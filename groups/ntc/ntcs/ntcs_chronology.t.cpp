@@ -13,37 +13,224 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntccfg_test.h>
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_chronology_t_cpp, "$Id$ $CSID$")
+
+#include <ntcs_chronology.h>
+
 #include <ntci_log.h>
 #include <ntci_timer.h>
 #include <ntci_timersession.h>
 #include <ntcs_chronology.h>
 #include <ntcs_driver.h>
 #include <ntcs_strand.h>
-#include <bdlf_bind.h>
-#include <bdlf_placeholder.h>
-#include <bdlmt_fixedthreadpool.h>
-#include <bdlt_currenttime.h>
-#include <bslma_testallocator.h>
-#include <bslmt_barrier.h>
-#include <bslmt_threadgroup.h>
-#include <bslmt_threadutil.h>
-#include <bsl_queue.h>
 
 using namespace BloombergLP;
 
-namespace test {
+namespace BloombergLP {
+namespace ntcs {
 
-const int k_THREAD_INDEX = 5;
-const int k_TIMER_ID_0   = 10;
-const int k_TIMER_ID_1   = 22;
-const int k_TIMER_ID_2   = 33;
-const int k_TIMER_ID_3   = 158;
-const int k_TIMER_ID_4   = 8;
-const int k_TIMER_ID_5   = 751;
+// Provide tests for 'ntcs::Chronology'.
+class ChronologyTest
+{
+    static const int k_THREAD_INDEX;
+    static const int k_TIMER_ID_0;
+    static const int k_TIMER_ID_1;
+    static const int k_TIMER_ID_2;
+    static const int k_TIMER_ID_3;
+    static const int k_TIMER_ID_4;
+    static const int k_TIMER_ID_5;
+
+    // This class collects events from timers.
+    class TimerCallbackCollector;
+
+    /// This class mocks behavior of ntci::Driver.
+    class DriverMock;
+
+    /// This class mocks behavior of ntci::Strand.
+    class StrandMock;
+
+    /// This class mocks behavior of ntci::TimerSession.
+    class TimerSessionMock;
+
+    /// This class provides the simulation of a clock.
+    class TestClock;
+
+    /// This class provides a common test suite.
+    class TestSuite;
+
+    /// Multithreaded test driver.
+    class MtDriver;
+
+    /// Multithreaded test suite.
+    class MtTestSuite;
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+
+    // TODO
+    static void verifyCase8();
+
+    // TODO
+    static void verifyCase9();
+
+    // TODO
+    static void verifyCase10();
+
+    // TODO
+    static void verifyCase11();
+
+    // TODO
+    static void verifyCase12();
+
+    // TODO
+    static void verifyCase13();
+
+    // TODO
+    static void verifyCase14();
+
+    // TODO
+    static void verifyCase15();
+
+    // TODO
+    static void verifyCase16();
+
+    // TODO
+    static void verifyCase17();
+
+    // TODO
+    static void verifyCase18();
+
+    // TODO
+    static void verifyCase19();
+
+    // TODO
+    static void verifyCase20();
+
+    // TODO
+    static void verifyCase21();
+
+    // TODO
+    static void verifyCase22();
+
+    // TODO
+    static void verifyCase23();
+
+    // TODO
+    static void verifyCase24();
+
+    // TODO
+    static void verifyCase25();
+
+    // TODO
+    static void verifyCase26();
+
+    // TODO
+    static void verifyCase27();
+
+    // TODO
+    static void verifyCase28();
+
+    // TODO
+    static void verifyCase29();
+
+    // TODO
+    static void verifyCase30();
+
+    // TODO
+    static void verifyCase31();
+
+    // TODO
+    static void verifyCase32();
+
+    // TODO
+    static void verifyCase33();
+
+    // TODO
+    static void verifyCase34();
+
+    // TODO
+    static void verifyCase35();
+
+    // TODO
+    static void verifyCase36();
+};
+
+const int ChronologyTest::k_THREAD_INDEX = 5;
+const int ChronologyTest::k_TIMER_ID_0   = 10;
+const int ChronologyTest::k_TIMER_ID_1   = 22;
+const int ChronologyTest::k_TIMER_ID_2   = 33;
+const int ChronologyTest::k_TIMER_ID_3   = 158;
+const int ChronologyTest::k_TIMER_ID_4   = 8;
+const int ChronologyTest::k_TIMER_ID_5   = 751;
+
+class ChronologyTest::TimerCallbackCollector {
+public:
+    TimerCallbackCollector(bslma::Allocator* basicAllocator)
+    : d_events(basicAllocator)
+    {
+    }
+
+    ~TimerCallbackCollector()
+    {
+        NTSCFG_TEST_TRUE(d_events.empty());
+    }
+
+    void processTimer(const bsl::shared_ptr<ntci::Timer>& timer,
+                      const ntca::TimerEvent&             event)
+    {
+        NTCI_LOG_CONTEXT();
+
+        NTCI_LOG_STREAM_DEBUG << "Processing timer event " << event
+                              << " from timer id " << timer->id()
+                              << NTCI_LOG_STREAM_END;
+
+        d_events.push(bsl::make_pair(timer->id(), event));
+    }
+
+    void validateEventReceived(int timerId, ntca::TimerEventType::Value event)
+    {
+        NTSCFG_TEST_FALSE(d_events.empty());
+
+        const TimerIdAndEvent& idAndEv = d_events.front();
+        NTSCFG_TEST_EQ(idAndEv.first, timerId);
+        NTSCFG_TEST_EQ(idAndEv.second.type(), event);
+        d_events.pop();
+    }
+
+    void validateNoEventReceived() const
+    {
+        NTSCFG_TEST_TRUE(d_events.empty());
+    }
+
+  private:
+    typedef std::pair<int, ntca::TimerEvent> TimerIdAndEvent;
+    bsl::queue<TimerIdAndEvent>              d_events;
+};
 
 /// This class mocks behavior of ntcs::Driver
-class DriverMock : public ntcs::Driver
+class ChronologyTest::DriverMock : public ntcs::Driver
 {
     int d_interruptOneCallCtr;
     int d_interruptAllCallCtr;
@@ -99,61 +286,19 @@ class DriverMock : public ntcs::Driver
 
     void validateInterruptOneCalled()
     {
-        NTCCFG_TEST_TRUE(d_interruptOneCallCtr > 0);
+        NTSCFG_TEST_TRUE(d_interruptOneCallCtr > 0);
         --d_interruptOneCallCtr;
     }
 
     void validateInterruptAllCalled()
     {
-        NTCCFG_TEST_TRUE(d_interruptAllCallCtr > 0);
+        NTSCFG_TEST_TRUE(d_interruptAllCallCtr > 0);
         --d_interruptAllCallCtr;
     }
 };
 
-struct TimerCallbackCollector {
-    TimerCallbackCollector(bslma::Allocator* basicAllocator)
-    : d_events(basicAllocator)
-    {
-    }
-
-    ~TimerCallbackCollector()
-    {
-        NTCCFG_TEST_TRUE(d_events.empty());
-    }
-
-    void processTimer(const bsl::shared_ptr<ntci::Timer>& timer,
-                      const ntca::TimerEvent&             event)
-    {
-        NTCI_LOG_CONTEXT();
-
-        NTCI_LOG_STREAM_DEBUG << "Processing timer event " << event
-                              << " from timer id " << timer->id()
-                              << NTCI_LOG_STREAM_END;
-
-        d_events.push(bsl::make_pair(timer->id(), event));
-    }
-
-    void validateEventReceived(int timerId, ntca::TimerEventType::Value event)
-    {
-        NTCCFG_TEST_FALSE(d_events.empty());
-
-        const TimerIdAndEvent& idAndEv = d_events.front();
-        NTCCFG_TEST_EQ(idAndEv.first, timerId);
-        NTCCFG_TEST_EQ(idAndEv.second.type(), event);
-        d_events.pop();
-    }
-
-    void validateNoEventReceived() const
-    {
-        NTCCFG_TEST_TRUE(d_events.empty());
-    }
-
-  private:
-    typedef std::pair<int, ntca::TimerEvent> TimerIdAndEvent;
-    bsl::queue<TimerIdAndEvent>              d_events;
-};
-
-class StrandMock : public ntci::Strand
+/// This class mocks behavior of ntcs::Strand.
+class ChronologyTest::StrandMock : public ntci::Strand
 {
   public:
     /// mocking base class method
@@ -180,14 +325,14 @@ class StrandMock : public ntci::Strand
     // mocking base class method
 };
 
-class TimerSessionMock : public ntci::TimerSession
+class ChronologyTest::TimerSessionMock : public ntci::TimerSession
 {
   public:
     ~TimerSessionMock()
     {
-        NTCCFG_TEST_FALSE(d_deadline.has_value());
-        NTCCFG_TEST_FALSE(d_cancel.has_value());
-        NTCCFG_TEST_FALSE(d_close.has_value());
+        NTSCFG_TEST_FALSE(d_deadline.has_value());
+        NTSCFG_TEST_FALSE(d_cancel.has_value());
+        NTSCFG_TEST_FALSE(d_close.has_value());
     }
 
     void processTimerDeadline(const bsl::shared_ptr<ntci::Timer>& timer,
@@ -199,7 +344,7 @@ class TimerSessionMock : public ntci::TimerSession
         NTCI_LOG_STREAM_DEBUG << "processTimerDeadline event " << event
                               << NTCI_LOG_STREAM_END;
 
-        NTCCFG_TEST_FALSE(d_deadline.has_value());
+        NTSCFG_TEST_FALSE(d_deadline.has_value());
         d_deadline = event;
     }
 
@@ -212,7 +357,7 @@ class TimerSessionMock : public ntci::TimerSession
         NTCI_LOG_STREAM_DEBUG << "processTimerCancelled event " << event
                               << NTCI_LOG_STREAM_END;
 
-        NTCCFG_TEST_FALSE(d_cancel.has_value());
+        NTSCFG_TEST_FALSE(d_cancel.has_value());
         d_cancel = event;
     }
 
@@ -225,22 +370,22 @@ class TimerSessionMock : public ntci::TimerSession
         NTCI_LOG_STREAM_DEBUG << "processTimerClosed event " << event
                               << NTCI_LOG_STREAM_END;
 
-        NTCCFG_TEST_FALSE(d_close.has_value());
+        NTSCFG_TEST_FALSE(d_close.has_value());
         d_close = event;
     }
 
     void validateEventReceivedAndClear(ntca::TimerEventType::Value v)
     {
         if (ntca::TimerEventType::e_DEADLINE == v) {
-            NTCCFG_TEST_TRUE(d_deadline.has_value());
+            NTSCFG_TEST_TRUE(d_deadline.has_value());
             d_deadline.reset();
         }
         else if (ntca::TimerEventType::e_CANCELED == v) {
-            NTCCFG_TEST_TRUE(d_cancel.has_value());
+            NTSCFG_TEST_TRUE(d_cancel.has_value());
             d_cancel.reset();
         }
         else {
-            NTCCFG_TEST_TRUE(d_close.has_value());
+            NTSCFG_TEST_TRUE(d_close.has_value());
             d_close.reset();
         }
     }
@@ -253,9 +398,9 @@ class TimerSessionMock : public ntci::TimerSession
 
     void validateNoEventReceived() const
     {
-        NTCCFG_TEST_FALSE(d_deadline.has_value());
-        NTCCFG_TEST_FALSE(d_cancel.has_value());
-        NTCCFG_TEST_FALSE(d_close.has_value());
+        NTSCFG_TEST_FALSE(d_deadline.has_value());
+        NTSCFG_TEST_FALSE(d_cancel.has_value());
+        NTSCFG_TEST_FALSE(d_close.has_value());
     }
 
   private:
@@ -264,7 +409,8 @@ class TimerSessionMock : public ntci::TimerSession
     bsl::optional<ntca::TimerEvent> d_close;
 };
 
-class TestClock
+/// This class provides the simulation of a clock.
+class ChronologyTest::TestClock
 {
   public:
     TestClock();
@@ -282,7 +428,7 @@ class TestClock
     static bsls::TimeInterval              s_currentTime;
 };
 
-class TestSuite
+class ChronologyTest::TestSuite
 {
   public:
     TestSuite();
@@ -297,26 +443,26 @@ class TestSuite
     static const bsls::TimeInterval oneMinute;
     static const bsls::TimeInterval oneHour;
 
-    ntccfg::TestAllocator ta;
+    ntscfg::TestAllocator ta;
     TestClock             clock;
 
     bsl::shared_ptr<TimerCallbackCollector> callbacks;
     ntci::TimerCallback                     timerCallback;
 
-    bsl::shared_ptr<test::DriverMock> driver;
+    bsl::shared_ptr<ChronologyTest::DriverMock> driver;
     bsl::shared_ptr<ntcs::Chronology> chronology;
 };
 
-const bsls::TimeInterval TestSuite::oneSecond = bsls::TimeInterval(1, 0);
-const bsls::TimeInterval TestSuite::oneMinute = bsls::TimeInterval(60, 0);
-const bsls::TimeInterval TestSuite::oneHour   = bsls::TimeInterval(3600, 0);
+const bsls::TimeInterval ChronologyTest::TestSuite::oneSecond = bsls::TimeInterval(1, 0);
+const bsls::TimeInterval ChronologyTest::TestSuite::oneMinute = bsls::TimeInterval(60, 0);
+const bsls::TimeInterval ChronologyTest::TestSuite::oneHour   = bsls::TimeInterval(3600, 0);
 
-TestSuite::TestSuite()
+ChronologyTest::TestSuite::TestSuite()
 {
     callbacks.createInplace(&ta, &ta);
 
     ntci::TimerCallback tmp(
-        NTCCFG_BIND(&test::TimerCallbackCollector::processTimer,
+        NTCCFG_BIND(&ChronologyTest::TimerCallbackCollector::processTimer,
                     callbacks.get(),
                     NTCCFG_BIND_PLACEHOLDER_1,
                     NTCCFG_BIND_PLACEHOLDER_2));
@@ -325,40 +471,40 @@ TestSuite::TestSuite()
     driver.createInplace(&ta);
     chronology.createInplace(&ta, driver, &ta);
 
-    NTCCFG_TEST_EQ(chronology->numRegistered(), 0);
-    NTCCFG_TEST_EQ(chronology->numScheduled(), 0);
-    NTCCFG_TEST_FALSE(chronology->hasAnyDeferred());
-    NTCCFG_TEST_FALSE(chronology->hasAnyRegistered());
-    NTCCFG_TEST_FALSE(chronology->hasAnyScheduled());
-    NTCCFG_TEST_FALSE(chronology->hasAnyScheduledOrDeferred());
-    NTCCFG_TEST_FALSE(chronology->earliest().has_value());
-    NTCCFG_TEST_FALSE(chronology->timeoutInterval().has_value());
+    NTSCFG_TEST_EQ(chronology->numRegistered(), 0);
+    NTSCFG_TEST_EQ(chronology->numScheduled(), 0);
+    NTSCFG_TEST_FALSE(chronology->hasAnyDeferred());
+    NTSCFG_TEST_FALSE(chronology->hasAnyRegistered());
+    NTSCFG_TEST_FALSE(chronology->hasAnyScheduled());
+    NTSCFG_TEST_FALSE(chronology->hasAnyScheduledOrDeferred());
+    NTSCFG_TEST_FALSE(chronology->earliest().has_value());
+    NTSCFG_TEST_FALSE(chronology->timeoutInterval().has_value());
 }
 
-TestSuite::~TestSuite()
+ChronologyTest::TestSuite::~TestSuite()
 {
-    NTCCFG_TEST_EQ(chronology->numScheduled(), 0);
-    NTCCFG_TEST_EQ(chronology->numRegistered(), 0);
-    NTCCFG_TEST_FALSE(chronology->hasAnyScheduledOrDeferred());
+    NTSCFG_TEST_EQ(chronology->numScheduled(), 0);
+    NTSCFG_TEST_EQ(chronology->numRegistered(), 0);
+    NTSCFG_TEST_FALSE(chronology->hasAnyScheduledOrDeferred());
     chronology.reset();
     driver.reset();
     callbacks.reset();
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-void TestSuite::validateRegisteredAndScheduled(int registered,
+void ChronologyTest::TestSuite::validateRegisteredAndScheduled(int registered,
                                                int scheduled) const
 {
-    NTCCFG_TEST_EQ(chronology->numRegistered(), registered);
-    NTCCFG_TEST_EQ(chronology->numScheduled(), scheduled);
+    NTSCFG_TEST_EQ(chronology->numRegistered(), registered);
+    NTSCFG_TEST_EQ(chronology->numScheduled(), scheduled);
 }
 
-void TestSuite::incrementCallback(int& val)
+void ChronologyTest::TestSuite::incrementCallback(int& val)
 {
     ++val;
 }
 
-ntca::TimerOptions TestSuite::createOptionsAllDisabled(int id)
+ntca::TimerOptions ChronologyTest::TestSuite::createOptionsAllDisabled(int id)
 {
     ntca::TimerOptions timerOptions;
     timerOptions.setId(id);
@@ -369,77 +515,77 @@ ntca::TimerOptions TestSuite::createOptionsAllDisabled(int id)
     return timerOptions;
 }
 
-DriverMock::DriverMock()
+ChronologyTest::DriverMock::DriverMock()
 {
     d_interruptAllCallCtr = 0;
     d_interruptOneCallCtr = 0;
 }
 
-DriverMock::~DriverMock()
+ChronologyTest::DriverMock::~DriverMock()
 {
-    NTCCFG_TEST_EQ(d_interruptOneCallCtr, 0);
-    NTCCFG_TEST_EQ(d_interruptAllCallCtr, 0);
+    NTSCFG_TEST_EQ(d_interruptOneCallCtr, 0);
+    NTSCFG_TEST_EQ(d_interruptAllCallCtr, 0);
 }
 
-ntci::Waiter DriverMock::registerWaiter(
+ntci::Waiter ChronologyTest::DriverMock::registerWaiter(
     const ntca::WaiterOptions& waiterOptions)
 {
     return reinterpret_cast<ntci::Waiter>(0);
 }
 
-void DriverMock::deregisterWaiter(ntci::Waiter waiter)
+void ChronologyTest::DriverMock::deregisterWaiter(ntci::Waiter waiter)
 {
 }
 
-void DriverMock::interruptOne()
+void ChronologyTest::DriverMock::interruptOne()
 {
-    NTCCFG_TEST_EQ(d_interruptOneCallCtr, 0);
+    NTSCFG_TEST_EQ(d_interruptOneCallCtr, 0);
     ++d_interruptOneCallCtr;
 }
 
-void DriverMock::interruptAll()
+void ChronologyTest::DriverMock::interruptAll()
 {
-    NTCCFG_TEST_EQ(d_interruptAllCallCtr, 0);
+    NTSCFG_TEST_EQ(d_interruptAllCallCtr, 0);
     ++d_interruptAllCallCtr;
 }
 
-void DriverMock::clear()
+void ChronologyTest::DriverMock::clear()
 {
 }
 
-const char* DriverMock::name() const
+const char* ChronologyTest::DriverMock::name() const
 {
     return "DriverMock";
 }
 
-bslmt::ThreadUtil::Handle DriverMock::threadHandle() const
+bslmt::ThreadUtil::Handle ChronologyTest::DriverMock::threadHandle() const
 {
     return bslmt::ThreadUtil::Handle();
 }
 
-bsl::size_t DriverMock::threadIndex() const
+bsl::size_t ChronologyTest::DriverMock::threadIndex() const
 {
     return k_THREAD_INDEX;
 }
 
-bsl::size_t DriverMock::numWaiters() const
+bsl::size_t ChronologyTest::DriverMock::numWaiters() const
 {
     return 0;
 }
 
-bsl::size_t DriverMock::numSockets() const
+bsl::size_t ChronologyTest::DriverMock::numSockets() const
 {
     return 0;
 }
 
-bsl::size_t DriverMock::maxSockets() const
+bsl::size_t ChronologyTest::DriverMock::maxSockets() const
 {
     return 0;
 }
 
-bsls::TimeInterval TestClock::s_currentTime = bsls::TimeInterval();
+bsls::TimeInterval ChronologyTest::TestClock::s_currentTime = bsls::TimeInterval();
 
-TestClock::TestClock()
+ChronologyTest::TestClock::TestClock()
 : d_previousCallback(bdlt::CurrentTime::currentTimeCallback())
 {
     bsls::TimeInterval startTime =
@@ -449,18 +595,18 @@ TestClock::TestClock()
     bdlt::CurrentTime::setCurrentTimeCallback(TestClock::currentTime);
 }
 
-TestClock::~TestClock()
+ChronologyTest::TestClock::~TestClock()
 {
     bdlt::CurrentTime::setCurrentTimeCallback(d_previousCallback);
 }
 
-void TestClock::advance(const bsls::TimeInterval& timePassed)
+void ChronologyTest::TestClock::advance(const bsls::TimeInterval& timePassed)
 {
     s_currentTime += timePassed;
 }
 
-/// Multithreaded test driver
-class MtDriver : public ntcs::Driver,
+/// Multithreaded test driver.
+class ChronologyTest::MtDriver : public ntcs::Driver,
                  public ntci::Executor,
                  public ntccfg::Shared<ntci::Executor>
 {
@@ -542,7 +688,7 @@ class MtDriver : public ntcs::Driver,
                     }
                 }
                 else {
-                    NTCCFG_TEST_ASSERT(false);
+                    NTSCFG_TEST_ASSERT(false);
                 }
             }
 
@@ -589,7 +735,7 @@ class MtDriver : public ntcs::Driver,
 
     const char* name() const BSLS_KEYWORD_OVERRIDE
     {
-        return "test::MtDriver";
+        return "ChronologyTest::MtDriver";
     }
 
     bslmt::ThreadUtil::Handle threadHandle() const BSLS_KEYWORD_OVERRIDE
@@ -627,7 +773,8 @@ class MtDriver : public ntcs::Driver,
     bsl::shared_ptr<ntcs::Chronology> d_chronology;
 };
 
-class MtTestSuite
+/// Multithreaded test suite.
+class ChronologyTest::MtTestSuite
 {
   private:
     MtTestSuite(const MtTestSuite&);
@@ -643,15 +790,15 @@ class MtTestSuite
 
     ~MtTestSuite()
     {
-        NTCCFG_TEST_EQ(d_numOneShotTimersToConsume, 0);
-        NTCCFG_TEST_EQ(d_numTimersToProduce, 0);
-        NTCCFG_TEST_EQ(d_numExpectedCloseEvents, 0);
-        NTCCFG_TEST_EQ(d_numPeriodicTimersShot, 0);
+        NTSCFG_TEST_EQ(d_numOneShotTimersToConsume, 0);
+        NTSCFG_TEST_EQ(d_numTimersToProduce, 0);
+        NTSCFG_TEST_EQ(d_numExpectedCloseEvents, 0);
+        NTSCFG_TEST_EQ(d_numPeriodicTimersShot, 0);
 
-        NTCCFG_TEST_EQ(d_consumers->numThreads(), 0);
-        NTCCFG_TEST_EQ(d_producers->numThreads(), 0);
-        NTCCFG_TEST_EQ(d_driver->chronology().numScheduled(), 0);
-        NTCCFG_TEST_EQ(d_driver->chronology().numRegistered(), 0);
+        NTSCFG_TEST_EQ(d_consumers->numThreads(), 0);
+        NTSCFG_TEST_EQ(d_producers->numThreads(), 0);
+        NTSCFG_TEST_EQ(d_driver->chronology().numScheduled(), 0);
+        NTSCFG_TEST_EQ(d_driver->chronology().numRegistered(), 0);
 
         d_driver.reset();
         d_consumers.reset();
@@ -665,9 +812,9 @@ class MtTestSuite
             attributes.setThreadName("consumer-" + bsl::to_string(i));
 
             int rc = d_consumers->addThread(
-                NTCCFG_BIND(&test::MtTestSuite::consumerThread, d_driver),
+                NTCCFG_BIND(&ChronologyTest::MtTestSuite::consumerThread, d_driver),
                 attributes);
-            NTCCFG_TEST_EQ(rc, 0);
+            NTSCFG_TEST_EQ(rc, 0);
         }
     }
 
@@ -678,9 +825,9 @@ class MtTestSuite
             attributes.setThreadName("producer-" + bsl::to_string(i));
 
             int rc = d_producers->addThread(
-                NTCCFG_BIND(&test::MtTestSuite::producerThread, this),
+                NTCCFG_BIND(&ChronologyTest::MtTestSuite::producerThread, this),
                 attributes);
-            NTCCFG_TEST_EQ(rc, 0);
+            NTSCFG_TEST_EQ(rc, 0);
         }
     }
 
@@ -691,15 +838,15 @@ class MtTestSuite
             attributes.setThreadName("producer-" + bsl::to_string(i));
 
             int rc = d_producers->addThread(
-                NTCCFG_BIND(&test::MtTestSuite::producerThreadWithStrand,
+                NTCCFG_BIND(&ChronologyTest::MtTestSuite::producerThreadWithStrand,
                             this,
                             i % d_strands.size()),
                 attributes);
-            NTCCFG_TEST_EQ(rc, 0);
+            NTSCFG_TEST_EQ(rc, 0);
         }
     }
 
-    static void consumerThread(const bsl::shared_ptr<test::MtDriver>& driver)
+    static void consumerThread(const bsl::shared_ptr<ChronologyTest::MtDriver>& driver)
     {
         NTCI_LOG_CONTEXT();
         NTCI_LOG_DEBUG("Starting consumer thread");
@@ -731,7 +878,7 @@ class MtTestSuite
             timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
             ntci::TimerCallback callback(
-                NTCCFG_BIND(&test::MtTestSuite::processTimer,
+                NTCCFG_BIND(&ChronologyTest::MtTestSuite::processTimer,
                             this,
                             NTCCFG_BIND_PLACEHOLDER_1,
                             NTCCFG_BIND_PLACEHOLDER_2));
@@ -768,7 +915,7 @@ class MtTestSuite
             timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
             ntci::TimerCallback callback(
-                NTCCFG_BIND(&test::MtTestSuite::processTimerAtStrand,
+                NTCCFG_BIND(&ChronologyTest::MtTestSuite::processTimerAtStrand,
                             this,
                             NTCCFG_BIND_PLACEHOLDER_1,
                             NTCCFG_BIND_PLACEHOLDER_2,
@@ -808,7 +955,7 @@ class MtTestSuite
             d_allOneShotConsumedCondition.signal();
         }
 
-        NTCCFG_TEST_ASSERT(res >= 0);
+        NTSCFG_TEST_ASSERT(res >= 0);
         if (res == 0 && d_numExpectedCloseEvents.load() == 0) {
             d_driver->stop();
         }
@@ -822,19 +969,19 @@ class MtTestSuite
 
         bsls::AtomicBool& executionFlag = d_strands[strandIndex]->second;
         bool              prev = executionFlag.testAndSwap(false, true);
-        NTCCFG_TEST_FALSE(prev);
+        NTSCFG_TEST_FALSE(prev);
 
         int res = d_numOneShotTimersToConsume.subtract(1);
 
         NTCI_LOG_DEBUG("processTimerAtStrand called: remaining = %d", res);
 
-        NTCCFG_TEST_ASSERT(res >= 0);
+        NTSCFG_TEST_ASSERT(res >= 0);
         if (res == 0 && d_numExpectedCloseEvents.load() == 0) {
             d_driver->stop();
         }
 
         prev = executionFlag.testAndSwap(true, false);
-        NTCCFG_TEST_TRUE(prev);
+        NTSCFG_TEST_TRUE(prev);
     }
 
     void processPeriodicTimer(const bsl::shared_ptr<ntci::Timer>& timer,
@@ -847,7 +994,7 @@ class MtTestSuite
         }
         else if (event.type() == ntca::TimerEventType::e_CLOSED) {
             int res = d_numExpectedCloseEvents.subtract(1);
-            NTCCFG_TEST_ASSERT(res >= 0);
+            NTSCFG_TEST_ASSERT(res >= 0);
             if (res == 0 && d_numOneShotTimersToConsume.load() == 0) {
                 d_driver->stop();
             }
@@ -882,9 +1029,9 @@ class MtTestSuite
         }
     }
 
-    ntccfg::TestAllocator d_ta;
+    ntscfg::TestAllocator d_ta;
 
-    bsl::shared_ptr<test::MtDriver> d_driver;
+    bsl::shared_ptr<ChronologyTest::MtDriver> d_driver;
 
     bsl::shared_ptr<bslmt::ThreadGroup> d_consumers;
     bsl::shared_ptr<bslmt::ThreadGroup> d_producers;
@@ -902,65 +1049,63 @@ class MtTestSuite
     bsl::vector<bsl::shared_ptr<StrandAndFlag> > d_strands;
 };
 
-}  // close namespace 'test'
-
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase1)
 {
     // Concern: check Timer::id()
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
 
         bsl::shared_ptr<ntci::Timer> timer1 =
             s.chronology->createTimer(timerOptions, s.timerCallback, &s.ta);
 
-        timerOptions.setId(test::k_TIMER_ID_1);
+        timerOptions.setId(ChronologyTest::k_TIMER_ID_1);
         bsl::shared_ptr<ntci::Timer> timer2 =
             s.chronology->createTimer(timerOptions, s.timerCallback, &s.ta);
 
-        NTCCFG_TEST_EQ(timer1->id(), test::k_TIMER_ID_0);
-        NTCCFG_TEST_EQ(timer2->id(), test::k_TIMER_ID_1);
+        NTSCFG_TEST_EQ(timer1->id(), ChronologyTest::k_TIMER_ID_0);
+        NTSCFG_TEST_EQ(timer2->id(), ChronologyTest::k_TIMER_ID_1);
 
         s.chronology->clearTimers();
     }
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase2)
 {
     // Concern: check Timer::oneShot()
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_1);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_1);
         timerOptions.setOneShot(true);
 
         bsl::shared_ptr<ntci::Timer> timer1 =
             s.chronology->createTimer(timerOptions, s.timerCallback, &s.ta);
 
-        timerOptions.setId(test::k_TIMER_ID_2);
+        timerOptions.setId(ChronologyTest::k_TIMER_ID_2);
         timerOptions.setOneShot(false);
         bsl::shared_ptr<ntci::Timer> timer2 =
             s.chronology->createTimer(timerOptions, s.timerCallback, &s.ta);
 
-        NTCCFG_TEST_TRUE(timer1->oneShot());
-        NTCCFG_TEST_FALSE(timer2->oneShot());
+        NTSCFG_TEST_TRUE(timer1->oneShot());
+        NTSCFG_TEST_FALSE(timer2->oneShot());
 
         s.chronology->clearTimers();
     }
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase3)
 {
     // Concern: check Timer::handle()
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
@@ -968,49 +1113,49 @@ NTCCFG_TEST_CASE(3)
         int handle2 = 0;
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_2);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_2);
         timerOptions.setHandle(&handle1);
 
         bsl::shared_ptr<ntci::Timer> timer1 =
             s.chronology->createTimer(timerOptions, s.timerCallback, &s.ta);
 
-        timerOptions.setId(test::k_TIMER_ID_3);
+        timerOptions.setId(ChronologyTest::k_TIMER_ID_3);
         timerOptions.setHandle(&handle2);
         bsl::shared_ptr<ntci::Timer> timer2 =
             s.chronology->createTimer(timerOptions, s.timerCallback, &s.ta);
 
-        NTCCFG_TEST_EQ(timer1->handle(), &handle1);
-        NTCCFG_TEST_EQ(timer2->handle(), &handle2);
+        NTSCFG_TEST_EQ(timer1->handle(), &handle1);
+        NTSCFG_TEST_EQ(timer2->handle(), &handle2);
 
         s.chronology->clearTimers();
     }
 }
 
-NTCCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase4)
 {
     // Concern: check Timer::strand()
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_4);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_4);
 
-        bsl::shared_ptr<test::StrandMock> strand1;
-        bsl::shared_ptr<test::StrandMock> strand2;
+        bsl::shared_ptr<ChronologyTest::StrandMock> strand1;
+        bsl::shared_ptr<ChronologyTest::StrandMock> strand2;
         strand1.createInplace(&s.ta);
         strand2.createInplace(&s.ta);
 
         ntci::TimerCallback timerCallback1(
-            NTCCFG_BIND(&test::TimerCallbackCollector::processTimer,
+            NTCCFG_BIND(&ChronologyTest::TimerCallbackCollector::processTimer,
                         s.callbacks.get(),
                         NTCCFG_BIND_PLACEHOLDER_1,
                         NTCCFG_BIND_PLACEHOLDER_2),
             static_cast<bsl::shared_ptr<ntci::Strand> >(strand1));
 
         ntci::TimerCallback timerCallback2(
-            NTCCFG_BIND(&test::TimerCallbackCollector::processTimer,
+            NTCCFG_BIND(&ChronologyTest::TimerCallbackCollector::processTimer,
                         s.callbacks.get(),
                         NTCCFG_BIND_PLACEHOLDER_1,
                         NTCCFG_BIND_PLACEHOLDER_2),
@@ -1022,84 +1167,84 @@ NTCCFG_TEST_CASE(4)
         bsl::shared_ptr<ntci::Timer> timer2 =
             s.chronology->createTimer(timerOptions, timerCallback2, &s.ta);
 
-        NTCCFG_TEST_EQ(timer1->strand().get(), strand1.get());
-        NTCCFG_TEST_EQ(timer2->strand().get(), strand2.get());
+        NTSCFG_TEST_EQ(timer1->strand().get(), strand1.get());
+        NTSCFG_TEST_EQ(timer2->strand().get(), strand2.get());
 
         s.chronology->clearTimers();
     }
 }
 
-NTCCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase5)
 {
     // Concern: check Timer::threadIndex()
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_5);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_5);
         bsl::shared_ptr<ntci::Timer> timer =
             s.chronology->createTimer(timerOptions, s.timerCallback, &s.ta);
-        NTCCFG_TEST_EQ(timer->threadIndex(), test::k_THREAD_INDEX);
+        NTSCFG_TEST_EQ(timer->threadIndex(), ChronologyTest::k_THREAD_INDEX);
         s.chronology->clearTimers();
     }
 }
 
-NTCCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase6)
 {
     // Concern: check Timer::currentTime()
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
 
         bsl::shared_ptr<ntci::Timer> timer =
             s.chronology->createTimer(timerOptions, s.timerCallback, &s.ta);
 
-        NTCCFG_TEST_EQ(timer->currentTime(), s.clock.currentTime());
+        NTSCFG_TEST_EQ(timer->currentTime(), s.clock.currentTime());
         s.clock.advance(s.oneHour);
-        NTCCFG_TEST_EQ(timer->currentTime(), s.clock.currentTime());
+        NTSCFG_TEST_EQ(timer->currentTime(), s.clock.currentTime());
 
         s.chronology->clearTimers();
     }
 }
 
-NTCCFG_TEST_CASE(7)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase7)
 {
     // Concern: check Chronology::currentTime
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         const bsls::TimeInterval now = s.clock.currentTime();
-        NTCCFG_TEST_EQ(s.chronology->currentTime(), now);
+        NTSCFG_TEST_EQ(s.chronology->currentTime(), now);
 
         s.clock.advance(s.oneSecond);
-        NTCCFG_TEST_EQ(s.chronology->currentTime(), now + s.oneSecond);
-        NTCCFG_TEST_EQ(s.chronology->currentTime(), s.clock.currentTime());
+        NTSCFG_TEST_EQ(s.chronology->currentTime(), now + s.oneSecond);
+        NTSCFG_TEST_EQ(s.chronology->currentTime(), s.clock.currentTime());
 
         s.clock.advance(s.oneHour);
-        NTCCFG_TEST_EQ(s.chronology->currentTime(),
+        NTSCFG_TEST_EQ(s.chronology->currentTime(),
                        now + s.oneSecond + s.oneHour);
-        NTCCFG_TEST_EQ(s.chronology->currentTime(), s.clock.currentTime());
+        NTSCFG_TEST_EQ(s.chronology->currentTime(), s.clock.currentTime());
     }
 }
 
-NTCCFG_TEST_CASE(8)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase8)
 {
     // Concern: check hasAnyRegistered and hasAnyScheduled
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_1);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_1);
         timerOptions.setOneShot(true);
         timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
@@ -1109,42 +1254,42 @@ NTCCFG_TEST_CASE(8)
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
                                           &s.ta);
-            NTCCFG_TEST_TRUE(s.chronology->hasAnyRegistered());
-            NTCCFG_TEST_FALSE(s.chronology->hasAnyScheduled());
+            NTSCFG_TEST_TRUE(s.chronology->hasAnyRegistered());
+            NTSCFG_TEST_FALSE(s.chronology->hasAnyScheduled());
 
             //to be fired immediately
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime());
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
-            NTCCFG_TEST_TRUE(s.chronology->hasAnyRegistered());
-            NTCCFG_TEST_TRUE(s.chronology->hasAnyScheduled());
+            NTSCFG_TEST_TRUE(s.chronology->hasAnyRegistered());
+            NTSCFG_TEST_TRUE(s.chronology->hasAnyScheduled());
         }
         NTCI_LOG_DEBUG("Part 2, announce");
         {
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_1,
+                ChronologyTest::k_TIMER_ID_1,
                 ntca::TimerEventType::e_DEADLINE);
-            NTCCFG_TEST_FALSE(s.chronology->hasAnyRegistered());
-            NTCCFG_TEST_FALSE(s.chronology->hasAnyScheduled());
+            NTSCFG_TEST_FALSE(s.chronology->hasAnyRegistered());
+            NTSCFG_TEST_FALSE(s.chronology->hasAnyScheduled());
         }
     }
 }
 
-NTCCFG_TEST_CASE(9)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase9)
 {
     // Concern: check earliest and timeoutInterval
     // add timer to be shot at t1, check earliest and timeoutInterval
     // then add timer to be shot at t0 and check that earliest and timeoutInterval changed
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
         timerOptions.setOneShot(true);
         timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
@@ -1154,8 +1299,8 @@ NTCCFG_TEST_CASE(9)
                 s.chronology->earliest();
             const bdlb::NullableValue<bsls::TimeInterval> timeoutInterval =
                 s.chronology->timeoutInterval();
-            NTCCFG_TEST_TRUE(earliest.isNull());
-            NTCCFG_TEST_TRUE(timeoutInterval.isNull());
+            NTSCFG_TEST_TRUE(earliest.isNull());
+            NTSCFG_TEST_TRUE(timeoutInterval.isNull());
         }
 
         NTCI_LOG_DEBUG(
@@ -1167,7 +1312,7 @@ NTCCFG_TEST_CASE(9)
                                           &s.ta);
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime() + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(1, 1);
 
@@ -1175,9 +1320,9 @@ NTCCFG_TEST_CASE(9)
                 s.chronology->earliest();
             const bdlb::NullableValue<bsls::TimeInterval> timeoutInterval =
                 s.chronology->timeoutInterval();
-            NTCCFG_TEST_EQ(earliest.value(),
+            NTSCFG_TEST_EQ(earliest.value(),
                            s.clock.currentTime() + s.oneHour);
-            NTCCFG_TEST_EQ(timeoutInterval.value(), s.oneHour);
+            NTSCFG_TEST_EQ(timeoutInterval.value(), s.oneHour);
         }
         NTCI_LOG_DEBUG("Part 2, advance a bit and check values again");
         {
@@ -1187,9 +1332,9 @@ NTCCFG_TEST_CASE(9)
                 s.chronology->earliest();
             const bdlb::NullableValue<bsls::TimeInterval> timeoutInterval =
                 s.chronology->timeoutInterval();
-            NTCCFG_TEST_EQ(earliest.value(),
+            NTSCFG_TEST_EQ(earliest.value(),
                            s.clock.currentTime() + s.oneHour - s.oneSecond);
-            NTCCFG_TEST_EQ(timeoutInterval.value(), s.oneHour - s.oneSecond);
+            NTSCFG_TEST_EQ(timeoutInterval.value(), s.oneHour - s.oneSecond);
         }
         NTCI_LOG_DEBUG("Part 3, add another timer which should fire earlier");
         {
@@ -1199,7 +1344,7 @@ NTCCFG_TEST_CASE(9)
                                           &s.ta);
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime() + s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(2, 2);
 
@@ -1207,25 +1352,25 @@ NTCCFG_TEST_CASE(9)
                 s.chronology->earliest();
             const bdlb::NullableValue<bsls::TimeInterval> timeoutInterval =
                 s.chronology->timeoutInterval();
-            NTCCFG_TEST_EQ(earliest.value(),
+            NTSCFG_TEST_EQ(earliest.value(),
                            s.clock.currentTime() + s.oneMinute);
-            NTCCFG_TEST_EQ(timeoutInterval.value(), s.oneMinute);
+            NTSCFG_TEST_EQ(timeoutInterval.value(), s.oneMinute);
         }
         s.chronology->closeAll();
     }
 }
 
-NTCCFG_TEST_CASE(10)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase10)
 {
     // Concern: test Chronology::clearFunctions
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         int                           callCounter = 0;
         const ntci::Executor::Functor f =
-            NTCCFG_BIND(&test::TestSuite::incrementCallback,
+            NTCCFG_BIND(&ChronologyTest::TestSuite::incrementCallback,
                         bsl::ref(callCounter));
 
         ntci::Executor::FunctorSequence seq;
@@ -1233,28 +1378,28 @@ NTCCFG_TEST_CASE(10)
         seq.push_back(f);
         seq.push_back(f);
         s.chronology->moveAndExecute(&seq, f);
-        NTCCFG_TEST_EQ(s.chronology->numDeferred(), 4);
+        NTSCFG_TEST_EQ(s.chronology->numDeferred(), 4);
 
         s.driver->validateInterruptAllCalled();
 
         s.chronology->clearFunctions();
 
         s.chronology->announce();
-        NTCCFG_TEST_EQ(callCounter, 0);
+        NTSCFG_TEST_EQ(callCounter, 0);
     }
 }
 
-NTCCFG_TEST_CASE(11)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase11)
 {
     // Concern: test Chronology::drain
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         int                           callCounter = 0;
         const ntci::Executor::Functor f =
-            NTCCFG_BIND(&test::TestSuite::incrementCallback,
+            NTCCFG_BIND(&ChronologyTest::TestSuite::incrementCallback,
                         bsl::ref(callCounter));
 
         ntci::Executor::FunctorSequence seq;
@@ -1262,17 +1407,17 @@ NTCCFG_TEST_CASE(11)
         seq.push_back(f);
         seq.push_back(f);
         s.chronology->moveAndExecute(&seq, f);
-        NTCCFG_TEST_EQ(s.chronology->numDeferred(), 4);
+        NTSCFG_TEST_EQ(s.chronology->numDeferred(), 4);
 
         s.driver->validateInterruptAllCalled();
 
         s.chronology->drain();
 
-        NTCCFG_TEST_EQ(callCounter, 4);
+        NTSCFG_TEST_EQ(callCounter, 4);
     }
 }
 
-NTCCFG_TEST_CASE(12)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase12)
 {
     // Concern: Test single timer creation and destruction without being
     // scheduled
@@ -1281,7 +1426,7 @@ NTCCFG_TEST_CASE(12)
     // Create two timers, memory left from the first timer should be reused.
     // Create 3 timers, memory from previous two timers should be reused.
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
@@ -1289,7 +1434,7 @@ NTCCFG_TEST_CASE(12)
         void* address2 = 0;
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
         timerOptions.setOneShot(true);
         timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
@@ -1302,9 +1447,9 @@ NTCCFG_TEST_CASE(12)
 
             address1 = timer1.get();
 
-            NTCCFG_TEST_EQ(s.chronology->numRegistered(), 1);
+            NTSCFG_TEST_EQ(s.chronology->numRegistered(), 1);
         }
-        NTCCFG_TEST_EQ(s.chronology->numRegistered(), 0);
+        NTSCFG_TEST_EQ(s.chronology->numRegistered(), 0);
 
         NTCI_LOG_DEBUG("Part 2, create two timers, address1 should be reused");
         {
@@ -1313,9 +1458,9 @@ NTCCFG_TEST_CASE(12)
                                           s.timerCallback,
                                           &s.ta);
 
-            NTCCFG_TEST_EQ(timer1.get(), address1);
+            NTSCFG_TEST_EQ(timer1.get(), address1);
 
-            NTCCFG_TEST_EQ(s.chronology->numRegistered(), 1);
+            NTSCFG_TEST_EQ(s.chronology->numRegistered(), 1);
 
             bsl::shared_ptr<ntci::Timer> timer2 =
                 s.chronology->createTimer(timerOptions,
@@ -1324,10 +1469,10 @@ NTCCFG_TEST_CASE(12)
 
             address2 = timer2.get();
 
-            NTCCFG_TEST_EQ(s.chronology->numRegistered(), 2);
+            NTSCFG_TEST_EQ(s.chronology->numRegistered(), 2);
         }
 
-        NTCCFG_TEST_EQ(s.chronology->numRegistered(), 0);
+        NTSCFG_TEST_EQ(s.chronology->numRegistered(), 0);
 
         NTCI_LOG_DEBUG(
             "Part 3, create 3 timers, address 1 & 2 should be reused");
@@ -1337,28 +1482,28 @@ NTCCFG_TEST_CASE(12)
                                           s.timerCallback,
                                           &s.ta);
 
-            NTCCFG_TEST_EQ(timer1.get(), address1);
-            NTCCFG_TEST_EQ(s.chronology->numRegistered(), 1);
+            NTSCFG_TEST_EQ(timer1.get(), address1);
+            NTSCFG_TEST_EQ(s.chronology->numRegistered(), 1);
 
             bsl::shared_ptr<ntci::Timer> timer2 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
                                           &s.ta);
 
-            NTCCFG_TEST_EQ(timer2.get(), address2);
-            NTCCFG_TEST_EQ(s.chronology->numRegistered(), 2);
+            NTSCFG_TEST_EQ(timer2.get(), address2);
+            NTSCFG_TEST_EQ(s.chronology->numRegistered(), 2);
 
             bsl::shared_ptr<ntci::Timer> timer3 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
                                           &s.ta);
 
-            NTCCFG_TEST_EQ(s.chronology->numRegistered(), 3);
+            NTSCFG_TEST_EQ(s.chronology->numRegistered(), 3);
         }
     }
 }
 
-NTCCFG_TEST_CASE(13)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase13)
 {
     // Concern: Test single timer creation and destruction without being
     // scheduled with a weak reference outstanding.
@@ -1367,7 +1512,7 @@ NTCCFG_TEST_CASE(13)
     // Repeat the same for two ptrs
     // Repeat the same for three ptrs
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
@@ -1375,7 +1520,7 @@ NTCCFG_TEST_CASE(13)
         void* address2 = 0;
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
         timerOptions.setOneShot(true);
         timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
@@ -1391,17 +1536,17 @@ NTCCFG_TEST_CASE(13)
 
                 address1 = timer1.get();
 
-                NTCCFG_TEST_EQ(s.chronology->numRegistered(), 1);
+                NTSCFG_TEST_EQ(s.chronology->numRegistered(), 1);
 
                 weakTimer1 = timer1;
             }
 
             {
                 bsl::shared_ptr<ntci::Timer> timer1 = weakTimer1.lock();
-                NTCCFG_TEST_FALSE(timer1);
+                NTSCFG_TEST_FALSE(timer1);
             }
         }
-        NTCCFG_TEST_EQ(s.chronology->numRegistered(), 0);
+        NTSCFG_TEST_EQ(s.chronology->numRegistered(), 0);
 
         NTCI_LOG_DEBUG("Part 2");
         {
@@ -1414,8 +1559,8 @@ NTCCFG_TEST_CASE(13)
                                               s.timerCallback,
                                               &s.ta);
 
-                NTCCFG_TEST_EQ(timer1.get(), address1);
-                NTCCFG_TEST_EQ(s.chronology->numRegistered(), 1);
+                NTSCFG_TEST_EQ(timer1.get(), address1);
+                NTSCFG_TEST_EQ(s.chronology->numRegistered(), 1);
 
                 weakTimer1 = timer1;
 
@@ -1426,20 +1571,20 @@ NTCCFG_TEST_CASE(13)
 
                 address2 = timer2.get();
 
-                NTCCFG_TEST_EQ(s.chronology->numRegistered(), 2);
+                NTSCFG_TEST_EQ(s.chronology->numRegistered(), 2);
 
                 weakTimer2 = timer2;
             }
 
             {
                 bsl::shared_ptr<ntci::Timer> timer1 = weakTimer1.lock();
-                NTCCFG_TEST_FALSE(timer1);
+                NTSCFG_TEST_FALSE(timer1);
 
                 bsl::shared_ptr<ntci::Timer> timer2 = weakTimer2.lock();
-                NTCCFG_TEST_FALSE(timer2);
+                NTSCFG_TEST_FALSE(timer2);
             }
         }
-        NTCCFG_TEST_EQ(s.chronology->numRegistered(), 0);
+        NTSCFG_TEST_EQ(s.chronology->numRegistered(), 0);
 
         NTCI_LOG_DEBUG("Part 3");
         {
@@ -1453,8 +1598,8 @@ NTCCFG_TEST_CASE(13)
                                               s.timerCallback,
                                               &s.ta);
 
-                NTCCFG_TEST_EQ(timer1.get(), address1);
-                NTCCFG_TEST_EQ(s.chronology->numRegistered(), 1);
+                NTSCFG_TEST_EQ(timer1.get(), address1);
+                NTSCFG_TEST_EQ(s.chronology->numRegistered(), 1);
 
                 weakTimer1 = timer1;
 
@@ -1463,8 +1608,8 @@ NTCCFG_TEST_CASE(13)
                                               s.timerCallback,
                                               &s.ta);
 
-                NTCCFG_TEST_EQ(timer2.get(), address2);
-                NTCCFG_TEST_EQ(s.chronology->numRegistered(), 2);
+                NTSCFG_TEST_EQ(timer2.get(), address2);
+                NTSCFG_TEST_EQ(s.chronology->numRegistered(), 2);
 
                 weakTimer2 = timer2;
 
@@ -1473,38 +1618,38 @@ NTCCFG_TEST_CASE(13)
                                               s.timerCallback,
                                               &s.ta);
 
-                NTCCFG_TEST_EQ(s.chronology->numRegistered(), 3);
+                NTSCFG_TEST_EQ(s.chronology->numRegistered(), 3);
 
                 weakTimer3 = timer3;
             }
 
             {
                 bsl::shared_ptr<ntci::Timer> timer1 = weakTimer1.lock();
-                NTCCFG_TEST_FALSE(timer1);
+                NTSCFG_TEST_FALSE(timer1);
 
                 bsl::shared_ptr<ntci::Timer> timer2 = weakTimer2.lock();
-                NTCCFG_TEST_FALSE(timer2);
+                NTSCFG_TEST_FALSE(timer2);
 
                 bsl::shared_ptr<ntci::Timer> timer3 = weakTimer2.lock();
-                NTCCFG_TEST_FALSE(timer3);
+                NTSCFG_TEST_FALSE(timer3);
             }
         }
     }
 }
 
-NTCCFG_TEST_CASE(14)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase14)
 {
     // Concern: Test scheduling a one-shot timer.
     // Plan: create a timer and schedule it to be due now
     // Announce and check that timer was fired and then removed
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
             timerOptions.setOneShot(true);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
@@ -1516,7 +1661,7 @@ NTCCFG_TEST_CASE(14)
             s.validateRegisteredAndScheduled(1, 0);
 
             const ntsa::Error error = timer->schedule(s.clock.currentTime());
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(1, 1);
         }
@@ -1524,14 +1669,14 @@ NTCCFG_TEST_CASE(14)
         s.validateRegisteredAndScheduled(1, 1);
 
         s.chronology->announce();
-        s.callbacks->validateEventReceived(test::k_TIMER_ID_0,
+        s.callbacks->validateEventReceived(ChronologyTest::k_TIMER_ID_0,
                                            ntca::TimerEventType::e_DEADLINE);
 
         s.validateRegisteredAndScheduled(0, 0);
     }
 }
 
-NTCCFG_TEST_CASE(15)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase15)
 {
     // Concern: Test scheduling a non-recurring timer then closing it, when
     // the close event is disabled.
@@ -1539,14 +1684,14 @@ NTCCFG_TEST_CASE(15)
     // announce and check that it is not fired
     // close the timers and check that no callback was called
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         bsl::shared_ptr<ntci::Timer> timer;
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
             timer = s.chronology->createTimer(timerOptions,
@@ -1557,7 +1702,7 @@ NTCCFG_TEST_CASE(15)
 
             const ntsa::Error error =
                 timer->schedule(s.clock.currentTime() + s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(1, 1);
         }
@@ -1574,7 +1719,7 @@ NTCCFG_TEST_CASE(15)
     }
 }
 
-NTCCFG_TEST_CASE(16)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase16)
 {
     // Concern: Test scheduling a non-recurring timer then closing it, when
     // the close event is enabled.
@@ -1582,14 +1727,14 @@ NTCCFG_TEST_CASE(16)
     // fire the timer, check deadlineevent received
     // mannually close the timer, check closed event received
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         bsl::shared_ptr<ntci::Timer> timerExt;
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
             timerOptions.showEvent(ntca::TimerEventType::e_CLOSED);
 
@@ -1601,7 +1746,7 @@ NTCCFG_TEST_CASE(16)
             s.validateRegisteredAndScheduled(1, 0);
 
             const ntsa::Error error = timer->schedule(s.clock.currentTime());
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(1, 1);
 
@@ -1611,7 +1756,7 @@ NTCCFG_TEST_CASE(16)
         s.validateRegisteredAndScheduled(1, 1);
 
         s.chronology->announce();
-        s.callbacks->validateEventReceived(test::k_TIMER_ID_0,
+        s.callbacks->validateEventReceived(ChronologyTest::k_TIMER_ID_0,
                                            ntca::TimerEventType::e_DEADLINE);
 
         s.validateRegisteredAndScheduled(1, 0);
@@ -1624,25 +1769,25 @@ NTCCFG_TEST_CASE(16)
         s.validateRegisteredAndScheduled(1, 0);
 
         s.chronology->announce();
-        s.callbacks->validateEventReceived(test::k_TIMER_ID_0,
+        s.callbacks->validateEventReceived(ChronologyTest::k_TIMER_ID_0,
                                            ntca::TimerEventType::e_CLOSED);
         s.validateRegisteredAndScheduled(0, 0);
     }
 }
 
-NTCCFG_TEST_CASE(17)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase17)
 {
     // Concern: Test clearing the chronology when a timer is pending
     // Plan: create and schedule a timer to be due at the future
     // announce and check that timer did not fired
     // clear chronology
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_1);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_1);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
             timerOptions.showEvent(ntca::TimerEventType::e_CLOSED);
 
@@ -1655,7 +1800,7 @@ NTCCFG_TEST_CASE(17)
 
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime() + s.oneSecond);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(1, 1);
         }
@@ -1668,7 +1813,7 @@ NTCCFG_TEST_CASE(17)
     }
 }
 
-NTCCFG_TEST_CASE(18)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase18)
 {
     // Concern: Test scheduling a non-recurring timer then closing it
     // before it is due.
@@ -1677,7 +1822,7 @@ NTCCFG_TEST_CASE(18)
     // schedule it and then close.
     // Check that e_DEADLINE event was not fired
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
@@ -1685,7 +1830,7 @@ NTCCFG_TEST_CASE(18)
         NTCI_LOG_DEBUG("Part 1, schedule one timer");
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_3);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_3);
             timerOptions.setOneShot(false);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
             timerOptions.showEvent(ntca::TimerEventType::e_CLOSED);
@@ -1699,7 +1844,7 @@ NTCCFG_TEST_CASE(18)
 
             const ntsa::Error error =
                 timer->schedule(s.clock.currentTime() + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(1, 1);
 
@@ -1720,25 +1865,25 @@ NTCCFG_TEST_CASE(18)
             s.validateRegisteredAndScheduled(1, 0);
 
             s.chronology->announce();
-            s.callbacks->validateEventReceived(test::k_TIMER_ID_3,
+            s.callbacks->validateEventReceived(ChronologyTest::k_TIMER_ID_3,
                                                ntca::TimerEventType::e_CLOSED);
             s.validateRegisteredAndScheduled(0, 0);
         }
     }
 }
 
-NTCCFG_TEST_CASE(19)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase19)
 {
     // Concern: Test scheduling a one-shot timer then cancelling it before it
     // is due, then schedule it again.  After rescheduling wait till it is
     // due, then fail to reschedule
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_4);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_4);
         timerOptions.setOneShot(true);
         timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
         timerOptions.showEvent(ntca::TimerEventType::e_CANCELED);
@@ -1755,7 +1900,7 @@ NTCCFG_TEST_CASE(19)
 
             const ntsa::Error error =
                 timer->schedule(s.clock.currentTime() + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             timerExt = timer;
 
@@ -1779,7 +1924,7 @@ NTCCFG_TEST_CASE(19)
 
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_4,
+                ChronologyTest::k_TIMER_ID_4,
                 ntca::TimerEventType::e_CANCELED);
             s.validateRegisteredAndScheduled(1, 0);
         }
@@ -1788,14 +1933,14 @@ NTCCFG_TEST_CASE(19)
         {
             const ntsa::Error error =
                 timerExt->schedule(s.clock.currentTime() + s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(1, 1);
 
             s.clock.advance(s.oneMinute);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_4,
+                ChronologyTest::k_TIMER_ID_4,
                 ntca::TimerEventType::e_DEADLINE);
 
             s.validateRegisteredAndScheduled(1, 0);
@@ -1805,7 +1950,7 @@ NTCCFG_TEST_CASE(19)
         {
             const ntsa::Error error =
                 timerExt->schedule(s.clock.currentTime() + s.oneMinute);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
 
             s.clock.advance(s.oneMinute);
             s.chronology->announce();
@@ -1818,7 +1963,7 @@ NTCCFG_TEST_CASE(19)
     }
 }
 
-NTCCFG_TEST_CASE(20)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase20)
 {
     // Concern: Test scheduling a non-recurring timer then cancelling it
     // before it is due, then rescheduling it
@@ -1827,7 +1972,7 @@ NTCCFG_TEST_CASE(20)
     // reschedule the timer
     // cancel it again
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
@@ -1835,7 +1980,7 @@ NTCCFG_TEST_CASE(20)
         NTCI_LOG_DEBUG("Part 1,schedule a timer");
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_5);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_5);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
             timerOptions.showEvent(ntca::TimerEventType::e_CANCELED);
 
@@ -1848,7 +1993,7 @@ NTCCFG_TEST_CASE(20)
 
             const ntsa::Error error =
                 timer->schedule(s.clock.currentTime() + s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             timerExt = timer;
 
@@ -1862,13 +2007,13 @@ NTCCFG_TEST_CASE(20)
             s.validateRegisteredAndScheduled(1, 1);
 
             const ntsa::Error error = timerExt->cancel();
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_CANCELLED);
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_CANCELLED);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(1, 0);
 
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_5,
+                ChronologyTest::k_TIMER_ID_5,
                 ntca::TimerEventType::e_CANCELED);
 
             s.validateRegisteredAndScheduled(1, 0);
@@ -1878,7 +2023,7 @@ NTCCFG_TEST_CASE(20)
         {
             const ntsa::Error error =
                 timerExt->schedule(s.clock.currentTime() + s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(1, 1);
         }
@@ -1887,14 +2032,14 @@ NTCCFG_TEST_CASE(20)
         {
             const ntsa::Error error = timerExt->cancel();
             s.driver->validateInterruptAllCalled();
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_CANCELLED);
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_CANCELLED);
             timerExt.reset();
 
             s.validateRegisteredAndScheduled(1, 0);
 
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_5,
+                ChronologyTest::k_TIMER_ID_5,
                 ntca::TimerEventType::e_CANCELED);
 
             s.validateRegisteredAndScheduled(0, 0);
@@ -1902,7 +2047,7 @@ NTCCFG_TEST_CASE(20)
     }
 }
 
-NTCCFG_TEST_CASE(21)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase21)
 {
     // Concern: Test announcement of 1 timer being due at a time point.
     //
@@ -1912,33 +2057,33 @@ NTCCFG_TEST_CASE(21)
     // verify the expected 1 timer was announced. Advance time to t2,
     // announce any due timers, verify the expected 1 timer was announced.
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
         timerOptions.setOneShot(true);
         timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
         ntsa::Error error;
         NTCI_LOG_DEBUG("Part 1, create 3 timers");
         {
-            timerOptions.setId(test::k_TIMER_ID_0);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_0);
             bsl::shared_ptr<ntci::Timer> timer1 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
                                           &s.ta);
             s.validateRegisteredAndScheduled(1, 0);
 
-            timerOptions.setId(test::k_TIMER_ID_1);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_1);
             bsl::shared_ptr<ntci::Timer> timer2 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
                                           &s.ta);
             s.validateRegisteredAndScheduled(2, 0);
 
-            timerOptions.setId(test::k_TIMER_ID_2);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_2);
             bsl::shared_ptr<ntci::Timer> timer3 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
@@ -1946,18 +2091,18 @@ NTCCFG_TEST_CASE(21)
             s.validateRegisteredAndScheduled(3, 0);
 
             error = timer1->schedule(s.chronology->currentTime() + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(3, 1);
 
             error = timer2->schedule(s.chronology->currentTime() + s.oneHour +
                                      s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.validateRegisteredAndScheduled(3, 2);
 
             error = timer3->schedule(s.chronology->currentTime() + s.oneHour +
                                      s.oneHour + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.validateRegisteredAndScheduled(3, 3);
 
             s.chronology->announce();
@@ -1969,7 +2114,7 @@ NTCCFG_TEST_CASE(21)
             s.clock.advance(s.oneHour);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_0,
+                ChronologyTest::k_TIMER_ID_0,
                 ntca::TimerEventType::e_DEADLINE);
 
             s.validateRegisteredAndScheduled(2, 2);
@@ -1977,7 +2122,7 @@ NTCCFG_TEST_CASE(21)
             s.clock.advance(s.oneHour);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_1,
+                ChronologyTest::k_TIMER_ID_1,
                 ntca::TimerEventType::e_DEADLINE);
 
             s.validateRegisteredAndScheduled(1, 1);
@@ -1985,7 +2130,7 @@ NTCCFG_TEST_CASE(21)
             s.clock.advance(s.oneHour);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_2,
+                ChronologyTest::k_TIMER_ID_2,
                 ntca::TimerEventType::e_DEADLINE);
 
             s.validateRegisteredAndScheduled(0, 0);
@@ -1993,7 +2138,7 @@ NTCCFG_TEST_CASE(21)
     }
 }
 
-NTCCFG_TEST_CASE(22)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase22)
 {
     // Concern: Test announcement of 2 timers being due at a time point.
     //
@@ -2003,12 +2148,12 @@ NTCCFG_TEST_CASE(22)
     // verify the expected 2 timers were announced. Advance time to t2,
     // announce any due timers, verify the expected 2 timers were announced.
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
         timerOptions.setOneShot(true);
         timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
@@ -2016,31 +2161,31 @@ NTCCFG_TEST_CASE(22)
 
         NTCI_LOG_DEBUG("Part 1, create and schedule two t0 timers");
         {
-            timerOptions.setId(test::k_TIMER_ID_0);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_0);
             bsl::shared_ptr<ntci::Timer> timer1 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
                                           &s.ta);
 
             error = timer1->schedule(s.chronology->currentTime() + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
-            timerOptions.setId(test::k_TIMER_ID_1);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_1);
             bsl::shared_ptr<ntci::Timer> timer2 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
                                           &s.ta);
 
             error = timer2->schedule(s.chronology->currentTime() + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
 
             s.validateRegisteredAndScheduled(2, 2);
         }
 
         NTCI_LOG_DEBUG("Part 2, create and schedule two t1 timers");
         {
-            timerOptions.setId(test::k_TIMER_ID_2);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_2);
             bsl::shared_ptr<ntci::Timer> timer1 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
@@ -2048,9 +2193,9 @@ NTCCFG_TEST_CASE(22)
 
             error = timer1->schedule(s.chronology->currentTime() + s.oneHour +
                                      s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
 
-            timerOptions.setId(test::k_TIMER_ID_3);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_3);
             bsl::shared_ptr<ntci::Timer> timer2 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
@@ -2058,7 +2203,7 @@ NTCCFG_TEST_CASE(22)
 
             error = timer2->schedule(s.chronology->currentTime() + s.oneHour +
                                      s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
 
             s.validateRegisteredAndScheduled(4, 4);
         }
@@ -2068,10 +2213,10 @@ NTCCFG_TEST_CASE(22)
             s.clock.advance(s.oneHour);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_0,
+                ChronologyTest::k_TIMER_ID_0,
                 ntca::TimerEventType::e_DEADLINE);
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_1,
+                ChronologyTest::k_TIMER_ID_1,
                 ntca::TimerEventType::e_DEADLINE);
 
             s.validateRegisteredAndScheduled(2, 2);
@@ -2083,10 +2228,10 @@ NTCCFG_TEST_CASE(22)
             s.chronology->announce();
 
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_2,
+                ChronologyTest::k_TIMER_ID_2,
                 ntca::TimerEventType::e_DEADLINE);
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_3,
+                ChronologyTest::k_TIMER_ID_3,
                 ntca::TimerEventType::e_DEADLINE);
 
             s.validateRegisteredAndScheduled(0, 0);
@@ -2094,7 +2239,7 @@ NTCCFG_TEST_CASE(22)
     }
 }
 
-NTCCFG_TEST_CASE(23)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase23)
 {
     // Concern: Test announcement of multiple timers being due at multiple
     // times in the past.
@@ -2104,44 +2249,44 @@ NTCCFG_TEST_CASE(23)
     // timers were announced. Advance time to t2, announce any due timers,
     // verify the expected 2 timers were announced.
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntsa::Error error;
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
         timerOptions.setOneShot(true);
         timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
         NTCI_LOG_DEBUG("Part 1, create and schedule two t0 timers");
         {
-            timerOptions.setId(test::k_TIMER_ID_0);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_0);
             bsl::shared_ptr<ntci::Timer> timer1 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
                                           &s.ta);
 
             error = timer1->schedule(s.chronology->currentTime() + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
-            timerOptions.setId(test::k_TIMER_ID_1);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_1);
             bsl::shared_ptr<ntci::Timer> timer2 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
                                           &s.ta);
 
             error = timer2->schedule(s.chronology->currentTime() + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
 
             s.validateRegisteredAndScheduled(2, 2);
         }
 
         NTCI_LOG_DEBUG("Part 2, create and schedule two t1 timers");
         {
-            timerOptions.setId(test::k_TIMER_ID_2);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_2);
             bsl::shared_ptr<ntci::Timer> timer1 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
@@ -2149,9 +2294,9 @@ NTCCFG_TEST_CASE(23)
 
             error = timer1->schedule(s.chronology->currentTime() + s.oneHour +
                                      s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
 
-            timerOptions.setId(test::k_TIMER_ID_3);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_3);
             bsl::shared_ptr<ntci::Timer> timer2 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
@@ -2159,13 +2304,13 @@ NTCCFG_TEST_CASE(23)
 
             error = timer2->schedule(s.chronology->currentTime() + s.oneHour +
                                      s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
 
             s.validateRegisteredAndScheduled(4, 4);
         }
         NTCI_LOG_DEBUG("Part 3, create and schedule two t2 timers");
         {
-            timerOptions.setId(test::k_TIMER_ID_4);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_4);
             bsl::shared_ptr<ntci::Timer> timer1 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
@@ -2173,9 +2318,9 @@ NTCCFG_TEST_CASE(23)
 
             error = timer1->schedule(s.chronology->currentTime() + s.oneHour +
                                      s.oneHour + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
 
-            timerOptions.setId(test::k_TIMER_ID_5);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_5);
             bsl::shared_ptr<ntci::Timer> timer2 =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
@@ -2183,7 +2328,7 @@ NTCCFG_TEST_CASE(23)
 
             error = timer2->schedule(s.chronology->currentTime() + s.oneHour +
                                      s.oneHour + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
 
             s.validateRegisteredAndScheduled(6, 6);
         }
@@ -2192,16 +2337,16 @@ NTCCFG_TEST_CASE(23)
             s.clock.advance(s.oneHour + s.oneHour);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_0,
+                ChronologyTest::k_TIMER_ID_0,
                 ntca::TimerEventType::e_DEADLINE);
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_1,
+                ChronologyTest::k_TIMER_ID_1,
                 ntca::TimerEventType::e_DEADLINE);
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_2,
+                ChronologyTest::k_TIMER_ID_2,
                 ntca::TimerEventType::e_DEADLINE);
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_3,
+                ChronologyTest::k_TIMER_ID_3,
                 ntca::TimerEventType::e_DEADLINE);
 
             s.validateRegisteredAndScheduled(2, 2);
@@ -2212,10 +2357,10 @@ NTCCFG_TEST_CASE(23)
             s.clock.advance(s.oneHour);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_4,
+                ChronologyTest::k_TIMER_ID_4,
                 ntca::TimerEventType::e_DEADLINE);
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_5,
+                ChronologyTest::k_TIMER_ID_5,
                 ntca::TimerEventType::e_DEADLINE);
 
             s.validateRegisteredAndScheduled(0, 0);
@@ -2223,12 +2368,12 @@ NTCCFG_TEST_CASE(23)
     }
 }
 
-NTCCFG_TEST_CASE(24)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase24)
 {
     // Concern: Test recurring timers. Create and schedule one timer with deadline t0 and period p0.
     // t0 > p0. Check that till t0 it does not shot. Then check that it shots every period
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
@@ -2236,7 +2381,7 @@ NTCCFG_TEST_CASE(24)
         bsl::shared_ptr<ntci::Timer> timer;
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_5);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_5);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
             timer = s.chronology->createTimer(timerOptions,
@@ -2246,7 +2391,7 @@ NTCCFG_TEST_CASE(24)
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime() + s.oneHour,
                                 s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
             s.validateRegisteredAndScheduled(1, 1);
@@ -2264,7 +2409,7 @@ NTCCFG_TEST_CASE(24)
             s.clock.advance(s.oneHour - s.oneMinute);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_5,
+                ChronologyTest::k_TIMER_ID_5,
                 ntca::TimerEventType::e_DEADLINE);
             s.validateRegisteredAndScheduled(1, 1);
 
@@ -2274,7 +2419,7 @@ NTCCFG_TEST_CASE(24)
     }
 }
 
-NTCCFG_TEST_CASE(25)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase25)
 {
     // Concern: Test recurring timer when time between consequetive announcements is X times biggger than its period
     // Plan: create recurring timer and schedule it to be due at t0 with period t1
@@ -2283,7 +2428,7 @@ NTCCFG_TEST_CASE(25)
     // advance less than one period and check that one baclocked shot is fired
     // advance more and check that no event fired
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
@@ -2291,7 +2436,7 @@ NTCCFG_TEST_CASE(25)
         bsl::shared_ptr<ntci::Timer> timer;
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
             timer = s.chronology->createTimer(timerOptions,
@@ -2300,7 +2445,7 @@ NTCCFG_TEST_CASE(25)
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime() + s.oneHour,
                                 s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
             s.validateRegisteredAndScheduled(1, 1);
@@ -2310,7 +2455,7 @@ NTCCFG_TEST_CASE(25)
             s.clock.advance(s.oneHour);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_0,
+                ChronologyTest::k_TIMER_ID_0,
                 ntca::TimerEventType::e_DEADLINE);
             s.validateRegisteredAndScheduled(1, 1);
         }
@@ -2320,7 +2465,7 @@ NTCCFG_TEST_CASE(25)
                             s.oneMinute);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_0,
+                ChronologyTest::k_TIMER_ID_0,
                 ntca::TimerEventType::e_DEADLINE);
             s.validateRegisteredAndScheduled(1, 1);
         }
@@ -2330,7 +2475,7 @@ NTCCFG_TEST_CASE(25)
             s.clock.advance(s.oneSecond);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_0,
+                ChronologyTest::k_TIMER_ID_0,
                 ntca::TimerEventType::e_DEADLINE);
         }
         NTCI_LOG_DEBUG(
@@ -2346,7 +2491,7 @@ NTCCFG_TEST_CASE(25)
     }
 }
 
-NTCCFG_TEST_CASE(26)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase26)
 {
     // Concern: Reccuring timers send closed event on close
     // Plan: create and schedule a timer to be due at t0 with period t1
@@ -2354,7 +2499,7 @@ NTCCFG_TEST_CASE(26)
     // advance less than a period and check that it does not shot
     // close the timer and check that close event received
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
@@ -2362,7 +2507,7 @@ NTCCFG_TEST_CASE(26)
         bsl::shared_ptr<ntci::Timer> timer;
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
             timerOptions.showEvent(ntca::TimerEventType::e_CLOSED);
 
@@ -2372,7 +2517,7 @@ NTCCFG_TEST_CASE(26)
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime() + s.oneHour,
                                 s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
             s.validateRegisteredAndScheduled(1, 1);
@@ -2382,7 +2527,7 @@ NTCCFG_TEST_CASE(26)
             s.clock.advance(s.oneHour);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_0,
+                ChronologyTest::k_TIMER_ID_0,
                 ntca::TimerEventType::e_DEADLINE);
             s.validateRegisteredAndScheduled(1, 1);
         }
@@ -2400,7 +2545,7 @@ NTCCFG_TEST_CASE(26)
 
             s.clock.advance(s.oneMinute);
             s.chronology->announce();
-            s.callbacks->validateEventReceived(test::k_TIMER_ID_0,
+            s.callbacks->validateEventReceived(ChronologyTest::k_TIMER_ID_0,
                                                ntca::TimerEventType::e_CLOSED);
 
             timer.reset();
@@ -2408,7 +2553,7 @@ NTCCFG_TEST_CASE(26)
     }
 }
 
-NTCCFG_TEST_CASE(27)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase27)
 {
     // Concern: Mix of one-shot, non one-shot non-recurring and recurring timers
     // schedule one shot to be fired at t1. Schedule non one-shot non-recurring
@@ -2417,14 +2562,14 @@ NTCCFG_TEST_CASE(27)
     // create and schedule non one-shot non recurring timer to be due at t2
     // create and schedule recurring timer to be due now with small period
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         NTCI_LOG_DEBUG("Part 1, create and schedule one shot timer");
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
             timerOptions.setOneShot(true);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
@@ -2434,7 +2579,7 @@ NTCCFG_TEST_CASE(27)
                                           &s.ta);
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime() + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
             s.validateRegisteredAndScheduled(1, 1);
@@ -2444,7 +2589,7 @@ NTCCFG_TEST_CASE(27)
         bsl::shared_ptr<ntci::Timer> timerNonOneShot;
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_1);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_1);
             ;
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
@@ -2453,14 +2598,14 @@ NTCCFG_TEST_CASE(27)
                                                         &s.ta);
             const ntsa::Error error = timerNonOneShot->schedule(
                 s.chronology->currentTime() + s.oneHour + s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
 
             s.validateRegisteredAndScheduled(2, 2);
         }
         NTCI_LOG_DEBUG("Part 3, create and schedule recurring timer");
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_2);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_2);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
             bsl::shared_ptr<ntci::Timer> timer =
@@ -2470,7 +2615,7 @@ NTCCFG_TEST_CASE(27)
             //to be fired immediately
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime(), s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
             s.validateRegisteredAndScheduled(3, 3);
@@ -2482,7 +2627,7 @@ NTCCFG_TEST_CASE(27)
                 s.clock.advance(s.oneMinute);
                 s.chronology->announce();
                 s.callbacks->validateEventReceived(
-                    test::k_TIMER_ID_2,
+                    ChronologyTest::k_TIMER_ID_2,
                     ntca::TimerEventType::e_DEADLINE);
                 s.validateRegisteredAndScheduled(3, 3);
             }
@@ -2493,10 +2638,10 @@ NTCCFG_TEST_CASE(27)
             s.clock.advance(s.oneMinute);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_2,
+                ChronologyTest::k_TIMER_ID_2,
                 ntca::TimerEventType::e_DEADLINE);
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_0,
+                ChronologyTest::k_TIMER_ID_0,
                 ntca::TimerEventType::e_DEADLINE);
             s.validateRegisteredAndScheduled(2, 2);
         }
@@ -2506,10 +2651,10 @@ NTCCFG_TEST_CASE(27)
             s.clock.advance(s.oneMinute);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_2,
+                ChronologyTest::k_TIMER_ID_2,
                 ntca::TimerEventType::e_DEADLINE);
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_1,
+                ChronologyTest::k_TIMER_ID_1,
                 ntca::TimerEventType::e_DEADLINE);
             s.validateRegisteredAndScheduled(2, 1);
         }
@@ -2522,46 +2667,46 @@ NTCCFG_TEST_CASE(27)
     }
 }
 
-NTCCFG_TEST_CASE(28)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase28)
 {
     // Concern: test execute (functor and functor sequence),
     // numDeferred and hasAnyDeferred
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         int                           callCounter = 0;
         const ntci::Executor::Functor f =
-            NTCCFG_BIND(&test::TestSuite::incrementCallback,
+            NTCCFG_BIND(&ChronologyTest::TestSuite::incrementCallback,
                         bsl::ref(callCounter));
 
         s.chronology->execute(f);
-        NTCCFG_TEST_EQ(s.chronology->numDeferred(), 1);
-        NTCCFG_TEST_TRUE(s.chronology->hasAnyDeferred());
-        NTCCFG_TEST_EQ(callCounter, 0);
+        NTSCFG_TEST_EQ(s.chronology->numDeferred(), 1);
+        NTSCFG_TEST_TRUE(s.chronology->hasAnyDeferred());
+        NTSCFG_TEST_EQ(callCounter, 0);
 
         s.driver->validateInterruptAllCalled();
 
         s.chronology->announce();
-        NTCCFG_TEST_EQ(callCounter, 1);
+        NTSCFG_TEST_EQ(callCounter, 1);
         --callCounter;
-        NTCCFG_TEST_EQ(s.chronology->numDeferred(), 0);
-        NTCCFG_TEST_FALSE(s.chronology->hasAnyDeferred());
+        NTSCFG_TEST_EQ(s.chronology->numDeferred(), 0);
+        NTSCFG_TEST_FALSE(s.chronology->hasAnyDeferred());
 
         s.chronology->announce();
-        NTCCFG_TEST_EQ(callCounter, 0);
-        NTCCFG_TEST_EQ(s.chronology->numDeferred(), 0);
-        NTCCFG_TEST_FALSE(s.chronology->hasAnyDeferred());
+        NTSCFG_TEST_EQ(callCounter, 0);
+        NTSCFG_TEST_EQ(s.chronology->numDeferred(), 0);
+        NTSCFG_TEST_FALSE(s.chronology->hasAnyDeferred());
 
         s.chronology->execute(f);
         s.driver->validateInterruptAllCalled();
         s.chronology->execute(f);
         s.driver->validateInterruptAllCalled();
-        NTCCFG_TEST_EQ(s.chronology->numDeferred(), 2);
-        NTCCFG_TEST_TRUE(s.chronology->hasAnyDeferred());
+        NTSCFG_TEST_EQ(s.chronology->numDeferred(), 2);
+        NTSCFG_TEST_TRUE(s.chronology->hasAnyDeferred());
         s.chronology->announce();
-        NTCCFG_TEST_EQ(callCounter, 2);
+        NTSCFG_TEST_EQ(callCounter, 2);
         callCounter = 0;
 
         ntci::Executor::FunctorSequence seq;
@@ -2570,26 +2715,26 @@ NTCCFG_TEST_CASE(28)
         seq.push_back(f);
         s.chronology->moveAndExecute(&seq, f);
         s.driver->validateInterruptAllCalled();
-        NTCCFG_TEST_EQ(s.chronology->numDeferred(), 4);
+        NTSCFG_TEST_EQ(s.chronology->numDeferred(), 4);
         s.chronology->announce();
-        NTCCFG_TEST_EQ(callCounter, 4);
+        NTSCFG_TEST_EQ(callCounter, 4);
     }
 }
 
-NTCCFG_TEST_CASE(29)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase29)
 {
     // Concern: check hasAnyScheduledOrDeferred
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
         int                           functorCallCtr = 0;
         const ntci::Executor::Functor f =
-            NTCCFG_BIND(&test::TestSuite::incrementCallback,
+            NTCCFG_BIND(&ChronologyTest::TestSuite::incrementCallback,
                         bsl::ref(functorCallCtr));
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_2);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_2);
         timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
         NTCI_LOG_DEBUG("Part 1, check with only a timer");
@@ -2601,66 +2746,66 @@ NTCCFG_TEST_CASE(29)
 
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime() + s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
             s.validateRegisteredAndScheduled(1, 1);
-            NTCCFG_TEST_TRUE(s.chronology->hasAnyScheduledOrDeferred());
+            NTSCFG_TEST_TRUE(s.chronology->hasAnyScheduledOrDeferred());
 
             timer->cancel();
             s.validateRegisteredAndScheduled(1, 0);
-            NTCCFG_TEST_FALSE(s.chronology->hasAnyScheduledOrDeferred());
+            NTSCFG_TEST_FALSE(s.chronology->hasAnyScheduledOrDeferred());
         }
         NTCI_LOG_DEBUG("Part 2, add deferred functor");
         {
             s.chronology->execute(f);
             s.driver->validateInterruptAllCalled();
-            NTCCFG_TEST_EQ(functorCallCtr, 0);
-            NTCCFG_TEST_TRUE(s.chronology->hasAnyScheduledOrDeferred());
+            NTSCFG_TEST_EQ(functorCallCtr, 0);
+            NTSCFG_TEST_TRUE(s.chronology->hasAnyScheduledOrDeferred());
         }
         NTCI_LOG_DEBUG(
             "Part 3, reschedule the timer and advance time slightly");
         {
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime() + s.oneMinute);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.clock.advance(s.oneSecond);
             s.chronology->announce();
-            NTCCFG_TEST_EQ(functorCallCtr, 1);
+            NTSCFG_TEST_EQ(functorCallCtr, 1);
             --functorCallCtr;
-            NTCCFG_TEST_TRUE(s.chronology->hasAnyScheduledOrDeferred());
+            NTSCFG_TEST_TRUE(s.chronology->hasAnyScheduledOrDeferred());
         }
         NTCI_LOG_DEBUG("Part 4, advance even more and trigger the timer");
         {
             s.clock.advance(s.oneMinute);
             s.chronology->announce();
-            NTCCFG_TEST_EQ(functorCallCtr, 0);
+            NTSCFG_TEST_EQ(functorCallCtr, 0);
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_2,
+                ChronologyTest::k_TIMER_ID_2,
                 ntca::TimerEventType::e_DEADLINE);
-            NTCCFG_TEST_FALSE(s.chronology->hasAnyScheduledOrDeferred());
+            NTSCFG_TEST_FALSE(s.chronology->hasAnyScheduledOrDeferred());
             timer.reset();
         }
     }
 }
 
-NTCCFG_TEST_CASE(30)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase30)
 {
     // Concern: test Chronology::load
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
         timerOptions.setOneShot(true);
         timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
         NTCI_LOG_DEBUG("Part 1, create and schedule oneshot timer");
         {
-            timerOptions.setId(test::k_TIMER_ID_0);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_0);
             bsl::shared_ptr<ntci::Timer> timer =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
@@ -2673,7 +2818,7 @@ NTCCFG_TEST_CASE(30)
             "Part 2, create and schedule non-oneshot non-recurring timer");
         {
             timerOptions.setOneShot(false);
-            timerOptions.setId(test::k_TIMER_ID_1);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_1);
             bsl::shared_ptr<ntci::Timer> timer =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
@@ -2683,7 +2828,7 @@ NTCCFG_TEST_CASE(30)
         }
         NTCI_LOG_DEBUG("Part 3, create periodic timer");
         {
-            timerOptions.setId(test::k_TIMER_ID_2);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_2);
             bsl::shared_ptr<ntci::Timer> timer =
                 s.chronology->createTimer(timerOptions,
                                           s.timerCallback,
@@ -2694,7 +2839,7 @@ NTCCFG_TEST_CASE(30)
         NTCI_LOG_DEBUG(
             "Part 4, create one shot timer which is to be due far later");
         {
-            timerOptions.setId(test::k_TIMER_ID_3);
+            timerOptions.setId(ChronologyTest::k_TIMER_ID_3);
             timerOptions.setOneShot(true);
             bsl::shared_ptr<ntci::Timer> timer =
                 s.chronology->createTimer(timerOptions,
@@ -2708,31 +2853,31 @@ NTCCFG_TEST_CASE(30)
             ntcs::Chronology::TimerVector v(&s.ta);
 
             s.chronology->load(&v);
-            NTCCFG_TEST_EQ(v.size(), 4);
+            NTSCFG_TEST_EQ(v.size(), 4);
 
-            NTCCFG_TEST_EQ(v[0]->id(), test::k_TIMER_ID_0);
-            NTCCFG_TEST_EQ(v[1]->id(), test::k_TIMER_ID_1);
-            NTCCFG_TEST_EQ(v[2]->id(), test::k_TIMER_ID_2);
-            NTCCFG_TEST_EQ(v[3]->id(), test::k_TIMER_ID_3);
+            NTSCFG_TEST_EQ(v[0]->id(), ChronologyTest::k_TIMER_ID_0);
+            NTSCFG_TEST_EQ(v[1]->id(), ChronologyTest::k_TIMER_ID_1);
+            NTSCFG_TEST_EQ(v[2]->id(), ChronologyTest::k_TIMER_ID_2);
+            NTSCFG_TEST_EQ(v[3]->id(), ChronologyTest::k_TIMER_ID_3);
         }
         NTCI_LOG_DEBUG("Part 6, advance and check timer results");
         {
             s.clock.advance(s.oneSecond);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_0,
+                ChronologyTest::k_TIMER_ID_0,
                 ntca::TimerEventType::e_DEADLINE);
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_1,
+                ChronologyTest::k_TIMER_ID_1,
                 ntca::TimerEventType::e_DEADLINE);
             s.validateRegisteredAndScheduled(2, 2);
 
             ntcs::Chronology::TimerVector v(&s.ta);
             s.chronology->load(&v);
-            NTCCFG_TEST_EQ(v.size(), 2);
+            NTSCFG_TEST_EQ(v.size(), 2);
 
-            NTCCFG_TEST_EQ(v[0]->id(), test::k_TIMER_ID_2);
-            NTCCFG_TEST_EQ(v[1]->id(), test::k_TIMER_ID_3);
+            NTSCFG_TEST_EQ(v[0]->id(), ChronologyTest::k_TIMER_ID_2);
+            NTSCFG_TEST_EQ(v[1]->id(), ChronologyTest::k_TIMER_ID_3);
 
             s.chronology->clear();
         }
@@ -2740,26 +2885,26 @@ NTCCFG_TEST_CASE(30)
     }
 }
 
-NTCCFG_TEST_CASE(31)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase31)
 {
     // Concern: test timers with TimerSession
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
-        bsl::shared_ptr<test::TimerSessionMock> ts1 =
-            bsl::allocate_shared<test::TimerSessionMock>(&s.ta);
-        bsl::shared_ptr<test::TimerSessionMock> ts2 =
-            bsl::allocate_shared<test::TimerSessionMock>(&s.ta);
-        bsl::shared_ptr<test::TimerSessionMock> ts3 =
-            bsl::allocate_shared<test::TimerSessionMock>(&s.ta);
+        bsl::shared_ptr<ChronologyTest::TimerSessionMock> ts1 =
+            bsl::allocate_shared<ChronologyTest::TimerSessionMock>(&s.ta);
+        bsl::shared_ptr<ChronologyTest::TimerSessionMock> ts2 =
+            bsl::allocate_shared<ChronologyTest::TimerSessionMock>(&s.ta);
+        bsl::shared_ptr<ChronologyTest::TimerSessionMock> ts3 =
+            bsl::allocate_shared<ChronologyTest::TimerSessionMock>(&s.ta);
 
         bsl::shared_ptr<ntci::Timer> timer1;
         NTCI_LOG_DEBUG("Part 1, create and schedule one-shot timer");
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_0);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_0);
             timerOptions.setOneShot(true);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
 
@@ -2772,7 +2917,7 @@ NTCCFG_TEST_CASE(31)
         NTCI_LOG_DEBUG("Part 2, create and schedule non one-shot timer");
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_1);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_1);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
             timerOptions.showEvent(ntca::TimerEventType::e_CANCELED);
 
@@ -2784,7 +2929,7 @@ NTCCFG_TEST_CASE(31)
         NTCI_LOG_DEBUG("Part 3, create and schedule recurrin timer");
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_2);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_2);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
             timerOptions.showEvent(ntca::TimerEventType::e_CANCELED);
             timerOptions.showEvent(ntca::TimerEventType::e_CLOSED);
@@ -2846,7 +2991,7 @@ NTCCFG_TEST_CASE(31)
     }
 }
 
-NTCCFG_TEST_CASE(32)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase32)
 {
     // Concern: Illustrate behaviour of a non one-shot non recurring timer
     // and a recurring timer in a special case when close event is required
@@ -2859,7 +3004,7 @@ NTCCFG_TEST_CASE(32)
     // cancel both timers and reset pointers -> no closed evend should be
     // received
 
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
@@ -2868,7 +3013,7 @@ NTCCFG_TEST_CASE(32)
         bsl::shared_ptr<ntci::Timer> timer1;
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_1);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_1);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
             timerOptions.showEvent(ntca::TimerEventType::e_CLOSED);
 
@@ -2878,7 +3023,7 @@ NTCCFG_TEST_CASE(32)
 
             const ntsa::Error error =
                 timer1->schedule(s.chronology->currentTime() + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
             s.validateRegisteredAndScheduled(1, 1);
@@ -2887,7 +3032,7 @@ NTCCFG_TEST_CASE(32)
         NTCI_LOG_DEBUG("Part 2, create and schedule recurring timer");
         {
             ntca::TimerOptions timerOptions =
-                s.createOptionsAllDisabled(test::k_TIMER_ID_2);
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_2);
             timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
             timerOptions.showEvent(ntca::TimerEventType::e_CLOSED);
 
@@ -2898,7 +3043,7 @@ NTCCFG_TEST_CASE(32)
             const ntsa::Error error =
                 timer2->schedule(s.chronology->currentTime() + s.oneMinute,
                                  s.oneSecond);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
             s.validateRegisteredAndScheduled(2, 2);
@@ -2909,7 +3054,7 @@ NTCCFG_TEST_CASE(32)
             s.clock.advance(s.oneMinute);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_2,
+                ChronologyTest::k_TIMER_ID_2,
                 ntca::TimerEventType::e_DEADLINE);
             s.validateRegisteredAndScheduled(2, 2);
         }
@@ -2932,14 +3077,14 @@ NTCCFG_TEST_CASE(32)
     }
 }
 
-NTCCFG_TEST_CASE(33)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase33)
 {
-    test::TestSuite s;
+    ChronologyTest::TestSuite s;
     {
         NTCI_LOG_CONTEXT();
 
         ntca::TimerOptions timerOptions =
-            s.createOptionsAllDisabled(test::k_TIMER_ID_1);
+            s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_1);
 
         timerOptions.setOneShot(false);
         timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
@@ -2951,7 +3096,7 @@ NTCCFG_TEST_CASE(33)
         {
             const ntsa::Error error =
                 timer->schedule(s.chronology->currentTime() + s.oneHour);
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
 
             s.validateRegisteredAndScheduled(1, 1);
@@ -2970,7 +3115,7 @@ NTCCFG_TEST_CASE(33)
                 timer->schedule(s.chronology->currentTime() + s.oneSecond,
                                 s.oneMinute);
 
-            NTCCFG_TEST_OK(error);
+            NTSCFG_TEST_OK(error);
             s.driver->validateInterruptAllCalled();
             s.validateRegisteredAndScheduled(1, 1);
         }
@@ -2980,7 +3125,7 @@ NTCCFG_TEST_CASE(33)
             s.clock.advance(s.oneSecond);
             s.chronology->announce();
             s.callbacks->validateEventReceived(
-                test::k_TIMER_ID_1,
+                ChronologyTest::k_TIMER_ID_1,
                 ntca::TimerEventType::e_DEADLINE);
         }
         NTCI_LOG_DEBUG("Validate it fires periodically");
@@ -2990,23 +3135,23 @@ NTCCFG_TEST_CASE(33)
                 s.clock.advance(s.oneMinute);
                 s.chronology->announce();
                 s.callbacks->validateEventReceived(
-                    test::k_TIMER_ID_1,
+                    ChronologyTest::k_TIMER_ID_1,
                     ntca::TimerEventType::e_DEADLINE);
             }
         }
 
         NTCI_LOG_DEBUG("Stop the timer");
         {
-            NTCCFG_TEST_EQ(timer->cancel(),
+            NTSCFG_TEST_EQ(timer->cancel(),
                            ntsa::Error(ntsa::Error::e_CANCELLED));
-            NTCCFG_TEST_OK(timer->close());
+            NTSCFG_TEST_OK(timer->close());
         }
 
         NTCI_LOG_DEBUG("Done");
     }
 }
 
-NTCCFG_TEST_CASE(34)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase34)
 {
     // Concern: basic multithreaded test
     // Plan:  launch several consumer threads
@@ -3015,7 +3160,7 @@ NTCCFG_TEST_CASE(34)
 
     NTCI_LOG_CONTEXT();
 
-    test::MtTestSuite ts;
+    ChronologyTest::MtTestSuite ts;
     {
 #if NTCS_CHRONOLOGY_TEST_MT_HEAVY
         const int numThreads = bslmt::ThreadUtil::hardwareConcurrency() > 0
@@ -3041,7 +3186,7 @@ NTCCFG_TEST_CASE(34)
     }
 }
 
-NTCCFG_TEST_CASE(35)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase35)
 {
     // Concern: multithreaded test with a mix of one-shot and periodic timers
     // Plan: launch consumer threads
@@ -3052,7 +3197,7 @@ NTCCFG_TEST_CASE(35)
 
     NTCI_LOG_CONTEXT();
 
-    test::MtTestSuite ts;
+    ChronologyTest::MtTestSuite ts;
     {
 #if NTCS_CHRONOLOGY_TEST_MT_HEAVY
         const int numThreads = bslmt::ThreadUtil::hardwareConcurrency() > 0
@@ -3086,7 +3231,7 @@ NTCCFG_TEST_CASE(35)
             timerOptions.showEvent(ntca::TimerEventType::e_CLOSED);
 
             ntci::TimerCallback callback(
-                NTCCFG_BIND(&test::MtTestSuite::processPeriodicTimer,
+                NTCCFG_BIND(&ChronologyTest::MtTestSuite::processPeriodicTimer,
                             &ts,
                             NTCCFG_BIND_PLACEHOLDER_1,
                             NTCCFG_BIND_PLACEHOLDER_2));
@@ -3109,7 +3254,7 @@ NTCCFG_TEST_CASE(35)
         {
             ntcs::Chronology::TimerVector v(&ts.d_ta);
             ts.d_driver->chronology().load(&v);
-            NTCCFG_TEST_EQ(v.size(), numPeriodicTimers);
+            NTSCFG_TEST_EQ(v.size(), numPeriodicTimers);
 
             for (int i = 0; i < numPeriodicTimers; ++i) {
                 v[i]->close();
@@ -3118,12 +3263,12 @@ NTCCFG_TEST_CASE(35)
 
         NTCI_LOG_INFO("Waiting for consumer threads to finish");
         ts.waitConsumers();
-        NTCCFG_TEST_TRUE(ts.d_numPeriodicTimersShot >= numPeriodicTimers);
+        NTSCFG_TEST_TRUE(ts.d_numPeriodicTimersShot >= numPeriodicTimers);
         ts.d_numPeriodicTimersShot = 0;
     }
 }
 
-NTCCFG_TEST_CASE(36)
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase36)
 {
     // Concern: test strand() functionality
     // Plan: create several producers and consumers
@@ -3132,7 +3277,7 @@ NTCCFG_TEST_CASE(36)
     // callbacks at the same strand are never exeuted in parallel
     NTCI_LOG_CONTEXT();
 
-    test::MtTestSuite ts;
+    ChronologyTest::MtTestSuite ts;
     {
 #if NTCS_CHRONOLOGY_TEST_MT_HEAVY
         const int numThreads = bslmt::ThreadUtil::hardwareConcurrency() > 0
@@ -3161,45 +3306,5 @@ NTCCFG_TEST_CASE(36)
     }
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-    NTCCFG_TEST_REGISTER(5);
-    NTCCFG_TEST_REGISTER(6);
-    NTCCFG_TEST_REGISTER(7);
-    NTCCFG_TEST_REGISTER(8);
-    NTCCFG_TEST_REGISTER(9);
-    NTCCFG_TEST_REGISTER(10);
-    NTCCFG_TEST_REGISTER(11);
-    NTCCFG_TEST_REGISTER(12);
-    NTCCFG_TEST_REGISTER(13);
-    NTCCFG_TEST_REGISTER(14);
-    NTCCFG_TEST_REGISTER(15);
-    NTCCFG_TEST_REGISTER(16);
-    NTCCFG_TEST_REGISTER(17);
-    NTCCFG_TEST_REGISTER(18);
-    NTCCFG_TEST_REGISTER(19);
-    NTCCFG_TEST_REGISTER(20);
-    NTCCFG_TEST_REGISTER(21);
-    NTCCFG_TEST_REGISTER(22);
-    NTCCFG_TEST_REGISTER(23);
-    NTCCFG_TEST_REGISTER(24);
-    NTCCFG_TEST_REGISTER(25);
-    NTCCFG_TEST_REGISTER(26);
-    NTCCFG_TEST_REGISTER(27);
-    NTCCFG_TEST_REGISTER(28);
-    NTCCFG_TEST_REGISTER(29);
-    NTCCFG_TEST_REGISTER(30);
-    NTCCFG_TEST_REGISTER(31);
-    NTCCFG_TEST_REGISTER(32);
-    NTCCFG_TEST_REGISTER(33);
-
-    //multithreaded tests below
-    NTCCFG_TEST_REGISTER(34);
-    NTCCFG_TEST_REGISTER(35);
-    NTCCFG_TEST_REGISTER(36);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP

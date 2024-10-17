@@ -13,43 +13,100 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_blobbufferfactory_t_cpp, "$Id$ $CSID$")
+
 #include <ntcs_blobbufferfactory.h>
 
-#include <ntccfg_test.h>
 #include <ntci_log.h>
-
-#include <bdlbb_blob.h>
-#include <bdlbb_pooledblobbufferfactory.h>
-
-#include <bslmt_barrier.h>
-#include <bslmt_threadattributes.h>
-#include <bslmt_threadgroup.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
-#include <bsls_stopwatch.h>
-#include <bsl_iomanip.h>
-#include <bsl_iostream.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntcs {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntcs::BlobBufferFactory'.
+class BlobBufferFactoryTest
+{
+    class Object;
 
-namespace test {
+    static void logAfterAllocation(
+        const ntcs::BlobBufferFactory& blobBufferFactory);
 
-void logAfterAllocation(const ntcs::BlobBufferFactory& blobBufferFactory)
+    static void logAfterAllocation(const ntcs::BlobBufferPool& blobBufferPool);
+
+    static void* allocate(bsl::size_t alignment);
+
+    static void free(void* address);
+
+    static void work(bdlbb::BlobBufferFactory* blobBufferFactory,
+                     bslmt::Barrier*           barrier,
+                     bsl::size_t               numIterations,
+                     bsl::size_t               maxThreads);
+
+    template <unsigned ALIGNMENT>
+    static void verifyTagSize(bsl::size_t maxTag);
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+
+    // TODO
+    static void verifyCase8();
+
+    // TODO
+    static void verifyCase9();
+
+    // TODO
+    static void verifyCase10();
+
+    // TODO
+    static void verifyCase11();
+};
+
+class BlobBufferFactoryTest::Object
+{
+    int d_value;
+
+  public:
+    Object()
+    : d_value(0)
+    {
+    }
+
+    void setValue(int value)
+    {
+        d_value = value;
+    }
+
+    int value() const
+    {
+        return d_value;
+    }
+};
+
+void BlobBufferFactoryTest::logAfterAllocation(
+    const ntcs::BlobBufferFactory& blobBufferFactory)
 {
     BSLS_LOG_TRACE("Allocated blob buffer: "
                    "numBuffersAllocated = %d, "
@@ -62,7 +119,8 @@ void logAfterAllocation(const ntcs::BlobBufferFactory& blobBufferFactory)
                    (int)(blobBufferFactory.numBytesInUse()));
 }
 
-void logAfterAllocation(const ntcs::BlobBufferPool& blobBufferPool)
+void BlobBufferFactoryTest::logAfterAllocation(
+    const ntcs::BlobBufferPool& blobBufferPool)
 {
     BSLS_LOG_TRACE("Allocated blob buffer: "
                    "numBuffersAllocated = %d, "
@@ -75,680 +133,19 @@ void logAfterAllocation(const ntcs::BlobBufferPool& blobBufferPool)
                    (int)(blobBufferPool.numBytesInUse()));
 }
 
-}  // close namespace test
-
-NTCCFG_TEST_CASE(1)
+void* BlobBufferFactoryTest::allocate(bsl::size_t alignment)
 {
-    // Concern:
-    // Plan:
-
-    ntccfg::TestAllocator ta;
-    {
-        const int BLOB_BUFFER_SIZE = 4096;
-
-        ntcs::BlobBufferFactory blobBufferFactory(BLOB_BUFFER_SIZE, &ta);
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    return reinterpret_cast<void*>(0 + alignment);
 }
 
-NTCCFG_TEST_CASE(2)
+void BlobBufferFactoryTest::free(void* address)
 {
-    // Concern:
-    // Plan:
-
-    ntccfg::TestAllocator ta;
-    {
-        const int BLOB_BUFFER_SIZE = 4096;
-
-        ntcs::BlobBufferFactory blobBufferFactory(BLOB_BUFFER_SIZE, &ta);
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-            bdlbb::BlobBuffer blobBuffer2;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 2");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
-
-                blobBuffer2 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 2");
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 2);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-            bdlbb::BlobBuffer blobBuffer2;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 2");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
-
-                blobBuffer2 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 2");
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(3)
-{
-    // Concern:
-    // Plan:
-
-    ntccfg::TestAllocator ta;
-    {
-        const int BLOB_BUFFER_SIZE = 4096;
-
-        ntcs::BlobBufferFactory blobBufferFactory(BLOB_BUFFER_SIZE, &ta);
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-            bdlbb::BlobBuffer blobBuffer2;
-            bdlbb::BlobBuffer blobBuffer3;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 2");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
-
-                blobBuffer2 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 3");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 3);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
-
-                blobBuffer3 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 3");
-            BSLS_LOG_TRACE("Destroying blob buffer 2");
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 3);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-            bdlbb::BlobBuffer blobBuffer2;
-            bdlbb::BlobBuffer blobBuffer3;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 2);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 2");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
-
-                blobBuffer2 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 3");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 3);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
-
-                blobBuffer3 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 3");
-            BSLS_LOG_TRACE("Destroying blob buffer 2");
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(4)
-{
-    // Concern:
-    // Plan:
-
-    ntccfg::TestAllocator ta;
-    {
-        const int BLOB_BUFFER_SIZE = 4096;
-
-        ntcs::BlobBufferPool blobBufferFactory(BLOB_BUFFER_SIZE, &ta);
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(5)
-{
-    // Concern:
-    // Plan:
-
-    ntccfg::TestAllocator ta;
-    {
-        const int BLOB_BUFFER_SIZE = 4096;
-
-        ntcs::BlobBufferPool blobBufferFactory(BLOB_BUFFER_SIZE, &ta);
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-            bdlbb::BlobBuffer blobBuffer2;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 2");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
-
-                blobBuffer2 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 2");
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 2);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-            bdlbb::BlobBuffer blobBuffer2;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 2");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
-
-                blobBuffer2 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 2");
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(6)
-{
-    // Concern:
-    // Plan:
-
-    ntccfg::TestAllocator ta;
-    {
-        const int BLOB_BUFFER_SIZE = 4096;
-
-        ntcs::BlobBufferPool blobBufferFactory(BLOB_BUFFER_SIZE, &ta);
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-            bdlbb::BlobBuffer blobBuffer2;
-            bdlbb::BlobBuffer blobBuffer3;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 2");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
-
-                blobBuffer2 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 3");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 3);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
-
-                blobBuffer3 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 3");
-            BSLS_LOG_TRACE("Destroying blob buffer 2");
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 3);
-        NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
-
-        {
-            bdlbb::BlobBuffer blobBuffer1;
-            bdlbb::BlobBuffer blobBuffer2;
-            bdlbb::BlobBuffer blobBuffer3;
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 1");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 2);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
-
-                blobBuffer1 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 2");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
-
-                blobBuffer2 = blobBuffer;
-            }
-
-            {
-                BSLS_LOG_TRACE("Allocating blob buffer 3");
-
-                bdlbb::BlobBuffer blobBuffer;
-                blobBufferFactory.allocate(&blobBuffer);
-
-                test::logAfterAllocation(blobBufferFactory);
-
-                NTCCFG_TEST_NE(blobBuffer.data(), 0);
-                NTCCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
-
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 3);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
-                NTCCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
-
-                blobBuffer3 = blobBuffer;
-            }
-
-            BSLS_LOG_TRACE("Destroying blob buffer 3");
-            BSLS_LOG_TRACE("Destroying blob buffer 2");
-            BSLS_LOG_TRACE("Destroying blob buffer 1");
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-namespace test {
-
-void work(bdlbb::BlobBufferFactory* blobBufferFactory,
-          bslmt::Barrier*           barrier,
-          bsl::size_t               numIterations,
-          bsl::size_t               maxThreads)
+void BlobBufferFactoryTest::work(bdlbb::BlobBufferFactory* blobBufferFactory,
+                                 bslmt::Barrier*           barrier,
+                                 bsl::size_t               numIterations,
+                                 bsl::size_t               maxThreads)
 {
     barrier->wait();
     barrier->wait();
@@ -764,9 +161,742 @@ void work(bdlbb::BlobBufferFactory* blobBufferFactory,
     barrier->wait();
 }
 
-}  // close namespace test
+template <unsigned ALIGNMENT>
+void BlobBufferFactoryTest::verifyTagSize(bsl::size_t maxTag)
+{
+    NTCI_LOG_CONTEXT();
 
-NTCCFG_TEST_CASE(7)
+    typedef ntcs::BlobBufferPoolHandleUtil<void, ALIGNMENT> Util;
+
+    NTSCFG_TEST_EQ(Util::maxTag(), maxTag);
+
+    bsl::size_t alignment = ALIGNMENT;
+    {
+        bsl::size_t tag = 0;
+        while (true) {
+            bool isValid = Util::isValid(tag);
+            if (tag <= maxTag) {
+                NTSCFG_TEST_TRUE(isValid);
+                NTCI_LOG_DEBUG("Align %zu tag %zu = 1",
+                               (bsl::size_t)(alignment),
+                               (bsl::size_t)(tag));
+            }
+            else {
+                NTSCFG_TEST_FALSE(isValid);
+                NTCI_LOG_DEBUG("Align %zu tag %zu = 0",
+                               (bsl::size_t)(alignment),
+                               (bsl::size_t)(tag));
+                break;
+            }
+
+            ++tag;
+        }
+    }
+
+    void*       memory   = BlobBufferFactoryTest::allocate(alignment);
+    void*       original = memory;
+    void*       ptr      = 0;
+    bsl::size_t tag      = 0;
+
+    NTSCFG_TEST_EQ(reinterpret_cast<bsl::size_t>(memory) % alignment, 0);
+
+    ptr = Util::getPtr(memory);
+    tag = Util::getTag(memory);
+
+    NTSCFG_TEST_EQ(ptr, memory);
+    NTSCFG_TEST_EQ(tag, 0);
+
+    for (bsl::size_t newTag = 1; newTag <= maxTag; ++newTag) {
+        Util::setTag(&memory, newTag);
+
+        ptr = Util::getPtr(memory);
+        tag = Util::getTag(memory);
+
+        NTSCFG_TEST_EQ(ptr, original);
+        NTSCFG_TEST_EQ(tag, newTag);
+    }
+
+    ptr = Util::getPtr(memory);
+    tag = Util::getTag(memory);
+
+    NTSCFG_TEST_EQ(ptr, original);
+    NTSCFG_TEST_EQ(tag, maxTag);
+
+    for (bsl::size_t newPtrMultiple = 2; newPtrMultiple <= 1024;
+         ++newPtrMultiple)
+    {
+        void* newPtr = reinterpret_cast<void*>(
+            reinterpret_cast<bsl::size_t>(original) * newPtrMultiple);
+
+        Util::setPtr(&memory, newPtr);
+
+        ptr = Util::getPtr(memory);
+        tag = Util::getTag(memory);
+
+        NTSCFG_TEST_EQ(ptr, newPtr);
+        NTSCFG_TEST_EQ(tag, maxTag);
+    }
+
+    Util::set(&memory, original, 0);
+
+    ptr = Util::getPtr(memory);
+    tag = Util::getTag(memory);
+
+    NTSCFG_TEST_EQ(ptr, original);
+    NTSCFG_TEST_EQ(tag, 0);
+
+    BlobBufferFactoryTest::free(memory);
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferFactoryTest::verifyCase1)
+{
+    // Concern:
+    // Plan:
+
+    const int BLOB_BUFFER_SIZE = 4096;
+
+    ntcs::BlobBufferFactory blobBufferFactory(BLOB_BUFFER_SIZE,
+                                              NTSCFG_TEST_ALLOCATOR);
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferFactoryTest::verifyCase2)
+{
+    // Concern:
+    // Plan:
+
+    const int BLOB_BUFFER_SIZE = 4096;
+
+    ntcs::BlobBufferFactory blobBufferFactory(BLOB_BUFFER_SIZE,
+                                              NTSCFG_TEST_ALLOCATOR);
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+        bdlbb::BlobBuffer blobBuffer2;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 2");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
+
+            blobBuffer2 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 2");
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 2);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+        bdlbb::BlobBuffer blobBuffer2;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 2");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
+
+            blobBuffer2 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 2");
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferFactoryTest::verifyCase3)
+{
+    // Concern:
+    // Plan:
+
+    const int BLOB_BUFFER_SIZE = 4096;
+
+    ntcs::BlobBufferFactory blobBufferFactory(BLOB_BUFFER_SIZE,
+                                              NTSCFG_TEST_ALLOCATOR);
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+        bdlbb::BlobBuffer blobBuffer2;
+        bdlbb::BlobBuffer blobBuffer3;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 2");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
+
+            blobBuffer2 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 3");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 3);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
+
+            blobBuffer3 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 3");
+        BSLS_LOG_TRACE("Destroying blob buffer 2");
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 3);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+        bdlbb::BlobBuffer blobBuffer2;
+        bdlbb::BlobBuffer blobBuffer3;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 2);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 2");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
+
+            blobBuffer2 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 3");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 3);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
+
+            blobBuffer3 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 3");
+        BSLS_LOG_TRACE("Destroying blob buffer 2");
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferFactoryTest::verifyCase4)
+{
+    // Concern:
+    // Plan:
+
+    const int BLOB_BUFFER_SIZE = 4096;
+
+    ntcs::BlobBufferPool blobBufferFactory(BLOB_BUFFER_SIZE,
+                                           NTSCFG_TEST_ALLOCATOR);
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferFactoryTest::verifyCase5)
+{
+    // Concern:
+    // Plan:
+
+    const int BLOB_BUFFER_SIZE = 4096;
+
+    ntcs::BlobBufferPool blobBufferFactory(BLOB_BUFFER_SIZE,
+                                           NTSCFG_TEST_ALLOCATOR);
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+        bdlbb::BlobBuffer blobBuffer2;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 2");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
+
+            blobBuffer2 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 2");
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 2);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+        bdlbb::BlobBuffer blobBuffer2;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 2");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
+
+            blobBuffer2 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 2");
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferFactoryTest::verifyCase6)
+{
+    // Concern:
+    // Plan:
+
+    const int BLOB_BUFFER_SIZE = 4096;
+
+    ntcs::BlobBufferPool blobBufferFactory(BLOB_BUFFER_SIZE,
+                                           NTSCFG_TEST_ALLOCATOR);
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBytesInUse(), 0);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+        bdlbb::BlobBuffer blobBuffer2;
+        bdlbb::BlobBuffer blobBuffer3;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 1);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 2");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 2);
+
+            blobBuffer2 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 3");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 3);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
+
+            blobBuffer3 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 3");
+        BSLS_LOG_TRACE("Destroying blob buffer 2");
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 0);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 3);
+    NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
+
+    {
+        bdlbb::BlobBuffer blobBuffer1;
+        bdlbb::BlobBuffer blobBuffer2;
+        bdlbb::BlobBuffer blobBuffer3;
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 1");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 2);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
+
+            blobBuffer1 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 2");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 2);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 1);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
+
+            blobBuffer2 = blobBuffer;
+        }
+
+        {
+            BSLS_LOG_TRACE("Allocating blob buffer 3");
+
+            bdlbb::BlobBuffer blobBuffer;
+            blobBufferFactory.allocate(&blobBuffer);
+
+            BlobBufferFactoryTest::logAfterAllocation(blobBufferFactory);
+
+            NTSCFG_TEST_NE(blobBuffer.data(), 0);
+            NTSCFG_TEST_EQ(blobBuffer.size(), BLOB_BUFFER_SIZE);
+
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAllocated(), 3);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersAvailable(), 0);
+            NTSCFG_TEST_EQ(blobBufferFactory.numBuffersPooled(), 3);
+
+            blobBuffer3 = blobBuffer;
+        }
+
+        BSLS_LOG_TRACE("Destroying blob buffer 3");
+        BSLS_LOG_TRACE("Destroying blob buffer 2");
+        BSLS_LOG_TRACE("Destroying blob buffer 1");
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferFactoryTest::verifyCase7)
 {
     bslma::Allocator* allocator = bslma::Default::defaultAllocator();
 
@@ -800,7 +930,7 @@ NTCCFG_TEST_CASE(7)
 
         bslmt::ThreadGroup threadGroup;
         threadGroup.addThreads(
-            bdlf::BindUtil::bind(&test::work,
+            bdlf::BindUtil::bind(&BlobBufferFactoryTest::work,
                                  &blobBufferFactory,
                                  &barrier,
                                  DATA[variation].d_numIterations,
@@ -847,7 +977,7 @@ NTCCFG_TEST_CASE(7)
     }
 }
 
-NTCCFG_TEST_CASE(8)
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferFactoryTest::verifyCase8)
 {
     bslma::Allocator* allocator = bslma::Default::defaultAllocator();
 
@@ -884,7 +1014,7 @@ NTCCFG_TEST_CASE(8)
 
         bslmt::ThreadGroup threadGroup;
         threadGroup.addThreads(
-            bdlf::BindUtil::bind(&test::work,
+            bdlf::BindUtil::bind(&BlobBufferFactoryTest::work,
                                  &blobBufferFactory,
                                  &barrier,
                                  DATA[variation].d_numIterations,
@@ -937,7 +1067,7 @@ NTCCFG_TEST_CASE(8)
     }
 }
 
-NTCCFG_TEST_CASE(9)
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferFactoryTest::verifyCase9)
 {
 #if 0
     bslma::Allocator *allocator = bslma::Default::defaultAllocator();
@@ -975,7 +1105,7 @@ NTCCFG_TEST_CASE(9)
 
         bslmt::ThreadGroup threadGroup;
         threadGroup.addThreads(
-            bdlf::BindUtil::bind(&test::work,
+            bdlf::BindUtil::bind(&BlobBufferFactoryTest::work,
                                  &blobBufferFactory,
                                  &barrier,
                                  DATA[variation].d_numIterations,
@@ -1029,323 +1159,176 @@ NTCCFG_TEST_CASE(9)
 #endif
 }
 
-namespace test {
-namespace case10 {
-
-void* allocate(bsl::size_t alignment)
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferFactoryTest::verifyCase10)
 {
-    return reinterpret_cast<void*>(0 + alignment);
+    BlobBufferFactoryTest::verifyTagSize<2>(1);
+    BlobBufferFactoryTest::verifyTagSize<4>(3);
+    BlobBufferFactoryTest::verifyTagSize<8>(7);
+    BlobBufferFactoryTest::verifyTagSize<16>(15);
+    BlobBufferFactoryTest::verifyTagSize<4096>(4095);
 }
 
-void free(void* address)
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferFactoryTest::verifyCase11)
 {
-    // Empty
-}
-
-template <unsigned ALIGNMENT>
-void execute(bsl::size_t maxTag)
-{
-    NTCI_LOG_CONTEXT();
-
-    typedef ntcs::BlobBufferPoolHandleUtil<void, ALIGNMENT> Util;
-
-    NTCCFG_TEST_EQ(Util::maxTag(), maxTag);
-
-    bsl::size_t alignment = ALIGNMENT;
-    {
-        bsl::size_t tag = 0;
-        while (true) {
-            bool isValid = Util::isValid(tag);
-            if (tag <= maxTag) {
-                NTCCFG_TEST_TRUE(isValid);
-                NTCI_LOG_DEBUG("Align %zu tag %zu = 1",
-                               (bsl::size_t)(alignment),
-                               (bsl::size_t)(tag));
-            }
-            else {
-                NTCCFG_TEST_FALSE(isValid);
-                NTCI_LOG_DEBUG("Align %zu tag %zu = 0",
-                               (bsl::size_t)(alignment),
-                               (bsl::size_t)(tag));
-                break;
-            }
-
-            ++tag;
-        }
-    }
-
-    void*       memory   = test::case10::allocate(alignment);
-    void*       original = memory;
-    void*       ptr      = 0;
-    bsl::size_t tag      = 0;
-
-    NTCCFG_TEST_EQ(reinterpret_cast<bsl::size_t>(memory) % alignment, 0);
-
-    ptr = Util::getPtr(memory);
-    tag = Util::getTag(memory);
-
-    NTCCFG_TEST_EQ(ptr, memory);
-    NTCCFG_TEST_EQ(tag, 0);
-
-    for (bsl::size_t newTag = 1; newTag <= maxTag; ++newTag) {
-        Util::setTag(&memory, newTag);
-
-        ptr = Util::getPtr(memory);
-        tag = Util::getTag(memory);
-
-        NTCCFG_TEST_EQ(ptr, original);
-        NTCCFG_TEST_EQ(tag, newTag);
-    }
-
-    ptr = Util::getPtr(memory);
-    tag = Util::getTag(memory);
-
-    NTCCFG_TEST_EQ(ptr, original);
-    NTCCFG_TEST_EQ(tag, maxTag);
-
-    for (bsl::size_t newPtrMultiple = 2; newPtrMultiple <= 1024;
-         ++newPtrMultiple)
-    {
-        void* newPtr = reinterpret_cast<void*>(
-            reinterpret_cast<bsl::size_t>(original) * newPtrMultiple);
-
-        Util::setPtr(&memory, newPtr);
-
-        ptr = Util::getPtr(memory);
-        tag = Util::getTag(memory);
-
-        NTCCFG_TEST_EQ(ptr, newPtr);
-        NTCCFG_TEST_EQ(tag, maxTag);
-    }
-
-    Util::set(&memory, original, 0);
-
-    ptr = Util::getPtr(memory);
-    tag = Util::getTag(memory);
-
-    NTCCFG_TEST_EQ(ptr, original);
-    NTCCFG_TEST_EQ(tag, 0);
-
-    test::case10::free(memory);
-}
-
-}  // close namespace 'case10'
-}  // close namespace 'test'
-
-NTCCFG_TEST_CASE(10)
-{
-    test::case10::execute<2>(1);
-    test::case10::execute<4>(3);
-    test::case10::execute<8>(7);
-    test::case10::execute<16>(15);
-    test::case10::execute<4096>(4095);
-}
-
-namespace test {
-namespace case11 {
-
-class Object
-{
-    int d_value;
-
-  public:
-    Object()
-    : d_value(0)
-    {
-    }
-    void setValue(int value)
-    {
-        d_value = value;
-    }
-    int value() const
-    {
-        return d_value;
-    }
-};
-
-}  // close namespace case11
-}  // close namespace test
-
-NTCCFG_TEST_CASE(11)
-{
-    using namespace test::case11;
-
     enum { ALIGNMENT = 4 };
 
-    ntccfg::TestAllocator ta;
+    bslma::Allocator* allocator = NTSCFG_TEST_ALLOCATOR;
+
+    Object* object1 = new (*allocator) Object();
+    NTSCFG_TEST_EQ((bsl::size_t)(bsl::uintptr_t)(object1) % ALIGNMENT, 0);
+
+    Object* object2 = new (*allocator) Object();
+    NTSCFG_TEST_EQ((bsl::size_t)(bsl::uintptr_t)(object2) % ALIGNMENT, 0);
+
+    typedef ntcs::BlobBufferPoolHandle<Object, ALIGNMENT> Handle;
+
+    Handle handle;
+
     {
-        Object* object1 = new (ta) Object();
-        NTCCFG_TEST_EQ((bsl::size_t)(bsl::uintptr_t)(object1) % ALIGNMENT, 0);
+        Object*         currentObject;
+        Handle::TagType currentTag;
 
-        Object* object2 = new (ta) Object();
-        NTCCFG_TEST_EQ((bsl::size_t)(bsl::uintptr_t)(object2) % ALIGNMENT, 0);
+        handle.load(&currentObject, &currentTag);
 
-        typedef ntcs::BlobBufferPoolHandle<Object, ALIGNMENT> Handle;
-
-        Handle handle;
-
-        {
-            Object*         currentObject;
-            Handle::TagType currentTag;
-
-            handle.load(&currentObject, &currentTag);
-
-            NTCCFG_TEST_EQ(currentObject, 0);
-            NTCCFG_TEST_EQ(currentTag, 0);
-        }
-
-        {
-            Object*         previousObject;
-            Handle::TagType previousTag;
-
-            handle.swap(&previousObject, &previousTag, object1, 1);
-
-            NTCCFG_TEST_EQ(previousObject, 0);
-            NTCCFG_TEST_EQ(previousTag, 0);
-        }
-
-        {
-            Object*         currentObject;
-            Handle::TagType currentTag;
-
-            handle.load(&currentObject, &currentTag);
-
-            NTCCFG_TEST_EQ(currentObject, object1);
-            NTCCFG_TEST_EQ(currentTag, 1);
-        }
-
-        handle.store(0, 0);
-
-        {
-            Object*         currentObject;
-            Handle::TagType currentTag;
-
-            handle.load(&currentObject, &currentTag);
-
-            NTCCFG_TEST_EQ(currentObject, 0);
-            NTCCFG_TEST_EQ(currentTag, 0);
-        }
-
-        {
-            Object*         previousObject;
-            Handle::TagType previousTag;
-
-            bool result = handle.testAndSwap(&previousObject,
-                                             &previousTag,
-                                             0,
-                                             0,
-                                             object1,
-                                             1);
-
-            NTCCFG_TEST_TRUE(result);
-
-            NTCCFG_TEST_EQ(previousObject, 0);
-            NTCCFG_TEST_EQ(previousTag, 0);
-        }
-
-        {
-            Object*         currentObject;
-            Handle::TagType currentTag;
-
-            handle.load(&currentObject, &currentTag);
-
-            NTCCFG_TEST_EQ(currentObject, object1);
-            NTCCFG_TEST_EQ(currentTag, 1);
-        }
-
-        handle.store(object1, 2);
-
-        {
-            Object*         previousObject;
-            Handle::TagType previousTag;
-
-            bool result = handle.testAndSwap(&previousObject,
-                                             &previousTag,
-                                             object1,
-                                             1,
-                                             object2,
-                                             2);
-
-            NTCCFG_TEST_FALSE(result);
-
-            NTCCFG_TEST_EQ(previousObject, object1);
-            NTCCFG_TEST_EQ(previousTag, 2);
-        }
-
-        {
-            Object*         currentObject;
-            Handle::TagType currentTag;
-
-            handle.load(&currentObject, &currentTag);
-
-            NTCCFG_TEST_EQ(currentObject, object1);
-            NTCCFG_TEST_EQ(currentTag, 2);
-        }
-
-        {
-            Object*         previousObject;
-            Handle::TagType previousTag;
-
-            bool result = handle.testAndSwap(&previousObject,
-                                             &previousTag,
-                                             object2,
-                                             2,
-                                             object2,
-                                             3);
-
-            NTCCFG_TEST_FALSE(result);
-
-            NTCCFG_TEST_EQ(previousObject, object1);
-            NTCCFG_TEST_EQ(previousTag, 2);
-        }
-
-        {
-            Object*         previousObject;
-            Handle::TagType previousTag;
-
-            bool result = handle.testAndSwap(&previousObject,
-                                             &previousTag,
-                                             object1,
-                                             2,
-                                             object2,
-                                             3);
-
-            NTCCFG_TEST_TRUE(result);
-
-            NTCCFG_TEST_EQ(previousObject, object1);
-            NTCCFG_TEST_EQ(previousTag, 2);
-        }
-
-        {
-            Object*         currentObject;
-            Handle::TagType currentTag;
-
-            handle.load(&currentObject, &currentTag);
-
-            NTCCFG_TEST_EQ(currentObject, object2);
-            NTCCFG_TEST_EQ(currentTag, 3);
-        }
-
-        ta.deleteObject(object1);
-        ta.deleteObject(object2);
+        NTSCFG_TEST_EQ(currentObject, 0);
+        NTSCFG_TEST_EQ(currentTag, 0);
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    {
+        Object*         previousObject;
+        Handle::TagType previousTag;
+
+        handle.swap(&previousObject, &previousTag, object1, 1);
+
+        NTSCFG_TEST_EQ(previousObject, 0);
+        NTSCFG_TEST_EQ(previousTag, 0);
+    }
+
+    {
+        Object*         currentObject;
+        Handle::TagType currentTag;
+
+        handle.load(&currentObject, &currentTag);
+
+        NTSCFG_TEST_EQ(currentObject, object1);
+        NTSCFG_TEST_EQ(currentTag, 1);
+    }
+
+    handle.store(0, 0);
+
+    {
+        Object*         currentObject;
+        Handle::TagType currentTag;
+
+        handle.load(&currentObject, &currentTag);
+
+        NTSCFG_TEST_EQ(currentObject, 0);
+        NTSCFG_TEST_EQ(currentTag, 0);
+    }
+
+    {
+        Object*         previousObject;
+        Handle::TagType previousTag;
+
+        bool result = handle.testAndSwap(&previousObject,
+                                         &previousTag,
+                                         0,
+                                         0,
+                                         object1,
+                                         1);
+
+        NTSCFG_TEST_TRUE(result);
+
+        NTSCFG_TEST_EQ(previousObject, 0);
+        NTSCFG_TEST_EQ(previousTag, 0);
+    }
+
+    {
+        Object*         currentObject;
+        Handle::TagType currentTag;
+
+        handle.load(&currentObject, &currentTag);
+
+        NTSCFG_TEST_EQ(currentObject, object1);
+        NTSCFG_TEST_EQ(currentTag, 1);
+    }
+
+    handle.store(object1, 2);
+
+    {
+        Object*         previousObject;
+        Handle::TagType previousTag;
+
+        bool result = handle.testAndSwap(&previousObject,
+                                         &previousTag,
+                                         object1,
+                                         1,
+                                         object2,
+                                         2);
+
+        NTSCFG_TEST_FALSE(result);
+
+        NTSCFG_TEST_EQ(previousObject, object1);
+        NTSCFG_TEST_EQ(previousTag, 2);
+    }
+
+    {
+        Object*         currentObject;
+        Handle::TagType currentTag;
+
+        handle.load(&currentObject, &currentTag);
+
+        NTSCFG_TEST_EQ(currentObject, object1);
+        NTSCFG_TEST_EQ(currentTag, 2);
+    }
+
+    {
+        Object*         previousObject;
+        Handle::TagType previousTag;
+
+        bool result = handle.testAndSwap(&previousObject,
+                                         &previousTag,
+                                         object2,
+                                         2,
+                                         object2,
+                                         3);
+
+        NTSCFG_TEST_FALSE(result);
+
+        NTSCFG_TEST_EQ(previousObject, object1);
+        NTSCFG_TEST_EQ(previousTag, 2);
+    }
+
+    {
+        Object*         previousObject;
+        Handle::TagType previousTag;
+
+        bool result = handle.testAndSwap(&previousObject,
+                                         &previousTag,
+                                         object1,
+                                         2,
+                                         object2,
+                                         3);
+
+        NTSCFG_TEST_TRUE(result);
+
+        NTSCFG_TEST_EQ(previousObject, object1);
+        NTSCFG_TEST_EQ(previousTag, 2);
+    }
+
+    {
+        Object*         currentObject;
+        Handle::TagType currentTag;
+
+        handle.load(&currentObject, &currentTag);
+
+        NTSCFG_TEST_EQ(currentObject, object2);
+        NTSCFG_TEST_EQ(currentTag, 3);
+    }
+
+    allocator->deleteObject(object1);
+    allocator->deleteObject(object2);
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-
-    NTCCFG_TEST_REGISTER(4);
-    NTCCFG_TEST_REGISTER(5);
-    NTCCFG_TEST_REGISTER(6);
-
-    NTCCFG_TEST_REGISTER(7);
-    NTCCFG_TEST_REGISTER(8);
-    NTCCFG_TEST_REGISTER(9);
-
-    NTCCFG_TEST_REGISTER(10);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP

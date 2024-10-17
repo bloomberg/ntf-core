@@ -16,24 +16,24 @@
 #include <ntscfg_test.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcs_async_t_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntcs_blobutil_t_cpp, "$Id$ $CSID$")
 
-#include <ntcs_async.h>
+#include <ntcs_blobutil.h>
 
 using namespace BloombergLP;
 
 namespace BloombergLP {
 namespace ntcs {
 
-// Provide tests for 'ntcs::Async'.
-class AsyncTest
+// Provide tests for 'ntcs::BlobUtil'.
+class BlobUtilTest
 {
   public:
     // TODO
     static void verify();
 };
 
-NTSCFG_TEST_FUNCTION(ntcs::AsyncTest::verify)
+NTSCFG_TEST_FUNCTION(ntcs::BlobUtilTest::verify)
 {
 }
 

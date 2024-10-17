@@ -13,64 +13,52 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_callbackstate_t_cpp, "$Id$ $CSID$")
+
 #include <ntcs_callbackstate.h>
 
-#include <ntccfg_test.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
-
 using namespace BloombergLP;
-using namespace ntcs;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntcs {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-NTCCFG_TEST_CASE(1)
+// Provide tests for 'ntcs::CallbackState'.
+class CallbackStateTest
 {
-    // Concern:
-    // Plan:
+  public:
+    // TODO
+    static void verify();
+};
 
-    ntccfg::TestAllocator ta;
-    {
-        ntcs::CallbackState callbackState;
+NTSCFG_TEST_FUNCTION(ntcs::CallbackStateTest::verify)
+{
+    ntcs::CallbackState callbackState;
 
-        bool result;
+    bool result;
 
-        result = callbackState.schedule();
-        NTCCFG_TEST_TRUE(result);
+    result = callbackState.schedule();
+    NTSCFG_TEST_TRUE(result);
 
-        result = callbackState.schedule();
-        NTCCFG_TEST_FALSE(result);
+    result = callbackState.schedule();
+    NTSCFG_TEST_FALSE(result);
 
-        result = callbackState.finish();
-        NTCCFG_TEST_TRUE(result);
+    result = callbackState.finish();
+    NTSCFG_TEST_TRUE(result);
 
-        result = callbackState.finish();
-        NTCCFG_TEST_FALSE(result);
+    result = callbackState.finish();
+    NTSCFG_TEST_FALSE(result);
 
-        result = callbackState.schedule();
-        NTCCFG_TEST_FALSE(result);
+    result = callbackState.schedule();
+    NTSCFG_TEST_FALSE(result);
 
-        result = callbackState.schedule();
-        NTCCFG_TEST_FALSE(result);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    result = callbackState.schedule();
+    NTSCFG_TEST_FALSE(result);
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP
+
+

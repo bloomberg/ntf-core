@@ -303,11 +303,6 @@ class StreamSocketTest
     // previous shutdown call while the socket was waiting for connection
     // attempt result, connection deadline timer is set.
     static void verifyShutdownCloseDetachEsoterica2();
-
-    // BBBB
-
-    // TODO
-    static void verify();
 };
 
 /// Provide a test case execution framework.
@@ -5596,10 +5591,6 @@ NTSCFG_TEST_FUNCTION(
         closeCallback();
         NTSCFG_TEST_TRUE(test.d_closed);
     }
-}
-
-NTSCFG_TEST_FUNCTION(ntcr::StreamSocketTest::verify)
-{
 }
 
 }  // close namespace ntcr
