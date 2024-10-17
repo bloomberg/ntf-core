@@ -22,10 +22,12 @@ BSLS_IDENT("$Id: $")
 #include <ntscfg_config.h>
 #include <ntsscm_version.h>
 #include <bdlb_nullablevalue.h>
+#include <bsls_assert.h>
 #include <bslmf_issame.h>
 #include <bslmf_isfundamental.h>
 #include <bslmf_removereference.h>
 #include <bslmf_typelist.h>
+#include <bsls_log.h>
 #include <bsl_list.h>
 #include <bsl_string.h>
 #include <bsl_vector.h>
@@ -59,7 +61,7 @@ namespace ntscfg {
 #define NTF_VA_SELECT(NAME, ...)                                              \
     NTF_SELECT(NAME, NTF_VA_SIZE(__VA_ARGS__))(__VA_ARGS__)
 
-struct TestMock {
+struct Mock {
     template <class T, bool FUNDAMENTAL>
     struct PassTraitsHelper {
         typedef T Type;
@@ -253,7 +255,7 @@ struct TestMock {
     struct DirectComparator {
         static void compare(const ARG& arg1, const EXP& arg2)
         {
-            NTSCFG_TEST_EQ(arg1, arg2);
+            BSLS_ASSERT_OPT(arg1 == arg2);
         }
     };
 
@@ -261,7 +263,7 @@ struct TestMock {
     struct DerefComparator {
         static void compare(const ARG& arg1, const EXP& arg2)
         {
-            NTSCFG_TEST_EQ(*arg1, arg2);
+            BSLS_ASSERT_OPT(*arg1 == arg2);
         }
     };
 
@@ -341,7 +343,7 @@ struct TestMock {
         BloombergLP::bdlb::NullableValue<RESULT> d_expResult;
         RESULT                                   get()
         {
-            NTSCFG_TEST_TRUE(d_expResult.has_value());
+            BSLS_ASSERT_OPT(d_expResult.has_value());
             return d_expResult.value();
         }
     };
@@ -355,7 +357,7 @@ struct TestMock {
         RESULT* d_expResult;
         RESULT& get()
         {
-            NTSCFG_TEST_TRUE(d_expResult != 0);
+            BSLS_ASSERT_OPT(d_expResult != 0);
             return *d_expResult;
         }
     };
@@ -369,7 +371,7 @@ struct TestMock {
         RESULT const* d_expResult;
         const RESULT& get()
         {
-            NTSCFG_TEST_TRUE(d_expResult != 0);
+            BSLS_ASSERT_OPT(d_expResult != 0);
             return *d_expResult;
         }
     };
@@ -443,16 +445,16 @@ struct TestMock {
         SELF& ALWAYS()
         {
             INVOCATION_DATA& invocation = getInvocationDataBack();
-            NTSCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+            BSLS_ASSERT_OPT(invocation.d_expectedCalls == 0);
             invocation.d_expectedCalls = INVOCATION_DATA::k_INFINITE_CALLS;
             return *(static_cast<SELF*>(this));
         }
 
         SELF& TIMES(int times)
         {
-            NTSCFG_TEST_GT(times, 0);
+            BSLS_ASSERT_OPT(times > 0);
             INVOCATION_DATA& invocation = getInvocationDataBack();
-            NTSCFG_TEST_EQ(invocation.d_expectedCalls, 0);
+            BSLS_ASSERT_OPT(invocation.d_expectedCalls == 0);
             invocation.d_expectedCalls = times;
             return *(static_cast<SELF*>(this));
         }
@@ -712,7 +714,7 @@ struct TestMock {
             if (invocation.d_expectedCalls !=
                 InvocationDataT::k_INFINITE_CALLS)
             {
-                NTSCFG_TEST_GE(invocation.d_expectedCalls, 1);
+                BSLS_ASSERT_OPT(invocation.d_expectedCalls >= 1);
             }
             return invocation;
         }
@@ -735,8 +737,8 @@ struct TestMock {
         InvocationDataT& expectPrologue()
         {
             if (!this->d_inv.d_storage.d_invocations.empty()) {
-                NTSCFG_TEST_NE(
-                    this->d_inv.d_storage.d_invocations.back().d_expectedCalls,
+                BSLS_ASSERT_OPT(
+                    this->d_inv.d_storage.d_invocations.back().d_expectedCalls !=
                     InvocationDataT::k_INFINITE_CALLS);
             }
             this->d_inv.d_storage.d_invocations.emplace_back();
@@ -863,7 +865,7 @@ struct TestMock {
 
         InvocationDataT& getInvocationDataBack() BSLS_KEYWORD_OVERRIDE
         {
-            NTSCFG_TEST_FALSE(d_storage.d_invocations.empty());
+            BSLS_ASSERT_OPT(!d_storage.d_invocations.empty());
             return d_storage.d_invocations.back();
         }
 
@@ -898,7 +900,7 @@ struct TestMock {
 
         InvocationDataT& getInvocationDataBack() BSLS_KEYWORD_OVERRIDE
         {
-            NTSCFG_TEST_FALSE(d_storage.d_invocations.empty());
+            BSLS_ASSERT_OPT(!d_storage.d_invocations.empty());
             return d_storage.d_invocations.back();
         }
 
@@ -914,7 +916,7 @@ struct TestMock {
             if (invocation.d_expectedCalls !=
                 InvocationDataT::k_INFINITE_CALLS)
             {
-                NTSCFG_TEST_GE(invocation.d_expectedCalls, 1);
+                BSLS_ASSERT_OPT(invocation.d_expectedCalls >= 1);
             }
             InvocationResult<RESULT> result =
                 invocation.d_result;  //copy by value
@@ -932,7 +934,7 @@ struct TestMock {
         Invocation& expect()
         {
             if (!d_storage.d_invocations.empty()) {
-                NTSCFG_TEST_NE(d_storage.d_invocations.back().d_expectedCalls,
+                BSLS_ASSERT_OPT(d_storage.d_invocations.back().d_expectedCalls !=
                                InvocationDataT::k_INFINITE_CALLS);
             }
             d_storage.d_invocations.emplace_back();
@@ -953,7 +955,7 @@ struct TestMock {
 };
 
 template <>
-struct TestMock::InvocationResult<void> {
+struct Mock::InvocationResult<void> {
     static void get()
     {
     }
@@ -974,23 +976,23 @@ struct TestMock::InvocationResult<void> {
     NTF_METHOD_INFO(METHOD_NAME)                                              \
                                                                               \
   public:                                                                     \
-    BloombergLP::ntscfg::TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    BloombergLP::ntscfg::Mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
-                         BloombergLP::ntscfg::TestMock::NoArgs>& expect_##METHOD_NAME()            \
+                         BloombergLP::ntscfg::Mock::NoArgs>& expect_##METHOD_NAME()            \
     {                                                                         \
         return d_invocation_##METHOD_NAME.expect();                           \
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable BloombergLP::ntscfg::TestMock::                                                        \
-        Invocation<NTF_CAT2(MethodInfo, __LINE__), RESULT, BloombergLP::ntscfg::TestMock::NoArgs>  \
+    mutable BloombergLP::ntscfg::Mock::                                                        \
+        Invocation<NTF_CAT2(MethodInfo, __LINE__), RESULT, BloombergLP::ntscfg::Mock::NoArgs>  \
             d_invocation_##METHOD_NAME;
 
 #define NTF_MOCK_METHOD_1_IMP(RESULT, METHOD_NAME, ARG0)                      \
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER>                                                  \
-    BloombergLP::ntscfg::TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    BloombergLP::ntscfg::Mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG0> >&                \
         expect_##METHOD_NAME(const MATCHER& arg0,                             \
@@ -1003,7 +1005,7 @@ struct TestMock::InvocationResult<void> {
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable BloombergLP::ntscfg::TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
+    mutable BloombergLP::ntscfg::Mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
                                  RESULT,                                      \
                                  BloombergLP::bslmf::TypeList<ARG0> >         \
         NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
@@ -1012,7 +1014,7 @@ struct TestMock::InvocationResult<void> {
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER0, class MATCHER1>                                 \
-    BloombergLP::ntscfg::TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    BloombergLP::ntscfg::Mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG0, ARG1> >&          \
         expect_##METHOD_NAME(const MATCHER0& arg0, const MATCHER1& arg1)      \
@@ -1023,7 +1025,7 @@ struct TestMock::InvocationResult<void> {
     }                                                                         \
                                                                               \
     template <class MATCHER0, class MATCHER1>                                 \
-    BloombergLP::ntscfg::TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    BloombergLP::ntscfg::Mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG0, ARG1> >&          \
         expect_##METHOD_NAME(const MATCHER0& arg0,                            \
@@ -1038,7 +1040,7 @@ struct TestMock::InvocationResult<void> {
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable BloombergLP::ntscfg::TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
+    mutable BloombergLP::ntscfg::Mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),              \
                                  RESULT,                                      \
                                  BloombergLP::bslmf::TypeList<ARG0, ARG1> >   \
         NTF_CAT2(d_invocation_##METHOD_NAME, __LINE__);
@@ -1047,7 +1049,7 @@ struct TestMock::InvocationResult<void> {
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER0, class MATCHER1, class MATCHER2>                 \
-    BloombergLP::ntscfg::TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    BloombergLP::ntscfg::Mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2> >&    \
         expect_##METHOD_NAME(const MATCHER0& arg0,                            \
@@ -1060,7 +1062,7 @@ struct TestMock::InvocationResult<void> {
     }                                                                         \
                                                                               \
     template <class MATCHER0, class MATCHER1, class MATCHER2>                 \
-    BloombergLP::ntscfg::TestMock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
+    BloombergLP::ntscfg::Mock::Invocation<NTF_CAT2(MethodInfo, __LINE__),                      \
                          RESULT,                                              \
                          BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2> >&    \
         expect_##METHOD_NAME(const MATCHER0& arg0,                            \
@@ -1076,7 +1078,7 @@ struct TestMock::InvocationResult<void> {
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable BloombergLP::ntscfg::TestMock::Invocation<                                             \
+    mutable BloombergLP::ntscfg::Mock::Invocation<                                             \
         NTF_CAT2(MethodInfo, __LINE__),                                       \
         RESULT,                                                               \
         BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2> >                      \
@@ -1086,7 +1088,7 @@ struct TestMock::InvocationResult<void> {
     NTF_METHOD_INFO(METHOD_NAME)                                              \
   public:                                                                     \
     template <class MATCHER0, class MATCHER1, class MATCHER2, class MATCHER3> \
-    BloombergLP::ntscfg::TestMock::Invocation<                                                     \
+    BloombergLP::ntscfg::Mock::Invocation<                                                     \
         NTF_CAT2(MethodInfo, __LINE__),                                       \
         RESULT,                                                               \
         BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2, ARG3> >&               \
@@ -1101,7 +1103,7 @@ struct TestMock::InvocationResult<void> {
     }                                                                         \
                                                                               \
     template <class MATCHER0, class MATCHER1, class MATCHER2, class MATCHER3> \
-    BloombergLP::ntscfg::TestMock::Invocation<                                                     \
+    BloombergLP::ntscfg::Mock::Invocation<                                                     \
         NTF_CAT2(MethodInfo, __LINE__),                                       \
         RESULT,                                                               \
         BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2, ARG3> >&               \
@@ -1120,7 +1122,7 @@ struct TestMock::InvocationResult<void> {
     }                                                                         \
                                                                               \
   private:                                                                    \
-    mutable BloombergLP::ntscfg::TestMock::Invocation<                                             \
+    mutable BloombergLP::ntscfg::Mock::Invocation<                                             \
         NTF_CAT2(MethodInfo, __LINE__),                                       \
         RESULT,                                                               \
         BloombergLP::bslmf::TypeList<ARG0, ARG1, ARG2, ARG3> >                \
@@ -1245,14 +1247,14 @@ struct TestMock::InvocationResult<void> {
     NTF_VA_SELECT(NTF_MOCK_METHOD_CONST, __VA_ARGS__)
 
 #define NTF_EQ_SPEC(ARG, SPEC)                                                \
-    BloombergLP::ntscfg::TestMock::createEqMatcher<BloombergLP::ntscfg::TestMock::DirectComparator>(ARG),               \
+    BloombergLP::ntscfg::Mock::createEqMatcher<BloombergLP::ntscfg::Mock::DirectComparator>(ARG),               \
         bsl::type_identity<SPEC>()
 
-#define IGNORE_ARG BloombergLP::ntscfg::TestMock::IgnoreArg()
-#define IGNORE_ARG_S(SPEC) BloombergLP::ntscfg::TestMock::IgnoreArg(), bsl::type_identity<SPEC>()
+#define IGNORE_ARG BloombergLP::ntscfg::Mock::IgnoreArg()
+#define IGNORE_ARG_S(SPEC) BloombergLP::ntscfg::Mock::IgnoreArg(), bsl::type_identity<SPEC>()
 
 #define NTF_EQ_DEREF_SPEC(ARG, SPEC)                                          \
-    BloombergLP::ntscfg::TestMock::createEqMatcher<TestMock::DerefComparator>(ARG),                \
+    BloombergLP::ntscfg::Mock::createEqMatcher<Mock::DerefComparator>(ARG),                \
         bsl::type_identity<SPEC>()
 
 #define NTF_EXPECT(MOCK_OBJECT, METHOD, ...)                                  \

@@ -7,3 +7,4 @@ ntco_kqueue
 ntco_poll
 ntco_pollset
 ntco_select
+ntco_test

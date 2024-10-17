@@ -744,6 +744,7 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntcd_streamsocket)
     ntf_component(NAME ntcd_simulation)
     ntf_component(NAME ntcd_timer)
+    ntf_component(NAME ntcd_test)
 
     ntf_package_end(NAME ntcd)
 
@@ -882,6 +883,7 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntco_poll)
     ntf_component(NAME ntco_pollset)
     ntf_component(NAME ntco_select)
+    ntf_component(NAME ntco_test)
 
     ntf_package_end(NAME ntco)
 

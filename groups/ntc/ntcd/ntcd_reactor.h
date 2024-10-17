@@ -21,7 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_reactorconfig.h>
 #include <ntccfg_platform.h>
-#include <ntccfg_test.h>
+#include <ntscfg_mock.h>
 #include <ntcd_datagramsocket.h>
 #include <ntcd_listenersocket.h>
 #include <ntcd_streamsocket.h>
@@ -629,7 +629,7 @@ class ReactorFactory : public ntci::ReactorFactory
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 };
 
-#if NTCCFG_TEST_MOCK_ENABLED
+#if NTSCFG_MOCK_ENABLED
 
 NTF_MOCK_CLASS(ReactorMock, ntci::Reactor)
 

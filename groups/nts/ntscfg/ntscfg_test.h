@@ -7,6 +7,7 @@ BSLS_IDENT("$Id: $")
 #include <ntscfg_platform.h>
 #include <bdlb_chartype.h>
 #include <bdld_manageddatum.h>
+#include <bdlb_bigendian.h>
 #include <bdlb_nullablevalue.h>
 #include <bdlb_random.h>
 #include <bdlb_string.h>
@@ -19,6 +20,7 @@ BSLS_IDENT("$Id: $")
 #include <bdlf_bind.h>
 #include <bdlf_memfn.h>
 #include <bdlf_placeholder.h>
+#include <bdlma_countingallocator.h>
 #include <bdlma_bufferedsequentialallocator.h>
 #include <bdlma_concurrentmultipoolallocator.h>
 #include <bdlmt_eventscheduler.h>

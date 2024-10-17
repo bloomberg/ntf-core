@@ -706,7 +706,7 @@ class TestAllocator : public bslma::Allocator
 #define NTCCFG_TEST_MOCK_ENABLED 1
 #endif
 
-#if NTCCFG_TEST_MOCK_ENABLED
+#if NTCCFG_TEST_MOCK_ENABLED && 0
 
 #define NTF_CAT2_(A, B) A##B
 #define NTF_CAT2(A, B) NTF_CAT2_(A, B)

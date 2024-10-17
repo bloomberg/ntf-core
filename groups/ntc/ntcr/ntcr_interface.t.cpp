@@ -13,21 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcr_interface_t_cpp, "$Id$ $CSID$")
+
 #include <ntcr_interface.h>
 
 #include <ntcd_simulation.h>
 #include <ntcs_datapool.h>
 
-#include <ntccfg_test.h>
-
-#include <bslmt_threadutil.h>
-#include <bsls_timeinterval.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
-
 using namespace BloombergLP;
+
+namespace BloombergLP {
+namespace ntcr {
 
 // Uncomment to test a particular style of socket-to-thread load balancing,
 // instead of both static and dynamic load balancing.
@@ -37,92 +36,28 @@ using namespace BloombergLP;
 // both static and dynamic sizing.
 // #define NTCR_INTERFACE_TEST_DYNAMIC_THREAD_COUNT true
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
-
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-namespace test {
-
-namespace case1 {
-
-void execute(bslma::Allocator* allocator)
+// Provide tests for 'ntcr::Interface'.
+class InterfaceTest
 {
-    ntsa::Error error;
+    static void run(const bsl::shared_ptr<ntcr::Interface>& interface,
+                    bsl::size_t                             numThreads,
+                    bsl::size_t                             restartIteration,
+                    bool dynamicLoadBalancing,
+                    bool dynamicThreadCount);
 
-    // Create the simulation.
+  public:
+    // TODO
+    static void verifyCase1();
 
-    bsl::shared_ptr<ntcd::Simulation> simulation;
-    simulation.createInplace(allocator, allocator);
+    // TODO
+    static void verifyCase2();
+};
 
-    error = simulation->run();
-    NTCCFG_TEST_OK(error);
-
-    // Create the data pool.
-
-    bsl::shared_ptr<ntcs::DataPool> dataPool;
-    dataPool.createInplace(allocator, allocator);
-
-    // Create the reactor factory.
-
-    bsl::shared_ptr<ntcd::ReactorFactory> reactorFactory;
-    reactorFactory.createInplace(allocator, allocator);
-
-    // Create the interface.
-
-    ntca::InterfaceConfig interfaceConfig;
-    interfaceConfig.setMetricName("test");
-    interfaceConfig.setMinThreads(1);
-    interfaceConfig.setMaxThreads(1);
-
-    bsl::shared_ptr<ntcr::Interface> interface;
-    interface.createInplace(allocator,
-                            interfaceConfig,
-                            dataPool,
-                            reactorFactory,
-                            allocator);
-
-    error = interface->start();
-    NTCCFG_TEST_OK(error);
-
-    // Ensure the interface has created one reactor run by one thread.
-
-    NTCCFG_TEST_EQ(interface->numReactors(), 1);
-    NTCCFG_TEST_EQ(interface->numThreads(), 1);
-
-    // Stop the interface.
-
-    interface->shutdown();
-    interface->linger();
-
-    // Ensure the interface is no longer running any threads but the
-    // original reactor still exists.
-
-    NTCCFG_TEST_EQ(interface->numReactors(), 1);
-    NTCCFG_TEST_EQ(interface->numThreads(), 0);
-
-    // Stop the simulation.
-
-    simulation->stop();
-}
-
-}  // close namespace case1
-
-namespace case2 {
-
-void run(ntcr::Interface* interface,
-         bsl::size_t      numThreads,
-         bsl::size_t      restartIteration,
-         bool             dynamicLoadBalancing,
-         bool             dynamicThreadCount)
+void InterfaceTest::run(const bsl::shared_ptr<ntcr::Interface>& interface,
+                        bsl::size_t                             numThreads,
+                        bsl::size_t restartIteration,
+                        bool        dynamicLoadBalancing,
+                        bool        dynamicThreadCount)
 {
     BSLS_LOG_INFO("Testing restart iteration %d", (int)(restartIteration));
 
@@ -250,7 +185,67 @@ void run(ntcr::Interface* interface,
     NTCCFG_TEST_EQ(interface->maxThreads(), numThreads);
 }
 
-void execute(bslma::Allocator* allocator)
+NTSCFG_TEST_FUNCTION(ntcr::InterfaceTest::verifyCase1)
+{
+    ntsa::Error error;
+
+    // Create the simulation.
+
+    bsl::shared_ptr<ntcd::Simulation> simulation;
+    simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    error = simulation->run();
+    NTCCFG_TEST_OK(error);
+
+    // Create the data pool.
+
+    bsl::shared_ptr<ntcs::DataPool> dataPool;
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Create the reactor factory.
+
+    bsl::shared_ptr<ntcd::ReactorFactory> reactorFactory;
+    reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Create the interface.
+
+    ntca::InterfaceConfig interfaceConfig;
+    interfaceConfig.setMetricName("test");
+    interfaceConfig.setMinThreads(1);
+    interfaceConfig.setMaxThreads(1);
+
+    bsl::shared_ptr<ntcr::Interface> interface;
+    interface.createInplace(NTSCFG_TEST_ALLOCATOR,
+                            interfaceConfig,
+                            dataPool,
+                            reactorFactory,
+                            NTSCFG_TEST_ALLOCATOR);
+
+    error = interface->start();
+    NTCCFG_TEST_OK(error);
+
+    // Ensure the interface has created one reactor run by one thread.
+
+    NTCCFG_TEST_EQ(interface->numReactors(), 1);
+    NTCCFG_TEST_EQ(interface->numThreads(), 1);
+
+    // Stop the interface.
+
+    interface->shutdown();
+    interface->linger();
+
+    // Ensure the interface is no longer running any threads but the
+    // original reactor still exists.
+
+    NTCCFG_TEST_EQ(interface->numReactors(), 1);
+    NTCCFG_TEST_EQ(interface->numThreads(), 0);
+
+    // Stop the simulation.
+
+    simulation->stop();
+}
+
+NTSCFG_TEST_FUNCTION(ntcr::InterfaceTest::verifyCase2)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -274,7 +269,7 @@ void execute(bslma::Allocator* allocator)
     // Create the simulation.
 
     bsl::shared_ptr<ntcd::Simulation> simulation;
-    simulation.createInplace(allocator, allocator);
+    simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     error = simulation->run();
     NTCCFG_TEST_OK(error);
@@ -282,12 +277,12 @@ void execute(bslma::Allocator* allocator)
     // Create the data pool.
 
     bsl::shared_ptr<ntcs::DataPool> dataPool;
-    dataPool.createInplace(allocator, allocator);
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     // Create the reactor factory.
 
     bsl::shared_ptr<ntcd::ReactorFactory> reactorFactory;
-    reactorFactory.createInplace(allocator, allocator);
+    reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     for (bsl::size_t dynamicLoadBalancingIndex = 0;
          dynamicLoadBalancingIndex < 2;
@@ -356,21 +351,21 @@ void execute(bslma::Allocator* allocator)
                         dynamicLoadBalancing);
 
                     bsl::shared_ptr<ntcr::Interface> interface;
-                    interface.createInplace(allocator,
+                    interface.createInplace(NTSCFG_TEST_ALLOCATOR,
                                             interfaceConfig,
                                             dataPool,
                                             reactorFactory,
-                                            allocator);
+                                            NTSCFG_TEST_ALLOCATOR);
 
                     for (bsl::size_t restartIteration = 0;
                          restartIteration < NUM_RESTARTS;
                          ++restartIteration)
                     {
-                        test::case2::run(interface.get(),
-                                         numThreads,
-                                         restartIteration,
-                                         dynamicLoadBalancing,
-                                         dynamicThreadCount);
+                        InterfaceTest::run(interface,
+                                           numThreads,
+                                           restartIteration,
+                                           dynamicLoadBalancing,
+                                           dynamicThreadCount);
                     }
                 }
                 NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
@@ -383,37 +378,5 @@ void execute(bslma::Allocator* allocator)
     simulation->stop();
 }
 
-}  // close namespace case2
-
-}  // close namespace test
-
-NTCCFG_TEST_CASE(1)
-{
-    // Concern: Interface can be started and stopped.
-    // Plan:
-
-    ntccfg::TestAllocator ta;
-    {
-        test::case1::execute(&ta);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(2)
-{
-    // Concern: Interface can be started, stopped, restarted, and expanded.
-    // Plan:
-
-    ntccfg::TestAllocator ta;
-    {
-        test::case2::execute(&ta);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcr
+}  // close namespace BloombergLP

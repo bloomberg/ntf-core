@@ -24,47 +24,44 @@ using namespace BloombergLP;
 
 #if NTSCFG_MOCK_ENABLED
 
-namespace mock_test {
-
-class Interface
-{
-    virtual void f()  = 0;
-    virtual int  f1() = 0;
-
-    virtual void f2(int)  = 0;
-    virtual void f3(int*) = 0;
-    virtual void f4(int&) = 0;
-
-    virtual void f5(int, char)    = 0;
-    virtual void f5(int*, double) = 0;
-
-    virtual const bsl::shared_ptr<int>& f6(int*, double&, long) = 0;
-};
-
-NTF_MOCK_CLASS(MyMock, Interface)
-
-NTF_MOCK_METHOD(void, f)
-NTF_MOCK_METHOD(int, f1)
-
-NTF_MOCK_METHOD(void, f2, int)
-NTF_MOCK_METHOD(void, f3, int*)
-NTF_MOCK_METHOD(void, f4, int&)
-
-NTF_MOCK_METHOD(void, f5, int, char)
-NTF_MOCK_METHOD(void, f5, int*, double)
-
-NTF_MOCK_METHOD(const bsl::shared_ptr<int>&, f6, int*, double&, long)
-
-NTF_MOCK_CLASS_END;
-
-}
-
 namespace BloombergLP {
 namespace ntscfg {
 
 // Provide tests for 'ntscfg::Mock'.
 class MockTest
 {
+    class Interface
+    {
+        virtual void f()  = 0;
+        virtual int  f1() = 0;
+
+        virtual void f2(int)  = 0;
+        virtual void f3(int*) = 0;
+        virtual void f4(int&) = 0;
+
+        virtual void f5(int, char)    = 0;
+        virtual void f5(int*, double) = 0;
+
+        virtual const bsl::shared_ptr<int>& f6(int*, double&, long) = 0;
+    };
+
+    NTF_MOCK_CLASS(Derivation, Interface)
+
+    NTF_MOCK_METHOD(void, f)
+    NTF_MOCK_METHOD(int, f1)
+
+    NTF_MOCK_METHOD(void, f2, int)
+    NTF_MOCK_METHOD(void, f3, int*)
+    NTF_MOCK_METHOD(void, f4, int&)
+
+    NTF_MOCK_METHOD(void, f5, int, char)
+    NTF_MOCK_METHOD(void, f5, int*, double)
+
+    NTF_MOCK_METHOD(const bsl::shared_ptr<int>&, f6, int*, double&, long)
+
+    NTF_MOCK_CLASS_END;
+
+
   public:
     // TODO
     static void verifyCase1();
@@ -87,9 +84,7 @@ class MockTest
 
 NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase1)
 {
-    using namespace mock_test;
-
-    MyMock mock;
+    Derivation mock;
     NTF_EXPECT(mock, f).ONCE();
     mock.f();
 
@@ -102,9 +97,7 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase1)
 
 NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase2)
 {
-    using namespace mock_test;
-
-    MyMock mock;
+    Derivation mock;
 
     {
         // it means we do not case what argument is used when f2 is called
@@ -115,7 +108,7 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase2)
 
         // here we expect that the argument used to call f2 equals `expected`
         const int expected = 22;
-        NTF_EXPECT(mock, f2, TestMock::EQ(expected)).ONCE();
+        NTF_EXPECT(mock, f2, Mock::EQ(expected)).ONCE();
         mock.f2(val);
     }
     {
@@ -124,26 +117,24 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase2)
         int* expected_ptr = ptr;
 
         // expect that argument used to call f3 equals `expected_ptr`
-        NTF_EXPECT(mock, f3, TestMock::EQ(expected_ptr)).ONCE();
+        NTF_EXPECT(mock, f3, Mock::EQ(expected_ptr)).ONCE();
         mock.f3(ptr);
 
         //expect that when argument used to call f3 is dereferenced it equals
         //`expected value`
         int expected_value = value;
-        NTF_EXPECT(mock, f3, TestMock::EQ_DEREF(expected_value)).ONCE();
+        NTF_EXPECT(mock, f3, Mock::EQ_DEREF(expected_value)).ONCE();
         mock.f3(ptr);
 
         int& ref = value;
-        NTF_EXPECT(mock, f4, TestMock::EQ(value)).ONCE();
+        NTF_EXPECT(mock, f4, Mock::EQ(value)).ONCE();
         mock.f4(ref);
     }
 }
 
 NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase3)
 {
-    using namespace mock_test;
-
-    MyMock mock;
+    Derivation mock;
 
     {
         const int newValue = 55;
@@ -151,7 +142,7 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase3)
         // dereference it and set it value to `newValue`
         NTF_EXPECT(mock, f3, IGNORE_ARG)
             .ONCE()
-            .SET_ARG_1(TestMock::FROM_DEREF(newValue));
+            .SET_ARG_1(Mock::FROM_DEREF(newValue));
 
         int val = 0;
         mock.f3(&val);
@@ -160,7 +151,7 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase3)
         // the same can be done with references
         NTF_EXPECT(mock, f4, IGNORE_ARG)
             .ONCE()
-            .SET_ARG_1(TestMock::FROM(newValue));
+            .SET_ARG_1(Mock::FROM(newValue));
 
         int  data     = 12;
         int& data_ref = data;
@@ -171,16 +162,14 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase3)
 
 NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase4)
 {
-    using namespace mock_test;
-
-    MyMock mock;
+    Derivation mock;
 
     {
         // an argument can be saved to external variable to later used
         int storage = 0;
         NTF_EXPECT(mock, f2, IGNORE_ARG)
             .ONCE()
-            .SAVE_ARG_1(TestMock::TO(&storage));
+            .SAVE_ARG_1(Mock::TO(&storage));
 
         int val = 22;
         mock.f2(val);
@@ -190,7 +179,7 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase4)
     {
         //the same can be done with raw pointers
         int* ptr = 0;
-        NTF_EXPECT(mock, f3, IGNORE_ARG).ONCE().SAVE_ARG_1(TestMock::TO(&ptr));
+        NTF_EXPECT(mock, f3, IGNORE_ARG).ONCE().SAVE_ARG_1(Mock::TO(&ptr));
 
         int val = 6;
         mock.f3(&val);
@@ -200,7 +189,7 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase4)
         int storage = 0;
         NTF_EXPECT(mock, f3, IGNORE_ARG)
             .ONCE()
-            .SAVE_ARG_1(TestMock::TO_DEREF(&storage));
+            .SAVE_ARG_1(Mock::TO_DEREF(&storage));
 
         mock.f3(&val);
         NTSCFG_TEST_EQ(storage, val);
@@ -210,7 +199,7 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase4)
         int storage = 0;
         NTF_EXPECT(mock, f4, IGNORE_ARG)
             .ONCE()
-            .SAVE_ARG_1(TestMock::TO(&storage));
+            .SAVE_ARG_1(Mock::TO(&storage));
 
         int val = 7;
         mock.f4(val);
@@ -220,9 +209,7 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase4)
 
 NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase5)
 {
-    using namespace mock_test;
-
-    MyMock mock;
+    Derivation mock;
 
     {
         //for overloaded methods we need to specify type of an argument using
@@ -247,14 +234,15 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase5)
 
 NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase6)
 {
-    using namespace mock_test;
-
-    MyMock mock;
+    Derivation mock;
     {
         //see how references can be returned and multiple arguments
         //expectations can be set
 
-        bsl::shared_ptr<int>        sptr(new int(14));
+        bsl::shared_ptr<int> sptr;
+        sptr.createInplace(NTSCFG_TEST_ALLOCATOR);
+        *sptr = 14;
+        
         const bsl::shared_ptr<int>& sptrRef = sptr;
 
         int    expectedInt    = 22;
@@ -264,12 +252,12 @@ NTSCFG_TEST_FUNCTION(ntscfg::MockTest::verifyCase6)
         double newDouble      = 8.8;
         NTF_EXPECT(mock,
                    f6,
-                   TestMock::EQ_DEREF(expectedInt),
-                   TestMock::EQ(expectedDouble),
-                   TestMock::EQ(expectedLong))
+                   Mock::EQ_DEREF(expectedInt),
+                   Mock::EQ(expectedDouble),
+                   Mock::EQ(expectedLong))
             .ONCE()
-            .SAVE_ARG_1(TestMock::TO(&ptr))
-            .SET_ARG_2(TestMock::FROM(newDouble))
+            .SAVE_ARG_1(Mock::TO(&ptr))
+            .SET_ARG_2(Mock::FROM(newDouble))
             .RETURNREF(sptrRef);
 
         const bsl::shared_ptr<int>& res =
