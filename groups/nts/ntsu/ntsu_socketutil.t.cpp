@@ -8168,17 +8168,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
             NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
             NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
 
-            SocketUtilTest::extractZeroCopyNotifications(&feedback,
-                                                         handle,
-                                                         NTSCFG_TEST_ALLOCATOR);
+            SocketUtilTest::extractZeroCopyNotifications(
+                &feedback,
+                handle,
+                NTSCFG_TEST_ALLOCATOR);
         }
 
         // retrieve data from the socket error queue until all send system
         // calls are acknowledged by the OS
         while (!sendIDs.empty()) {
-            SocketUtilTest::extractZeroCopyNotifications(&feedback,
-                                                         handle,
-                                                         NTSCFG_TEST_ALLOCATOR);
+            SocketUtilTest::extractZeroCopyNotifications(
+                &feedback,
+                handle,
+                NTSCFG_TEST_ALLOCATOR);
 
             while (!feedback.empty()) {
                 const ntsa::ZeroCopy& zc = feedback.front();

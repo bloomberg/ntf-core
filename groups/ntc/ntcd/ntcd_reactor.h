@@ -21,7 +21,6 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_reactorconfig.h>
 #include <ntccfg_platform.h>
-#include <ntccfg_test.h>
 #include <ntcd_datagramsocket.h>
 #include <ntcd_listenersocket.h>
 #include <ntcd_streamsocket.h>
@@ -41,6 +40,7 @@ BSLS_IDENT("$Id: $")
 #include <ntcs_driver.h>
 #include <ntcs_registry.h>
 #include <ntcscm_version.h>
+#include <ntscfg_mock.h>
 #include <bsl_memory.h>
 #include <bsl_string.h>
 #include <bsl_vector.h>
@@ -108,7 +108,7 @@ class Reactor : public ntci::Reactor,
     bslma::Allocator*                           d_allocator_p;
 
   private:
-             Reactor(const Reactor&) BSLS_KEYWORD_DELETED;
+    Reactor(const Reactor&) BSLS_KEYWORD_DELETED;
     Reactor& operator=(const Reactor&) BSLS_KEYWORD_DELETED;
 
   private:
@@ -606,7 +606,7 @@ class ReactorFactory : public ntci::ReactorFactory
     bslma::Allocator* d_allocator_p;
 
   private:
-                    ReactorFactory(const ReactorFactory&) BSLS_KEYWORD_DELETED;
+    ReactorFactory(const ReactorFactory&) BSLS_KEYWORD_DELETED;
     ReactorFactory& operator=(const ReactorFactory&) BSLS_KEYWORD_DELETED;
 
   public:
@@ -629,7 +629,7 @@ class ReactorFactory : public ntci::ReactorFactory
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 };
 
-#if NTCCFG_TEST_MOCK_ENABLED
+#if NTSCFG_MOCK_ENABLED
 
 NTF_MOCK_CLASS(ReactorMock, ntci::Reactor)
 

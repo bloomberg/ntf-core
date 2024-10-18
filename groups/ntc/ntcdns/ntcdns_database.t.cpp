@@ -13,50 +13,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcdns_database_t_cpp, "$Id$ $CSID$")
+
 #include <ntcdns_database.h>
 
-#include <ntccfg_test.h>
 #include <ntcdns_compat.h>
 #include <ntcdns_utility.h>
 #include <ntci_log.h>
 #include <ntsa_host.h>
 
-#include <bdlb_chartype.h>
-#include <bdlma_bufferedsequentialallocator.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bslmt_lockguard.h>
-#include <bsls_alignedbuffer.h>
-#include <bsls_assert.h>
-#include <bsls_stopwatch.h>
-#include <bsl_array.h>
-#include <bsl_iostream.h>
-#include <bsl_map.h>
-#include <bsl_set.h>
-#include <bsl_unordered_map.h>
-#include <bsl_unordered_set.h>
-
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntcdns {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntcdns::Database'.
+class DatabaseTest
+{
+    /// Provide a host database for use by this test driver. This class is
+    /// thread safe.
+    class HostDatabase;
 
-namespace test {
+    /// Provide a port database for use by this test driver. This class is
+    /// thread safe.
+    class PortDatabase;
+
+    /// Dump the specified 'portDatabase' to the log.
+    static void dump(const ntcdns::PortDatabase& portDatabase);
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+};
 
 /// Provide a host database for use by this test driver. This class is thread
 /// safe.
-class HostDatabase
+class DatabaseTest::HostDatabase
 {
     /// Define a type alias for a vector of IP addresses.
     typedef bsl::vector<ntsa::IpAddress> IpAddressVector;
@@ -138,7 +142,7 @@ class HostDatabase
 
 /// Provide a port database for use by this test driver. This class is thread
 /// safe.
-class PortDatabase
+class DatabaseTest::PortDatabase
 {
     /// Define a type alias for a vector of port numbers.
     typedef bsl::vector<ntsa::Port> PortVector;
@@ -214,7 +218,7 @@ class PortDatabase
         const ntca::GetServiceNameOptions& options) const;
 };
 
-HostDatabase::HostDatabase(bslma::Allocator* basicAllocator)
+DatabaseTest::HostDatabase::HostDatabase(bslma::Allocator* basicAllocator)
 : d_mutex()
 , d_ipAddressByDomainName(basicAllocator)
 , d_domainNameByIpAddress(basicAllocator)
@@ -222,11 +226,11 @@ HostDatabase::HostDatabase(bslma::Allocator* basicAllocator)
 {
 }
 
-HostDatabase::~HostDatabase()
+DatabaseTest::HostDatabase::~HostDatabase()
 {
 }
 
-void HostDatabase::clear()
+void DatabaseTest::HostDatabase::clear()
 {
     LockGuard guard(&d_mutex);
 
@@ -234,7 +238,7 @@ void HostDatabase::clear()
     d_domainNameByIpAddress.clear();
 }
 
-ntsa::Error HostDatabase::addHostEntryList(
+ntsa::Error DatabaseTest::HostDatabase::addHostEntryList(
     const ntcdns::HostDatabaseConfig& configuration)
 {
     ntsa::Error error;
@@ -254,7 +258,8 @@ ntsa::Error HostDatabase::addHostEntryList(
     return ntsa::Error();
 }
 
-ntsa::Error HostDatabase::addHostEntry(const ntcdns::HostEntry& entry)
+ntsa::Error DatabaseTest::HostDatabase::addHostEntry(
+    const ntcdns::HostEntry& entry)
 {
     NTCI_LOG_CONTEXT();
 
@@ -349,16 +354,18 @@ ntsa::Error HostDatabase::addHostEntry(const ntcdns::HostEntry& entry)
     return ntsa::Error();
 }
 
-ntsa::Error HostDatabase::addHostEntry(const bsl::string& address,
-                                       const bsl::string& canonicalHostname)
+ntsa::Error DatabaseTest::HostDatabase::addHostEntry(
+    const bsl::string& address,
+    const bsl::string& canonicalHostname)
 {
     bsl::vector<bsl::string> aliases;
     return this->addHostEntry(address, canonicalHostname, aliases);
 }
 
-ntsa::Error HostDatabase::addHostEntry(const bsl::string& address,
-                                       const bsl::string& canonicalHostname,
-                                       const bsl::vector<bsl::string>& aliases)
+ntsa::Error DatabaseTest::HostDatabase::addHostEntry(
+    const bsl::string&              address,
+    const bsl::string&              canonicalHostname,
+    const bsl::vector<bsl::string>& aliases)
 {
     ntcdns::HostEntry entry;
     entry.address()           = address;
@@ -368,7 +375,7 @@ ntsa::Error HostDatabase::addHostEntry(const bsl::string& address,
     return this->addHostEntry(entry);
 }
 
-ntsa::Error HostDatabase::getIpAddress(
+ntsa::Error DatabaseTest::HostDatabase::getIpAddress(
     ntca::GetIpAddressContext*       context,
     bsl::vector<ntsa::IpAddress>*    result,
     const bslstl::StringRef&         domainName,
@@ -428,7 +435,7 @@ ntsa::Error HostDatabase::getIpAddress(
     return ntsa::Error();
 }
 
-ntsa::Error HostDatabase::getDomainName(
+ntsa::Error DatabaseTest::HostDatabase::getDomainName(
     ntca::GetDomainNameContext*       context,
     bsl::string*                      result,
     const ntsa::IpAddress&            ipAddress,
@@ -455,7 +462,7 @@ ntsa::Error HostDatabase::getDomainName(
     return ntsa::Error();
 }
 
-PortDatabase::PortDatabase(bslma::Allocator* basicAllocator)
+DatabaseTest::PortDatabase::PortDatabase(bslma::Allocator* basicAllocator)
 : d_mutex()
 , d_tcpPortByServiceName(basicAllocator)
 , d_tcpServiceNameByPort(basicAllocator)
@@ -465,11 +472,11 @@ PortDatabase::PortDatabase(bslma::Allocator* basicAllocator)
 {
 }
 
-PortDatabase::~PortDatabase()
+DatabaseTest::PortDatabase::~PortDatabase()
 {
 }
 
-void PortDatabase::clear()
+void DatabaseTest::PortDatabase::clear()
 {
     LockGuard guard(&d_mutex);
 
@@ -479,7 +486,7 @@ void PortDatabase::clear()
     d_udpServiceNameByPort.clear();
 }
 
-ntsa::Error PortDatabase::addPortEntryList(
+ntsa::Error DatabaseTest::PortDatabase::addPortEntryList(
     const ntcdns::PortDatabaseConfig& configuration)
 {
     ntsa::Error error;
@@ -499,7 +506,8 @@ ntsa::Error PortDatabase::addPortEntryList(
     return ntsa::Error();
 }
 
-ntsa::Error PortDatabase::addPortEntry(const ntcdns::PortEntry& entry)
+ntsa::Error DatabaseTest::PortDatabase::addPortEntry(
+    const ntcdns::PortEntry& entry)
 {
     NTCI_LOG_CONTEXT();
 
@@ -559,9 +567,10 @@ ntsa::Error PortDatabase::addPortEntry(const ntcdns::PortEntry& entry)
     return ntsa::Error();
 }
 
-ntsa::Error PortDatabase::addPortEntry(const bsl::string& service,
-                                       ntsa::Port         port,
-                                       const bsl::string& protocol)
+ntsa::Error DatabaseTest::PortDatabase::addPortEntry(
+    const bsl::string& service,
+    ntsa::Port         port,
+    const bsl::string& protocol)
 {
     ntcdns::PortEntry entry;
     entry.service()  = service;
@@ -571,10 +580,11 @@ ntsa::Error PortDatabase::addPortEntry(const bsl::string& service,
     return this->addPortEntry(entry);
 }
 
-ntsa::Error PortDatabase::getPort(ntca::GetPortContext*       context,
-                                  bsl::vector<ntsa::Port>*    result,
-                                  const bslstl::StringRef&    serviceName,
-                                  const ntca::GetPortOptions& options) const
+ntsa::Error DatabaseTest::PortDatabase::getPort(
+    ntca::GetPortContext*       context,
+    bsl::vector<ntsa::Port>*    result,
+    const bslstl::StringRef&    serviceName,
+    const ntca::GetPortOptions& options) const
 {
     result->clear();
 
@@ -683,7 +693,7 @@ ntsa::Error PortDatabase::getPort(ntca::GetPortContext*       context,
     return ntsa::Error();
 }
 
-ntsa::Error PortDatabase::getServiceName(
+ntsa::Error DatabaseTest::PortDatabase::getServiceName(
     ntca::GetServiceNameContext*       context,
     bsl::string*                       result,
     const ntsa::Port&                  port,
@@ -766,7 +776,7 @@ ntsa::Error PortDatabase::getServiceName(
     return ntsa::Error();
 }
 
-void dump(const ntcdns::PortDatabase& portDatabase)
+void DatabaseTest::dump(const ntcdns::PortDatabase& portDatabase)
 {
     typedef bsl::vector<ntcdns::PortEntry> PortEntryVector;
 
@@ -784,9 +794,7 @@ void dump(const ntcdns::PortDatabase& portDatabase)
     }
 }
 
-}  // close namespace test
-
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcdns::DatabaseTest::verifyCase1)
 {
     // Concern: Host database configurations from user-defined text.
     // Plan:
@@ -821,575 +829,562 @@ NTCCFG_TEST_CASE(1)
     "\n";
     // clang-format on
 
-    ntccfg::TestAllocator ta;
+    ntcdns::HostDatabase hostDatabase(NTSCFG_TEST_ALLOCATOR);
+
+    error = hostDatabase.loadText(ETC_HOSTS, sizeof ETC_HOSTS - 1);
+    NTSCFG_TEST_OK(error);
+
+    //
+    // Test 'getIpAddress'.
+    //
+
+    // Get IP address for test-ipv4-1.
+
     {
-        ntcdns::HostDatabase hostDatabase(&ta);
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
 
-        error = hostDatabase.loadText(ETC_HOSTS, sizeof ETC_HOSTS - 1);
-        NTCCFG_TEST_OK(error);
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv4-1",
+                                          options);
+        NTSCFG_TEST_OK(error);
 
-        //
-        // Test 'getIpAddress'.
-        //
+        NTSCFG_TEST_EQ(ipAddressList.size(), 1);
+        NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.1.101"));
+    }
 
-        // Get IP address for test-ipv4-1.
+    // Get IPv4 address for test-ipv4-1.
 
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
 
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv4-1",
-                                              options);
-            NTCCFG_TEST_OK(error);
+        options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-            NTCCFG_TEST_EQ(ipAddressList.size(), 1);
-            NTCCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.1.101"));
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv4-1",
+                                          options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(ipAddressList.size(), 1);
+        NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.1.101"));
+    }
+
+    // Get IPv6 address for test-ipv4-1.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        options.setIpAddressType(ntsa::IpAddressType::e_V6);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv4-1",
+                                          options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    // Get IP address for test-ipv4-2.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv4-2",
+                                          options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(ipAddressList.size(), 2);
+        NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.1.102"));
+        NTSCFG_TEST_EQ(ipAddressList[1], ntsa::IpAddress("192.168.1.103"));
+    }
+
+    // Get IPv4 address for test-ipv4-2.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv4-2",
+                                          options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(ipAddressList.size(), 2);
+        NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.1.102"));
+        NTSCFG_TEST_EQ(ipAddressList[1], ntsa::IpAddress("192.168.1.103"));
+    }
+
+    // Get IPv6 address for test-ipv4-2.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        options.setIpAddressType(ntsa::IpAddressType::e_V6);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv4-2",
+                                          options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    // Get IP address for test-ipv6-1.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv6-1",
+                                          options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(ipAddressList.size(), 1);
+        NTSCFG_TEST_EQ(ipAddressList[0],
+                       ntsa::IpAddress("2001:0db8::1:0:0:1"));
+    }
+
+    // Get IPv4 address for test-ipv6-1.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv6-1",
+                                          options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    // Get IPv6 address for test-ipv6-1.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        options.setIpAddressType(ntsa::IpAddressType::e_V6);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv6-1",
+                                          options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(ipAddressList.size(), 1);
+        NTSCFG_TEST_EQ(ipAddressList[0],
+                       ntsa::IpAddress("2001:0db8::1:0:0:1"));
+    }
+
+    // Get IP address for test-ipv6-2.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv6-2",
+                                          options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(ipAddressList.size(), 2);
+        NTSCFG_TEST_EQ(ipAddressList[0],
+                       ntsa::IpAddress("2001:0db8::1:0:0:2"));
+        NTSCFG_TEST_EQ(ipAddressList[1],
+                       ntsa::IpAddress("2001:0db8::1:0:0:3"));
+    }
+
+    // Get IPv4 address for test-ipv6-2.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv6-2",
+                                          options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    // Get IPv6 address for test-ipv4-2.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        options.setIpAddressType(ntsa::IpAddressType::e_V6);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-ipv6-2",
+                                          options);
+        NTSCFG_TEST_EQ(ipAddressList[0],
+                       ntsa::IpAddress("2001:0db8::1:0:0:2"));
+        NTSCFG_TEST_EQ(ipAddressList[1],
+                       ntsa::IpAddress("2001:0db8::1:0:0:3"));
+    }
+
+    // Get IP address for test-both.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-both",
+                                          options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(ipAddressList.size(), 6);
+        NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.2.101"));
+        NTSCFG_TEST_EQ(ipAddressList[1], ntsa::IpAddress("192.168.2.102"));
+        NTSCFG_TEST_EQ(ipAddressList[2], ntsa::IpAddress("192.168.2.103"));
+        NTSCFG_TEST_EQ(ipAddressList[3],
+                       ntsa::IpAddress("2001:0db8::2:0:0:1"));
+        NTSCFG_TEST_EQ(ipAddressList[4],
+                       ntsa::IpAddress("2001:0db8::2:0:0:2"));
+        NTSCFG_TEST_EQ(ipAddressList[5],
+                       ntsa::IpAddress("2001:0db8::2:0:0:3"));
+    }
+
+    // Get IPv4 address for test-both.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-both",
+                                          options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(ipAddressList.size(), 3);
+        NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.2.101"));
+        NTSCFG_TEST_EQ(ipAddressList[1], ntsa::IpAddress("192.168.2.102"));
+        NTSCFG_TEST_EQ(ipAddressList[2], ntsa::IpAddress("192.168.2.103"));
+    }
+
+    // Get IPv6 address for test-both.
+
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        options.setIpAddressType(ntsa::IpAddressType::e_V6);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-both",
+                                          options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(ipAddressList.size(), 3);
+        NTSCFG_TEST_EQ(ipAddressList[0],
+                       ntsa::IpAddress("2001:0db8::2:0:0:1"));
+        NTSCFG_TEST_EQ(ipAddressList[1],
+                       ntsa::IpAddress("2001:0db8::2:0:0:2"));
+        NTSCFG_TEST_EQ(ipAddressList[2],
+                       ntsa::IpAddress("2001:0db8::2:0:0:3"));
+    }
+
+    // Get IP address for test-both with round-robin selection.
+
+    for (bsl::size_t i = 0; i < 2 * 6; ++i) {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
+
+        options.setIpAddressSelector(i);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-both",
+                                          options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(ipAddressList.size(), 1);
+
+        if (i % 6 == 0) {
+            NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.2.101"));
         }
 
-        // Get IPv4 address for test-ipv4-1.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            options.setIpAddressType(ntsa::IpAddressType::e_V4);
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv4-1",
-                                              options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(ipAddressList.size(), 1);
-            NTCCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.1.101"));
+        if (i % 6 == 1) {
+            NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.2.102"));
         }
 
-        // Get IPv6 address for test-ipv4-1.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            options.setIpAddressType(ntsa::IpAddressType::e_V6);
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv4-1",
-                                              options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+        if (i % 6 == 2) {
+            NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.2.103"));
         }
 
-        // Get IP address for test-ipv4-2.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv4-2",
-                                              options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(ipAddressList.size(), 2);
-            NTCCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.1.102"));
-            NTCCFG_TEST_EQ(ipAddressList[1], ntsa::IpAddress("192.168.1.103"));
-        }
-
-        // Get IPv4 address for test-ipv4-2.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            options.setIpAddressType(ntsa::IpAddressType::e_V4);
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv4-2",
-                                              options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(ipAddressList.size(), 2);
-            NTCCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.1.102"));
-            NTCCFG_TEST_EQ(ipAddressList[1], ntsa::IpAddress("192.168.1.103"));
-        }
-
-        // Get IPv6 address for test-ipv4-2.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            options.setIpAddressType(ntsa::IpAddressType::e_V6);
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv4-2",
-                                              options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        // Get IP address for test-ipv6-1.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv6-1",
-                                              options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(ipAddressList.size(), 1);
-            NTCCFG_TEST_EQ(ipAddressList[0],
-                           ntsa::IpAddress("2001:0db8::1:0:0:1"));
-        }
-
-        // Get IPv4 address for test-ipv6-1.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            options.setIpAddressType(ntsa::IpAddressType::e_V4);
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv6-1",
-                                              options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        // Get IPv6 address for test-ipv6-1.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            options.setIpAddressType(ntsa::IpAddressType::e_V6);
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv6-1",
-                                              options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(ipAddressList.size(), 1);
-            NTCCFG_TEST_EQ(ipAddressList[0],
-                           ntsa::IpAddress("2001:0db8::1:0:0:1"));
-        }
-
-        // Get IP address for test-ipv6-2.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv6-2",
-                                              options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(ipAddressList.size(), 2);
-            NTCCFG_TEST_EQ(ipAddressList[0],
-                           ntsa::IpAddress("2001:0db8::1:0:0:2"));
-            NTCCFG_TEST_EQ(ipAddressList[1],
-                           ntsa::IpAddress("2001:0db8::1:0:0:3"));
-        }
-
-        // Get IPv4 address for test-ipv6-2.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            options.setIpAddressType(ntsa::IpAddressType::e_V4);
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv6-2",
-                                              options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        // Get IPv6 address for test-ipv4-2.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            options.setIpAddressType(ntsa::IpAddressType::e_V6);
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-ipv6-2",
-                                              options);
-            NTCCFG_TEST_EQ(ipAddressList[0],
-                           ntsa::IpAddress("2001:0db8::1:0:0:2"));
-            NTCCFG_TEST_EQ(ipAddressList[1],
-                           ntsa::IpAddress("2001:0db8::1:0:0:3"));
-        }
-
-        // Get IP address for test-both.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-both",
-                                              options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(ipAddressList.size(), 6);
-            NTCCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.2.101"));
-            NTCCFG_TEST_EQ(ipAddressList[1], ntsa::IpAddress("192.168.2.102"));
-            NTCCFG_TEST_EQ(ipAddressList[2], ntsa::IpAddress("192.168.2.103"));
-            NTCCFG_TEST_EQ(ipAddressList[3],
+        if (i % 6 == 3) {
+            NTSCFG_TEST_EQ(ipAddressList[0],
                            ntsa::IpAddress("2001:0db8::2:0:0:1"));
-            NTCCFG_TEST_EQ(ipAddressList[4],
+        }
+
+        if (i % 6 == 4) {
+            NTSCFG_TEST_EQ(ipAddressList[0],
                            ntsa::IpAddress("2001:0db8::2:0:0:2"));
-            NTCCFG_TEST_EQ(ipAddressList[5],
+        }
+
+        if (i % 6 == 5) {
+            NTSCFG_TEST_EQ(ipAddressList[0],
                            ntsa::IpAddress("2001:0db8::2:0:0:3"));
         }
+    }
 
-        // Get IPv4 address for test-both.
+    // Get IPv4 address for test-both with round-robin selection.
 
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
+    for (bsl::size_t i = 0; i < 2 * 3; ++i) {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
 
-            options.setIpAddressType(ntsa::IpAddressType::e_V4);
+        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+        options.setIpAddressSelector(i);
 
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-both",
-                                              options);
-            NTCCFG_TEST_OK(error);
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-both",
+                                          options);
+        NTSCFG_TEST_OK(error);
 
-            NTCCFG_TEST_EQ(ipAddressList.size(), 3);
-            NTCCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.2.101"));
-            NTCCFG_TEST_EQ(ipAddressList[1], ntsa::IpAddress("192.168.2.102"));
-            NTCCFG_TEST_EQ(ipAddressList[2], ntsa::IpAddress("192.168.2.103"));
+        NTSCFG_TEST_EQ(ipAddressList.size(), 1);
+
+        if (i % 3 == 0) {
+            NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.2.101"));
         }
 
-        // Get IPv6 address for test-both.
+        if (i % 3 == 1) {
+            NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.2.102"));
+        }
 
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
+        if (i % 3 == 2) {
+            NTSCFG_TEST_EQ(ipAddressList[0], ntsa::IpAddress("192.168.2.103"));
+        }
+    }
 
-            options.setIpAddressType(ntsa::IpAddressType::e_V6);
+    // Get IPv6 address for test-both with round-robin selection.
 
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-both",
-                                              options);
-            NTCCFG_TEST_OK(error);
+    for (bsl::size_t i = 0; i < 2 * 3; ++i) {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
 
-            NTCCFG_TEST_EQ(ipAddressList.size(), 3);
-            NTCCFG_TEST_EQ(ipAddressList[0],
+        options.setIpAddressType(ntsa::IpAddressType::e_V6);
+        options.setIpAddressSelector(i);
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-both",
+                                          options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(ipAddressList.size(), 1);
+
+        if (i % 3 == 0) {
+            NTSCFG_TEST_EQ(ipAddressList[0],
                            ntsa::IpAddress("2001:0db8::2:0:0:1"));
-            NTCCFG_TEST_EQ(ipAddressList[1],
+        }
+
+        if (i % 3 == 1) {
+            NTSCFG_TEST_EQ(ipAddressList[0],
                            ntsa::IpAddress("2001:0db8::2:0:0:2"));
-            NTCCFG_TEST_EQ(ipAddressList[2],
+        }
+
+        if (i % 3 == 2) {
+            NTSCFG_TEST_EQ(ipAddressList[0],
                            ntsa::IpAddress("2001:0db8::2:0:0:3"));
         }
+    }
 
-        // Get IP address for test-both with round-robin selection.
+    // Get IP address for test-removed.
 
-        for (bsl::size_t i = 0; i < 2 * 6; ++i) {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
 
-            options.setIpAddressSelector(i);
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-removed",
+                                          options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
 
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-both",
-                                              options);
-            NTCCFG_TEST_OK(error);
+    // Get IP address for test-nonexistant.
 
-            NTCCFG_TEST_EQ(ipAddressList.size(), 1);
+    {
+        ntca::GetIpAddressContext context;
+        ntca::GetIpAddressOptions options;
 
-            if (i % 6 == 0) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("192.168.2.101"));
-            }
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        error = hostDatabase.getIpAddress(&context,
+                                          &ipAddressList,
+                                          "test-nonexistant",
+                                          options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
 
-            if (i % 6 == 1) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("192.168.2.102"));
-            }
+    //
+    // Test 'getDomainName'.
+    //
 
-            if (i % 6 == 2) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("192.168.2.103"));
-            }
+    // Get domain name for 127.0.0.1.
 
-            if (i % 6 == 3) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("2001:0db8::2:0:0:1"));
-            }
+    {
+        ntca::GetDomainNameContext context;
+        ntca::GetDomainNameOptions options;
 
-            if (i % 6 == 4) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("2001:0db8::2:0:0:2"));
-            }
+        bsl::string domainName;
+        error = hostDatabase.getDomainName(&context,
+                                           &domainName,
+                                           ntsa::IpAddress("127.0.0.1"),
+                                           options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(domainName, "localhost.localdomain");
+    }
 
-            if (i % 6 == 5) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("2001:0db8::2:0:0:3"));
-            }
-        }
+    // Get domain name for an IP address that results in 'test-ipv4-1'.
 
-        // Get IPv4 address for test-both with round-robin selection.
+    {
+        ntca::GetDomainNameContext context;
+        ntca::GetDomainNameOptions options;
 
-        for (bsl::size_t i = 0; i < 2 * 3; ++i) {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            options.setIpAddressType(ntsa::IpAddressType::e_V4);
-            options.setIpAddressSelector(i);
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-both",
-                                              options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(ipAddressList.size(), 1);
-
-            if (i % 3 == 0) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("192.168.2.101"));
-            }
-
-            if (i % 3 == 1) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("192.168.2.102"));
-            }
-
-            if (i % 3 == 2) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("192.168.2.103"));
-            }
-        }
-
-        // Get IPv6 address for test-both with round-robin selection.
-
-        for (bsl::size_t i = 0; i < 2 * 3; ++i) {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            options.setIpAddressType(ntsa::IpAddressType::e_V6);
-            options.setIpAddressSelector(i);
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-both",
-                                              options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(ipAddressList.size(), 1);
-
-            if (i % 3 == 0) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("2001:0db8::2:0:0:1"));
-            }
-
-            if (i % 3 == 1) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("2001:0db8::2:0:0:2"));
-            }
-
-            if (i % 3 == 2) {
-                NTCCFG_TEST_EQ(ipAddressList[0],
-                               ntsa::IpAddress("2001:0db8::2:0:0:3"));
-            }
-        }
-
-        // Get IP address for test-removed.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-removed",
-                                              options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        // Get IP address for test-nonexistant.
-
-        {
-            ntca::GetIpAddressContext context;
-            ntca::GetIpAddressOptions options;
-
-            bsl::vector<ntsa::IpAddress> ipAddressList;
-            error = hostDatabase.getIpAddress(&context,
-                                              &ipAddressList,
-                                              "test-nonexistant",
-                                              options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        //
-        // Test 'getDomainName'.
-        //
-
-        // Get domain name for 127.0.0.1.
-
-        {
-            ntca::GetDomainNameContext context;
-            ntca::GetDomainNameOptions options;
-
-            bsl::string domainName;
-            error = hostDatabase.getDomainName(&context,
-                                               &domainName,
-                                               ntsa::IpAddress("127.0.0.1"),
-                                               options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(domainName, "localhost.localdomain");
-        }
-
-        // Get domain name for an IP address that results in 'test-ipv4-1'.
-
-        {
-            ntca::GetDomainNameContext context;
-            ntca::GetDomainNameOptions options;
-
-            bsl::string domainName;
-            error =
-                hostDatabase.getDomainName(&context,
+        bsl::string domainName;
+        error = hostDatabase.getDomainName(&context,
                                            &domainName,
                                            ntsa::IpAddress("192.168.1.101"),
                                            options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(domainName, "test-ipv4-1");
-        }
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(domainName, "test-ipv4-1");
+    }
 
-        // Get domain name for an IP address that results in 'test-ipv4-2'.
+    // Get domain name for an IP address that results in 'test-ipv4-2'.
 
-        {
-            ntca::GetDomainNameContext context;
-            ntca::GetDomainNameOptions options;
+    {
+        ntca::GetDomainNameContext context;
+        ntca::GetDomainNameOptions options;
 
-            bsl::string domainName;
-            error =
-                hostDatabase.getDomainName(&context,
+        bsl::string domainName;
+        error = hostDatabase.getDomainName(&context,
                                            &domainName,
                                            ntsa::IpAddress("192.168.1.102"),
                                            options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(domainName, "test-ipv4-2");
-        }
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(domainName, "test-ipv4-2");
+    }
 
-        {
-            ntca::GetDomainNameContext context;
-            ntca::GetDomainNameOptions options;
+    {
+        ntca::GetDomainNameContext context;
+        ntca::GetDomainNameOptions options;
 
-            bsl::string domainName;
-            error =
-                hostDatabase.getDomainName(&context,
+        bsl::string domainName;
+        error = hostDatabase.getDomainName(&context,
                                            &domainName,
                                            ntsa::IpAddress("192.168.1.103"),
                                            options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(domainName, "test-ipv4-2");
-        }
-
-        // Get domain name for an IP address that results in 'test-ipv6-1'.
-
-        {
-            ntca::GetDomainNameContext context;
-            ntca::GetDomainNameOptions options;
-
-            bsl::string domainName;
-            error = hostDatabase.getDomainName(
-                &context,
-                &domainName,
-                ntsa::IpAddress("2001:0db8::1:0:0:1"),
-                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(domainName, "test-ipv6-1");
-        }
-
-        // Get domain name for an IP address that results in 'test-ipv6-2'.
-
-        {
-            ntca::GetDomainNameContext context;
-            ntca::GetDomainNameOptions options;
-
-            bsl::string domainName;
-            error = hostDatabase.getDomainName(
-                &context,
-                &domainName,
-                ntsa::IpAddress("2001:0db8::1:0:0:2"),
-                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(domainName, "test-ipv6-2");
-        }
-
-        {
-            ntca::GetDomainNameContext context;
-            ntca::GetDomainNameOptions options;
-
-            bsl::string domainName;
-            error = hostDatabase.getDomainName(
-                &context,
-                &domainName,
-                ntsa::IpAddress("2001:0db8::1:0:0:3"),
-                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(domainName, "test-ipv6-2");
-        }
-
-        // Get a domain name for an unknown IP address.
-
-        {
-            ntca::GetDomainNameContext context;
-            ntca::GetDomainNameOptions options;
-
-            bsl::string domainName;
-            error = hostDatabase.getDomainName(&context,
-                                               &domainName,
-                                               ntsa::IpAddress("10.10.0.1"),
-                                               options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(domainName, "test-ipv4-2");
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    // Get domain name for an IP address that results in 'test-ipv6-1'.
+
+    {
+        ntca::GetDomainNameContext context;
+        ntca::GetDomainNameOptions options;
+
+        bsl::string domainName;
+        error =
+            hostDatabase.getDomainName(&context,
+                                       &domainName,
+                                       ntsa::IpAddress("2001:0db8::1:0:0:1"),
+                                       options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(domainName, "test-ipv6-1");
+    }
+
+    // Get domain name for an IP address that results in 'test-ipv6-2'.
+
+    {
+        ntca::GetDomainNameContext context;
+        ntca::GetDomainNameOptions options;
+
+        bsl::string domainName;
+        error =
+            hostDatabase.getDomainName(&context,
+                                       &domainName,
+                                       ntsa::IpAddress("2001:0db8::1:0:0:2"),
+                                       options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(domainName, "test-ipv6-2");
+    }
+
+    {
+        ntca::GetDomainNameContext context;
+        ntca::GetDomainNameOptions options;
+
+        bsl::string domainName;
+        error =
+            hostDatabase.getDomainName(&context,
+                                       &domainName,
+                                       ntsa::IpAddress("2001:0db8::1:0:0:3"),
+                                       options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(domainName, "test-ipv6-2");
+    }
+
+    // Get a domain name for an unknown IP address.
+
+    {
+        ntca::GetDomainNameContext context;
+        ntca::GetDomainNameOptions options;
+
+        bsl::string domainName;
+        error = hostDatabase.getDomainName(&context,
+                                           &domainName,
+                                           ntsa::IpAddress("10.10.0.1"),
+                                           options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcdns::DatabaseTest::verifyCase2)
 {
     // Concern: Port database configurations from user-defined text.
     // Plan:
@@ -1446,692 +1441,656 @@ NTCCFG_TEST_CASE(2)
     "\n";
     // clang-format on
 
-    ntccfg::TestAllocator ta;
+    ntcdns::PortDatabase portDatabase(NTSCFG_TEST_ALLOCATOR);
+
+    error = portDatabase.loadText(ETC_SERVICES, sizeof ETC_SERVICES - 1);
+    NTSCFG_TEST_OK(error);
+
+    //
+    // Test 'getPort'.
+    //
+
+    // Get port for 'test-shared'.
+
     {
-        ntcdns::PortDatabase portDatabase(&ta);
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
 
-        error = portDatabase.loadText(ETC_SERVICES, sizeof ETC_SERVICES - 1);
-        NTCCFG_TEST_OK(error);
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-shared", options);
+        NTSCFG_TEST_OK(error);
 
-        //
-        // Test 'getPort'.
-        //
+        NTSCFG_TEST_EQ(portList.size(), 1);
+        NTSCFG_TEST_EQ(portList[0], 50000);
+    }
 
-        // Get port for 'test-shared'.
+    // Get TCP port for 'test-shared'.
 
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
 
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-shared",
-                                         options);
-            NTCCFG_TEST_OK(error);
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
-            NTCCFG_TEST_EQ(portList.size(), 1);
-            NTCCFG_TEST_EQ(portList[0], 50000);
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-shared", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 1);
+        NTSCFG_TEST_EQ(portList[0], 50000);
+    }
+
+    // Get UDP port for 'test-shared'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-shared", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 1);
+        NTSCFG_TEST_EQ(portList[0], 50000);
+    }
+
+    // Get port for 'test-both'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-both", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 2);
+        NTSCFG_TEST_EQ(portList[0], 50001);
+        NTSCFG_TEST_EQ(portList[1], 50002);
+    }
+
+    // Get TCP port for 'test-both'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-both", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 1);
+        NTSCFG_TEST_EQ(portList[0], 50001);
+    }
+
+    // Get UDP port for 'test-both'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-both", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 1);
+        NTSCFG_TEST_EQ(portList[0], 50002);
+    }
+
+    // Get port for 'test-tcp'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        bsl::vector<ntsa::Port> portList;
+        error = portDatabase.getPort(&context, &portList, "test-tcp", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 1);
+        NTSCFG_TEST_EQ(portList[0], 50003);
+    }
+
+    // Get TCP port for 'test-tcp'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::vector<ntsa::Port> portList;
+        error = portDatabase.getPort(&context, &portList, "test-tcp", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 1);
+        NTSCFG_TEST_EQ(portList[0], 50003);
+    }
+
+    // Get UDP port for 'test-tcp'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::vector<ntsa::Port> portList;
+        error = portDatabase.getPort(&context, &portList, "test-tcp", options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    // Get port for 'test-udp'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        bsl::vector<ntsa::Port> portList;
+        error = portDatabase.getPort(&context, &portList, "test-udp", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 1);
+        NTSCFG_TEST_EQ(portList[0], 50004);
+    }
+
+    // Get TCP port for 'test-udp'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::vector<ntsa::Port> portList;
+        error = portDatabase.getPort(&context, &portList, "test-udp", options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    // Get UDP port for 'test-udp'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::vector<ntsa::Port> portList;
+        error = portDatabase.getPort(&context, &portList, "test-udp", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 1);
+        NTSCFG_TEST_EQ(portList[0], 50004);
+    }
+
+    // Get port for 'test-many'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-many", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 9);
+        NTSCFG_TEST_EQ(portList[0], 20001);
+        NTSCFG_TEST_EQ(portList[1], 20002);
+        NTSCFG_TEST_EQ(portList[2], 20003);
+        NTSCFG_TEST_EQ(portList[3], 20004);
+        NTSCFG_TEST_EQ(portList[4], 20005);
+        NTSCFG_TEST_EQ(portList[5], 20006);
+        NTSCFG_TEST_EQ(portList[6], 20007);
+        NTSCFG_TEST_EQ(portList[7], 20008);
+        NTSCFG_TEST_EQ(portList[8], 20009);
+    }
+
+    // Get TCP port for 'test-many'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-many", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 6);
+        NTSCFG_TEST_EQ(portList[0], 20001);
+        NTSCFG_TEST_EQ(portList[1], 20002);
+        NTSCFG_TEST_EQ(portList[2], 20003);
+        NTSCFG_TEST_EQ(portList[3], 20004);
+        NTSCFG_TEST_EQ(portList[4], 20005);
+        NTSCFG_TEST_EQ(portList[5], 20006);
+    }
+
+    // Get UDP port for 'test-many'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-many", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 6);
+        NTSCFG_TEST_EQ(portList[0], 20001);
+        NTSCFG_TEST_EQ(portList[1], 20002);
+        NTSCFG_TEST_EQ(portList[2], 20003);
+        NTSCFG_TEST_EQ(portList[3], 20007);
+        NTSCFG_TEST_EQ(portList[4], 20008);
+        NTSCFG_TEST_EQ(portList[5], 20009);
+    }
+
+    // Get port for 'test-many' with round-robin selection.
+
+    for (bsl::size_t i = 0; i < 2 * 9; ++i) {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setPortSelector(i);
+
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-many", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 1);
+
+        if (i % 9 == 0) {
+            NTSCFG_TEST_EQ(portList[0], 20001);
         }
 
-        // Get TCP port for 'test-shared'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-shared",
-                                         options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 1);
-            NTCCFG_TEST_EQ(portList[0], 50000);
+        if (i % 9 == 1) {
+            NTSCFG_TEST_EQ(portList[0], 20002);
         }
 
-        // Get UDP port for 'test-shared'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-shared",
-                                         options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 1);
-            NTCCFG_TEST_EQ(portList[0], 50000);
+        if (i % 9 == 2) {
+            NTSCFG_TEST_EQ(portList[0], 20003);
         }
 
-        // Get port for 'test-both'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-both",
-                                         options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 2);
-            NTCCFG_TEST_EQ(portList[0], 50001);
-            NTCCFG_TEST_EQ(portList[1], 50002);
+        if (i % 9 == 3) {
+            NTSCFG_TEST_EQ(portList[0], 20004);
         }
 
-        // Get TCP port for 'test-both'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-both",
-                                         options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 1);
-            NTCCFG_TEST_EQ(portList[0], 50001);
+        if (i % 9 == 4) {
+            NTSCFG_TEST_EQ(portList[0], 20005);
         }
 
-        // Get UDP port for 'test-both'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-both",
-                                         options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 1);
-            NTCCFG_TEST_EQ(portList[0], 50002);
+        if (i % 9 == 5) {
+            NTSCFG_TEST_EQ(portList[0], 20006);
         }
 
-        // Get port for 'test-tcp'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            bsl::vector<ntsa::Port> portList;
-            error =
-                portDatabase.getPort(&context, &portList, "test-tcp", options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 1);
-            NTCCFG_TEST_EQ(portList[0], 50003);
+        if (i % 9 == 6) {
+            NTSCFG_TEST_EQ(portList[0], 20007);
         }
 
-        // Get TCP port for 'test-tcp'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error =
-                portDatabase.getPort(&context, &portList, "test-tcp", options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 1);
-            NTCCFG_TEST_EQ(portList[0], 50003);
+        if (i % 9 == 7) {
+            NTSCFG_TEST_EQ(portList[0], 20008);
         }
 
-        // Get UDP port for 'test-tcp'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error =
-                portDatabase.getPort(&context, &portList, "test-tcp", options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        // Get port for 'test-udp'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            bsl::vector<ntsa::Port> portList;
-            error =
-                portDatabase.getPort(&context, &portList, "test-udp", options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 1);
-            NTCCFG_TEST_EQ(portList[0], 50004);
-        }
-
-        // Get TCP port for 'test-udp'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error =
-                portDatabase.getPort(&context, &portList, "test-udp", options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        // Get UDP port for 'test-udp'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error =
-                portDatabase.getPort(&context, &portList, "test-udp", options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 1);
-            NTCCFG_TEST_EQ(portList[0], 50004);
-        }
-
-        // Get port for 'test-many'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-many",
-                                         options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 9);
-            NTCCFG_TEST_EQ(portList[0], 20001);
-            NTCCFG_TEST_EQ(portList[1], 20002);
-            NTCCFG_TEST_EQ(portList[2], 20003);
-            NTCCFG_TEST_EQ(portList[3], 20004);
-            NTCCFG_TEST_EQ(portList[4], 20005);
-            NTCCFG_TEST_EQ(portList[5], 20006);
-            NTCCFG_TEST_EQ(portList[6], 20007);
-            NTCCFG_TEST_EQ(portList[7], 20008);
-            NTCCFG_TEST_EQ(portList[8], 20009);
-        }
-
-        // Get TCP port for 'test-many'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-many",
-                                         options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 6);
-            NTCCFG_TEST_EQ(portList[0], 20001);
-            NTCCFG_TEST_EQ(portList[1], 20002);
-            NTCCFG_TEST_EQ(portList[2], 20003);
-            NTCCFG_TEST_EQ(portList[3], 20004);
-            NTCCFG_TEST_EQ(portList[4], 20005);
-            NTCCFG_TEST_EQ(portList[5], 20006);
-        }
-
-        // Get UDP port for 'test-many'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-many",
-                                         options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 6);
-            NTCCFG_TEST_EQ(portList[0], 20001);
-            NTCCFG_TEST_EQ(portList[1], 20002);
-            NTCCFG_TEST_EQ(portList[2], 20003);
-            NTCCFG_TEST_EQ(portList[3], 20007);
-            NTCCFG_TEST_EQ(portList[4], 20008);
-            NTCCFG_TEST_EQ(portList[5], 20009);
-        }
-
-        // Get port for 'test-many' with round-robin selection.
-
-        for (bsl::size_t i = 0; i < 2 * 9; ++i) {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setPortSelector(i);
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-many",
-                                         options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 1);
-
-            if (i % 9 == 0) {
-                NTCCFG_TEST_EQ(portList[0], 20001);
-            }
-
-            if (i % 9 == 1) {
-                NTCCFG_TEST_EQ(portList[0], 20002);
-            }
-
-            if (i % 9 == 2) {
-                NTCCFG_TEST_EQ(portList[0], 20003);
-            }
-
-            if (i % 9 == 3) {
-                NTCCFG_TEST_EQ(portList[0], 20004);
-            }
-
-            if (i % 9 == 4) {
-                NTCCFG_TEST_EQ(portList[0], 20005);
-            }
-
-            if (i % 9 == 5) {
-                NTCCFG_TEST_EQ(portList[0], 20006);
-            }
-
-            if (i % 9 == 6) {
-                NTCCFG_TEST_EQ(portList[0], 20007);
-            }
-
-            if (i % 9 == 7) {
-                NTCCFG_TEST_EQ(portList[0], 20008);
-            }
-
-            if (i % 9 == 8) {
-                NTCCFG_TEST_EQ(portList[0], 20009);
-            }
-        }
-
-        // Get TCP port for 'test-many' with round-robin selection.
-
-        for (bsl::size_t i = 0; i < 2 * 6; ++i) {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setPortSelector(i);
-            options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-many",
-                                         options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 1);
-
-            if (i % 6 == 0) {
-                NTCCFG_TEST_EQ(portList[0], 20001);
-            }
-
-            if (i % 6 == 1) {
-                NTCCFG_TEST_EQ(portList[0], 20002);
-            }
-
-            if (i % 6 == 2) {
-                NTCCFG_TEST_EQ(portList[0], 20003);
-            }
-
-            if (i % 6 == 3) {
-                NTCCFG_TEST_EQ(portList[0], 20004);
-            }
-
-            if (i % 6 == 4) {
-                NTCCFG_TEST_EQ(portList[0], 20005);
-            }
-
-            if (i % 6 == 5) {
-                NTCCFG_TEST_EQ(portList[0], 20006);
-            }
-        }
-
-        // Get UDP port for 'test-many' with round-robin selection.
-
-        for (bsl::size_t i = 0; i < 2 * 6; ++i) {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            options.setPortSelector(i);
-            options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-many",
-                                         options);
-            NTCCFG_TEST_OK(error);
-
-            NTCCFG_TEST_EQ(portList.size(), 1);
-
-            if (i % 6 == 0) {
-                NTCCFG_TEST_EQ(portList[0], 20001);
-            }
-
-            if (i % 6 == 1) {
-                NTCCFG_TEST_EQ(portList[0], 20002);
-            }
-
-            if (i % 6 == 2) {
-                NTCCFG_TEST_EQ(portList[0], 20003);
-            }
-
-            if (i % 6 == 3) {
-                NTCCFG_TEST_EQ(portList[0], 20007);
-            }
-
-            if (i % 6 == 4) {
-                NTCCFG_TEST_EQ(portList[0], 20008);
-            }
-
-            if (i % 6 == 5) {
-                NTCCFG_TEST_EQ(portList[0], 20009);
-            }
-        }
-
-        // Get port for 'test-remove'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-removed",
-                                         options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        // Get port for 'test-nonexistant'.
-
-        {
-            ntca::GetPortContext context;
-            ntca::GetPortOptions options;
-
-            bsl::vector<ntsa::Port> portList;
-            error = portDatabase.getPort(&context,
-                                         &portList,
-                                         "test-nonexistant",
-                                         options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        //
-        // Test 'getServiceName'.
-        //
-
-        // Get service name for a port assigned to 'test-shared'.
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50000,
-                                                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(serviceName, "test-shared");
-        }
-
-        // Get service name for a TCP port assigned to 'test-shared'.
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50000,
-                                                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(serviceName, "test-shared");
-        }
-
-        // Get service name for a UDP port assigned to 'test-shared'.
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50000,
-                                                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(serviceName, "test-shared");
-        }
-
-        // Get service name for a port assigned to 'test-both'.
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50001,
-                                                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(serviceName, "test-both");
-        }
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50001,
-                                                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(serviceName, "test-both");
-        }
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50001,
-                                                options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50002,
-                                                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(serviceName, "test-both");
-        }
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50002,
-                                                options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50002,
-                                                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(serviceName, "test-both");
-        }
-
-        // Get service name for a port assigned to 'test-tcp'.
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50003,
-                                                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(serviceName, "test-tcp");
-        }
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50003,
-                                                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(serviceName, "test-tcp");
-        }
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50003,
-                                                options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        // Get service name for a port assigned to 'test-udp'.
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50004,
-                                                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(serviceName, "test-udp");
-        }
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50004,
-                                                options);
-            NTCCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
-        }
-
-        {
-            ntca::GetServiceNameContext context;
-            ntca::GetServiceNameOptions options;
-
-            options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-
-            bsl::string serviceName;
-            error = portDatabase.getServiceName(&context,
-                                                &serviceName,
-                                                50004,
-                                                options);
-            NTCCFG_TEST_OK(error);
-            NTCCFG_TEST_EQ(serviceName, "test-udp");
+        if (i % 9 == 8) {
+            NTSCFG_TEST_EQ(portList[0], 20009);
         }
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    // Get TCP port for 'test-many' with round-robin selection.
+
+    for (bsl::size_t i = 0; i < 2 * 6; ++i) {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setPortSelector(i);
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-many", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 1);
+
+        if (i % 6 == 0) {
+            NTSCFG_TEST_EQ(portList[0], 20001);
+        }
+
+        if (i % 6 == 1) {
+            NTSCFG_TEST_EQ(portList[0], 20002);
+        }
+
+        if (i % 6 == 2) {
+            NTSCFG_TEST_EQ(portList[0], 20003);
+        }
+
+        if (i % 6 == 3) {
+            NTSCFG_TEST_EQ(portList[0], 20004);
+        }
+
+        if (i % 6 == 4) {
+            NTSCFG_TEST_EQ(portList[0], 20005);
+        }
+
+        if (i % 6 == 5) {
+            NTSCFG_TEST_EQ(portList[0], 20006);
+        }
+    }
+
+    // Get UDP port for 'test-many' with round-robin selection.
+
+    for (bsl::size_t i = 0; i < 2 * 6; ++i) {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        options.setPortSelector(i);
+        options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-many", options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(portList.size(), 1);
+
+        if (i % 6 == 0) {
+            NTSCFG_TEST_EQ(portList[0], 20001);
+        }
+
+        if (i % 6 == 1) {
+            NTSCFG_TEST_EQ(portList[0], 20002);
+        }
+
+        if (i % 6 == 2) {
+            NTSCFG_TEST_EQ(portList[0], 20003);
+        }
+
+        if (i % 6 == 3) {
+            NTSCFG_TEST_EQ(portList[0], 20007);
+        }
+
+        if (i % 6 == 4) {
+            NTSCFG_TEST_EQ(portList[0], 20008);
+        }
+
+        if (i % 6 == 5) {
+            NTSCFG_TEST_EQ(portList[0], 20009);
+        }
+    }
+
+    // Get port for 'test-remove'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        bsl::vector<ntsa::Port> portList;
+        error =
+            portDatabase.getPort(&context, &portList, "test-removed", options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    // Get port for 'test-nonexistant'.
+
+    {
+        ntca::GetPortContext context;
+        ntca::GetPortOptions options;
+
+        bsl::vector<ntsa::Port> portList;
+        error = portDatabase.getPort(&context,
+                                     &portList,
+                                     "test-nonexistant",
+                                     options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    //
+    // Test 'getServiceName'.
+    //
+
+    // Get service name for a port assigned to 'test-shared'.
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50000,
+                                            options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serviceName, "test-shared");
+    }
+
+    // Get service name for a TCP port assigned to 'test-shared'.
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50000,
+                                            options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serviceName, "test-shared");
+    }
+
+    // Get service name for a UDP port assigned to 'test-shared'.
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50000,
+                                            options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serviceName, "test-shared");
+    }
+
+    // Get service name for a port assigned to 'test-both'.
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50001,
+                                            options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serviceName, "test-both");
+    }
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50001,
+                                            options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serviceName, "test-both");
+    }
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50001,
+                                            options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50002,
+                                            options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serviceName, "test-both");
+    }
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50002,
+                                            options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50002,
+                                            options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serviceName, "test-both");
+    }
+
+    // Get service name for a port assigned to 'test-tcp'.
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50003,
+                                            options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serviceName, "test-tcp");
+    }
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50003,
+                                            options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serviceName, "test-tcp");
+    }
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50003,
+                                            options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    // Get service name for a port assigned to 'test-udp'.
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50004,
+                                            options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serviceName, "test-udp");
+    }
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50004,
+                                            options);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_EOF);
+    }
+
+    {
+        ntca::GetServiceNameContext context;
+        ntca::GetServiceNameOptions options;
+
+        options.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::string serviceName;
+        error = portDatabase.getServiceName(&context,
+                                            &serviceName,
+                                            50004,
+                                            options);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serviceName, "test-udp");
+    }
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcdns::DatabaseTest::verifyCase3)
 {
     // Concern: Host database configurations from "/etc/hosts".
     // Plan:
@@ -2145,29 +2104,25 @@ NTCCFG_TEST_CASE(3)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        bsls::Stopwatch stopwatch;
-        stopwatch.start();
+    bsls::Stopwatch stopwatch;
+    stopwatch.start();
 
-        ntcdns::HostDatabase hostDatabase(&ta);
+    ntcdns::HostDatabase hostDatabase(NTSCFG_TEST_ALLOCATOR);
 
-        error = hostDatabase.load();
-        NTCCFG_TEST_ASSERT(!error);
+    error = hostDatabase.load();
+    NTSCFG_TEST_ASSERT(!error);
 
-        stopwatch.stop();
+    stopwatch.stop();
 
-        if (NTCCFG_TEST_VERBOSITY > 0) {
-            bsl::cout << "Loaded host database in "
-                      << bsls::TimeInterval(stopwatch.elapsedTime())
-                             .totalMilliseconds()
-                      << " milliseconds" << bsl::endl;
-        }
+    if (NTSCFG_TEST_VERBOSITY > 0) {
+        bsl::cout
+            << "Loaded host database in "
+            << bsls::TimeInterval(stopwatch.elapsedTime()).totalMilliseconds()
+            << " milliseconds" << bsl::endl;
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntcdns::DatabaseTest::verifyCase4)
 {
     // Concern: Port database configurations from "/etc/services".
     // Plan:
@@ -2181,35 +2136,25 @@ NTCCFG_TEST_CASE(4)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        bsls::Stopwatch stopwatch;
-        stopwatch.start();
+    bsls::Stopwatch stopwatch;
+    stopwatch.start();
 
-        ntcdns::PortDatabase portDatabase(&ta);
+    ntcdns::PortDatabase portDatabase(NTSCFG_TEST_ALLOCATOR);
 
-        error = portDatabase.load();
-        NTCCFG_TEST_ASSERT(!error);
+    error = portDatabase.load();
+    NTSCFG_TEST_ASSERT(!error);
 
-        stopwatch.stop();
+    stopwatch.stop();
 
-        if (NTCCFG_TEST_VERBOSITY > 0) {
-            test::dump(portDatabase);
+    if (NTSCFG_TEST_VERBOSITY > 0) {
+        DatabaseTest::dump(portDatabase);
 
-            bsl::cout << "Loaded port database in "
-                      << bsls::TimeInterval(stopwatch.elapsedTime())
-                             .totalMilliseconds()
-                      << " milliseconds" << bsl::endl;
-        }
+        bsl::cout
+            << "Loaded port database in "
+            << bsls::TimeInterval(stopwatch.elapsedTime()).totalMilliseconds()
+            << " milliseconds" << bsl::endl;
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcdns
+}  // close namespace BloombergLP

@@ -293,12 +293,12 @@ class Chronology NTSCFG_FINAL : public ntci::Chronology
         bool oneShot() const BSLS_KEYWORD_OVERRIDE;
 
         /// Return the deadline, or null if no deadline is scheduled.
-        bdlb::NullableValue<bsls::TimeInterval> deadline() const 
-        BSLS_KEYWORD_OVERRIDE;
+        bdlb::NullableValue<bsls::TimeInterval> deadline() const
+            BSLS_KEYWORD_OVERRIDE;
 
         /// Return the period, or null if the timer is not periodic.
-        bdlb::NullableValue<bsls::TimeInterval> period() const 
-        BSLS_KEYWORD_OVERRIDE;
+        bdlb::NullableValue<bsls::TimeInterval> period() const
+            BSLS_KEYWORD_OVERRIDE;
 
         /// Return the handle of the thread that manages this socket, or
         /// the default value if no such thread has been set.
@@ -484,7 +484,7 @@ class Chronology NTSCFG_FINAL : public ntci::Chronology
     /// used to supply memory. If 'basicAllocator' is 0, the currently
     /// installed default allocator is used.
     explicit Chronology(const bsl::shared_ptr<ntcs::Interruptor>& interruptor,
-                        const bsl::shared_ptr<ntci::Chronology>& parent,
+                        const bsl::shared_ptr<ntci::Chronology>&  parent,
                         bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
@@ -511,8 +511,7 @@ class Chronology NTSCFG_FINAL : public ntci::Chronology
     bsl::shared_ptr<ntci::Timer> createTimer(
         const ntca::TimerOptions&                  options,
         const bsl::shared_ptr<ntci::TimerSession>& session,
-        bslma::Allocator*                          basicAllocator = 0) 
-        BSLS_KEYWORD_OVERRIDE;
+        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
     /// Create a new timer according to the specified 'options' that invokes
     /// the specified 'callback' for each timer event on this object's
@@ -540,23 +539,23 @@ class Chronology NTSCFG_FINAL : public ntci::Chronology
 
     /// Atomically push the specified 'functorSequence' immediately followed
     /// by the specified 'functor', then clear the 'functorSequence'.
-    void moveAndExecute(
-        ntci::Executor::FunctorSequence* functorSequence,
-        const ntci::Executor::Functor&   functor) BSLS_KEYWORD_OVERRIDE;
+    void moveAndExecute(ntci::Executor::FunctorSequence* functorSequence,
+                        const ntci::Executor::Functor&   functor)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' all the scheduled timers in the
     /// chronology.
     void load(TimerVector* result) const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the absolute time the earliest scheduled timer is due, if any.
-    bdlb::NullableValue<bsls::TimeInterval> earliest() const 
-    BSLS_KEYWORD_OVERRIDE;
+    bdlb::NullableValue<bsls::TimeInterval> earliest() const
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Return the relative time interval to wait until the earliest timer
     /// is due, if any, from the current time, or null if no timer is
     /// scheduled.
-    bdlb::NullableValue<bsls::TimeInterval> timeoutInterval() const 
-    BSLS_KEYWORD_OVERRIDE;
+    bdlb::NullableValue<bsls::TimeInterval> timeoutInterval() const
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Return the number of milliseconds to wait until the earliest timer
     /// is due, if any, from the current time, or -1 if no timer is

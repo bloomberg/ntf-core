@@ -13,24 +13,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_dispatch_t_cpp, "$Id$ $CSID$")
+
 #include <ntcs_dispatch.h>
-
-#include <ntccfg_test.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
 
 using namespace BloombergLP;
 
-namespace Test {
+namespace BloombergLP {
+namespace ntcs {
+
+// Provide tests for 'ntcs::Dispatch'.
+class DispatchTest
+{
+    /// This class mocks ntci::ReactorSocket interface and is used to validate how
+    /// processNotifications method is called.
+    class ReactorSocketMock;
+
+    /// This class mocks ntci::Strand interface and is used to check how execute
+    /// method is executed.
+    class StrandMock;
+
+    /// This class mocks the ntci::Proactor interface.
+    class ProactorSocketMock;
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+};
+
 /// This class mocks ntci::ReactorSocket interface and is used to validate how
 /// processNotifications method is called.
-class ReactorSocketMock : public ntci::ReactorSocket
+class DispatchTest::ReactorSocketMock : public ntci::ReactorSocket
 {
   public:
     /// Construct object using the specified 'handle'.
     ReactorSocketMock(ntsa::Handle handle);
+
     /// D-tor, validates that d_notifications does not exist.
     ~ReactorSocketMock();
 
@@ -63,7 +93,7 @@ class ReactorSocketMock : public ntci::ReactorSocket
 
 /// This class mocks ntci::Strand interface and is used to check how execute
 /// method is executed.
-class StrandMock : public ntci::Strand
+class DispatchTest::StrandMock : public ntci::Strand
 {
   public:
     /// D-tor, validates that d_functor is not assigned.
@@ -92,7 +122,8 @@ class StrandMock : public ntci::Strand
     ntci::Executor::Functor d_functor;
 };
 
-class ProactorSocketMock : public ntci::ProactorSocket
+/// This class mocks the ntci::Proactor interface.
+class DispatchTest::ProactorSocketMock : public ntci::ProactorSocket
 {
   public:
     /// Construct the object using the specified 'handle'
@@ -117,211 +148,189 @@ class ProactorSocketMock : public ntci::ProactorSocket
     bool               d_processSocketDetachedExpected;
 };
 
-ReactorSocketMock::ReactorSocketMock(ntsa::Handle handle)
+DispatchTest::ReactorSocketMock::ReactorSocketMock(ntsa::Handle handle)
 : d_handle(handle)
 {
 }
 
-ReactorSocketMock::~ReactorSocketMock()
+DispatchTest::ReactorSocketMock::~ReactorSocketMock()
 {
-    NTCCFG_TEST_FALSE(d_notifications.has_value());
+    NTSCFG_TEST_FALSE(d_notifications.has_value());
 }
 
-ntsa::Handle ReactorSocketMock::handle() const
+ntsa::Handle DispatchTest::ReactorSocketMock::handle() const
 {
     return d_handle;
 }
 
-void ReactorSocketMock::close()
+void DispatchTest::ReactorSocketMock::close()
 {
-    NTCCFG_TEST_ASSERT(false);
+    NTSCFG_TEST_ASSERT(false);
 }
 
-void ReactorSocketMock::processNotifications(
+void DispatchTest::ReactorSocketMock::processNotifications(
     const ntsa::NotificationQueue& notifications)
 {
-    NTCCFG_TEST_FALSE(d_notifications.has_value());
+    NTSCFG_TEST_FALSE(d_notifications.has_value());
     d_notifications = notifications;
 }
 
-void ReactorSocketMock::validateNotifications(
+void DispatchTest::ReactorSocketMock::validateNotifications(
     const ntsa::NotificationQueue& notifications)
 {
-    NTCCFG_TEST_EQ(d_notifications, notifications);
+    NTSCFG_TEST_EQ(d_notifications, notifications);
     d_notifications.reset();
 }
 
-void ReactorSocketMock::validateNoNotifications() const
+void DispatchTest::ReactorSocketMock::validateNoNotifications() const
 {
-    NTCCFG_TEST_FALSE(d_notifications.has_value());
+    NTSCFG_TEST_FALSE(d_notifications.has_value());
 }
 
-StrandMock::~StrandMock()
+DispatchTest::StrandMock::~StrandMock()
 {
-    NTCCFG_TEST_FALSE(d_functor);
+    NTSCFG_TEST_FALSE(d_functor);
 }
 
-void StrandMock::drain()
+void DispatchTest::StrandMock::drain()
 {
-    NTCCFG_TEST_ASSERT(false);
+    NTSCFG_TEST_ASSERT(false);
 }
 
-void StrandMock::clear()
+void DispatchTest::StrandMock::clear()
 {
-    NTCCFG_TEST_ASSERT(false);
+    NTSCFG_TEST_ASSERT(false);
 }
 
-bool StrandMock::isRunningInCurrentThread() const
+bool DispatchTest::StrandMock::isRunningInCurrentThread() const
 {
-    NTCCFG_TEST_ASSERT(false);
+    NTSCFG_TEST_ASSERT(false);
     return true;
 }
 
-void StrandMock::execute(const ntci::Executor::Functor& functor)
+void DispatchTest::StrandMock::execute(const ntci::Executor::Functor& functor)
 {
     d_functor = functor;
 }
 
-void StrandMock::moveAndExecute(FunctorSequence* functorSequence,
-                                const Functor&   functor)
+void DispatchTest::StrandMock::moveAndExecute(FunctorSequence* functorSequence,
+                                              const Functor&   functor)
 {
-    NTCCFG_TEST_ASSERT(false);
+    NTSCFG_TEST_ASSERT(false);
 }
 
-void StrandMock::checkAndExecuteFunctor()
+void DispatchTest::StrandMock::checkAndExecuteFunctor()
 {
-    NTCCFG_TEST_TRUE(d_functor);
+    NTSCFG_TEST_TRUE(d_functor);
     d_functor();
     d_functor = ntci::Executor::Functor();
 }
 
-ProactorSocketMock::ProactorSocketMock(const ntsa::Handle handle)
+DispatchTest::ProactorSocketMock::ProactorSocketMock(const ntsa::Handle handle)
 : d_handle(handle)
 , d_processSocketDetachedExpected(false)
 {
 }
 
-ProactorSocketMock::~ProactorSocketMock() BSLS_KEYWORD_NOEXCEPT
+DispatchTest::ProactorSocketMock::~ProactorSocketMock() BSLS_KEYWORD_NOEXCEPT
 {
 }
 
-ntsa::Handle ProactorSocketMock::handle() const
+ntsa::Handle DispatchTest::ProactorSocketMock::handle() const
 {
     return d_handle;
 }
 
-void ProactorSocketMock::processSocketDetached()
+void DispatchTest::ProactorSocketMock::processSocketDetached()
 {
-    NTCCFG_TEST_ASSERT(d_processSocketDetachedExpected && "unexpected call");
+    NTSCFG_TEST_ASSERT(d_processSocketDetachedExpected && "unexpected call");
     d_processSocketDetachedExpected = false;
 }
 
-void ProactorSocketMock::close()
+void DispatchTest::ProactorSocketMock::close()
 {
-    NTCCFG_TEST_ASSERT(false && "unexpected call");
+    NTSCFG_TEST_ASSERT(false && "unexpected call");
 }
 
-void ProactorSocketMock::setProcessSocketDetachedExpected()
+void DispatchTest::ProactorSocketMock::setProcessSocketDetachedExpected()
 {
     d_processSocketDetachedExpected = true;
 }
 
-}
-
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcs::DispatchTest::verifyCase1)
 {
     // Concern: test announceNotifications directly
 
     const ntsa::Handle handle = 5;
     const int          tsId   = 2;
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<Test::ReactorSocketMock> socket;
-        socket.createInplace(&ta, handle);
+    bsl::shared_ptr<DispatchTest::ReactorSocketMock> socket;
+    socket.createInplace(NTSCFG_TEST_ALLOCATOR, handle);
 
-        ntsa::NotificationQueue queue(&ta);
-        ntsa::Notification      n;
-        n.makeTimestamp().setId(tsId);
+    ntsa::NotificationQueue queue(NTSCFG_TEST_ALLOCATOR);
+    ntsa::Notification      n;
+    n.makeTimestamp().setId(tsId);
 
-        ntcs::Dispatch::announceNotifications(socket, queue, NULL);
-        socket->validateNotifications(queue);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    ntcs::Dispatch::announceNotifications(socket, queue, NULL);
+    socket->validateNotifications(queue);
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcs::DispatchTest::verifyCase2)
 {
     // Concern: test announceNotifications via strand
 
     const ntsa::Handle handle = 5;
     const int          tsId   = 2;
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<Test::ReactorSocketMock> socket;
-        socket.createInplace(&ta, handle);
+    bsl::shared_ptr<DispatchTest::ReactorSocketMock> socket;
+    socket.createInplace(NTSCFG_TEST_ALLOCATOR, handle);
 
-        bsl::shared_ptr<Test::StrandMock> strand;
-        strand.createInplace(&ta);
+    bsl::shared_ptr<DispatchTest::StrandMock> strand;
+    strand.createInplace(NTSCFG_TEST_ALLOCATOR);
 
-        ntsa::NotificationQueue queue(&ta);
-        ntsa::Notification      n;
-        n.makeTimestamp().setId(tsId);
+    ntsa::NotificationQueue queue(NTSCFG_TEST_ALLOCATOR);
+    ntsa::Notification      n;
+    n.makeTimestamp().setId(tsId);
 
-        ntcs::Dispatch::announceNotifications(socket, queue, strand);
-        socket->validateNoNotifications();
+    ntcs::Dispatch::announceNotifications(socket, queue, strand);
+    socket->validateNoNotifications();
 
-        strand->checkAndExecuteFunctor();
-        socket->validateNotifications(queue);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    strand->checkAndExecuteFunctor();
+    socket->validateNotifications(queue);
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcs::DispatchTest::verifyCase3)
 {
     // Concern: test announceDetached directly
 
-    const ntsa::Handle    h = 22;
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<Test::ProactorSocketMock> socket;
-        socket.createInplace(&ta, h);
+    const ntsa::Handle h = 22;
 
-        bsl::shared_ptr<Test::StrandMock> strand;
+    bsl::shared_ptr<DispatchTest::ProactorSocketMock> socket;
+    socket.createInplace(NTSCFG_TEST_ALLOCATOR, h);
 
-        socket->setProcessSocketDetachedExpected();
-        ntcs::Dispatch::announceDetached(socket, strand);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    bsl::shared_ptr<DispatchTest::StrandMock> strand;
+
+    socket->setProcessSocketDetachedExpected();
+    ntcs::Dispatch::announceDetached(socket, strand);
 }
 
-NTCCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntcs::DispatchTest::verifyCase4)
 {
     // Concern: test announceDetached via strand
 
-    const ntsa::Handle    h = 22;
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<Test::ProactorSocketMock> socket;
-        socket.createInplace(&ta, h);
+    const ntsa::Handle h = 22;
 
-        bsl::shared_ptr<Test::StrandMock> strand;
-        strand.createInplace(&ta);
+    bsl::shared_ptr<DispatchTest::ProactorSocketMock> socket;
+    socket.createInplace(NTSCFG_TEST_ALLOCATOR, h);
 
-        ntcs::Dispatch::announceDetached(socket, strand);
+    bsl::shared_ptr<DispatchTest::StrandMock> strand;
+    strand.createInplace(NTSCFG_TEST_ALLOCATOR);
 
-        socket->setProcessSocketDetachedExpected();
-        strand->checkAndExecuteFunctor();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    ntcs::Dispatch::announceDetached(socket, strand);
+
+    socket->setProcessSocketDetachedExpected();
+    strand->checkAndExecuteFunctor();
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP

@@ -69,11 +69,10 @@ class Encryption
 
     /// Initiate the handshake to begin the session. Invoke the specified
     /// 'callback' when the handshake completes. Return the error.
-    virtual ntsa::Error initiateHandshake(
-        const HandshakeCallback& callback);
+    virtual ntsa::Error initiateHandshake(const HandshakeCallback& callback);
 
     /// Initiate the handshake to begin the session according to the specified
-    /// 'upgradeOptions'. Invoke the specified 'callback' when the handshake 
+    /// 'upgradeOptions'. Invoke the specified 'callback' when the handshake
     /// completes. Return the error.
     virtual ntsa::Error initiateHandshake(
         const ntca::UpgradeOptions& upgradeOptions,
@@ -168,8 +167,8 @@ class Encryption
     virtual bsl::shared_ptr<ntci::EncryptionKey> privateKey() const;
 
     /// Load into the specified 'result' the server name indication, if any.
-    /// Return the error, for example, when no server name indication is 
-    /// explicitly requested or accepted. 
+    /// Return the error, for example, when no server name indication is
+    /// explicitly requested or accepted.
     virtual ntsa::Error serverNameIndication(bsl::string* result) const;
 };
 

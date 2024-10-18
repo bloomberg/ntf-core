@@ -13,23 +13,524 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntca_encryptioncertificate.h>
+#include <ntscfg_test.h>
 
-#include <ntccfg_test.h>
-#include <bdlsb_fixedmeminstreambuf.h>
-#include <bdlsb_memoutstreambuf.h>
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
-#include <bsl_iomanip.h>
-#include <bsl_iostream.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntca_encryptioncertificate_t_cpp, "$Id$ $CSID$")
+
+#include <ntca_encryptioncertificate.h>
 
 using namespace BloombergLP;
 
-namespace test {
+namespace BloombergLP {
+namespace ntca {
+
+// Provide tests for 'ntca::EncryptionCertificate'.
+class EncryptionCertificateTest
+{
+  public:
+    // Verify the traversal of the DER-encoding of a certificate.
+    static void verifyPrerequisites();
+
+    // Verify encoding/decoding end-user certificates.
+    static void verifyUser();
+
+    // Verify encoding/decoding trusted certificate authorities.
+    static void verifyAuthority();
+
+    // Verify matching domain names.
+    static void verifyMatchName();
+
+    // Verify matching endpoints, IP addresses, local names, and URIs.
+    static void verifyMatchAddress();
+
+    // Verify the examination of various fields of the certificate.
+    static void verifyFields();
+
+  private:
+    // The encoded end-user certificate.
+    static const bsl::uint8_t k_USER_CERTIFICATE_ASN1[614];
+
+    // The encoded trusted certificate authority.
+    static const bsl::uint8_t k_CA_CERTIFICATE_ASN1[479];
+
+    // Provide a I/O stream manipulator to indent output.
+    class Indentation;
+
+    // Decode a certificate from the specified 'buffer'.
+    static void decodeCertificate(bsl::streambuf* buffer);
+
+    // Decode an ASN.1 constructed element from the specified 'decoder'.
+    static void decodeConstructed(ntsa::AbstractSyntaxDecoder* decoder);
+
+    // Decode an ASN.1 sequence from the specified 'decoder'.
+    static void decodeSequence(ntsa::AbstractSyntaxDecoder* decoder);
+
+    // Decode an ASN.1 primitive from the specified 'decoder'.
+    static void decodePrimitive(ntsa::AbstractSyntaxDecoder* decoder);
+};
+
+class EncryptionCertificateTest::Indentation
+{
+  public:
+    bsl::size_t d_numSpaces;
+
+    explicit Indentation(bsl::size_t numSpaces)
+    : d_numSpaces(numSpaces)
+    {
+    }
+
+    friend bsl::ostream& operator<<(bsl::ostream&      stream,
+                                    const Indentation& object)
+    {
+        for (bsl::size_t i = 0; i < object.d_numSpaces; ++i) {
+            stream << "    ";
+        }
+
+        return stream;
+    }
+};
+
+NTSCFG_TEST_FUNCTION(ntca::EncryptionCertificateTest::verifyPrerequisites)
+{
+    ntsa::Error error;
+
+    NTSCFG_TEST_LOG_DEBUG << "Decoding: "
+                          << bdlb::PrintStringSingleLineHexDumper(
+                                 (const char*)k_USER_CERTIFICATE_ASN1,
+                                 sizeof k_USER_CERTIFICATE_ASN1)
+                          << NTSCFG_TEST_LOG_END;
+
+    ntca::EncryptionCertificate certificate(NTSCFG_TEST_ALLOCATOR);
+
+    bdlsb::FixedMemInStreamBuf isb(
+        reinterpret_cast<const char*>(k_USER_CERTIFICATE_ASN1),
+        sizeof k_USER_CERTIFICATE_ASN1);
+
+    EncryptionCertificateTest::decodeCertificate(&isb);
+}
+
+NTSCFG_TEST_FUNCTION(ntca::EncryptionCertificateTest::verifyUser)
+{
+    ntsa::Error error;
+    int         rc;
+
+    NTSCFG_TEST_LOG_DEBUG << "Decoding: "
+                          << bdlb::PrintStringSingleLineHexDumper(
+                                 (const char*)k_USER_CERTIFICATE_ASN1,
+                                 sizeof k_USER_CERTIFICATE_ASN1)
+                          << NTSCFG_TEST_LOG_END;
+
+    bdlsb::FixedMemInStreamBuf isb(
+        reinterpret_cast<const char*>(k_USER_CERTIFICATE_ASN1),
+        sizeof k_USER_CERTIFICATE_ASN1);
+
+    ntsa::AbstractSyntaxDecoder decoder(&isb, NTSCFG_TEST_ALLOCATOR);
+
+    ntca::EncryptionCertificate certificate(NTSCFG_TEST_ALLOCATOR);
+    error = certificate.decode(&decoder);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
+                          << NTSCFG_TEST_LOG_END;
+
+    bdlsb::MemOutStreamBuf osb(NTSCFG_TEST_ALLOCATOR);
+
+    ntsa::AbstractSyntaxEncoder encoder(&osb, NTSCFG_TEST_ALLOCATOR);
+
+    error = certificate.encode(&encoder);
+    NTSCFG_TEST_OK(error);
+
+    rc = osb.pubsync();
+    NTSCFG_TEST_EQ(rc, 0);
+
+    NTSCFG_TEST_EQ(osb.length(), sizeof k_USER_CERTIFICATE_ASN1);
+
+    rc = bsl::memcmp(osb.data(),
+                     k_USER_CERTIFICATE_ASN1,
+                     sizeof k_USER_CERTIFICATE_ASN1);
+    NTSCFG_TEST_EQ(rc, 0);
+
+    bool isCa = certificate.isAuthority();
+    NTSCFG_TEST_FALSE(isCa);
+}
+
+NTSCFG_TEST_FUNCTION(ntca::EncryptionCertificateTest::verifyAuthority)
+{
+    ntsa::Error error;
+    int         rc;
+
+    NTSCFG_TEST_LOG_DEBUG << "Decoding: "
+                          << bdlb::PrintStringSingleLineHexDumper(
+                                 (const char*)k_CA_CERTIFICATE_ASN1,
+                                 sizeof k_CA_CERTIFICATE_ASN1)
+                          << NTSCFG_TEST_LOG_END;
+
+    bdlsb::FixedMemInStreamBuf isb(
+        reinterpret_cast<const char*>(k_CA_CERTIFICATE_ASN1),
+        sizeof k_CA_CERTIFICATE_ASN1);
+
+    ntsa::AbstractSyntaxDecoder decoder(&isb, NTSCFG_TEST_ALLOCATOR);
+
+    ntca::EncryptionCertificate certificate(NTSCFG_TEST_ALLOCATOR);
+    error = certificate.decode(&decoder);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
+                          << NTSCFG_TEST_LOG_END;
+
+    bdlsb::MemOutStreamBuf osb(NTSCFG_TEST_ALLOCATOR);
+
+    ntsa::AbstractSyntaxEncoder encoder(&osb, NTSCFG_TEST_ALLOCATOR);
+
+    error = certificate.encode(&encoder);
+    NTSCFG_TEST_OK(error);
+
+    rc = osb.pubsync();
+    NTSCFG_TEST_EQ(rc, 0);
+
+    NTSCFG_TEST_EQ(osb.length(), sizeof k_CA_CERTIFICATE_ASN1);
+
+    rc = bsl::memcmp(osb.data(),
+                     k_CA_CERTIFICATE_ASN1,
+                     sizeof k_CA_CERTIFICATE_ASN1);
+    NTSCFG_TEST_EQ(rc, 0);
+
+    bool isCa = certificate.isAuthority();
+    NTSCFG_TEST_TRUE(isCa);
+}
+
+NTSCFG_TEST_FUNCTION(ntca::EncryptionCertificateTest::verifyMatchName)
+{
+    // clang-format off
+
+    bool match;
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "c.b.a", 
+        "c.b.a");
+    NTSCFG_TEST_TRUE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "c.b.x", 
+        "c.b.a");
+    NTSCFG_TEST_FALSE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "c.x.a", 
+        "c.b.a");
+    NTSCFG_TEST_FALSE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "x.b.a", 
+        "c.b.a");
+    NTSCFG_TEST_FALSE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "d.c.b.a", 
+            "c.b.a");
+    NTSCFG_TEST_FALSE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+            "c.b.a", 
+        "d.c.b.a");
+    NTSCFG_TEST_FALSE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "d.c.b.a", 
+        "*.c.b.a");
+    NTSCFG_TEST_TRUE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "e.d.c.b.a", 
+            "*.c.b.a");
+    NTSCFG_TEST_TRUE(match);
+
+    // clang-format on
+}
+
+NTSCFG_TEST_FUNCTION(ntca::EncryptionCertificateTest::verifyMatchAddress)
+{
+    bool match;
+
+    {
+        ntsa::IpAddress requestedIpAddress("10.0.92.14");
+        bsl::string     certifiedString = "10.0.92.14";
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedIpAddress,
+                                                         certifiedString);
+        NTSCFG_TEST_TRUE(match);
+    }
+
+    {
+        ntsa::IpAddress requestedIpAddress("10.0.92.254");
+        bsl::string     certifiedString = "10.0.92.14";
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedIpAddress,
+                                                         certifiedString);
+        NTSCFG_TEST_FALSE(match);
+    }
+
+    {
+        ntsa::LocalName requestedLocalName;
+        requestedLocalName.setValue("/path/to/resource");
+
+        bsl::string certifiedString = "/path/to/resource";
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedLocalName,
+                                                         certifiedString);
+        NTSCFG_TEST_TRUE(match);
+    }
+
+    {
+        ntsa::LocalName requestedLocalName;
+        requestedLocalName.setValue("/path/to/missing");
+
+        bsl::string certifiedString = "/path/to/resource";
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedLocalName,
+                                                         certifiedString);
+        NTSCFG_TEST_FALSE(match);
+    }
+
+    {
+        ntsa::Uri requestedUri;
+        requestedUri.setScheme("http");
+        requestedUri.setHost("found");
+        requestedUri.setPort(80);
+
+        bsl::string certifiedString = "found";
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedUri,
+                                                         certifiedString);
+        NTSCFG_TEST_TRUE(match);
+    }
+
+    {
+        ntsa::Uri requestedUri;
+        requestedUri.setScheme("http");
+        requestedUri.setHost("missing");
+        requestedUri.setPort(80);
+
+        bsl::string certifiedString = "found";
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedUri,
+                                                         certifiedString);
+        NTSCFG_TEST_FALSE(match);
+    }
+
+    {
+        ntsa::IpAddress requestedIpAddress("10.0.92.14");
+        ntsa::IpAddress certifiedIpAddress("10.0.92.14");
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedIpAddress,
+                                                         certifiedIpAddress);
+        NTSCFG_TEST_TRUE(match);
+    }
+
+    {
+        ntsa::IpAddress requestedIpAddress("10.0.92.254");
+        ntsa::IpAddress certifiedIpAddress("10.0.92.14");
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedIpAddress,
+                                                         certifiedIpAddress);
+        NTSCFG_TEST_FALSE(match);
+    }
+
+    {
+        ntsa::Uri requestedUri;
+        requestedUri.setScheme("http");
+        requestedUri.setHost("found");
+        requestedUri.setPort(80);
+
+        ntsa::Uri certifiedUri;
+        certifiedUri.setScheme("https");  // intentional
+        certifiedUri.setHost("found");
+        certifiedUri.setPort(8080);  // intentional
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedUri,
+                                                         certifiedUri);
+        NTSCFG_TEST_TRUE(match);
+    }
+
+    {
+        ntsa::Uri requestedUri;
+        requestedUri.setScheme("http");
+        requestedUri.setHost("missing");
+        requestedUri.setPort(80);
+
+        ntsa::Uri certifiedUri;
+        certifiedUri.setScheme("https");  // intentional
+        certifiedUri.setHost("found");
+        certifiedUri.setPort(8080);  // intentional
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedUri,
+                                                         certifiedUri);
+        NTSCFG_TEST_FALSE(match);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntca::EncryptionCertificateTest::verifyFields)
+{
+    ntsa::Error error;
+    int         rc;
+
+    NTSCFG_TEST_LOG_DEBUG << "Decoding: "
+                          << bdlb::PrintStringSingleLineHexDumper(
+                                 (const char*)k_USER_CERTIFICATE_ASN1,
+                                 sizeof k_USER_CERTIFICATE_ASN1)
+                          << NTSCFG_TEST_LOG_END;
+
+    bdlsb::FixedMemInStreamBuf isb(
+        reinterpret_cast<const char*>(k_USER_CERTIFICATE_ASN1),
+        sizeof k_USER_CERTIFICATE_ASN1);
+
+    ntsa::AbstractSyntaxDecoder decoder(&isb, NTSCFG_TEST_ALLOCATOR);
+
+    ntca::EncryptionCertificate certificate(NTSCFG_TEST_ALLOCATOR);
+    error = certificate.decode(&decoder);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
+                          << NTSCFG_TEST_LOG_END;
+
+    bool matchesSubjectDomainName =
+        certificate.matchesSubjectDomainName("ntf.bloomberg.com");
+
+    bool isEllipticCurve = certificate.usesSubjectPublicKeyAlgorithm(
+        ntca::EncryptionKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE);
+    NTSCFG_TEST_TRUE(isEllipticCurve);
+
+    bool isEllipticCurveP256 =
+        certificate.usesSubjectPublicKeyAlgorithmParameters(
+            ntca::EncryptionKeyEllipticCurveParametersIdentifierType ::
+                e_SEC_P256_R1);
+    NTSCFG_TEST_TRUE(isEllipticCurveP256);
+
+    bool allowsDigitalSignatures = certificate.allowsKeyUsage(
+        ntca::EncryptionCertificateSubjectKeyUsageType ::e_DIGITAL_SIGNATURE);
+    NTSCFG_TEST_FALSE(allowsDigitalSignatures);
+
+    bool allowsTlsClients = certificate.allowsKeyUsage(
+        ntca::EncryptionCertificateSubjectKeyUsageExtendedType ::e_TLS_CLIENT);
+    NTSCFG_TEST_FALSE(allowsTlsClients);
+
+    bool isCa = certificate.isAuthority();
+    NTSCFG_TEST_FALSE(isCa);
+}
+
+void EncryptionCertificateTest::decodeCertificate(bsl::streambuf* buffer)
+{
+    ntsa::Error error;
+
+    ntsa::AbstractSyntaxDecoder decoder(buffer, NTSCFG_TEST_ALLOCATOR);
+
+    error = decoder.decodeTag();
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_LOG_DEBUG << Indentation(decoder.depth())
+                          << "Context = " << decoder.current()
+                          << NTSCFG_TEST_LOG_END;
+
+    NTSCFG_TEST_EQ(decoder.current().tagClass(),
+                   ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+
+    NTSCFG_TEST_EQ(decoder.current().tagType(),
+                   ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
+
+    NTSCFG_TEST_EQ(decoder.current().tagNumber(),
+                   ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
+
+    EncryptionCertificateTest::decodeConstructed(&decoder);
+
+    error = decoder.decodeTagComplete();
+    NTSCFG_TEST_OK(error);
+}
+
+void EncryptionCertificateTest::decodeConstructed(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    NTSCFG_TEST_EQ(decoder->current().tagType(),
+                   ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
+
+    if (decoder->current().tagClass() ==
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL &&
+        decoder->current().tagNumber() ==
+            ntsa::AbstractSyntaxTagNumber::e_SEQUENCE)
+    {
+        EncryptionCertificateTest::decodeSequence(decoder);
+    }
+    else {
+        error = decoder->skip();
+        NTSCFG_TEST_OK(error);
+    }
+}
+
+void EncryptionCertificateTest::decodeSequence(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    NTSCFG_TEST_EQ(decoder->current().tagClass(),
+                   ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
+
+    NTSCFG_TEST_EQ(decoder->current().tagType(),
+                   ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
+
+    NTSCFG_TEST_EQ(decoder->current().tagNumber(),
+                   ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
+
+    const bsl::uint64_t endPosition =
+        decoder->current().contentPosition() +
+        decoder->current().contentLength().value();
+
+    while (true) {
+        const bsl::uint64_t currentPosition = decoder->position();
+
+        if (currentPosition >= endPosition) {
+            break;
+        }
+
+        error = decoder->decodeTag();
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_LOG_DEBUG << Indentation(decoder->depth())
+                              << "Context = " << decoder->current()
+                              << NTSCFG_TEST_LOG_END;
+
+        if (decoder->current().tagType() ==
+            ntsa::AbstractSyntaxTagType::e_CONSTRUCTED)
+        {
+            EncryptionCertificateTest::decodeConstructed(decoder);
+        }
+        else {
+            EncryptionCertificateTest::decodePrimitive(decoder);
+        }
+
+        error = decoder->decodeTagComplete();
+        NTSCFG_TEST_OK(error);
+    }
+}
+
+void EncryptionCertificateTest::decodePrimitive(
+    ntsa::AbstractSyntaxDecoder* decoder)
+{
+    ntsa::Error error;
+
+    if (decoder->current().tagClass() ==
+            ntsa::AbstractSyntaxTagClass::e_UNIVERSAL &&
+        decoder->current().tagType() ==
+            ntsa::AbstractSyntaxTagType::e_PRIMITIVE)
+    {
+    }
+
+    decoder->skip();
+}
 
 // clang-format off
-const unsigned char k_USER_CERTIFICATE_ASN1[614] = {
+const bsl::uint8_t EncryptionCertificateTest::k_USER_CERTIFICATE_ASN1[614] = {
     0x30, 0x82, 0x02, 0x62, 0x30, 0x82, 0x02, 0x08, 0xA0, 0x03,
     0x02, 0x01, 0x02, 0x02, 0x01, 0x02, 0x30, 0x0A, 0x06, 0x08,
     0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x04, 0x03, 0x02, 0x30, 0x48,
@@ -94,7 +595,7 @@ const unsigned char k_USER_CERTIFICATE_ASN1[614] = {
     0xF4, 0x5A, 0x89, 0xF4
 };
 
-const unsigned char k_CA_CERTIFICATE_ASN1[479] = {
+const bsl::uint8_t EncryptionCertificateTest::k_CA_CERTIFICATE_ASN1[479] = {
     0x30, 0x82, 0x01, 0xDB, 0x30, 0x82, 0x01, 0x82, 0xA0, 0x03,
     0x02, 0x01, 0x02, 0x02, 0x01, 0x01, 0x30, 0x0A, 0x06, 0x08,
     0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x04, 0x03, 0x02, 0x30, 0x48,
@@ -144,544 +645,7 @@ const unsigned char k_CA_CERTIFICATE_ASN1[479] = {
     0x7B, 0x55, 0x13, 0xDA, 0x9E, 0x78, 0x82, 0xEB, 0x89, 0xD1,
     0xD1, 0x4D, 0xB1, 0x57, 0x82, 0x35, 0x4B, 0xAF, 0x9B
 };
-
-class Indentation 
-{
-public:
-    bsl::size_t d_numSpaces;
-
-    explicit Indentation(bsl::size_t numSpaces) : d_numSpaces(numSpaces) {}
-
-    friend bsl::ostream& operator<<(bsl::ostream&      stream, 
-                                    const Indentation& object)
-    {
-        for (bsl::size_t i = 0; i < object.d_numSpaces; ++i) {
-            stream << "    ";
-        }
-
-        return stream;
-    }
-};
-
-class TestUtil 
-{
-public:
-    static void decodeCertificate(bsl::streambuf*   buffer, 
-                                  bslma::Allocator* allocator);
-
-    static void decodeConstructed(ntsa::AbstractSyntaxDecoder* decoder, 
-                                  bslma::Allocator*            allocator);
-
-    static void decodeSequence(ntsa::AbstractSyntaxDecoder* decoder, 
-                               bslma::Allocator*            allocator);
-
-    static void decodePrimitive(ntsa::AbstractSyntaxDecoder* decoder, 
-                                bslma::Allocator*            allocator);
-};
-
-void TestUtil::decodeCertificate(bsl::streambuf*   buffer, 
-                                 bslma::Allocator* allocator)
-{
-    ntsa::Error error;
-
-    ntsa::AbstractSyntaxDecoder decoder(buffer, allocator);
-
-    error = decoder.decodeTag();
-    NTCCFG_TEST_OK(error);
-
-    NTCCFG_TEST_LOG_DEBUG << test::Indentation(decoder.depth())
-                          << "Context = " 
-                          << decoder.current()
-                          << NTCCFG_TEST_LOG_END;
-
-    NTCCFG_TEST_EQ(decoder.current().tagClass(), 
-                   ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
-
-    NTCCFG_TEST_EQ(decoder.current().tagType(), 
-                   ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
-
-    NTCCFG_TEST_EQ(decoder.current().tagNumber(), 
-                   ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
-
-    TestUtil::decodeConstructed(&decoder, allocator);
-
-    error = decoder.decodeTagComplete();
-    NTCCFG_TEST_OK(error);
-}
-
-void TestUtil::decodeConstructed(ntsa::AbstractSyntaxDecoder* decoder, 
-                                 bslma::Allocator*            allocator)
-{
-    ntsa::Error error;
-
-    NTCCFG_TEST_EQ(decoder->current().tagType(), 
-                   ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
-
-    if (decoder->current().tagClass() ==
-        ntsa::AbstractSyntaxTagClass::e_UNIVERSAL &&
-        decoder->current().tagNumber() == 
-        ntsa::AbstractSyntaxTagNumber::e_SEQUENCE) 
-    {
-        test::TestUtil::decodeSequence(decoder, allocator);
-    }
-    else {
-        error = decoder->skip();
-        NTCCFG_TEST_OK(error);
-    }
-}
-
-void TestUtil::decodeSequence(ntsa::AbstractSyntaxDecoder* decoder, 
-                              bslma::Allocator*            allocator)
-{
-    ntsa::Error error;
-
-    NTCCFG_TEST_EQ(decoder->current().tagClass(), 
-                   ntsa::AbstractSyntaxTagClass::e_UNIVERSAL);
-
-    NTCCFG_TEST_EQ(decoder->current().tagType(), 
-                   ntsa::AbstractSyntaxTagType::e_CONSTRUCTED);
-
-    NTCCFG_TEST_EQ(decoder->current().tagNumber(), 
-                   ntsa::AbstractSyntaxTagNumber::e_SEQUENCE);
-
-    const bsl::uint64_t endPosition = 
-                        decoder->current().contentPosition() + 
-                        decoder->current().contentLength().value();
-
-    while (true) {
-        const bsl::uint64_t currentPosition = decoder->position();
-
-        if (currentPosition >= endPosition) {
-            break;
-        }
-
-        error = decoder->decodeTag();
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_LOG_DEBUG << test::Indentation(decoder->depth()) 
-                              << "Context = " 
-                              << decoder->current()
-                              << NTCCFG_TEST_LOG_END;
-
-        if (decoder->current().tagType() == 
-            ntsa::AbstractSyntaxTagType::e_CONSTRUCTED) 
-        {
-            test::TestUtil::decodeConstructed(decoder, allocator);
-        }
-        else {
-            test::TestUtil::decodePrimitive(decoder, allocator);
-        }
-
-        error = decoder->decodeTagComplete();
-        NTCCFG_TEST_OK(error);
-
-    }
-}
-
-void TestUtil::decodePrimitive(ntsa::AbstractSyntaxDecoder* decoder, 
-                              bslma::Allocator*            allocator)
-{
-    ntsa::Error error;
-
-    if (decoder->current().tagClass() ==
-        ntsa::AbstractSyntaxTagClass::e_UNIVERSAL &&
-        decoder->current().tagType() ==
-        ntsa::AbstractSyntaxTagType::e_PRIMITIVE)
-    {
-
-    }
-
-    decoder->skip();
-}
-
 // clang-format on
 
-}  // close namespace 'test'
-
-NTCCFG_TEST_CASE(1)
-{
-    // Concern: Traverse the DER-encoding of a certificate.
-
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-
-        NTCCFG_TEST_LOG_DEBUG
-            << "Decoding: "
-            << bdlb::PrintStringSingleLineHexDumper(
-                   (const char*)test::k_USER_CERTIFICATE_ASN1,
-                   sizeof test::k_USER_CERTIFICATE_ASN1)
-            << NTCCFG_TEST_LOG_END;
-
-        ntca::EncryptionCertificate certificate(&ta);
-
-        bdlsb::FixedMemInStreamBuf isb(
-            reinterpret_cast<const char*>(test::k_USER_CERTIFICATE_ASN1),
-            sizeof test::k_USER_CERTIFICATE_ASN1);
-
-        test::TestUtil::decodeCertificate(&isb, &ta);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(2)
-{
-    // Concern: Encode and decode end-user certificates.
-
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-        int         rc;
-
-        NTCCFG_TEST_LOG_DEBUG
-            << "Decoding: "
-            << bdlb::PrintStringSingleLineHexDumper(
-                   (const char*)test::k_USER_CERTIFICATE_ASN1,
-                   sizeof test::k_USER_CERTIFICATE_ASN1)
-            << NTCCFG_TEST_LOG_END;
-
-        bdlsb::FixedMemInStreamBuf isb(
-            reinterpret_cast<const char*>(test::k_USER_CERTIFICATE_ASN1),
-            sizeof test::k_USER_CERTIFICATE_ASN1);
-
-        ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
-
-        ntca::EncryptionCertificate certificate(&ta);
-        error = certificate.decode(&decoder);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
-                              << NTCCFG_TEST_LOG_END;
-
-        bdlsb::MemOutStreamBuf osb(&ta);
-
-        ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
-
-        error = certificate.encode(&encoder);
-        NTCCFG_TEST_OK(error);
-
-        rc = osb.pubsync();
-        NTCCFG_TEST_EQ(rc, 0);
-
-        NTCCFG_TEST_EQ(osb.length(), sizeof test::k_USER_CERTIFICATE_ASN1);
-
-        rc = bsl::memcmp(osb.data(),
-                         test::k_USER_CERTIFICATE_ASN1,
-                         sizeof test::k_USER_CERTIFICATE_ASN1);
-        NTCCFG_TEST_EQ(rc, 0);
-
-        bool isCa = certificate.isAuthority();
-        NTCCFG_TEST_FALSE(isCa);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(3)
-{
-    // Concern: Encode and decode trusted certificate authorities.
-
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-        int         rc;
-
-        NTCCFG_TEST_LOG_DEBUG << "Decoding: "
-                              << bdlb::PrintStringSingleLineHexDumper(
-                                     (const char*)test::k_CA_CERTIFICATE_ASN1,
-                                     sizeof test::k_CA_CERTIFICATE_ASN1)
-                              << NTCCFG_TEST_LOG_END;
-
-        bdlsb::FixedMemInStreamBuf isb(
-            reinterpret_cast<const char*>(test::k_CA_CERTIFICATE_ASN1),
-            sizeof test::k_CA_CERTIFICATE_ASN1);
-
-        ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
-
-        ntca::EncryptionCertificate certificate(&ta);
-        error = certificate.decode(&decoder);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
-                              << NTCCFG_TEST_LOG_END;
-
-        bdlsb::MemOutStreamBuf osb(&ta);
-
-        ntsa::AbstractSyntaxEncoder encoder(&osb, &ta);
-
-        error = certificate.encode(&encoder);
-        NTCCFG_TEST_OK(error);
-
-        rc = osb.pubsync();
-        NTCCFG_TEST_EQ(rc, 0);
-
-        NTCCFG_TEST_EQ(osb.length(), sizeof test::k_CA_CERTIFICATE_ASN1);
-
-        rc = bsl::memcmp(osb.data(),
-                         test::k_CA_CERTIFICATE_ASN1,
-                         sizeof test::k_CA_CERTIFICATE_ASN1);
-        NTCCFG_TEST_EQ(rc, 0);
-
-        bool isCa = certificate.isAuthority();
-        NTCCFG_TEST_TRUE(isCa);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(4)
-{
-    // Concern: Matching domain names.
-
-    ntccfg::TestAllocator ta;
-    {
-        // clang-format off
-
-        bool match;
-
-        match = ntca::EncryptionCertificateUtil::matches(
-            "c.b.a", 
-            "c.b.a");
-        NTCCFG_TEST_TRUE(match);
-
-        match = ntca::EncryptionCertificateUtil::matches(
-            "c.b.x", 
-            "c.b.a");
-        NTCCFG_TEST_FALSE(match);
-
-        match = ntca::EncryptionCertificateUtil::matches(
-            "c.x.a", 
-            "c.b.a");
-        NTCCFG_TEST_FALSE(match);
-
-        match = ntca::EncryptionCertificateUtil::matches(
-            "x.b.a", 
-            "c.b.a");
-        NTCCFG_TEST_FALSE(match);
-
-        match = ntca::EncryptionCertificateUtil::matches(
-            "d.c.b.a", 
-              "c.b.a");
-        NTCCFG_TEST_FALSE(match);
-
-        match = ntca::EncryptionCertificateUtil::matches(
-              "c.b.a", 
-            "d.c.b.a");
-        NTCCFG_TEST_FALSE(match);
-
-        match = ntca::EncryptionCertificateUtil::matches(
-            "d.c.b.a", 
-            "*.c.b.a");
-        NTCCFG_TEST_TRUE(match);
-
-        match = ntca::EncryptionCertificateUtil::matches(
-            "e.d.c.b.a", 
-              "*.c.b.a");
-        NTCCFG_TEST_TRUE(match);
-
-        // clang-format on
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(5)
-{
-    // Concern: Matching endpoints, IP addresses, local names, and URIs.
-
-    ntccfg::TestAllocator ta;
-    {
-        bool match;
-
-        {
-            ntsa::IpAddress requestedIpAddress("10.0.92.14");
-            bsl::string     certifiedString = "10.0.92.14";
-
-            match =
-                ntca::EncryptionCertificateUtil::matches(requestedIpAddress,
-                                                         certifiedString);
-            NTCCFG_TEST_TRUE(match);
-        }
-
-        {
-            ntsa::IpAddress requestedIpAddress("10.0.92.254");
-            bsl::string     certifiedString = "10.0.92.14";
-
-            match =
-                ntca::EncryptionCertificateUtil::matches(requestedIpAddress,
-                                                         certifiedString);
-            NTCCFG_TEST_FALSE(match);
-        }
-
-        {
-            ntsa::LocalName requestedLocalName;
-            requestedLocalName.setValue("/path/to/resource");
-
-            bsl::string certifiedString = "/path/to/resource";
-
-            match =
-                ntca::EncryptionCertificateUtil::matches(requestedLocalName,
-                                                         certifiedString);
-            NTCCFG_TEST_TRUE(match);
-        }
-
-        {
-            ntsa::LocalName requestedLocalName;
-            requestedLocalName.setValue("/path/to/missing");
-
-            bsl::string certifiedString = "/path/to/resource";
-
-            match =
-                ntca::EncryptionCertificateUtil::matches(requestedLocalName,
-                                                         certifiedString);
-            NTCCFG_TEST_FALSE(match);
-        }
-
-        {
-            ntsa::Uri requestedUri;
-            requestedUri.setScheme("http");
-            requestedUri.setHost("found");
-            requestedUri.setPort(80);
-
-            bsl::string certifiedString = "found";
-
-            match = ntca::EncryptionCertificateUtil::matches(requestedUri,
-                                                             certifiedString);
-            NTCCFG_TEST_TRUE(match);
-        }
-
-        {
-            ntsa::Uri requestedUri;
-            requestedUri.setScheme("http");
-            requestedUri.setHost("missing");
-            requestedUri.setPort(80);
-
-            bsl::string certifiedString = "found";
-
-            match = ntca::EncryptionCertificateUtil::matches(requestedUri,
-                                                             certifiedString);
-            NTCCFG_TEST_FALSE(match);
-        }
-
-        {
-            ntsa::IpAddress requestedIpAddress("10.0.92.14");
-            ntsa::IpAddress certifiedIpAddress("10.0.92.14");
-
-            match =
-                ntca::EncryptionCertificateUtil::matches(requestedIpAddress,
-                                                         certifiedIpAddress);
-            NTCCFG_TEST_TRUE(match);
-        }
-
-        {
-            ntsa::IpAddress requestedIpAddress("10.0.92.254");
-            ntsa::IpAddress certifiedIpAddress("10.0.92.14");
-
-            match =
-                ntca::EncryptionCertificateUtil::matches(requestedIpAddress,
-                                                         certifiedIpAddress);
-            NTCCFG_TEST_FALSE(match);
-        }
-
-        {
-            ntsa::Uri requestedUri;
-            requestedUri.setScheme("http");
-            requestedUri.setHost("found");
-            requestedUri.setPort(80);
-
-            ntsa::Uri certifiedUri;
-            certifiedUri.setScheme("https");  // intentional
-            certifiedUri.setHost("found");
-            certifiedUri.setPort(8080);  // intentional
-
-            match = ntca::EncryptionCertificateUtil::matches(requestedUri,
-                                                             certifiedUri);
-            NTCCFG_TEST_TRUE(match);
-        }
-
-        {
-            ntsa::Uri requestedUri;
-            requestedUri.setScheme("http");
-            requestedUri.setHost("missing");
-            requestedUri.setPort(80);
-
-            ntsa::Uri certifiedUri;
-            certifiedUri.setScheme("https");  // intentional
-            certifiedUri.setHost("found");
-            certifiedUri.setPort(8080);  // intentional
-
-            match = ntca::EncryptionCertificateUtil::matches(requestedUri,
-                                                             certifiedUri);
-            NTCCFG_TEST_FALSE(match);
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_CASE(6)
-{
-    // Concern: Examine the fields of a certificate.
-
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-        int         rc;
-
-        NTCCFG_TEST_LOG_DEBUG
-            << "Decoding: "
-            << bdlb::PrintStringSingleLineHexDumper(
-                   (const char*)test::k_USER_CERTIFICATE_ASN1,
-                   sizeof test::k_USER_CERTIFICATE_ASN1)
-            << NTCCFG_TEST_LOG_END;
-
-        bdlsb::FixedMemInStreamBuf isb(
-            reinterpret_cast<const char*>(test::k_USER_CERTIFICATE_ASN1),
-            sizeof test::k_USER_CERTIFICATE_ASN1);
-
-        ntsa::AbstractSyntaxDecoder decoder(&isb, &ta);
-
-        ntca::EncryptionCertificate certificate(&ta);
-        error = certificate.decode(&decoder);
-        NTCCFG_TEST_OK(error);
-
-        NTCCFG_TEST_LOG_DEBUG << "Certificate = " << certificate
-                              << NTCCFG_TEST_LOG_END;
-
-        bool matchesSubjectDomainName = 
-            certificate.matchesSubjectDomainName("ntf.bloomberg.com");
-
-        bool isEllipticCurve = certificate.usesSubjectPublicKeyAlgorithm(
-                ntca::EncryptionKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE);
-        NTCCFG_TEST_TRUE(isEllipticCurve);
-
-        bool isEllipticCurveP256 = 
-            certificate.usesSubjectPublicKeyAlgorithmParameters(
-                ntca::EncryptionKeyEllipticCurveParametersIdentifierType
-                ::e_SEC_P256_R1);
-        NTCCFG_TEST_TRUE(isEllipticCurveP256);
-
-        bool allowsDigitalSignatures = 
-            certificate.allowsKeyUsage(
-                ntca::EncryptionCertificateSubjectKeyUsageType
-                ::e_DIGITAL_SIGNATURE);
-        NTCCFG_TEST_FALSE(allowsDigitalSignatures);
-
-        bool allowsTlsClients = 
-            certificate.allowsKeyUsage(
-                ntca::EncryptionCertificateSubjectKeyUsageExtendedType
-                ::e_TLS_CLIENT);
-        NTCCFG_TEST_FALSE(allowsTlsClients);
-
-        bool isCa = certificate.isAuthority();
-        NTCCFG_TEST_FALSE(isCa);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-    NTCCFG_TEST_REGISTER(5);
-    NTCCFG_TEST_REGISTER(6);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntca
+}  // close namespace BloombergLP

@@ -46,8 +46,7 @@ BSLS_IDENT_RCSID(ntco_ioring_cpp, "$Id$ $CSID$")
 #include <ntcp_listenersocket.h>
 #include <ntcp_streamsocket.h>
 
-#include <ntcm_monitorableregistry.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 
 #include <ntci_log.h>
 #include <ntci_mutex.h>
@@ -1408,7 +1407,7 @@ class IoRingDevice
 ///
 /// @par Thread Safety
 /// This class is thread safe.
-class IoRingDeviceTest : public IoRingTest
+class IoRingDeviceTest : public IoRingValidator
 {
     ntco::IoRingDevice d_device;
     ntcs::EventPool    d_eventPool;
@@ -4337,7 +4336,7 @@ bool IoRingUtil::isSupported()
     }
 }
 
-IoRingTest::~IoRingTest()
+IoRingValidator::~IoRingValidator()
 {
 }
 
@@ -6431,7 +6430,7 @@ bsl::shared_ptr<ntci::Proactor> IoRingFactory::createProactor(
     return proactor;
 }
 
-bsl::shared_ptr<ntco::IoRingTest> IoRingFactory::createTest(
+bsl::shared_ptr<ntco::IoRingValidator> IoRingFactory::createTest(
     bsl::size_t       queueDepth,
     bslma::Allocator* basicAllocator)
 {

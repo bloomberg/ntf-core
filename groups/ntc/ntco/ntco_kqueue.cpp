@@ -25,8 +25,7 @@ BSLS_IDENT_RCSID(ntco_kqueue_cpp, "$Id$ $CSID$")
 #include <ntcr_listenersocket.h>
 #include <ntcr_streamsocket.h>
 
-#include <ntcm_monitorableregistry.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 
 #include <ntci_log.h>
 #include <ntci_mutex.h>
@@ -1993,8 +1992,8 @@ void Kqueue::run(ntci::Waiter waiter)
             NTCO_KQUEUE_LOG_WAIT_INDEFINITE();
         }
 
-        if (tsPtr && tsPtr->tv_sec == 0 && tsPtr->tv_nsec == 0 && 
-            this->numSockets() == 0) 
+        if (tsPtr && tsPtr->tv_sec == 0 && tsPtr->tv_nsec == 0 &&
+            this->numSockets() == 0)
         {
             rc = 0;
         }
@@ -2196,8 +2195,8 @@ void Kqueue::poll(ntci::Waiter waiter)
         NTCO_KQUEUE_LOG_WAIT_INDEFINITE();
     }
 
-    if (tsPtr && tsPtr->tv_sec == 0 && tsPtr->tv_nsec == 0 && 
-        this->numSockets() == 0) 
+    if (tsPtr && tsPtr->tv_sec == 0 && tsPtr->tv_nsec == 0 &&
+        this->numSockets() == 0)
     {
         rc = 0;
     }

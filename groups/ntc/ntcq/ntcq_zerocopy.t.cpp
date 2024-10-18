@@ -1,4 +1,4 @@
-// Copyright 2023 Bloomberg Finance L.P.
+// Copyright 2020-2023 Bloomberg Finance L.P.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,22 +13,99 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcq_zerocopy_t_cpp, "$Id$ $CSID$")
+
 #include <ntcq_zerocopy.h>
 
-#include <ntccfg_test.h>
 #include <ntci_sendcallback.h>
 #include <ntci_sender.h>
 #include <ntcq_send.h>
 #include <ntcs_datapool.h>
-#include <bslma_allocator.h>
 
 using namespace BloombergLP;
 
-namespace test {
+namespace BloombergLP {
+namespace ntcq {
+
+// Provide tests for 'ntcq::ZeroCopyQueue'.
+class ZeroCopyTest
+{
+    /// Provide a mechanism to track the transfer state of data that is
+    /// zero-copied.
+    class Transfer;
+
+    /// Defines a type alias for a handle to a zero-copy transfer mechanism.
+    typedef bsl::shared_ptr<Transfer> TransferHandle;
+
+    /// Submit all operations required by the specified 'transfer' to the
+    /// 'zeroCopyQueue'.
+    static void submit(
+        ntcq::ZeroCopyQueue*                           zeroCopyQueue,
+        const bsl::shared_ptr<ZeroCopyTest::Transfer>& transfer);
+
+    /// Update the specified 'zeroCopyQueue' that previously-submitted
+    /// '[from, thru]' operations are complete.
+    static void update(ntcq::ZeroCopyQueue* zeroCopyQueue,
+                       bsl::uint32_t        from,
+                       bsl::uint32_t        thru);
+
+    /// Dequeue the next available completed operation, if any, and invoke its
+    /// callback, if any. Assert that an operation is complete according to the
+    /// specified 'exists' flag.
+    static void invoke(ntcq::ZeroCopyQueue*                 zeroCopyQueue,
+                       const bsl::shared_ptr<ntci::Sender>& sender,
+                       bool                                 exists);
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+
+    // TODO
+    static void verifyCase8();
+
+    // TODO
+    static void verifyCase9();
+
+    // TODO
+    static void verifyCase10();
+
+    // TODO
+    static void verifyCase11();
+
+    // TODO
+    static void verifyCase12();
+
+    // TODO
+    static void verifyCase13();
+
+    // TODO
+    static void verifyCase14();
+};
 
 /// Provide a mechanism to track the transfer state of data that is
 /// zero-copied.
-class Transfer
+class ZeroCopyTest::Transfer
 {
     ntcq::SendCounter               d_group;
     bsl::size_t                     d_numOperations;
@@ -92,29 +169,29 @@ class Transfer
         bslma::Allocator*                      basicAllocator = 0);
 };
 
-typedef bsl::shared_ptr<test::Transfer> TransferHandle;
-
-void Transfer::processComplete(const bsl::shared_ptr<ntci::Sender>& sender,
-                               const ntca::SendEvent&               event)
+void ZeroCopyTest::Transfer::processComplete(
+    const bsl::shared_ptr<ntci::Sender>& sender,
+    const ntca::SendEvent&               event)
 {
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_STREAM_DEBUG << "Zero-copy group " << d_group << " complete"
                           << NTCI_LOG_STREAM_END;
 
-    NTCCFG_TEST_EQ(sender, d_sender_sp);
-    NTCCFG_TEST_EQ(event.type(), ntca::SendEventType::e_COMPLETE);
+    NTSCFG_TEST_EQ(sender, d_sender_sp);
+    NTSCFG_TEST_EQ(event.type(), ntca::SendEventType::e_COMPLETE);
 
-    NTCCFG_TEST_FALSE(d_complete);
+    NTSCFG_TEST_FALSE(d_complete);
 
     d_complete = true;
 }
 
-Transfer::Transfer(const bsl::shared_ptr<ntci::Sender>&   sender,
-                   ntcq::SendCounter                      group,
-                   bsl::size_t                            numOperations,
-                   const bsl::shared_ptr<ntci::DataPool>& dataPool,
-                   bslma::Allocator*                      basicAllocator)
+ZeroCopyTest::Transfer::Transfer(
+    const bsl::shared_ptr<ntci::Sender>&   sender,
+    ntcq::SendCounter                      group,
+    bsl::size_t                            numOperations,
+    const bsl::shared_ptr<ntci::DataPool>& dataPool,
+    bslma::Allocator*                      basicAllocator)
 : d_group(group)
 , d_numOperations(numOperations)
 , d_complete(false)
@@ -125,19 +202,19 @@ Transfer::Transfer(const bsl::shared_ptr<ntci::Sender>&   sender,
 {
 }
 
-Transfer::~Transfer()
+ZeroCopyTest::Transfer::~Transfer()
 {
 }
 
-void Transfer::submit(ntcq::ZeroCopyQueue* zeroCopyQueue)
+void ZeroCopyTest::Transfer::submit(ntcq::ZeroCopyQueue* zeroCopyQueue)
 {
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_STREAM_DEBUG << "Zero-copy group " << d_group << " starting"
                           << NTCI_LOG_STREAM_END;
 
-    NTCCFG_TEST_GT(d_numOperations, 0);
-    NTCCFG_TEST_FALSE(d_complete);
+    NTSCFG_TEST_GT(d_numOperations, 0);
+    NTSCFG_TEST_FALSE(d_complete);
 
     ntci::SendCallback callback(NTCCFG_BIND(&Transfer::processComplete,
                                             this,
@@ -156,22 +233,22 @@ void Transfer::submit(ntcq::ZeroCopyQueue* zeroCopyQueue)
     zeroCopyQueue->frame(d_group);
 }
 
-ntcq::SendCounter Transfer::group() const
+ntcq::SendCounter ZeroCopyTest::Transfer::group() const
 {
     return d_group;
 }
 
-bool Transfer::complete() const
+bool ZeroCopyTest::Transfer::complete() const
 {
     return d_complete;
 }
 
-bool Transfer::pending() const
+bool ZeroCopyTest::Transfer::pending() const
 {
     return !d_complete;
 }
 
-bsl::shared_ptr<Transfer> Transfer::create(
+bsl::shared_ptr<ZeroCopyTest::Transfer> ZeroCopyTest::Transfer::create(
     const bsl::shared_ptr<ntci::Sender>&   sender,
     ntcq::SendCounter                      group,
     bsl::size_t                            numOperations,
@@ -191,34 +268,14 @@ bsl::shared_ptr<Transfer> Transfer::create(
     return transfer;
 }
 
-/// Provide utilities for testing a zero-copy queue.
-struct ZeroCopyUtil {
-    /// Submit all operations required by the specified 'transfer' to the
-    /// 'zeroCopyQueue'.
-    static void submit(ntcq::ZeroCopyQueue*                   zeroCopyQueue,
-                       const bsl::shared_ptr<test::Transfer>& transfer);
-
-    /// Update the specified 'zeroCopyQueue' that previously-submitted
-    /// '[from, thru]' operations are complete.
-    static void update(ntcq::ZeroCopyQueue* zeroCopyQueue,
-                       bsl::uint32_t        from,
-                       bsl::uint32_t        thru);
-
-    /// Dequeue the next available completed operation, if any, and invoke its
-    /// callback, if any. Assert that an operation is complete according to the
-    /// specified 'exists' flag.
-    static void invoke(ntcq::ZeroCopyQueue*                 zeroCopyQueue,
-                       const bsl::shared_ptr<ntci::Sender>& sender,
-                       bool                                 exists);
-};
-
-void ZeroCopyUtil::submit(ntcq::ZeroCopyQueue*                   zeroCopyQueue,
-                          const bsl::shared_ptr<test::Transfer>& transfer)
+void ZeroCopyTest::submit(
+    ntcq::ZeroCopyQueue*                           zeroCopyQueue,
+    const bsl::shared_ptr<ZeroCopyTest::Transfer>& transfer)
 {
     transfer->submit(zeroCopyQueue);
 }
 
-void ZeroCopyUtil::update(ntcq::ZeroCopyQueue* zeroCopyQueue,
+void ZeroCopyTest::update(ntcq::ZeroCopyQueue* zeroCopyQueue,
                           bsl::uint32_t        from,
                           bsl::uint32_t        thru)
 {
@@ -226,16 +283,16 @@ void ZeroCopyUtil::update(ntcq::ZeroCopyQueue* zeroCopyQueue,
         ntsa::ZeroCopy(from, thru, ntsa::ZeroCopyType::e_AVOIDED));
 }
 
-void ZeroCopyUtil::invoke(ntcq::ZeroCopyQueue*                 zeroCopyQueue,
+void ZeroCopyTest::invoke(ntcq::ZeroCopyQueue*                 zeroCopyQueue,
                           const bsl::shared_ptr<ntci::Sender>& sender,
                           bool                                 expected)
 {
     ntci::SendCallback callback;
     bool               found = zeroCopyQueue->pop(&callback);
-    NTCCFG_TEST_EQ(found, expected);
+    NTSCFG_TEST_EQ(found, expected);
 
     if (found) {
-        NTCCFG_TEST_TRUE(callback);
+        NTSCFG_TEST_TRUE(callback);
 
         ntca::SendEvent event;
         event.setType(ntca::SendEventType::e_COMPLETE);
@@ -244,9 +301,7 @@ void ZeroCopyUtil::invoke(ntcq::ZeroCopyQueue*                 zeroCopyQueue,
     }
 }
 
-}  // close namespace test
-
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase1)
 {
     // Concern: Test ntcq::ZeroCopyRange::intersection()
     // Plan:
@@ -294,78 +349,74 @@ NTCCFG_TEST_CASE(1)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        // clang-format off
-        struct Data {
-            bsl::size_t           d_line;
-            ntcq::ZeroCopyCounter d_lhsMin;
-            ntcq::ZeroCopyCounter d_lhsMax;
-            ntcq::ZeroCopyCounter d_rhsMin;
-            ntcq::ZeroCopyCounter d_rhsMax;
-            ntcq::ZeroCopyCounter d_intersectionMin;
-            ntcq::ZeroCopyCounter d_intersectionMax;
-            bsl::size_t           d_intersectionSize;
-        } DATA[] = {
-            { __LINE__, 0, 1,    0, 1,    0, 1, 1 },
+    // clang-format off
+    struct Data {
+        bsl::size_t           d_line;
+        ntcq::ZeroCopyCounter d_lhsMin;
+        ntcq::ZeroCopyCounter d_lhsMax;
+        ntcq::ZeroCopyCounter d_rhsMin;
+        ntcq::ZeroCopyCounter d_rhsMax;
+        ntcq::ZeroCopyCounter d_intersectionMin;
+        ntcq::ZeroCopyCounter d_intersectionMax;
+        bsl::size_t           d_intersectionSize;
+    } DATA[] = {
+        { __LINE__, 0, 1,    0, 1,    0, 1, 1 },
 
-            { __LINE__, 3, 6,    0, 3,    0, 0,    0 }, // Case 1
+        { __LINE__, 3, 6,    0, 3,    0, 0,    0 }, // Case 1
 
-            { __LINE__, 3, 6,    0, 4,    3, 4,    1 }, // Case 2, size 1
-            { __LINE__, 3, 6,    0, 5,    3, 5,    2 }, // Case 2, size 2
-            { __LINE__, 3, 6,    0, 6,    3, 6,    3 }, // Case 2, size 3
+        { __LINE__, 3, 6,    0, 4,    3, 4,    1 }, // Case 2, size 1
+        { __LINE__, 3, 6,    0, 5,    3, 5,    2 }, // Case 2, size 2
+        { __LINE__, 3, 6,    0, 6,    3, 6,    3 }, // Case 2, size 3
 
-            { __LINE__, 3, 6,    3, 4,    3, 4,    1 }, // Case 3, size 1
-            { __LINE__, 3, 6,    3, 5,    3, 5,    2 }, // Case 3, size 2
-            { __LINE__, 3, 6,    3, 6,    3, 6,    3 }, // Case 3, size 3
+        { __LINE__, 3, 6,    3, 4,    3, 4,    1 }, // Case 3, size 1
+        { __LINE__, 3, 6,    3, 5,    3, 5,    2 }, // Case 3, size 2
+        { __LINE__, 3, 6,    3, 6,    3, 6,    3 }, // Case 3, size 3
 
-            { __LINE__, 3, 6,    3, 6,    3, 6,    3 }, // Case 4, size 3
+        { __LINE__, 3, 6,    3, 6,    3, 6,    3 }, // Case 4, size 3
 
-            { __LINE__, 3, 6,    3, 6,    3, 6,    3 }, // Case 5, size 3
-            { __LINE__, 3, 6,    4, 6,    4, 6,    2 }, // Case 5, size 2
-            { __LINE__, 3, 6,    5, 6,    5, 6,    1 }, // Case 5, size 1
-            
-            { __LINE__, 3, 6,    3, 6,    3, 6,    3 }, // Case 6, size 3
-            { __LINE__, 3, 6,    4, 6,    4, 6,    2 }, // Case 6, size 2
-            { __LINE__, 3, 6,    5, 8,    5, 6,    1 }, // Case 6, size 1
-            
-            { __LINE__, 3, 6,    6, 9,    0, 0,    0 }, // Case 7
+        { __LINE__, 3, 6,    3, 6,    3, 6,    3 }, // Case 5, size 3
+        { __LINE__, 3, 6,    4, 6,    4, 6,    2 }, // Case 5, size 2
+        { __LINE__, 3, 6,    5, 6,    5, 6,    1 }, // Case 5, size 1
+        
+        { __LINE__, 3, 6,    3, 6,    3, 6,    3 }, // Case 6, size 3
+        { __LINE__, 3, 6,    4, 6,    4, 6,    2 }, // Case 6, size 2
+        { __LINE__, 3, 6,    5, 8,    5, 6,    1 }, // Case 6, size 1
+        
+        { __LINE__, 3, 6,    6, 9,    0, 0,    0 }, // Case 7
 
-            { __LINE__, 0, 0,    0, 0,    0, 0, 0 }
-        };
-        // clang-format on
+        { __LINE__, 0, 0,    0, 0,    0, 0, 0 }
+    };
+    // clang-format on
 
-        enum { NUM_DATA = sizeof(DATA) / sizeof(DATA[0]) };
+    enum { NUM_DATA = sizeof(DATA) / sizeof(DATA[0]) };
 
-        for (bsl::size_t i = 0; i < NUM_DATA; ++i) {
-            const Data& data = DATA[i];
+    for (bsl::size_t i = 0; i < NUM_DATA; ++i) {
+        const Data& data = DATA[i];
 
-            ntcq::ZeroCopyRange lhs(data.d_lhsMin, data.d_lhsMax);
-            ntcq::ZeroCopyRange rhs(data.d_rhsMin, data.d_rhsMax);
+        ntcq::ZeroCopyRange lhs(data.d_lhsMin, data.d_lhsMax);
+        ntcq::ZeroCopyRange rhs(data.d_rhsMin, data.d_rhsMax);
 
-            ntcq::ZeroCopyRange expectedIntersection(data.d_intersectionMin,
-                                                     data.d_intersectionMax);
+        ntcq::ZeroCopyRange expectedIntersection(data.d_intersectionMin,
+                                                 data.d_intersectionMax);
 
-            ntcq::ZeroCopyRange intersection =
-                ntcq::ZeroCopyRange::intersect(lhs, rhs);
+        ntcq::ZeroCopyRange intersection =
+            ntcq::ZeroCopyRange::intersect(lhs, rhs);
 
-            NTCI_LOG_STREAM_DEBUG
-                << "Testing line " << data.d_line << "\nL: " << lhs
-                << "\nR: " << rhs << "\nE: " << expectedIntersection
-                << "\nF: " << intersection << NTCI_LOG_STREAM_END;
+        NTCI_LOG_STREAM_DEBUG
+            << "Testing line " << data.d_line << "\nL: " << lhs
+            << "\nR: " << rhs << "\nE: " << expectedIntersection
+            << "\nF: " << intersection << NTCI_LOG_STREAM_END;
 
-            if (expectedIntersection.empty()) {
-                NTCCFG_TEST_TRUE(intersection.empty());
-            }
-            else {
-                NTCCFG_TEST_EQ(intersection, expectedIntersection);
-            }
+        if (expectedIntersection.empty()) {
+            NTSCFG_TEST_TRUE(intersection.empty());
+        }
+        else {
+            NTSCFG_TEST_EQ(intersection, expectedIntersection);
         }
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase2)
 {
     // Concern: Test ntcq::ZeroCopyRange::difference()
     // Plan:
@@ -373,83 +424,79 @@ NTCCFG_TEST_CASE(2)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
+    // LHS:     -----
+    // RHS: --------------
+
     {
-        // LHS:     -----
-        // RHS: --------------
+        ntcq::ZeroCopyRange lhs(3, 6);
+        ntcq::ZeroCopyRange rhs(0, 9);
 
-        {
-            ntcq::ZeroCopyRange lhs(3, 6);
-            ntcq::ZeroCopyRange rhs(0, 9);
+        ntcq::ZeroCopyRange result;
+        ntcq::ZeroCopyRange overflow;
 
-            ntcq::ZeroCopyRange result;
-            ntcq::ZeroCopyRange overflow;
+        ntcq::ZeroCopyRange::difference(&result, &overflow, lhs, rhs);
 
-            ntcq::ZeroCopyRange::difference(&result, &overflow, lhs, rhs);
-
-            NTCCFG_TEST_TRUE(result.empty());
-            NTCCFG_TEST_TRUE(overflow.empty());
-        }
-
-        // LHS: RRR----
-        // RHS:    ----
-
-        {
-            ntcq::ZeroCopyRange lhs(0, 6);
-            ntcq::ZeroCopyRange rhs(3, 6);
-
-            ntcq::ZeroCopyRange result;
-            ntcq::ZeroCopyRange overflow;
-
-            ntcq::ZeroCopyRange::difference(&result, &overflow, lhs, rhs);
-
-            NTCCFG_TEST_EQ(result.minCounter(), 0);
-            NTCCFG_TEST_EQ(result.maxCounter(), 3);
-
-            NTCCFG_TEST_TRUE(overflow.empty());
-        }
-
-        // LHS: ----OOO
-        // RHS: ----
-
-        {
-            ntcq::ZeroCopyRange lhs(3, 9);
-            ntcq::ZeroCopyRange rhs(3, 6);
-
-            ntcq::ZeroCopyRange result;
-            ntcq::ZeroCopyRange overflow;
-
-            ntcq::ZeroCopyRange::difference(&result, &overflow, lhs, rhs);
-
-            NTCCFG_TEST_EQ(result.minCounter(), 6);
-            NTCCFG_TEST_EQ(result.maxCounter(), 9);
-
-            NTCCFG_TEST_TRUE(overflow.empty());
-        }
-
-        // LHS: RRR----OOO
-        // RHS:    ----
-
-        {
-            ntcq::ZeroCopyRange lhs(0, 9);
-            ntcq::ZeroCopyRange rhs(3, 6);
-
-            ntcq::ZeroCopyRange result;
-            ntcq::ZeroCopyRange overflow;
-
-            ntcq::ZeroCopyRange::difference(&result, &overflow, lhs, rhs);
-
-            NTCCFG_TEST_EQ(result.minCounter(), 0);
-            NTCCFG_TEST_EQ(result.maxCounter(), 3);
-
-            NTCCFG_TEST_EQ(overflow.minCounter(), 6);
-            NTCCFG_TEST_EQ(overflow.maxCounter(), 9);
-        }
+        NTSCFG_TEST_TRUE(result.empty());
+        NTSCFG_TEST_TRUE(overflow.empty());
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    // LHS: RRR----
+    // RHS:    ----
+
+    {
+        ntcq::ZeroCopyRange lhs(0, 6);
+        ntcq::ZeroCopyRange rhs(3, 6);
+
+        ntcq::ZeroCopyRange result;
+        ntcq::ZeroCopyRange overflow;
+
+        ntcq::ZeroCopyRange::difference(&result, &overflow, lhs, rhs);
+
+        NTSCFG_TEST_EQ(result.minCounter(), 0);
+        NTSCFG_TEST_EQ(result.maxCounter(), 3);
+
+        NTSCFG_TEST_TRUE(overflow.empty());
+    }
+
+    // LHS: ----OOO
+    // RHS: ----
+
+    {
+        ntcq::ZeroCopyRange lhs(3, 9);
+        ntcq::ZeroCopyRange rhs(3, 6);
+
+        ntcq::ZeroCopyRange result;
+        ntcq::ZeroCopyRange overflow;
+
+        ntcq::ZeroCopyRange::difference(&result, &overflow, lhs, rhs);
+
+        NTSCFG_TEST_EQ(result.minCounter(), 6);
+        NTSCFG_TEST_EQ(result.maxCounter(), 9);
+
+        NTSCFG_TEST_TRUE(overflow.empty());
+    }
+
+    // LHS: RRR----OOO
+    // RHS:    ----
+
+    {
+        ntcq::ZeroCopyRange lhs(0, 9);
+        ntcq::ZeroCopyRange rhs(3, 6);
+
+        ntcq::ZeroCopyRange result;
+        ntcq::ZeroCopyRange overflow;
+
+        ntcq::ZeroCopyRange::difference(&result, &overflow, lhs, rhs);
+
+        NTSCFG_TEST_EQ(result.minCounter(), 0);
+        NTSCFG_TEST_EQ(result.maxCounter(), 3);
+
+        NTSCFG_TEST_EQ(overflow.minCounter(), 6);
+        NTSCFG_TEST_EQ(overflow.maxCounter(), 9);
+    }
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase3)
 {
     // Concern: Test 32-bit ntsa::ZeroCopy counter wraparound
     // Plan:
@@ -457,239 +504,235 @@ NTCCFG_TEST_CASE(3)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
+    const bsl::uint32_t k_U32_UINT32_MAX =
+        bsl::numeric_limits<bsl::uint32_t>::max();
+
+    const bsl::uint64_t k_U64_UINT32_MAX =
+        bsl::numeric_limits<bsl::uint32_t>::max();
+
+    // Test basic operation.
+
     {
-        const bsl::uint32_t k_U32_UINT32_MAX =
-            bsl::numeric_limits<bsl::uint32_t>::max();
+        ntcq::ZeroCopyCounterGenerator generator;
+        ntcq::ZeroCopyCounter          counter = 0;
 
-        const bsl::uint64_t k_U64_UINT32_MAX =
-            bsl::numeric_limits<bsl::uint32_t>::max();
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, 0);
 
-        // Test basic operation.
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, 1);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, 2);
+
+        ntcq::ZeroCopyRange range = generator.update(
+            ntsa::ZeroCopy(0, 3, ntsa::ZeroCopyType::e_AVOIDED));
+
+        NTSCFG_TEST_EQ(range.minCounter(), 0);
+        NTSCFG_TEST_EQ(range.maxCounter(), 4);
+    }
+
+    // Test 32-bit wraparound incrementing by intervals of size 1.
+
+    {
+        ntcq::ZeroCopyCounterGenerator generator;
+        ntcq::ZeroCopyCounter          counter = 0;
+
+        generator.configure(k_U64_UINT32_MAX - 2, 0);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 2);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 1);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 1);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 2);
 
         {
-            ntcq::ZeroCopyCounterGenerator generator;
-            ntcq::ZeroCopyCounter          counter = 0;
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, 0);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, 1);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, 2);
-
             ntcq::ZeroCopyRange range = generator.update(
-                ntsa::ZeroCopy(0, 3, ntsa::ZeroCopyType::e_AVOIDED));
+                ntsa::ZeroCopy(k_U32_UINT32_MAX - 2,
+                               k_U32_UINT32_MAX - 2,
+                               ntsa::ZeroCopyType::e_AVOIDED));
 
-            NTCCFG_TEST_EQ(range.minCounter(), 0);
-            NTCCFG_TEST_EQ(range.maxCounter(), 4);
+            NTSCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 2);
+            NTSCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX - 2 + 1);
         }
 
-        // Test 32-bit wraparound incrementing by intervals of size 1.
-
         {
-            ntcq::ZeroCopyCounterGenerator generator;
-            ntcq::ZeroCopyCounter          counter = 0;
+            ntcq::ZeroCopyRange range = generator.update(
+                ntsa::ZeroCopy(k_U32_UINT32_MAX - 1,
+                               k_U32_UINT32_MAX - 1,
+                               ntsa::ZeroCopyType::e_AVOIDED));
 
-            generator.configure(k_U64_UINT32_MAX - 2, 0);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 2);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 1);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 1);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 2);
-
-            {
-                ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 2,
-                                   k_U32_UINT32_MAX - 2,
-                                   ntsa::ZeroCopyType::e_AVOIDED));
-
-                NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 2);
-                NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX - 2 + 1);
-            }
-
-            {
-                ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 1,
-                                   k_U32_UINT32_MAX - 1,
-                                   ntsa::ZeroCopyType::e_AVOIDED));
-
-                NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 1);
-                NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX - 1 + 1);
-            }
-
-            {
-                ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX + 0,
-                                   k_U32_UINT32_MAX + 0,
-                                   ntsa::ZeroCopyType::e_AVOIDED));
-
-                NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 0);
-                NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 0 + 1);
-            }
-
-            {
-                ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(0, 0, ntsa::ZeroCopyType::e_AVOIDED));
-
-                NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 1);
-                NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 1 + 1);
-            }
-
-            {
-                ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(1, 1, ntsa::ZeroCopyType::e_AVOIDED));
-
-                NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 2);
-                NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 2 + 1);
-            }
+            NTSCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 1);
+            NTSCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX - 1 + 1);
         }
 
-        // Test 32-bit wraparound incrementing an intervals of size 2, ending
-        // on UINT_MAX.
-
         {
-            ntcq::ZeroCopyCounterGenerator generator;
-            ntcq::ZeroCopyCounter          counter = 0;
+            ntcq::ZeroCopyRange range = generator.update(
+                ntsa::ZeroCopy(k_U32_UINT32_MAX + 0,
+                               k_U32_UINT32_MAX + 0,
+                               ntsa::ZeroCopyType::e_AVOIDED));
 
-            generator.configure(k_U64_UINT32_MAX - 2, 0);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 2);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 1);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 1);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 2);
-
-            {
-                ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 1,
-                                   k_U32_UINT32_MAX,
-                                   ntsa::ZeroCopyType::e_AVOIDED));
-
-                NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 1);
-                NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 1);
-            }
-
-            {
-                ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(0, 1, ntsa::ZeroCopyType::e_AVOIDED));
-
-                NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 1);
-                NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 3);
-            }
+            NTSCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 0);
+            NTSCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 0 + 1);
         }
 
-        // Test 32-bit wraparound incrementing an intervals of size 2, starting
-        // on UINT_MAX.
-
         {
-            ntcq::ZeroCopyCounterGenerator generator;
-            ntcq::ZeroCopyCounter          counter = 0;
+            ntcq::ZeroCopyRange range = generator.update(
+                ntsa::ZeroCopy(0, 0, ntsa::ZeroCopyType::e_AVOIDED));
 
-            generator.configure(k_U64_UINT32_MAX - 2, 0);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 2);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 1);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 1);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 2);
-
-            {
-                ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX,
-                                   0,
-                                   ntsa::ZeroCopyType::e_AVOIDED));
-
-                NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX);
-                NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 2);
-            }
-
-            {
-                ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(1, 2, ntsa::ZeroCopyType::e_AVOIDED));
-
-                NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 2);
-                NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 4);
-            }
+            NTSCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 1);
+            NTSCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 1 + 1);
         }
 
-        // Test 32-bit wraparound incrementing an intervals of size 3, spanning
-        // UINT_MAX.
-
         {
-            ntcq::ZeroCopyCounterGenerator generator;
-            ntcq::ZeroCopyCounter          counter = 0;
+            ntcq::ZeroCopyRange range = generator.update(
+                ntsa::ZeroCopy(1, 1, ntsa::ZeroCopyType::e_AVOIDED));
 
-            generator.configure(k_U64_UINT32_MAX - 2, 0);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 2);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 1);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 1);
-
-            counter = generator.next();
-            NTCCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 2);
-
-            {
-                ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(k_U32_UINT32_MAX - 1,
-                                   0,
-                                   ntsa::ZeroCopyType::e_AVOIDED));
-
-                NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 1);
-                NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 2);
-            }
-
-            {
-                ntcq::ZeroCopyRange range = generator.update(
-                    ntsa::ZeroCopy(1, 2, ntsa::ZeroCopyType::e_AVOIDED));
-
-                NTCCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 2);
-                NTCCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 4);
-            }
+            NTSCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 2);
+            NTSCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 2 + 1);
         }
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    // Test 32-bit wraparound incrementing an intervals of size 2, ending
+    // on UINT_MAX.
+
+    {
+        ntcq::ZeroCopyCounterGenerator generator;
+        ntcq::ZeroCopyCounter          counter = 0;
+
+        generator.configure(k_U64_UINT32_MAX - 2, 0);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 2);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 1);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 1);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 2);
+
+        {
+            ntcq::ZeroCopyRange range = generator.update(
+                ntsa::ZeroCopy(k_U32_UINT32_MAX - 1,
+                               k_U32_UINT32_MAX,
+                               ntsa::ZeroCopyType::e_AVOIDED));
+
+            NTSCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 1);
+            NTSCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 1);
+        }
+
+        {
+            ntcq::ZeroCopyRange range = generator.update(
+                ntsa::ZeroCopy(0, 1, ntsa::ZeroCopyType::e_AVOIDED));
+
+            NTSCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 1);
+            NTSCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 3);
+        }
+    }
+
+    // Test 32-bit wraparound incrementing an intervals of size 2, starting
+    // on UINT_MAX.
+
+    {
+        ntcq::ZeroCopyCounterGenerator generator;
+        ntcq::ZeroCopyCounter          counter = 0;
+
+        generator.configure(k_U64_UINT32_MAX - 2, 0);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 2);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 1);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 1);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 2);
+
+        {
+            ntcq::ZeroCopyRange range = generator.update(
+                ntsa::ZeroCopy(k_U32_UINT32_MAX,
+                               0,
+                               ntsa::ZeroCopyType::e_AVOIDED));
+
+            NTSCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX);
+            NTSCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 2);
+        }
+
+        {
+            ntcq::ZeroCopyRange range = generator.update(
+                ntsa::ZeroCopy(1, 2, ntsa::ZeroCopyType::e_AVOIDED));
+
+            NTSCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 2);
+            NTSCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 4);
+        }
+    }
+
+    // Test 32-bit wraparound incrementing an intervals of size 3, spanning
+    // UINT_MAX.
+
+    {
+        ntcq::ZeroCopyCounterGenerator generator;
+        ntcq::ZeroCopyCounter          counter = 0;
+
+        generator.configure(k_U64_UINT32_MAX - 2, 0);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 2);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX - 1);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 1);
+
+        counter = generator.next();
+        NTSCFG_TEST_EQ(counter, k_U64_UINT32_MAX + 2);
+
+        {
+            ntcq::ZeroCopyRange range = generator.update(
+                ntsa::ZeroCopy(k_U32_UINT32_MAX - 1,
+                               0,
+                               ntsa::ZeroCopyType::e_AVOIDED));
+
+            NTSCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX - 1);
+            NTSCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 2);
+        }
+
+        {
+            ntcq::ZeroCopyRange range = generator.update(
+                ntsa::ZeroCopy(1, 2, ntsa::ZeroCopyType::e_AVOIDED));
+
+            NTSCFG_TEST_EQ(range.minCounter(), k_U64_UINT32_MAX + 2);
+            NTSCFG_TEST_EQ(range.maxCounter(), k_U64_UINT32_MAX + 4);
+        }
+    }
 }
 
-NTCCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase4)
 {
     // Concern: Test ntcq::ZeroCopyQueue sanity check: numOps = 1, depth 1
     // Plan:
@@ -697,28 +740,25 @@ NTCCFG_TEST_CASE(4)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<ntci::Sender> s;
+    bsl::shared_ptr<ntci::Sender> s;
 
-        bsl::shared_ptr<ntcs::DataPool> dp;
-        dp.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcs::DataPool> dp;
+    dp.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        ntcq::ZeroCopyQueue zq(dp, &ta);
+    ntcq::ZeroCopyQueue zq(dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::TransferHandle t0 = test::Transfer::create(s, 0, 1, dp, &ta);
+    ZeroCopyTest::TransferHandle t0 =
+        ZeroCopyTest::Transfer::create(s, 0, 1, dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::ZeroCopyUtil::submit(&zq, t0);
-        test::ZeroCopyUtil::invoke(&zq, s, false);
-        test::ZeroCopyUtil::update(&zq, 0, 0);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::submit(&zq, t0);
+    ZeroCopyTest::invoke(&zq, s, false);
+    ZeroCopyTest::update(&zq, 0, 0);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(t0->complete());
 }
 
-NTCCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase5)
 {
     // Concern: Test ntcq::ZeroCopyQueue sanity check: numOps = 1, depth 2
     // Plan:
@@ -726,39 +766,37 @@ NTCCFG_TEST_CASE(5)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<ntci::Sender> s;
+    bsl::shared_ptr<ntci::Sender> s;
 
-        bsl::shared_ptr<ntcs::DataPool> dp;
-        dp.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcs::DataPool> dp;
+    dp.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        ntcq::ZeroCopyQueue zq(dp, &ta);
+    ntcq::ZeroCopyQueue zq(dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::TransferHandle t0 = test::Transfer::create(s, 0, 1, dp, &ta);
-        test::TransferHandle t1 = test::Transfer::create(s, 1, 1, dp, &ta);
+    ZeroCopyTest::TransferHandle t0 =
+        ZeroCopyTest::Transfer::create(s, 0, 1, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t1 =
+        ZeroCopyTest::Transfer::create(s, 1, 1, dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::ZeroCopyUtil::submit(&zq, t0);
-        test::ZeroCopyUtil::submit(&zq, t1);
+    ZeroCopyTest::submit(&zq, t0);
+    ZeroCopyTest::submit(&zq, t1);
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        test::ZeroCopyUtil::update(&zq, 0, 0);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 0, 0);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->pending());
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->pending());
 
-        test::ZeroCopyUtil::update(&zq, 1, 1);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 1, 1);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->complete());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->complete());
 }
 
-NTCCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase6)
 {
     // Concern: Test ntcq::ZeroCopyQueue sanity check: numOps = 1, depth 3
     // Plan:
@@ -766,50 +804,49 @@ NTCCFG_TEST_CASE(6)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<ntci::Sender> s;
+    bsl::shared_ptr<ntci::Sender> s;
 
-        bsl::shared_ptr<ntcs::DataPool> dp;
-        dp.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcs::DataPool> dp;
+    dp.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        ntcq::ZeroCopyQueue zq(dp, &ta);
+    ntcq::ZeroCopyQueue zq(dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::TransferHandle t0 = test::Transfer::create(s, 0, 1, dp, &ta);
-        test::TransferHandle t1 = test::Transfer::create(s, 1, 1, dp, &ta);
-        test::TransferHandle t2 = test::Transfer::create(s, 2, 1, dp, &ta);
+    ZeroCopyTest::TransferHandle t0 =
+        ZeroCopyTest::Transfer::create(s, 0, 1, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t1 =
+        ZeroCopyTest::Transfer::create(s, 1, 1, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t2 =
+        ZeroCopyTest::Transfer::create(s, 2, 1, dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::ZeroCopyUtil::submit(&zq, t0);
-        test::ZeroCopyUtil::submit(&zq, t1);
-        test::ZeroCopyUtil::submit(&zq, t2);
+    ZeroCopyTest::submit(&zq, t0);
+    ZeroCopyTest::submit(&zq, t1);
+    ZeroCopyTest::submit(&zq, t2);
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        test::ZeroCopyUtil::update(&zq, 0, 0);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 0, 0);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->pending());
-        NTCCFG_TEST_TRUE(t2->pending());
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->pending());
+    NTSCFG_TEST_TRUE(t2->pending());
 
-        test::ZeroCopyUtil::update(&zq, 1, 1);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 1, 1);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->complete());
-        NTCCFG_TEST_TRUE(t2->pending());
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->complete());
+    NTSCFG_TEST_TRUE(t2->pending());
 
-        test::ZeroCopyUtil::update(&zq, 2, 2);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 2, 2);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->complete());
-        NTCCFG_TEST_TRUE(t2->complete());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->complete());
+    NTSCFG_TEST_TRUE(t2->complete());
 }
 
-NTCCFG_TEST_CASE(7)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase7)
 {
     // Concern: Test ntcq::ZeroCopyQueue sanity check: numOps = 1, depth 3, batch
     // Plan:
@@ -817,53 +854,52 @@ NTCCFG_TEST_CASE(7)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<ntci::Sender> s;
+    bsl::shared_ptr<ntci::Sender> s;
 
-        bsl::shared_ptr<ntcs::DataPool> dp;
-        dp.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcs::DataPool> dp;
+    dp.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        ntcq::ZeroCopyQueue zq(dp, &ta);
+    ntcq::ZeroCopyQueue zq(dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::TransferHandle t0 = test::Transfer::create(s, 0, 1, dp, &ta);
-        test::TransferHandle t1 = test::Transfer::create(s, 1, 1, dp, &ta);
-        test::TransferHandle t2 = test::Transfer::create(s, 2, 1, dp, &ta);
+    ZeroCopyTest::TransferHandle t0 =
+        ZeroCopyTest::Transfer::create(s, 0, 1, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t1 =
+        ZeroCopyTest::Transfer::create(s, 1, 1, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t2 =
+        ZeroCopyTest::Transfer::create(s, 2, 1, dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::ZeroCopyUtil::submit(&zq, t0);
-        test::ZeroCopyUtil::submit(&zq, t1);
-        test::ZeroCopyUtil::submit(&zq, t2);
+    ZeroCopyTest::submit(&zq, t0);
+    ZeroCopyTest::submit(&zq, t1);
+    ZeroCopyTest::submit(&zq, t2);
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        NTCCFG_TEST_TRUE(t0->pending());
-        NTCCFG_TEST_TRUE(t1->pending());
-        NTCCFG_TEST_TRUE(t2->pending());
+    NTSCFG_TEST_TRUE(t0->pending());
+    NTSCFG_TEST_TRUE(t1->pending());
+    NTSCFG_TEST_TRUE(t2->pending());
 
-        test::ZeroCopyUtil::update(&zq, 0, 2);
+    ZeroCopyTest::update(&zq, 0, 2);
 
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->pending());
-        NTCCFG_TEST_TRUE(t2->pending());
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->pending());
+    NTSCFG_TEST_TRUE(t2->pending());
 
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->complete());
-        NTCCFG_TEST_TRUE(t2->pending());
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->complete());
+    NTSCFG_TEST_TRUE(t2->pending());
 
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->complete());
-        NTCCFG_TEST_TRUE(t2->complete());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->complete());
+    NTSCFG_TEST_TRUE(t2->complete());
 }
 
-NTCCFG_TEST_CASE(8)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase8)
 {
     // Concern: Test ntcq::ZeroCopyQueue sanity check: numOps = 2, depth 1
     // Plan:
@@ -871,28 +907,25 @@ NTCCFG_TEST_CASE(8)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<ntci::Sender> s;
+    bsl::shared_ptr<ntci::Sender> s;
 
-        bsl::shared_ptr<ntcs::DataPool> dp;
-        dp.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcs::DataPool> dp;
+    dp.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        ntcq::ZeroCopyQueue zq(dp, &ta);
+    ntcq::ZeroCopyQueue zq(dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::TransferHandle t0 = test::Transfer::create(s, 0, 2, dp, &ta);
+    ZeroCopyTest::TransferHandle t0 =
+        ZeroCopyTest::Transfer::create(s, 0, 2, dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::ZeroCopyUtil::submit(&zq, t0);
-        test::ZeroCopyUtil::invoke(&zq, s, false);
-        test::ZeroCopyUtil::update(&zq, 0, 1);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::submit(&zq, t0);
+    ZeroCopyTest::invoke(&zq, s, false);
+    ZeroCopyTest::update(&zq, 0, 1);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(t0->complete());
 }
 
-NTCCFG_TEST_CASE(9)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase9)
 {
     // Concern: Test ntcq::ZeroCopyQueue sanity check: numOps = 2, depth 2
     // Plan:
@@ -900,39 +933,37 @@ NTCCFG_TEST_CASE(9)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<ntci::Sender> s;
+    bsl::shared_ptr<ntci::Sender> s;
 
-        bsl::shared_ptr<ntcs::DataPool> dp;
-        dp.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcs::DataPool> dp;
+    dp.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        ntcq::ZeroCopyQueue zq(dp, &ta);
+    ntcq::ZeroCopyQueue zq(dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::TransferHandle t0 = test::Transfer::create(s, 0, 2, dp, &ta);
-        test::TransferHandle t1 = test::Transfer::create(s, 1, 2, dp, &ta);
+    ZeroCopyTest::TransferHandle t0 =
+        ZeroCopyTest::Transfer::create(s, 0, 2, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t1 =
+        ZeroCopyTest::Transfer::create(s, 1, 2, dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::ZeroCopyUtil::submit(&zq, t0);
-        test::ZeroCopyUtil::submit(&zq, t1);
+    ZeroCopyTest::submit(&zq, t0);
+    ZeroCopyTest::submit(&zq, t1);
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        test::ZeroCopyUtil::update(&zq, 0, 1);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 0, 1);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->pending());
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->pending());
 
-        test::ZeroCopyUtil::update(&zq, 2, 3);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 2, 3);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->complete());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->complete());
 }
 
-NTCCFG_TEST_CASE(10)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase10)
 {
     // Concern: Test ntcq::ZeroCopyQueue sanity check: numOps = 2, depth 3
     // Plan:
@@ -940,50 +971,49 @@ NTCCFG_TEST_CASE(10)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<ntci::Sender> s;
+    bsl::shared_ptr<ntci::Sender> s;
 
-        bsl::shared_ptr<ntcs::DataPool> dp;
-        dp.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcs::DataPool> dp;
+    dp.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        ntcq::ZeroCopyQueue zq(dp, &ta);
+    ntcq::ZeroCopyQueue zq(dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::TransferHandle t0 = test::Transfer::create(s, 0, 2, dp, &ta);
-        test::TransferHandle t1 = test::Transfer::create(s, 1, 2, dp, &ta);
-        test::TransferHandle t2 = test::Transfer::create(s, 2, 2, dp, &ta);
+    ZeroCopyTest::TransferHandle t0 =
+        ZeroCopyTest::Transfer::create(s, 0, 2, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t1 =
+        ZeroCopyTest::Transfer::create(s, 1, 2, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t2 =
+        ZeroCopyTest::Transfer::create(s, 2, 2, dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::ZeroCopyUtil::submit(&zq, t0);
-        test::ZeroCopyUtil::submit(&zq, t1);
-        test::ZeroCopyUtil::submit(&zq, t2);
+    ZeroCopyTest::submit(&zq, t0);
+    ZeroCopyTest::submit(&zq, t1);
+    ZeroCopyTest::submit(&zq, t2);
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        test::ZeroCopyUtil::update(&zq, 0, 1);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 0, 1);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->pending());
-        NTCCFG_TEST_TRUE(t2->pending());
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->pending());
+    NTSCFG_TEST_TRUE(t2->pending());
 
-        test::ZeroCopyUtil::update(&zq, 2, 3);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 2, 3);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->complete());
-        NTCCFG_TEST_TRUE(t2->pending());
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->complete());
+    NTSCFG_TEST_TRUE(t2->pending());
 
-        test::ZeroCopyUtil::update(&zq, 4, 5);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 4, 5);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->complete());
-        NTCCFG_TEST_TRUE(t2->complete());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->complete());
+    NTSCFG_TEST_TRUE(t2->complete());
 }
 
-NTCCFG_TEST_CASE(11)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase11)
 {
     // Concern: Test ntcq::ZeroCopyQueue sanity check: numOps = 2, depth 3, batch
     // Plan:
@@ -991,61 +1021,60 @@ NTCCFG_TEST_CASE(11)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<ntci::Sender> s;
+    bsl::shared_ptr<ntci::Sender> s;
 
-        bsl::shared_ptr<ntcs::DataPool> dp;
-        dp.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcs::DataPool> dp;
+    dp.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        ntcq::ZeroCopyQueue zq(dp, &ta);
+    ntcq::ZeroCopyQueue zq(dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::TransferHandle t0 = test::Transfer::create(s, 0, 2, dp, &ta);
-        test::TransferHandle t1 = test::Transfer::create(s, 1, 2, dp, &ta);
-        test::TransferHandle t2 = test::Transfer::create(s, 2, 2, dp, &ta);
+    ZeroCopyTest::TransferHandle t0 =
+        ZeroCopyTest::Transfer::create(s, 0, 2, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t1 =
+        ZeroCopyTest::Transfer::create(s, 1, 2, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t2 =
+        ZeroCopyTest::Transfer::create(s, 2, 2, dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::ZeroCopyUtil::submit(&zq, t0);
-        test::ZeroCopyUtil::submit(&zq, t1);
-        test::ZeroCopyUtil::submit(&zq, t2);
+    ZeroCopyTest::submit(&zq, t0);
+    ZeroCopyTest::submit(&zq, t1);
+    ZeroCopyTest::submit(&zq, t2);
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        NTCCFG_TEST_TRUE(t0->pending());
-        NTCCFG_TEST_TRUE(t1->pending());
-        NTCCFG_TEST_TRUE(t2->pending());
+    NTSCFG_TEST_TRUE(t0->pending());
+    NTSCFG_TEST_TRUE(t1->pending());
+    NTSCFG_TEST_TRUE(t2->pending());
 
-        test::ZeroCopyUtil::update(&zq, 0, 2);
+    ZeroCopyTest::update(&zq, 0, 2);
 
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->pending());
-        NTCCFG_TEST_TRUE(t2->pending());
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->pending());
+    NTSCFG_TEST_TRUE(t2->pending());
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        test::ZeroCopyUtil::update(&zq, 3, 4);
+    ZeroCopyTest::update(&zq, 3, 4);
 
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->complete());
-        NTCCFG_TEST_TRUE(t2->pending());
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->complete());
+    NTSCFG_TEST_TRUE(t2->pending());
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        test::ZeroCopyUtil::update(&zq, 5, 5);
+    ZeroCopyTest::update(&zq, 5, 5);
 
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->complete());
-        NTCCFG_TEST_TRUE(t2->complete());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->complete());
+    NTSCFG_TEST_TRUE(t2->complete());
 }
 
-NTCCFG_TEST_CASE(12)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase12)
 {
     // Concern: Test ntcq::ZeroCopyQueue sanity check: complete backwards
     // Plan:
@@ -1053,61 +1082,60 @@ NTCCFG_TEST_CASE(12)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<ntci::Sender> s;
+    bsl::shared_ptr<ntci::Sender> s;
 
-        bsl::shared_ptr<ntcs::DataPool> dp;
-        dp.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcs::DataPool> dp;
+    dp.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        ntcq::ZeroCopyQueue zq(dp, &ta);
+    ntcq::ZeroCopyQueue zq(dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::TransferHandle t0 = test::Transfer::create(s, 0, 2, dp, &ta);
-        test::TransferHandle t1 = test::Transfer::create(s, 1, 2, dp, &ta);
-        test::TransferHandle t2 = test::Transfer::create(s, 2, 2, dp, &ta);
+    ZeroCopyTest::TransferHandle t0 =
+        ZeroCopyTest::Transfer::create(s, 0, 2, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t1 =
+        ZeroCopyTest::Transfer::create(s, 1, 2, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle t2 =
+        ZeroCopyTest::Transfer::create(s, 2, 2, dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::ZeroCopyUtil::submit(&zq, t0);
-        test::ZeroCopyUtil::submit(&zq, t1);
-        test::ZeroCopyUtil::submit(&zq, t2);
+    ZeroCopyTest::submit(&zq, t0);
+    ZeroCopyTest::submit(&zq, t1);
+    ZeroCopyTest::submit(&zq, t2);
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        NTCCFG_TEST_TRUE(t0->pending());
-        NTCCFG_TEST_TRUE(t1->pending());
-        NTCCFG_TEST_TRUE(t2->pending());
+    NTSCFG_TEST_TRUE(t0->pending());
+    NTSCFG_TEST_TRUE(t1->pending());
+    NTSCFG_TEST_TRUE(t2->pending());
 
-        test::ZeroCopyUtil::update(&zq, 3, 5);
+    ZeroCopyTest::update(&zq, 3, 5);
 
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->pending());
-        NTCCFG_TEST_TRUE(t1->pending());
-        NTCCFG_TEST_TRUE(t2->complete());
+    NTSCFG_TEST_TRUE(t0->pending());
+    NTSCFG_TEST_TRUE(t1->pending());
+    NTSCFG_TEST_TRUE(t2->complete());
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        test::ZeroCopyUtil::update(&zq, 1, 2);
+    ZeroCopyTest::update(&zq, 1, 2);
 
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->pending());
-        NTCCFG_TEST_TRUE(t1->complete());
-        NTCCFG_TEST_TRUE(t2->complete());
+    NTSCFG_TEST_TRUE(t0->pending());
+    NTSCFG_TEST_TRUE(t1->complete());
+    NTSCFG_TEST_TRUE(t2->complete());
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        test::ZeroCopyUtil::update(&zq, 0, 0);
+    ZeroCopyTest::update(&zq, 0, 0);
 
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(t0->complete());
-        NTCCFG_TEST_TRUE(t1->complete());
-        NTCCFG_TEST_TRUE(t2->complete());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_TRUE(t0->complete());
+    NTSCFG_TEST_TRUE(t1->complete());
+    NTSCFG_TEST_TRUE(t2->complete());
 }
 
-NTCCFG_TEST_CASE(13)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase13)
 {
     // Concern: Test ntcq::ZeroCopyQueue sanity check: complete with splits
     // Plan:
@@ -1115,105 +1143,104 @@ NTCCFG_TEST_CASE(13)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<ntci::Sender> s;
+    bsl::shared_ptr<ntci::Sender> s;
 
-        bsl::shared_ptr<ntcs::DataPool> dp;
-        dp.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcs::DataPool> dp;
+    dp.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        ntcq::ZeroCopyQueue zq(dp, &ta);
+    ntcq::ZeroCopyQueue zq(dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::TransferHandle x = test::Transfer::create(s, 0, 7, dp, &ta);
-        test::TransferHandle y = test::Transfer::create(s, 1, 7, dp, &ta);
-        test::TransferHandle z = test::Transfer::create(s, 2, 7, dp, &ta);
+    ZeroCopyTest::TransferHandle x =
+        ZeroCopyTest::Transfer::create(s, 0, 7, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle y =
+        ZeroCopyTest::Transfer::create(s, 1, 7, dp, NTSCFG_TEST_ALLOCATOR);
+    ZeroCopyTest::TransferHandle z =
+        ZeroCopyTest::Transfer::create(s, 2, 7, dp, NTSCFG_TEST_ALLOCATOR);
 
-        test::ZeroCopyUtil::submit(&zq, x);
-        test::ZeroCopyUtil::submit(&zq, y);
-        test::ZeroCopyUtil::submit(&zq, z);
+    ZeroCopyTest::submit(&zq, x);
+    ZeroCopyTest::submit(&zq, y);
+    ZeroCopyTest::submit(&zq, z);
 
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        NTCCFG_TEST_TRUE(x->pending());
-        NTCCFG_TEST_TRUE(y->pending());
-        NTCCFG_TEST_TRUE(z->pending());
+    NTSCFG_TEST_TRUE(x->pending());
+    NTSCFG_TEST_TRUE(y->pending());
+    NTSCFG_TEST_TRUE(z->pending());
 
-        // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
-        // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
-        // [ x x x x x x x y y y y y y y z z z z z z z ]
-        //       -----
+    // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
+    // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
+    // [ x x x x x x x y y y y y y y z z z z z z z ]
+    //       -----
 
-        test::ZeroCopyUtil::update(&zq, 2, 4);
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::update(&zq, 2, 4);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
-        // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
-        // [ x x X X X x x y y y y y y y z z z z z z z ]
-        //                     -----
+    // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
+    // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
+    // [ x x X X X x x y y y y y y y z z z z z z z ]
+    //                     -----
 
-        test::ZeroCopyUtil::update(&zq, 9, 12);
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::update(&zq, 9, 12);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
-        // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
-        // [ x x X X X x x y y Y Y Y y y z z z z z z z ]
-        //                                   -----
+    // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
+    // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
+    // [ x x X X X x x y y Y Y Y y y z z z z z z z ]
+    //                                   -----
 
-        test::ZeroCopyUtil::update(&zq, 16, 18);
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::update(&zq, 16, 18);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
-        // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
-        // [ x x X X X x x y y Y Y Y y y z z Z Z Z z z ]
-        //             -------
+    // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
+    // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
+    // [ x x X X X x x y y Y Y Y y y z z Z Z Z z z ]
+    //             -------
 
-        test::ZeroCopyUtil::update(&zq, 5, 8);
-        test::ZeroCopyUtil::invoke(&zq, s, false);
+    ZeroCopyTest::update(&zq, 5, 8);
+    ZeroCopyTest::invoke(&zq, s, false);
 
-        // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
-        // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
-        // [ x x X X X X X Y Y Y Y Y y y z z Z Z Z z z ]
-        //                           -------
+    // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
+    // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
+    // [ x x X X X X X Y Y Y Y Y y y z z Z Z Z z z ]
+    //                           -------
 
-        test::ZeroCopyUtil::update(&zq, 12, 15);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 12, 15);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(x->pending());
-        NTCCFG_TEST_TRUE(y->complete());
-        NTCCFG_TEST_TRUE(z->pending());
+    NTSCFG_TEST_TRUE(x->pending());
+    NTSCFG_TEST_TRUE(y->complete());
+    NTSCFG_TEST_TRUE(z->pending());
 
-        // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
-        // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
-        // [ x x X X X X X Y Y Y Y Y Y Y Z Z Z Z Z z z ]
-        //                                         ---
+    // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
+    // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
+    // [ x x X X X X X Y Y Y Y Y Y Y Z Z Z Z Z z z ]
+    //                                         ---
 
-        test::ZeroCopyUtil::update(&zq, 19, 20);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 19, 20);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(x->pending());
-        NTCCFG_TEST_TRUE(y->complete());
-        NTCCFG_TEST_TRUE(z->complete());
+    NTSCFG_TEST_TRUE(x->pending());
+    NTSCFG_TEST_TRUE(y->complete());
+    NTSCFG_TEST_TRUE(z->complete());
 
-        // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
-        // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
-        // [ x x X X X X X Y Y Y Y Y Y Y Z Z Z Z Z Z Z ]
-        //   ---
+    // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
+    // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
+    // [ x x X X X X X Y Y Y Y Y Y Y Z Z Z Z Z Z Z ]
+    //   ---
 
-        test::ZeroCopyUtil::update(&zq, 0, 1);
-        test::ZeroCopyUtil::invoke(&zq, s, true);
+    ZeroCopyTest::update(&zq, 0, 1);
+    ZeroCopyTest::invoke(&zq, s, true);
 
-        NTCCFG_TEST_TRUE(x->complete());
-        NTCCFG_TEST_TRUE(y->complete());
-        NTCCFG_TEST_TRUE(z->complete());
+    NTSCFG_TEST_TRUE(x->complete());
+    NTSCFG_TEST_TRUE(y->complete());
+    NTSCFG_TEST_TRUE(z->complete());
 
-        // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
-        // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
-        // [ X X X X X X X Y Y Y Y Y Y Y Z Z Z Z Z Z Z ]
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    // [ 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 ]
+    // [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 ]
+    // [ X X X X X X X Y Y Y Y Y Y Y Z Z Z Z Z Z Z ]
 }
 
-NTCCFG_TEST_CASE(14)
+NTSCFG_TEST_FUNCTION(ntcq::ZeroCopyTest::verifyCase14)
 {
     // Concern: Test ntcq::ZeroCopyQueue exhaustive test
     // Plan:
@@ -1221,39 +1248,15 @@ NTCCFG_TEST_CASE(14)
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<ntcs::DataPool> dataPool;
-        dataPool.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcs::DataPool> dataPool;
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        ntcq::ZeroCopyQueue zeroCopyQueue(dataPool, &ta);
+    ntcq::ZeroCopyQueue zeroCopyQueue(dataPool, NTSCFG_TEST_ALLOCATOR);
 
-        NTCCFG_WARNING_UNUSED(zeroCopyQueue);
+    NTCCFG_WARNING_UNUSED(zeroCopyQueue);
 
-        // TODO
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    // TODO
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-
-    NTCCFG_TEST_REGISTER(4);
-    NTCCFG_TEST_REGISTER(5);
-    NTCCFG_TEST_REGISTER(6);
-    NTCCFG_TEST_REGISTER(7);
-
-    NTCCFG_TEST_REGISTER(8);
-    NTCCFG_TEST_REGISTER(9);
-    NTCCFG_TEST_REGISTER(10);
-    NTCCFG_TEST_REGISTER(11);
-
-    NTCCFG_TEST_REGISTER(12);
-    NTCCFG_TEST_REGISTER(13);
-
-    NTCCFG_TEST_REGISTER(14);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcq
+}  // close namespace BloombergLP

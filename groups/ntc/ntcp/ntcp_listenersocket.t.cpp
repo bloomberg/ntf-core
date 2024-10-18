@@ -13,10 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcp_listenersocket_t_cpp, "$Id$ $CSID$")
+
 #include <ntcp_listenersocket.h>
 
-#include <ntccfg_bind.h>
-#include <ntccfg_test.h>
 #include <ntcd_datautil.h>
 #include <ntcd_encryption.h>
 #include <ntcd_proactor.h>
@@ -29,20 +32,6 @@
 #include <ntsa_error.h>
 #include <ntsa_transport.h>
 #include <ntsi_streamsocket.h>
-#include <bdlbb_blob.h>
-#include <bdlbb_blobutil.h>
-#include <bdlf_bind.h>
-#include <bdlf_memfn.h>
-#include <bdlf_placeholder.h>
-#include <bdlt_currenttime.h>
-#include <bslmt_barrier.h>
-#include <bslmt_latch.h>
-#include <bslmt_lockguard.h>
-#include <bslmt_mutex.h>
-#include <bslmt_semaphore.h>
-#include <bslmt_threadgroup.h>
-#include <bslmt_threadutil.h>
-#include <bsl_unordered_map.h>
 
 using namespace BloombergLP;
 
@@ -50,10 +39,100 @@ using namespace BloombergLP;
 // instead of both static and dynamic load balancing.
 // #define NTCP_LISTENER_SOCKET_TEST_DYNAMIC_LOAD_BALANCING false
 
-namespace test {
+namespace BloombergLP {
+namespace ntcp {
+
+// Provide tests for 'ntcp::ListenerSocket'.
+class ListenerSocketTest
+{
+    /// Provide a test case execution framework.
+    class Framework;
+
+    /// Describe the parameters of a test.
+    class Parameters;
+
+    /// Provides a listener socket protocol for this test driver.
+    class ListenerSocketApplication;
+
+    /// This test provides a stream socket protocol for this test driver.
+    class StreamSocketSession;
+
+    /// Provide a stream socket manager for this test driver.
+    class StreamSocketManager;
+
+    // Execute the concern with the specified 'parameters' for the specified
+    // 'transport' using the specified 'proactor'.
+    static void verifyGenericVariation(
+        ntsa::Transport::Value                 transport,
+        const bsl::shared_ptr<ntci::Proactor>& proactor,
+        const ListenerSocketTest::Parameters&  parameters,
+        bslma::Allocator*                      allocator);
+
+    // Execute the concern with the specified 'parameters' for the specified
+    // 'transport' using the specified 'proactor'.
+    static void verifyAcceptDeadlineVariation(
+        ntsa::Transport::Value                 transport,
+        const bsl::shared_ptr<ntci::Proactor>& proactor,
+        const ListenerSocketTest::Parameters&  parameters,
+        bslma::Allocator*                      allocator);
+
+    // Execute the concern with the specified 'parameters' for the specified
+    // 'transport' using the specified 'proactor'.
+    static void verifyAcceptCancellationVariation(
+        ntsa::Transport::Value                 transport,
+        const bsl::shared_ptr<ntci::Proactor>& proactor,
+        const ListenerSocketTest::Parameters&  parameters,
+        bslma::Allocator*                      allocator);
+
+    // Cancel the accept operation on the specified 'listenerSocket' identified
+    // by the specified 'token'.
+    static void cancelAccept(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::AcceptToken                      token);
+
+    // Process the expected accept timeout.
+    static void processAcceptTimeout(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const bsl::shared_ptr<ntci::Acceptor>&       acceptor,
+        const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
+        const ntca::AcceptEvent&                     event,
+        bslmt::Semaphore*                            semaphore);
+
+    // Process the expected accept cancellation.
+    static void processAcceptCancellation(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const bsl::shared_ptr<ntci::Acceptor>&       acceptor,
+        const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
+        const ntca::AcceptEvent&                     event,
+        bslmt::Semaphore*                            semaphore);
+
+    /// Return an endpoint representing a suitable address to which to
+    /// bind a socket of the specified 'transport' type for use by this
+    /// test driver.
+    static ntsa::Endpoint any(ntsa::Transport::Value transport);
+
+  public:
+    // TODO
+    static void verifyBreathing();
+
+    // TODO
+    static void verifyBreathingAsync();
+
+    // TODO
+    static void verifyStress();
+
+    // TODO
+    static void verifyStressAsync();
+
+    // TODO
+    static void verifyAcceptDeadline();
+
+    // TODO
+    static void verifyAcceptCancellation();
+};
 
 /// Provide a test case execution framework.
-class Framework
+class ListenerSocketTest::Framework
 {
   private:
     /// Run a thread identified by the specified 'threadIndex' that waits
@@ -88,179 +167,10 @@ class Framework
                         const ExecuteCallback& executeCallback);
 };
 
-void Framework::runProactor(const bsl::shared_ptr<ntci::Proactor>& proactor,
-                            bslmt::Barrier*                        barrier,
-                            bsl::size_t                            threadIndex)
-{
-    const char* threadNamePrefix = "test";
-
-    bsl::string threadName;
-    {
-        bsl::stringstream ss;
-        ss << threadNamePrefix << "-" << threadIndex;
-        threadName = ss.str();
-    }
-
-    bslmt::ThreadUtil::setThreadName(threadName);
-
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_CONTEXT_GUARD_OWNER(threadNamePrefix);
-    NTCI_LOG_CONTEXT_GUARD_THREAD(threadIndex);
-
-    // Register this thread as the thread that will wait on the proactor.
-
-    ntci::Waiter waiter = proactor->registerWaiter(ntca::WaiterOptions());
-
-    // Wait until all threads have reached the rendezvous point.
-
-    barrier->wait();
-
-    // Process deferred functions.
-
-    proactor->run(waiter);
-
-    // Deregister the waiter.
-
-    proactor->deregisterWaiter(waiter);
-}
-
-void Framework::execute(const ExecuteCallback& executeCallback)
-{
-    Framework::execute(ntsa::Transport::e_TCP_IPV4_STREAM, executeCallback);
-}
-
-void Framework::execute(ntsa::Transport::Value transport,
-                        const ExecuteCallback& executeCallback)
-{
-#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
-
-    const bsl::size_t MIN_THREADS = 1;
-    const bsl::size_t MAX_THREADS = 1;
-
-#else
-
-    const bsl::size_t MIN_THREADS = 1;
-    const bsl::size_t MAX_THREADS = 1;
-
-#endif
-
-    for (bsl::size_t numThreads = MIN_THREADS; numThreads <= MAX_THREADS;
-         ++numThreads)
-    {
-        const bool dynamicLoadBalancing = numThreads > 1;
-
-#if defined(NTCP_LISTENER_SOCKET_TEST_DYNAMIC_LOAD_BALANCING)
-        if (dynamicLoadBalancing !=
-            NTCP_LISTENER_SOCKET_TEST_DYNAMIC_LOAD_BALANCING)
-        {
-            continue;
-        }
-#endif
-
-        Framework::execute(transport, numThreads, executeCallback);
-    }
-}
-
-void Framework::execute(ntsa::Transport::Value transport,
-                        bsl::size_t            numThreads,
-                        const ExecuteCallback& executeCallback)
-{
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-
-        BSLS_LOG_INFO("Testing transport %s numThreads %d",
-                      ntsa::Transport::toString(transport),
-                      (int)(numThreads));
-
-        bsl::shared_ptr<ntcd::Simulation> simulation;
-        simulation.createInplace(&ta, &ta);
-
-        error = simulation->run();
-        NTCCFG_TEST_OK(error);
-
-        const bsl::size_t BLOB_BUFFER_SIZE = 4096;
-
-        bsl::shared_ptr<ntcs::DataPool> dataPool;
-        dataPool.createInplace(&ta, BLOB_BUFFER_SIZE, BLOB_BUFFER_SIZE, &ta);
-
-        bsl::shared_ptr<ntcs::User> user;
-        user.createInplace(&ta, &ta);
-
-        user->setDataPool(dataPool);
-
-        ntca::ProactorConfig proactorConfig;
-        proactorConfig.setMetricName("test");
-        proactorConfig.setMinThreads(numThreads);
-        proactorConfig.setMaxThreads(numThreads);
-
-        bsl::shared_ptr<ntcd::Proactor> proactor;
-        proactor.createInplace(&ta, proactorConfig, user, &ta);
-
-        bslmt::Barrier threadGroupBarrier(numThreads + 1);
-
-        bslmt::ThreadGroup threadGroup(&ta);
-
-        for (bsl::size_t threadIndex = 0; threadIndex < numThreads;
-             ++threadIndex)
-        {
-            threadGroup.addThread(NTCCFG_BIND(&Framework::runProactor,
-                                              proactor,
-                                              &threadGroupBarrier,
-                                              threadIndex));
-        }
-
-        threadGroupBarrier.wait();
-
-        executeCallback(transport, proactor, &ta);
-
-        threadGroup.joinAll();
-
-        simulation->stop();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-/// Provide functions for returning endpoints used by this
-/// test driver.
-struct EndpointUtil {
-    /// Return an endpoint representing a suitable address to which to
-    /// bind a socket of the specified 'transport' type for use by this
-    /// test driver.
-    static ntsa::Endpoint any(ntsa::Transport::Value transport);
-};
-
-ntsa::Endpoint EndpointUtil::any(ntsa::Transport::Value transport)
-{
-    ntsa::Endpoint endpoint;
-
-    switch (transport) {
-    case ntsa::Transport::e_TCP_IPV4_STREAM:
-    case ntsa::Transport::e_UDP_IPV4_DATAGRAM:
-        endpoint.makeIp(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0));
-        break;
-    case ntsa::Transport::e_TCP_IPV6_STREAM:
-    case ntsa::Transport::e_UDP_IPV6_DATAGRAM:
-        endpoint.makeIp(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0));
-        break;
-    case ntsa::Transport::e_LOCAL_STREAM:
-    case ntsa::Transport::e_LOCAL_DATAGRAM: {
-        ntsa::LocalName   localName;
-        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
-        BSLS_ASSERT_OPT(!error);
-
-        endpoint.makeLocal(localName);
-        break;
-    }
-    default:
-        NTCCFG_UNREACHABLE();
-    }
-
-    return endpoint;
-}
-
 /// This struct defines the parameters of a test.
-struct Parameters {
+class ListenerSocketTest::Parameters
+{
+  public:
     ntsa::Transport::Value             d_transport;
     bsl::size_t                        d_numListeners;
     bsl::size_t                        d_numConnectionsPerListener;
@@ -299,14 +209,15 @@ struct Parameters {
     }
 };
 
-/// This test provides a listener socket protocol for this test driver.
-class ListenerSocketApplication : public ntci::ListenerSocketSession
+/// Provides a listener socket protocol for this test driver.
+class ListenerSocketTest::ListenerSocketApplication
+: public ntci::ListenerSocketSession
 {
     ntccfg::Object                        d_object;
     bsl::shared_ptr<ntci::ListenerSocket> d_listenerSocket_sp;
     bslmt::Latch                          d_numTimerEvents;
     bslmt::Latch                          d_numSocketsAccepted;
-    test::Parameters                      d_parameters;
+    ListenerSocketTest::Parameters        d_parameters;
     bslma::Allocator*                     d_allocator_p;
 
   private:
@@ -344,7 +255,7 @@ class ListenerSocketApplication : public ntci::ListenerSocketSession
     /// default allocator is used.
     ListenerSocketApplication(
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-        const test::Parameters&                      parameters,
+        const ListenerSocketTest::Parameters&        parameters,
         bslma::Allocator*                            basicAllocator = 0);
 
     /// Destroy this object.
@@ -368,7 +279,8 @@ class ListenerSocketApplication : public ntci::ListenerSocketSession
 };
 
 /// This test provides a stream socket protocol for this test driver.
-class StreamSocketSession : public ntci::StreamSocketSession
+class ListenerSocketTest::StreamSocketSession
+: public ntci::StreamSocketSession
 {
     ntccfg::Object                      d_object;
     bsl::shared_ptr<ntci::StreamSocket> d_streamSocket_sp;
@@ -377,7 +289,7 @@ class StreamSocketSession : public ntci::StreamSocketSession
     bsls::AtomicUint                    d_numMessagesLeftToSend;
     bslmt::Latch                        d_numMessagesSent;
     bslmt::Latch                        d_numMessagesReceived;
-    test::Parameters                    d_parameters;
+    ListenerSocketTest::Parameters      d_parameters;
     bslma::Allocator*                   d_allocator_p;
 
   private:
@@ -424,7 +336,7 @@ class StreamSocketSession : public ntci::StreamSocketSession
     /// default allocator is used.
     StreamSocketSession(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-        const test::Parameters&                    parameters,
+        const ListenerSocketTest::Parameters&      parameters,
         bslma::Allocator*                          basicAllocator = 0);
 
     /// Destroy this object.
@@ -454,8 +366,9 @@ class StreamSocketSession : public ntci::StreamSocketSession
 };
 
 /// Provide a stream socket manager for this test driver.
-class StreamSocketManager : public ntci::ListenerSocketManager,
-                            public ntccfg::Shared<StreamSocketManager>
+class ListenerSocketTest::StreamSocketManager
+: public ntci::ListenerSocketManager,
+  public ntccfg::Shared<StreamSocketManager>
 {
     typedef bsl::unordered_map<bsl::shared_ptr<ntci::ListenerSocket>,
                                bsl::shared_ptr<ListenerSocketApplication> >
@@ -485,7 +398,7 @@ class StreamSocketManager : public ntci::ListenerSocketManager,
     bslmt::Latch                    d_streamSocketsConnected;
     bslmt::Latch                    d_streamSocketsEstablished;
     bslmt::Latch                    d_streamSocketsClosed;
-    test::Parameters                d_parameters;
+    ListenerSocketTest::Parameters  d_parameters;
     bslma::Allocator*               d_allocator_p;
 
   private:
@@ -527,7 +440,7 @@ class StreamSocketManager : public ntci::ListenerSocketManager,
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     StreamSocketManager(const bsl::shared_ptr<ntci::Proactor>& proactor,
-                        const test::Parameters&                parameters,
+                        const ListenerSocketTest::Parameters&  parameters,
                         bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
@@ -538,9 +451,148 @@ class StreamSocketManager : public ntci::ListenerSocketManager,
     void run();
 };
 
-void ListenerSocketApplication::processAcceptQueueLowWatermark(
-    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-    const ntca::AcceptQueueEvent&                event)
+void ListenerSocketTest::Framework::runProactor(
+    const bsl::shared_ptr<ntci::Proactor>& proactor,
+    bslmt::Barrier*                        barrier,
+    bsl::size_t                            threadIndex)
+{
+    const char* threadNamePrefix = "test";
+
+    bsl::string threadName;
+    {
+        bsl::stringstream ss;
+        ss << threadNamePrefix << "-" << threadIndex;
+        threadName = ss.str();
+    }
+
+    bslmt::ThreadUtil::setThreadName(threadName);
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER(threadNamePrefix);
+    NTCI_LOG_CONTEXT_GUARD_THREAD(threadIndex);
+
+    // Register this thread as the thread that will wait on the proactor.
+
+    ntci::Waiter waiter = proactor->registerWaiter(ntca::WaiterOptions());
+
+    // Wait until all threads have reached the rendezvous point.
+
+    barrier->wait();
+
+    // Process deferred functions.
+
+    proactor->run(waiter);
+
+    // Deregister the waiter.
+
+    proactor->deregisterWaiter(waiter);
+}
+
+void ListenerSocketTest::Framework::execute(
+    const ExecuteCallback& executeCallback)
+{
+    Framework::execute(ntsa::Transport::e_TCP_IPV4_STREAM, executeCallback);
+}
+
+void ListenerSocketTest::Framework::execute(
+    ntsa::Transport::Value transport,
+    const ExecuteCallback& executeCallback)
+{
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
+    const bsl::size_t k_MIN_THREADS = 1;
+    const bsl::size_t k_MAX_THREADS = 1;
+
+#else
+
+    const bsl::size_t k_MIN_THREADS = 1;
+    const bsl::size_t k_MAX_THREADS = 1;
+
+#endif
+
+    for (bsl::size_t numThreads = k_MIN_THREADS; numThreads <= k_MAX_THREADS;
+         ++numThreads)
+    {
+        const bool dynamicLoadBalancing = numThreads > 1;
+
+#if defined(NTCP_LISTENER_SOCKET_TEST_DYNAMIC_LOAD_BALANCING)
+        if (dynamicLoadBalancing !=
+            NTCP_LISTENER_SOCKET_TEST_DYNAMIC_LOAD_BALANCING)
+        {
+            continue;
+        }
+#endif
+
+        Framework::execute(transport, numThreads, executeCallback);
+    }
+}
+
+void ListenerSocketTest::Framework::execute(
+    ntsa::Transport::Value transport,
+    bsl::size_t            numThreads,
+    const ExecuteCallback& executeCallback)
+{
+    ntsa::Error error;
+
+    BSLS_LOG_INFO("Testing transport %s numThreads %d",
+                  ntsa::Transport::toString(transport),
+                  (int)(numThreads));
+
+    bsl::shared_ptr<ntcd::Simulation> simulation;
+    simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    error = simulation->run();
+    NTSCFG_TEST_OK(error);
+
+    const bsl::size_t BLOB_BUFFER_SIZE = 4096;
+
+    bsl::shared_ptr<ntcs::DataPool> dataPool;
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           BLOB_BUFFER_SIZE,
+                           BLOB_BUFFER_SIZE,
+                           NTSCFG_TEST_ALLOCATOR);
+
+    bsl::shared_ptr<ntcs::User> user;
+    user.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    user->setDataPool(dataPool);
+
+    ntca::ProactorConfig proactorConfig;
+    proactorConfig.setMetricName("test");
+    proactorConfig.setMinThreads(numThreads);
+    proactorConfig.setMaxThreads(numThreads);
+
+    bsl::shared_ptr<ntcd::Proactor> proactor;
+    proactor.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           proactorConfig,
+                           user,
+                           NTSCFG_TEST_ALLOCATOR);
+
+    bslmt::Barrier threadGroupBarrier(numThreads + 1);
+
+    bslmt::ThreadGroup threadGroup(NTSCFG_TEST_ALLOCATOR);
+
+    for (bsl::size_t threadIndex = 0; threadIndex < numThreads; ++threadIndex)
+    {
+        threadGroup.addThread(NTCCFG_BIND(&Framework::runProactor,
+                                          proactor,
+                                          &threadGroupBarrier,
+                                          threadIndex));
+    }
+
+    threadGroupBarrier.wait();
+
+    executeCallback(transport, proactor, NTSCFG_TEST_ALLOCATOR);
+
+    threadGroup.joinAll();
+
+    simulation->stop();
+}
+
+void ListenerSocketTest::ListenerSocketApplication::
+    processAcceptQueueLowWatermark(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::AcceptQueueEvent&                event)
 {
     NTCCFG_OBJECT_GUARD(&d_object);
 
@@ -570,12 +622,12 @@ void ListenerSocketApplication::processAcceptQueueLowWatermark(
                 break;
             }
             else {
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_OK);
+                NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
             }
         }
 
         error = streamSocket->open();
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
 
         NTCI_LOG_DEBUG(
             "Listener socket %d at %s accepted stream socket %d at %s to %s "
@@ -594,7 +646,7 @@ void ListenerSocketApplication::processAcceptQueueLowWatermark(
     }
 }
 
-void ListenerSocketApplication::processAccept(
+void ListenerSocketTest::ListenerSocketApplication::processAccept(
     const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
     const bsl::shared_ptr<ntci::Acceptor>&       acceptor,
     const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
@@ -603,17 +655,17 @@ void ListenerSocketApplication::processAccept(
     NTCI_LOG_CONTEXT();
 
     if (event.type() == ntca::AcceptEventType::e_ERROR) {
-        NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_EOF);
+        NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_EOF);
 
         NTCI_LOG_DEBUG("Listener socket %d at %s asynchronously accepted EOF",
                        (int)(d_listenerSocket_sp->handle()),
                        d_listenerSocket_sp->sourceEndpoint().text().c_str());
     }
     else {
-        NTCCFG_TEST_FALSE(event.context().error());
+        NTSCFG_TEST_FALSE(event.context().error());
 
         ntsa::Error openError = streamSocket->open();
-        NTCCFG_TEST_FALSE(openError);
+        NTSCFG_TEST_FALSE(openError);
 
         NTCI_LOG_DEBUG("Listener socket %d at %s asynchronously accepted "
                        "stream socket %d at %s to %s",
@@ -633,17 +685,17 @@ void ListenerSocketApplication::processAccept(
                             NTCCFG_BIND_PLACEHOLDER_3),
                 d_allocator_p);
 
-        NTCCFG_TEST_EQ(acceptCallback.strand(), d_listenerSocket_sp->strand());
+        NTSCFG_TEST_EQ(acceptCallback.strand(), d_listenerSocket_sp->strand());
 
         ntsa::Error acceptError =
             d_listenerSocket_sp->accept(ntca::AcceptOptions(), acceptCallback);
-        NTCCFG_TEST_OK(acceptError);
+        NTSCFG_TEST_OK(acceptError);
 
         d_numSocketsAccepted.arrive();
     }
 }
 
-void ListenerSocketApplication::processTimer(
+void ListenerSocketTest::ListenerSocketApplication::processTimer(
     const bsl::shared_ptr<ntci::Timer>& timer,
     const ntca::TimerEvent&             event)
 {
@@ -673,11 +725,11 @@ void ListenerSocketApplication::processTimer(
     }
 }
 
-ListenerSocketApplication::ListenerSocketApplication(
+ListenerSocketTest::ListenerSocketApplication::ListenerSocketApplication(
     const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-    const test::Parameters&                      parameters,
+    const ListenerSocketTest::Parameters&        parameters,
     bslma::Allocator*                            basicAllocator)
-: d_object("test::ListenerSocketApplication")
+: d_object("ListenerSocketTest::ListenerSocketApplication")
 , d_listenerSocket_sp(listenerSocket)
 , d_numTimerEvents(parameters.d_numTimers)
 , d_numSocketsAccepted(parameters.d_numConnectionsPerListener)
@@ -686,11 +738,11 @@ ListenerSocketApplication::ListenerSocketApplication(
 {
 }
 
-ListenerSocketApplication::~ListenerSocketApplication()
+ListenerSocketTest::ListenerSocketApplication::~ListenerSocketApplication()
 {
 }
 
-void ListenerSocketApplication::schedule()
+void ListenerSocketTest::ListenerSocketApplication::schedule()
 {
     NTCI_LOG_CONTEXT();
 
@@ -708,7 +760,7 @@ void ListenerSocketApplication::schedule()
                     this),
                 d_allocator_p);
 
-        NTCCFG_TEST_EQ(timerCallback.strand(), d_listenerSocket_sp->strand());
+        NTSCFG_TEST_EQ(timerCallback.strand(), d_listenerSocket_sp->strand());
 
         bsl::shared_ptr<ntci::Timer> timer =
             d_listenerSocket_sp->createTimer(timerOptions,
@@ -728,7 +780,7 @@ void ListenerSocketApplication::schedule()
     }
 }
 
-void ListenerSocketApplication::accept()
+void ListenerSocketTest::ListenerSocketApplication::accept()
 {
     ntsa::Error error;
 
@@ -743,28 +795,28 @@ void ListenerSocketApplication::accept()
                             NTCCFG_BIND_PLACEHOLDER_3),
                 d_allocator_p);
 
-        NTCCFG_TEST_EQ(acceptCallback.strand(), d_listenerSocket_sp->strand());
+        NTSCFG_TEST_EQ(acceptCallback.strand(), d_listenerSocket_sp->strand());
 
         error =
             d_listenerSocket_sp->accept(ntca::AcceptOptions(), acceptCallback);
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_OK(error);
     }
 
     d_listenerSocket_sp->relaxFlowControl(ntca::FlowControlType::e_RECEIVE);
 }
 
-void ListenerSocketApplication::wait()
+void ListenerSocketTest::ListenerSocketApplication::wait()
 {
     d_numTimerEvents.wait();
     d_numSocketsAccepted.wait();
 }
 
-void ListenerSocketApplication::close()
+void ListenerSocketTest::ListenerSocketApplication::close()
 {
     ntsa::Error error;
 
     error = d_listenerSocket_sp->shutdown();
-    NTCCFG_TEST_FALSE(error);
+    NTSCFG_TEST_FALSE(error);
 
     if (d_parameters.d_useAsyncCallbacks) {
         ntci::ListenerSocketCloseGuard guard(d_listenerSocket_sp);
@@ -774,12 +826,13 @@ void ListenerSocketApplication::close()
     }
 }
 
-ntsa::Endpoint ListenerSocketApplication::sourceEndpoint() const
+ntsa::Endpoint ListenerSocketTest::ListenerSocketApplication::sourceEndpoint()
+    const
 {
     return d_listenerSocket_sp->sourceEndpoint();
 }
 
-void StreamSocketSession::processReadQueueLowWatermark(
+void ListenerSocketTest::StreamSocketSession::processReadQueueLowWatermark(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::ReadQueueEvent&                event)
 {
@@ -815,7 +868,7 @@ void StreamSocketSession::processReadQueueLowWatermark(
                 break;
             }
             else {
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_OK);
+                NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
             }
         }
 
@@ -825,16 +878,16 @@ void StreamSocketSession::processReadQueueLowWatermark(
                        d_streamSocket_sp->remoteEndpoint().text().c_str(),
                        d_dataReceived.length());
 
-        NTCCFG_TEST_EQ(d_streamSocket_sp->transport(),
+        NTSCFG_TEST_EQ(d_streamSocket_sp->transport(),
                        d_parameters.d_transport);
 
-        NTCCFG_TEST_EQ(receiveContext.transport(),
+        NTSCFG_TEST_EQ(receiveContext.transport(),
                        d_streamSocket_sp->transport());
 
-        NTCCFG_TEST_FALSE(receiveContext.endpoint().isNull());
-        NTCCFG_TEST_FALSE(receiveContext.endpoint().value().isUndefined());
+        NTSCFG_TEST_FALSE(receiveContext.endpoint().isNull());
+        NTSCFG_TEST_FALSE(receiveContext.endpoint().value().isUndefined());
 
-        NTCCFG_TEST_EQ(d_dataReceived.length(), d_parameters.d_messageSize);
+        NTSCFG_TEST_EQ(d_dataReceived.length(), d_parameters.d_messageSize);
 
         NTCI_LOG_DEBUG("Stream socket %d at %s to %s received message %d/%d",
                        (int)(d_streamSocket_sp->handle()),
@@ -851,7 +904,7 @@ void StreamSocketSession::processReadQueueLowWatermark(
     }
 }
 
-void StreamSocketSession::processWriteQueueLowWatermark(
+void ListenerSocketTest::StreamSocketSession::processWriteQueueLowWatermark(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::WriteQueueEvent&               event)
 {
@@ -883,13 +936,13 @@ void StreamSocketSession::processWriteQueueLowWatermark(
                                 NTCCFG_BIND_PLACEHOLDER_2),
                     d_allocator_p);
 
-            NTCCFG_TEST_EQ(sendCallback.strand(), d_streamSocket_sp->strand());
+            NTSCFG_TEST_EQ(sendCallback.strand(), d_streamSocket_sp->strand());
 
             error = d_streamSocket_sp->send(data,
                                             ntca::SendOptions(),
                                             sendCallback);
             if (error) {
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_WOULD_BLOCK);
+                NTSCFG_TEST_EQ(error, ntsa::Error::e_WOULD_BLOCK);
                 NTCI_LOG_DEBUG(
                     "Stream socket %d at %s to %s unable to send message "
                     "%d/%d: %s",
@@ -909,7 +962,7 @@ void StreamSocketSession::processWriteQueueLowWatermark(
         else {
             error = d_streamSocket_sp->send(data, ntca::SendOptions());
             if (error) {
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_WOULD_BLOCK);
+                NTSCFG_TEST_EQ(error, ntsa::Error::e_WOULD_BLOCK);
                 NTCI_LOG_DEBUG(
                     "Stream socket %d at %s to %s unable to send message "
                     "%d/%d: %s",
@@ -929,7 +982,7 @@ void StreamSocketSession::processWriteQueueLowWatermark(
     }
 }
 
-void StreamSocketSession::processRead(
+void ListenerSocketTest::StreamSocketSession::processRead(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const bsl::shared_ptr<ntci::Receiver>&     receiver,
     const bsl::shared_ptr<bdlbb::Blob>&        data,
@@ -938,7 +991,7 @@ void StreamSocketSession::processRead(
     NTCI_LOG_CONTEXT();
 
     if (event.type() == ntca::ReceiveEventType::e_ERROR) {
-        NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_EOF);
+        NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_EOF);
 
         NTCI_LOG_DEBUG(
             "Stream socket %d at %s to %s asynchronously received EOF",
@@ -947,16 +1000,16 @@ void StreamSocketSession::processRead(
             d_streamSocket_sp->remoteEndpoint().text().c_str());
     }
     else {
-        NTCCFG_TEST_FALSE(event.context().error());
+        NTSCFG_TEST_FALSE(event.context().error());
 
-        NTCCFG_TEST_EQ(streamSocket->transport(), d_parameters.d_transport);
+        NTSCFG_TEST_EQ(streamSocket->transport(), d_parameters.d_transport);
 
-        NTCCFG_TEST_EQ(event.context().transport(), streamSocket->transport());
+        NTSCFG_TEST_EQ(event.context().transport(), streamSocket->transport());
 
-        NTCCFG_TEST_FALSE(event.context().endpoint().isNull());
-        NTCCFG_TEST_FALSE(event.context().endpoint().value().isUndefined());
+        NTSCFG_TEST_FALSE(event.context().endpoint().isNull());
+        NTSCFG_TEST_FALSE(event.context().endpoint().value().isUndefined());
 
-        NTCCFG_TEST_EQ(data->length(), d_parameters.d_messageSize);
+        NTSCFG_TEST_EQ(data->length(), d_parameters.d_messageSize);
 
         NTCI_LOG_DEBUG("Stream socket %d at %s to %s asynchronously received "
                        "message %d/%d",
@@ -982,17 +1035,17 @@ void StreamSocketSession::processRead(
                             NTCCFG_BIND_PLACEHOLDER_3),
                 d_allocator_p);
 
-        NTCCFG_TEST_EQ(receiveCallback.strand(), d_streamSocket_sp->strand());
+        NTSCFG_TEST_EQ(receiveCallback.strand(), d_streamSocket_sp->strand());
 
         ntsa::Error receiveError =
             d_streamSocket_sp->receive(options, receiveCallback);
-        NTCCFG_TEST_OK(receiveError);
+        NTSCFG_TEST_OK(receiveError);
 
         d_numMessagesReceived.arrive();
     }
 }
 
-void StreamSocketSession::processWrite(
+void ListenerSocketTest::StreamSocketSession::processWrite(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const bsl::shared_ptr<ntci::Sender>&       sender,
     const ntca::SendEvent&                     event)
@@ -1002,7 +1055,7 @@ void StreamSocketSession::processWrite(
     NTCI_LOG_CONTEXT();
 
     if (event.type() == ntca::SendEventType::e_ERROR) {
-        NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
+        NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
 
         NTCI_LOG_DEBUG(
             "Stream socket %d at %s to %s asynchronous write cancelled",
@@ -1011,7 +1064,7 @@ void StreamSocketSession::processWrite(
             d_streamSocket_sp->remoteEndpoint().text().c_str());
     }
     else {
-        NTCCFG_TEST_FALSE(event.context().error());
+        NTSCFG_TEST_FALSE(event.context().error());
 
         NTCI_LOG_DEBUG("Stream socket %d at %s to %s asynchronously sent "
                        "message %d/%d",
@@ -1027,7 +1080,7 @@ void StreamSocketSession::processWrite(
     }
 }
 
-void StreamSocketSession::processTimer(
+void ListenerSocketTest::StreamSocketSession::processTimer(
     const bsl::shared_ptr<ntci::Timer>& timer,
     const ntca::TimerEvent&             event)
 {
@@ -1059,11 +1112,11 @@ void StreamSocketSession::processTimer(
     }
 }
 
-StreamSocketSession::StreamSocketSession(
+ListenerSocketTest::StreamSocketSession::StreamSocketSession(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const test::Parameters&                    parameters,
+    const ListenerSocketTest::Parameters&      parameters,
     bslma::Allocator*                          basicAllocator)
-: d_object("test::StreamSocketSession")
+: d_object("ListenerSocketTest::StreamSocketSession")
 , d_streamSocket_sp(streamSocket)
 , d_dataReceived(streamSocket->incomingBlobBufferFactory().get(),
                  basicAllocator)
@@ -1076,11 +1129,11 @@ StreamSocketSession::StreamSocketSession(
 {
 }
 
-StreamSocketSession::~StreamSocketSession()
+ListenerSocketTest::StreamSocketSession::~StreamSocketSession()
 {
 }
 
-void StreamSocketSession::schedule()
+void ListenerSocketTest::StreamSocketSession::schedule()
 {
     NTCI_LOG_CONTEXT();
 
@@ -1097,7 +1150,7 @@ void StreamSocketSession::schedule()
                                        this),
                 d_allocator_p);
 
-        NTCCFG_TEST_EQ(timerCallback.strand(), d_streamSocket_sp->strand());
+        NTSCFG_TEST_EQ(timerCallback.strand(), d_streamSocket_sp->strand());
 
         bsl::shared_ptr<ntci::Timer> timer =
             d_streamSocket_sp->createTimer(timerOptions,
@@ -1118,7 +1171,7 @@ void StreamSocketSession::schedule()
     }
 }
 
-void StreamSocketSession::send()
+void ListenerSocketTest::StreamSocketSession::send()
 {
     ntca::WriteQueueEvent event;
     event.setType(ntca::WriteQueueEventType::e_LOW_WATERMARK);
@@ -1130,7 +1183,7 @@ void StreamSocketSession::send()
                     event));
 }
 
-void StreamSocketSession::receive()
+void ListenerSocketTest::StreamSocketSession::receive()
 {
     ntsa::Error error;
 
@@ -1149,16 +1202,16 @@ void StreamSocketSession::receive()
                             NTCCFG_BIND_PLACEHOLDER_3),
                 d_allocator_p);
 
-        NTCCFG_TEST_EQ(receiveCallback.strand(), d_streamSocket_sp->strand());
+        NTSCFG_TEST_EQ(receiveCallback.strand(), d_streamSocket_sp->strand());
 
         error = d_streamSocket_sp->receive(options, receiveCallback);
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_OK(error);
     }
 
     d_streamSocket_sp->relaxFlowControl(ntca::FlowControlType::e_RECEIVE);
 }
 
-void StreamSocketSession::wait()
+void ListenerSocketTest::StreamSocketSession::wait()
 {
     d_numTimerEvents.wait();
     if (d_parameters.d_useAsyncCallbacks) {
@@ -1167,13 +1220,13 @@ void StreamSocketSession::wait()
     d_numMessagesReceived.wait();
 }
 
-void StreamSocketSession::close()
+void ListenerSocketTest::StreamSocketSession::close()
 {
     ntsa::Error error;
 
     error = d_streamSocket_sp->shutdown(ntsa::ShutdownType::e_BOTH,
                                         ntsa::ShutdownMode::e_IMMEDIATE);
-    NTCCFG_TEST_FALSE(error);
+    NTSCFG_TEST_FALSE(error);
 
     if (d_parameters.d_useAsyncCallbacks) {
         ntci::StreamSocketCloseGuard guard(d_streamSocket_sp);
@@ -1183,17 +1236,17 @@ void StreamSocketSession::close()
     }
 }
 
-ntsa::Endpoint StreamSocketSession::sourceEndpoint() const
+ntsa::Endpoint ListenerSocketTest::StreamSocketSession::sourceEndpoint() const
 {
     return d_streamSocket_sp->sourceEndpoint();
 }
 
-ntsa::Endpoint StreamSocketSession::remoteEndpoint() const
+ntsa::Endpoint ListenerSocketTest::StreamSocketSession::remoteEndpoint() const
 {
     return d_streamSocket_sp->remoteEndpoint();
 }
 
-void StreamSocketManager::processListenerSocketEstablished(
+void ListenerSocketTest::StreamSocketManager::processListenerSocketEstablished(
     const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
 {
     NTCI_LOG_CONTEXT();
@@ -1226,7 +1279,7 @@ void StreamSocketManager::processListenerSocketEstablished(
     d_listenerSocketsEstablished.arrive();
 }
 
-void StreamSocketManager::processListenerSocketClosed(
+void ListenerSocketTest::StreamSocketManager::processListenerSocketClosed(
     const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
 {
     NTCI_LOG_CONTEXT();
@@ -1235,15 +1288,15 @@ void StreamSocketManager::processListenerSocketClosed(
                    (int)(listenerSocket->handle()));
 
     {
-        LockGuard guard(&d_listenerSocketMapMutex);
+        LockGuard   guard(&d_listenerSocketMapMutex);
         bsl::size_t n = d_listenerSocketMap.erase(listenerSocket);
-        NTCCFG_TEST_EQ(n, 1);
+        NTSCFG_TEST_EQ(n, 1);
     }
 
     d_listenerSocketsClosed.arrive();
 }
 
-void StreamSocketManager::processStreamSocketEstablished(
+void ListenerSocketTest::StreamSocketManager::processStreamSocketEstablished(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
 {
     NTCI_LOG_CONTEXT();
@@ -1279,7 +1332,7 @@ void StreamSocketManager::processStreamSocketEstablished(
     d_streamSocketsEstablished.arrive();
 }
 
-void StreamSocketManager::processStreamSocketClosed(
+void ListenerSocketTest::StreamSocketManager::processStreamSocketClosed(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
 {
     NTCI_LOG_CONTEXT();
@@ -1287,28 +1340,28 @@ void StreamSocketManager::processStreamSocketClosed(
     NTCI_LOG_DEBUG("Stream socket %d closed", (int)(streamSocket->handle()));
 
     {
-        LockGuard guard(&d_streamSocketMapMutex);
+        LockGuard   guard(&d_streamSocketMapMutex);
         bsl::size_t n = d_streamSocketMap.erase(streamSocket);
-        NTCCFG_TEST_EQ(n, 1);
+        NTSCFG_TEST_EQ(n, 1);
     }
 
     d_streamSocketsClosed.arrive();
 }
 
-void StreamSocketManager::processConnect(
+void ListenerSocketTest::StreamSocketManager::processConnect(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const bsl::shared_ptr<ntci::Connector>&    connector,
     const ntca::ConnectEvent&                  connectEvent)
 {
-    NTCCFG_TEST_EQ(connectEvent.type(), ntca::ConnectEventType::e_COMPLETE);
+    NTSCFG_TEST_EQ(connectEvent.type(), ntca::ConnectEventType::e_COMPLETE);
     d_streamSocketsConnected.arrive();
 }
 
-StreamSocketManager::StreamSocketManager(
+ListenerSocketTest::StreamSocketManager::StreamSocketManager(
     const bsl::shared_ptr<ntci::Proactor>& proactor,
-    const test::Parameters&                parameters,
+    const ListenerSocketTest::Parameters&  parameters,
     bslma::Allocator*                      basicAllocator)
-: d_object("test::StreamSocketManager")
+: d_object("ListenerSocketTest::StreamSocketManager")
 , d_proactor_sp(proactor)
 , d_metrics_sp()
 , d_listenerSocketMapMutex()
@@ -1328,13 +1381,13 @@ StreamSocketManager::StreamSocketManager(
 {
 }
 
-StreamSocketManager::~StreamSocketManager()
+ListenerSocketTest::StreamSocketManager::~StreamSocketManager()
 {
-    NTCCFG_TEST_TRUE(d_listenerSocketMap.empty());
-    NTCCFG_TEST_TRUE(d_streamSocketMap.empty());
+    NTSCFG_TEST_TRUE(d_listenerSocketMap.empty());
+    NTSCFG_TEST_TRUE(d_streamSocketMap.empty());
 }
 
-void StreamSocketManager::run()
+void ListenerSocketTest::StreamSocketManager::run()
 {
     ntsa::Error error;
 
@@ -1344,7 +1397,7 @@ void StreamSocketManager::run()
         ntca::ListenerSocketOptions options;
         options.setTransport(d_parameters.d_transport);
         options.setSourceEndpoint(
-            test::EndpointUtil::any(d_parameters.d_transport));
+            ListenerSocketTest::any(d_parameters.d_transport));
         options.setAcceptQueueLowWatermark(1);
         options.setAcceptQueueHighWatermark(
             d_parameters.d_acceptQueueHighWatermark);
@@ -1380,17 +1433,17 @@ void StreamSocketManager::run()
                                      d_allocator_p);
 
         error = listenerSocket->registerManager(this->getSelf(this));
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
 
         bsl::shared_ptr<ntcd::ListenerSocket> listenerSocketBase;
         listenerSocketBase.createInplace(d_allocator_p, d_allocator_p);
 
         error =
             listenerSocket->open(d_parameters.d_transport, listenerSocketBase);
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
 
         error = listenerSocket->listen();
-        NTCCFG_TEST_FALSE(error);
+        NTSCFG_TEST_FALSE(error);
     }
 
     // Wait for all the listener sockets to become established.
@@ -1448,14 +1501,14 @@ void StreamSocketManager::run()
                                            d_allocator_p);
 
                 error = streamSocket->registerManager(this->getSelf(this));
-                NTCCFG_TEST_FALSE(error);
+                NTSCFG_TEST_FALSE(error);
 
                 bsl::shared_ptr<ntcd::StreamSocket> streamSocketBase;
                 streamSocketBase.createInplace(d_allocator_p, d_allocator_p);
 
                 error = streamSocket->open(d_parameters.d_transport,
                                            streamSocketBase);
-                NTCCFG_TEST_FALSE(error);
+                NTSCFG_TEST_FALSE(error);
 
                 ntci::ConnectCallback connectCallback =
                     streamSocket->createConnectCallback(
@@ -1469,7 +1522,7 @@ void StreamSocketManager::run()
                 error = streamSocket->connect(listenerSocket->sourceEndpoint(),
                                               ntca::ConnectOptions(),
                                               connectCallback);
-                NTCCFG_TEST_OK(error);
+                NTSCFG_TEST_OK(error);
             }
         }
     }
@@ -1641,10 +1694,11 @@ void StreamSocketManager::run()
     d_listenerSocketsClosed.wait();
 }
 
-void concern(ntsa::Transport::Value                 transport,
-             const bsl::shared_ptr<ntci::Proactor>& proactor,
-             const test::Parameters&                parameters,
-             bslma::Allocator*                      allocator)
+void ListenerSocketTest::verifyGenericVariation(
+    ntsa::Transport::Value                 transport,
+    const bsl::shared_ptr<ntci::Proactor>& proactor,
+    const ListenerSocketTest::Parameters&  parameters,
+    bslma::Allocator*                      allocator)
 {
     // Test accepting using asynchronous accept callbacks and reading data
     // using asynchronous read callbacks.
@@ -1653,10 +1707,11 @@ void concern(ntsa::Transport::Value                 transport,
 
     NTCI_LOG_DEBUG("Listener socket test starting");
 
-    test::Parameters effectiveParameters = parameters;
-    effectiveParameters.d_transport      = transport;
+    ListenerSocketTest::Parameters effectiveParameters = parameters;
+    effectiveParameters.d_transport                    = transport;
 
-    bsl::shared_ptr<test::StreamSocketManager> streamSocketManager;
+    bsl::shared_ptr<ListenerSocketTest::StreamSocketManager>
+        streamSocketManager;
     streamSocketManager.createInplace(allocator,
                                       proactor,
                                       effectiveParameters,
@@ -1670,101 +1725,11 @@ void concern(ntsa::Transport::Value                 transport,
     proactor->stop();
 }
 
-void variation(const test::Parameters& parameters)
-{
-    test::Framework::execute(NTCCFG_BIND(&test::concern,
-                                         NTCCFG_BIND_PLACEHOLDER_1,
-                                         NTCCFG_BIND_PLACEHOLDER_2,
-                                         parameters,
-                                         NTCCFG_BIND_PLACEHOLDER_3));
-}
-
-}  // close namespace test
-
-NTCCFG_TEST_CASE(1)
-{
-    // Concern: Breathing test.
-
-    test::Parameters parameters;
-    parameters.d_numTimers                 = 0;
-    parameters.d_numListeners              = 1;
-    parameters.d_numConnectionsPerListener = 1;
-    parameters.d_numMessages               = 1;
-    parameters.d_messageSize               = 32;
-    parameters.d_useAsyncCallbacks         = false;
-
-    test::variation(parameters);
-}
-
-NTCCFG_TEST_CASE(2)
-{
-    // Concern: Breathing test using asynchronous callbacks.
-
-    test::Parameters parameters;
-    parameters.d_numTimers                 = 0;
-    parameters.d_numListeners              = 1;
-    parameters.d_numConnectionsPerListener = 1;
-    parameters.d_numMessages               = 1;
-    parameters.d_messageSize               = 32;
-    parameters.d_useAsyncCallbacks         = true;
-
-    test::variation(parameters);
-}
-
-NTCCFG_TEST_CASE(3)
-{
-    // Concern: Stress test.
-
-    test::Parameters parameters;
-    parameters.d_numTimers                 = 0;
-    parameters.d_numListeners              = 10;
-    parameters.d_numConnectionsPerListener = 10;
-    parameters.d_numMessages               = 100;
-    parameters.d_messageSize               = 32;
-    parameters.d_useAsyncCallbacks         = false;
-
-    test::variation(parameters);
-}
-
-NTCCFG_TEST_CASE(4)
-{
-    // Concern: Stress test using asynchronous callbacks.
-
-    test::Parameters parameters;
-    parameters.d_numTimers                 = 0;
-    parameters.d_numListeners              = 10;
-    parameters.d_numConnectionsPerListener = 10;
-    parameters.d_numMessages               = 100;
-    parameters.d_messageSize               = 32;
-    parameters.d_useAsyncCallbacks         = true;
-
-    test::variation(parameters);
-}
-
-namespace test {
-namespace concern5 {
-
-void processAccept(const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-                   const bsl::shared_ptr<ntci::Acceptor>&       acceptor,
-                   const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
-                   const ntca::AcceptEvent&                     event,
-                   bslmt::Semaphore*                            semaphore)
-{
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_DEBUG("Processing accept event type %s: %s",
-                   ntca::AcceptEventType::toString(event.type()),
-                   event.context().error().text().c_str());
-
-    NTCCFG_TEST_EQ(event.type(), ntca::AcceptEventType::e_ERROR);
-    NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_WOULD_BLOCK);
-
-    semaphore->post();
-}
-
-void execute(ntsa::Transport::Value                 transport,
-             const bsl::shared_ptr<ntci::Proactor>& proactor,
-             const test::Parameters&                parameters,
-             bslma::Allocator*                      allocator)
+void ListenerSocketTest::verifyAcceptDeadlineVariation(
+    ntsa::Transport::Value                 transport,
+    const bsl::shared_ptr<ntci::Proactor>& proactor,
+    const ListenerSocketTest::Parameters&  parameters,
+    bslma::Allocator*                      allocator)
 {
     // Concern: Accept deadlines.
 
@@ -1780,7 +1745,7 @@ void execute(ntsa::Transport::Value                 transport,
 
     ntca::ListenerSocketOptions options;
     options.setTransport(transport);
-    options.setSourceEndpoint(test::EndpointUtil::any(transport));
+    options.setSourceEndpoint(ListenerSocketTest::any(transport));
 
     bsl::shared_ptr<ntci::Resolver> resolver;
 
@@ -1797,10 +1762,10 @@ void execute(ntsa::Transport::Value                 transport,
     listenerSocketBase.createInplace(allocator, allocator);
 
     error = listenerSocket->open(transport, listenerSocketBase);
-    NTCCFG_TEST_FALSE(error);
+    NTSCFG_TEST_FALSE(error);
 
     error = listenerSocket->listen();
-    NTCCFG_TEST_FALSE(error);
+    NTSCFG_TEST_FALSE(error);
 
     bsls::TimeInterval acceptTimeout;
     acceptTimeout.setTotalMilliseconds(k_ACCEPT_TIMEOUT_IN_MILLISECONDS);
@@ -1812,7 +1777,7 @@ void execute(ntsa::Transport::Value                 transport,
     acceptOptions.setDeadline(acceptDeadline);
 
     ntci::AcceptCallback acceptCallback = listenerSocket->createAcceptCallback(
-        NTCCFG_BIND(&processAccept,
+        NTCCFG_BIND(&ListenerSocketTest::processAcceptTimeout,
                     listenerSocket,
                     NTCCFG_BIND_PLACEHOLDER_1,
                     NTCCFG_BIND_PLACEHOLDER_2,
@@ -1821,7 +1786,7 @@ void execute(ntsa::Transport::Value                 transport,
         allocator);
 
     error = listenerSocket->accept(acceptOptions, acceptCallback);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     semaphore.wait();
 
@@ -1835,53 +1800,11 @@ void execute(ntsa::Transport::Value                 transport,
     proactor->stop();
 }
 
-}  // close namespace concern5
-}  // close namespace test
-
-NTCCFG_TEST_CASE(5)
-{
-    // Concern: Accept deadlines
-
-    test::Parameters parameters;
-
-    test::Framework::execute(NTCCFG_BIND(&test::concern5::execute,
-                                         NTCCFG_BIND_PLACEHOLDER_1,
-                                         NTCCFG_BIND_PLACEHOLDER_2,
-                                         parameters,
-                                         NTCCFG_BIND_PLACEHOLDER_3));
-}
-
-namespace test {
-namespace concern6 {
-
-void processAccept(const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-                   const bsl::shared_ptr<ntci::Acceptor>&       acceptor,
-                   const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
-                   const ntca::AcceptEvent&                     event,
-                   bslmt::Semaphore*                            semaphore)
-{
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_DEBUG("Processing accept event type %s: %s",
-                   ntca::AcceptEventType::toString(event.type()),
-                   event.context().error().text().c_str());
-
-    NTCCFG_TEST_EQ(event.type(), ntca::AcceptEventType::e_ERROR);
-    NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
-
-    semaphore->post();
-}
-
-void cancelAccept(const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-                  const ntca::AcceptToken                      token)
-{
-    ntsa::Error error = listenerSocket->cancel(token);
-    NTCCFG_TEST_FALSE(error);
-}
-
-void execute(ntsa::Transport::Value                 transport,
-             const bsl::shared_ptr<ntci::Proactor>& proactor,
-             const test::Parameters&                parameters,
-             bslma::Allocator*                      allocator)
+void ListenerSocketTest::verifyAcceptCancellationVariation(
+    ntsa::Transport::Value                 transport,
+    const bsl::shared_ptr<ntci::Proactor>& proactor,
+    const ListenerSocketTest::Parameters&  parameters,
+    bslma::Allocator*                      allocator)
 {
     // Concern: Accept cancellation.
 
@@ -1897,7 +1820,7 @@ void execute(ntsa::Transport::Value                 transport,
 
     ntca::ListenerSocketOptions options;
     options.setTransport(transport);
-    options.setSourceEndpoint(test::EndpointUtil::any(transport));
+    options.setSourceEndpoint(ListenerSocketTest::any(transport));
 
     bsl::shared_ptr<ntci::Resolver> resolver;
 
@@ -1914,10 +1837,10 @@ void execute(ntsa::Transport::Value                 transport,
     listenerSocketBase.createInplace(allocator, allocator);
 
     error = listenerSocket->open(transport, listenerSocketBase);
-    NTCCFG_TEST_FALSE(error);
+    NTSCFG_TEST_FALSE(error);
 
     error = listenerSocket->listen();
-    NTCCFG_TEST_FALSE(error);
+    NTSCFG_TEST_FALSE(error);
 
     bsls::TimeInterval acceptTimeout;
     acceptTimeout.setTotalMilliseconds(k_ACCEPT_TIMEOUT_IN_MILLISECONDS);
@@ -1932,7 +1855,7 @@ void execute(ntsa::Transport::Value                 transport,
     acceptOptions.setToken(acceptToken);
 
     ntci::AcceptCallback acceptCallback = listenerSocket->createAcceptCallback(
-        NTCCFG_BIND(&processAccept,
+        NTCCFG_BIND(&ListenerSocketTest::processAcceptCancellation,
                     listenerSocket,
                     NTCCFG_BIND_PLACEHOLDER_1,
                     NTCCFG_BIND_PLACEHOLDER_2,
@@ -1941,7 +1864,7 @@ void execute(ntsa::Transport::Value                 transport,
         allocator);
 
     error = listenerSocket->accept(acceptOptions, acceptCallback);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     ntca::TimerOptions timerOptions;
 
@@ -1950,14 +1873,16 @@ void execute(ntsa::Transport::Value                 transport,
     timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
 
     ntci::TimerCallback timerCallback = listenerSocket->createTimerCallback(
-        bdlf::BindUtil::bind(&cancelAccept, listenerSocket, acceptToken),
+        bdlf::BindUtil::bind(&ListenerSocketTest::cancelAccept,
+                             listenerSocket,
+                             acceptToken),
         allocator);
 
     bsl::shared_ptr<ntci::Timer> timer =
         listenerSocket->createTimer(timerOptions, timerCallback, allocator);
 
     error = timer->schedule(acceptDeadline);
-    NTCCFG_TEST_FALSE(error);
+    NTSCFG_TEST_FALSE(error);
 
     semaphore.wait();
 
@@ -1971,30 +1896,182 @@ void execute(ntsa::Transport::Value                 transport,
     proactor->stop();
 }
 
-}  // close namespace concern6
-}  // close namespace test
-
-NTCCFG_TEST_CASE(6)
+void ListenerSocketTest::cancelAccept(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+    const ntca::AcceptToken                      token)
 {
-    // Concern: Accept deadlines
-
-    test::Parameters parameters;
-
-    test::Framework::execute(NTCCFG_BIND(&test::concern6::execute,
-                                         NTCCFG_BIND_PLACEHOLDER_1,
-                                         NTCCFG_BIND_PLACEHOLDER_2,
-                                         parameters,
-                                         NTCCFG_BIND_PLACEHOLDER_3));
+    ntsa::Error error = listenerSocket->cancel(token);
+    NTSCFG_TEST_FALSE(error);
 }
 
-NTCCFG_TEST_DRIVER
+void ListenerSocketTest::processAcceptTimeout(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+    const bsl::shared_ptr<ntci::Acceptor>&       acceptor,
+    const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
+    const ntca::AcceptEvent&                     event,
+    bslmt::Semaphore*                            semaphore)
 {
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Processing accept event type %s: %s",
+                   ntca::AcceptEventType::toString(event.type()),
+                   event.context().error().text().c_str());
 
-    NTCCFG_TEST_REGISTER(5);
-    NTCCFG_TEST_REGISTER(6);
+    NTSCFG_TEST_EQ(event.type(), ntca::AcceptEventType::e_ERROR);
+    NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_WOULD_BLOCK);
+
+    semaphore->post();
 }
-NTCCFG_TEST_DRIVER_END;
+
+void ListenerSocketTest::processAcceptCancellation(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+    const bsl::shared_ptr<ntci::Acceptor>&       acceptor,
+    const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
+    const ntca::AcceptEvent&                     event,
+    bslmt::Semaphore*                            semaphore)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Processing accept event type %s: %s",
+                   ntca::AcceptEventType::toString(event.type()),
+                   event.context().error().text().c_str());
+
+    NTSCFG_TEST_EQ(event.type(), ntca::AcceptEventType::e_ERROR);
+    NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
+
+    semaphore->post();
+}
+
+ntsa::Endpoint ListenerSocketTest::any(ntsa::Transport::Value transport)
+{
+    ntsa::Endpoint endpoint;
+
+    switch (transport) {
+    case ntsa::Transport::e_TCP_IPV4_STREAM:
+    case ntsa::Transport::e_UDP_IPV4_DATAGRAM:
+        endpoint.makeIp(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0));
+        break;
+    case ntsa::Transport::e_TCP_IPV6_STREAM:
+    case ntsa::Transport::e_UDP_IPV6_DATAGRAM:
+        endpoint.makeIp(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0));
+        break;
+    case ntsa::Transport::e_LOCAL_STREAM:
+    case ntsa::Transport::e_LOCAL_DATAGRAM: {
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        BSLS_ASSERT_OPT(!error);
+
+        endpoint.makeLocal(localName);
+        break;
+    }
+    default:
+        NTCCFG_UNREACHABLE();
+    }
+
+    return endpoint;
+}
+
+NTSCFG_TEST_FUNCTION(ntcp::ListenerSocketTest::verifyBreathing)
+{
+    // Concern: Breathing test.
+
+    ListenerSocketTest::Parameters parameters;
+    parameters.d_numTimers                 = 0;
+    parameters.d_numListeners              = 1;
+    parameters.d_numConnectionsPerListener = 1;
+    parameters.d_numMessages               = 1;
+    parameters.d_messageSize               = 32;
+    parameters.d_useAsyncCallbacks         = false;
+
+    ListenerSocketTest::Framework::execute(
+        NTCCFG_BIND(&ListenerSocketTest::verifyGenericVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+}
+
+NTSCFG_TEST_FUNCTION(ntcp::ListenerSocketTest::verifyBreathingAsync)
+{
+    // Concern: Breathing test using asynchronous callbacks.
+
+    ListenerSocketTest::Parameters parameters;
+    parameters.d_numTimers                 = 0;
+    parameters.d_numListeners              = 1;
+    parameters.d_numConnectionsPerListener = 1;
+    parameters.d_numMessages               = 1;
+    parameters.d_messageSize               = 32;
+    parameters.d_useAsyncCallbacks         = true;
+
+    ListenerSocketTest::Framework::execute(
+        NTCCFG_BIND(&ListenerSocketTest::verifyGenericVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+}
+
+NTSCFG_TEST_FUNCTION(ntcp::ListenerSocketTest::verifyStress)
+{
+    // Concern: Stress test.
+
+    ListenerSocketTest::Parameters parameters;
+    parameters.d_numTimers                 = 0;
+    parameters.d_numListeners              = 10;
+    parameters.d_numConnectionsPerListener = 10;
+    parameters.d_numMessages               = 100;
+    parameters.d_messageSize               = 32;
+    parameters.d_useAsyncCallbacks         = false;
+
+    ListenerSocketTest::Framework::execute(
+        NTCCFG_BIND(&ListenerSocketTest::verifyGenericVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+}
+
+NTSCFG_TEST_FUNCTION(ntcp::ListenerSocketTest::verifyStressAsync)
+{
+    // Concern: Stress test using asynchronous callbacks.
+
+    ListenerSocketTest::Parameters parameters;
+    parameters.d_numTimers                 = 0;
+    parameters.d_numListeners              = 10;
+    parameters.d_numConnectionsPerListener = 10;
+    parameters.d_numMessages               = 100;
+    parameters.d_messageSize               = 32;
+    parameters.d_useAsyncCallbacks         = true;
+
+    ListenerSocketTest::Framework::execute(
+        NTCCFG_BIND(&ListenerSocketTest::verifyGenericVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+}
+
+NTSCFG_TEST_FUNCTION(ntcp::ListenerSocketTest::verifyAcceptDeadline)
+{
+    ListenerSocketTest::Parameters parameters;
+
+    ListenerSocketTest::Framework::execute(
+        NTCCFG_BIND(&ListenerSocketTest::verifyAcceptDeadlineVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+}
+
+NTSCFG_TEST_FUNCTION(ntcp::ListenerSocketTest::verifyAcceptCancellation)
+{
+    ListenerSocketTest::Parameters parameters;
+
+    ListenerSocketTest::Framework::execute(
+        NTCCFG_BIND(&ListenerSocketTest::verifyAcceptCancellationVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+}
+
+}  // close namespace ntcp
+}  // close namespace BloombergLP

@@ -13,39 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcdns_protocol_t_cpp, "$Id$ $CSID$")
+
 #include <ntcdns_protocol.h>
 
-#include <ntccfg_test.h>
 #include <ntci_log.h>
 #include <ntsa_ipv4address.h>
 #include <ntsa_ipv6address.h>
 
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
-
-#include <bsl_cstdlib.h>
-#include <bsl_cstring.h>
-#include <bsl_iostream.h>
-#include <bsl_string.h>
-#include <bsl_vector.h>
-
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntcdns {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
-
-// IMPLEMENTATION NOTE:
+// Provide tests for 'ntcdns::Protocol'.
 //
 // The payloads defined in this test driver were gathered by running a UDP
 // proxy between a 'dig' DNS client and the Google public DNS server available
@@ -66,19 +50,29 @@ using namespace BloombergLP;
 // expected port 8054 that we've chosen.
 //
 //     $ dig google.com @192.168.42.131 -4 -p 8053 -b127.0.0.1#8054 +noadflag
+class ProtocolTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
 
-namespace test {
+    // TODO
+    static void verifyCase2();
 
-// TODO
+    // TODO
+    static void verifyCase3();
 
-}  // close namespace test
+    // TODO
+    static void verifyCase4();
+};
 
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyCase1)
 {
     // Concern: Real request data.
     // Plan:
     // Command:
-    // dig google.com @192.168.42.131 -4 -p 8053 -b127.0.0.1#8054 +noadflag +noedns +nodnssec +additional
+    // dig google.com @192.168.42.131 -4 -p 8053 -b127.0.0.1#8054
+    //     +noadflag +noedns +nodnssec +additional
 
     NTCI_LOG_CONTEXT();
 
@@ -94,72 +88,68 @@ NTCCFG_TEST_CASE(1)
     };
     // clang-format on
 
-    ntccfg::TestAllocator ta;
+    ntcdns::Message message(NTSCFG_TEST_ALLOCATOR);
+
     {
-        ntcdns::Message message(&ta);
-
-        {
-            ntcdns::MemoryDecoder decoder(REQUEST, sizeof REQUEST);
-            error = message.decode(&decoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-        }
-
-        NTCI_LOG_STREAM_DEBUG << "Message = " << message
-                              << NTCI_LOG_STREAM_END;
-
-        NTCCFG_TEST_EQ(message.id(), 13179);
-
-        NTCCFG_TEST_EQ(message.direction(), ntcdns::Direction::e_REQUEST);
-        NTCCFG_TEST_EQ(message.operation(), ntcdns::Operation::e_STANDARD);
-        NTCCFG_TEST_EQ(message.error(), ntcdns::Error::e_OK);
-
-        NTCCFG_TEST_EQ(message.aa(), false);
-        NTCCFG_TEST_EQ(message.tc(), false);
-        NTCCFG_TEST_EQ(message.rd(), true);
-        NTCCFG_TEST_EQ(message.ra(), false);
-        NTCCFG_TEST_EQ(message.ad(), false);
-        NTCCFG_TEST_EQ(message.cd(), false);
-
-        NTCCFG_TEST_EQ(message.qdcount(), 1);
-        NTCCFG_TEST_EQ(message.ancount(), 0);
-        NTCCFG_TEST_EQ(message.nscount(), 0);
-        NTCCFG_TEST_EQ(message.arcount(), 0);
-
-        const ntcdns::Question& question = message.qd(0);
-
-        NTCCFG_TEST_EQ(question.name(), "google.com");
-        NTCCFG_TEST_EQ(question.type(), ntcdns::Type::e_A);
-        NTCCFG_TEST_EQ(question.classification(),
-                       ntcdns::Classification::e_INTERNET);
-
-        {
-            bsl::vector<bsl::uint8_t> buffer(1024 * 64);
-
-            ntcdns::MemoryEncoder encoder(&buffer[0], buffer.size());
-
-            error = message.encode(&encoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-
-            bsl::size_t bufferSize = encoder.position();
-
-            ntcdns::MemoryDecoder decoder(&buffer[0], bufferSize);
-
-            ntcdns::Message other(&ta);
-            error = other.decode(&decoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-
-            NTCCFG_TEST_EQ(message, other);
-        }
+        ntcdns::MemoryDecoder decoder(REQUEST, sizeof REQUEST);
+        error = message.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTCI_LOG_STREAM_DEBUG << "Message = " << message << NTCI_LOG_STREAM_END;
+
+    NTSCFG_TEST_EQ(message.id(), 13179);
+
+    NTSCFG_TEST_EQ(message.direction(), ntcdns::Direction::e_REQUEST);
+    NTSCFG_TEST_EQ(message.operation(), ntcdns::Operation::e_STANDARD);
+    NTSCFG_TEST_EQ(message.error(), ntcdns::Error::e_OK);
+
+    NTSCFG_TEST_EQ(message.aa(), false);
+    NTSCFG_TEST_EQ(message.tc(), false);
+    NTSCFG_TEST_EQ(message.rd(), true);
+    NTSCFG_TEST_EQ(message.ra(), false);
+    NTSCFG_TEST_EQ(message.ad(), false);
+    NTSCFG_TEST_EQ(message.cd(), false);
+
+    NTSCFG_TEST_EQ(message.qdcount(), 1);
+    NTSCFG_TEST_EQ(message.ancount(), 0);
+    NTSCFG_TEST_EQ(message.nscount(), 0);
+    NTSCFG_TEST_EQ(message.arcount(), 0);
+
+    const ntcdns::Question& question = message.qd(0);
+
+    NTSCFG_TEST_EQ(question.name(), "google.com");
+    NTSCFG_TEST_EQ(question.type(), ntcdns::Type::e_A);
+    NTSCFG_TEST_EQ(question.classification(),
+                   ntcdns::Classification::e_INTERNET);
+
+    {
+        bsl::vector<bsl::uint8_t> buffer(1024 * 64);
+
+        ntcdns::MemoryEncoder encoder(&buffer[0], buffer.size());
+
+        error = message.encode(&encoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+        bsl::size_t bufferSize = encoder.position();
+
+        ntcdns::MemoryDecoder decoder(&buffer[0], bufferSize);
+
+        ntcdns::Message other(NTSCFG_TEST_ALLOCATOR);
+        error = other.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+        NTSCFG_TEST_EQ(message, other);
+    }
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyCase2)
 {
     // Concern: Real response data.
     // Plan:
     // Command:
-    // dig google.com @192.168.42.131 -4 -p 8053 -b127.0.0.1#8054 +noadflag +noedns +nodnssec +additional
+    // dig google.com @192.168.42.131 -4 -p 8053 -b127.0.0.1#8054
+    //     +noadflag +noedns +nodnssec +additional
 
     NTCI_LOG_CONTEXT();
 
@@ -177,84 +167,80 @@ NTCCFG_TEST_CASE(2)
     };
     // clang-format on
 
-    ntccfg::TestAllocator ta;
+    ntcdns::Message message(NTSCFG_TEST_ALLOCATOR);
+
     {
-        ntcdns::Message message(&ta);
-
-        {
-            ntcdns::MemoryDecoder decoder(RESPONSE, sizeof RESPONSE);
-            error = message.decode(&decoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-        }
-
-        NTCI_LOG_STREAM_DEBUG << "Message = " << message
-                              << NTCI_LOG_STREAM_END;
-
-        NTCCFG_TEST_EQ(message.id(), 13179);
-
-        NTCCFG_TEST_EQ(message.direction(), ntcdns::Direction::e_RESPONSE);
-        NTCCFG_TEST_EQ(message.operation(), ntcdns::Operation::e_STANDARD);
-        NTCCFG_TEST_EQ(message.error(), ntcdns::Error::e_OK);
-
-        NTCCFG_TEST_EQ(message.aa(), false);
-        NTCCFG_TEST_EQ(message.tc(), false);
-        NTCCFG_TEST_EQ(message.rd(), true);
-        NTCCFG_TEST_EQ(message.ra(), true);
-        NTCCFG_TEST_EQ(message.ad(), false);
-        NTCCFG_TEST_EQ(message.cd(), false);
-
-        NTCCFG_TEST_EQ(message.qdcount(), 1);
-        NTCCFG_TEST_EQ(message.ancount(), 1);
-        NTCCFG_TEST_EQ(message.nscount(), 0);
-        NTCCFG_TEST_EQ(message.arcount(), 0);
-
-        const ntcdns::Question& question = message.qd(0);
-
-        NTCCFG_TEST_EQ(question.name(), "google.com");
-        NTCCFG_TEST_EQ(question.type(), ntcdns::Type::e_A);
-        NTCCFG_TEST_EQ(question.classification(),
-                       ntcdns::Classification::e_INTERNET);
-
-        const ntcdns::ResourceRecord& answer = message.an(0);
-
-        NTCCFG_TEST_EQ(answer.name(), "google.com");
-        NTCCFG_TEST_EQ(answer.type(), ntcdns::Type::e_A);
-        NTCCFG_TEST_EQ(answer.classification(),
-                       ntcdns::Classification::e_INTERNET);
-        NTCCFG_TEST_EQ(answer.ttl(), 119);
-        NTCCFG_TEST_EQ(answer.rdata().isIpv4Value(), true);
-        NTCCFG_TEST_EQ(ntsa::Ipv4Address(answer.rdata().ipv4().address()),
-                       ntsa::Ipv4Address("172.217.6.238"));
-
-        {
-            bsl::vector<bsl::uint8_t> buffer(1024 * 64);
-
-            ntcdns::MemoryEncoder encoder(&buffer[0], buffer.size());
-
-            error = message.encode(&encoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-
-            bsl::size_t bufferSize = encoder.position();
-
-            ntcdns::MemoryDecoder decoder(&buffer[0], bufferSize);
-
-            ntcdns::Message other(&ta);
-            error = other.decode(&decoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-
-            NTCCFG_TEST_EQ(message, other);
-        }
+        ntcdns::MemoryDecoder decoder(RESPONSE, sizeof RESPONSE);
+        error = message.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTCI_LOG_STREAM_DEBUG << "Message = " << message << NTCI_LOG_STREAM_END;
+
+    NTSCFG_TEST_EQ(message.id(), 13179);
+
+    NTSCFG_TEST_EQ(message.direction(), ntcdns::Direction::e_RESPONSE);
+    NTSCFG_TEST_EQ(message.operation(), ntcdns::Operation::e_STANDARD);
+    NTSCFG_TEST_EQ(message.error(), ntcdns::Error::e_OK);
+
+    NTSCFG_TEST_EQ(message.aa(), false);
+    NTSCFG_TEST_EQ(message.tc(), false);
+    NTSCFG_TEST_EQ(message.rd(), true);
+    NTSCFG_TEST_EQ(message.ra(), true);
+    NTSCFG_TEST_EQ(message.ad(), false);
+    NTSCFG_TEST_EQ(message.cd(), false);
+
+    NTSCFG_TEST_EQ(message.qdcount(), 1);
+    NTSCFG_TEST_EQ(message.ancount(), 1);
+    NTSCFG_TEST_EQ(message.nscount(), 0);
+    NTSCFG_TEST_EQ(message.arcount(), 0);
+
+    const ntcdns::Question& question = message.qd(0);
+
+    NTSCFG_TEST_EQ(question.name(), "google.com");
+    NTSCFG_TEST_EQ(question.type(), ntcdns::Type::e_A);
+    NTSCFG_TEST_EQ(question.classification(),
+                   ntcdns::Classification::e_INTERNET);
+
+    const ntcdns::ResourceRecord& answer = message.an(0);
+
+    NTSCFG_TEST_EQ(answer.name(), "google.com");
+    NTSCFG_TEST_EQ(answer.type(), ntcdns::Type::e_A);
+    NTSCFG_TEST_EQ(answer.classification(),
+                   ntcdns::Classification::e_INTERNET);
+    NTSCFG_TEST_EQ(answer.ttl(), 119);
+    NTSCFG_TEST_EQ(answer.rdata().isIpv4Value(), true);
+    NTSCFG_TEST_EQ(ntsa::Ipv4Address(answer.rdata().ipv4().address()),
+                   ntsa::Ipv4Address("172.217.6.238"));
+
+    {
+        bsl::vector<bsl::uint8_t> buffer(1024 * 64);
+
+        ntcdns::MemoryEncoder encoder(&buffer[0], buffer.size());
+
+        error = message.encode(&encoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+        bsl::size_t bufferSize = encoder.position();
+
+        ntcdns::MemoryDecoder decoder(&buffer[0], bufferSize);
+
+        ntcdns::Message other(NTSCFG_TEST_ALLOCATOR);
+        error = other.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+        NTSCFG_TEST_EQ(message, other);
+    }
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyCase3)
 {
     // Concern: Real request data (trace) for nameservers with EDNS resource
     // records.
     // Plan:
     // Command:
-    // dig google.com @192.168.42.131 -4 -p 8053 -b127.0.0.1#8054 +noadflag +noedns +nodnssec +additional +trace
+    // dig google.com @192.168.42.131 -4 -p 8053 -b127.0.0.1#8054
+    //     +noadflag +noedns +nodnssec +additional +trace
 
     NTCI_LOG_CONTEXT();
 
@@ -271,83 +257,79 @@ NTCCFG_TEST_CASE(3)
     };
     // clang-format on
 
-    ntccfg::TestAllocator ta;
+    ntcdns::Message message(NTSCFG_TEST_ALLOCATOR);
+
     {
-        ntcdns::Message message(&ta);
-
-        {
-            ntcdns::MemoryDecoder decoder(REQUEST, sizeof REQUEST);
-            error = message.decode(&decoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-        }
-
-        NTCI_LOG_STREAM_DEBUG << "Message = " << message
-                              << NTCI_LOG_STREAM_END;
-
-        NTCCFG_TEST_EQ(message.id(), 24043);
-
-        NTCCFG_TEST_EQ(message.direction(), ntcdns::Direction::e_REQUEST);
-        NTCCFG_TEST_EQ(message.operation(), ntcdns::Operation::e_STANDARD);
-        NTCCFG_TEST_EQ(message.error(), ntcdns::Error::e_OK);
-
-        NTCCFG_TEST_EQ(message.aa(), false);
-        NTCCFG_TEST_EQ(message.tc(), false);
-        NTCCFG_TEST_EQ(message.rd(), true);
-        NTCCFG_TEST_EQ(message.ra(), false);
-        NTCCFG_TEST_EQ(message.ad(), false);
-        NTCCFG_TEST_EQ(message.cd(), false);
-
-        NTCCFG_TEST_EQ(message.qdcount(), 1);
-        NTCCFG_TEST_EQ(message.ancount(), 0);
-        NTCCFG_TEST_EQ(message.nscount(), 0);
-        NTCCFG_TEST_EQ(message.arcount(), 1);
-
-        const ntcdns::Question& question = message.qd(0);
-
-        NTCCFG_TEST_EQ(question.name(), "");
-        NTCCFG_TEST_EQ(question.type(), ntcdns::Type::e_NS);
-        NTCCFG_TEST_EQ(question.classification(),
-                       ntcdns::Classification::e_INTERNET);
-
-        const ntcdns::ResourceRecord& additional = message.ar(0);
-
-        NTCCFG_TEST_EQ(additional.name(), "");
-        NTCCFG_TEST_EQ(additional.type(), ntcdns::Type::e_OPT);
-        NTCCFG_TEST_EQ(additional.payloadSize(), 4096);
-        NTCCFG_TEST_EQ(additional.flags(), 32768);
-        NTCCFG_TEST_EQ(additional.rdata().isRawValue(), true);
-        // TODO: Compare expected EDNS OPT pseudo-record type content with the
-        // value found.
-
-        {
-            bsl::vector<bsl::uint8_t> buffer(1024 * 64);
-
-            ntcdns::MemoryEncoder encoder(&buffer[0], buffer.size());
-
-            error = message.encode(&encoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-
-            bsl::size_t bufferSize = encoder.position();
-
-            ntcdns::MemoryDecoder decoder(&buffer[0], bufferSize);
-
-            ntcdns::Message other(&ta);
-            error = other.decode(&decoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-
-            NTCCFG_TEST_EQ(message, other);
-        }
+        ntcdns::MemoryDecoder decoder(REQUEST, sizeof REQUEST);
+        error = message.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTCI_LOG_STREAM_DEBUG << "Message = " << message << NTCI_LOG_STREAM_END;
+
+    NTSCFG_TEST_EQ(message.id(), 24043);
+
+    NTSCFG_TEST_EQ(message.direction(), ntcdns::Direction::e_REQUEST);
+    NTSCFG_TEST_EQ(message.operation(), ntcdns::Operation::e_STANDARD);
+    NTSCFG_TEST_EQ(message.error(), ntcdns::Error::e_OK);
+
+    NTSCFG_TEST_EQ(message.aa(), false);
+    NTSCFG_TEST_EQ(message.tc(), false);
+    NTSCFG_TEST_EQ(message.rd(), true);
+    NTSCFG_TEST_EQ(message.ra(), false);
+    NTSCFG_TEST_EQ(message.ad(), false);
+    NTSCFG_TEST_EQ(message.cd(), false);
+
+    NTSCFG_TEST_EQ(message.qdcount(), 1);
+    NTSCFG_TEST_EQ(message.ancount(), 0);
+    NTSCFG_TEST_EQ(message.nscount(), 0);
+    NTSCFG_TEST_EQ(message.arcount(), 1);
+
+    const ntcdns::Question& question = message.qd(0);
+
+    NTSCFG_TEST_EQ(question.name(), "");
+    NTSCFG_TEST_EQ(question.type(), ntcdns::Type::e_NS);
+    NTSCFG_TEST_EQ(question.classification(),
+                   ntcdns::Classification::e_INTERNET);
+
+    const ntcdns::ResourceRecord& additional = message.ar(0);
+
+    NTSCFG_TEST_EQ(additional.name(), "");
+    NTSCFG_TEST_EQ(additional.type(), ntcdns::Type::e_OPT);
+    NTSCFG_TEST_EQ(additional.payloadSize(), 4096);
+    NTSCFG_TEST_EQ(additional.flags(), 32768);
+    NTSCFG_TEST_EQ(additional.rdata().isRawValue(), true);
+    // TODO: Compare expected EDNS OPT pseudo-record type content with the
+    // value found.
+
+    {
+        bsl::vector<bsl::uint8_t> buffer(1024 * 64);
+
+        ntcdns::MemoryEncoder encoder(&buffer[0], buffer.size());
+
+        error = message.encode(&encoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+        bsl::size_t bufferSize = encoder.position();
+
+        ntcdns::MemoryDecoder decoder(&buffer[0], bufferSize);
+
+        ntcdns::Message other(NTSCFG_TEST_ALLOCATOR);
+        error = other.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+        NTSCFG_TEST_EQ(message, other);
+    }
 }
 
-NTCCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyCase4)
 {
     // Concern: Real response data (trace) for nameservers with EDNS resource
     // records.
     // Plan:
     // Command:
-    // dig google.com @192.168.42.131 -4 -p 8053 -b127.0.0.1#8054 +noadflag +noedns +nodnssec +additional +trace
+    // dig google.com @192.168.42.131 -4 -p 8053 -b127.0.0.1#8054
+    //     +noadflag +noedns +nodnssec +additional +trace
 
     NTCI_LOG_CONTEXT();
 
@@ -425,111 +407,100 @@ NTCCFG_TEST_CASE(4)
     };
     // clang-format on
 
-    ntccfg::TestAllocator ta;
+    ntcdns::Message message(NTSCFG_TEST_ALLOCATOR);
+
     {
-        ntcdns::Message message(&ta);
-
-        {
-            ntcdns::MemoryDecoder decoder(RESPONSE, sizeof RESPONSE);
-            error = message.decode(&decoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-        }
-
-        NTCI_LOG_STREAM_DEBUG << "Message = " << message
-                              << NTCI_LOG_STREAM_END;
-
-        NTCCFG_TEST_EQ(message.id(), 24043);
-
-        NTCCFG_TEST_EQ(message.direction(), ntcdns::Direction::e_RESPONSE);
-        NTCCFG_TEST_EQ(message.operation(), ntcdns::Operation::e_STANDARD);
-        NTCCFG_TEST_EQ(message.error(), ntcdns::Error::e_OK);
-
-        NTCCFG_TEST_EQ(message.aa(), false);
-        NTCCFG_TEST_EQ(message.tc(), false);
-        NTCCFG_TEST_EQ(message.rd(), true);
-        NTCCFG_TEST_EQ(message.ra(), true);
-        NTCCFG_TEST_EQ(message.ad(), false);
-        NTCCFG_TEST_EQ(message.cd(), false);
-
-        NTCCFG_TEST_EQ(message.qdcount(), 1);
-        NTCCFG_TEST_EQ(message.ancount(), 14);
-        NTCCFG_TEST_EQ(message.nscount(), 0);
-        NTCCFG_TEST_EQ(message.arcount(), 1);
-
-        const ntcdns::Question& question = message.qd(0);
-
-        NTCCFG_TEST_EQ(question.name(), "");
-        NTCCFG_TEST_EQ(question.type(), ntcdns::Type::e_NS);
-        NTCCFG_TEST_EQ(question.classification(),
-                       ntcdns::Classification::e_INTERNET);
-
-        for (bsl::size_t i = 0; i < 13; ++i) {
-            const ntcdns::ResourceRecord& answer = message.an(i);
-
-            bsl::string nsdname;
-            {
-                bsl::stringstream ss;
-                ss << static_cast<char>('a' + i) << ".root-servers.net";
-                nsdname = ss.str();
-            }
-
-            NTCCFG_TEST_EQ(answer.name(), "");
-            NTCCFG_TEST_EQ(answer.type(), ntcdns::Type::e_NS);
-            NTCCFG_TEST_EQ(answer.classification(),
-                           ntcdns::Classification::e_INTERNET);
-            NTCCFG_TEST_EQ(answer.ttl(), 13217);
-            NTCCFG_TEST_EQ(answer.rdata().isNameServerValue(), true);
-            NTCCFG_TEST_EQ(answer.rdata().nameServer().nsdname(), nsdname);
-        }
-
-        {
-            const ntcdns::ResourceRecord& answer = message.an(13);
-
-            NTCCFG_TEST_EQ(answer.name(), "");
-            NTCCFG_TEST_EQ(answer.type(), ntcdns::Type::e_RRSIG);
-            NTCCFG_TEST_EQ(answer.classification(),
-                           ntcdns::Classification::e_INTERNET);
-            NTCCFG_TEST_EQ(answer.ttl(), 13217);
-            NTCCFG_TEST_EQ(answer.rdata().isRawValue(), true);
-            // TODO: Compare expected RRSIG resource record type content with
-            // the value found.
-        }
-
-        const ntcdns::ResourceRecord& additional = message.ar(0);
-
-        NTCCFG_TEST_EQ(additional.name(), "");
-        NTCCFG_TEST_EQ(additional.type(), ntcdns::Type::e_OPT);
-        NTCCFG_TEST_EQ(additional.payloadSize(), 512);
-        NTCCFG_TEST_EQ(additional.flags(), 32768);
-        NTCCFG_TEST_EQ(additional.rdata().isUndefinedValue(), true);
-
-        {
-            bsl::vector<bsl::uint8_t> buffer(1024 * 64);
-
-            ntcdns::MemoryEncoder encoder(&buffer[0], buffer.size());
-
-            error = message.encode(&encoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-
-            bsl::size_t bufferSize = encoder.position();
-
-            ntcdns::MemoryDecoder decoder(&buffer[0], bufferSize);
-
-            ntcdns::Message other(&ta);
-            error = other.decode(&decoder);
-            NTCCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
-
-            NTCCFG_TEST_EQ(message, other);
-        }
+        ntcdns::MemoryDecoder decoder(RESPONSE, sizeof RESPONSE);
+        error = message.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    NTCI_LOG_STREAM_DEBUG << "Message = " << message << NTCI_LOG_STREAM_END;
+
+    NTSCFG_TEST_EQ(message.id(), 24043);
+
+    NTSCFG_TEST_EQ(message.direction(), ntcdns::Direction::e_RESPONSE);
+    NTSCFG_TEST_EQ(message.operation(), ntcdns::Operation::e_STANDARD);
+    NTSCFG_TEST_EQ(message.error(), ntcdns::Error::e_OK);
+
+    NTSCFG_TEST_EQ(message.aa(), false);
+    NTSCFG_TEST_EQ(message.tc(), false);
+    NTSCFG_TEST_EQ(message.rd(), true);
+    NTSCFG_TEST_EQ(message.ra(), true);
+    NTSCFG_TEST_EQ(message.ad(), false);
+    NTSCFG_TEST_EQ(message.cd(), false);
+
+    NTSCFG_TEST_EQ(message.qdcount(), 1);
+    NTSCFG_TEST_EQ(message.ancount(), 14);
+    NTSCFG_TEST_EQ(message.nscount(), 0);
+    NTSCFG_TEST_EQ(message.arcount(), 1);
+
+    const ntcdns::Question& question = message.qd(0);
+
+    NTSCFG_TEST_EQ(question.name(), "");
+    NTSCFG_TEST_EQ(question.type(), ntcdns::Type::e_NS);
+    NTSCFG_TEST_EQ(question.classification(),
+                   ntcdns::Classification::e_INTERNET);
+
+    for (bsl::size_t i = 0; i < 13; ++i) {
+        const ntcdns::ResourceRecord& answer = message.an(i);
+
+        bsl::string nsdname;
+        {
+            bsl::stringstream ss;
+            ss << static_cast<char>('a' + i) << ".root-servers.net";
+            nsdname = ss.str();
+        }
+
+        NTSCFG_TEST_EQ(answer.name(), "");
+        NTSCFG_TEST_EQ(answer.type(), ntcdns::Type::e_NS);
+        NTSCFG_TEST_EQ(answer.classification(),
+                       ntcdns::Classification::e_INTERNET);
+        NTSCFG_TEST_EQ(answer.ttl(), 13217);
+        NTSCFG_TEST_EQ(answer.rdata().isNameServerValue(), true);
+        NTSCFG_TEST_EQ(answer.rdata().nameServer().nsdname(), nsdname);
+    }
+
+    {
+        const ntcdns::ResourceRecord& answer = message.an(13);
+
+        NTSCFG_TEST_EQ(answer.name(), "");
+        NTSCFG_TEST_EQ(answer.type(), ntcdns::Type::e_RRSIG);
+        NTSCFG_TEST_EQ(answer.classification(),
+                       ntcdns::Classification::e_INTERNET);
+        NTSCFG_TEST_EQ(answer.ttl(), 13217);
+        NTSCFG_TEST_EQ(answer.rdata().isRawValue(), true);
+        // TODO: Compare expected RRSIG resource record type content with
+        // the value found.
+    }
+
+    const ntcdns::ResourceRecord& additional = message.ar(0);
+
+    NTSCFG_TEST_EQ(additional.name(), "");
+    NTSCFG_TEST_EQ(additional.type(), ntcdns::Type::e_OPT);
+    NTSCFG_TEST_EQ(additional.payloadSize(), 512);
+    NTSCFG_TEST_EQ(additional.flags(), 32768);
+    NTSCFG_TEST_EQ(additional.rdata().isUndefinedValue(), true);
+
+    {
+        bsl::vector<bsl::uint8_t> buffer(1024 * 64);
+
+        ntcdns::MemoryEncoder encoder(&buffer[0], buffer.size());
+
+        error = message.encode(&encoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+        bsl::size_t bufferSize = encoder.position();
+
+        ntcdns::MemoryDecoder decoder(&buffer[0], bufferSize);
+
+        ntcdns::Message other(NTSCFG_TEST_ALLOCATOR);
+        error = other.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+        NTSCFG_TEST_EQ(message, other);
+    }
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcdns
+}  // close namespace BloombergLP

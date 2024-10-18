@@ -13,17 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntccfg_mutex_t_cpp, "$Id$ $CSID$")
+
 #include <ntccfg_mutex.h>
-
-#include <ntccfg_test.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
 
 using namespace BloombergLP;
 
-NTCCFG_TEST_CASE(1)
+namespace BloombergLP {
+namespace ntccfg {
+
+// Provide tests for 'ntccfg::Mutex'.
+class MutexTest
+{
+  public:
+    // TODO
+    static void verify();
+};
+
+NTSCFG_TEST_FUNCTION(ntccfg::MutexTest::verify)
 {
     ntccfg::Mutex mutex;
 
@@ -34,8 +44,5 @@ NTCCFG_TEST_CASE(1)
     mutex.unlock();
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntccfg
+}  // close namespace BloombergLP

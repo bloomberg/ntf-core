@@ -48,18 +48,18 @@ class ProcessMetrics : public ntci::Monitorable,
     /// Define a type alias for a mutex lock guard.
     typedef ntccfg::LockGuard LockGuard;
 
-    mutable Mutex        d_mutex;
-    ntci::MetricTotal    d_cpuTimeUser;
-    ntci::MetricTotal    d_cpuTimeSystem;
-    ntci::MetricGauge    d_memoryResident;
-    ntci::MetricGauge    d_memoryAddressSpace;
-    ntci::MetricTotal    d_contextSwitchesUser;
-    ntci::MetricTotal    d_contextSwitchesSystem;
-    ntci::MetricTotal    d_pageFaultsMajor;
-    ntci::MetricTotal    d_pageFaultsMinor;
-    bsl::string          d_prefix;
-    bsl::string          d_objectName;
-    bslma::Allocator*    d_allocator_p;
+    mutable Mutex     d_mutex;
+    ntci::MetricTotal d_cpuTimeUser;
+    ntci::MetricTotal d_cpuTimeSystem;
+    ntci::MetricGauge d_memoryResident;
+    ntci::MetricGauge d_memoryAddressSpace;
+    ntci::MetricTotal d_contextSwitchesUser;
+    ntci::MetricTotal d_contextSwitchesSystem;
+    ntci::MetricTotal d_pageFaultsMajor;
+    ntci::MetricTotal d_pageFaultsMinor;
+    bsl::string       d_prefix;
+    bsl::string       d_objectName;
+    bslma::Allocator* d_allocator_p;
 
     static const struct ntci::MetricMetadata STATISTICS[];
 

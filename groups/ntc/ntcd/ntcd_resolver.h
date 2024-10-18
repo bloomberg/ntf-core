@@ -19,12 +19,12 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntci_resolver.h>
-#include <ntccfg_test.h>
+#include <ntscfg_mock.h>
 
 namespace BloombergLP {
 namespace ntcd {
 
-#if NTCCFG_TEST_MOCK_ENABLED
+#if NTSCFG_MOCK_ENABLED
 
 NTF_MOCK_CLASS(ResolverMock, ntci::Resolver)
 

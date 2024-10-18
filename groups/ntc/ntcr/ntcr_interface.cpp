@@ -21,8 +21,7 @@ BSLS_IDENT_RCSID(ntcr_interface_cpp, "$Id$ $CSID$")
 #include <ntccfg_limits.h>
 #include <ntcdns_resolver.h>
 #include <ntci_log.h>
-#include <ntcm_monitorableregistry.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
 #include <ntcr_streamsocket.h>
@@ -465,9 +464,9 @@ void Interface::interruptOne()
 {
     LockGuard lock(&d_mutex);
 
-    for (ReactorVector::iterator it  = d_reactorVector.begin();
-                                 it != d_reactorVector.end();
-                               ++it)
+    for (ReactorVector::iterator it = d_reactorVector.begin();
+         it != d_reactorVector.end();
+         ++it)
     {
         const bsl::shared_ptr<ntci::Reactor>& reactor = *it;
         reactor->interruptOne();
@@ -478,9 +477,9 @@ void Interface::interruptAll()
 {
     LockGuard lock(&d_mutex);
 
-    for (ReactorVector::iterator it  = d_reactorVector.begin();
-                                 it != d_reactorVector.end();
-                               ++it)
+    for (ReactorVector::iterator it = d_reactorVector.begin();
+         it != d_reactorVector.end();
+         ++it)
     {
         const bsl::shared_ptr<ntci::Reactor>& reactor = *it;
         reactor->interruptAll();
@@ -564,9 +563,8 @@ Interface::Interface(
     }
 
     BSLS_ASSERT_OPT(!d_config.dynamicLoadBalancing().isNull());
-    
-    if (d_config.maxThreads() > 1 && 
-        !d_config.dynamicLoadBalancing().value()) 
+
+    if (d_config.maxThreads() > 1 && !d_config.dynamicLoadBalancing().value())
     {
         d_chronology_sp.createInplace(d_allocator_p, this, d_allocator_p);
         d_user_sp->setChronology(d_chronology_sp);
@@ -1107,13 +1105,12 @@ ntsa::Error Interface::createEncryptionResource(
     return encryptionDriver->createEncryptionResource(result, basicAllocator);
 }
 
-
 ntsa::Error Interface::generateCertificate(
-    ntca::EncryptionCertificate*                  result,
-    const ntsa::DistinguishedName&                subjectIdentity,
-    const ntca::EncryptionKey&                    subjectPrivateKey,
-    const ntca::EncryptionCertificateOptions&     options,
-    bslma::Allocator*                             basicAllocator) 
+    ntca::EncryptionCertificate*              result,
+    const ntsa::DistinguishedName&            subjectIdentity,
+    const ntca::EncryptionKey&                subjectPrivateKey,
+    const ntca::EncryptionCertificateOptions& options,
+    bslma::Allocator*                         basicAllocator)
 {
     NTCI_LOG_CONTEXT();
 
@@ -1141,7 +1138,7 @@ ntsa::Error Interface::generateCertificate(
     const ntca::EncryptionCertificate&        issuerCertificate,
     const ntca::EncryptionKey&                issuerPrivateKey,
     const ntca::EncryptionCertificateOptions& options,
-    bslma::Allocator*                         basicAllocator) 
+    bslma::Allocator*                         basicAllocator)
 {
     NTCI_LOG_CONTEXT();
 
@@ -1294,10 +1291,9 @@ ntsa::Error Interface::decodeCertificate(
                                                basicAllocator);
 }
 
-ntsa::Error Interface::generateKey(
-    ntca::EncryptionKey*                  result,
-    const ntca::EncryptionKeyOptions&     options,
-    bslma::Allocator*                     basicAllocator)
+ntsa::Error Interface::generateKey(ntca::EncryptionKey*              result,
+                                   const ntca::EncryptionKeyOptions& options,
+                                   bslma::Allocator* basicAllocator)
 {
     NTCI_LOG_CONTEXT();
 
@@ -1312,8 +1308,7 @@ ntsa::Error Interface::generateKey(
     }
 
     return encryptionDriver->generateKey(result, options, basicAllocator);
-} 
-
+}
 
 ntsa::Error Interface::generateKey(
     bsl::shared_ptr<ntci::EncryptionKey>* result,

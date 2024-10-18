@@ -13,36 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcr_datagramsocket_t_cpp, "$Id$ $CSID$")
+
 #include <ntcr_datagramsocket.h>
 
 #include <ntccfg_bind.h>
 #include <ntccfg_limits.h>
-#include <ntccfg_test.h>
 #include <ntcd_datautil.h>
 #include <ntcd_encryption.h>
 #include <ntcd_reactor.h>
 #include <ntcd_simulation.h>
 #include <ntci_log.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 #include <ntcs_datapool.h>
 #include <ntcs_ratelimiter.h>
 #include <ntcs_user.h>
 #include <ntsa_error.h>
 #include <ntsa_transport.h>
-#include <bdlbb_blob.h>
-#include <bdlbb_blobutil.h>
-#include <bdlf_bind.h>
-#include <bdlf_memfn.h>
-#include <bdlf_placeholder.h>
-#include <bdlt_currenttime.h>
-#include <bslmt_barrier.h>
-#include <bslmt_latch.h>
-#include <bslmt_lockguard.h>
-#include <bslmt_mutex.h>
-#include <bslmt_semaphore.h>
-#include <bslmt_threadgroup.h>
-#include <bslmt_threadutil.h>
-#include <bsl_unordered_map.h>
 
 using namespace BloombergLP;
 
@@ -50,40 +40,115 @@ using namespace BloombergLP;
 // instead of both static and dynamic load balancing.
 // #define NTCR_DATAGRAM_SOCKET_TEST_DYNAMIC_LOAD_BALANCING true
 
-namespace test {
+namespace BloombergLP {
+namespace ntcr {
 
-namespace {
-
-/// Validate that the specified 'metrics' does not contain data for
-/// elements starting from the specified 'base' up to 'base' + the
-/// 'specified 'num' (exclusive) in total.
-void validateNoMetricsAvailable(const bdld::DatumArrayRef& metrics,
-                                int                        base,
-                                int                        num)
+// Provide tests for 'ntcr::DatagramSocket'.
+class DatagramSocketTest
 {
-    NTCCFG_TEST_GE(metrics.length(), base + num);
-    for (int i = base; i < base + num; ++i) {
-        NTCCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_NIL);
-    }
-}
+    /// Provide a test case execution framework.
+    class Framework;
 
-/// Validate that the specified 'metrics' contains data for elements
-/// starting from the specified 'base' up to 'base' + the specified 'num'
-/// (exclusive) in total.
-void validateMetricsAvailable(const bdld::DatumArrayRef& metrics,
-                              int                        base,
-                              int                        num)
-{
-    NTCCFG_TEST_GE(metrics.length(), base + num);
-    for (int i = base; i < base + num; ++i) {
-        NTCCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_DOUBLE);
-    }
-}
+    /// Describe test parameters.
+    class Parameters;
 
-}  // close unnamed namespace
+    /// Provide a datagram socket session for this test driver.
+    class DatagramSocketSession;
+
+    /// Provide a datagram socket manager for this test driver.
+    class DatagramSocketManager;
+
+    // Execute the concern with the specified 'parameters' for the specified
+    // 'transport' using the specified 'reactor'.
+    static void verifyGenericVariation(
+        ntsa::Transport::Value                transport,
+        const bsl::shared_ptr<ntci::Reactor>& reactor,
+        const DatagramSocketTest::Parameters& parameters,
+        bslma::Allocator*                     allocator);
+
+    // Execute the concern with the specified 'parameters' for the specified
+    // 'transport' using the specified 'reactor'.
+    static void verifyReceiveDeadlineVariation(
+        ntsa::Transport::Value                transport,
+        const bsl::shared_ptr<ntci::Reactor>& reactor,
+        const DatagramSocketTest::Parameters& parameters,
+        bslma::Allocator*                     allocator);
+
+    // Execute the concern with the specified 'parameters' for the specified
+    // 'transport' using the specified 'reactor'.
+    static void verifyReceiveCancellationVariation(
+        ntsa::Transport::Value                transport,
+        const bsl::shared_ptr<ntci::Reactor>& reactor,
+        const DatagramSocketTest::Parameters& parameters,
+        bslma::Allocator*                     allocator);
+
+    /// Validate that the specified 'metrics' does not contain data for
+    /// elements starting from the specified 'base' up to 'base' + the
+    /// 'specified 'number' (exclusive) in total.
+    static void validateNoMetricsAvailable(const bdld::DatumArrayRef& metrics,
+                                           int                        base,
+                                           int                        number);
+
+    /// Validate that the specified 'metrics' contains data for elements
+    /// starting from the specified 'base' up to 'base' + the specified
+    /// 'number' (exclusive) in total.
+    static void validateMetricsAvailable(const bdld::DatumArrayRef& metrics,
+                                         int                        base,
+                                         int                        number);
+
+    /// Return an endpoint representing a suitable address to which to
+    /// bind a socket of the specified 'transport' type for use by this
+    /// test driver.
+    static ntsa::Endpoint any(ntsa::Transport::Value transport);
+
+    // Cancel the receive operation on the specified 'datagramSocket'
+    // identified by the specified 'token'.
+    static void cancelReceive(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ReceiveToken                     token);
+
+    // Process the expected timeout of a receive operation.
+    static void processReceiveTimeout(
+        const bsl::shared_ptr<ntci::Receiver>& receiver,
+        const bsl::shared_ptr<bdlbb::Blob>&    data,
+        const ntca::ReceiveEvent&              event,
+        bslmt::Semaphore*                      semaphore);
+
+    // Process the expected cancellation of a receive operation.
+    static void processReceiveCancellation(
+        const bsl::shared_ptr<ntci::Receiver>& receiver,
+        const bsl::shared_ptr<bdlbb::Blob>&    data,
+        const ntca::ReceiveEvent&              event,
+        bslmt::Semaphore*                      semaphore);
+
+  public:
+    // TODO
+    static void verifyBreathing();
+
+    // TODO
+    static void verifyBreathingAsync();
+
+    // TODO
+    static void verifyStress();
+
+    // TODO
+    static void verifyStressAsync();
+
+    // TODO
+    static void verifyIncomingTimestamps();
+
+    // TODO
+    static void verifyOutgoingTimestamps();
+
+    // TODO
+    static void verifyReceiveDeadline();
+
+    // TODO
+    static void verifyReceiveCancellation();
+};
 
 /// Provide a test case execution framework.
-class Framework
+class DatagramSocketTest::Framework
 {
   private:
     /// Run a thread identified by the specified 'threadIndex' that waits
@@ -118,182 +183,10 @@ class Framework
                         const ExecuteCallback& executeCallback);
 };
 
-void Framework::runReactor(const bsl::shared_ptr<ntci::Reactor>& reactor,
-                           bslmt::Barrier*                       barrier,
-                           bsl::size_t                           threadIndex)
-{
-    const char* threadNamePrefix = "test";
-
-    bsl::string threadName;
-    {
-        bsl::stringstream ss;
-        ss << threadNamePrefix << "-" << threadIndex;
-        threadName = ss.str();
-    }
-
-    bslmt::ThreadUtil::setThreadName(threadName);
-
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_CONTEXT_GUARD_OWNER(threadNamePrefix);
-    NTCI_LOG_CONTEXT_GUARD_THREAD(threadIndex);
-
-    // Register this thread as the thread that will wait on the reactor.
-
-    ntci::Waiter waiter = reactor->registerWaiter(ntca::WaiterOptions());
-
-    // Wait until all threads have reached the rendezvous point.
-
-    barrier->wait();
-
-    // Process deferred functions.
-
-    reactor->run(waiter);
-
-    // Deregister the waiter.
-
-    reactor->deregisterWaiter(waiter);
-}
-
-void Framework::execute(const ExecuteCallback& executeCallback)
-{
-    Framework::execute(ntsa::Transport::e_UDP_IPV4_DATAGRAM, executeCallback);
-}
-
-void Framework::execute(ntsa::Transport::Value transport,
-                        const ExecuteCallback& executeCallback)
-{
-#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
-
-    const bsl::size_t MIN_THREADS = 1;
-    const bsl::size_t MAX_THREADS = 1;
-
-#else
-
-    const bsl::size_t MIN_THREADS = 1;
-    const bsl::size_t MAX_THREADS = 1;
-
-#endif
-
-    for (bsl::size_t numThreads = MIN_THREADS; numThreads <= MAX_THREADS;
-         ++numThreads)
-    {
-        const bool dynamicLoadBalancing = numThreads > 1;
-
-#if defined(NTCR_DATAGRAM_SOCKET_TEST_DYNAMIC_LOAD_BALANCING)
-        if (dynamicLoadBalancing !=
-            NTCR_DATAGRAM_SOCKET_TEST_DYNAMIC_LOAD_BALANCING)
-        {
-            continue;
-        }
-#endif
-
-        Framework::execute(transport, numThreads, executeCallback);
-    }
-}
-
-void Framework::execute(ntsa::Transport::Value transport,
-                        bsl::size_t            numThreads,
-                        const ExecuteCallback& executeCallback)
-{
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
-
-        BSLS_LOG_INFO("Testing transport %s numThreads %d",
-                      ntsa::Transport::toString(transport),
-                      (int)(numThreads));
-
-        bsl::shared_ptr<ntcd::Simulation> simulation;
-        simulation.createInplace(&ta, &ta);
-
-        error = simulation->run();
-        NTCCFG_TEST_OK(error);
-
-        const bsl::size_t BLOB_BUFFER_SIZE = 4096;
-
-        bsl::shared_ptr<ntcs::DataPool> dataPool;
-        dataPool.createInplace(&ta, BLOB_BUFFER_SIZE, BLOB_BUFFER_SIZE, &ta);
-
-        bsl::shared_ptr<ntcs::User> user;
-        user.createInplace(&ta, &ta);
-
-        user->setDataPool(dataPool);
-
-        ntca::ReactorConfig reactorConfig;
-        reactorConfig.setMetricName("test");
-        reactorConfig.setMinThreads(numThreads);
-        reactorConfig.setMaxThreads(numThreads);
-        reactorConfig.setAutoAttach(false);
-        reactorConfig.setAutoDetach(false);
-        reactorConfig.setOneShot(numThreads > 1);
-
-        bsl::shared_ptr<ntcd::Reactor> reactor;
-        reactor.createInplace(&ta, reactorConfig, user, &ta);
-
-        bslmt::Barrier threadGroupBarrier(numThreads + 1);
-
-        bslmt::ThreadGroup threadGroup(&ta);
-
-        for (bsl::size_t threadIndex = 0; threadIndex < numThreads;
-             ++threadIndex)
-        {
-            threadGroup.addThread(NTCCFG_BIND(&Framework::runReactor,
-                                              reactor,
-                                              &threadGroupBarrier,
-                                              threadIndex));
-        }
-
-        threadGroupBarrier.wait();
-
-        executeCallback(transport, reactor, &ta);
-
-        threadGroup.joinAll();
-
-        simulation->stop();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-/// Provide functions for returning endpoints used by this
-/// test driver.
-struct EndpointUtil {
-    /// Return an endpoint representing a suitable address to which to
-    /// bind a socket of the specified 'transport' type for use by this
-    /// test driver.
-    static ntsa::Endpoint any(ntsa::Transport::Value transport);
-};
-
-ntsa::Endpoint EndpointUtil::any(ntsa::Transport::Value transport)
-{
-    ntsa::Endpoint endpoint;
-
-    switch (transport) {
-    case ntsa::Transport::e_TCP_IPV4_STREAM:
-    case ntsa::Transport::e_UDP_IPV4_DATAGRAM:
-        endpoint.makeIp(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0));
-        break;
-    case ntsa::Transport::e_TCP_IPV6_STREAM:
-    case ntsa::Transport::e_UDP_IPV6_DATAGRAM:
-        endpoint.makeIp(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0));
-        break;
-    case ntsa::Transport::e_LOCAL_STREAM:
-    case ntsa::Transport::e_LOCAL_DATAGRAM: {
-        ntsa::LocalName   localName;
-        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
-        BSLS_ASSERT_OPT(!error);
-
-        endpoint.makeLocal(localName);
-        break;
-    }
-    default:
-        NTCCFG_UNREACHABLE();
-    }
-
-    return endpoint;
-}
-
 /// This struct defines the parameters of a test.
-struct Parameters {
+class DatagramSocketTest::Parameters
+{
+  public:
     ntsa::Transport::Value             d_transport;
     bsl::size_t                        d_numSocketPairs;
     bsl::size_t                        d_numTimers;
@@ -335,7 +228,8 @@ struct Parameters {
 };
 
 /// This test provides a datagram socket protocol for this test driver.
-class DatagramSocketSession : public ntci::DatagramSocketSession
+class DatagramSocketTest::DatagramSocketSession
+: public ntci::DatagramSocketSession
 {
     ntccfg::Object                        d_object;
     bsl::shared_ptr<ntci::DatagramSocket> d_datagramSocket_sp;
@@ -344,7 +238,7 @@ class DatagramSocketSession : public ntci::DatagramSocketSession
     bsls::AtomicUint                      d_numMessagesLeftToSend;
     bslmt::Latch                          d_numMessagesSent;
     bslmt::Latch                          d_numMessagesReceived;
-    test::Parameters                      d_parameters;
+    DatagramSocketTest::Parameters        d_parameters;
     bslma::Allocator*                     d_allocator_p;
 
   private:
@@ -392,7 +286,7 @@ class DatagramSocketSession : public ntci::DatagramSocketSession
     /// default allocator is used.
     DatagramSocketSession(
         const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
-        const test::Parameters&                      parameters,
+        const DatagramSocketTest::Parameters&        parameters,
         bslma::Allocator*                            basicAllocator = 0);
 
     /// Destroy this object.
@@ -419,8 +313,9 @@ class DatagramSocketSession : public ntci::DatagramSocketSession
 };
 
 /// Provide a datagram socket manager for this test driver.
-class DatagramSocketManager : public ntci::DatagramSocketManager,
-                              public ntccfg::Shared<DatagramSocketManager>
+class DatagramSocketTest::DatagramSocketManager
+: public ntci::DatagramSocketManager,
+  public ntccfg::Shared<DatagramSocketManager>
 {
     /// Define a type alias for a set of managed datagram
     /// sockets.
@@ -441,7 +336,7 @@ class DatagramSocketManager : public ntci::DatagramSocketManager,
     DatagramSocketApplicationMap   d_socketMap;
     bslmt::Latch                   d_socketsEstablished;
     bslmt::Latch                   d_socketsClosed;
-    test::Parameters               d_parameters;
+    DatagramSocketTest::Parameters d_parameters;
     bslma::Allocator*              d_allocator_p;
 
   private:
@@ -467,7 +362,7 @@ class DatagramSocketManager : public ntci::DatagramSocketManager,
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     DatagramSocketManager(const bsl::shared_ptr<ntci::Reactor>& reactor,
-                          const test::Parameters&               parameters,
+                          const DatagramSocketTest::Parameters& parameters,
                           bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
@@ -478,7 +373,148 @@ class DatagramSocketManager : public ntci::DatagramSocketManager,
     void run();
 };
 
-void DatagramSocketSession::processReadQueueLowWatermark(
+void DatagramSocketTest::Framework::runReactor(
+    const bsl::shared_ptr<ntci::Reactor>& reactor,
+    bslmt::Barrier*                       barrier,
+    bsl::size_t                           threadIndex)
+{
+    const char* threadNamePrefix = "test";
+
+    bsl::string threadName;
+    {
+        bsl::stringstream ss;
+        ss << threadNamePrefix << "-" << threadIndex;
+        threadName = ss.str();
+    }
+
+    bslmt::ThreadUtil::setThreadName(threadName);
+
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER(threadNamePrefix);
+    NTCI_LOG_CONTEXT_GUARD_THREAD(threadIndex);
+
+    // Register this thread as the thread that will wait on the reactor.
+
+    ntci::Waiter waiter = reactor->registerWaiter(ntca::WaiterOptions());
+
+    // Wait until all threads have reached the rendezvous point.
+
+    barrier->wait();
+
+    // Process deferred functions.
+
+    reactor->run(waiter);
+
+    // Deregister the waiter.
+
+    reactor->deregisterWaiter(waiter);
+}
+
+void DatagramSocketTest::Framework::execute(
+    const ExecuteCallback& executeCallback)
+{
+    Framework::execute(ntsa::Transport::e_UDP_IPV4_DATAGRAM, executeCallback);
+}
+
+void DatagramSocketTest::Framework::execute(
+    ntsa::Transport::Value transport,
+    const ExecuteCallback& executeCallback)
+{
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
+    const bsl::size_t MIN_THREADS = 1;
+    const bsl::size_t MAX_THREADS = 1;
+
+#else
+
+    const bsl::size_t MIN_THREADS = 1;
+    const bsl::size_t MAX_THREADS = 1;
+
+#endif
+
+    for (bsl::size_t numThreads = MIN_THREADS; numThreads <= MAX_THREADS;
+         ++numThreads)
+    {
+        const bool dynamicLoadBalancing = numThreads > 1;
+
+#if defined(NTCR_DATAGRAM_SOCKET_TEST_DYNAMIC_LOAD_BALANCING)
+        if (dynamicLoadBalancing !=
+            NTCR_DATAGRAM_SOCKET_TEST_DYNAMIC_LOAD_BALANCING)
+        {
+            continue;
+        }
+#endif
+
+        Framework::execute(transport, numThreads, executeCallback);
+    }
+}
+
+void DatagramSocketTest::Framework::execute(
+    ntsa::Transport::Value transport,
+    bsl::size_t            numThreads,
+    const ExecuteCallback& executeCallback)
+{
+    ntsa::Error error;
+
+    BSLS_LOG_INFO("Testing transport %s numThreads %d",
+                  ntsa::Transport::toString(transport),
+                  (int)(numThreads));
+
+    bsl::shared_ptr<ntcd::Simulation> simulation;
+    simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    error = simulation->run();
+    NTSCFG_TEST_OK(error);
+
+    const bsl::size_t BLOB_BUFFER_SIZE = 4096;
+
+    bsl::shared_ptr<ntcs::DataPool> dataPool;
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           BLOB_BUFFER_SIZE,
+                           BLOB_BUFFER_SIZE,
+                           NTSCFG_TEST_ALLOCATOR);
+
+    bsl::shared_ptr<ntcs::User> user;
+    user.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    user->setDataPool(dataPool);
+
+    ntca::ReactorConfig reactorConfig;
+    reactorConfig.setMetricName("test");
+    reactorConfig.setMinThreads(numThreads);
+    reactorConfig.setMaxThreads(numThreads);
+    reactorConfig.setAutoAttach(false);
+    reactorConfig.setAutoDetach(false);
+    reactorConfig.setOneShot(numThreads > 1);
+
+    bsl::shared_ptr<ntcd::Reactor> reactor;
+    reactor.createInplace(NTSCFG_TEST_ALLOCATOR,
+                          reactorConfig,
+                          user,
+                          NTSCFG_TEST_ALLOCATOR);
+
+    bslmt::Barrier threadGroupBarrier(numThreads + 1);
+
+    bslmt::ThreadGroup threadGroup(NTSCFG_TEST_ALLOCATOR);
+
+    for (bsl::size_t threadIndex = 0; threadIndex < numThreads; ++threadIndex)
+    {
+        threadGroup.addThread(NTCCFG_BIND(&Framework::runReactor,
+                                          reactor,
+                                          &threadGroupBarrier,
+                                          threadIndex));
+    }
+
+    threadGroupBarrier.wait();
+
+    executeCallback(transport, reactor, NTSCFG_TEST_ALLOCATOR);
+
+    threadGroup.joinAll();
+
+    simulation->stop();
+}
+
+void DatagramSocketTest::DatagramSocketSession::processReadQueueLowWatermark(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const ntca::ReadQueueEvent&                  event)
 {
@@ -512,20 +548,20 @@ void DatagramSocketSession::processReadQueueLowWatermark(
                 break;
             }
             else {
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_OK);
+                NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
             }
         }
 
-        NTCCFG_TEST_EQ(d_datagramSocket_sp->transport(),
+        NTSCFG_TEST_EQ(d_datagramSocket_sp->transport(),
                        d_parameters.d_transport);
 
-        NTCCFG_TEST_EQ(receiveContext.transport(),
+        NTSCFG_TEST_EQ(receiveContext.transport(),
                        d_datagramSocket_sp->transport());
 
-        NTCCFG_TEST_FALSE(receiveContext.endpoint().isNull());
-        NTCCFG_TEST_FALSE(receiveContext.endpoint().value().isUndefined());
+        NTSCFG_TEST_FALSE(receiveContext.endpoint().isNull());
+        NTSCFG_TEST_FALSE(receiveContext.endpoint().value().isUndefined());
 
-        NTCCFG_TEST_EQ(data.length(), d_parameters.d_messageSize);
+        NTSCFG_TEST_EQ(data.length(), d_parameters.d_messageSize);
 
         NTCI_LOG_DEBUG(
             "Datagram socket %d at %s received message %d/%d from %s",
@@ -541,7 +577,7 @@ void DatagramSocketSession::processReadQueueLowWatermark(
     }
 }
 
-void DatagramSocketSession::processWriteQueueLowWatermark(
+void DatagramSocketTest::DatagramSocketSession::processWriteQueueLowWatermark(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const ntca::WriteQueueEvent&                 event)
 {
@@ -574,7 +610,7 @@ void DatagramSocketSession::processWriteQueueLowWatermark(
                                 NTCCFG_BIND_PLACEHOLDER_2),
                     d_allocator_p);
 
-            NTCCFG_TEST_EQ(sendCallback.strand(),
+            NTSCFG_TEST_EQ(sendCallback.strand(),
                            d_datagramSocket_sp->strand());
 
             ntca::SendOptions sendOptions;
@@ -599,7 +635,7 @@ void DatagramSocketSession::processWriteQueueLowWatermark(
                     continue;
                 }
 
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_WOULD_BLOCK);
+                NTSCFG_TEST_EQ(error, ntsa::Error::e_WOULD_BLOCK);
                 break;
             }
 
@@ -628,7 +664,7 @@ void DatagramSocketSession::processWriteQueueLowWatermark(
                     continue;
                 }
 
-                NTCCFG_TEST_EQ(error, ntsa::Error::e_WOULD_BLOCK);
+                NTSCFG_TEST_EQ(error, ntsa::Error::e_WOULD_BLOCK);
                 break;
             }
 
@@ -637,7 +673,7 @@ void DatagramSocketSession::processWriteQueueLowWatermark(
     }
 }
 
-void DatagramSocketSession::processRead(
+void DatagramSocketTest::DatagramSocketSession::processRead(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const bsl::shared_ptr<ntci::Receiver>&       receiver,
     const bsl::shared_ptr<bdlbb::Blob>&          data,
@@ -648,24 +684,24 @@ void DatagramSocketSession::processRead(
     NTCI_LOG_CONTEXT();
 
     if (event.type() == ntca::ReceiveEventType::e_ERROR) {
-        NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_EOF);
+        NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_EOF);
 
         NTCI_LOG_DEBUG("Datagram socket %d at %s asynchronously received EOF",
                        (int)(d_datagramSocket_sp->handle()),
                        d_datagramSocket_sp->sourceEndpoint().text().c_str());
     }
     else {
-        NTCCFG_TEST_FALSE(event.context().error());
+        NTSCFG_TEST_FALSE(event.context().error());
 
-        NTCCFG_TEST_EQ(datagramSocket->transport(), d_parameters.d_transport);
+        NTSCFG_TEST_EQ(datagramSocket->transport(), d_parameters.d_transport);
 
-        NTCCFG_TEST_EQ(event.context().transport(),
+        NTSCFG_TEST_EQ(event.context().transport(),
                        datagramSocket->transport());
 
-        NTCCFG_TEST_FALSE(event.context().endpoint().isNull());
-        NTCCFG_TEST_FALSE(event.context().endpoint().value().isUndefined());
+        NTSCFG_TEST_FALSE(event.context().endpoint().isNull());
+        NTSCFG_TEST_FALSE(event.context().endpoint().value().isUndefined());
 
-        NTCCFG_TEST_EQ(data->length(), d_parameters.d_messageSize);
+        NTSCFG_TEST_EQ(data->length(), d_parameters.d_messageSize);
 
         NTCI_LOG_DEBUG("Datagram socket %d at %s asynchronously received "
                        "message %d/%d from %s",
@@ -687,19 +723,19 @@ void DatagramSocketSession::processRead(
                             NTCCFG_BIND_PLACEHOLDER_3),
                 d_allocator_p);
 
-        NTCCFG_TEST_EQ(receiveCallback.strand(),
+        NTSCFG_TEST_EQ(receiveCallback.strand(),
                        d_datagramSocket_sp->strand());
 
         ntsa::Error receiveError =
             d_datagramSocket_sp->receive(ntca::ReceiveOptions(),
                                          receiveCallback);
-        NTCCFG_TEST_OK(receiveError);
+        NTSCFG_TEST_OK(receiveError);
 
         d_numMessagesReceived.arrive();
     }
 }
 
-void DatagramSocketSession::processWrite(
+void DatagramSocketTest::DatagramSocketSession::processWrite(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const bsl::shared_ptr<ntci::Sender>&         sender,
     const ntca::SendEvent&                       event)
@@ -741,7 +777,7 @@ void DatagramSocketSession::processWrite(
         }
     }
     else {
-        NTCCFG_TEST_FALSE(event.context().error());
+        NTSCFG_TEST_FALSE(event.context().error());
 
         NTCI_LOG_DEBUG("Datagram socket %d at %s asynchronously sent "
                        "message %d/%d",
@@ -758,7 +794,7 @@ void DatagramSocketSession::processWrite(
     d_numMessagesSent.arrive();
 }
 
-void DatagramSocketSession::processTimer(
+void DatagramSocketTest::DatagramSocketSession::processTimer(
     const bsl::shared_ptr<ntci::Timer>& timer,
     const ntca::TimerEvent&             event)
 {
@@ -784,11 +820,11 @@ void DatagramSocketSession::processTimer(
     }
 }
 
-DatagramSocketSession::DatagramSocketSession(
+DatagramSocketTest::DatagramSocketSession::DatagramSocketSession(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
-    const test::Parameters&                      parameters,
+    const DatagramSocketTest::Parameters&        parameters,
     bslma::Allocator*                            basicAllocator)
-: d_object("test::DatagramSocketSession")
+: d_object("DatagramSocketTest::DatagramSocketSession")
 , d_datagramSocket_sp(datagramSocket)
 , d_receiverEndpoint()
 , d_numTimerEvents(parameters.d_numTimers)
@@ -800,11 +836,11 @@ DatagramSocketSession::DatagramSocketSession(
 {
 }
 
-DatagramSocketSession::~DatagramSocketSession()
+DatagramSocketTest::DatagramSocketSession::~DatagramSocketSession()
 {
 }
 
-void DatagramSocketSession::schedule()
+void DatagramSocketTest::DatagramSocketSession::schedule()
 {
     NTCI_LOG_CONTEXT();
 
@@ -821,7 +857,7 @@ void DatagramSocketSession::schedule()
                                        this),
                 d_allocator_p);
 
-        NTCCFG_TEST_EQ(timerCallback.strand(), d_datagramSocket_sp->strand());
+        NTSCFG_TEST_EQ(timerCallback.strand(), d_datagramSocket_sp->strand());
 
         bsl::shared_ptr<ntci::Timer> timer =
             d_datagramSocket_sp->createTimer(timerOptions,
@@ -841,11 +877,12 @@ void DatagramSocketSession::schedule()
     }
 }
 
-void DatagramSocketSession::send(const ntsa::Endpoint& endpoint)
+void DatagramSocketTest::DatagramSocketSession::send(
+    const ntsa::Endpoint& endpoint)
 {
     ntsa::Error error;
 
-    NTCCFG_TEST_TRUE(d_receiverEndpoint.isUndefined());
+    NTSCFG_TEST_TRUE(d_receiverEndpoint.isUndefined());
     d_receiverEndpoint = endpoint;
 
     ntca::WriteQueueEvent event;
@@ -858,7 +895,7 @@ void DatagramSocketSession::send(const ntsa::Endpoint& endpoint)
                     event));
 }
 
-void DatagramSocketSession::receive()
+void DatagramSocketTest::DatagramSocketSession::receive()
 {
     ntsa::Error error;
 
@@ -873,18 +910,18 @@ void DatagramSocketSession::receive()
                             NTCCFG_BIND_PLACEHOLDER_3),
                 d_allocator_p);
 
-        NTCCFG_TEST_EQ(receiveCallback.strand(),
+        NTSCFG_TEST_EQ(receiveCallback.strand(),
                        d_datagramSocket_sp->strand());
 
         error = d_datagramSocket_sp->receive(ntca::ReceiveOptions(),
                                              receiveCallback);
-        NTCCFG_TEST_OK(error);
+        NTSCFG_TEST_OK(error);
     }
 
     d_datagramSocket_sp->relaxFlowControl(ntca::FlowControlType::e_RECEIVE);
 }
 
-void DatagramSocketSession::wait()
+void DatagramSocketTest::DatagramSocketSession::wait()
 {
     NTCI_LOG_CONTEXT();
 
@@ -935,13 +972,13 @@ void DatagramSocketSession::wait()
     }
 }
 
-void DatagramSocketSession::close()
+void DatagramSocketTest::DatagramSocketSession::close()
 {
     ntsa::Error error;
 
     error = d_datagramSocket_sp->shutdown(ntsa::ShutdownType::e_BOTH,
                                           ntsa::ShutdownMode::e_IMMEDIATE);
-    NTCCFG_TEST_FALSE(error);
+    NTSCFG_TEST_FALSE(error);
 
     if (d_parameters.d_useAsyncCallbacks) {
         ntci::DatagramSocketCloseGuard guard(d_datagramSocket_sp);
@@ -951,13 +988,15 @@ void DatagramSocketSession::close()
     }
 }
 
-ntsa::Endpoint DatagramSocketSession::sourceEndpoint() const
+ntsa::Endpoint DatagramSocketTest::DatagramSocketSession::sourceEndpoint()
+    const
 {
     return d_datagramSocket_sp->sourceEndpoint();
 }
 
-void DatagramSocketManager::processDatagramSocketEstablished(
-    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket)
+void DatagramSocketTest::DatagramSocketManager::
+    processDatagramSocketEstablished(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket)
 {
     NTCI_LOG_CONTEXT();
 
@@ -993,7 +1032,7 @@ void DatagramSocketManager::processDatagramSocketEstablished(
     d_socketsEstablished.arrive();
 }
 
-void DatagramSocketManager::processDatagramSocketClosed(
+void DatagramSocketTest::DatagramSocketManager::processDatagramSocketClosed(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket)
 {
     NTCI_LOG_CONTEXT();
@@ -1002,19 +1041,19 @@ void DatagramSocketManager::processDatagramSocketClosed(
                    (int)(datagramSocket->handle()));
 
     {
-        LockGuard guard(&d_socketMapMutex);
-        bsl::size_t                    n = d_socketMap.erase(datagramSocket);
-        NTCCFG_TEST_EQ(n, 1);
+        LockGuard   guard(&d_socketMapMutex);
+        bsl::size_t n = d_socketMap.erase(datagramSocket);
+        NTSCFG_TEST_EQ(n, 1);
     }
 
     d_socketsClosed.arrive();
 }
 
-DatagramSocketManager::DatagramSocketManager(
+DatagramSocketTest::DatagramSocketManager::DatagramSocketManager(
     const bsl::shared_ptr<ntci::Reactor>& reactor,
-    const test::Parameters&               parameters,
+    const DatagramSocketTest::Parameters& parameters,
     bslma::Allocator*                     basicAllocator)
-: d_object("test::DatagramSocketManager")
+: d_object("DatagramSocketTest::DatagramSocketManager")
 , d_reactor_sp(reactor)
 , d_metrics_sp()
 , d_socketMapMutex()
@@ -1026,12 +1065,12 @@ DatagramSocketManager::DatagramSocketManager(
 {
 }
 
-DatagramSocketManager::~DatagramSocketManager()
+DatagramSocketTest::DatagramSocketManager::~DatagramSocketManager()
 {
-    NTCCFG_TEST_TRUE(d_socketMap.empty());
+    NTSCFG_TEST_TRUE(d_socketMap.empty());
 }
 
-void DatagramSocketManager::run()
+void DatagramSocketTest::DatagramSocketManager::run()
 {
     ntsa::Error error;
 
@@ -1046,7 +1085,7 @@ void DatagramSocketManager::run()
             ntca::DatagramSocketOptions options;
             options.setTransport(d_parameters.d_transport);
             options.setSourceEndpoint(
-                test::EndpointUtil::any(d_parameters.d_transport));
+                DatagramSocketTest::any(d_parameters.d_transport));
             options.setReadQueueLowWatermark(1);
             options.setReadQueueHighWatermark(
                 d_parameters.d_readQueueHighWatermark);
@@ -1065,7 +1104,7 @@ void DatagramSocketManager::run()
                 d_parameters.d_timestampOutgoingData)
             {
                 // Metrics is used to validate timestamps
-                NTCCFG_TEST_TRUE(d_parameters.d_collectMetrics);
+                NTSCFG_TEST_TRUE(d_parameters.d_collectMetrics);
             }
 
             if (!d_parameters.d_sendBufferSize.isNull()) {
@@ -1090,14 +1129,14 @@ void DatagramSocketManager::run()
                                          d_allocator_p);
 
             error = datagramSocket->registerManager(this->getSelf(this));
-            NTCCFG_TEST_FALSE(error);
+            NTSCFG_TEST_FALSE(error);
 
             bsl::shared_ptr<ntcd::DatagramSocket> datagramSocketBase;
             datagramSocketBase.createInplace(d_allocator_p, d_allocator_p);
 
             error = datagramSocket->open(d_parameters.d_transport,
                                          datagramSocketBase);
-            NTCCFG_TEST_FALSE(error);
+            NTSCFG_TEST_FALSE(error);
         }
     }
 
@@ -1200,7 +1239,7 @@ void DatagramSocketManager::run()
             bdld::ManagedDatum stats;
             (*it)->getStats(&stats);
             const bdld::Datum& d = stats.datum();
-            NTCCFG_TEST_EQ(d.type(), bdld::Datum::e_ARRAY);
+            NTSCFG_TEST_EQ(d.type(), bdld::Datum::e_ARRAY);
             bdld::DatumArrayRef statsArray = d.theArray();
 
             const int baseTxDelayBeforeSchedIndex = 90;
@@ -1249,61 +1288,61 @@ void DatagramSocketManager::run()
                                            baseTxDelayBeforeAckIndex,
                                            total);
 
-                NTCCFG_TEST_GE(
+                NTSCFG_TEST_GE(
                     statsArray[baseTxDelayInSoftwareIndex + countOffset]
                         .theDouble(),
                     d_parameters.d_numMessages * txTimestampsPercentage);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayInSoftwareIndex + totalOffset]
                         .theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayInSoftwareIndex + minOffset]
                         .theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayInSoftwareIndex + avgOffset]
                         .theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayInSoftwareIndex + maxOffset]
                         .theDouble(),
                     0);
 
-                NTCCFG_TEST_GE(
+                NTSCFG_TEST_GE(
                     statsArray[baseTxDelayInSoftwareIndex + countOffset]
                         .theDouble(),
                     d_parameters.d_numMessages * txTimestampsPercentage);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayInSoftwareIndex + totalOffset]
                         .theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayInSoftwareIndex + minOffset]
                         .theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayInSoftwareIndex + avgOffset]
                         .theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayInSoftwareIndex + maxOffset]
                         .theDouble(),
                     0);
 
-                NTCCFG_TEST_GE(
+                NTSCFG_TEST_GE(
                     statsArray[baseTxDelayIndex + countOffset].theDouble(),
                     d_parameters.d_numMessages * txTimestampsPercentage);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayIndex + totalOffset].theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayIndex + minOffset].theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayIndex + avgOffset].theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseTxDelayIndex + maxOffset].theDouble(),
                     0);
             }
@@ -1321,19 +1360,19 @@ void DatagramSocketManager::run()
                                            baseRxDelayInHardwareIndex,
                                            total);
 
-                NTCCFG_TEST_EQ(
+                NTSCFG_TEST_EQ(
                     statsArray[baseRxDelayIndex + countOffset].theDouble(),
                     d_parameters.d_numMessages);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseRxDelayIndex + totalOffset].theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseRxDelayIndex + minOffset].theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseRxDelayIndex + avgOffset].theDouble(),
                     0);
-                NTCCFG_TEST_GT(
+                NTSCFG_TEST_GT(
                     statsArray[baseRxDelayIndex + maxOffset].theDouble(),
                     0);
             }
@@ -1380,19 +1419,21 @@ void DatagramSocketManager::run()
     d_socketsClosed.wait();
 }
 
-void concern(ntsa::Transport::Value                transport,
-             const bsl::shared_ptr<ntci::Reactor>& reactor,
-             const test::Parameters&               parameters,
-             bslma::Allocator*                     allocator)
+void DatagramSocketTest::verifyGenericVariation(
+    ntsa::Transport::Value                transport,
+    const bsl::shared_ptr<ntci::Reactor>& reactor,
+    const DatagramSocketTest::Parameters& parameters,
+    bslma::Allocator*                     allocator)
 {
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_DEBUG("Datagram socket test starting");
 
-    test::Parameters effectiveParameters = parameters;
-    effectiveParameters.d_transport      = transport;
+    DatagramSocketTest::Parameters effectiveParameters = parameters;
+    effectiveParameters.d_transport                    = transport;
 
-    bsl::shared_ptr<test::DatagramSocketManager> datagramSocketManager;
+    bsl::shared_ptr<DatagramSocketTest::DatagramSocketManager>
+        datagramSocketManager;
     datagramSocketManager.createInplace(allocator,
                                         reactor,
                                         effectiveParameters,
@@ -1406,104 +1447,11 @@ void concern(ntsa::Transport::Value                transport,
     reactor->stop();
 }
 
-void variation(const test::Parameters& parameters)
-{
-    test::Framework::execute(NTCCFG_BIND(&test::concern,
-                                         NTCCFG_BIND_PLACEHOLDER_1,
-                                         NTCCFG_BIND_PLACEHOLDER_2,
-                                         parameters,
-                                         NTCCFG_BIND_PLACEHOLDER_3));
-}
-
-}  // close namespace test
-
-NTCCFG_TEST_CASE(1)
-{
-    // Concern: Breathing test.
-
-    test::Parameters parameters;
-    parameters.d_numTimers         = 0;
-    parameters.d_numSocketPairs    = 1;
-    parameters.d_numMessages       = 1;
-    parameters.d_messageSize       = 32;
-    parameters.d_useAsyncCallbacks = false;
-
-    test::variation(parameters);
-}
-
-NTCCFG_TEST_CASE(2)
-{
-    // Concern: Breathing test using asynchronous callbacks.
-
-    test::Parameters parameters;
-    parameters.d_numTimers         = 0;
-    parameters.d_numSocketPairs    = 1;
-    parameters.d_numMessages       = 1;
-    parameters.d_messageSize       = 32;
-    parameters.d_useAsyncCallbacks = true;
-
-    test::variation(parameters);
-}
-
-NTCCFG_TEST_CASE(3)
-{
-    // Concern: Stress test.
-
-    // The test currently fails sporadically on Linux on CI build machines
-    // with "Assertion failed: !d_chronology_sp->hasAnyDeferred()".
-#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
-    test::Parameters parameters;
-    parameters.d_numTimers         = 100;
-    parameters.d_numSocketPairs    = 100;
-    parameters.d_numMessages       = 32;
-    parameters.d_messageSize       = 1024;
-    parameters.d_useAsyncCallbacks = false;
-
-    test::variation(parameters);
-#endif
-}
-
-NTCCFG_TEST_CASE(4)
-{
-    // Concern: Stress test using asynchronous callbacks.
-
-    // The test currently fails sporadically on Linux on CI build machines
-    // with "Assertion failed: !d_chronology_sp->hasAnyDeferred()".
-#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
-    test::Parameters parameters;
-    parameters.d_numTimers         = 100;
-    parameters.d_numSocketPairs    = 100;
-    parameters.d_numMessages       = 32;
-    parameters.d_messageSize       = 1024;
-    parameters.d_useAsyncCallbacks = true;
-
-    test::variation(parameters);
-#endif
-}
-
-namespace test {
-namespace concern5 {
-
-void processReceive(const bsl::shared_ptr<ntci::Receiver>& receiver,
-                    const bsl::shared_ptr<bdlbb::Blob>&    data,
-                    const ntca::ReceiveEvent&              event,
-                    bslmt::Semaphore*                      semaphore)
-{
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_DEBUG("Processing receive from event type %s: %s",
-                   ntca::ReceiveEventType::toString(event.type()),
-                   event.context().error().text().c_str());
-
-    NTCCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
-    NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_WOULD_BLOCK);
-
-    semaphore->post();
-}
-
-void execute(ntsa::Transport::Value                transport,
-             const bsl::shared_ptr<ntci::Reactor>& reactor,
-             const test::Parameters&               parameters,
-             bslma::Allocator*                     allocator)
+void DatagramSocketTest::verifyReceiveDeadlineVariation(
+    ntsa::Transport::Value                transport,
+    const bsl::shared_ptr<ntci::Reactor>& reactor,
+    const DatagramSocketTest::Parameters& parameters,
+    bslma::Allocator*                     allocator)
 {
     // Concern: Receive deadlines.
 
@@ -1519,7 +1467,7 @@ void execute(ntsa::Transport::Value                transport,
 
     ntca::DatagramSocketOptions options;
     options.setTransport(transport);
-    options.setSourceEndpoint(test::EndpointUtil::any(transport));
+    options.setSourceEndpoint(DatagramSocketTest::any(transport));
 
     bsl::shared_ptr<ntci::Resolver> resolver;
 
@@ -1536,7 +1484,7 @@ void execute(ntsa::Transport::Value                transport,
     datagramSocketBase.createInplace(allocator, allocator);
 
     error = datagramSocket->open(transport, datagramSocketBase);
-    NTCCFG_TEST_FALSE(error);
+    NTSCFG_TEST_FALSE(error);
 
     bsls::TimeInterval receiveTimeout;
     receiveTimeout.setTotalMilliseconds(k_RECEIVE_TIMEOUT_IN_MILLISECONDS);
@@ -1549,7 +1497,7 @@ void execute(ntsa::Transport::Value                transport,
 
     ntci::ReceiveCallback receiveCallback =
         datagramSocket->createReceiveCallback(
-            NTCCFG_BIND(&processReceive,
+            NTCCFG_BIND(&DatagramSocketTest::processReceiveTimeout,
                         NTCCFG_BIND_PLACEHOLDER_1,
                         NTCCFG_BIND_PLACEHOLDER_2,
                         NTCCFG_BIND_PLACEHOLDER_3,
@@ -1557,7 +1505,7 @@ void execute(ntsa::Transport::Value                transport,
             allocator);
 
     error = datagramSocket->receive(receiveOptions, receiveCallback);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     semaphore.wait();
 
@@ -1571,52 +1519,11 @@ void execute(ntsa::Transport::Value                transport,
     reactor->stop();
 }
 
-}  // close namespace concern5
-}  // close namespace test
-
-NTCCFG_TEST_CASE(5)
-{
-    // Concern: Receive deadlines.
-
-    test::Parameters parameters;
-
-    test::Framework::execute(NTCCFG_BIND(&test::concern5::execute,
-                                         NTCCFG_BIND_PLACEHOLDER_1,
-                                         NTCCFG_BIND_PLACEHOLDER_2,
-                                         parameters,
-                                         NTCCFG_BIND_PLACEHOLDER_3));
-}
-
-namespace test {
-namespace concern6 {
-
-void processReceive(const bsl::shared_ptr<ntci::Receiver>& receiver,
-                    const bsl::shared_ptr<bdlbb::Blob>&    data,
-                    const ntca::ReceiveEvent&              event,
-                    bslmt::Semaphore*                      semaphore)
-{
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_DEBUG("Processing receive from event type %s: %s",
-                   ntca::ReceiveEventType::toString(event.type()),
-                   event.context().error().text().c_str());
-
-    NTCCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
-    NTCCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
-
-    semaphore->post();
-}
-
-void cancelReceive(const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
-                   const ntca::ReceiveToken                     token)
-{
-    ntsa::Error error = datagramSocket->cancel(token);
-    NTCCFG_TEST_FALSE(error);
-}
-
-void execute(ntsa::Transport::Value                transport,
-             const bsl::shared_ptr<ntci::Reactor>& reactor,
-             const test::Parameters&               parameters,
-             bslma::Allocator*                     allocator)
+void DatagramSocketTest::verifyReceiveCancellationVariation(
+    ntsa::Transport::Value                transport,
+    const bsl::shared_ptr<ntci::Reactor>& reactor,
+    const DatagramSocketTest::Parameters& parameters,
+    bslma::Allocator*                     allocator)
 {
     // Concern: Receive cancellation.
 
@@ -1632,7 +1539,7 @@ void execute(ntsa::Transport::Value                transport,
 
     ntca::DatagramSocketOptions options;
     options.setTransport(transport);
-    options.setSourceEndpoint(test::EndpointUtil::any(transport));
+    options.setSourceEndpoint(DatagramSocketTest::any(transport));
 
     bsl::shared_ptr<ntci::Resolver> resolver;
 
@@ -1649,7 +1556,7 @@ void execute(ntsa::Transport::Value                transport,
     datagramSocketBase.createInplace(allocator, allocator);
 
     error = datagramSocket->open(transport, datagramSocketBase);
-    NTCCFG_TEST_FALSE(error);
+    NTSCFG_TEST_FALSE(error);
 
     bsls::TimeInterval receiveTimeout;
     receiveTimeout.setTotalMilliseconds(k_RECEIVE_TIMEOUT_IN_MILLISECONDS);
@@ -1665,7 +1572,7 @@ void execute(ntsa::Transport::Value                transport,
 
     ntci::ReceiveCallback receiveCallback =
         datagramSocket->createReceiveCallback(
-            NTCCFG_BIND(&processReceive,
+            NTCCFG_BIND(&DatagramSocketTest::processReceiveCancellation,
                         NTCCFG_BIND_PLACEHOLDER_1,
                         NTCCFG_BIND_PLACEHOLDER_2,
                         NTCCFG_BIND_PLACEHOLDER_3,
@@ -1673,7 +1580,7 @@ void execute(ntsa::Transport::Value                transport,
             allocator);
 
     error = datagramSocket->receive(receiveOptions, receiveCallback);
-    NTCCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(error);
 
     ntca::TimerOptions timerOptions;
 
@@ -1689,7 +1596,7 @@ void execute(ntsa::Transport::Value                transport,
         datagramSocket->createTimer(timerOptions, timerCallback, allocator);
 
     error = timer->schedule(receiveDeadline);
-    NTCCFG_TEST_FALSE(error);
+    NTSCFG_TEST_FALSE(error);
 
     semaphore.wait();
 
@@ -1703,27 +1610,188 @@ void execute(ntsa::Transport::Value                transport,
     reactor->stop();
 }
 
-}  // close namespace concern6
-}  // close namespace test
-
-NTCCFG_TEST_CASE(6)
+void DatagramSocketTest::validateNoMetricsAvailable(
+    const bdld::DatumArrayRef& metrics,
+    int                        base,
+    int                        number)
 {
-    // Concern: Receive cancellation.
-
-    test::Parameters parameters;
-
-    test::Framework::execute(NTCCFG_BIND(&test::concern6::execute,
-                                         NTCCFG_BIND_PLACEHOLDER_1,
-                                         NTCCFG_BIND_PLACEHOLDER_2,
-                                         parameters,
-                                         NTCCFG_BIND_PLACEHOLDER_3));
+    NTSCFG_TEST_GE(metrics.length(), base + number);
+    for (int i = base; i < base + number; ++i) {
+        NTSCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_NIL);
+    }
 }
 
-NTCCFG_TEST_CASE(7)
+void DatagramSocketTest::validateMetricsAvailable(
+    const bdld::DatumArrayRef& metrics,
+    int                        base,
+    int                        number)
+{
+    NTSCFG_TEST_GE(metrics.length(), base + number);
+    for (int i = base; i < base + number; ++i) {
+        NTSCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_DOUBLE);
+    }
+}
+
+ntsa::Endpoint DatagramSocketTest::any(ntsa::Transport::Value transport)
+{
+    ntsa::Endpoint endpoint;
+
+    switch (transport) {
+    case ntsa::Transport::e_TCP_IPV4_STREAM:
+    case ntsa::Transport::e_UDP_IPV4_DATAGRAM:
+        endpoint.makeIp(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0));
+        break;
+    case ntsa::Transport::e_TCP_IPV6_STREAM:
+    case ntsa::Transport::e_UDP_IPV6_DATAGRAM:
+        endpoint.makeIp(ntsa::IpEndpoint(ntsa::Ipv6Address::loopback(), 0));
+        break;
+    case ntsa::Transport::e_LOCAL_STREAM:
+    case ntsa::Transport::e_LOCAL_DATAGRAM: {
+        ntsa::LocalName   localName;
+        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        BSLS_ASSERT_OPT(!error);
+
+        endpoint.makeLocal(localName);
+        break;
+    }
+    default:
+        NTCCFG_UNREACHABLE();
+    }
+
+    return endpoint;
+}
+
+void DatagramSocketTest::cancelReceive(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ReceiveToken                     token)
+{
+    ntsa::Error error = datagramSocket->cancel(token);
+    NTSCFG_TEST_FALSE(error);
+}
+
+void DatagramSocketTest::processReceiveTimeout(
+    const bsl::shared_ptr<ntci::Receiver>& receiver,
+    const bsl::shared_ptr<bdlbb::Blob>&    data,
+    const ntca::ReceiveEvent&              event,
+    bslmt::Semaphore*                      semaphore)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Processing receive from event type %s: %s",
+                   ntca::ReceiveEventType::toString(event.type()),
+                   event.context().error().text().c_str());
+
+    NTSCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
+    NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_WOULD_BLOCK);
+
+    semaphore->post();
+}
+
+void DatagramSocketTest::processReceiveCancellation(
+    const bsl::shared_ptr<ntci::Receiver>& receiver,
+    const bsl::shared_ptr<bdlbb::Blob>&    data,
+    const ntca::ReceiveEvent&              event,
+    bslmt::Semaphore*                      semaphore)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_DEBUG("Processing receive from event type %s: %s",
+                   ntca::ReceiveEventType::toString(event.type()),
+                   event.context().error().text().c_str());
+
+    NTSCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
+    NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
+
+    semaphore->post();
+}
+
+NTSCFG_TEST_FUNCTION(ntcr::DatagramSocketTest::verifyBreathing)
+{
+    // Concern: Breathing test.
+
+    DatagramSocketTest::Parameters parameters;
+    parameters.d_numTimers         = 0;
+    parameters.d_numSocketPairs    = 1;
+    parameters.d_numMessages       = 1;
+    parameters.d_messageSize       = 32;
+    parameters.d_useAsyncCallbacks = false;
+
+    DatagramSocketTest::Framework::execute(
+        NTCCFG_BIND(&DatagramSocketTest::verifyGenericVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+}
+
+NTSCFG_TEST_FUNCTION(ntcr::DatagramSocketTest::verifyBreathingAsync)
+{
+    // Concern: Breathing test using asynchronous callbacks.
+
+    DatagramSocketTest::Parameters parameters;
+    parameters.d_numTimers         = 0;
+    parameters.d_numSocketPairs    = 1;
+    parameters.d_numMessages       = 1;
+    parameters.d_messageSize       = 32;
+    parameters.d_useAsyncCallbacks = true;
+
+    DatagramSocketTest::Framework::execute(
+        NTCCFG_BIND(&DatagramSocketTest::verifyGenericVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+}
+
+NTSCFG_TEST_FUNCTION(ntcr::DatagramSocketTest::verifyStress)
+{
+    // Concern: Stress test.
+
+    // The test currently fails sporadically on Linux on CI build machines
+    // with "Assertion failed: !d_chronology_sp->hasAnyDeferred()".
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+    DatagramSocketTest::Parameters parameters;
+    parameters.d_numTimers         = 100;
+    parameters.d_numSocketPairs    = 100;
+    parameters.d_numMessages       = 32;
+    parameters.d_messageSize       = 1024;
+    parameters.d_useAsyncCallbacks = false;
+
+    DatagramSocketTest::Framework::execute(
+        NTCCFG_BIND(&DatagramSocketTest::verifyGenericVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntcr::DatagramSocketTest::verifyStressAsync)
+{
+    // Concern: Stress test using asynchronous callbacks.
+
+    // The test currently fails sporadically on Linux on CI build machines
+    // with "Assertion failed: !d_chronology_sp->hasAnyDeferred()".
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+    DatagramSocketTest::Parameters parameters;
+    parameters.d_numTimers         = 100;
+    parameters.d_numSocketPairs    = 100;
+    parameters.d_numMessages       = 32;
+    parameters.d_messageSize       = 1024;
+    parameters.d_useAsyncCallbacks = true;
+
+    DatagramSocketTest::Framework::execute(
+        NTCCFG_BIND(&DatagramSocketTest::verifyGenericVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntcr::DatagramSocketTest::verifyIncomingTimestamps)
 {
     // Concern: Incoming timestamps test
 
-    test::Parameters parameters;
+    DatagramSocketTest::Parameters parameters;
     parameters.d_numTimers             = 0;
     parameters.d_numSocketPairs        = 1;
     parameters.d_numMessages           = 10;
@@ -1732,15 +1800,20 @@ NTCCFG_TEST_CASE(7)
     parameters.d_timestampIncomingData = true;
     parameters.d_collectMetrics        = true;
 
-    test::variation(parameters);
+    DatagramSocketTest::Framework::execute(
+        NTCCFG_BIND(&DatagramSocketTest::verifyGenericVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
 }
 
-NTCCFG_TEST_CASE(8)
+NTSCFG_TEST_FUNCTION(ntcr::DatagramSocketTest::verifyOutgoingTimestamps)
 {
     // Concern: Outgoing timestamps test
 #if 0
     // The test is disabled due to its flaky nature
-    test::Parameters parameters;
+    DatagramSocketTest::Parameters parameters;
     parameters.d_numTimers             = 0;
     parameters.d_numSocketPairs        = 1;
     parameters.d_numMessages           = 100;
@@ -1749,22 +1822,40 @@ NTCCFG_TEST_CASE(8)
     parameters.d_useAsyncCallbacks     = false;
     parameters.d_timestampOutgoingData = true;
     parameters.d_collectMetrics        = true;
-    parameters.d_tolerateDataLoss = false;
+    parameters.d_tolerateDataLoss      = false;
 
-    test::variation(parameters);
+    DatagramSocketTest::Framework::execute(
+        NTCCFG_BIND(&DatagramSocketTest::verifyGenericVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
 #endif
 }
 
-NTCCFG_TEST_DRIVER
+NTSCFG_TEST_FUNCTION(ntcr::DatagramSocketTest::verifyReceiveDeadline)
 {
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
+    DatagramSocketTest::Parameters parameters;
 
-    NTCCFG_TEST_REGISTER(5);
-    NTCCFG_TEST_REGISTER(6);
-    NTCCFG_TEST_REGISTER(7);
-    NTCCFG_TEST_REGISTER(8);
+    DatagramSocketTest::Framework::execute(
+        NTCCFG_BIND(&DatagramSocketTest::verifyReceiveDeadlineVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
 }
-NTCCFG_TEST_DRIVER_END;
+
+NTSCFG_TEST_FUNCTION(ntcr::DatagramSocketTest::verifyReceiveCancellation)
+{
+    DatagramSocketTest::Parameters parameters;
+
+    DatagramSocketTest::Framework::execute(
+        NTCCFG_BIND(&DatagramSocketTest::verifyReceiveCancellationVariation,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    parameters,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+}
+
+}  // close namespace ntcr
+}  // close namespace BloombergLP

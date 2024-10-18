@@ -70,7 +70,7 @@ __attribute__((noinline)) void Futex::unlockContention()
 #pragma GCC diagnostic pop
 #endif
 
-#endif // NTCCFG_FUTEX_ENABLED
+#endif  // NTCCFG_FUTEX_ENABLED
 
 }  // close package namespace
 }  // close enterprise namespace

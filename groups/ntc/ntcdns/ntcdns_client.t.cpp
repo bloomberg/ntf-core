@@ -13,46 +13,42 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcdns_client_t_cpp, "$Id$ $CSID$")
+
 #include <ntcdns_client.h>
 
-#include <ntccfg_test.h>
 #include <ntcdns_cache.h>
 #include <ntcdns_database.h>
 #include <ntcdns_utility.h>
 #include <ntci_log.h>
 
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bslmt_semaphore.h>
-#include <bsls_assert.h>
-#include <bsl_iostream.h>
-
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntcdns {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntcdns::Client'.
+class ClientTest
+{
+    static void processGetIpAddressResult(
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const bsl::vector<ntsa::IpAddress>&    ipAddressList,
+        const ntca::GetIpAddressEvent&         event,
+        bslmt::Semaphore*                      semaphore);
 
-// MRM: This test implementation is disable because of the difficulty
-// implementing the 'ntcdns::Client' dependencies in a test context.
-#if 0
+  public:
+    // TODO
+    static void verify();
+};
 
-namespace test {
-
-void processGetIpAddressResult(
-                         const bsl::shared_ptr<ntci::Resolver>&  resolver,
-                         const bsl::vector<ntsa::IpAddress>&     ipAddressList,
-                         const ntca::GetIpAddressEvent&          event,
-                         bslmt::Semaphore                       *semaphore)
+void ClientTest::processGetIpAddressResult(
+    const bsl::shared_ptr<ntci::Resolver>& resolver,
+    const bsl::vector<ntsa::IpAddress>&    ipAddressList,
+    const ntca::GetIpAddressEvent&         event,
+    bslmt::Semaphore*                      semaphore)
 {
     NTCI_LOG_CONTEXT();
 
@@ -79,11 +75,11 @@ void processGetIpAddressResult(
     semaphore->post();
 }
 
-}  // close namespace test
-
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcdns::ClientTest::verify)
 {
-#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+// MRM: This test implementation is disable because of the difficulty
+// implementing the 'ntcdns::Client' dependencies in a test context.
+#if 0
 
     // Concern:
     // Plan:
@@ -93,80 +89,60 @@ NTCCFG_TEST_CASE(1)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Load the default client configuration from /etc/resolv.conf.
+    // Load the default client configuration from /etc/resolv.conf.
 
-        ntcdns::ClientConfig clientConfig(&ta);
-        error = ntcdns::Utility::loadClientConfig(&clientConfig);
-        NTCCFG_TEST_FALSE(error);
+    ntcdns::ClientConfig clientConfig(NTSCFG_TEST_ALLOCATOR);
+    error = ntcdns::Utility::loadClientConfig(&clientConfig);
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the cache.
+    // Create the cache.
 
-        bsl::shared_ptr<ntcdns::Cache> cache;
-        cache.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcdns::Cache> cache;
+    cache.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        // Create a start a client.
+    // Create a start a client.
 
-        bsl::shared_ptr<ntcdns::Client> client;
-        client.createInplace(&ta, clientConfig, cache, &ta);
+    bsl::shared_ptr<ntcdns::Client> client;
+    client.createInplace(
+        NTSCFG_TEST_ALLOCATOR, clientConfig, cache, NTSCFG_TEST_ALLOCATOR);
 
-        error = client->start();
-        NTCCFG_TEST_FALSE(error);
+    error = client->start();
+    NTSCFG_TEST_FALSE(error);
 
-        bsl::shared_ptr<ntci::Resolver> resolver;
+    bsl::shared_ptr<ntci::Resolver> resolver;
 
-        ntca::GetIpAddressOptions options;
-        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+    ntca::GetIpAddressOptions options;
+    options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetIpAddressCallback callback(
-            bdlf::BindUtil::bind(&test::processGetIpAddressResult,
-                                 bdlf::PlaceHolders::_1,
-                                 bdlf::PlaceHolders::_2,
-                                 bdlf::PlaceHolders::_3,
-                                 &semaphore),
-            &ta);
+    ntci::GetIpAddressCallback callback(
+        bdlf::BindUtil::bind(&test::processGetIpAddressResult,
+                                bdlf::PlaceHolders::_1,
+                                bdlf::PlaceHolders::_2,
+                                bdlf::PlaceHolders::_3,
+                                &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        error =
-            client->getIpAddress(resolver, "google.com", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error =
+        client->getIpAddress(resolver, "google.com", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        error =
-            client->getIpAddress(resolver, "google.com", options, callback);
-        NTCCFG_TEST_FALSE(error);
+    error =
+        client->getIpAddress(resolver, "google.com", options, callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the client.
+    // Stop the client.
 
-        client->shutdown();
-        client->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    client->shutdown();
+    client->linger();
 
 #endif
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-}
-NTCCFG_TEST_DRIVER_END;
-
-#else
-
-NTCCFG_TEST_CASE(1)
-{
-}
-
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-}
-NTCCFG_TEST_DRIVER_END;
-
-#endif
+}  // close namespace ntcdns
+}  // close namespace BloombergLP

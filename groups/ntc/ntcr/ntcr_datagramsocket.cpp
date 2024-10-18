@@ -21,7 +21,7 @@ BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
 #include <ntccfg_limits.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 #include <ntcs_async.h>
 #include <ntcs_blobbufferutil.h>
 #include <ntcs_blobutil.h>
@@ -450,9 +450,9 @@ ntsa::Error DatagramSocket::privateTimestampOutgoingData(
 
     {
         ntsa::SocketOption option(d_allocator_p);
-        error = d_socket_sp->getOption(
-            &option,
-            ntsa::SocketOptionType::e_TX_TIMESTAMPING);
+        error =
+            d_socket_sp->getOption(&option,
+                                   ntsa::SocketOptionType::e_TX_TIMESTAMPING);
         if (error) {
             if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
                 NTCI_LOG_TRACE("Failed to get socket option: "
@@ -533,9 +533,9 @@ ntsa::Error DatagramSocket::privateTimestampIncomingData(
 
     {
         ntsa::SocketOption option(d_allocator_p);
-        error = d_socket_sp->getOption(
-            &option,
-            ntsa::SocketOptionType::e_RX_TIMESTAMPING);
+        error =
+            d_socket_sp->getOption(&option,
+                                   ntsa::SocketOptionType::e_RX_TIMESTAMPING);
         if (error) {
             if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
                 NTCI_LOG_TRACE("Failed to get socket option: "
@@ -3169,7 +3169,7 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
     ntsa::Error error;
 
     bsl::shared_ptr<DatagramSocket> self(this->getSelf(this));
-    LockGuard  lock(&d_mutex);
+    LockGuard                       lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3331,7 +3331,7 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
     ntsa::Error error;
 
     bsl::shared_ptr<DatagramSocket> self(this->getSelf(this));
-    LockGuard  lock(&d_mutex);
+    LockGuard                       lock(&d_mutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -3912,7 +3912,7 @@ ntsa::Error DatagramSocket::deregisterSession()
 ntsa::Error DatagramSocket::setZeroCopyThreshold(bsl::size_t value)
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
-    LockGuard  lock(&d_mutex);
+    LockGuard                       lock(&d_mutex);
 
     return this->privateZeroCopyEngage(self, value);
 }

@@ -13,40 +13,62 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcdns_system_t_cpp, "$Id$ $CSID$")
+
 #include <ntcdns_system.h>
 
-#include <ntccfg_test.h>
-#include <ntcdns_system.h>
 #include <ntci_log.h>
-#include <bslmt_semaphore.h>
-
-#include <bdlf_bind.h>
-#include <bdlf_placeholder.h>
-#include <bdlt_currenttime.h>
-
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
-#include <bsl_iostream.h>
 
 using namespace BloombergLP;
 
-//=============================================================================
-//                                 TEST PLAN
-//-----------------------------------------------------------------------------
-//                                 Overview
-//                                 --------
-//
-//-----------------------------------------------------------------------------
+namespace BloombergLP {
+namespace ntcdns {
 
-// [ 1]
-//-----------------------------------------------------------------------------
-// [ 1]
-//-----------------------------------------------------------------------------
+// Provide tests for 'ntcdns::System'.
+class SystemTest
+{
+    static void processGetIpAddressResult(
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const bsl::vector<ntsa::IpAddress>&    ipAddressList,
+        const ntca::GetIpAddressEvent&         event,
+        bslmt::Semaphore*                      semaphore);
 
-namespace test {
+    static void processGetDomainNameResult(
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const bsl::string&                     domainName,
+        const ntca::GetDomainNameEvent&        event,
+        bslmt::Semaphore*                      semaphore);
 
-void processGetIpAddressResult(
+    static void processGetPortResult(
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const bsl::vector<ntsa::Port>&         portList,
+        const ntca::GetPortEvent&              event,
+        bslmt::Semaphore*                      semaphore);
+
+    static void processGetServiceNameResult(
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const bsl::string&                     serviceName,
+        const ntca::GetServiceNameEvent&       event,
+        bslmt::Semaphore*                      semaphore);
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+};
+
+void SystemTest::processGetIpAddressResult(
     const bsl::shared_ptr<ntci::Resolver>& resolver,
     const bsl::vector<ntsa::IpAddress>&    ipAddressList,
     const ntca::GetIpAddressEvent&         event,
@@ -77,7 +99,7 @@ void processGetIpAddressResult(
     semaphore->post();
 }
 
-void processGetDomainNameResult(
+void SystemTest::processGetDomainNameResult(
     const bsl::shared_ptr<ntci::Resolver>& resolver,
     const bsl::string&                     domainName,
     const ntca::GetDomainNameEvent&        event,
@@ -106,10 +128,11 @@ void processGetDomainNameResult(
     semaphore->post();
 }
 
-void processGetPortResult(const bsl::shared_ptr<ntci::Resolver>& resolver,
-                          const bsl::vector<ntsa::Port>&         portList,
-                          const ntca::GetPortEvent&              event,
-                          bslmt::Semaphore*                      semaphore)
+void SystemTest::processGetPortResult(
+    const bsl::shared_ptr<ntci::Resolver>& resolver,
+    const bsl::vector<ntsa::Port>&         portList,
+    const ntca::GetPortEvent&              event,
+    bslmt::Semaphore*                      semaphore)
 {
     NTCI_LOG_CONTEXT();
 
@@ -136,7 +159,7 @@ void processGetPortResult(const bsl::shared_ptr<ntci::Resolver>& resolver,
     semaphore->post();
 }
 
-void processGetServiceNameResult(
+void SystemTest::processGetServiceNameResult(
     const bsl::shared_ptr<ntci::Resolver>& resolver,
     const bsl::string&                     serviceName,
     const ntca::GetServiceNameEvent&       event,
@@ -163,9 +186,7 @@ void processGetServiceNameResult(
     semaphore->post();
 }
 
-}  // close namespace test
-
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcdns::SystemTest::verifyCase1)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -177,68 +198,64 @@ NTCCFG_TEST_CASE(1)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Create a start a multithreaded system resolver.
+    // Create a start a multithreaded system resolver.
 
-        bsl::shared_ptr<ntcdns::System> resolver;
-        resolver.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcdns::System> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetIpAddressCallback callback(
-            bdlf::BindUtil::bind(&test::processGetIpAddressResult,
-                                 bdlf::PlaceHolders::_1,
-                                 bdlf::PlaceHolders::_2,
-                                 bdlf::PlaceHolders::_3,
-                                 &semaphore),
-            &ta);
+    ntci::GetIpAddressCallback callback(
+        bdlf::BindUtil::bind(&SystemTest::processGetIpAddressResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetIpAddressOptions options;
-        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+    ntca::GetIpAddressOptions options;
+    options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        // Get the IP addresses assigned to "google.com".
+    // Get the IP addresses assigned to "google.com".
 
-        error = resolver->getIpAddress(bsl::shared_ptr<ntci::Resolver>(),
-                                       "google.com",
-                                       bdlt::CurrentTime::now(),
-                                       options,
-                                       callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getIpAddress(bsl::shared_ptr<ntci::Resolver>(),
+                                   "google.com",
+                                   bdlt::CurrentTime::now(),
+                                   options,
+                                   callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the IP addresses assigned to "google.com".
+    // Get the IP addresses assigned to "google.com".
 
-        error = resolver->getIpAddress(bsl::shared_ptr<ntci::Resolver>(),
-                                       "google.com",
-                                       bdlt::CurrentTime::now(),
-                                       options,
-                                       callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getIpAddress(bsl::shared_ptr<ntci::Resolver>(),
+                                   "google.com",
+                                   bdlt::CurrentTime::now(),
+                                   options,
+                                   callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcdns::SystemTest::verifyCase2)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -250,67 +267,63 @@ NTCCFG_TEST_CASE(2)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Create a start a multithreaded system resolver.
+    // Create a start a multithreaded system resolver.
 
-        bsl::shared_ptr<ntcdns::System> resolver;
-        resolver.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcdns::System> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetDomainNameCallback callback(
-            bdlf::BindUtil::bind(&test::processGetDomainNameResult,
-                                 bdlf::PlaceHolders::_1,
-                                 bdlf::PlaceHolders::_2,
-                                 bdlf::PlaceHolders::_3,
-                                 &semaphore),
-            &ta);
+    ntci::GetDomainNameCallback callback(
+        bdlf::BindUtil::bind(&SystemTest::processGetDomainNameResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetDomainNameOptions options;
+    ntca::GetDomainNameOptions options;
 
-        // Get the domain name to which "8.8.8.8" is assigned.
+    // Get the domain name to which "8.8.8.8" is assigned.
 
-        error = resolver->getDomainName(bsl::shared_ptr<ntci::Resolver>(),
-                                        ntsa::IpAddress("8.8.8.8"),
-                                        bdlt::CurrentTime::now(),
-                                        options,
-                                        callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getDomainName(bsl::shared_ptr<ntci::Resolver>(),
+                                    ntsa::IpAddress("8.8.8.8"),
+                                    bdlt::CurrentTime::now(),
+                                    options,
+                                    callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the domain name to which "8.8.8.8" is assigned.
+    // Get the domain name to which "8.8.8.8" is assigned.
 
-        error = resolver->getDomainName(bsl::shared_ptr<ntci::Resolver>(),
-                                        ntsa::IpAddress("8.8.8.8"),
-                                        bdlt::CurrentTime::now(),
-                                        options,
-                                        callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getDomainName(bsl::shared_ptr<ntci::Resolver>(),
+                                    ntsa::IpAddress("8.8.8.8"),
+                                    bdlt::CurrentTime::now(),
+                                    options,
+                                    callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcdns::SystemTest::verifyCase3)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -322,68 +335,64 @@ NTCCFG_TEST_CASE(3)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Create a start a multithreaded system resolver.
+    // Create a start a multithreaded system resolver.
 
-        bsl::shared_ptr<ntcdns::System> resolver;
-        resolver.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcdns::System> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetPortCallback callback(
-            bdlf::BindUtil::bind(&test::processGetPortResult,
-                                 bdlf::PlaceHolders::_1,
-                                 bdlf::PlaceHolders::_2,
-                                 bdlf::PlaceHolders::_3,
-                                 &semaphore),
-            &ta);
+    ntci::GetPortCallback callback(
+        bdlf::BindUtil::bind(&SystemTest::processGetPortResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetPortOptions options;
-        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    ntca::GetPortOptions options;
+    options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
-        // Get the ports assigned to the "echo" service.
+    // Get the ports assigned to the "echo" service.
 
-        error = resolver->getPort(bsl::shared_ptr<ntci::Resolver>(),
-                                  "echo",
-                                  bdlt::CurrentTime::now(),
-                                  options,
-                                  callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getPort(bsl::shared_ptr<ntci::Resolver>(),
+                              "echo",
+                              bdlt::CurrentTime::now(),
+                              options,
+                              callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the ports assigned to the "echo" service.
+    // Get the ports assigned to the "echo" service.
 
-        error = resolver->getPort(bsl::shared_ptr<ntci::Resolver>(),
-                                  "echo",
-                                  bdlt::CurrentTime::now(),
-                                  options,
-                                  callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getPort(bsl::shared_ptr<ntci::Resolver>(),
+                              "echo",
+                              bdlt::CurrentTime::now(),
+                              options,
+                              callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_CASE(4)
+NTSCFG_TEST_FUNCTION(ntcdns::SystemTest::verifyCase4)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
@@ -395,72 +404,62 @@ NTCCFG_TEST_CASE(4)
     ntsa::Error error;
     int         rc;
 
-    ntccfg::TestAllocator ta;
-    {
-        // Create a start a multithreaded system resolver.
+    // Create a start a multithreaded system resolver.
 
-        bsl::shared_ptr<ntcdns::System> resolver;
-        resolver.createInplace(&ta, &ta);
+    bsl::shared_ptr<ntcdns::System> resolver;
+    resolver.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-        error = resolver->start();
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->start();
+    NTSCFG_TEST_FALSE(error);
 
-        // Create the callback.
+    // Create the callback.
 
-        bslmt::Semaphore semaphore;
+    bslmt::Semaphore semaphore;
 
-        ntci::GetServiceNameCallback callback(
-            bdlf::BindUtil::bind(&test::processGetServiceNameResult,
-                                 bdlf::PlaceHolders::_1,
-                                 bdlf::PlaceHolders::_2,
-                                 bdlf::PlaceHolders::_3,
-                                 &semaphore),
-            &ta);
+    ntci::GetServiceNameCallback callback(
+        bdlf::BindUtil::bind(&SystemTest::processGetServiceNameResult,
+                             bdlf::PlaceHolders::_1,
+                             bdlf::PlaceHolders::_2,
+                             bdlf::PlaceHolders::_3,
+                             &semaphore),
+        NTSCFG_TEST_ALLOCATOR);
 
-        // Define the options.
+    // Define the options.
 
-        ntca::GetServiceNameOptions options;
-        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    ntca::GetServiceNameOptions options;
+    options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
 
-        // Get the service name to which TCP port 7 is assigned.
+    // Get the service name to which TCP port 7 is assigned.
 
-        error = resolver->getServiceName(bsl::shared_ptr<ntci::Resolver>(),
-                                         7,
-                                         bdlt::CurrentTime::now(),
-                                         options,
-                                         callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getServiceName(bsl::shared_ptr<ntci::Resolver>(),
+                                     7,
+                                     bdlt::CurrentTime::now(),
+                                     options,
+                                     callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Get the service name to which TCP port 7 is assigned.
+    // Get the service name to which TCP port 7 is assigned.
 
-        error = resolver->getServiceName(bsl::shared_ptr<ntci::Resolver>(),
-                                         7,
-                                         bdlt::CurrentTime::now(),
-                                         options,
-                                         callback);
-        NTCCFG_TEST_FALSE(error);
+    error = resolver->getServiceName(bsl::shared_ptr<ntci::Resolver>(),
+                                     7,
+                                     bdlt::CurrentTime::now(),
+                                     options,
+                                     callback);
+    NTSCFG_TEST_FALSE(error);
 
-        semaphore.wait();
+    semaphore.wait();
 
-        // Stop the resolver.
+    // Stop the resolver.
 
-        callback.reset();
+    callback.reset();
 
-        resolver->shutdown();
-        resolver->linger();
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    resolver->shutdown();
+    resolver->linger();
 
 #endif
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcdns
+}  // close namespace BloombergLP

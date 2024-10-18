@@ -13,13 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntci_mutex.h>
+#include <ntscfg_test.h>
 
-#include <ntccfg_test.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntci_mutex_t_cpp, "$Id$ $CSID$")
+
+#include <ntci_mutex.h>
 
 using namespace BloombergLP;
 
-NTCCFG_TEST_CASE(1)
+namespace BloombergLP {
+namespace ntci {
+
+// Provide tests for 'ntci::Mutex'.
+class MutexTest
+{
+  public:
+    // TODO
+    static void verify();
+};
+
+NTSCFG_TEST_FUNCTION(ntci::MutexTest::verify)
 {
     ntci::Mutex mutex;
 
@@ -30,8 +44,5 @@ NTCCFG_TEST_CASE(1)
     mutex.unlock();
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntci
+}  // close namespace BloombergLP

@@ -17,4 +17,3 @@
 
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntci_mutex_cpp, "$Id$ $CSID$")
-

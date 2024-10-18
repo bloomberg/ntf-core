@@ -23,12 +23,11 @@ BSLS_IDENT("$Id: $")
 #include <ntcd_machine.h>
 #include <ntci_streamsocketfactory.h>
 #include <ntcscm_version.h>
+#include <ntscfg_mock.h>
 #include <ntsi_streamsocket.h>
 #include <bsl_memory.h>
 #include <bsl_string.h>
 #include <bsl_vector.h>
-
-#include <ntccfg_test.h>
 
 namespace BloombergLP {
 namespace ntcd {
@@ -264,7 +263,7 @@ class StreamSocketFactory : public ntci::StreamSocketFactory
         bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 };
 
-#if NTCCFG_TEST_MOCK_ENABLED
+#if NTSCFG_MOCK_ENABLED
 
 NTF_MOCK_CLASS(StreamSocketMock, ntsi::StreamSocket)
 

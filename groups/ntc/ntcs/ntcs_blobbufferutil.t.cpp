@@ -13,24 +13,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_blobbufferutil_t_cpp, "$Id$ $CSID$")
+
 #include <ntcs_blobbufferutil.h>
 
-#include <ntccfg_test.h>
 #include <ntci_log.h>
-
-#include <bdlbb_blob.h>
-#include <bdlbb_pooledblobbufferfactory.h>
 
 using namespace BloombergLP;
 
-namespace test {
+namespace BloombergLP {
+namespace ntcs {
 
-const bsl::size_t k_DEFAULT_MAX_RECEIVE_SIZE = 1024 * 1024 * 32;
-
-}  // close test namespace
-
-NTCCFG_TEST_CASE(1)
+// Provide tests for 'ntcs::BlobBufferUtil'.
+class BlobBufferUtilTest
 {
+    enum Constant { k_DEFAULT_MAX_RECEIVE_SIZE = 1024 * 1024 * 32 };
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+};
+
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferUtilTest::verifyCase1)
+{
+    // clang-format off
+
     struct Data {
         size_t d_size;
         size_t d_capacity;
@@ -133,128 +149,121 @@ NTCCFG_TEST_CASE(1)
             DATA[i].d_capacity,
             DATA[i].d_lowWatermark,
             DATA[i].d_minReceiveSize,
-            test::k_DEFAULT_MAX_RECEIVE_SIZE);
+            BlobBufferUtilTest::k_DEFAULT_MAX_RECEIVE_SIZE);
 
-        NTCCFG_TEST_GE(result + (DATA[i].d_capacity - DATA[i].d_size),
+        NTSCFG_TEST_GE(result + (DATA[i].d_capacity - DATA[i].d_size),
                        DATA[i].d_minReceiveSize);
 
-        NTCCFG_TEST_EQ(result, DATA[i].d_numBytesToAllocate);
+        NTSCFG_TEST_EQ(result, DATA[i].d_numBytesToAllocate);
     }
+
+    // clang-format on
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferUtilTest::verifyCase2)
 {
     // clang-format off
-    ntccfg::TestAllocator ta;
+
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    const bsl::size_t k_MIN_CAPACITY     = 0;
+    const bsl::size_t k_MAX_CAPACITY     = 8;
+
+    for (bsl::size_t capacity  = k_MIN_CAPACITY;
+                     capacity <= k_MAX_CAPACITY;
+                   ++capacity)
     {
-        NTCI_LOG_CONTEXT();
-
-        ntsa::Error error;
-
-        const bsl::size_t k_MIN_CAPACITY     = 0;
-        const bsl::size_t k_MAX_CAPACITY     = 8;
-
-        for (bsl::size_t capacity  = k_MIN_CAPACITY;
-                         capacity <= k_MAX_CAPACITY;
-                       ++capacity)
-        {
-            for (bsl::size_t size = 0; size <= capacity; ++size) {
-                for (bsl::size_t lowWatermark  = 1;
-                                 lowWatermark <= 2 * capacity;
-                               ++lowWatermark)
+        for (bsl::size_t size = 0; size <= capacity; ++size) {
+            for (bsl::size_t lowWatermark  = 1;
+                             lowWatermark <= 2 * capacity;
+                           ++lowWatermark)
+            {
+                for (bsl::size_t minReceiveSize  = 1;
+                                 minReceiveSize <= 2 * lowWatermark;
+                               ++minReceiveSize)
                 {
-                    for (bsl::size_t minReceiveSize  = 1;
-                                     minReceiveSize <= 2 * lowWatermark;
-                                   ++minReceiveSize)
+                    for (bsl::size_t maxReceiveSize  = 1;
+                                     maxReceiveSize <= 2 * minReceiveSize;
+                                   ++maxReceiveSize)
                     {
-                        for (bsl::size_t maxReceiveSize  = 1;
-                                         maxReceiveSize <= 2 * minReceiveSize;
-                                       ++maxReceiveSize)
-                        {
-                            NTCI_LOG_TRACE("Enter"
-                                           ": size = %zu"
-                                           ", capacity = %zu"
-                                           ", lowWatermark = %zu"
-                                           ", minReceiveSize = %zu"
-                                           ", maxReceiveSize = %zu",
+                        NTCI_LOG_TRACE("Enter"
+                                       ": size = %zu"
+                                       ", capacity = %zu"
+                                       ", lowWatermark = %zu"
+                                       ", minReceiveSize = %zu"
+                                       ", maxReceiveSize = %zu",
+                                       size,
+                                       capacity,
+                                       lowWatermark,
+                                       minReceiveSize,
+                                       maxReceiveSize);
+
+                        size_t result =
+                            ntcs::BlobBufferUtil
+                                ::calculateNumBytesToAllocate(
                                     size,
                                     capacity,
                                     lowWatermark,
                                     minReceiveSize,
                                     maxReceiveSize);
 
-                            size_t result =
-                                ntcs::BlobBufferUtil
-                                    ::calculateNumBytesToAllocate(
-                                        size,
-                                        capacity,
-                                        lowWatermark,
-                                        minReceiveSize,
-                                        maxReceiveSize);
+                        NTCI_LOG_TRACE("Leave"
+                                       ": size = %zu"
+                                       ", capacity = %zu"
+                                       ", lowWatermark = %zu"
+                                       ", minReceiveSize = %zu"
+                                       ", maxReceiveSize = %zu"
+                                       ", numBytesToAllocate = %zu",
+                                       size,
+                                       capacity,
+                                       lowWatermark,
+                                       minReceiveSize,
+                                       maxReceiveSize,
+                                       result);
 
-                            NTCI_LOG_TRACE("Leave"
-                                           ": size = %zu"
-                                           ", capacity = %zu"
-                                           ", lowWatermark = %zu"
-                                           ", minReceiveSize = %zu"
-                                           ", maxReceiveSize = %zu"
-                                           ", numBytesToAllocate = %zu",
-                                    size,
-                                    capacity,
-                                    lowWatermark,
-                                    minReceiveSize,
-                                    maxReceiveSize,
-                                    result);
+                        NTSCFG_TEST_LE(size, capacity);
 
-                            NTCCFG_TEST_LE(size, capacity);
+                        NTSCFG_TEST_GE(
+                            result + (capacity - size), 
+                            bsl::min(minReceiveSize, maxReceiveSize));
 
-                            NTCCFG_TEST_GE(result + (capacity - size), bsl::min(minReceiveSize, maxReceiveSize));
-
-                            NTCCFG_TEST_LE(result, maxReceiveSize);
-                        }
+                        NTSCFG_TEST_LE(result, maxReceiveSize);
                     }
                 }
             }
         }
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
     // clang-format on
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcs::BlobBufferUtilTest::verifyCase3)
 {
-    ntccfg::TestAllocator ta;
-    {
-        ntsa::Error error;
+    ntsa::Error error;
 
-        bdlbb::PooledBlobBufferFactory blobBufferFactory(4, &ta);
+    bdlbb::PooledBlobBufferFactory blobBufferFactory(4, NTSCFG_TEST_ALLOCATOR);
 
-        bdlbb::Blob blob(&blobBufferFactory, &ta);
+    bdlbb::Blob blob(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
 
-        blob.setLength(100);
-        blob.setLength(10);
+    blob.setLength(100);
+    blob.setLength(10);
 
-        NTCCFG_TEST_EQ(blob.length(), 10);
-        NTCCFG_TEST_EQ(blob.totalSize(), 100);
+    NTSCFG_TEST_EQ(blob.length(), 10);
+    NTSCFG_TEST_EQ(blob.totalSize(), 100);
 
-        ntcs::BlobBufferUtil::reserveCapacity(
-            &blob,
-            &blobBufferFactory,
-            0,
-            118,
-            1,
-            test::k_DEFAULT_MAX_RECEIVE_SIZE);
+    ntcs::BlobBufferUtil::reserveCapacity(
+        &blob,
+        &blobBufferFactory,
+        0,
+        118,
+        1,
+        BlobBufferUtilTest::k_DEFAULT_MAX_RECEIVE_SIZE);
 
-        NTCCFG_TEST_EQ(blob.length(), 10);
-        NTCCFG_TEST_EQ(blob.totalSize(), 120);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    NTSCFG_TEST_EQ(blob.length(), 10);
+    NTSCFG_TEST_EQ(blob.totalSize(), 120);
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP

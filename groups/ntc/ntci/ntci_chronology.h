@@ -19,14 +19,14 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntccfg_platform.h>
 #include <ntca_timeroptions.h>
+#include <ntccfg_platform.h>
 #include <ntci_executor.h>
+#include <ntci_strand.h>
 #include <ntci_timer.h>
 #include <ntci_timercallback.h>
 #include <ntci_timerfactory.h>
 #include <ntci_timersession.h>
-#include <ntci_strand.h>
 #include <ntcscm_version.h>
 #include <ntsa_error.h>
 #include <bdlb_nullablevalue.h>
@@ -113,8 +113,8 @@ class Chronology : public ntci::Executor, ntci::TimerFactory
     /// Return the relative time interval to wait until the earliest timer
     /// is due, if any, from the current time, or null if no timer is
     /// scheduled.
-    virtual bdlb::NullableValue<bsls::TimeInterval> 
-      timeoutInterval() const = 0;
+    virtual bdlb::NullableValue<bsls::TimeInterval> timeoutInterval()
+        const = 0;
 
     /// Return the number of milliseconds to wait until the earliest timer
     /// is due, if any, from the current time, or -1 if no timer is

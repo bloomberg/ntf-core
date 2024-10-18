@@ -50,7 +50,7 @@ namespace ntca {
 /// peer to initiate a cryptographically secure session of communication,
 /// typically according to either the Transport Layer Security (TLS) protocol
 /// or Secure Shell (SSH) protocol, within which data is transformed from from
-/// cleartext to ciphertext. An encryption server may generate one or more 
+/// cleartext to ciphertext. An encryption server may generate one or more
 /// encryption sessions acting in the server role.
 ///
 /// @par Attributes
@@ -65,13 +65,13 @@ namespace ntca {
 /// @li @b maxMethod:
 /// The type and maximum version of the encryption protocol acceptable for use.
 /// If set to 'ntca::EncryptionMethod::e_DEFAULT' (the default value) the
-/// maximum version is interpreted as the maximum version supported by the 
+/// maximum version is interpreted as the maximum version supported by the
 /// TLS implementation.
 ///
 /// @li @b authentication:
 /// Flag that determines whether the peer's certificate is verified as signed
 /// by a trusted issuer. If set to 'ntca::EncryptionAuthentication::e_DEFAULT'
-/// (the default value), the server does not verify any of its clients's 
+/// (the default value), the server does not verify any of its clients's
 /// identities.
 ///
 /// @li @b validation:
@@ -90,7 +90,7 @@ namespace ntca {
 /// @li @b optionsMap
 /// The optional, effective options to use when listening as a specific server
 /// name. Note that a server name, in this context, may be an IP address,
-/// domain name, a domain name wildcard such as "*.example.com", or any 
+/// domain name, a domain name wildcard such as "*.example.com", or any
 /// sequence of characters used to identify the server.
 ///
 /// @par Thread Safety
@@ -104,7 +104,7 @@ namespace ntca {
 /// achieved by verifying the issuer and signer of the peer's certificate is
 /// trusted by server, forming a chain a trust: if the server trusts the signer
 /// of the peer's certificate, the server trusts the signer has verified the
-/// peer's identity, and transitively trusts the peer. 
+/// peer's identity, and transitively trusts the peer.
 ///
 /// To build and verify this chain of trust, the server must explicitly define
 /// which certificates form the roots of each chain. By default, all
@@ -140,7 +140,7 @@ namespace ntca {
 /// Note that "mozilla.pki" and "google.pki" may be any supported format
 /// enumerated by ntca::EncryptionResourceType, and may even contain a
 /// concatenation of multiple objects of that resource type (the files may
-/// contain a concatenation of PEM-encoded certificates, for example.) 
+/// contain a concatenation of PEM-encoded certificates, for example.)
 ///
 /// Also note that if any file contains more than one resource type (i.e. a
 /// private key, and/or an end-user certificate, and/or a set of trusted
@@ -156,7 +156,7 @@ namespace ntca {
 ///
 /// This function will set any private key found in the file to the servers's
 /// private key, set any end-user certificate found in the file as the server's
-/// certificate, and the server will trust any certificate authorities found 
+/// certificate, and the server will trust any certificate authorities found
 /// in the file.
 ///
 /// @par Usage Example: Defining end-user certificates and private keys
@@ -210,7 +210,7 @@ namespace ntca {
 ///     resourceOptions.setSecretCallback(&passphraseCallback);
 ///
 ///     ntca::EncryptionServerOptions encryptionServerOptions;
-///     
+///
 ///     encryptionServerOptions.setPrivateKeyFile(
 ///         "/etc/pki/my/key.pki", resourceOptions);
 ///
@@ -242,22 +242,22 @@ namespace ntca {
 ///     encryptionServerOptions.addResourceFile(
 ///         "/etc/pki/trust/server/default.pki");
 ///
-/// Next, let's define the server configuration effective when the user 
+/// Next, let's define the server configuration effective when the user
 /// upgrades specifically to "beta.example.com".
 ///
 ///     ntca::EncryptionOptions betaServerNameOverrides;
-///     
+///
 ///     betaServerNameOverrides.addResourceFile(
 ///         "/etc/pki/trust/server/beta.pk");
 ///
 ///     encryptionClientOptions.addOverrides(
 ///         "beta.example.com", betaServerNameOverrides);
 ///
-/// Finally, let's define the server configuration effective when the user 
+/// Finally, let's define the server configuration effective when the user
 /// upgrades specifically to "internal.example.com".
 ///
 ///     ntca::EncryptionOptions internalServerNameOverrides;
-///     
+///
 ///     internalServerNameOverrides.addResourceFile(
 ///         "/etc/pki/trust/server/internal.pk");
 ///
@@ -265,7 +265,7 @@ namespace ntca {
 ///         "internal.example.com", internalServerNameOverrides);
 ///
 /// Note that wildcard name matching is available, so for example, if overrides
-/// are registered for "*.example.com" then the overrides would match for 
+/// are registered for "*.example.com" then the overrides would match for
 /// TLS sessions to either "test.example.com" or "production.example.com".
 ///
 /// @ingroup module_ntci_encryption

@@ -62,7 +62,6 @@ namespace ntccfg {
             LOCK_SCOPE_GUARD_,                                                \
             __LINE__)((mutex));                                               \
         {
-
 /// @internal @brief
 /// Leave the current stack scope locked by the specified basic, non-recursive
 /// 'mutex'.

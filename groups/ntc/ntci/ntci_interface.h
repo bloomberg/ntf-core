@@ -312,7 +312,7 @@ class Interface : public ntci::DatagramSocketFactory,
     /// Return the current elapsed time since the Unix epoch.
     virtual bsls::TimeInterval currentTime() const = 0;
 
-    /// Return the configuration. 
+    /// Return the configuration.
     virtual const ntca::InterfaceConfig& configuration() const = 0;
 };
 

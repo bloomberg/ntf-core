@@ -90,6 +90,7 @@ if (${NTF_BUILD_WITH_NTS})
 
     ntf_component(PATH ${CMAKE_BINARY_DIR}/ntscfg_config.cpp)
     ntf_component(NAME ntscfg_limits)
+    ntf_component(NAME ntscfg_mock)
     ntf_component(NAME ntscfg_platform)
     ntf_component(NAME ntscfg_test)
 
@@ -357,7 +358,6 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntccfg_mutex)
     ntf_component(NAME ntccfg_object)
     ntf_component(NAME ntccfg_platform)
-    ntf_component(NAME ntccfg_test)
     ntf_component(NAME ntccfg_traits)
     ntf_component(NAME ntccfg_tune)
 
@@ -631,11 +631,7 @@ if (${NTF_BUILD_WITH_NTC})
         PRIVATE
     )
 
-    ntf_component(NAME ntcm_collector)
-    ntf_component(NAME ntcm_logpublisher)
-    ntf_component(NAME ntcm_monitorableregistry)
-    ntf_component(NAME ntcm_monitorableutil)
-    ntf_component(NAME ntcm_periodiccollector)
+    ntf_component(NAME ntcm_monitorable)
 
     ntf_package_end(NAME ntcm)
 
@@ -747,6 +743,7 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntcd_streamsocket)
     ntf_component(NAME ntcd_simulation)
     ntf_component(NAME ntcd_timer)
+    ntf_component(NAME ntcd_test)
 
     ntf_package_end(NAME ntcd)
 
@@ -885,6 +882,7 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntco_poll)
     ntf_component(NAME ntco_pollset)
     ntf_component(NAME ntco_select)
+    ntf_component(NAME ntco_test)
 
     ntf_package_end(NAME ntco)
 

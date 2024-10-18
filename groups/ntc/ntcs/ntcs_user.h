@@ -97,8 +97,8 @@ class User : public ntci::User
         BSLS_KEYWORD_OVERRIDE;
 
     // Return the shared chronology, if any.
-    const bsl::shared_ptr<ntci::Chronology>& chronology() const 
-    BSLS_KEYWORD_OVERRIDE;
+    const bsl::shared_ptr<ntci::Chronology>& chronology() const
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Return the connection amount limiter, if any.
     const bsl::shared_ptr<ntci::Reservation>& connectionLimiter() const

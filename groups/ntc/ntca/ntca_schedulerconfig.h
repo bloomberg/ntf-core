@@ -19,8 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntccfg_platform.h>
 #include <ntca_interfaceconfig.h>
+#include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 
 namespace BloombergLP {

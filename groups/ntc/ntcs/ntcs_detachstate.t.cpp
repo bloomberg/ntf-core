@@ -13,30 +13,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntcs_detachstate.h>
+#include <ntscfg_test.h>
 
-#include <ntccfg_test.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_detachstate_t_cpp, "$Id$ $CSID$")
+
+#include <ntcs_detachstate.h>
 
 using namespace BloombergLP;
 
-NTCCFG_TEST_CASE(1)
+namespace BloombergLP {
+namespace ntcs {
+
+// Provide tests for 'ntcs::DetachState'.
+class DetachStateTest
+{
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+};
+
+NTSCFG_TEST_FUNCTION(ntcs::DetachStateTest::verifyCase1)
 {
     ntcs::DetachState state;
-    NTCCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_IDLE);
+    NTSCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_IDLE);
 
     state.set(ntcs::DetachState::e_DETACH_INITIATED);
-    NTCCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_INITIATED);
+    NTSCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_INITIATED);
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcs::DetachStateTest::verifyCase2)
 {
     ntcs::DetachState state(ntcs::DetachState::e_DETACH_INITIATED);
-    NTCCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_INITIATED);
+    NTSCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_INITIATED);
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP

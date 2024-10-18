@@ -118,7 +118,7 @@ struct Initializer {
     Initializer();
 
     // Perform process-wide cleanup for this component.
-    ~Initializer(); 
+    ~Initializer();
 
     // Allocate memory for a new log context.
     static void* allocateLogContext();
@@ -159,15 +159,16 @@ void* Initializer::allocateLogContext()
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
-    const pid_t tid = (pid_t) syscall(SYS_gettid);
-    const pid_t pid = (pid_t) getpid();
+    const pid_t tid = (pid_t)syscall(SYS_gettid);
+    const pid_t pid = (pid_t)getpid();
 
     if (tid == pid) {
         BSLS_ASSERT_OPT(
-            (bsl::size_t)(bsl::uintptr_t)(s_initializer.d_mainThreadContext) 
-            % 16 == 0);
+            (bsl::size_t)(bsl::uintptr_t)(s_initializer.d_mainThreadContext) %
+                16 ==
+            0);
 
-        return (void*) s_initializer.d_mainThreadContext;
+        return (void*)s_initializer.d_mainThreadContext;
     }
     else {
         return bsl::malloc(sizeof(ntci::LogContext));
@@ -185,7 +186,7 @@ void Initializer::freeLogContext(void* address)
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
     if (address != 0) {
-        if (address != (void*) s_initializer.d_mainThreadContext) {
+        if (address != (void*)s_initializer.d_mainThreadContext) {
             bsl::free(address);
         }
     }
@@ -3438,7 +3439,7 @@ bsl::size_t LogUtil::formatContext(char*                   destination,
             --n;
         }
 
-        destination[0] = 
+        destination[0] =
             static_cast<char>(bdlb::CharType::toUpper(destination[0]));
     }
 

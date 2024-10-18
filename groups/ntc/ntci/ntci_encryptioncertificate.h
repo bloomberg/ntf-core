@@ -19,8 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntca_encryptionresourceoptions.h>
 #include <ntca_encryptioncertificate.h>
+#include <ntca_encryptionresourceoptions.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_distinguishedname.h>
@@ -128,8 +128,8 @@ class EncryptionCertificate
     /// Return the issuer of the certificate.
     virtual const ntsa::DistinguishedName& issuer() const = 0;
 
-    /// Return true if this certificate has the same value as the specified 
-    /// 'other' certificate, otherwise return false. 
+    /// Return true if this certificate has the same value as the specified
+    /// 'other' certificate, otherwise return false.
     virtual bool equals(const ntci::EncryptionCertificate& other) const;
 
     /// Print the certificate to the specified stream in an unspecified but

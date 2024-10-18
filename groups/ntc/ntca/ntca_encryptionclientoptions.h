@@ -65,7 +65,7 @@ namespace ntca {
 /// @li @b maxMethod:
 /// The type and maximum version of the encryption protocol acceptable for use.
 /// If set to 'ntca::EncryptionMethod::e_DEFAULT' (the default value) the
-/// maximum version is interpreted as the maximum version supported by the 
+/// maximum version is interpreted as the maximum version supported by the
 /// TLS implementation.
 ///
 /// @li @b authentication:
@@ -90,7 +90,7 @@ namespace ntca {
 /// @li @b optionsMap
 /// The optional, effective options to use when connecting to a specific server
 /// name. Note that a server name, in this context, may be an IP address,
-/// domain name, a domain name wildcard such as "*.example.com", or any 
+/// domain name, a domain name wildcard such as "*.example.com", or any
 /// sequence of characters used to identify the server.
 ///
 /// @par Thread Safety
@@ -103,7 +103,7 @@ namespace ntca {
 /// achieved by verifying the issuer and signer of the peer's certificate is
 /// trusted by client, forming a chain a trust: if the client trusts the signer
 /// of the peer's certificate, the client trusts the signer has verified the
-/// peer's identity, and transitively trusts the peer. 
+/// peer's identity, and transitively trusts the peer.
 ///
 /// To build and verify this chain of trust, the client must explicitly define
 /// which certificates form the roots of each chain. By default, all
@@ -139,7 +139,7 @@ namespace ntca {
 /// Note that "mozilla.pki" and "google.pki" may be any supported format
 /// enumerated by ntca::EncryptionResourceType, and may even contain a
 /// concatenation of multiple objects of that resource type (the files may
-/// contain a concatenation of PEM-encoded certificates, for example.) 
+/// contain a concatenation of PEM-encoded certificates, for example.)
 ///
 /// Also note that if any file contains more than one resource type (i.e. a
 /// private key, and/or an end-user certificate, and/or a set of trusted
@@ -155,7 +155,7 @@ namespace ntca {
 ///
 /// This function will set any private key found in the file to the client's
 /// private key, set any end-user certificate found in the file as the client's
-/// certificate, and the client will trust any certificate authorities found 
+/// certificate, and the client will trust any certificate authorities found
 /// in the file.
 ///
 /// @par Usage Example: Defining end-user certificates and private keys
@@ -208,7 +208,7 @@ namespace ntca {
 ///     resourceOptions.setSecretCallback(&passphraseCallback);
 ///
 ///     ntca::EncryptionClientOptions encryptionClientOptions;
-///     
+///
 ///     encryptionClientOptions.setPrivateKeyFile(
 ///         "/etc/pki/my/key.pki", resourceOptions);
 ///
@@ -241,11 +241,11 @@ namespace ntca {
 ///     encryptionClientOptions.addAuthorityFile(
 ///         "/etc/pki/trust/extra/mozilla.pki");
 ///
-/// Next, let's define the client configuration effective when the user 
+/// Next, let's define the client configuration effective when the user
 /// upgrades specifically to "test.example.com".
 ///
 ///     ntca::EncryptionOptions serverNameOverrides;
-///     
+///
 ///     serverNameOverrides.addAuthorityFile(
 ///         "/etc/pki/trust/extra/mozilla.pki");
 ///
@@ -253,7 +253,7 @@ namespace ntca {
 ///         "test.example.com", serverNameOverrides);
 ///
 /// Note that wildcard name matching is available, so for example, if overrides
-/// are registered for "*.example.com" then the overrides would match for 
+/// are registered for "*.example.com" then the overrides would match for
 /// TLS sessions to either "test.example.com" or "production.example.com".
 ///
 /// @par Usage Example: Defining user-specified validation callbacks
@@ -277,7 +277,7 @@ namespace ntca {
 ///
 ///     ntca::EncryptionValidation encryptionValidation;
 ///     encryptionValidation.setCallback(&validatePeer);
-///     
+///
 ///     ntca::EncryptionClientOptions encryptionClientOptions;
 ///
 ///     encryptionClientOptions.setAuthentication(

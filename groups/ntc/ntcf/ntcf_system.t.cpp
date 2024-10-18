@@ -16,7 +16,6 @@
 #include <ntcf_system.h>
 
 #include <ntccfg_bind.h>
-#include <ntccfg_test.h>
 #include <ntcd_datautil.h>
 #include <ntci_log.h>
 #include <ntcs_blobutil.h>
@@ -34,6 +33,28 @@
 #include <ntsi_datagramsocket.h>
 #include <ntsi_streamsocket.h>
 #include <ntsu_adapterutil.h>
+#include <ntccfg_config.h>
+#include <ntccfg_platform.h>
+#include <ntcscm_version.h>
+#include <bdlb_nullablevalue.h>
+#include <bdlt_currenttime.h>
+#include <bdlt_datetime.h>
+#include <bdlt_epochutil.h>
+#include <bslma_mallocfreeallocator.h>
+#include <bslma_testallocator.h>
+#include <bslmf_issame.h>
+#include <bslmt_threadutil.h>
+#include <bsls_log.h>
+#include <bsls_logseverity.h>
+#include <bsls_platform.h>
+#include <bsls_types.h>
+#include <bsl_cstdio.h>
+#include <bsl_cstdlib.h>
+#include <bsl_cstring.h>
+#include <bsl_list.h>
+#include <bsl_ostream.h>
+#include <bsl_sstream.h>
+#include <bsl_stdexcept.h>
 #include <bdlb_bigendian.h>
 #include <bdlb_guid.h>
 #include <bdlb_guidutil.h>
@@ -66,7 +87,853 @@
 #include <bsl_unordered_set.h>
 #include <balst_stacktracetestallocator.h>
 
+#if NTC_BUILD_WITH_STACK_TRACE_TEST_ALLOCATOR
+#include <balst_stacktracetestallocator.h>
+#endif
+
+
 using namespace BloombergLP;
+
+//===================== BEGIN LEGACY NTCCFG TEST===============================
+
+namespace BloombergLP {
+namespace ntccfg {
+
+/// @internal @brief
+/// The test case number.
+///
+/// @ingroup module_ntccfg
+extern int testCase;
+
+/// @internal @brief
+/// The test verbosity level.
+///
+/// @ingroup module_ntccfg
+extern int testVerbosity;
+
+/// @internal @brief
+/// The number of arguments specified when the test driver was executed.
+///
+/// @ingroup module_ntccfg
+extern int testArgc;
+
+/// @internal @brief
+/// The argument vector specified when the test driver was executed.
+///
+/// @ingroup module_ntccfg
+extern char** testArgv;
+
+/// @internal @brief
+/// Defines a type alias for a function invoked to initialize any global state
+/// used by the test driver.
+///
+/// @ingroup module_ntccfg
+typedef void (*TestInitCallback)();
+
+/// Defines a type alias for a function invoked to clean up any global state
+/// used by the test driver.
+///
+/// @ingroup module_ntccfg
+typedef void (*TestExitCallback)();
+
+/// The function invoked to initialize any global state used by the test
+/// driver.
+///
+/// @ingroup module_ntccfg
+extern TestInitCallback testInit;
+
+/// The function invoked to clean up any global state used by the test driver.
+///
+/// @ingroup module_ntccfg
+extern TestExitCallback testExit;
+
+/// @internal @brief
+/// Provide a guard to automatically call any registered initialization or
+/// exit functions in the context of a test driver.
+///
+/// @ingroup module_ntccfg
+struct TestGuard {
+    /// Construct the guard and automatically call any registered
+    /// initialization function.
+    TestGuard()
+    {
+        if (testInit) {
+            testInit();
+        }
+    }
+
+    /// Construct the guard and automatically call any registered exit
+    /// function.
+    ~TestGuard()
+    {
+        if (testExit) {
+            testExit();
+        }
+    }
+};
+
+#if NTC_BUILD_WITH_STACK_TRACE_TEST_ALLOCATOR
+
+/// @internal @brief
+/// Provide an allocator suitable for a test driver.
+///
+/// @details
+/// Provide an implementation of the 'bslma::Allocator'
+/// protocol suitable for use as a test allocator for this library.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntccfg
+class TestAllocator : public bslma::Allocator
+{
+    balst::StackTraceTestAllocator d_base;
+
+  public:
+    /// Create a new test allocator.
+    TestAllocator();
+
+    /// Destroy this object.
+    virtual ~TestAllocator();
+
+    /// Return a newly allocated block of memory of (at least) the specified
+    /// positive 'size' (in bytes).  If 'size' is 0, a null pointer is
+    /// returned with no other effect.  If this allocator cannot return the
+    /// requested number of bytes, then it will throw a 'bsl::bad_alloc'
+    /// exception in an exception-enabled build, or else will abort the
+    /// program in a non-exception build.  The behavior is undefined unless
+    /// '0 <= size'.  Note that the alignment of the address returned
+    /// conforms to the platform requirement for any object of the specified
+    /// 'size'.
+    virtual void* allocate(size_type size);
+
+    /// Return the memory block at the specified 'address' back to this
+    /// allocator.  If 'address' is 0, this function has no effect.  The
+    /// behavior is undefined unless 'address' was allocated using this
+    /// allocator object and has not already been deallocated.
+    virtual void deallocate(void* address);
+
+    /// Return the number of blocks currently allocated from this object.
+    bsl::int64_t numBlocksInUse() const;
+};
+
+inline
+TestAllocator::TestAllocator()
+: d_base(64)
+{
+}
+
+inline
+TestAllocator::~TestAllocator()
+{
+}
+
+inline
+void* TestAllocator::allocate(size_type size)
+{
+    return d_base.allocate(size);
+}
+
+inline
+void TestAllocator::deallocate(void* address)
+{
+    d_base.deallocate(address);
+}
+
+inline
+bsl::int64_t TestAllocator::numBlocksInUse() const
+{
+    // Intentionally report 0 blocks in use and assert in the destructor.
+    return 0;
+}
+
+#else
+
+/// @internal @brief
+/// Provide an allocator suitable for a test driver.
+///
+/// @details
+/// Provide an implementation of the 'bslma::Allocator'
+/// protocol suitable for use as a test allocator for this library.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntccfg
+class TestAllocator : public bslma::Allocator
+{
+    bslma::TestAllocator d_base;
+
+  public:
+    /// Create a new test allocator.
+    TestAllocator();
+
+    /// Destroy this object.
+    virtual ~TestAllocator();
+
+    /// Return a newly allocated block of memory of (at least) the specified
+    /// positive 'size' (in bytes).  If 'size' is 0, a null pointer is
+    /// returned with no other effect.  If this allocator cannot return the
+    /// requested number of bytes, then it will throw a 'bsl::bad_alloc'
+    /// exception in an exception-enabled build, or else will abort the
+    /// program in a non-exception build.  The behavior is undefined unless
+    /// '0 <= size'.  Note that the alignment of the address returned
+    /// conforms to the platform requirement for any object of the specified
+    /// 'size'.
+    virtual void* allocate(size_type size);
+
+    /// Return the memory block at the specified 'address' back to this
+    /// allocator.  If 'address' is 0, this function has no effect.  The
+    /// behavior is undefined unless 'address' was allocated using this
+    /// allocator object and has not already been deallocated.
+    virtual void deallocate(void* address);
+
+    /// Return the number of blocks currently allocated from this object.
+    /// Note that 'numBlocksInUse() <= numBlocksMax()'.
+    bsl::int64_t numBlocksInUse() const;
+};
+
+inline
+TestAllocator::TestAllocator()
+: d_base()
+{
+}
+
+inline
+TestAllocator::~TestAllocator()
+{
+}
+
+inline
+void* TestAllocator::allocate(size_type size)
+{
+    return d_base.allocate(size);
+}
+
+inline
+void TestAllocator::deallocate(void* address)
+{
+    d_base.deallocate(address);
+}
+
+inline
+bsl::int64_t TestAllocator::numBlocksInUse() const
+{
+    return d_base.numBlocksInUse();
+}
+
+#endif
+
+}  // close package namespace
+}  // close enterprise namespace
+
+/// @internal @brief
+/// Assert the 'expression' is true.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_ASSERT(expression)                                        \
+    do {                                                                      \
+        if (!(expression)) {                                                  \
+            BSLS_LOG_FATAL("Assertion failed: %s", #expression);              \
+            bsl::abort();                                                     \
+        }                                                                     \
+    } while (false)
+
+/// @internal @brief
+/// Assert the 'expression' is true.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_TRUE(expression)                                          \
+    do {                                                                      \
+        if (!(expression)) {                                                  \
+            BSLS_LOG_FATAL("Assertion false: %s", #expression);               \
+            bsl::abort();                                                     \
+        }                                                                     \
+    } while (false)
+
+/// @internal @brief
+/// Assert the 'expression' is false.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_FALSE(expression)                                         \
+    do {                                                                      \
+        if ((expression)) {                                                   \
+            BSLS_LOG_FATAL("Assertion true: %s", #expression);                \
+            bsl::abort();                                                     \
+        }                                                                     \
+    } while (false)
+
+/// @internal @brief
+/// Assert the 'found' value equals the 'expected' value.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_EQ(found, expected)                                       \
+    do {                                                                      \
+        if ((found) != (expected)) {                                          \
+            bsl::stringstream foundStream;                                    \
+            foundStream << found;                                             \
+            bsl::stringstream expectedStream;                                 \
+            expectedStream << expected;                                       \
+            BSLS_LOG_FATAL("Assertion failed: %s == %s\n"                     \
+                           "Found:    %s (%s)\n"                              \
+                           "Expected: %s (%s)",                               \
+                           #found,                                            \
+                           #expected,                                         \
+                           foundStream.str().c_str(),                         \
+                           #found,                                            \
+                           expectedStream.str().c_str(),                      \
+                           #expected);                                        \
+            bsl::abort();                                                     \
+        }                                                                     \
+    } while (false)
+
+/// @internal @brief
+/// Assert the 'found' value does not equal the 'expected' value.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_NE(found, expected)                                       \
+    do {                                                                      \
+        if ((found) == (expected)) {                                          \
+            bsl::stringstream foundStream;                                    \
+            foundStream << found;                                             \
+            bsl::stringstream expectedStream;                                 \
+            expectedStream << expected;                                       \
+            BSLS_LOG_FATAL("Assertion failed: %s != %s\n"                     \
+                           "Found:    %s (%s)\n"                              \
+                           "Expected: %s (%s)",                               \
+                           #found,                                            \
+                           #expected,                                         \
+                           foundStream.str().c_str(),                         \
+                           #found,                                            \
+                           expectedStream.str().c_str(),                      \
+                           #expected);                                        \
+            bsl::abort();                                                     \
+        }                                                                     \
+    } while (false)
+
+/// @internal @brief
+/// Assert the 'found' value is less than the 'expected' value.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LT(found, expected)                                       \
+    do {                                                                      \
+        if (!((found) < (expected))) {                                        \
+            bsl::stringstream foundStream;                                    \
+            foundStream << found;                                             \
+            bsl::stringstream expectedStream;                                 \
+            expectedStream << expected;                                       \
+            BSLS_LOG_FATAL("Assertion failed: %s < %s\n"                      \
+                           "Found:    %s (%s)\n"                              \
+                           "Expected: %s (%s)",                               \
+                           #found,                                            \
+                           #expected,                                         \
+                           foundStream.str().c_str(),                         \
+                           #found,                                            \
+                           expectedStream.str().c_str(),                      \
+                           #expected);                                        \
+            bsl::abort();                                                     \
+        }                                                                     \
+    } while (false)
+
+/// @internal @brief
+/// Assert the 'found' value is less than or equal to the 'expected' value.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LE(found, expected)                                       \
+    do {                                                                      \
+        if (!((found) <= (expected))) {                                       \
+            bsl::stringstream foundStream;                                    \
+            foundStream << found;                                             \
+            bsl::stringstream expectedStream;                                 \
+            expectedStream << expected;                                       \
+            BSLS_LOG_FATAL("Assertion failed: %s <= %s\n"                     \
+                           "Found:    %s (%s)\n"                              \
+                           "Expected: %s (%s)",                               \
+                           #found,                                            \
+                           #expected,                                         \
+                           foundStream.str().c_str(),                         \
+                           #found,                                            \
+                           expectedStream.str().c_str(),                      \
+                           #expected);                                        \
+            bsl::abort();                                                     \
+        }                                                                     \
+    } while (false)
+
+/// @internal @brief
+/// Assert the 'found' value is greater than the 'expected' value.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_GT(found, expected)                                       \
+    do {                                                                      \
+        if (!((found) > (expected))) {                                        \
+            bsl::stringstream foundStream;                                    \
+            foundStream << found;                                             \
+            bsl::stringstream expectedStream;                                 \
+            expectedStream << expected;                                       \
+            BSLS_LOG_FATAL("Assertion failed: %s > %s\n"                      \
+                           "Found:    %s (%s)\n"                              \
+                           "Expected: %s (%s)",                               \
+                           #found,                                            \
+                           #expected,                                         \
+                           foundStream.str().c_str(),                         \
+                           #found,                                            \
+                           expectedStream.str().c_str(),                      \
+                           #expected);                                        \
+            bsl::abort();                                                     \
+        }                                                                     \
+    } while (false)
+
+/// @internal @brief
+/// Assert the 'found' value is greater than or equal to the 'expected' value.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_GE(found, expected)                                       \
+    do {                                                                      \
+        if (!((found) >= (expected))) {                                       \
+            bsl::stringstream foundStream;                                    \
+            foundStream << found;                                             \
+            bsl::stringstream expectedStream;                                 \
+            expectedStream << expected;                                       \
+            BSLS_LOG_FATAL("Assertion failed: %s >= %s\n"                     \
+                           "Found:    %s (%s)\n"                              \
+                           "Expected: %s (%s)",                               \
+                           #found,                                            \
+                           #expected,                                         \
+                           foundStream.str().c_str(),                         \
+                           #found,                                            \
+                           expectedStream.str().c_str(),                      \
+                           #expected);                                        \
+            bsl::abort();                                                     \
+        }                                                                     \
+    } while (false)
+
+/// @internal @brief
+/// Assert the 'found' error value does not indicate an error.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_OK(found)                                                 \
+    NTCCFG_TEST_EQ(found, ntsa::Error(ntsa::Error::e_OK))
+
+/// @internal @brief
+/// Assert the 'found' error value has the same value as the specified
+/// 'expected' error value.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_ERROR(found, expected)                                    \
+    NTCCFG_TEST_EQ(found, ntsa::Error(expected))
+
+/// @internal @brief
+/// The verbosity at which the test driver is run.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_VERBOSITY BloombergLP::ntccfg::testVerbosity
+
+/// @internal @brief
+/// The number of command line arguments.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_ARGC BloombergLP::ntccfg::testArgc
+
+/// @internal @brief
+/// Return the array of command line arguments.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_ARGV BloombergLP::ntccfg::testArgv
+
+/// @internal @brief
+/// Begin a functional test case identified by the specified 'number'.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_CASE(number) void runTestCase##number()
+
+/// @internal @brief
+/// Define the beginning of a callback function to be run after all the common
+/// test mechanisms are initialized but before any of the test cases are run.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_INIT()                                                    \
+    void runTestInit();                                                       \
+    struct runTestInitBinder {                                                \
+        runTestInitBinder()                                                   \
+        {                                                                     \
+            BloombergLP::ntccfg::testInit = &runTestInit;                     \
+        }                                                                     \
+    } s_runTestInitBinder;                                                    \
+    void runTestInit()
+
+/// @internal @brief
+/// Define the beginning of a callback function to be run after all the test
+/// cases are run but before the the common test mechanisms are destroyed.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_EXIT()                                                    \
+    void runTestExit();                                                       \
+    struct runTestExitBinder {                                                \
+        runTestExitBinder()                                                   \
+        {                                                                     \
+            BloombergLP::ntccfg::testExit = &runTestExit;                     \
+        }                                                                     \
+    } s_runTestExitBinder;                                                    \
+    void runTestExit()
+
+/// @internal @brief
+/// Begin the definition of the dispatcher for a component test driver.
+///
+/// @par Usage Example: The skeleton of a test driver
+/// This example shows the basic skeleton of a test driver.
+///
+///     #include <ntccfg_test.h>
+///
+///     NTSCFG_TEST_CASE(1)
+///     {
+///         NTSCFG_TEST_TRUE(true);
+///         NTSCFG_TEST_FALSE(false);
+///     }
+///
+///     NTSCFG_TEST_CASE(2)
+///     {
+///         NTSCFG_TEST_EQ(1, 1);
+///         NTSCFG_TEST_NE(1, 2);
+///     }
+///
+///     NTSCFG_TEST_DRIVER
+///     {
+///         NTSCFG_TEST_REGISTER(1);
+///         NTSCFG_TEST_REGISTER(2);
+///     }
+///     NTSCFG_TEST_DRIVER_END;
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_DRIVER                                                    \
+    namespace BloombergLP {                                                   \
+    namespace ntccfg {                                                        \
+                                                                              \
+    int              testCase;                                                \
+    int              testVerbosity;                                           \
+    int              testArgc;                                                \
+    char**           testArgv;                                                \
+    TestInitCallback testInit;                                                \
+    TestExitCallback testExit;                                                \
+                                                                              \
+    void printLogMessage(bsls::LogSeverity::Enum severity,                    \
+                         const char*             file,                        \
+                         int                     line,                        \
+                         const char*             message)                     \
+    {                                                                         \
+        bdlt::Datetime now = bdlt::CurrentTime::utc();                        \
+                                                                              \
+        char nowBuffer[256];                                                  \
+        now.printToBuffer(nowBuffer, sizeof nowBuffer, 3);                    \
+                                                                              \
+        bsl::uint64_t thread = bslmt::ThreadUtil::selfIdAsUint64();           \
+                                                                              \
+        bsl::string threadName;                                               \
+        bslmt::ThreadUtil::getThreadName(&threadName);                        \
+                                                                              \
+        bsl::string fileString = file;                                        \
+                                                                              \
+        bsl::string::size_type n = fileString.find_last_of("/\\");            \
+        if (n != bsl::string::npos) {                                         \
+            fileString = fileString.substr(n + 1);                            \
+        }                                                                     \
+                                                                              \
+        bsl::stringstream fileStream;                                         \
+        fileStream << fileString;                                             \
+        fileStream << ':' << line;                                            \
+        fileStream.flush();                                                   \
+                                                                              \
+        char severityCode;                                                    \
+        switch (severity) {                                                   \
+        case bsls::LogSeverity::e_FATAL:                                      \
+            severityCode = 'F';                                               \
+            break;                                                            \
+        case bsls::LogSeverity::e_ERROR:                                      \
+            severityCode = 'E';                                               \
+            break;                                                            \
+        case bsls::LogSeverity::e_WARN:                                       \
+            severityCode = 'W';                                               \
+            break;                                                            \
+        case bsls::LogSeverity::e_INFO:                                       \
+            severityCode = 'I';                                               \
+            break;                                                            \
+        case bsls::LogSeverity::e_DEBUG:                                      \
+            severityCode = 'D';                                               \
+            break;                                                            \
+        case bsls::LogSeverity::e_TRACE:                                      \
+            severityCode = 'T';                                               \
+            break;                                                            \
+        default:                                                              \
+            severityCode = 'X';                                               \
+        }                                                                     \
+                                                                              \
+        if (threadName.empty()) {                                             \
+            bsl::fprintf(stdout,                                              \
+                         "[ %c ][ %s ][ %012llu ][ %40s ]: %s\n",             \
+                         severityCode,                                        \
+                         nowBuffer,                                           \
+                         static_cast<unsigned long long>(thread),             \
+                         fileStream.str().c_str(),                            \
+                         message);                                            \
+        }                                                                     \
+        else {                                                                \
+            bsl::fprintf(stdout,                                              \
+                         "[ %c ][ %s ][ %16s ][ %40s ]: %s\n",                \
+                         severityCode,                                        \
+                         nowBuffer,                                           \
+                         threadName.c_str(),                                  \
+                         fileStream.str().c_str(),                            \
+                         message);                                            \
+        }                                                                     \
+                                                                              \
+        bsl::fflush(stdout);                                                  \
+    }                                                                         \
+    }                                                                         \
+    }                                                                         \
+                                                                              \
+    int runTest(int testCase, int);                                           \
+    int main(int argc, char** argv);                                          \
+                                                                              \
+    int runTest(int testCase, int verbosity)                                  \
+    {                                                                         \
+        (void)verbosity;                                                      \
+        switch (testCase)
+
+/// @internal @brief
+/// End the definition of the dispatcher for a component test driver.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_DRIVER_END                                                \
+    return -1;                                                                \
+    }                                                                         \
+                                                                              \
+    int main(int argc, char** argv)                                           \
+    {                                                                         \
+        BloombergLP::ntccfg::Platform::initialize();                          \
+        BloombergLP::ntccfg::Platform::ignore(                                \
+            BloombergLP::ntscfg::Signal::e_PIPE);                             \
+                                                                              \
+        BloombergLP::bslmt::ThreadUtil::setThreadName("main");                \
+                                                                              \
+        BloombergLP::bsls::Log::setLogMessageHandler(                         \
+            &BloombergLP::ntccfg::printLogMessage);                           \
+                                                                              \
+        BloombergLP::ntccfg::testCase      = 0;                               \
+        BloombergLP::ntccfg::testVerbosity = 0;                               \
+        BloombergLP::ntccfg::testArgc      = argc;                            \
+        BloombergLP::ntccfg::testArgv      = argv;                            \
+                                                                              \
+        try {                                                                 \
+            if (argc > 6) {                                                   \
+                bsl::printf("%s\n",                                           \
+                            "usage: <test-driver>.exe "                       \
+                            "[ <test-case> ] [ <verbose> ]");                 \
+                return 1;                                                     \
+            }                                                                 \
+                                                                              \
+            if (argc >= 2) {                                                  \
+                BloombergLP::ntccfg::testCase = bsl::atoi(argv[1]);           \
+            }                                                                 \
+                                                                              \
+            if (argc == 2) {                                                  \
+                BloombergLP::ntccfg::testVerbosity = 0;                       \
+                BloombergLP::bsls::Log::setSeverityThreshold(                 \
+                    BloombergLP::bsls::LogSeverity::e_FATAL);                 \
+            }                                                                 \
+                                                                              \
+            if (argc >= 3) {                                                  \
+                BloombergLP::ntccfg::testVerbosity = 2;                       \
+                BloombergLP::bsls::Log::setSeverityThreshold(                 \
+                    BloombergLP::bsls::LogSeverity::e_WARN);                  \
+            }                                                                 \
+                                                                              \
+            if (argc >= 4) {                                                  \
+                BloombergLP::ntccfg::testVerbosity = 3;                       \
+                BloombergLP::bsls::Log::setSeverityThreshold(                 \
+                    BloombergLP::bsls::LogSeverity::e_INFO);                  \
+            }                                                                 \
+                                                                              \
+            if (argc >= 5) {                                                  \
+                BloombergLP::ntccfg::testVerbosity = 4;                       \
+                BloombergLP::bsls::Log::setSeverityThreshold(                 \
+                    BloombergLP::bsls::LogSeverity::e_DEBUG);                 \
+            }                                                                 \
+                                                                              \
+            if (argc == 6) {                                                  \
+                BloombergLP::ntccfg::testVerbosity = 5;                       \
+                BloombergLP::bsls::Log::setSeverityThreshold(                 \
+                    BloombergLP::bsls::LogSeverity::e_TRACE);                 \
+            }                                                                 \
+                                                                              \
+            BloombergLP::ntccfg::TestGuard testGuard;                         \
+                                                                              \
+            if (BloombergLP::ntccfg::testCase == 0) {                         \
+                BloombergLP::ntccfg::testCase = 1;                            \
+                while (0 == runTest(BloombergLP::ntccfg::testCase,            \
+                                    BloombergLP::ntccfg::testVerbosity))      \
+                {                                                             \
+                    ++BloombergLP::ntccfg::testCase;                          \
+                }                                                             \
+            }                                                                 \
+            else {                                                            \
+                if (0 != runTest(BloombergLP::ntccfg::testCase,               \
+                                 BloombergLP::ntccfg::testVerbosity))         \
+                {                                                             \
+                    return -1;                                                \
+                }                                                             \
+            }                                                                 \
+        }                                                                     \
+        catch (const bsl::exception& e) {                                     \
+            bsl::printf("Test %d failed: %s\n",                               \
+                        BloombergLP::ntccfg::testCase,                        \
+                        e.what());                                            \
+            return 1;                                                         \
+        }                                                                     \
+        catch (...) {                                                         \
+            bsl::printf("Test %d failed: %s\n",                               \
+                        BloombergLP::ntccfg::testCase,                        \
+                        "Unknown exception");                                 \
+            return 1;                                                         \
+        }                                                                     \
+                                                                              \
+        return 0;                                                             \
+    }
+
+/// @internal @brief
+/// Register a functional test case inside a dispatcher for a component test
+/// driver.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_REGISTER(number)                                          \
+    case number:                                                              \
+        bsl::printf("Running test case %d\n", number);                        \
+        runTestCase##number();                                                \
+        return 0;
+
+/// @internal @brief
+/// Log at the fatal severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_FATAL                                                 \
+    if (BloombergLP::bsls::LogSeverity::e_FATAL <=                            \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_FATAL;                          \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// Log at the error severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_ERROR                                                 \
+    if (BloombergLP::bsls::LogSeverity::e_ERROR <=                            \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_ERROR;                          \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// Log at the warn severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_WARN                                                  \
+    if (BloombergLP::bsls::LogSeverity::e_WARN <=                             \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_WARN;                           \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// Log at the info severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_INFO                                                  \
+    if (BloombergLP::bsls::LogSeverity::e_INFO <=                             \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_INFO;                           \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// Log at the debug severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_DEBUG                                                 \
+    if (BloombergLP::bsls::LogSeverity::e_DEBUG <=                            \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_DEBUG;                          \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// Log at the trace severity level.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_TRACE                                                 \
+    if (BloombergLP::bsls::LogSeverity::e_TRACE <=                            \
+        BloombergLP::bsls::Log::severityThreshold())                          \
+    {                                                                         \
+        BloombergLP::bsls::LogSeverity::Enum ntclSeverity =                   \
+            BloombergLP::bsls::LogSeverity::e_TRACE;                          \
+        bsl::stringstream ntclStream;                                         \
+        ntclStream
+
+/// @internal @brief
+/// End logging.
+///
+/// @ingroup module_ntccfg
+#define NTCCFG_TEST_LOG_END                                                   \
+    bsl::flush;                                                               \
+    BloombergLP::bsls::Log::logFormattedMessage(ntclSeverity,                 \
+                                                __FILE__,                     \
+                                                __LINE__,                     \
+                                                "%s",                         \
+                                                ntclStream.str().c_str());    \
+    }
+
+#if defined(BSLS_PLATFORM_CMP_GNU)
+
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+
+#elif defined(BSLS_PLATFORM_CMP_CLANG)
+
+#pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wshorten-64-to-32"
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wsign-compare"
+
+#elif defined(BSLS_PLATFORM_CMP_SUN)
+
+// ...
+
+#elif defined(BSLS_PLATFORM_CMP_IBM)
+
+// ...
+
+#elif defined(BSLS_PLATFORM_CMP_MSVC)
+
+#pragma warning(push, 0)
+
+#else
+#error Not implemented
+#endif
+
+//=======================END LEGACY NTCCFG TEST================================
 
 //=============================================================================
 //                                 TEST PLAN
@@ -865,8 +1732,8 @@ void DatagramSocketManager::processDatagramSocketClosed(
                    (int)(datagramSocket->handle()));
 
     {
-        LockGuard guard(&d_socketMapMutex);
-        bsl::size_t                    n = d_socketMap.erase(datagramSocket);
+        LockGuard   guard(&d_socketMapMutex);
+        bsl::size_t n = d_socketMap.erase(datagramSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
 
@@ -2041,7 +2908,7 @@ void StreamSocketManager::processListenerSocketClosed(
                    (int)(listenerSocket->handle()));
 
     {
-        LockGuard guard(&d_listenerSocketMapMutex);
+        LockGuard   guard(&d_listenerSocketMapMutex);
         bsl::size_t n = d_listenerSocketMap.erase(listenerSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
@@ -2115,7 +2982,7 @@ void StreamSocketManager::processStreamSocketClosed(
     NTCI_LOG_DEBUG("Stream socket %d closed", (int)(streamSocket->handle()));
 
     {
-        LockGuard guard(&d_streamSocketMapMutex);
+        LockGuard   guard(&d_streamSocketMapMutex);
         bsl::size_t n = d_streamSocketMap.erase(streamSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
@@ -3330,8 +4197,8 @@ void TransferClient::processStreamSocketClosed(
                          << NTCCFG_TEST_LOG_END;
 
     {
-        LockGuard lockGuard(&d_mutex);
-        bsl::size_t                    n = d_streamSockets.erase(streamSocket);
+        LockGuard   lockGuard(&d_mutex);
+        bsl::size_t n = d_streamSockets.erase(streamSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
 
@@ -3923,7 +4790,7 @@ void TransferServer::processListenerSocketClosed(
                          << NTCCFG_TEST_LOG_END;
 
     {
-        LockGuard lockGuard(&d_mutex);
+        LockGuard   lockGuard(&d_mutex);
         bsl::size_t n = d_listenerSockets.erase(listenerSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
@@ -3974,8 +4841,8 @@ void TransferServer::processStreamSocketClosed(
                          << NTCCFG_TEST_LOG_END;
 
     {
-        LockGuard lockGuard(&d_mutex);
-        bsl::size_t                    n = d_streamSockets.erase(streamSocket);
+        LockGuard   lockGuard(&d_mutex);
+        bsl::size_t n = d_streamSockets.erase(streamSocket);
         NTCCFG_TEST_EQ(n, 1);
     }
 
@@ -7135,8 +8002,8 @@ void concernConnectAndShutdown(
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
 #endif
 
-    const int         k_TIMEOUT_MICROSEC        = 100;
-    const char*       address                   = "127.0.0.1:51";
+    const int   k_TIMEOUT_MICROSEC = 100;
+    const char* address            = "127.0.0.1:51";
 
     NTCI_LOG_CONTEXT();
 
@@ -12414,8 +13281,8 @@ void concernStreamSocketConnectDeadlineTimerClose(
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 60;
 #endif
 
-    const int         k_DEADLINE_INTERVAL_HOURS = 1;
-    const int         k_RETRY_INTERVAL_MINUTES  = 1;
+    const int k_DEADLINE_INTERVAL_HOURS = 1;
+    const int k_RETRY_INTERVAL_MINUTES  = 1;
 
     NTCI_LOG_CONTEXT();
 
@@ -13157,7 +14024,7 @@ void concernInterfaceFunctionAndTimerDistribution(
     const bsl::size_t minThreads = schedulerConfig.minThreads();
     const bsl::size_t maxThreads = schedulerConfig.maxThreads();
 
-    // This test assumes that there are a fixed number of threads run by 
+    // This test assumes that there are a fixed number of threads run by
     // the scheduler.
 
     NTCCFG_TEST_EQ(minThreads, maxThreads);
@@ -13167,15 +14034,13 @@ void concernInterfaceFunctionAndTimerDistribution(
         bslmt::Barrier suspendBarrier(numThreads + 1);
         bslmt::Barrier releaseBarrier(numThreads + 1);
 
-        for (bsl::size_t threadIndex = 0; 
-                         threadIndex < numThreads; 
-                       ++threadIndex) 
+        for (bsl::size_t threadIndex = 0; threadIndex < numThreads;
+             ++threadIndex)
         {
-            scheduler->execute(
-                NTCCFG_BIND(&distributedFunction,
-                            &suspendBarrier,
-                            &releaseBarrier,
-                            threadIndex));
+            scheduler->execute(NTCCFG_BIND(&distributedFunction,
+                                           &suspendBarrier,
+                                           &releaseBarrier,
+                                           threadIndex));
         }
 
         suspendBarrier.wait();

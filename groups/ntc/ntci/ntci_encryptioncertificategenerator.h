@@ -19,11 +19,11 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_encryptioncertificate.h>
 #include <ntca_encryptioncertificateoptions.h>
 #include <ntccfg_platform.h>
 #include <ntci_encryptioncertificate.h>
 #include <ntci_encryptionkey.h>
-#include <ntca_encryptioncertificate.h>
 #include <ntcscm_version.h>
 #include <ntsa_distinguishedname.h>
 #include <bdlbb_blob.h>
@@ -54,11 +54,11 @@ class EncryptionCertificateGenerator
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
     /// the currently installed default allocator is used. Return the error.
     virtual ntsa::Error generateCertificate(
-        ntca::EncryptionCertificate*                  result,
-        const ntsa::DistinguishedName&                subjectIdentity,
-        const ntca::EncryptionKey&                    subjectPrivateKey,
-        const ntca::EncryptionCertificateOptions&     options,
-        bslma::Allocator*                             basicAllocator = 0) = 0;
+        ntca::EncryptionCertificate*              result,
+        const ntsa::DistinguishedName&            subjectIdentity,
+        const ntca::EncryptionKey&                subjectPrivateKey,
+        const ntca::EncryptionCertificateOptions& options,
+        bslma::Allocator*                         basicAllocator = 0) = 0;
 
     /// Load into the specified 'result' a certificate generated according
     /// to the specified 'options' for the specified 'subjectIdentity' and

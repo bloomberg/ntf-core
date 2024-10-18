@@ -301,12 +301,11 @@ class Interface : public ntci::Interface,
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
     /// the currently installed default allocator is used. Return the error.
     ntsa::Error generateCertificate(
-        ntca::EncryptionCertificate*                  result,
-        const ntsa::DistinguishedName&                subjectIdentity,
-        const ntca::EncryptionKey&                    subjectPrivateKey,
-        const ntca::EncryptionCertificateOptions&     options,
-        bslma::Allocator*                             basicAllocator = 0) 
-        BSLS_KEYWORD_OVERRIDE;
+        ntca::EncryptionCertificate*              result,
+        const ntsa::DistinguishedName&            subjectIdentity,
+        const ntca::EncryptionKey&                subjectPrivateKey,
+        const ntca::EncryptionCertificateOptions& options,
+        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' a certificate generated according
     /// to the specified 'options' for the specified 'subjectIdentity' and
@@ -322,8 +321,7 @@ class Interface : public ntci::Interface,
         const ntca::EncryptionCertificate&        issuerCertificate,
         const ntca::EncryptionKey&                issuerPrivateKey,
         const ntca::EncryptionCertificateOptions& options,
-        bslma::Allocator*                         basicAllocator = 0) 
-        BSLS_KEYWORD_OVERRIDE;
+        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' a certificate generated according
     /// to the specified 'options' for the specified 'subjectIdentity' and
@@ -393,10 +391,9 @@ class Interface : public ntci::Interface,
     /// the specified 'options'. Optionally specify a 'basicAllocator' used
     /// to supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used. Return the error.
-    ntsa::Error generateKey(
-        ntca::EncryptionKey*                  result,
-        const ntca::EncryptionKeyOptions&     options,
-        bslma::Allocator*                     basicAllocator = 0) 
+    ntsa::Error generateKey(ntca::EncryptionKey*              result,
+                            const ntca::EncryptionKeyOptions& options,
+                            bslma::Allocator* basicAllocator = 0)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' an RSA key generated according to
@@ -573,7 +570,7 @@ class Interface : public ntci::Interface,
     const bsl::shared_ptr<ntci::Resolver>& resolver() const
         BSLS_KEYWORD_OVERRIDE;
 
-    /// Return the configuration. 
+    /// Return the configuration.
     const ntca::InterfaceConfig& configuration() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return true if the specified 'driverType' is supported on the

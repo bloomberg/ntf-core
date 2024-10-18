@@ -19,13 +19,13 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntscfg_mock.h>
 #include <bdlbb_blob.h>
-#include <ntccfg_test.h>
 
 namespace BloombergLP {
 namespace ntcd {
 
-#if NTCCFG_TEST_MOCK_ENABLED
+#if NTSCFG_MOCK_ENABLED
 
 NTF_MOCK_CLASS(BufferFactoryMock, bdlbb::BlobBufferFactory)
 NTF_MOCK_METHOD(void, allocate, bdlbb::BlobBuffer*)

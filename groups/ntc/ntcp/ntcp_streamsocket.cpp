@@ -24,7 +24,7 @@ BSLS_IDENT_RCSID(ntcp_streamsocket_cpp, "$Id$ $CSID$")
 #include <ntci_encryptioncertificate.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 #include <ntcs_async.h>
 #include <ntcs_blobbufferutil.h>
 #include <ntcs_blobutil.h>
@@ -4192,8 +4192,9 @@ ntsa::Error StreamSocket::upgrade(
     ntsa::Error error;
 
     bsl::shared_ptr<ntci::Encryption> encryption;
-    error = encryptionClient->createEncryption(
-        &encryption, d_dataPool_sp, d_allocator_p);
+    error = encryptionClient->createEncryption(&encryption,
+                                               d_dataPool_sp,
+                                               d_allocator_p);
     if (error) {
         return error;
     }
@@ -4219,8 +4220,9 @@ ntsa::Error StreamSocket::upgrade(
     ntsa::Error error;
 
     bsl::shared_ptr<ntci::Encryption> encryption;
-    error = encryptionServer->createEncryption(
-        &encryption, d_dataPool_sp, d_allocator_p);
+    error = encryptionServer->createEncryption(&encryption,
+                                               d_dataPool_sp,
+                                               d_allocator_p);
     if (error) {
         return error;
     }

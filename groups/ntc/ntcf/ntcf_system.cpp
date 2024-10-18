@@ -22,7 +22,7 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 #include <ntccfg_tune.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcm_monitorableutil.h>
+#include <ntcm_monitorable.h>
 #include <ntcs_authorization.h>
 #include <ntcs_compat.h>
 #include <ntcs_datapool.h>
@@ -391,8 +391,9 @@ bsl::shared_ptr<ntci::Scheduler> System::createScheduler(
     const bsl::shared_ptr<bdlbb::BlobBufferFactory>& blobBufferFactory,
     bslma::Allocator*                                basicAllocator)
 {
-    return System::createInterface(
-        configuration, blobBufferFactory, basicAllocator);
+    return System::createInterface(configuration,
+                                   blobBufferFactory,
+                                   basicAllocator);
 }
 
 bsl::shared_ptr<ntci::Scheduler> System::createScheduler(
@@ -1480,16 +1481,12 @@ ntsa::Error System::createEncryptionServer(
                                                     basicAllocator);
 }
 
-
-
-
-
 ntsa::Error System::generateCertificate(
-        ntca::EncryptionCertificate*                  result,
-        const ntsa::DistinguishedName&                subjectIdentity,
-        const ntca::EncryptionKey&                    subjectPrivateKey,
-        const ntca::EncryptionCertificateOptions&     options,
-        bslma::Allocator*                             basicAllocator)
+    ntca::EncryptionCertificate*              result,
+    const ntsa::DistinguishedName&            subjectIdentity,
+    const ntca::EncryptionKey&                subjectPrivateKey,
+    const ntca::EncryptionCertificateOptions& options,
+    bslma::Allocator*                         basicAllocator)
 {
     ntsa::Error error;
 
@@ -1510,13 +1507,13 @@ ntsa::Error System::generateCertificate(
 }
 
 ntsa::Error System::generateCertificate(
-        ntca::EncryptionCertificate*              result,
-        const ntsa::DistinguishedName&            subjectIdentity,
-        const ntca::EncryptionKey&                subjectPrivateKey,
-        const ntca::EncryptionCertificate&        issuerCertificate,
-        const ntca::EncryptionKey&                issuerPrivateKey,
-        const ntca::EncryptionCertificateOptions& options,
-        bslma::Allocator*                         basicAllocator)
+    ntca::EncryptionCertificate*              result,
+    const ntsa::DistinguishedName&            subjectIdentity,
+    const ntca::EncryptionKey&                subjectPrivateKey,
+    const ntca::EncryptionCertificate&        issuerCertificate,
+    const ntca::EncryptionKey&                issuerPrivateKey,
+    const ntca::EncryptionCertificateOptions& options,
+    bslma::Allocator*                         basicAllocator)
 {
     ntsa::Error error;
 
@@ -1995,10 +1992,9 @@ ntsa::Error System::decodeCertificate(
                                                basicAllocator);
 }
 
-ntsa::Error System::generateKey(
-        ntca::EncryptionKey*                  result,
-        const ntca::EncryptionKeyOptions&     options,
-        bslma::Allocator*                     basicAllocator)
+ntsa::Error System::generateKey(ntca::EncryptionKey*              result,
+                                const ntca::EncryptionKeyOptions& options,
+                                bslma::Allocator* basicAllocator)
 {
     ntsa::Error error;
 

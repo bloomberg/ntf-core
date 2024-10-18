@@ -5274,11 +5274,11 @@ class EncryptionCertificateExtensionList
     /// 'usage', otherwise return false.
     bool allowsKeyUsage(
         ntca::EncryptionCertificateSubjectKeyUsageType::Value usage) const;
-        
-    /// Return true if the certificate supports the specified well-known 
+
+    /// Return true if the certificate supports the specified well-known
     /// extended key 'usage', otherwise return false.
     bool allowsKeyUsage(
-        ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) 
+        ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage)
         const;
 
     /// Return true if this object has the same value as the specified
@@ -5513,11 +5513,11 @@ class EncryptionCertificateEntity
     /// 'usage', otherwise return false.
     bool allowsKeyUsage(
         ntca::EncryptionCertificateSubjectKeyUsageType::Value usage) const;
-        
-    /// Return true if the certificate supports the specified well-known 
+
+    /// Return true if the certificate supports the specified well-known
     /// extended key 'usage', otherwise return false.
     bool allowsKeyUsage(
-        ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) 
+        ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage)
         const;
 
     /// Return true if this object has the same value as the specified
@@ -5751,23 +5751,23 @@ class EncryptionCertificate
     /// 'usage', otherwise return false.
     bool allowsKeyUsage(
         ntca::EncryptionCertificateSubjectKeyUsageType::Value usage) const;
-        
-    /// Return true if the certificate supports the specified well-known 
+
+    /// Return true if the certificate supports the specified well-known
     /// extended key 'usage', otherwise return false.
     bool allowsKeyUsage(
-        ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage) 
+        ntca::EncryptionCertificateSubjectKeyUsageExtendedType::Value usage)
         const;
 
     /// Return true if the certificate uses the specified well-known public key
     /// 'algorithm', otherwise return false.
     bool usesSubjectPublicKeyAlgorithm(
         ntca::EncryptionKeyAlgorithmIdentifierType::Value algorithm) const;
-    
+
     /// Return true if the certificate uses the specified well-known public key
-    /// algorithm 'parameters', otherwise return false. 
+    /// algorithm 'parameters', otherwise return false.
     bool usesSubjectPublicKeyAlgorithmParameters(
-        ntca::EncryptionKeyEllipticCurveParametersIdentifierType::Value 
-        parameters) const;
+        ntca::EncryptionKeyEllipticCurveParametersIdentifierType::Value
+            parameters) const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.

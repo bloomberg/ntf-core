@@ -5,8 +5,10 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntscfg_platform.h>
+#include <bdlb_bigendian.h>
 #include <bdlb_chartype.h>
 #include <bdlb_nullablevalue.h>
+#include <bdlb_random.h>
 #include <bdlb_string.h>
 #include <bdlb_stringrefutil.h>
 #include <bdlbb_blob.h>
@@ -14,17 +16,28 @@ BSLS_IDENT("$Id: $")
 #include <bdlbb_blobutil.h>
 #include <bdlbb_pooledblobbufferfactory.h>
 #include <bdlbb_simpleblobbufferfactory.h>
+#include <bdld_manageddatum.h>
 #include <bdlf_bind.h>
 #include <bdlf_memfn.h>
 #include <bdlf_placeholder.h>
+#include <bdlma_bufferedsequentialallocator.h>
+#include <bdlma_concurrentmultipoolallocator.h>
+#include <bdlma_countingallocator.h>
+#include <bdlmt_eventscheduler.h>
+#include <bdlmt_fixedthreadpool.h>
 #include <bdls_filesystemutil.h>
 #include <bdls_pathutil.h>
 #include <bdls_processutil.h>
 #include <bdlsb_fixedmeminstreambuf.h>
 #include <bdlsb_memoutstreambuf.h>
 #include <bdlt_currenttime.h>
+#include <bdlt_date.h>
 #include <bdlt_datetime.h>
+#include <bdlt_datetimetz.h>
+#include <bdlt_datetz.h>
 #include <bdlt_epochutil.h>
+#include <bdlt_time.h>
+#include <bdlt_timetz.h>
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bslma_mallocfreeallocator.h>
@@ -32,17 +45,23 @@ BSLS_IDENT("$Id: $")
 #include <bslmf_assert.h>
 #include <bslmt_barrier.h>
 #include <bslmt_condition.h>
+#include <bslmt_latch.h>
 #include <bslmt_lockguard.h>
 #include <bslmt_mutex.h>
 #include <bslmt_semaphore.h>
+#include <bslmt_threadattributes.h>
 #include <bslmt_threadgroup.h>
 #include <bslmt_threadutil.h>
+#include <bslmt_turnstile.h>
+#include <bsls_alignedbuffer.h>
 #include <bsls_assert.h>
 #include <bsls_atomic.h>
 #include <bsls_log.h>
 #include <bsls_logseverity.h>
 #include <bsls_platform.h>
+#include <bsls_stopwatch.h>
 #include <bsls_timeinterval.h>
+#include <bsls_timeutil.h>
 #include <bsls_types.h>
 #include <bsl_algorithm.h>
 #include <bsl_array.h>
@@ -56,8 +75,10 @@ BSLS_IDENT("$Id: $")
 #include <bsl_list.h>
 #include <bsl_map.h>
 #include <bsl_ostream.h>
+#include <bsl_queue.h>
 #include <bsl_set.h>
 #include <bsl_sstream.h>
+#include <bsl_stack.h>
 #include <bsl_stdexcept.h>
 #include <bsl_string.h>
 #include <bsl_unordered_map.h>
@@ -512,6 +533,291 @@ void TestLog::printLogMessage(bsls::LogSeverity::Enum severity,
     bsl::fflush(stdout);
 }
 
+/// Provide utilities for reading and writing to contiguous locations in
+/// memory.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+class TestMemoryUtil
+{
+  public:
+    /// Generate a byte at the specified 'index' in the specified repeating
+    /// 'pattern' of the specified 'size' starting at the specified
+    /// 'position'. The behavior is undefined unless 'size > 0'. Note that
+    /// if 'position > size' then 'position = position % size'. Also note
+    /// that if 'index > size' then 'index = (position + index) % size'.
+    static char cycle(bsl::size_t index,
+                      const void* pattern,
+                      bsl::size_t size,
+                      bsl::size_t position);
+
+    /// Write to the region of memory beginning at the specified 'address'
+    /// and having the specified 'capacity' the specified repeating
+    /// 'pattern' of the specified 'size' starting at the specified
+    /// 'position', truncating that pattern appropriately if 'capacity' is
+    /// not evenly divisible by 'size'. The behavior is undefined unless
+    /// 'capacity > 0' and 'size > 0'.  Note that if 'position > size' then
+    /// 'position = position % size'.
+    static void write(void*       address,
+                      bsl::size_t capacity,
+                      const void* pattern,
+                      bsl::size_t size,
+                      bsl::size_t position);
+
+    /// Write to the region of memory beginning at the specified 'address'
+    /// and having the specified 'capacity' a repeating pattern of
+    /// 0xDEADBEEF.
+    static void writeDeadBeef(void* address, bsl::size_t capacity);
+
+    /// Write to the region of memory beginning at the specified 'address'
+    /// and having the specified 'capacity' a repeating pattern of
+    /// 0xFACEFEED.
+    static void writeFaceFeed(void* address, bsl::size_t capacity);
+
+    /// Write to the region of memory beginning at the specified 'address'
+    /// and having the specified 'capacity' a repeating pattern of
+    /// 0xCAFEBABE.
+    static void writeCafeBabe(void* address, bsl::size_t capacity);
+
+    /// Write to the region of memory beginning at the specified 'address'
+    /// and having the specified 'capacity' a repeating pattern of
+    /// 0x00000000.
+    static void write0s(void* address, bsl::size_t capacity);
+
+    /// Write to the region of memory beginning at the specified 'address'
+    /// and having the specified 'capacity' a repeating pattern of
+    /// 0xFFFFFFFF.
+    static void write1s(void* address, bsl::size_t capacity);
+
+    /// Verify that the region of memory beginning at the specified
+    /// 'address' and having the specified 'capacity' of defined data
+    /// follows the specified repeating'pattern' of the specified 'size'
+    /// starting at the specified 'position', truncated appropriately if
+    /// 'capacity' is not evenly divisible by 'size'. The behavior is
+    /// undefined unless 'capacity > 0' and 'size > 0'. Note that if
+    /// 'position > size' then 'position = position % size'.
+    static bool check(const void* address,
+                      bsl::size_t capacity,
+                      const void* pattern,
+                      bsl::size_t size,
+                      bsl::size_t position);
+
+    /// Verify that the region of memory beginning at the specified
+    /// 'address' and having the specified 'capacity' of defined data
+    /// follows the specified repeating pattern of 0xDEADBEEF.
+    static bool checkDeadBeef(void* address, bsl::size_t capacity);
+
+    /// Verify that the region of memory beginning at the specified
+    /// 'address' and having the specified 'capacity' of defined data
+    /// follows the specified repeating pattern of 0xFACEFEED.
+    static bool checkFaceFeed(void* address, bsl::size_t capacity);
+
+    /// Verify that the region of memory beginning at the specified
+    /// 'address' and having the specified 'capacity' of defined data
+    /// follows the specified repeating pattern of 0xCAFEBABE.
+    static bool checkCafebabe(void* address, bsl::size_t capacity);
+
+    /// Verify that the region of memory beginning at the specified
+    /// 'address' and having the specified 'capacity' of defined data
+    /// follows the specified repeating pattern of 0x00000000.
+    static bool check0s(void* address, bsl::size_t capacity);
+
+    /// Verify that the region of memory beginning at the specified
+    /// 'address' and having the specified 'capacity' of defined data
+    /// follows the specified repeating pattern of 0xFFFFFFFF.
+    static bool check1s(void* address, bsl::size_t capacity);
+
+    /// The standard pattern.
+    static const char PATTERN[26];
+};
+
+const char TestMemoryUtil::PATTERN[26] = {
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
+
+char TestMemoryUtil::cycle(bsl::size_t index,
+                           const void* pattern,
+                           bsl::size_t size,
+                           bsl::size_t position)
+{
+    BSLS_ASSERT_OPT(pattern);
+    BSLS_ASSERT_OPT(size > 0);
+
+    return ((const char*)(pattern))[(position + index) % size];
+}
+
+void TestMemoryUtil::write(void*       address,
+                           bsl::size_t capacity,
+                           const void* pattern,
+                           bsl::size_t size,
+                           bsl::size_t position)
+{
+    BSLS_ASSERT_OPT(address);
+    BSLS_ASSERT_OPT(pattern);
+
+    BSLS_ASSERT_OPT(capacity > 0);
+    BSLS_ASSERT_OPT(size > 0);
+
+    char* dc = (char*)(address);
+    char* de = dc + capacity;
+
+    const bsl::size_t so = position % size;
+    const char*       sb = (const char*)(pattern);
+    const char*       sc = sb + so;
+    const char*       se = sb + size;
+
+    while (dc != de) {
+        *dc++ = *sc++;
+
+        if (sc == se) {
+            sc = sb;
+        }
+    }
+}
+
+void TestMemoryUtil::writeDeadBeef(void* address, bsl::size_t capacity)
+{
+    const bsl::uint8_t DEADBEEF_ARRAY[4] = {0xDE, 0xAD, 0xBE, 0xEF};
+
+    bsl::uint32_t DEADBEEF;
+    bsl::memcpy(&DEADBEEF, DEADBEEF_ARRAY, sizeof DEADBEEF_ARRAY);
+
+    TestMemoryUtil::write(address, capacity, &DEADBEEF, sizeof DEADBEEF, 0);
+}
+
+void TestMemoryUtil::writeFaceFeed(void* address, bsl::size_t capacity)
+{
+    const bsl::uint8_t FACEFEED_ARRAY[4] = {0xFA, 0xCE, 0xFE, 0xED};
+
+    bsl::uint32_t FACEFEED;
+    bsl::memcpy(&FACEFEED, FACEFEED_ARRAY, sizeof FACEFEED_ARRAY);
+
+    TestMemoryUtil::write(address, capacity, &FACEFEED, sizeof FACEFEED, 0);
+}
+
+void TestMemoryUtil::writeCafeBabe(void* address, bsl::size_t capacity)
+{
+    const bsl::uint8_t CAFEBABE_ARRAY[4] = {0xCA, 0xFE, 0xBA, 0xBE};
+
+    bsl::uint32_t CAFEBABE;
+    bsl::memcpy(&CAFEBABE, CAFEBABE_ARRAY, sizeof CAFEBABE_ARRAY);
+
+    TestMemoryUtil::write(address, capacity, &CAFEBABE, sizeof CAFEBABE, 0);
+}
+
+void TestMemoryUtil::write0s(void* address, bsl::size_t capacity)
+{
+    bsl::memset(address, 0x00, capacity);
+}
+
+void TestMemoryUtil::write1s(void* address, bsl::size_t capacity)
+{
+    bsl::memset(address, 0xFF, capacity);
+}
+
+bool TestMemoryUtil::check(const void* address,
+                           bsl::size_t capacity,
+                           const void* pattern,
+                           bsl::size_t size,
+                           bsl::size_t position)
+{
+    BSLS_ASSERT_OPT(address);
+    BSLS_ASSERT_OPT(pattern);
+
+    BSLS_ASSERT_OPT(capacity > 0);
+    BSLS_ASSERT_OPT(size > 0);
+
+    const char* dc = (const char*)(address);
+    const char* de = dc + capacity;
+
+    const bsl::size_t so = position % size;
+    const char*       sb = (const char*)(pattern);
+    const char*       sc = sb + so;
+    const char*       se = sb + size;
+
+    while (dc != de) {
+        if (*dc++ != *sc++) {
+            return false;
+        }
+
+        if (sc == se) {
+            sc = sb;
+        }
+    }
+
+    return true;
+}
+
+bool TestMemoryUtil::checkDeadBeef(void* address, bsl::size_t capacity)
+{
+    const bsl::uint8_t DEADBEEF_ARRAY[4] = {0xDE, 0xAD, 0xBE, 0xEF};
+
+    bsl::uint32_t DEADBEEF;
+    bsl::memcpy(&DEADBEEF, DEADBEEF_ARRAY, sizeof DEADBEEF_ARRAY);
+
+    return TestMemoryUtil::check(address,
+                                 capacity,
+                                 &DEADBEEF,
+                                 sizeof DEADBEEF,
+                                 0);
+}
+
+bool TestMemoryUtil::checkFaceFeed(void* address, bsl::size_t capacity)
+{
+    const bsl::uint8_t FACEFEED_ARRAY[4] = {0xFA, 0xCE, 0xFE, 0xED};
+
+    bsl::uint32_t FACEFEED;
+    bsl::memcpy(&FACEFEED, FACEFEED_ARRAY, sizeof FACEFEED_ARRAY);
+
+    return TestMemoryUtil::check(address,
+                                 capacity,
+                                 &FACEFEED,
+                                 sizeof FACEFEED,
+                                 0);
+}
+
+bool TestMemoryUtil::checkCafebabe(void* address, bsl::size_t capacity)
+{
+    const bsl::uint8_t CAFEBABE_ARRAY[4] = {0xCA, 0xFE, 0xBA, 0xBE};
+
+    bsl::uint32_t CAFEBABE;
+    bsl::memcpy(&CAFEBABE, CAFEBABE_ARRAY, sizeof CAFEBABE_ARRAY);
+
+    return TestMemoryUtil::check(address,
+                                 capacity,
+                                 &CAFEBABE,
+                                 sizeof CAFEBABE,
+                                 0);
+}
+
+bool TestMemoryUtil::check0s(void* address, bsl::size_t capacity)
+{
+    const bsl::uint8_t ALL_ZEROES_ARRAY[4] = {0x00, 0x00, 0x00, 0x00};
+
+    bsl::uint32_t ALL_ZEROES;
+    bsl::memcpy(&ALL_ZEROES, ALL_ZEROES_ARRAY, sizeof ALL_ZEROES_ARRAY);
+
+    return TestMemoryUtil::check(address,
+                                 capacity,
+                                 &ALL_ZEROES,
+                                 sizeof ALL_ZEROES,
+                                 0);
+}
+
+bool TestMemoryUtil::check1s(void* address, bsl::size_t capacity)
+{
+    const bsl::uint8_t ALL_ONES_ARRAY[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+
+    bsl::uint32_t ALL_ONES;
+    bsl::memcpy(&ALL_ONES, ALL_ONES_ARRAY, sizeof ALL_ONES_ARRAY);
+
+    return TestMemoryUtil::check(address,
+                                 capacity,
+                                 &ALL_ONES,
+                                 sizeof ALL_ONES,
+                                 0);
+}
+
 /// @internal @brief
 /// Provide a suite of utilities for generating test data.
 ///
@@ -823,6 +1129,7 @@ int main(int argc, char** argv)
                     BloombergLP::ntscfg::TestUtil::help();
                     return 1;
                 }
+                arg = argv[i];
 
                 int level;
                 if (BloombergLP::ntscfg::TestUtil::parseInt(&level, arg)) {
@@ -844,7 +1151,10 @@ int main(int argc, char** argv)
                     BloombergLP::ntscfg::TestUtil::help();
                     return 1;
                 }
+                arg = argv[i];
+
                 concern.makeValue(bsl::string(arg));
+
                 ++i;
                 continue;
             }

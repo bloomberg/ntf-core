@@ -20,12 +20,12 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntci_datapool.h>
-#include <ntccfg_test.h>
+#include <ntscfg_mock.h>
 
 namespace BloombergLP {
 namespace ntcd {
 
-#if NTCCFG_TEST_MOCK_ENABLED
+#if NTSCFG_MOCK_ENABLED
 
 NTF_MOCK_CLASS(DataPoolMock, ntci::DataPool)
 NTF_MOCK_METHOD(bsl::shared_ptr<ntsa::Data>, createIncomingData)

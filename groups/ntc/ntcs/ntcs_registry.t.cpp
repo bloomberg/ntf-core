@@ -13,19 +13,72 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntcs_registry.h>
+#include <ntscfg_test.h>
 
-#include <ntccfg_test.h>
-#include <bdlb_random.h>
-#include <bslmt_latch.h>
-#include <bslmt_threadutil.h>
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_registry_t_cpp, "$Id$ $CSID$")
+
+#include <ntcs_registry.h>
 
 using namespace BloombergLP;
 
-namespace Test {
+namespace BloombergLP {
+namespace ntcs {
+
+// Provide tests for 'ntcs::Registry'.
+class RegistryTest
+{
+    /// This class mocks ntci::ReactorSocket interface and is used to validate
+    /// how processNotifications method is called.
+    class ReactorSocketMock;
+
+    /// This is a functor which is used to test how ReactorNotificationCallback is
+    /// called.
+    class NotificationCallbackMock;
+
+    /// This class mocks ntci::Executor interface
+    class ExecutorMock;
+
+    /// Returns random NotificationQueue.
+    static ntsa::NotificationQueue generate();
+
+    static void noop();
+
+    static void testCase5Helper(bslmt::Latch&                latch,
+                                int                          iterations,
+                                const bsl::function<void()>& functor);
+
+    static void testCase6Helper(
+        bslmt::Latch&                                      latch,
+        ntcs::RegistryEntry&                               entry,
+        const bsl::shared_ptr<RegistryTest::ExecutorMock>& executor);
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+
+    // TODO
+    static void verifyCase3();
+
+    // TODO
+    static void verifyCase4();
+
+    // TODO
+    static void verifyCase5();
+
+    // TODO
+    static void verifyCase6();
+
+    // TODO
+    static void verifyCase7();
+};
+
 /// This class mocks ntci::ReactorSocket interface and is used to validate how
 /// processNotifications method is called.
-class ReactorSocketMock : public ntci::ReactorSocket
+class RegistryTest::ReactorSocketMock : public ntci::ReactorSocket
 {
   public:
     /// Construct object using the specified 'handle'.
@@ -60,7 +113,9 @@ class ReactorSocketMock : public ntci::ReactorSocket
 
 /// This is a functor which is used to test how ReactorNotificationCallback is
 /// called.
-struct NotificationCallbackMock {
+class RegistryTest::NotificationCallbackMock
+{
+  public:
     /// D-tor, checks that d_notifications does not exist.
     ~NotificationCallbackMock();
 
@@ -74,7 +129,9 @@ struct NotificationCallbackMock {
 };
 
 /// This class mocks ntci::Executor interface
-struct ExecutorMock : public ntci::Executor {
+class RegistryTest::ExecutorMock : public ntci::Executor
+{
+  public:
     /// Construct the object
     ExecutorMock();
 
@@ -96,66 +153,88 @@ struct ExecutorMock : public ntci::Executor {
     bool d_executeExpected;
 };
 
-/// Generator of randomly filled NotificationQueues.
-struct RandomNotificationsGenerator {
-    /// Returns random NotificationQueue.
-    static ntsa::NotificationQueue generate();
-};
-
-ReactorSocketMock::ReactorSocketMock(ntsa::Handle handle)
+RegistryTest::ReactorSocketMock::ReactorSocketMock(ntsa::Handle handle)
 : d_handle(handle)
 {
 }
 
-ReactorSocketMock::~ReactorSocketMock()
+RegistryTest::ReactorSocketMock::~ReactorSocketMock()
 {
-    NTCCFG_TEST_FALSE(d_notifications.has_value());
+    NTSCFG_TEST_FALSE(d_notifications.has_value());
 }
 
-ntsa::Handle ReactorSocketMock::handle() const
+ntsa::Handle RegistryTest::ReactorSocketMock::handle() const
 {
     return d_handle;
 }
 
-void ReactorSocketMock::close()
+void RegistryTest::ReactorSocketMock::close()
 {
-    NTCCFG_TEST_ASSERT(false);
+    NTSCFG_TEST_ASSERT(false);
 }
 
-void ReactorSocketMock::processNotifications(
+void RegistryTest::ReactorSocketMock::processNotifications(
     const ntsa::NotificationQueue& notifications)
 {
-    NTCCFG_TEST_FALSE(d_notifications.has_value());
+    NTSCFG_TEST_FALSE(d_notifications.has_value());
     d_notifications = notifications;
 }
 
-void ReactorSocketMock::validateNotifications(
+void RegistryTest::ReactorSocketMock::validateNotifications(
     const ntsa::NotificationQueue& notifications)
 {
-    NTCCFG_TEST_EQ(d_notifications, notifications);
+    NTSCFG_TEST_EQ(d_notifications, notifications);
     d_notifications.reset();
 }
 
-NotificationCallbackMock::~NotificationCallbackMock()
+RegistryTest::NotificationCallbackMock::~NotificationCallbackMock()
 {
-    NTCCFG_TEST_FALSE(d_notifications.has_value());
+    NTSCFG_TEST_FALSE(d_notifications.has_value());
 }
 
-void NotificationCallbackMock::operator()(
+void RegistryTest::NotificationCallbackMock::operator()(
     const ntsa::NotificationQueue& notifications)
 {
-    NTCCFG_TEST_FALSE(d_notifications.has_value());
+    NTSCFG_TEST_FALSE(d_notifications.has_value());
     d_notifications = notifications;
 }
 
-void NotificationCallbackMock::validateNotifications(
+void RegistryTest::NotificationCallbackMock::validateNotifications(
     const ntsa::NotificationQueue& notifications)
 {
-    NTCCFG_TEST_EQ(d_notifications, notifications);
+    NTSCFG_TEST_EQ(d_notifications, notifications);
     d_notifications.reset();
 }
 
-ntsa::NotificationQueue RandomNotificationsGenerator::generate()
+RegistryTest::ExecutorMock::ExecutorMock()
+: d_executeExpected(false)
+{
+}
+
+RegistryTest::ExecutorMock::~ExecutorMock() BSLS_KEYWORD_NOEXCEPT
+{
+}
+
+void RegistryTest::ExecutorMock::execute(
+    const BloombergLP::ntci::Executor::Functor& functor)
+{
+    NTSCFG_TEST_ASSERT(d_executeExpected && "not expected to be called");
+    d_executeExpected = false;
+}
+
+void RegistryTest::ExecutorMock::moveAndExecute(
+    BloombergLP::ntci::Executor::FunctorSequence* functorSequence,
+    const BloombergLP::ntci::Executor::Functor&   functor)
+{
+    NTSCFG_TEST_ASSERT(false && "not expected to be called");
+}
+
+void RegistryTest::ExecutorMock::setExecuteExpected()
+{
+    d_executeExpected = true;
+}
+
+ntsa::NotificationQueue RegistryTest::generate()
 {
     static int              seed = 10;
     ntsa::NotificationQueue queue;
@@ -171,36 +250,13 @@ ntsa::NotificationQueue RandomNotificationsGenerator::generate()
     return queue;
 }
 
-ExecutorMock::ExecutorMock()
-: d_executeExpected(false)
+void RegistryTest::noop()
 {
 }
 
-ExecutorMock::~ExecutorMock() BSLS_KEYWORD_NOEXCEPT
-{
-}
-
-void ExecutorMock::execute(const BloombergLP::ntci::Executor::Functor& functor)
-{
-    NTCCFG_TEST_ASSERT(d_executeExpected && "not expected to be called");
-    d_executeExpected = false;
-}
-
-void ExecutorMock::moveAndExecute(
-    BloombergLP::ntci::Executor::FunctorSequence* functorSequence,
-    const BloombergLP::ntci::Executor::Functor&   functor)
-{
-    NTCCFG_TEST_ASSERT(false && "not expected to be called");
-}
-
-void ExecutorMock::setExecuteExpected()
-{
-    d_executeExpected = true;
-}
-
-void testCase5Helper(bslmt::Latch&                latch,
-                     int                          iterations,
-                     const bsl::function<void()>& functor)
+void RegistryTest::testCase5Helper(bslmt::Latch&                latch,
+                                   int                          iterations,
+                                   const bsl::function<void()>& functor)
 {
     latch.arriveAndWait();
     for (int i = 0; i < iterations; ++i) {
@@ -208,325 +264,283 @@ void testCase5Helper(bslmt::Latch&                latch,
     }
 }
 
-void noop()
-{
-}
-
-void testCase6Helper(bslmt::Latch&                              latch,
-                     ntcs::RegistryEntry&                       entry,
-                     const bsl::shared_ptr<Test::ExecutorMock>& executor)
+void RegistryTest::testCase6Helper(
+    bslmt::Latch&                                      latch,
+    ntcs::RegistryEntry&                               entry,
+    const bsl::shared_ptr<RegistryTest::ExecutorMock>& executor)
 {
     latch.arriveAndWait();
     entry.announceDetached(executor);
 }
 
-}
-
-NTCCFG_TEST_CASE(1)
+NTSCFG_TEST_FUNCTION(ntcs::RegistryTest::verifyCase1)
 {
     // Concern: test hideNotifications, wantNotifications and showNotifications
-    // methods
-    const ntsa::Handle    handle = 5;
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<Test::ReactorSocketMock> socket;
-        socket.createInplace(&ta, handle);
+    // methods.
 
-        ntcs::RegistryEntry re(socket,
-                               ntca::ReactorEventTrigger::e_LEVEL,
-                               false,
-                               &ta);
-        NTCCFG_TEST_TRUE(re.wantNotifications());
+    const ntsa::Handle handle = 5;
 
-        const ntcs::Interest interest = re.hideNotifications();
-        ntcs::Interest       expected;
-        expected.hideNotifications();
-        NTCCFG_TEST_EQ(interest, expected);
-        NTCCFG_TEST_FALSE(re.wantNotifications());
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    bsl::shared_ptr<RegistryTest::ReactorSocketMock> socket;
+    socket.createInplace(NTSCFG_TEST_ALLOCATOR, handle);
+
+    ntcs::RegistryEntry re(socket,
+                           ntca::ReactorEventTrigger::e_LEVEL,
+                           false,
+                           NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_TRUE(re.wantNotifications());
+
+    const ntcs::Interest interest = re.hideNotifications();
+    ntcs::Interest       expected;
+    expected.hideNotifications();
+    NTSCFG_TEST_EQ(interest, expected);
+    NTSCFG_TEST_FALSE(re.wantNotifications());
 }
 
-NTCCFG_TEST_CASE(2)
+NTSCFG_TEST_FUNCTION(ntcs::RegistryTest::verifyCase2)
 {
     // Concern: test announceNotifications
     const ntsa::Handle handle = 5;
 
-    ntccfg::TestAllocator ta;
-    {
-        bsl::shared_ptr<Test::ReactorSocketMock> socket;
-        socket.createInplace(&ta, handle);
+    bsl::shared_ptr<RegistryTest::ReactorSocketMock> socket;
+    socket.createInplace(NTSCFG_TEST_ALLOCATOR, handle);
 
-        ntcs::RegistryEntry re(socket,
-                               ntca::ReactorEventTrigger::e_LEVEL,
-                               false,
-                               &ta);
-        NTCCFG_TEST_TRUE(re.wantNotifications());
+    ntcs::RegistryEntry re(socket,
+                           ntca::ReactorEventTrigger::e_LEVEL,
+                           false,
+                           NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_TRUE(re.wantNotifications());
 
-        const ntsa::NotificationQueue notifications =
-            Test::RandomNotificationsGenerator::generate();
+    const ntsa::NotificationQueue notifications = RegistryTest::generate();
 
-        re.announceNotifications(notifications);
-        socket->validateNotifications(notifications);
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    re.announceNotifications(notifications);
+    socket->validateNotifications(notifications);
 }
 
-NTCCFG_TEST_CASE(3)
+NTSCFG_TEST_FUNCTION(ntcs::RegistryTest::verifyCase3)
 {
-    // Concern: test hidden notifications are not announced
-    const ntsa::Handle    handle = 5;
-    ntccfg::TestAllocator ta;
+    // Concern: test hidden notifications are not announced.
+
+    const ntsa::Handle handle = 5;
+
+    bsl::shared_ptr<RegistryTest::ReactorSocketMock> socket;
+    socket.createInplace(NTSCFG_TEST_ALLOCATOR, handle);
+
+    ntcs::RegistryEntry re(socket,
+                           ntca::ReactorEventTrigger::e_LEVEL,
+                           false,
+                           NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_TRUE(re.wantNotifications());
+
+    re.hideNotifications();
+
+    const ntsa::NotificationQueue notifications = RegistryTest::generate();
+    re.announceNotifications(notifications);
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::RegistryTest::verifyCase4)
+{
+    // Concern: test notificationCallback is used.
+
+    const ntsa::Handle handle = 5;
+
+    ntcs::RegistryEntry re(handle,
+                           ntca::ReactorEventTrigger::e_LEVEL,
+                           false,
+                           NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_TRUE(re.wantNotifications());
+
     {
-        bsl::shared_ptr<Test::ReactorSocketMock> socket;
-        socket.createInplace(&ta, handle);
-
-        ntcs::RegistryEntry re(socket,
-                               ntca::ReactorEventTrigger::e_LEVEL,
-                               false,
-                               &ta);
-        NTCCFG_TEST_TRUE(re.wantNotifications());
-
-        re.hideNotifications();
-
-        const ntsa::NotificationQueue notifications =
-            Test::RandomNotificationsGenerator::generate();
+        // Nothing should break, but no callback is installed
+        const ntsa::NotificationQueue notifications = RegistryTest::generate();
         re.announceNotifications(notifications);
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
 
-NTCCFG_TEST_CASE(4)
-{
-    // Concern: test notificationCallback is used
-    const ntsa::Handle    handle = 5;
-    ntccfg::TestAllocator ta;
     {
-        ntcs::RegistryEntry re(handle,
-                               ntca::ReactorEventTrigger::e_LEVEL,
-                               false,
-                               &ta);
-        NTCCFG_TEST_TRUE(re.wantNotifications());
+        RegistryTest::NotificationCallbackMock callbackMock;
+        ntci::ReactorNotificationCallback      callback(
+            NTCCFG_BIND(&RegistryTest::NotificationCallbackMock::operator(),
+                        &callbackMock,
+                        NTCCFG_BIND_PLACEHOLDER_1));
 
-        {
-            // Nothing should break, but no callback is installed
-            const ntsa::NotificationQueue notifications =
-                Test::RandomNotificationsGenerator::generate();
-            re.announceNotifications(notifications);
-        }
-
-        {
-            Test::NotificationCallbackMock    callbackMock;
-            ntci::ReactorNotificationCallback callback(
-                NTCCFG_BIND(&Test::NotificationCallbackMock::operator(),
-                            &callbackMock,
-                            NTCCFG_BIND_PLACEHOLDER_1));
-
-            re.showNotificationsCallback(callback);
-            const ntsa::NotificationQueue notifications =
-                Test::RandomNotificationsGenerator::generate();
-            re.announceNotifications(notifications);
-            callbackMock.validateNotifications(notifications);
-        }
-
-        {
-            re.hideNotificationsCallback();
-            NTCCFG_TEST_FALSE(re.wantNotifications());
-
-            const ntsa::NotificationQueue notifications =
-                Test::RandomNotificationsGenerator::generate();
-            ;
-            re.announceNotifications(notifications);
-        }
-
-        {
-            Test::NotificationCallbackMock    callbackMock;
-            ntci::ReactorNotificationCallback callback(
-                NTCCFG_BIND(&Test::NotificationCallbackMock::operator(),
-                            &callbackMock,
-                            NTCCFG_BIND_PLACEHOLDER_1));
-
-            re.showNotificationsCallback(callback);
-            re.hideNotifications();  //callback is still installed
-            NTCCFG_TEST_FALSE(re.wantNotifications());
-            const ntsa::NotificationQueue notifications =
-                Test::RandomNotificationsGenerator::generate();
-            re.announceNotifications(notifications);
-        }
+        re.showNotificationsCallback(callback);
+        const ntsa::NotificationQueue notifications = RegistryTest::generate();
+        re.announceNotifications(notifications);
+        callbackMock.validateNotifications(notifications);
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    {
+        re.hideNotificationsCallback();
+        NTSCFG_TEST_FALSE(re.wantNotifications());
+
+        const ntsa::NotificationQueue notifications = RegistryTest::generate();
+        ;
+        re.announceNotifications(notifications);
+    }
+
+    {
+        RegistryTest::NotificationCallbackMock callbackMock;
+        ntci::ReactorNotificationCallback      callback(
+            NTCCFG_BIND(&RegistryTest::NotificationCallbackMock::operator(),
+                        &callbackMock,
+                        NTCCFG_BIND_PLACEHOLDER_1));
+
+        re.showNotificationsCallback(callback);
+        re.hideNotifications();  //callback is still installed
+        NTSCFG_TEST_FALSE(re.wantNotifications());
+        const ntsa::NotificationQueue notifications = RegistryTest::generate();
+        re.announceNotifications(notifications);
+    }
 }
 
-NTCCFG_TEST_CASE(5)
+NTSCFG_TEST_FUNCTION(ntcs::RegistryTest::verifyCase5)
 {
     const ntsa::Handle handle = 22;
 
-    ntccfg::TestAllocator ta;
-    {
+    ntcs::RegistryEntry entry(handle,
+                              ntca::ReactorEventTrigger::e_LEVEL,
+                              false,
+                              NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_EQ(entry.processCounter(), 0);
+    NTSCFG_TEST_FALSE(entry.isProcessing());
+
+    entry.incrementProcessCounter();
+    NTSCFG_TEST_EQ(entry.processCounter(), 1);
+    NTSCFG_TEST_TRUE(entry.isProcessing());
+    entry.incrementProcessCounter();
+    NTSCFG_TEST_EQ(entry.processCounter(), 2);
+    NTSCFG_TEST_TRUE(entry.isProcessing());
+
+    NTSCFG_TEST_EQ(entry.decrementProcessCounter(), 1);
+    NTSCFG_TEST_EQ(entry.processCounter(), 1);
+    NTSCFG_TEST_TRUE(entry.isProcessing());
+
+    NTSCFG_TEST_EQ(entry.decrementProcessCounter(), 0);
+    NTSCFG_TEST_EQ(entry.processCounter(), 0);
+    NTSCFG_TEST_FALSE(entry.isProcessing());
+
+    const int startingCounter = 1000;
+    for (int i = 0; i < startingCounter; i++) {
+        entry.incrementProcessCounter();
+    }
+    NTSCFG_TEST_EQ(entry.processCounter(), startingCounter);
+
+    const bsl::function<void()> addProcessFunctor =
+        NTCCFG_BIND(&ntcs::RegistryEntry::incrementProcessCounter, &entry);
+    const bsl::function<void()> decrementProcessFunctor =
+        NTCCFG_BIND(&ntcs::RegistryEntry::decrementProcessCounter, &entry);
+
+    bslmt::Latch latch(3);
+
+    const int finalCounter = startingCounter + 200;
+
+    bslmt::ThreadUtil::Handle inc = bslmt::ThreadUtil::invalidHandle();
+    bslmt::ThreadUtil::create(&inc,
+                              NTCCFG_BIND(RegistryTest::testCase5Helper,
+                                          bsl::ref<bslmt::Latch>(latch),
+                                          finalCounter,
+                                          addProcessFunctor));
+    NTSCFG_TEST_ASSERT(inc != bslmt::ThreadUtil::invalidHandle());
+
+    bslmt::ThreadUtil::Handle dec1 = bslmt::ThreadUtil::invalidHandle();
+    bslmt::ThreadUtil::create(&dec1,
+                              NTCCFG_BIND(RegistryTest::testCase5Helper,
+                                          bsl::ref<bslmt::Latch>(latch),
+                                          startingCounter / 2,
+                                          decrementProcessFunctor));
+    NTSCFG_TEST_ASSERT(dec1 != bslmt::ThreadUtil::invalidHandle());
+
+    bslmt::ThreadUtil::Handle dec2 = bslmt::ThreadUtil::invalidHandle();
+    bslmt::ThreadUtil::create(&dec2,
+                              NTCCFG_BIND(RegistryTest::testCase5Helper,
+                                          bsl::ref<bslmt::Latch>(latch),
+                                          startingCounter / 2,
+                                          decrementProcessFunctor));
+    NTSCFG_TEST_ASSERT(dec2 != bslmt::ThreadUtil::invalidHandle());
+
+    bslmt::ThreadUtil::join(inc);
+    bslmt::ThreadUtil::join(dec1);
+    bslmt::ThreadUtil::join(dec2);
+    NTSCFG_TEST_EQ(entry.processCounter(), finalCounter);
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::RegistryTest::verifyCase6)
+{
+    const ntsa::Handle handle = 22;
+
+    for (int i = 0; i < 100; ++i) {
         ntcs::RegistryEntry entry(handle,
                                   ntca::ReactorEventTrigger::e_LEVEL,
                                   false,
-                                  &ta);
-        NTCCFG_TEST_EQ(entry.processCounter(), 0);
-        NTCCFG_TEST_FALSE(entry.isProcessing());
+                                  NTSCFG_TEST_ALLOCATOR);
 
-        entry.incrementProcessCounter();
-        NTCCFG_TEST_EQ(entry.processCounter(), 1);
-        NTCCFG_TEST_TRUE(entry.isProcessing());
-        entry.incrementProcessCounter();
-        NTCCFG_TEST_EQ(entry.processCounter(), 2);
-        NTCCFG_TEST_TRUE(entry.isProcessing());
+        const ntci::SocketDetachedCallback callback;
 
-        NTCCFG_TEST_EQ(entry.decrementProcessCounter(), 1);
-        NTCCFG_TEST_EQ(entry.processCounter(), 1);
-        NTCCFG_TEST_TRUE(entry.isProcessing());
-
-        NTCCFG_TEST_EQ(entry.decrementProcessCounter(), 0);
-        NTCCFG_TEST_EQ(entry.processCounter(), 0);
-        NTCCFG_TEST_FALSE(entry.isProcessing());
-
-        const int startingCounter = 1000;
-        for (int i = 0; i < startingCounter; i++) {
-            entry.incrementProcessCounter();
-        }
-        NTCCFG_TEST_EQ(entry.processCounter(), startingCounter);
-
-        const bsl::function<void()> addProcessFunctor =
-            NTCCFG_BIND(&ntcs::RegistryEntry::incrementProcessCounter, &entry);
-        const bsl::function<void()> decrementProcessFunctor =
-            NTCCFG_BIND(&ntcs::RegistryEntry::decrementProcessCounter, &entry);
+        entry.setDetachmentRequired(callback);
 
         bslmt::Latch latch(3);
 
-        const int finalCounter = startingCounter + 200;
+        bsl::shared_ptr<RegistryTest::ExecutorMock> executor =
+            bsl::make_shared<RegistryTest::ExecutorMock>();
+        executor->setExecuteExpected();  //only once
 
-        bslmt::ThreadUtil::Handle inc = bslmt::ThreadUtil::invalidHandle();
-        bslmt::ThreadUtil::create(&inc,
-                                  NTCCFG_BIND(Test::testCase5Helper,
-                                              bsl::ref<bslmt::Latch>(latch),
-                                              finalCounter,
-                                              addProcessFunctor));
-        NTCCFG_TEST_ASSERT(inc != bslmt::ThreadUtil::invalidHandle());
+        bslmt::ThreadUtil::Handle t1 = bslmt::ThreadUtil::invalidHandle();
+        bslmt::ThreadUtil::create(
+            &t1,
+            NTCCFG_BIND(RegistryTest::testCase6Helper,
+                        bsl::ref<bslmt::Latch>(latch),
+                        bsl::ref<ntcs::RegistryEntry>(entry),
+                        executor));
+        NTSCFG_TEST_ASSERT(t1 != bslmt::ThreadUtil::invalidHandle());
 
-        bslmt::ThreadUtil::Handle dec1 = bslmt::ThreadUtil::invalidHandle();
-        bslmt::ThreadUtil::create(&dec1,
-                                  NTCCFG_BIND(Test::testCase5Helper,
-                                              bsl::ref<bslmt::Latch>(latch),
-                                              startingCounter / 2,
-                                              decrementProcessFunctor));
-        NTCCFG_TEST_ASSERT(dec1 != bslmt::ThreadUtil::invalidHandle());
+        bslmt::ThreadUtil::Handle t2 = bslmt::ThreadUtil::invalidHandle();
+        bslmt::ThreadUtil::create(
+            &t2,
+            NTCCFG_BIND(RegistryTest::testCase6Helper,
+                        bsl::ref<bslmt::Latch>(latch),
+                        bsl::ref<ntcs::RegistryEntry>(entry),
+                        executor));
+        NTSCFG_TEST_ASSERT(t2 != bslmt::ThreadUtil::invalidHandle());
 
-        bslmt::ThreadUtil::Handle dec2 = bslmt::ThreadUtil::invalidHandle();
-        bslmt::ThreadUtil::create(&dec2,
-                                  NTCCFG_BIND(Test::testCase5Helper,
-                                              bsl::ref<bslmt::Latch>(latch),
-                                              startingCounter / 2,
-                                              decrementProcessFunctor));
-        NTCCFG_TEST_ASSERT(dec2 != bslmt::ThreadUtil::invalidHandle());
+        bslmt::ThreadUtil::Handle t3 = bslmt::ThreadUtil::invalidHandle();
+        bslmt::ThreadUtil::create(
+            &t3,
+            NTCCFG_BIND(RegistryTest::testCase6Helper,
+                        bsl::ref<bslmt::Latch>(latch),
+                        bsl::ref<ntcs::RegistryEntry>(entry),
+                        executor));
+        NTSCFG_TEST_ASSERT(t3 != bslmt::ThreadUtil::invalidHandle());
 
-        bslmt::ThreadUtil::join(inc);
-        bslmt::ThreadUtil::join(dec1);
-        bslmt::ThreadUtil::join(dec2);
-        NTCCFG_TEST_EQ(entry.processCounter(), finalCounter);
+        bslmt::ThreadUtil::join(t1);
+        bslmt::ThreadUtil::join(t2);
+        bslmt::ThreadUtil::join(t3);
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-NTCCFG_TEST_CASE(6)
+NTSCFG_TEST_FUNCTION(ntcs::RegistryTest::verifyCase7)
 {
     const ntsa::Handle handle = 22;
 
-    ntccfg::TestAllocator ta;
-    {
-        for (int i = 0; i < 100; ++i) {
-            ntcs::RegistryEntry entry(handle,
-                                      ntca::ReactorEventTrigger::e_LEVEL,
-                                      false,
-                                      &ta);
+    ntcs::RegistryEntry entry(handle,
+                              ntca::ReactorEventTrigger::e_LEVEL,
+                              false,
+                              NTSCFG_TEST_ALLOCATOR);
 
-            const ntci::SocketDetachedCallback callback;
+    bsl::shared_ptr<RegistryTest::ExecutorMock> executor =
+        bsl::make_shared<RegistryTest::ExecutorMock>();
 
-            entry.setDetachmentRequired(callback);
+    const ntci::SocketDetachedCallback callback(RegistryTest::noop);
 
-            bslmt::Latch latch(3);
+    entry.setDetachmentRequired(callback);
+    executor->setExecuteExpected();
+    NTSCFG_TEST_TRUE(entry.announceDetached(executor));
+    NTSCFG_TEST_FALSE(entry.announceDetached(executor));
 
-            bsl::shared_ptr<Test::ExecutorMock> executor =
-                bsl::make_shared<Test::ExecutorMock>();
-            executor->setExecuteExpected();  //only once
-
-            bslmt::ThreadUtil::Handle t1 = bslmt::ThreadUtil::invalidHandle();
-            bslmt::ThreadUtil::create(
-                &t1,
-                NTCCFG_BIND(Test::testCase6Helper,
-                            bsl::ref<bslmt::Latch>(latch),
-                            bsl::ref<ntcs::RegistryEntry>(entry),
-                            executor));
-            NTCCFG_TEST_ASSERT(t1 != bslmt::ThreadUtil::invalidHandle());
-
-            bslmt::ThreadUtil::Handle t2 = bslmt::ThreadUtil::invalidHandle();
-            bslmt::ThreadUtil::create(
-                &t2,
-                NTCCFG_BIND(Test::testCase6Helper,
-                            bsl::ref<bslmt::Latch>(latch),
-                            bsl::ref<ntcs::RegistryEntry>(entry),
-                            executor));
-            NTCCFG_TEST_ASSERT(t2 != bslmt::ThreadUtil::invalidHandle());
-
-            bslmt::ThreadUtil::Handle t3 = bslmt::ThreadUtil::invalidHandle();
-            bslmt::ThreadUtil::create(
-                &t3,
-                NTCCFG_BIND(Test::testCase6Helper,
-                            bsl::ref<bslmt::Latch>(latch),
-                            bsl::ref<ntcs::RegistryEntry>(entry),
-                            executor));
-            NTCCFG_TEST_ASSERT(t3 != bslmt::ThreadUtil::invalidHandle());
-
-            bslmt::ThreadUtil::join(t1);
-            bslmt::ThreadUtil::join(t2);
-            bslmt::ThreadUtil::join(t3);
-        }
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    entry.clear();
+    entry.setDetachmentRequired(callback);
+    executor->setExecuteExpected();
+    NTSCFG_TEST_TRUE(entry.announceDetached(executor));
+    NTSCFG_TEST_FALSE(entry.announceDetached(executor));
 }
 
-NTCCFG_TEST_CASE(7)
-{
-    const ntsa::Handle handle = 22;
-
-    ntccfg::TestAllocator ta;
-    {
-        ntcs::RegistryEntry entry(handle,
-                                  ntca::ReactorEventTrigger::e_LEVEL,
-                                  false,
-                                  &ta);
-
-        bsl::shared_ptr<Test::ExecutorMock> executor =
-            bsl::make_shared<Test::ExecutorMock>();
-
-        const ntci::SocketDetachedCallback callback(Test::noop);
-
-        entry.setDetachmentRequired(callback);
-        executor->setExecuteExpected();
-        NTCCFG_TEST_TRUE(entry.announceDetached(executor));
-        NTCCFG_TEST_FALSE(entry.announceDetached(executor));
-
-        entry.clear();
-        entry.setDetachmentRequired(callback);
-        executor->setExecuteExpected();
-        NTCCFG_TEST_TRUE(entry.announceDetached(executor));
-        NTCCFG_TEST_FALSE(entry.announceDetached(executor));
-    }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
-}
-
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-    NTCCFG_TEST_REGISTER(3);
-    NTCCFG_TEST_REGISTER(4);
-    NTCCFG_TEST_REGISTER(5);
-    NTCCFG_TEST_REGISTER(6);
-    NTCCFG_TEST_REGISTER(7);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP

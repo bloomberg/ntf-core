@@ -13,32 +13,104 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ntscfg_test.h>
+
+#include <bsls_ident.h>
+BSLS_IDENT_RCSID(ntcs_strand_t_cpp, "$Id$ $CSID$")
+
 #include <ntcs_strand.h>
 
-#include <ntccfg_test.h>
 #include <ntci_executor.h>
 #include <ntci_log.h>
-#include <bdlf_bind.h>
-#include <bdlf_memfn.h>
-#include <bdlf_placeholder.h>
-#include <bdlma_concurrentmultipoolallocator.h>
-#include <bslmt_barrier.h>
-#include <bslmt_latch.h>
-#include <bslmt_semaphore.h>
-#include <bslmt_threadgroup.h>
-#include <bslmt_threadutil.h>
-#include <bsls_stopwatch.h>
-#include <bsls_timeinterval.h>
-#include <bsl_functional.h>
-#include <bsl_iostream.h>
-#include <bsl_unordered_map.h>
 
 using namespace BloombergLP;
 
-namespace test {
+namespace BloombergLP {
+namespace ntcs {
+
+// Provide tests for 'ntcs::Strand'.
+class StrandTest
+{
+    /// Provide an interface to execute a function.
+    class Executor;
+
+    /// This class keeps track of the count of an action performed by a thread.
+    class Count;
+
+    static void processFunction(bsl::size_t        sequenceNumber,
+                                bsls::AtomicUint*  dequeueSequenceNumber,
+                                StrandTest::Count* dequeueCount,
+                                bsl::size_t        maxSequenceNumber,
+                                bslmt::Semaphore*  semaphore);
+
+    static void dequeueFunction(
+        const bsl::shared_ptr<StrandTest::Executor>& executor,
+        bsl::size_t                                  threadIndex,
+        bslmt::Barrier*                              dequeueBarrier,
+        StrandTest::Count*                           dequeueCount);
+
+    static void enqueueFunction(
+        const bsl::shared_ptr<StrandTest::Executor>& executor,
+        const bsl::shared_ptr<ntci::Strand>&         strand,
+        bsl::size_t                                  threadIndex,
+        bslmt::Barrier*                              enqueueBarrier,
+        ntccfg::Mutex*                               enqueueMutex,
+        bsl::size_t*                                 enqueueSequenceNumber,
+        StrandTest::Count*                           enqueueCount,
+        bsls::AtomicUint*                            dequeueSequenceNumber,
+        StrandTest::Count*                           dequeueCount,
+        bsl::size_t                                  maxSequenceNumber,
+        bslmt::Semaphore*                            semaphore,
+        bslma::Allocator*                            allocator);
+
+    static void executeCaseOneThreadGroups(
+        bsl::size_t       numEnqueueThreads,
+        bsl::size_t       numDequeueThreads,
+        bsl::size_t       maxSequenceNumber,
+        bslma::Allocator* basicAllocator = 0);
+
+    static void verifyCurrentStrandOne(
+        ntccfg::Object*                      strandOneObject,
+        const bsl::shared_ptr<ntcs::Strand>& strandOne,
+        bsls::AtomicInt*                     strandOneJobsComplete,
+        bsls::AtomicInt*                     strandOneJobsRemaining,
+        bsl::size_t                          strandOneJobsTotal,
+        bslmt::Semaphore*                    strandOneSemaphore,
+        ntccfg::Object*                      strandTwoObject,
+        const bsl::shared_ptr<ntcs::Strand>& strandTwo,
+        bsls::AtomicInt*                     strandTwoJobsComplete,
+        bsls::AtomicInt*                     strandTwoJobsRemaining,
+        bsl::size_t                          strandTwoJobsTotal,
+        bslmt::Semaphore*                    strandTwoSemaphore);
+
+    static void verifyCurrentStrandTwo(
+        ntccfg::Object*                      strandOneObject,
+        const bsl::shared_ptr<ntcs::Strand>& strandOne,
+        bsls::AtomicInt*                     strandOneJobsComplete,
+        bsls::AtomicInt*                     strandOneJobsRemaining,
+        bsl::size_t                          strandOneJobsTotal,
+        bslmt::Semaphore*                    strandOneSemaphore,
+        ntccfg::Object*                      strandTwoObject,
+        const bsl::shared_ptr<ntcs::Strand>& strandTwo,
+        bsls::AtomicInt*                     strandTwoJobsComplete,
+        bsls::AtomicInt*                     strandTwoJobsRemaining,
+        bsl::size_t                          strandTwoJobsTotal,
+        bslmt::Semaphore*                    strandTwoSemaphore);
+
+    static void executeCaseTwoThread(
+        const bsl::shared_ptr<StrandTest::Executor>& executor,
+        bsl::size_t                                  threadIndex);
+
+  public:
+    // TODO
+    static void verifyCase1();
+
+    // TODO
+    static void verifyCase2();
+};
 
 /// Provide an interface to execute a function.
-class Executor : public ntci::Executor
+class StrandTest::Executor : public ntci::Executor
 {
     ntccfg::ConditionMutex d_functorQueueMutex;
     ntccfg::Condition      d_functorQueueCondition;
@@ -75,7 +147,7 @@ class Executor : public ntci::Executor
                         const Functor&   functor) BSLS_KEYWORD_OVERRIDE;
 };
 
-Executor::Executor(bslma::Allocator* basicAllocator)
+StrandTest::Executor::Executor(bslma::Allocator* basicAllocator)
 : d_functorQueueMutex()
 , d_functorQueueCondition()
 , d_functorQueue(basicAllocator)
@@ -84,11 +156,11 @@ Executor::Executor(bslma::Allocator* basicAllocator)
 {
 }
 
-Executor::~Executor()
+StrandTest::Executor::~Executor()
 {
 }
 
-void Executor::run()
+void StrandTest::Executor::run()
 {
     ntccfg::ConditionMutexGuard guard(&d_functorQueueMutex);
 
@@ -115,14 +187,14 @@ void Executor::run()
     }
 }
 
-void Executor::stop()
+void StrandTest::Executor::stop()
 {
     ntccfg::ConditionMutexGuard guard(&d_functorQueueMutex);
     d_stop = true;
     d_functorQueueCondition.broadcast();
 }
 
-void Executor::execute(const Functor& functor)
+void StrandTest::Executor::execute(const Functor& functor)
 {
     ntccfg::ConditionMutexGuard guard(&d_functorQueueMutex);
     d_functorQueue.push_back(functor);
@@ -130,8 +202,8 @@ void Executor::execute(const Functor& functor)
     d_functorQueueCondition.signal();
 }
 
-void Executor::moveAndExecute(FunctorSequence* functorSequence,
-                              const Functor&   functor)
+void StrandTest::Executor::moveAndExecute(FunctorSequence* functorSequence,
+                                          const Functor&   functor)
 {
     ntccfg::ConditionMutexGuard guard(&d_functorQueueMutex);
 
@@ -145,7 +217,7 @@ void Executor::moveAndExecute(FunctorSequence* functorSequence,
 
 /// This class keeps track of the count of an action performed by a thread.
 /// This class is thread safe.
-class Count
+class StrandTest::Count
 {
     typedef bsl::unordered_map<bsl::uint64_t, bsl::size_t> CountMap;
     typedef bsl::unordered_map<bsl::uint64_t, bsl::size_t> IndexMap;
@@ -190,10 +262,10 @@ class Count
     const bsl::string& name() const;
 };
 
-Count::Count(const bsl::string& name,
-             bsl::size_t        maxThreads,
-             bsl::size_t        maxCount,
-             bslma::Allocator*  basicAllocator)
+StrandTest::Count::Count(const bsl::string& name,
+                         bsl::size_t        maxThreads,
+                         bsl::size_t        maxCount,
+                         bslma::Allocator*  basicAllocator)
 : d_lock(bsls::SpinLock::s_unlocked)
 , d_countMap(basicAllocator)
 , d_indexMap(basicAllocator)
@@ -203,12 +275,12 @@ Count::Count(const bsl::string& name,
 {
 }
 
-Count::~Count()
+StrandTest::Count::~Count()
 {
 }
 
-void Count::setThreadIndex(bslmt::ThreadUtil::Handle threadHandle,
-                           bsl::size_t               threadIndex)
+void StrandTest::Count::setThreadIndex(bslmt::ThreadUtil::Handle threadHandle,
+                                       bsl::size_t               threadIndex)
 {
     BSLS_ASSERT(threadIndex < d_maxThreads);
 
@@ -219,7 +291,7 @@ void Count::setThreadIndex(bslmt::ThreadUtil::Handle threadHandle,
     d_indexMap[key] = threadIndex;
 }
 
-void Count::record(bslmt::ThreadUtil::Handle threadHandle)
+void StrandTest::Count::record(bslmt::ThreadUtil::Handle threadHandle)
 {
     bsl::uint64_t key = bslmt::ThreadUtil::idAsUint64(
         bslmt::ThreadUtil::handleToId(threadHandle));
@@ -228,7 +300,7 @@ void Count::record(bslmt::ThreadUtil::Handle threadHandle)
     ++d_countMap[key];
 }
 
-void Count::print(bsl::ostream& stream)
+void StrandTest::Count::print(bsl::ostream& stream)
 {
     stream << "\n" << d_name << ":\n";
 
@@ -282,16 +354,16 @@ void Count::print(bsl::ostream& stream)
            << bsl::right << total << "\n";
 }
 
-const bsl::string& Count::name() const
+const bsl::string& StrandTest::Count::name() const
 {
     return d_name;
 }
 
-void processFunction(bsl::size_t       sequenceNumber,
-                     bsls::AtomicUint* dequeueSequenceNumber,
-                     test::Count*      dequeueCount,
-                     bsl::size_t       maxSequenceNumber,
-                     bslmt::Semaphore* semaphore)
+void StrandTest::processFunction(bsl::size_t        sequenceNumber,
+                                 bsls::AtomicUint*  dequeueSequenceNumber,
+                                 StrandTest::Count* dequeueCount,
+                                 bsl::size_t        maxSequenceNumber,
+                                 bslmt::Semaphore*  semaphore)
 {
     NTCI_LOG_CONTEXT();
 
@@ -302,7 +374,7 @@ void processFunction(bsl::size_t       sequenceNumber,
 
     NTCI_LOG_DEBUG("[-] %d", (int)(sequenceNumber));
 
-    NTCCFG_TEST_EQ(sequenceNumber, expectedSequenceNumber);
+    NTSCFG_TEST_EQ(sequenceNumber, expectedSequenceNumber);
 
     dequeueCount->record(bslmt::ThreadUtil::self());
 
@@ -315,10 +387,11 @@ void processFunction(bsl::size_t       sequenceNumber,
     }
 }
 
-void dequeueFunction(const bsl::shared_ptr<test::Executor>& executor,
-                     bsl::size_t                            threadIndex,
-                     bslmt::Barrier*                        dequeueBarrier,
-                     test::Count*                           dequeueCount)
+void StrandTest::dequeueFunction(
+    const bsl::shared_ptr<StrandTest::Executor>& executor,
+    bsl::size_t                                  threadIndex,
+    bslmt::Barrier*                              dequeueBarrier,
+    StrandTest::Count*                           dequeueCount)
 {
     int rc;
 
@@ -346,18 +419,19 @@ void dequeueFunction(const bsl::shared_ptr<test::Executor>& executor,
     executor->run();
 }
 
-void enqueueFunction(const bsl::shared_ptr<test::Executor>& executor,
-                     const bsl::shared_ptr<ntci::Strand>&   strand,
-                     bsl::size_t                            threadIndex,
-                     bslmt::Barrier*                        enqueueBarrier,
-                     ntccfg::Mutex*                         enqueueMutex,
-                     bsl::size_t*      enqueueSequenceNumber,
-                     test::Count*      enqueueCount,
-                     bsls::AtomicUint* dequeueSequenceNumber,
-                     test::Count*      dequeueCount,
-                     bsl::size_t       maxSequenceNumber,
-                     bslmt::Semaphore* semaphore,
-                     bslma::Allocator* allocator)
+void StrandTest::enqueueFunction(
+    const bsl::shared_ptr<StrandTest::Executor>& executor,
+    const bsl::shared_ptr<ntci::Strand>&         strand,
+    bsl::size_t                                  threadIndex,
+    bslmt::Barrier*                              enqueueBarrier,
+    ntccfg::Mutex*                               enqueueMutex,
+    bsl::size_t*                                 enqueueSequenceNumber,
+    StrandTest::Count*                           enqueueCount,
+    bsls::AtomicUint*                            dequeueSequenceNumber,
+    StrandTest::Count*                           dequeueCount,
+    bsl::size_t                                  maxSequenceNumber,
+    bslmt::Semaphore*                            semaphore,
+    bslma::Allocator*                            allocator)
 {
     bsl::string threadName;
     {
@@ -409,7 +483,7 @@ void enqueueFunction(const bsl::shared_ptr<test::Executor>& executor,
         enqueueCount->record(bslmt::ThreadUtil::self());
 
         strand->execute(bdlf::BindUtil::bindS(allocator,
-                                              &test::processFunction,
+                                              &StrandTest::processFunction,
                                               sequenceNumber,
                                               dequeueSequenceNumber,
                                               dequeueCount,
@@ -420,10 +494,10 @@ void enqueueFunction(const bsl::shared_ptr<test::Executor>& executor,
     }
 }
 
-void execute(bsl::size_t       numEnqueueThreads,
-             bsl::size_t       numDequeueThreads,
-             bsl::size_t       maxSequenceNumber,
-             bslma::Allocator* basicAllocator = 0)
+void StrandTest::executeCaseOneThreadGroups(bsl::size_t numEnqueueThreads,
+                                            bsl::size_t numDequeueThreads,
+                                            bsl::size_t maxSequenceNumber,
+                                            bslma::Allocator* basicAllocator)
 {
     NTCI_LOG_CONTEXT();
 
@@ -431,7 +505,7 @@ void execute(bsl::size_t       numEnqueueThreads,
 
     // Create the executor.
 
-    bsl::shared_ptr<test::Executor> executor;
+    bsl::shared_ptr<StrandTest::Executor> executor;
     executor.createInplace(allocator, allocator);
 
     bsl::size_t      enqueueSequenceNumber = 0;
@@ -447,14 +521,14 @@ void execute(bsl::size_t       numEnqueueThreads,
 
     ntccfg::Mutex enqueueMutex;
 
-    test::Count enqueueCount("Enqueue",
-                             numEnqueueThreads,
-                             maxSequenceNumber,
-                             allocator);
-    test::Count dequeueCount("Dequeue",
-                             numDequeueThreads,
-                             maxSequenceNumber,
-                             allocator);
+    StrandTest::Count enqueueCount("Enqueue",
+                                   numEnqueueThreads,
+                                   maxSequenceNumber,
+                                   allocator);
+    StrandTest::Count dequeueCount("Dequeue",
+                                   numDequeueThreads,
+                                   maxSequenceNumber,
+                                   allocator);
 
     bsls::Stopwatch stopwatch;
     stopwatch.start(true);
@@ -470,7 +544,7 @@ void execute(bsl::size_t       numEnqueueThreads,
     {
         dequeueThreadGroup.addThread(
             bdlf::BindUtil::bindS(allocator,
-                                  &test::dequeueFunction,
+                                  &StrandTest::dequeueFunction,
                                   executor,
                                   dequeueThreadIndex,
                                   &dequeueBarrier,
@@ -496,7 +570,7 @@ void execute(bsl::size_t       numEnqueueThreads,
     {
         enqueueThreadGroup.addThread(
             bdlf::BindUtil::bindS(allocator,
-                                  &test::enqueueFunction,
+                                  &StrandTest::enqueueFunction,
                                   executor,
                                   strand,
                                   enqueueThreadIndex,
@@ -568,9 +642,190 @@ void execute(bsl::size_t       numEnqueueThreads,
     }
 }
 
-}  // close namespace test
+void StrandTest::verifyCurrentStrandOne(
+    ntccfg::Object*                      strandOneObject,
+    const bsl::shared_ptr<ntcs::Strand>& strandOne,
+    bsls::AtomicInt*                     strandOneJobsComplete,
+    bsls::AtomicInt*                     strandOneJobsRemaining,
+    bsl::size_t                          strandOneJobsTotal,
+    bslmt::Semaphore*                    strandOneSemaphore,
+    ntccfg::Object*                      strandTwoObject,
+    const bsl::shared_ptr<ntcs::Strand>& strandTwo,
+    bsls::AtomicInt*                     strandTwoJobsComplete,
+    bsls::AtomicInt*                     strandTwoJobsRemaining,
+    bsl::size_t                          strandTwoJobsTotal,
+    bslmt::Semaphore*                    strandTwoSemaphore)
+{
+    NTCCFG_OBJECT_GUARD(strandOneObject);
 
-NTCCFG_TEST_CASE(1)
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_INFO("Strand one job %d/%d complete",
+                  strandOneJobsComplete->load() + 1,
+                  strandOneJobsTotal);
+
+    // Ensure strand one is active in this thread, but strand two is not.
+
+    ntci::Strand* current = ntci::Strand::getThreadLocal();
+    NTSCFG_TEST_EQ(current, strandOne.get());
+
+    bool strandOneIsActive = strandOne->isRunningInCurrentThread();
+    bool strandTwoIsActive = strandTwo->isRunningInCurrentThread();
+
+    NTSCFG_TEST_TRUE(strandOneIsActive);
+    NTSCFG_TEST_FALSE(strandTwoIsActive);
+
+    // Note that a job on strand one is complete.
+
+    int previousNumJobsComplete = strandOneJobsComplete->add(1);
+
+    // Kick off another job on strand one, if there are any left remaining.
+
+    if (strandOneJobsRemaining->subtract(1) >= 0) {
+        strandOne->execute(
+            bdlf::BindUtil::bind(&StrandTest::verifyCurrentStrandOne,
+                                 strandOneObject,
+                                 strandOne,
+                                 strandOneJobsComplete,
+                                 strandOneJobsRemaining,
+                                 strandOneJobsTotal,
+                                 strandOneSemaphore,
+                                 strandTwoObject,
+                                 strandTwo,
+                                 strandTwoJobsComplete,
+                                 strandTwoJobsRemaining,
+                                 strandTwoJobsTotal,
+                                 strandTwoSemaphore));
+    }
+
+    // Kick off another job on strand two, if there are any left remaining.
+
+    if (strandTwoJobsRemaining->subtract(1) >= 0) {
+        strandTwo->execute(
+            bdlf::BindUtil::bind(&StrandTest::verifyCurrentStrandTwo,
+                                 strandOneObject,
+                                 strandOne,
+                                 strandOneJobsComplete,
+                                 strandOneJobsRemaining,
+                                 strandOneJobsTotal,
+                                 strandOneSemaphore,
+                                 strandTwoObject,
+                                 strandTwo,
+                                 strandTwoJobsComplete,
+                                 strandTwoJobsRemaining,
+                                 strandTwoJobsTotal,
+                                 strandTwoSemaphore));
+    }
+
+    if (previousNumJobsComplete == strandOneJobsTotal) {
+        strandOneSemaphore->post();
+    }
+}
+
+void StrandTest::verifyCurrentStrandTwo(
+    ntccfg::Object*                      strandOneObject,
+    const bsl::shared_ptr<ntcs::Strand>& strandOne,
+    bsls::AtomicInt*                     strandOneJobsComplete,
+    bsls::AtomicInt*                     strandOneJobsRemaining,
+    bsl::size_t                          strandOneJobsTotal,
+    bslmt::Semaphore*                    strandOneSemaphore,
+    ntccfg::Object*                      strandTwoObject,
+    const bsl::shared_ptr<ntcs::Strand>& strandTwo,
+    bsls::AtomicInt*                     strandTwoJobsComplete,
+    bsls::AtomicInt*                     strandTwoJobsRemaining,
+    bsl::size_t                          strandTwoJobsTotal,
+    bslmt::Semaphore*                    strandTwoSemaphore)
+{
+    NTCCFG_OBJECT_GUARD(strandTwoObject);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_INFO("Strand two job %d/%d complete",
+                  strandTwoJobsComplete->load() + 1,
+                  strandTwoJobsTotal);
+
+    // Ensure strand two is active in this thread, but strand one is not.
+
+    ntci::Strand* current = ntci::Strand::getThreadLocal();
+    NTSCFG_TEST_EQ(current, strandTwo.get());
+
+    bool strandOneIsActive = strandOne->isRunningInCurrentThread();
+    bool strandTwoIsActive = strandTwo->isRunningInCurrentThread();
+
+    NTSCFG_TEST_FALSE(strandOneIsActive);
+    NTSCFG_TEST_TRUE(strandTwoIsActive);
+
+    // Note that a job on strand two is complete.
+
+    int previousNumJobsComplete = strandTwoJobsComplete->add(1);
+
+    // Kick off another job on strand one, if there are any left remaining.
+
+    if (strandOneJobsRemaining->subtract(1) >= 0) {
+        strandOne->execute(
+            bdlf::BindUtil::bind(&StrandTest::verifyCurrentStrandOne,
+                                 strandOneObject,
+                                 strandOne,
+                                 strandOneJobsComplete,
+                                 strandOneJobsRemaining,
+                                 strandOneJobsTotal,
+                                 strandOneSemaphore,
+                                 strandTwoObject,
+                                 strandTwo,
+                                 strandTwoJobsComplete,
+                                 strandTwoJobsRemaining,
+                                 strandTwoJobsTotal,
+                                 strandTwoSemaphore));
+    }
+
+    // Kick off another job on strand two, if there are any left remaining.
+
+    if (strandTwoJobsRemaining->subtract(1) >= 0) {
+        strandTwo->execute(
+            bdlf::BindUtil::bind(&StrandTest::verifyCurrentStrandTwo,
+                                 strandOneObject,
+                                 strandOne,
+                                 strandOneJobsComplete,
+                                 strandOneJobsRemaining,
+                                 strandOneJobsTotal,
+                                 strandOneSemaphore,
+                                 strandTwoObject,
+                                 strandTwo,
+                                 strandTwoJobsComplete,
+                                 strandTwoJobsRemaining,
+                                 strandTwoJobsTotal,
+                                 strandTwoSemaphore));
+    }
+
+    if (previousNumJobsComplete == strandTwoJobsTotal) {
+        strandTwoSemaphore->post();
+    }
+}
+
+void StrandTest::executeCaseTwoThread(
+    const bsl::shared_ptr<StrandTest::Executor>& executor,
+    bsl::size_t                                  threadIndex)
+{
+    NTCI_LOG_CONTEXT();
+
+    int rc;
+
+    bsl::string threadName;
+    {
+        bsl::stringstream ss;
+        ss << "executor-" << threadIndex;
+        threadName = ss.str();
+    }
+
+    bslmt::ThreadUtil::setThreadName(threadName);
+
+    NTCI_LOG_CONTEXT_GUARD_OWNER("executor");
+    NTCI_LOG_CONTEXT_GUARD_THREAD(threadIndex);
+
+    executor->run();
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::StrandTest::verifyCase1)
 {
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
@@ -606,357 +861,127 @@ NTCCFG_TEST_CASE(1)
                       (int)(DATA[iteration].d_numEnqueueThreads),
                       (int)(DATA[iteration].d_numDequeueThreads));
 
-        ntccfg::TestAllocator ta;
-        {
-            test::execute(DATA[iteration].d_numEnqueueThreads,
-                          DATA[iteration].d_numDequeueThreads,
-                          MAX_SEQUENCE_NUMBER,
-                          &d_memoryPools);
-        }
-        NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+        StrandTest::executeCaseOneThreadGroups(
+            DATA[iteration].d_numEnqueueThreads,
+            DATA[iteration].d_numDequeueThreads,
+            MAX_SEQUENCE_NUMBER,
+            &d_memoryPools);
     }
 }
 
-namespace test {
-
-/// Provide utilities for verifying the current strand active
-/// in a thread used by this test driver.
-struct CurrentUtil {
-    static void verifyCurrentStrandOne(
-        ntccfg::Object*                      strandOneObject,
-        const bsl::shared_ptr<ntcs::Strand>& strandOne,
-        bsls::AtomicInt*                     strandOneJobsComplete,
-        bsls::AtomicInt*                     strandOneJobsRemaining,
-        bsl::size_t                          strandOneJobsTotal,
-        bslmt::Semaphore*                    strandOneSemaphore,
-        ntccfg::Object*                      strandTwoObject,
-        const bsl::shared_ptr<ntcs::Strand>& strandTwo,
-        bsls::AtomicInt*                     strandTwoJobsComplete,
-        bsls::AtomicInt*                     strandTwoJobsRemaining,
-        bsl::size_t                          strandTwoJobsTotal,
-        bslmt::Semaphore*                    strandTwoSemaphore);
-
-    static void verifyCurrentStrandTwo(
-        ntccfg::Object*                      strandOneObject,
-        const bsl::shared_ptr<ntcs::Strand>& strandOne,
-        bsls::AtomicInt*                     strandOneJobsComplete,
-        bsls::AtomicInt*                     strandOneJobsRemaining,
-        bsl::size_t                          strandOneJobsTotal,
-        bslmt::Semaphore*                    strandOneSemaphore,
-        ntccfg::Object*                      strandTwoObject,
-        const bsl::shared_ptr<ntcs::Strand>& strandTwo,
-        bsls::AtomicInt*                     strandTwoJobsComplete,
-        bsls::AtomicInt*                     strandTwoJobsRemaining,
-        bsl::size_t                          strandTwoJobsTotal,
-        bslmt::Semaphore*                    strandTwoSemaphore);
-
-    static void executeThread(const bsl::shared_ptr<test::Executor>& executor,
-                              bsl::size_t threadIndex);
-};
-
-void CurrentUtil::verifyCurrentStrandOne(
-    ntccfg::Object*                      strandOneObject,
-    const bsl::shared_ptr<ntcs::Strand>& strandOne,
-    bsls::AtomicInt*                     strandOneJobsComplete,
-    bsls::AtomicInt*                     strandOneJobsRemaining,
-    bsl::size_t                          strandOneJobsTotal,
-    bslmt::Semaphore*                    strandOneSemaphore,
-    ntccfg::Object*                      strandTwoObject,
-    const bsl::shared_ptr<ntcs::Strand>& strandTwo,
-    bsls::AtomicInt*                     strandTwoJobsComplete,
-    bsls::AtomicInt*                     strandTwoJobsRemaining,
-    bsl::size_t                          strandTwoJobsTotal,
-    bslmt::Semaphore*                    strandTwoSemaphore)
+NTSCFG_TEST_FUNCTION(ntcs::StrandTest::verifyCase2)
 {
-    NTCCFG_OBJECT_GUARD(strandOneObject);
+    const bsl::size_t NUM_THREADS = 4;
+    const bsl::size_t NUM_JOBS    = 1000;
 
-    NTCI_LOG_CONTEXT();
+    ntsa::Error error;
+    int         rc;
 
-    NTCI_LOG_INFO("Strand one job %d/%d complete",
-                  strandOneJobsComplete->load() + 1,
-                  strandOneJobsTotal);
+    // Ensure there is no current strand active in this thread.
 
-    // Ensure strand one is active in this thread, but strand two is not.
-
-    ntci::Strand* current = ntci::Strand::getThreadLocal();
-    NTCCFG_TEST_EQ(current, strandOne.get());
-
-    bool strandOneIsActive = strandOne->isRunningInCurrentThread();
-    bool strandTwoIsActive = strandTwo->isRunningInCurrentThread();
-
-    NTCCFG_TEST_TRUE(strandOneIsActive);
-    NTCCFG_TEST_FALSE(strandTwoIsActive);
-
-    // Note that a job on strand one is complete.
-
-    int previousNumJobsComplete = strandOneJobsComplete->add(1);
-
-    // Kick off another job on strand one, if there are any left remaining.
-
-    if (strandOneJobsRemaining->subtract(1) >= 0) {
-        strandOne->execute(
-            bdlf::BindUtil::bind(&test::CurrentUtil::verifyCurrentStrandOne,
-                                 strandOneObject,
-                                 strandOne,
-                                 strandOneJobsComplete,
-                                 strandOneJobsRemaining,
-                                 strandOneJobsTotal,
-                                 strandOneSemaphore,
-                                 strandTwoObject,
-                                 strandTwo,
-                                 strandTwoJobsComplete,
-                                 strandTwoJobsRemaining,
-                                 strandTwoJobsTotal,
-                                 strandTwoSemaphore));
-    }
-
-    // Kick off another job on strand two, if there are any left remaining.
-
-    if (strandTwoJobsRemaining->subtract(1) >= 0) {
-        strandTwo->execute(
-            bdlf::BindUtil::bind(&test::CurrentUtil::verifyCurrentStrandTwo,
-                                 strandOneObject,
-                                 strandOne,
-                                 strandOneJobsComplete,
-                                 strandOneJobsRemaining,
-                                 strandOneJobsTotal,
-                                 strandOneSemaphore,
-                                 strandTwoObject,
-                                 strandTwo,
-                                 strandTwoJobsComplete,
-                                 strandTwoJobsRemaining,
-                                 strandTwoJobsTotal,
-                                 strandTwoSemaphore));
-    }
-
-    if (previousNumJobsComplete == strandOneJobsTotal) {
-        strandOneSemaphore->post();
-    }
-}
-
-void CurrentUtil::verifyCurrentStrandTwo(
-    ntccfg::Object*                      strandOneObject,
-    const bsl::shared_ptr<ntcs::Strand>& strandOne,
-    bsls::AtomicInt*                     strandOneJobsComplete,
-    bsls::AtomicInt*                     strandOneJobsRemaining,
-    bsl::size_t                          strandOneJobsTotal,
-    bslmt::Semaphore*                    strandOneSemaphore,
-    ntccfg::Object*                      strandTwoObject,
-    const bsl::shared_ptr<ntcs::Strand>& strandTwo,
-    bsls::AtomicInt*                     strandTwoJobsComplete,
-    bsls::AtomicInt*                     strandTwoJobsRemaining,
-    bsl::size_t                          strandTwoJobsTotal,
-    bslmt::Semaphore*                    strandTwoSemaphore)
-{
-    NTCCFG_OBJECT_GUARD(strandTwoObject);
-
-    NTCI_LOG_CONTEXT();
-
-    NTCI_LOG_INFO("Strand two job %d/%d complete",
-                  strandTwoJobsComplete->load() + 1,
-                  strandTwoJobsTotal);
-
-    // Ensure strand two is active in this thread, but strand one is not.
-
-    ntci::Strand* current = ntci::Strand::getThreadLocal();
-    NTCCFG_TEST_EQ(current, strandTwo.get());
-
-    bool strandOneIsActive = strandOne->isRunningInCurrentThread();
-    bool strandTwoIsActive = strandTwo->isRunningInCurrentThread();
-
-    NTCCFG_TEST_FALSE(strandOneIsActive);
-    NTCCFG_TEST_TRUE(strandTwoIsActive);
-
-    // Note that a job on strand two is complete.
-
-    int previousNumJobsComplete = strandTwoJobsComplete->add(1);
-
-    // Kick off another job on strand one, if there are any left remaining.
-
-    if (strandOneJobsRemaining->subtract(1) >= 0) {
-        strandOne->execute(
-            bdlf::BindUtil::bind(&test::CurrentUtil::verifyCurrentStrandOne,
-                                 strandOneObject,
-                                 strandOne,
-                                 strandOneJobsComplete,
-                                 strandOneJobsRemaining,
-                                 strandOneJobsTotal,
-                                 strandOneSemaphore,
-                                 strandTwoObject,
-                                 strandTwo,
-                                 strandTwoJobsComplete,
-                                 strandTwoJobsRemaining,
-                                 strandTwoJobsTotal,
-                                 strandTwoSemaphore));
-    }
-
-    // Kick off another job on strand two, if there are any left remaining.
-
-    if (strandTwoJobsRemaining->subtract(1) >= 0) {
-        strandTwo->execute(
-            bdlf::BindUtil::bind(&test::CurrentUtil::verifyCurrentStrandTwo,
-                                 strandOneObject,
-                                 strandOne,
-                                 strandOneJobsComplete,
-                                 strandOneJobsRemaining,
-                                 strandOneJobsTotal,
-                                 strandOneSemaphore,
-                                 strandTwoObject,
-                                 strandTwo,
-                                 strandTwoJobsComplete,
-                                 strandTwoJobsRemaining,
-                                 strandTwoJobsTotal,
-                                 strandTwoSemaphore));
-    }
-
-    if (previousNumJobsComplete == strandTwoJobsTotal) {
-        strandTwoSemaphore->post();
-    }
-}
-
-void CurrentUtil::executeThread(
-    const bsl::shared_ptr<test::Executor>& executor,
-    bsl::size_t                            threadIndex)
-{
-    NTCI_LOG_CONTEXT();
-
-    int rc;
-
-    bsl::string threadName;
     {
-        bsl::stringstream ss;
-        ss << "executor-" << threadIndex;
-        threadName = ss.str();
+        ntci::Strand* current = ntci::Strand::getThreadLocal();
+        NTSCFG_TEST_EQ(current, 0);
     }
 
-    bslmt::ThreadUtil::setThreadName(threadName);
+    // Create the executor.
 
-    NTCI_LOG_CONTEXT_GUARD_OWNER("executor");
-    NTCI_LOG_CONTEXT_GUARD_THREAD(threadIndex);
+    bsl::shared_ptr<StrandTest::Executor> executor;
+    executor.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-    executor->run();
-}
+    // Create two strands.
 
-}  // close unnamed namespace
+    ntccfg::Object strandOneObject("one");
+    ntccfg::Object strandTwoObject("two");
 
-NTCCFG_TEST_CASE(2)
-{
-    ntccfg::TestAllocator ta;
+    bsl::shared_ptr<ntcs::Strand> strandOne;
+    strandOne.createInplace(NTSCFG_TEST_ALLOCATOR,
+                            executor,
+                            NTSCFG_TEST_ALLOCATOR);
+
+    bsl::shared_ptr<ntcs::Strand> strandTwo;
+    strandTwo.createInplace(NTSCFG_TEST_ALLOCATOR,
+                            executor,
+                            NTSCFG_TEST_ALLOCATOR);
+
+    const bsl::size_t strandOneJobsTotal = NUM_JOBS;
+    const bsl::size_t strandTwoJobsTotal = NUM_JOBS;
+
+    bsls::AtomicInt strandOneJobsComplete(0);
+    bsls::AtomicInt strandOneJobsRemaining(strandOneJobsTotal);
+
+    bsls::AtomicInt strandTwoJobsComplete(0);
+    bsls::AtomicInt strandTwoJobsRemaining(strandTwoJobsTotal);
+
+    bslmt::Semaphore strandOneSemaphore;
+    bslmt::Semaphore strandTwoSemaphore;
+
+    // Create a set of threads that will drive the strands.
+
+    bslmt::ThreadGroup threadGroup(NTSCFG_TEST_ALLOCATOR);
+
+    for (bsl::size_t threadIndex = 0; threadIndex < NUM_THREADS; ++threadIndex)
     {
-        const bsl::size_t NUM_THREADS = 4;
-        const bsl::size_t NUM_JOBS    = 1000;
-
-        ntsa::Error error;
-        int         rc;
-
-        // Ensure there is no current strand active in this thread.
-
-        {
-            ntci::Strand* current = ntci::Strand::getThreadLocal();
-            NTCCFG_TEST_EQ(current, 0);
-        }
-
-        // Create the executor.
-
-        bsl::shared_ptr<test::Executor> executor;
-        executor.createInplace(&ta, &ta);
-
-        // Create two strands.
-
-        ntccfg::Object strandOneObject("one");
-        ntccfg::Object strandTwoObject("two");
-
-        bsl::shared_ptr<ntcs::Strand> strandOne;
-        strandOne.createInplace(&ta, executor, &ta);
-
-        bsl::shared_ptr<ntcs::Strand> strandTwo;
-        strandTwo.createInplace(&ta, executor, &ta);
-
-        const bsl::size_t strandOneJobsTotal = NUM_JOBS;
-        const bsl::size_t strandTwoJobsTotal = NUM_JOBS;
-
-        bsls::AtomicInt strandOneJobsComplete(0);
-        bsls::AtomicInt strandOneJobsRemaining(strandOneJobsTotal);
-
-        bsls::AtomicInt strandTwoJobsComplete(0);
-        bsls::AtomicInt strandTwoJobsRemaining(strandTwoJobsTotal);
-
-        bslmt::Semaphore strandOneSemaphore;
-        bslmt::Semaphore strandTwoSemaphore;
-
-        // Create a set of threads that will drive the strands.
-
-        bslmt::ThreadGroup threadGroup(&ta);
-
-        for (bsl::size_t threadIndex = 0; threadIndex < NUM_THREADS;
-             ++threadIndex)
-        {
-            rc = threadGroup.addThread(
-                bdlf::BindUtil::bind(&test::CurrentUtil::executeThread,
-                                     executor,
-                                     threadIndex));
-            NTCCFG_TEST_EQ(rc, 0);
-        }
-
-        // Kick off a job on strand one. The job will invoke other jobs for
-        // strand one and strand two as necessary.
-
-        if (strandOneJobsRemaining.subtract(1) > 0) {
-            strandOne->execute(bdlf::BindUtil::bind(
-                &test::CurrentUtil::verifyCurrentStrandOne,
-                &strandOneObject,
-                strandOne,
-                &strandOneJobsComplete,
-                &strandOneJobsRemaining,
-                strandOneJobsTotal,
-                &strandOneSemaphore,
-                &strandTwoObject,
-                strandTwo,
-                &strandTwoJobsComplete,
-                &strandTwoJobsRemaining,
-                strandTwoJobsTotal,
-                &strandTwoSemaphore));
-        }
-
-        // Kick off a job on strand two. The job will invoke other jobs for
-        // strand one and strand two as necessary.
-
-        if (strandTwoJobsRemaining.subtract(1) > 0) {
-            strandTwo->execute(bdlf::BindUtil::bind(
-                &test::CurrentUtil::verifyCurrentStrandTwo,
-                &strandOneObject,
-                strandOne,
-                &strandOneJobsComplete,
-                &strandOneJobsRemaining,
-                strandOneJobsTotal,
-                &strandOneSemaphore,
-                &strandTwoObject,
-                strandTwo,
-                &strandTwoJobsComplete,
-                &strandTwoJobsRemaining,
-                strandTwoJobsTotal,
-                &strandTwoSemaphore));
-        }
-
-        // Wait for all jobs from both strands to complete.
-
-        strandOneSemaphore.wait();
-        strandTwoSemaphore.wait();
-
-        // Stop the executor.
-
-        executor->stop();
-
-        // Join all threads.
-
-        threadGroup.joinAll();
+        rc = threadGroup.addThread(
+            bdlf::BindUtil::bind(&StrandTest::executeCaseTwoThread,
+                                 executor,
+                                 threadIndex));
+        NTSCFG_TEST_EQ(rc, 0);
     }
-    NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+
+    // Kick off a job on strand one. The job will invoke other jobs for
+    // strand one and strand two as necessary.
+
+    if (strandOneJobsRemaining.subtract(1) > 0) {
+        strandOne->execute(
+            bdlf::BindUtil::bind(&StrandTest::verifyCurrentStrandOne,
+                                 &strandOneObject,
+                                 strandOne,
+                                 &strandOneJobsComplete,
+                                 &strandOneJobsRemaining,
+                                 strandOneJobsTotal,
+                                 &strandOneSemaphore,
+                                 &strandTwoObject,
+                                 strandTwo,
+                                 &strandTwoJobsComplete,
+                                 &strandTwoJobsRemaining,
+                                 strandTwoJobsTotal,
+                                 &strandTwoSemaphore));
+    }
+
+    // Kick off a job on strand two. The job will invoke other jobs for
+    // strand one and strand two as necessary.
+
+    if (strandTwoJobsRemaining.subtract(1) > 0) {
+        strandTwo->execute(
+            bdlf::BindUtil::bind(&StrandTest::verifyCurrentStrandTwo,
+                                 &strandOneObject,
+                                 strandOne,
+                                 &strandOneJobsComplete,
+                                 &strandOneJobsRemaining,
+                                 strandOneJobsTotal,
+                                 &strandOneSemaphore,
+                                 &strandTwoObject,
+                                 strandTwo,
+                                 &strandTwoJobsComplete,
+                                 &strandTwoJobsRemaining,
+                                 strandTwoJobsTotal,
+                                 &strandTwoSemaphore));
+    }
+
+    // Wait for all jobs from both strands to complete.
+
+    strandOneSemaphore.wait();
+    strandTwoSemaphore.wait();
+
+    // Stop the executor.
+
+    executor->stop();
+
+    // Join all threads.
+
+    threadGroup.joinAll();
 }
 
-NTCCFG_TEST_DRIVER
-{
-    NTCCFG_TEST_REGISTER(1);
-    NTCCFG_TEST_REGISTER(2);
-}
-NTCCFG_TEST_DRIVER_END;
+}  // close namespace ntcs
+}  // close namespace BloombergLP
