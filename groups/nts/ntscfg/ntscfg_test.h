@@ -1290,6 +1290,19 @@ int main(int argc, char** argv)
 #define NTSCFG_TEST_FUNCTION_NAME(prefix, disambiguator)                      \
     NTSCFG_TEST_FUNCTION_NAME_JOIN(prefix, disambiguator)
 
+#if defined(BSLS_PLATFORM_CMP_SUN)
+
+// Implement the declaration of a test function for the specified
+// 'concernStringLiteral'. Note that this macro is private to the
+// implementation and should not be used.
+#define NTSCFG_TEST_FUNCTION(function)                                        \
+    BloombergLP::ntscfg::TestRegistration NTSCFG_TEST_FUNCTION_NAME(          \
+        test_,                                                                \
+        __LINE__)(#function, &(function));                                    \
+    void function()
+
+#else
+
 // Implement the declaration of a test function for the specified
 // 'concernStringLiteral'. Note that this macro is private to the
 // implementation and should not be used.
@@ -1298,6 +1311,8 @@ int main(int argc, char** argv)
         test_,                                                                \
         __COUNTER__)(#function, &(function));                                 \
     void function()
+
+#endif
 
 /// @internal @brief
 /// Assert the 'expression' is true.
