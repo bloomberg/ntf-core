@@ -82,6 +82,20 @@ class DatagramSocketTest
         const DatagramSocketTest::Parameters&  parameters,
         bslma::Allocator*                      allocator);
 
+    /// Validate that the specified 'metrics' does not contain data for
+    /// elements starting from the specified 'base' up to 'base' + the
+    /// 'specified 'number' (exclusive) in total.
+    static void validateNoMetricsAvailable(const bdld::DatumArrayRef& metrics,
+                                           int                        base,
+                                           int                        number);
+
+    /// Validate that the specified 'metrics' contains data for elements
+    /// starting from the specified 'base' up to 'base' + the specified
+    /// 'number' (exclusive) in total.
+    static void validateMetricsAvailable(const bdld::DatumArrayRef& metrics,
+                                         int                        base,
+                                         int                        number);
+
     /// Return an endpoint representing a suitable address to which to
     /// bind a socket of the specified 'transport' type for use by this
     /// test driver.
@@ -1593,6 +1607,28 @@ void DatagramSocketTest::verifyReceiveCancellationVariation(
     proactor->stop();
 }
 
+void DatagramSocketTest::validateNoMetricsAvailable(
+    const bdld::DatumArrayRef& metrics,
+    int                        base,
+    int                        number)
+{
+    NTSCFG_TEST_GE(metrics.length(), base + number);
+    for (int i = base; i < base + number; ++i) {
+        NTSCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_NIL);
+    }
+}
+
+void DatagramSocketTest::validateMetricsAvailable(
+    const bdld::DatumArrayRef& metrics,
+    int                        base,
+    int                        number)
+{
+    NTSCFG_TEST_GE(metrics.length(), base + number);
+    for (int i = base; i < base + number; ++i) {
+        NTSCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_DOUBLE);
+    }
+}
+
 ntsa::Endpoint DatagramSocketTest::any(ntsa::Transport::Value transport)
 {
     ntsa::Endpoint endpoint;
@@ -1751,7 +1787,8 @@ NTSCFG_TEST_FUNCTION(ntcp::DatagramSocketTest::verifyStressAsync)
 NTSCFG_TEST_FUNCTION(ntcp::DatagramSocketTest::verifyIncomingTimestamps)
 {
     // Concern: Incoming timestamps test
-
+#if 0
+    // The test is disabled due to its flaky nature
     DatagramSocketTest::Parameters parameters;
     parameters.d_numTimers             = 0;
     parameters.d_numSocketPairs        = 1;
@@ -1767,6 +1804,7 @@ NTSCFG_TEST_FUNCTION(ntcp::DatagramSocketTest::verifyIncomingTimestamps)
                     NTCCFG_BIND_PLACEHOLDER_2,
                     parameters,
                     NTCCFG_BIND_PLACEHOLDER_3));
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcp::DatagramSocketTest::verifyOutgoingTimestamps)

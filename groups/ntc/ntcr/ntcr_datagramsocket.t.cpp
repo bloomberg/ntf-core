@@ -82,6 +82,20 @@ class DatagramSocketTest
         const DatagramSocketTest::Parameters& parameters,
         bslma::Allocator*                     allocator);
 
+    /// Validate that the specified 'metrics' does not contain data for
+    /// elements starting from the specified 'base' up to 'base' + the
+    /// 'specified 'number' (exclusive) in total.
+    static void validateNoMetricsAvailable(const bdld::DatumArrayRef& metrics,
+                                           int                        base,
+                                           int                        number);
+
+    /// Validate that the specified 'metrics' contains data for elements
+    /// starting from the specified 'base' up to 'base' + the specified
+    /// 'number' (exclusive) in total.
+    static void validateMetricsAvailable(const bdld::DatumArrayRef& metrics,
+                                         int                        base,
+                                         int                        number);
+
     /// Return an endpoint representing a suitable address to which to
     /// bind a socket of the specified 'transport' type for use by this
     /// test driver.
@@ -1594,6 +1608,28 @@ void DatagramSocketTest::verifyReceiveCancellationVariation(
     NTCI_LOG_DEBUG("Datagram socket receive cancellation test complete");
 
     reactor->stop();
+}
+
+void DatagramSocketTest::validateNoMetricsAvailable(
+    const bdld::DatumArrayRef& metrics,
+    int                        base,
+    int                        number)
+{
+    NTSCFG_TEST_GE(metrics.length(), base + number);
+    for (int i = base; i < base + number; ++i) {
+        NTSCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_NIL);
+    }
+}
+
+void DatagramSocketTest::validateMetricsAvailable(
+    const bdld::DatumArrayRef& metrics,
+    int                        base,
+    int                        number)
+{
+    NTSCFG_TEST_GE(metrics.length(), base + number);
+    for (int i = base; i < base + number; ++i) {
+        NTSCFG_TEST_EQ(metrics[i].type(), bdld::Datum::e_DOUBLE);
+    }
 }
 
 ntsa::Endpoint DatagramSocketTest::any(ntsa::Transport::Value transport)

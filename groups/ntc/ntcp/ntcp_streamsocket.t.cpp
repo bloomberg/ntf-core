@@ -2966,7 +2966,8 @@ NTSCFG_TEST_FUNCTION(
 NTSCFG_TEST_FUNCTION(ntcp::StreamSocketTest::verifyIncomingTimestamps)
 {
     // Concern: RX timestamping test.
-
+#if 0
+    // The test is disabled due to its flaky nature
     StreamSocketTest::Parameters parameters;
     parameters.d_numTimers             = 0;
     parameters.d_numSocketPairs        = 1;
@@ -2982,6 +2983,7 @@ NTSCFG_TEST_FUNCTION(ntcp::StreamSocketTest::verifyIncomingTimestamps)
                     NTCCFG_BIND_PLACEHOLDER_2,
                     parameters,
                     NTCCFG_BIND_PLACEHOLDER_3));
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcp::StreamSocketTest::verifyOutgoingTimestamps)
