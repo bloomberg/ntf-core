@@ -1111,7 +1111,7 @@ int main(int argc, char** argv)
                 (0 == bsl::strcmp(arg, "--help")))
             {
                 BloombergLP::ntscfg::TestUtil::help();
-                return 1;
+                return 0;
             }
 
             if ((0 == bsl::strcmp(arg, "-l")) ||
@@ -1187,7 +1187,7 @@ int main(int argc, char** argv)
                         bsl::cerr << "The test case number " << number
                                   << " is not found" << bsl::endl;
                     }
-                    return 1;
+                    return -1;
                 }
             }
             else {
