@@ -1407,7 +1407,7 @@ class IoRingDevice
 ///
 /// @par Thread Safety
 /// This class is thread safe.
-class IoRingDeviceTest : public IoRingTest
+class IoRingDeviceTest : public IoRingValidator
 {
     ntco::IoRingDevice d_device;
     ntcs::EventPool    d_eventPool;
@@ -4336,7 +4336,7 @@ bool IoRingUtil::isSupported()
     }
 }
 
-IoRingTest::~IoRingTest()
+IoRingValidator::~IoRingValidator()
 {
 }
 
@@ -6430,7 +6430,7 @@ bsl::shared_ptr<ntci::Proactor> IoRingFactory::createProactor(
     return proactor;
 }
 
-bsl::shared_ptr<ntco::IoRingTest> IoRingFactory::createTest(
+bsl::shared_ptr<ntco::IoRingValidator> IoRingFactory::createTest(
     bsl::size_t       queueDepth,
     bslma::Allocator* basicAllocator)
 {

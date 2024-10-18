@@ -40,11 +40,11 @@ namespace ntco {
 /// This class is thread safe.
 ///
 /// @ingroup module_ntco
-class IoRingTest
+class IoRingValidator
 {
   public:
     /// Destroy this object.
-    virtual ~IoRingTest();
+    virtual ~IoRingValidator();
 
     /// Push a unit of work identified by the specified 'id' onto the
     /// submission queue and immediately submit it. Return the error.
@@ -123,7 +123,7 @@ class IoRingFactory : public ntci::ProactorFactory
     /// 'queueDepth'. Optionally specify a 'basicAllocator' used to supply
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used. Return the error.
-    static bsl::shared_ptr<ntco::IoRingTest> createTest(
+    static bsl::shared_ptr<ntco::IoRingValidator> createTest(
         bsl::size_t       queueDepth,
         bslma::Allocator* basicAllocator = 0);
 
