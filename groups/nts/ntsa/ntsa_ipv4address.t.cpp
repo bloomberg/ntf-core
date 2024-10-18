@@ -299,7 +299,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv4AddressTest::verifyParsing)
         {              "256.1", {0x00, 0x00, 0x00, 0x00}, false},
         {       "255.16777216", {0x00, 0x00, 0x00, 0x00}, false},
         {      "255.255.65536", {0xFF, 0xFF, 0xFF, 0xFF}, false},
-        {  "99999999999999999", {0x00, 0x00, 0x00, 0x00}, false},
+        {  "99999999999999999", {0x00, 0x00, 0x00, 0x00}, false}
     };
 
     enum { NUM_DATA = sizeof(DATA) / sizeof(DATA[0]) };
