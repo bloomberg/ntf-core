@@ -150,9 +150,6 @@ NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase1)
 
 NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase2)
 {
-    NTCI_LOG_CONTEXT();
-    NTCI_LOG_CONTEXT_GUARD_OWNER("test");
-
     if (!ntco::IoRingFactory::isSupported()) {
         return;
     }
@@ -194,5 +191,3 @@ NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase4)
 }  // close namespace BloombergLP
 
 #endif
-
-
