@@ -124,16 +124,36 @@ bool Ipv4Address::parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT
         ++current;
     }
 
-    bsl::uint64_t numOctetsLeft = 4 - index;
-    if (numAtIndex >= bsl::pow(256, numOctetsLeft)) {
-        return false;
-    }
+    if (NTSCFG_LIKELY(index == 3)) {
+        if (numAtIndex > 255) {
+            return false;
+        }
 
-    for (size_t oct = 0; oct < numOctetsLeft; ++oct) {
-        bsl::uint8_t octet =
-            NTSCFG_WARNING_NARROW(bsl::uint8_t, numAtIndex % 256);
-        newValue.d_asBytes[3 - oct]  = octet;
-        numAtIndex                  /= 256;
+        newValue.d_asBytes[index] =
+            NTSCFG_WARNING_NARROW(bsl::uint8_t, numAtIndex);
+    }
+    else {
+        bsl::uint64_t numOctetsLeft = 4 - index;
+
+#if defined(BSLS_PLATFORM_CMP_SUN)
+        bsl::uint64_t product = 1;
+        for (bsl::size_t i = 0; i < numOctetsLeft; ++i) {
+            product *= 256;
+        }
+#else
+        bsl::uint64_t product = bsl::pow(256, numOctetsLeft);
+#endif
+
+        if (numAtIndex >= product) {
+            return false;
+        }
+
+        for (size_t i = 0; i < numOctetsLeft; ++i) {
+            bsl::uint8_t octet =
+                NTSCFG_WARNING_NARROW(bsl::uint8_t, numAtIndex % 256);
+            newValue.d_asBytes[3 - i]  = octet;
+            numAtIndex /= 256;
+        }
     }
 
     d_value.d_asDword = newValue.d_asDword;
