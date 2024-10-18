@@ -8,6 +8,5 @@ ntccfg_lock
 ntccfg_mutex
 ntccfg_object
 ntccfg_platform
-ntccfg_test
 ntccfg_traits
 ntccfg_tune

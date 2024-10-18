@@ -358,7 +358,6 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntccfg_mutex)
     ntf_component(NAME ntccfg_object)
     ntf_component(NAME ntccfg_platform)
-    ntf_component(NAME ntccfg_test)
     ntf_component(NAME ntccfg_traits)
     ntf_component(NAME ntccfg_tune)
 
