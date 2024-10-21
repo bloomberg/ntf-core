@@ -59,6 +59,8 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 #include <ntco_pollset.h>
 #include <ntco_select.h>
 
+#include <ntctls_plugin.h>
+
 #include <bdlbb_pooledblobbufferfactory.h>
 
 #include <bslma_allocator.h>
@@ -1339,6 +1341,10 @@ ntsa::Error System::createEncryptionClient(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1360,6 +1366,10 @@ ntsa::Error System::createEncryptionClient(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1384,6 +1394,10 @@ ntsa::Error System::createEncryptionClient(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1406,6 +1420,10 @@ ntsa::Error System::createEncryptionServer(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1426,6 +1444,10 @@ ntsa::Error System::createEncryptionResource(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1445,6 +1467,10 @@ ntsa::Error System::createEncryptionServer(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1468,6 +1494,10 @@ ntsa::Error System::createEncryptionServer(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);

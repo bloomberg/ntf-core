@@ -299,6 +299,10 @@ else
     NTF_CONFIGURE_WITH_IORING=0
 fi
 
+if [[ -z "${NTF_CONFIGURE_WITH_OPENSSL}" ]]; then
+    NTF_CONFIGURE_WITH_OPENSSL=1
+fi
+
 if [[ -z "${NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING}" ]]; then
     NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=1
 fi
@@ -477,6 +481,8 @@ usage()
     echo "    --with-iocp                        Enable the proactor driver implemented with I/O completion ports (Windows only) [${NTF_CONFIGURE_WITH_IOCP}]"
     echo "    --with-ioring                      Enable the proactor driver implemented with 'io_uring' (Linux only) [${NTF_CONFIGURE_WITH_IORING}]"
 
+    echo "    --with-openssl                     Enable the encryption driver implemented with OpenSSL [${NTF_CONFIGURE_WITH_OPENSSL}]"
+
     echo "    --with-dynamic-load-balancing      Enable processing I/O on any thread, rather than a single thread [${NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING}]"
     echo "    --with-thread-scaling              Enable automatic scaling of thread pools [${NTF_CONFIGURE_WITH_THREAD_SCALING}]"
     echo "    --with-deprecated-features         Enable deprecated features [${NTF_CONFIGURE_WITH_DEPRECATED_FEATURES}]"
@@ -648,6 +654,9 @@ while true ; do
         --with-ioring)
             NTF_CONFIGURE_WITH_IORING=1 ; shift ;;
 
+        --with-openssl)
+            NTF_CONFIGURE_WITH_OPENSSL=1 ; shift ;;
+
         --with-dynamic-load-balancing)
             NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=1 ; shift ;;
         --with-thread-scaling)
@@ -756,6 +765,9 @@ while true ; do
             NTF_CONFIGURE_WITH_IOCP=0 ; shift ;;
         --without-ioring)
             NTF_CONFIGURE_WITH_IORING=0 ; shift ;;
+
+        --without-openssl)
+            NTF_CONFIGURE_WITH_OPENSSL=0 ; shift ;;
 
         --without-dynamic-load-balancing)
             NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=0 ; shift ;;
@@ -878,6 +890,8 @@ export NTF_CONFIGURE_WITH_POLLSET
 export NTF_CONFIGURE_WITH_KQUEUE
 export NTF_CONFIGURE_WITH_IOCP
 export NTF_CONFIGURE_WITH_IORING
+
+export NTF_CONFIGURE_WITH_OPENSSL
 
 export NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING
 export NTF_CONFIGURE_WITH_THREAD_SCALING

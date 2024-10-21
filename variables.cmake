@@ -559,6 +559,18 @@ if (NOT DEFINED NTF_BUILD_WITH_IORING)
     endif()
 endif()
 
+if (NOT DEFINED NTF_BUILD_WITH_OPENSSL)
+    if (DEFINED NTF_CONFIGURE_WITH_OPENSSL)
+        set(NTF_BUILD_WITH_OPENSSL
+            ${NTF_CONFIGURE_WITH_OPENSSL} CACHE INTERNAL "")
+    elseif (DEFINED ENV{NTF_CONFIGURE_WITH_OPENSSL})
+        set(NTF_BUILD_WITH_OPENSSL
+            $ENV{NTF_CONFIGURE_WITH_OPENSSL} CACHE INTERNAL "")
+    else()
+        set(NTF_BUILD_WITH_OPENSSL TRUE CACHE INTERNAL "")
+    endif()
+endif()
+
 if (NOT DEFINED NTF_BUILD_WITH_DYNAMIC_LOAD_BALANCING)
     if (DEFINED NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING)
         set(NTF_BUILD_WITH_DYNAMIC_LOAD_BALANCING
@@ -968,6 +980,12 @@ if (${NTF_BUILD_WITH_IOCP})
     message(STATUS "NTF: Building with I/O completion ports:        yes")
 else()
     message(STATUS "NTF: Building with I/O completion ports:        no")
+endif()
+
+if (${NTF_BUILD_WITH_OPENSSL})
+    message(STATUS "NTF: Building with OpenSSL:                     yes")
+else()
+    message(STATUS "NTF: Building with OpenSSL:                     no")
 endif()
 
 if (${NTF_BUILD_WITH_DYNAMIC_LOAD_BALANCING})

@@ -32,6 +32,8 @@ BSLS_IDENT_RCSID(ntcp_interface_cpp, "$Id$ $CSID$")
 #include <ntcs_threadutil.h>
 #include <ntcs_user.h>
 
+#include <ntctls_plugin.h>
+
 #include <bdlt_currenttime.h>
 #include <bslma_allocator.h>
 #include <bslma_default.h>
@@ -952,6 +954,10 @@ ntsa::Error Interface::createEncryptionClient(
 
     ntsa::Error error;
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -974,6 +980,10 @@ ntsa::Error Interface::createEncryptionClient(
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
 
     ntsa::Error error;
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -999,6 +1009,10 @@ ntsa::Error Interface::createEncryptionClient(
 
     ntsa::Error error;
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1022,6 +1036,10 @@ ntsa::Error Interface::createEncryptionServer(
 
     ntsa::Error error;
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1044,6 +1062,10 @@ ntsa::Error Interface::createEncryptionServer(
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
 
     ntsa::Error error;
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1069,6 +1091,10 @@ ntsa::Error Interface::createEncryptionServer(
 
     ntsa::Error error;
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1085,7 +1111,15 @@ ntsa::Error Interface::createEncryptionResource(
     bsl::shared_ptr<ntci::EncryptionResource>* result,
     bslma::Allocator*                          basicAllocator)
 {
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
+
     ntsa::Error error;
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1108,6 +1142,10 @@ ntsa::Error Interface::generateCertificate(
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
 
     ntsa::Error error;
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1137,6 +1175,10 @@ ntsa::Error Interface::generateCertificate(
 
     ntsa::Error error;
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1164,6 +1206,10 @@ ntsa::Error Interface::generateCertificate(
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
 
     ntsa::Error error;
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1193,6 +1239,10 @@ ntsa::Error Interface::generateCertificate(
 
     ntsa::Error error;
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1216,6 +1266,10 @@ ntsa::Error Interface::loadCertificate(
 {
     ntsa::Error error;
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1235,6 +1289,10 @@ ntsa::Error Interface::saveCertificate(
 {
     ntsa::Error error;
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1250,6 +1308,10 @@ ntsa::Error Interface::encodeCertificate(
     const ntca::EncryptionResourceOptions&              options)
 {
     ntsa::Error error;
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1269,6 +1331,10 @@ ntsa::Error Interface::decodeCertificate(
     bslma::Allocator*                             basicAllocator)
 {
     ntsa::Error error;
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1292,6 +1358,10 @@ ntsa::Error Interface::generateKey(ntca::EncryptionKey*              result,
 
     ntsa::Error error;
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1312,6 +1382,10 @@ ntsa::Error Interface::generateKey(
 
     ntsa::Error error;
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1327,6 +1401,10 @@ ntsa::Error Interface::loadKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
                                bslma::Allocator* basicAllocator)
 {
     ntsa::Error error;
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1344,6 +1422,10 @@ ntsa::Error Interface::saveKey(
 {
     ntsa::Error error;
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1359,6 +1441,10 @@ ntsa::Error Interface::encodeKey(
     const ntca::EncryptionResourceOptions&      options)
 {
     ntsa::Error error;
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1376,6 +1462,10 @@ ntsa::Error Interface::decodeKey(
     bslma::Allocator*                      basicAllocator)
 {
     ntsa::Error error;
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
