@@ -106,6 +106,9 @@ namespace ntccfg {
 // driver for a proactor. This driver is available on Linux.
 #define NTC_BUILD_WITH_IORING @NTF_BUILD_WITH_IORING@
 
+// Build with support for OpenSSL as the driver for TLS.
+#define NTC_BUILD_WITH_OPENSSL @NTF_BUILD_WITH_OPENSSL@
+
 // Build with support for being able to configure a processing model where
 // any thread can process I/O for a socket, rather than just a particular
 // thread chosen at the time the socket was created.

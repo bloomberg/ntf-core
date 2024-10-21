@@ -64,6 +64,10 @@ if (${NTF_BUILD_WITH_NTS})
         ntf_group_requires(NAME nts DEPENDENCY bsl)
     endif()
 
+    if (${NTF_BUILD_WITH_OPENSSL})
+        ntf_group_requires(NAME nts DEPENDENCY openssl)
+    endif()
+
     ntf_package(NAME ntsscm)
 
     ntf_component(NAME ntsscm_version)
@@ -320,6 +324,10 @@ if (${NTF_BUILD_WITH_NTC})
 
     if (${NTF_BUILD_WITH_BSL})
         ntf_group_requires(NAME ntc DEPENDENCY bsl)
+    endif()
+
+    if (${NTF_BUILD_WITH_OPENSSL})
+        ntf_group_requires(NAME ntc DEPENDENCY openssl)
     endif()
 
     ntf_package(NAME ntcscm)
@@ -777,6 +785,26 @@ if (${NTF_BUILD_WITH_NTC})
 
     ntf_package(
         NAME
+            ntctls
+        REQUIRES
+            ntcscm
+            ntccfg
+            ntca
+            ntci
+            ntcm
+            ntcs
+            ntcq
+            ntcd
+            ntcdns
+        PRIVATE
+    )
+
+    ntf_component(NAME ntctls_plugin)
+
+    ntf_package_end(NAME ntctls)
+
+    ntf_package(
+        NAME
             ntcu
         REQUIRES
             ntcscm
@@ -788,6 +816,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctls
         PRIVATE
     )
 
@@ -817,6 +846,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctls
             ntcu
         PRIVATE
     )
@@ -842,6 +872,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctls
             ntcu
         PRIVATE
     )
@@ -867,6 +898,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctls
             ntcu
             ntcr
             ntcp
@@ -899,6 +931,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctls
             ntcu
             ntcr
             ntcp

@@ -105,6 +105,10 @@ IF NOT DEFINED NTF_CONFIGURE_WITH_IOCP (
     set NTF_CONFIGURE_WITH_IOCP=1
 )
 
+IF NOT DEFINED NTF_CONFIGURE_WITH_OPENSSL (
+    set NTF_CONFIGURE_WITH_OPENSSL=1
+)
+
 IF NOT DEFINED NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING (
     set NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=1
 )
@@ -322,6 +326,10 @@ if not "%1"=="" (
         set NTF_CONFIGURE_WITH_IOCP=1
     )
 
+    if "%1"=="--with-openssl" (
+        set NTF_CONFIGURE_WITH_OPENSSL=1
+    )
+
     if "%1"=="--with-dynamic-load-balancing" (
         set NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=1
     )
@@ -448,6 +456,10 @@ if not "%1"=="" (
     )
     if "%1"=="--without-iocp" (
         set NTF_CONFIGURE_WITH_IOCP=0
+    )
+
+    if "%1"=="--without-openssl" (
+        set NTF_CONFIGURE_WITH_OPENSSL=0
     )
 
     if "%1"=="--without-dynamic-load-balancing" (
@@ -839,6 +851,8 @@ echo     --with-ntc                       Enable and build features that depend 
 echo     --with-select                    Enable the reactor driver implemented with 'select'
 echo     --with-poll                      Enable the reactor driver implemented with 'poll'
 echo     --with-iocp                      Enable the proactor driver that depends on I/O completion ports
+
+echo     --with-openssl                   Enable the encryption driver implemented with OpenSSL
 
 echo     --with-dynamic-load-balancing    Enable processing I/O on any thread, rather than a single thread
 echo     --with-thread-scaling            Enable automatic scaling of thread pools
