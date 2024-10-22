@@ -1523,6 +1523,10 @@ ntsa::Error System::generateCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1549,6 +1553,10 @@ ntsa::Error System::generateCertificate(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1577,6 +1585,10 @@ ntsa::Error System::generateCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1604,6 +1616,10 @@ ntsa::Error System::generateCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1629,6 +1645,10 @@ ntsa::Error System::loadCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1648,6 +1668,10 @@ ntsa::Error System::loadCertificate(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1670,6 +1694,10 @@ ntsa::Error System::saveCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1689,6 +1717,10 @@ ntsa::Error System::saveCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1707,6 +1739,10 @@ ntsa::Error System::encodeCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1726,6 +1762,10 @@ ntsa::Error System::encodeCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1746,6 +1786,10 @@ ntsa::Error System::encodeCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1764,6 +1808,10 @@ ntsa::Error System::encodeCertificate(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1785,6 +1833,10 @@ ntsa::Error System::encodeCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1803,6 +1855,10 @@ ntsa::Error System::encodeCertificate(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1824,6 +1880,10 @@ ntsa::Error System::encodeCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1842,6 +1902,10 @@ ntsa::Error System::encodeCertificate(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1863,6 +1927,10 @@ ntsa::Error System::decodeCertificate(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1883,6 +1951,10 @@ ntsa::Error System::decodeCertificate(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1906,6 +1978,10 @@ ntsa::Error System::decodeCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1926,6 +2002,10 @@ ntsa::Error System::decodeCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1948,6 +2028,10 @@ ntsa::Error System::decodeCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -1967,6 +2051,10 @@ ntsa::Error System::decodeCertificate(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -1990,6 +2078,10 @@ ntsa::Error System::decodeCertificate(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2009,6 +2101,10 @@ ntsa::Error System::decodeCertificate(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -2031,6 +2127,10 @@ ntsa::Error System::generateKey(ntca::EncryptionKey*              result,
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2049,6 +2149,10 @@ ntsa::Error System::generateKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2066,6 +2170,10 @@ ntsa::Error System::loadKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -2086,6 +2194,10 @@ ntsa::Error System::loadKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2103,6 +2215,10 @@ ntsa::Error System::saveKey(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -2123,6 +2239,10 @@ ntsa::Error System::saveKey(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2141,6 +2261,10 @@ ntsa::Error System::encodeKey(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2160,6 +2284,10 @@ ntsa::Error System::encodeKey(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2177,6 +2305,10 @@ ntsa::Error System::encodeKey(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -2196,6 +2328,10 @@ ntsa::Error System::encodeKey(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -2215,6 +2351,10 @@ ntsa::Error System::encodeKey(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2234,6 +2374,10 @@ ntsa::Error System::encodeKey(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2251,6 +2395,10 @@ ntsa::Error System::encodeKey(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -2270,6 +2418,10 @@ ntsa::Error System::encodeKey(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -2289,6 +2441,10 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2307,6 +2463,10 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -2329,6 +2489,10 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2347,6 +2511,10 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -2369,6 +2537,10 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2387,6 +2559,10 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
@@ -2409,6 +2585,10 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>* result,
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
+
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
     if (error) {
@@ -2427,6 +2607,10 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
+
+#if NTC_BUILD_WITH_OPENSSL
+    ntctls::Plugin::initialize();
+#endif
 
     bsl::shared_ptr<ntci::EncryptionDriver> encryptionDriver;
     error = ntcs::Plugin::lookupEncryptionDriver(&encryptionDriver);
