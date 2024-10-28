@@ -33,7 +33,9 @@ namespace ntcs {
 /// This struct is thread safe.
 ///
 /// @ingroup module_ntcs
-struct Nomenclature {
+class Nomenclature
+{
+  public:
     /// Return a metric name for an anonymous reactor.
     static bsl::string createReactorName();
 
@@ -43,11 +45,12 @@ struct Nomenclature {
     /// Return a metric name for an anonymous thread.
     static bsl::string createThreadName();
 
-    /// Return a metric name for an anonymous thread pool.
-    static bsl::string createThreadPoolName();
-
     /// Return a metric name for an anonymous interface.
     static bsl::string createInterfaceName();
+
+  private:
+    /// Provide global state.
+    class State;
 };
 
 }  // end namespace ntcs

@@ -90,65 +90,92 @@ BSLS_IDENT_RCSID(ntsu_adapterutil_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsu {
 
-namespace {
+/// Provide a private implementation.
+class AdapterUtil::Impl
+{
+  public:
+    /// Provide a functor to sort the addresses first by public IP, then the
+    /// loop back interface, the by private IP.
+    class AdapterSorterByIndex;
 
-/// Sort the addresses first by public IP, then the loop back interface, the
-/// by private IP.
-struct AdapterSorterByIndex {
-    bool operator()(const ntsa::Adapter& lhs, const ntsa::Adapter& rhs) const
-    {
-        return lhs.index() < rhs.index();
-    }
+    /// Provide a functor to sort the addresses first by public IP, then the
+    /// loop back interface, the by private IP.
+    class AdapterSorterByAddress;
+
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+    // Load into the specified 'destination' string the specified
+    // wide-character 'source' string converted into UTF-8.
+    void convertWideString(bsl::string* destination, const WCHAR* source);
+#endif
 };
 
-/// Sort the addresses first by public IP, then the loop back interface, the
-/// by private IP.
-struct AdapterSorterByAddress {
-    bool operator()(const ntsa::Adapter& lhs, const ntsa::Adapter& rhs) const
-    {
-        if (!lhs.ipv4Address().isNull() && !rhs.ipv4Address().isNull()) {
-            if (lhs.ipv4Address().value().isLoopback() &&
-                !rhs.ipv4Address().value().isLoopback())
-            {
-                return false;
-            }
-
-            if (lhs.ipv4Address().value().isPrivate() &&
-                !rhs.ipv4Address().value().isPrivate())
-            {
-                return false;
-            }
-
-            return lhs.ipv4Address() < rhs.ipv4Address();
-        }
-        else if (!lhs.ipv6Address().isNull() && !rhs.ipv6Address().isNull()) {
-            if (lhs.ipv6Address().value().isLoopback() &&
-                !rhs.ipv6Address().value().isLoopback())
-            {
-                return false;
-            }
-
-            if (lhs.ipv6Address().value().isPrivate() &&
-                !rhs.ipv6Address().value().isPrivate())
-            {
-                return false;
-            }
-
-            return lhs.ipv6Address() < rhs.ipv6Address();
-        }
-        else {
-            return lhs.ethernetAddress() < rhs.ethernetAddress();
-        }
-    }
+/// Provide a functor to sort the addresses first by public IP, then the loop
+/// back interface, the by private IP.
+class AdapterUtil::Impl::AdapterSorterByIndex
+{
+  public:
+    bool operator()(const ntsa::Adapter& lhs, const ntsa::Adapter& rhs) const;
 };
+
+/// Provide a functor to sort the addresses first by public IP, then the loop
+/// back interface, the by private IP.
+class AdapterUtil::Impl::AdapterSorterByAddress
+{
+  public:
+    bool operator()(const ntsa::Adapter& lhs, const ntsa::Adapter& rhs) const;
+};
+
+bool AdapterUtil::Impl::AdapterSorterByIndex::operator()(
+    const ntsa::Adapter& lhs,
+    const ntsa::Adapter& rhs) const
+{
+    return lhs.index() < rhs.index();
+}
+
+bool AdapterUtil::Impl::AdapterSorterByAddress::operator()(
+    const ntsa::Adapter& lhs,
+    const ntsa::Adapter& rhs) const
+{
+    if (!lhs.ipv4Address().isNull() && !rhs.ipv4Address().isNull()) {
+        if (lhs.ipv4Address().value().isLoopback() &&
+            !rhs.ipv4Address().value().isLoopback())
+        {
+            return false;
+        }
+
+        if (lhs.ipv4Address().value().isPrivate() &&
+            !rhs.ipv4Address().value().isPrivate())
+        {
+            return false;
+        }
+
+        return lhs.ipv4Address() < rhs.ipv4Address();
+    }
+    else if (!lhs.ipv6Address().isNull() && !rhs.ipv6Address().isNull()) {
+        if (lhs.ipv6Address().value().isLoopback() &&
+            !rhs.ipv6Address().value().isLoopback())
+        {
+            return false;
+        }
+
+        if (lhs.ipv6Address().value().isPrivate() &&
+            !rhs.ipv6Address().value().isPrivate())
+        {
+            return false;
+        }
+
+        return lhs.ipv6Address() < rhs.ipv6Address();
+    }
+    else {
+        return lhs.ethernetAddress() < rhs.ethernetAddress();
+    }
+}
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 
-void convertWideString(bsl::string* destination, const WCHAR* source)
+void AdapterUtil::Impl::convertWideString(bsl::string* destination,
+                                          const WCHAR* source)
 {
-    // Load into the specified 'destination' string the specified
-    // wide-character 'source' string converted into UTF-8.
-
     int rc;
 
     destination->clear();
@@ -191,8 +218,6 @@ void convertWideString(bsl::string* destination, const WCHAR* source)
 }
 
 #endif
-
-}  // close unnamed namespace
 
 void AdapterUtil::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
 {
@@ -393,7 +418,7 @@ void AdapterUtil::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
         result->push_back(adapter);
     }
 
-    bsl::sort(result->begin(), result->end(), AdapterSorterByIndex());
+    bsl::sort(result->begin(), result->end(), Impl::AdapterSorterByIndex());
 
 #elif defined(BSLS_PLATFORM_OS_AIX)
 
@@ -593,7 +618,7 @@ void AdapterUtil::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
         result->push_back(adapter);
     }
 
-    bsl::sort(result->begin(), result->end(), AdapterSorterByIndex());
+    bsl::sort(result->begin(), result->end(), Impl::AdapterSorterByIndex());
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
@@ -673,11 +698,11 @@ void AdapterUtil::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
         }
 
         bsl::string friendlyName;
-        convertWideString(&friendlyName, interfaceAddress->FriendlyName);
+        Impl::convertWideString(&friendlyName, interfaceAddress->FriendlyName);
 
 #if NTSU_ADAPTERUTIL_SKIP_VMWARE
         bsl::string description;
-        convertWideString(&description, interfaceAddress->Description);
+        Impl::convertWideString(&description, interfaceAddress->Description);
 
         // Skip over host side VMware adapters, which have names like:
         // "VMware Virtual Ethernet Adapter for VMnet1".
@@ -805,7 +830,7 @@ void AdapterUtil::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
         result->push_back(adapter);
     }
 
-    bsl::sort(result->begin(), result->end(), AdapterSorterByIndex());
+    bsl::sort(result->begin(), result->end(), Impl::AdapterSorterByIndex());
 
 #else
 #error Not implemented

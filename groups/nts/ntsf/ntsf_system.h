@@ -1615,6 +1615,10 @@ struct System {
 
     /// Release the resources necessary for this library's implementation.
     static void exit();
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 /// Provide a guard to automatically initialize the resources required by this

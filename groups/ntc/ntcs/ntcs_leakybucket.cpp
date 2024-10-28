@@ -23,8 +23,6 @@ BSLS_IDENT_RCSID(ntcs_leakybucket_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcs {
 
-namespace {
-
 /// Return the number of units that would be drained from a leaky bucket
 /// over the specified 'timeInterval' at the specified 'drainRate', plus the
 /// specified 'fractionalUnitDrainedInNanoUnits', representing a fractional
@@ -37,7 +35,7 @@ namespace {
 /// 'timeInterval.seconds() * drainRate <= ULLONG_MAX'.  Note that
 /// 'fractionalUnitDrainedInNanoUnits' is represented in nano-units to avoid
 /// using a floating point representation.
-bsl::uint64_t calculateNumberOfUnitsToDrain(
+bsl::uint64_t LeakyBucket::calculateNumberOfUnitsToDrain(
     bsl::uint64_t*            fractionalUnitDrainedInNanoUnits,
     bsl::uint64_t             drainRate,
     const bsls::TimeInterval& timeInterval)
@@ -68,8 +66,6 @@ bsl::uint64_t calculateNumberOfUnitsToDrain(
 
     return units;
 }
-
-}  // close unnamed namespace
 
 bsls::TimeInterval LeakyBucket::calculateDrainTime(bsl::uint64_t numUnits,
                                                    bsl::uint64_t drainRate,

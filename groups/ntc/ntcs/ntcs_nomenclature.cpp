@@ -18,55 +18,72 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcs_nomenclature_cpp, "$Id$ $CSID$")
 
+#include <bslmt_once.h>
 #include <bsls_assert.h>
 #include <bsls_atomic.h>
+#include <bsls_atomicoperations.h>
 #include <bsl_sstream.h>
 
 namespace BloombergLP {
 namespace ntcs {
 
-namespace {
+/// Provide global state.
+class Nomenclature::State
+{
+  public:
+    bsls::AtomicOperations::AtomicTypes::Int d_anonymousReactorInstanceCount;
+    bsls::AtomicOperations::AtomicTypes::Int d_anonymousProactorInstanceCount;
+    bsls::AtomicOperations::AtomicTypes::Int d_anonymousThreadInstanceCount;
+    bsls::AtomicOperations::AtomicTypes::Int d_anonymousInterfaceInstanceCount;
 
-bsls::AtomicInt s_anonymousReactorInstanceCount;
-bsls::AtomicInt s_anonymousProactorInstanceCount;
-bsls::AtomicInt s_anonymousThreadInstanceCount;
-bsls::AtomicInt s_anonymousThreadPoolInstanceCount;
-bsls::AtomicInt s_anonymousInterfaceInstanceCount;
+    static State s_global;
+};
 
-}  // close unnamed namespace
+Nomenclature::State Nomenclature::State::s_global;
 
 bsl::string Nomenclature::createReactorName()
 {
+    const int counter = bsls::AtomicOperations::incrementIntNv(
+                            &State::s_global.d_anonymousReactorInstanceCount) -
+                        1;
+
     bsl::stringstream ss;
-    ss << "reactor-" << ++s_anonymousReactorInstanceCount;
+    ss << "reactor-" << counter;
     return ss.str();
 }
 
 bsl::string Nomenclature::createProactorName()
 {
+    const int counter =
+        bsls::AtomicOperations::incrementIntNv(
+            &State::s_global.d_anonymousProactorInstanceCount) -
+        1;
+
     bsl::stringstream ss;
-    ss << "proactor-" << ++s_anonymousProactorInstanceCount;
+    ss << "proactor-" << counter;
     return ss.str();
 }
 
 bsl::string Nomenclature::createThreadName()
 {
-    bsl::stringstream ss;
-    ss << "thread-" << ++s_anonymousThreadInstanceCount;
-    return ss.str();
-}
+    const int counter = bsls::AtomicOperations::incrementIntNv(
+                            &State::s_global.d_anonymousThreadInstanceCount) -
+                        1;
 
-bsl::string Nomenclature::createThreadPoolName()
-{
     bsl::stringstream ss;
-    ss << "threadpool-" << ++s_anonymousThreadPoolInstanceCount;
+    ss << "thread-" << counter;
     return ss.str();
 }
 
 bsl::string Nomenclature::createInterfaceName()
 {
+    const int counter =
+        bsls::AtomicOperations::incrementIntNv(
+            &State::s_global.d_anonymousInterfaceInstanceCount) -
+        1;
+
     bsl::stringstream ss;
-    ss << "interface-" << ++s_anonymousInterfaceInstanceCount;
+    ss << "interface-" << counter;
     return ss.str();
 }
 

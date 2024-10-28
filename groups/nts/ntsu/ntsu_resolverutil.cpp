@@ -56,10 +56,19 @@ BSLS_IDENT_RCSID(ntsu_resolverutil_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsu {
 
-namespace {
+/// Provide a private implementation.
+class ResolverUtil::Impl
+{
+  public:
+    /// Provide a guard to automatically free address information.
+    class AddrInfoGuard;
+
+    /// Return the effective error from the specified 'rc'.
+    static ntsa::Error convertGetAddrInfoError(int rc);
+};
 
 /// Provide a guard to automatically free address information.
-class AddrInfoGuard
+class ResolverUtil::Impl::AddrInfoGuard
 {
     struct addrinfo* d_info_p;
 
@@ -76,17 +85,17 @@ class AddrInfoGuard
     ~AddrInfoGuard();
 };
 
-AddrInfoGuard::AddrInfoGuard(struct addrinfo* info)
+ResolverUtil::Impl::AddrInfoGuard::AddrInfoGuard(struct addrinfo* info)
 : d_info_p(info)
 {
 }
 
-AddrInfoGuard::~AddrInfoGuard()
+ResolverUtil::Impl::AddrInfoGuard::~AddrInfoGuard()
 {
     freeaddrinfo(d_info_p);
 }
 
-ntsa::Error convertGetAddrInfoError(int rc)
+ntsa::Error ResolverUtil::Impl::convertGetAddrInfoError(int rc)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
@@ -143,8 +152,6 @@ ntsa::Error convertGetAddrInfoError(int rc)
 #endif
 }
 
-}  // close unnamed namespace
-
 ntsa::Error ResolverUtil::getIpAddress(bsl::vector<ntsa::IpAddress>* result,
                                        const bslstl::StringRef& domainName,
                                        const ntsa::IpAddressOptions& options)
@@ -187,10 +194,10 @@ ntsa::Error ResolverUtil::getIpAddress(bsl::vector<ntsa::IpAddress>* result,
     rc                    = getaddrinfo(nameString.c_str(), 0, &hints, &info);
 
     if (rc != 0) {
-        return convertGetAddrInfoError(rc);
+        return Impl::convertGetAddrInfoError(rc);
     }
 
-    AddrInfoGuard guard(info);
+    Impl::AddrInfoGuard guard(info);
 
     for (addrinfo* current = info; current != 0; current = current->ai_next) {
         if (current->ai_addr == 0) {
@@ -383,10 +390,10 @@ ntsa::Error ResolverUtil::getPort(bsl::vector<ntsa::Port>* result,
     rc                    = getaddrinfo(0, nameString.c_str(), &hints, &info);
 
     if (rc != 0) {
-        return convertGetAddrInfoError(rc);
+        return Impl::convertGetAddrInfoError(rc);
     }
 
-    AddrInfoGuard guard(info);
+    Impl::AddrInfoGuard guard(info);
 
     for (addrinfo* current = info; current != 0; current = current->ai_next) {
 #if defined(BSLS_PLATFORM_OS_UNIX)
@@ -623,10 +630,10 @@ ntsa::Error ResolverUtil::getHostnameFullyQualified(bsl::string* result)
     struct addrinfo* info = 0;
     rc                    = getaddrinfo(buffer, 0, &hints, &info);
     if (rc != 0) {
-        return convertGetAddrInfoError(rc);
+        return Impl::convertGetAddrInfoError(rc);
     }
 
-    AddrInfoGuard guard(info);
+    Impl::AddrInfoGuard guard(info);
 
     result->assign(info->ai_canonname);
 

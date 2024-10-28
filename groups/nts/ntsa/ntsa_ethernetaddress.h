@@ -40,6 +40,8 @@ class EthernetAddress
 {
     bsl::uint8_t d_value[6];
 
+    class Impl;
+
   public:
     /// Declare constants used by this implementation.
     enum Constant {

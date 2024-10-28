@@ -61,6 +61,8 @@ class Ipv6Address
     Representation    d_value;
     ntsa::Ipv6ScopeId d_scopeId;
 
+    class Impl;
+
   public:
     enum {
         /// The maximum required capacity of a buffer to store the longest

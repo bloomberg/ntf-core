@@ -46,113 +46,6 @@ BSLS_IDENT_RCSID(ntcm_monitorable_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcm {
 
-namespace {
-
-#if NTCM_LOGPUBLISHER_FULL
-const char* describeStatisticType(ntci::Monitorable::StatisticType type)
-{
-    switch (type) {
-    case ntci::Monitorable::e_GAUGE:
-        return "GAUGE";
-        break;
-    case ntci::Monitorable::e_SUM:
-        return "SUM";
-        break;
-    case ntci::Monitorable::e_MINIMUM:
-        return "MINIMUM";
-        break;
-    case ntci::Monitorable::e_MAXIMUM:
-        return "MAXIMUM";
-        break;
-    case ntci::Monitorable::e_AVERAGE:
-        return "AVERAGE";
-        break;
-    }
-
-    return "UNKNOWN";
-}
-#endif
-
-bsl::string formatMetricName(const bsl::string& objectName,
-                             const bsl::string& prefix,
-                             const bsl::string& fieldName)
-{
-    NTCCFG_WARNING_UNUSED(objectName);
-
-    bsl::ostringstream ss;
-
-    if (!prefix.empty()) {
-        ss << prefix << '.';
-    }
-
-    ss << fieldName;
-
-    return ss.str();
-}
-
-/// Provide a functor to sort two records.
-struct RecordSorter {
-    bool operator()(const MonitorableLogRecord& lhs,
-                    const MonitorableLogRecord& rhs) const
-    {
-        if (lhs.prefix() < rhs.prefix()) {
-            return true;
-        }
-
-        if (rhs.prefix() < lhs.prefix()) {
-            return false;
-        }
-
-        if (lhs.objectName() < rhs.objectName()) {
-            return true;
-        }
-
-        if (rhs.objectName() < lhs.objectName()) {
-            return false;
-        }
-
-        return lhs.name() < rhs.name();
-    }
-};
-
-bsl::string format(double value)
-{
-    bsl::stringstream ss;
-    ss << bsl::setprecision(2);
-    ss << bsl::fixed;
-
-    if (value < 1024) {
-        ss << value;
-        return ss.str();
-    }
-
-    value /= 1024;
-
-    if (value < 1024) {
-        ss << value << "K";
-        return ss.str();
-    }
-
-    value /= 1024;
-
-    if (value < 1024) {
-        ss << value << "M";
-        return ss.str();
-    }
-
-    value /= 1024;
-
-    if (value < 1024) {
-        ss << value << "G";
-        return ss.str();
-    }
-
-    ss << value << "T";
-    return ss.str();
-}
-
-}  // close unnamed namespace
-
 MonitorableLogRecord::MonitorableLogRecord(bslma::Allocator* basicAllocator)
 : d_guid(basicAllocator)
 , d_objectId(basicAllocator)
@@ -294,6 +187,114 @@ bool operator!=(const MonitorableLogRecord& lhs,
                 const MonitorableLogRecord& rhs)
 {
     return !operator==(lhs, rhs);
+}
+
+/// Provide a functor to sort two records.
+class MonitorableLog::RecordSorter
+{
+  public:
+    bool operator()(const MonitorableLogRecord& lhs,
+                    const MonitorableLogRecord& rhs) const;
+};
+
+bool MonitorableLog::RecordSorter::operator()(
+    const MonitorableLogRecord& lhs,
+    const MonitorableLogRecord& rhs) const
+{
+    if (lhs.prefix() < rhs.prefix()) {
+        return true;
+    }
+
+    if (rhs.prefix() < lhs.prefix()) {
+        return false;
+    }
+
+    if (lhs.objectName() < rhs.objectName()) {
+        return true;
+    }
+
+    if (rhs.objectName() < lhs.objectName()) {
+        return false;
+    }
+
+    return lhs.name() < rhs.name();
+}
+
+const char* MonitorableLog::describeStatisticType(
+    ntci::Monitorable::StatisticType type)
+{
+    switch (type) {
+    case ntci::Monitorable::e_GAUGE:
+        return "GAUGE";
+        break;
+    case ntci::Monitorable::e_SUM:
+        return "SUM";
+        break;
+    case ntci::Monitorable::e_MINIMUM:
+        return "MINIMUM";
+        break;
+    case ntci::Monitorable::e_MAXIMUM:
+        return "MAXIMUM";
+        break;
+    case ntci::Monitorable::e_AVERAGE:
+        return "AVERAGE";
+        break;
+    }
+
+    return "UNKNOWN";
+}
+
+bsl::string MonitorableLog::formatMetricName(const bsl::string& objectName,
+                                             const bsl::string& prefix,
+                                             const bsl::string& fieldName)
+{
+    NTCCFG_WARNING_UNUSED(objectName);
+
+    bsl::ostringstream ss;
+
+    if (!prefix.empty()) {
+        ss << prefix << '.';
+    }
+
+    ss << fieldName;
+
+    return ss.str();
+}
+
+bsl::string MonitorableLog::formatValue(double value)
+{
+    bsl::stringstream ss;
+    ss << bsl::setprecision(2);
+    ss << bsl::fixed;
+
+    if (value < 1024) {
+        ss << value;
+        return ss.str();
+    }
+
+    value /= 1024;
+
+    if (value < 1024) {
+        ss << value << "K";
+        return ss.str();
+    }
+
+    value /= 1024;
+
+    if (value < 1024) {
+        ss << value << "M";
+        return ss.str();
+    }
+
+    value /= 1024;
+
+    if (value < 1024) {
+        ss << value << "G";
+        return ss.str();
+    }
+
+    ss << value << "T";
+    return ss.str();
 }
 
 MonitorableLog::MonitorableLog(bslma::Allocator* basicAllocator)
@@ -564,7 +565,7 @@ void MonitorableLog::publish(
                        << "  ";
 
                     {
-                        bsl::string display = format(record.value());
+                        bsl::string display = formatValue(record.value());
 
                         ss << bsl::setw(10) << bsl::right << display << "  ";
                     }
@@ -609,56 +610,93 @@ bsl::size_t MonitorableLog::numPublications() const
     return d_numPublications;
 }
 
-Collector::Collector(const LoadCallback& loadCallback,
-                     bslma::Allocator*   basicAllocator)
+MonitorableCollector::MonitorableCollector(
+    const ntca::MonitorableCollectorConfig& configuration,
+    const LoadCallback&                     loadCallback,
+    bslma::Allocator*                       basicAllocator)
 : d_mutex()
+, d_scheduler(basicAllocator)
+, d_event()
 , d_publishers(basicAllocator)
 , d_memoryPools(k_POOLS_UP_TO_1K, basicAllocator)
 , d_loader(bsl::allocator_arg, basicAllocator, loadCallback)
-, d_config(basicAllocator)
-, d_allocator_p(bslma::Default::allocator(basicAllocator))
-{
-}
-
-Collector::Collector(const ntca::MonitorableCollectorConfig& configuration,
-                     const LoadCallback&                     loadCallback,
-                     bslma::Allocator*                       basicAllocator)
-: d_mutex()
-, d_publishers(basicAllocator)
-, d_memoryPools(k_POOLS_UP_TO_1K, basicAllocator)
-, d_loader(bsl::allocator_arg, basicAllocator, loadCallback)
+, d_interval()
 , d_config(configuration, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
+    if (d_config.threadName().isNull() ||
+        d_config.threadName().value().empty())
+    {
+        d_config.setThreadName("metrics");
+    }
+
+    if (!d_config.period().isNull()) {
+        d_interval = bsls::TimeInterval(configuration.period().value(), 0);
+    }
+    else {
+        d_interval = bsls::TimeInterval(k_DEFAULT_INTERVAL, 0);
+    }
 }
 
-Collector::~Collector()
+MonitorableCollector::~MonitorableCollector()
 {
 }
 
-void Collector::registerPublisher(
+void MonitorableCollector::registerPublisher(
     const bsl::shared_ptr<ntci::MonitorablePublisher>& publisher)
 {
     LockGuard guard(&d_mutex);
     d_publishers.insert(publisher);
 }
 
-void Collector::deregisterPublisher(
+void MonitorableCollector::deregisterPublisher(
     const bsl::shared_ptr<ntci::MonitorablePublisher>& publisher)
 {
     LockGuard guard(&d_mutex);
     d_publishers.erase(publisher);
 }
 
-void Collector::start()
+void MonitorableCollector::start()
 {
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_TRACE("Starting metrics collector");
+
+    if (d_interval > bsls::TimeInterval(0, 0)) {
+        d_scheduler.scheduleRecurringEvent(
+            &d_event,
+            d_interval,
+            bdlf::MemFnUtil::memFn(&ntcm::MonitorableCollector::collect,
+                                   this));
+
+        bslmt::ThreadAttributes threadAttributes;
+        if (!d_config.threadName().isNull()) {
+            threadAttributes.setThreadName(d_config.threadName().value());
+        }
+
+        int rc = d_scheduler.start(threadAttributes);
+        if (rc != 0) {
+            NTCI_LOG_ERROR(
+                "Failed to start metrics collector scheduler, rc = %d",
+                rc);
+            return;
+        }
+    }
 }
 
-void Collector::stop()
+void MonitorableCollector::stop()
 {
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_TRACE("Stopping metrics collector");
+
+    if (d_interval > bsls::TimeInterval(0, 0)) {
+        d_scheduler.cancelEventAndWait(&d_event);
+        d_scheduler.stop();
+    }
 }
 
-void Collector::collect()
+void MonitorableCollector::collect()
 {
     char                               arena[1024];
     bdlma::BufferedSequentialAllocator sequentialAllocator(arena,
@@ -707,101 +745,10 @@ void Collector::collect()
     }
 }
 
-const ntca::MonitorableCollectorConfig& Collector::configuration() const
+const ntca::MonitorableCollectorConfig& MonitorableCollector::configuration()
+    const
 {
     return d_config;
-}
-
-PeriodicCollector::PeriodicCollector(const bsls::TimeInterval& interval,
-                                     const LoadCallback&       loadCallback,
-                                     bslma::Allocator*         basicAllocator)
-: d_scheduler(basicAllocator)
-, d_event()
-, d_interval(interval)
-, d_collector(loadCallback, basicAllocator)
-{
-}
-
-PeriodicCollector::PeriodicCollector(
-    const ntca::MonitorableCollectorConfig& configuration,
-    const LoadCallback&                     loadCallback,
-    bslma::Allocator*                       basicAllocator)
-: d_scheduler(basicAllocator)
-, d_event()
-, d_interval(0)
-, d_collector(configuration, loadCallback, basicAllocator)
-{
-    if (!configuration.period().isNull()) {
-        d_interval = bsls::TimeInterval(configuration.period().value(), 0);
-    }
-    else {
-        d_interval = bsls::TimeInterval(k_DEFAULT_INTERVAL, 0);
-    }
-}
-
-PeriodicCollector::~PeriodicCollector()
-{
-}
-
-void PeriodicCollector::registerPublisher(
-    const bsl::shared_ptr<ntci::MonitorablePublisher>& publisher)
-{
-    d_collector.registerPublisher(publisher);
-}
-
-void PeriodicCollector::deregisterPublisher(
-    const bsl::shared_ptr<ntci::MonitorablePublisher>& publisher)
-{
-    d_collector.deregisterPublisher(publisher);
-}
-
-void PeriodicCollector::start()
-{
-    NTCI_LOG_CONTEXT();
-
-    NTCI_LOG_TRACE("Starting metrics collector");
-
-    d_collector.start();
-
-    if (d_interval > bsls::TimeInterval(0, 0)) {
-        d_scheduler.scheduleRecurringEvent(
-            &d_event,
-            d_interval,
-            bdlf::MemFnUtil::memFn(&ntcm::Collector::collect, &d_collector));
-
-        bslmt::ThreadAttributes threadAttributes;
-        if (!d_collector.configuration().threadName().isNull()) {
-            threadAttributes.setThreadName(
-                d_collector.configuration().threadName().value());
-        }
-
-        int rc = d_scheduler.start(threadAttributes);
-        if (rc != 0) {
-            NTCI_LOG_ERROR(
-                "Failed to start metrics collector scheduler, rc = %d",
-                rc);
-            return;
-        }
-    }
-}
-
-void PeriodicCollector::stop()
-{
-    NTCI_LOG_CONTEXT();
-
-    NTCI_LOG_TRACE("Stopping metrics collector");
-
-    if (d_interval > bsls::TimeInterval(0, 0)) {
-        d_scheduler.cancelEventAndWait(&d_event);
-        d_scheduler.stop();
-    }
-
-    d_collector.stop();
-}
-
-void PeriodicCollector::collect()
-{
-    d_collector.collect();
 }
 
 MonitorableRegistry::MonitorableRegistry(bslma::Allocator* basicAllocator)
@@ -863,21 +810,65 @@ void MonitorableRegistry::loadRegisteredObjects(
     }
 }
 
-namespace {
+/// Provide global monitorable state.
+class MonitorableUtil::State
+{
+  public:
+    /// Create new global state.
+    State();
 
-bsls::SpinLock s_monitorableRegistryLock = BSLS_SPINLOCK_UNLOCKED;
-bsl::shared_ptr<ntci::MonitorableRegistry> s_monitorableRegistry_sp;
+    /// Destroy this object.
+    ~State();
 
-bsls::SpinLock s_monitorableCollectorLock = BSLS_SPINLOCK_UNLOCKED;
-bsl::shared_ptr<ntci::MonitorableCollector> s_monitorableCollector_sp;
+    /// The installed registry lock.
+    bsls::SpinLock d_registryLock;
 
-bsls::SpinLock s_monitorableSystemLock = BSLS_SPINLOCK_UNLOCKED;
-bsl::shared_ptr<ntci::Monitorable> s_monitorableSystem_sp;
+    /// The installed registry.
+    bsl::shared_ptr<ntci::MonitorableRegistry> d_registry_sp;
 
-bsls::SpinLock s_logPublisherLock = BSLS_SPINLOCK_UNLOCKED;
-bsl::shared_ptr<ntcm::MonitorableLog> s_logPublisher_sp;
+    /// The installed collector lock.
+    bsls::SpinLock d_collectorLock;
 
-}  // close unnamed namespace
+    /// The installed collector.
+    bsl::shared_ptr<ntci::MonitorableCollector> d_collector_sp;
+
+    /// The installed system monitorable object lock.
+    bsls::SpinLock d_systemLock;
+
+    /// The installed system monitorable object.
+    bsl::shared_ptr<ntci::Monitorable> d_system_sp;
+
+    /// The installed log publisher lock.
+    bsls::SpinLock d_publisherLock;
+
+    /// The installed log publisher.
+    bsl::shared_ptr<ntcm::MonitorableLog> d_logPublisher_sp;
+
+    /// The instance of the global monitorable state.
+    static State s_global;
+
+  private:
+    State(const State&) BSLS_KEYWORD_DELETED;
+    State& operator=(const State&) BSLS_KEYWORD_DELETED;
+};
+
+MonitorableUtil::State MonitorableUtil::State::s_global;
+
+MonitorableUtil::State::State()
+: d_registryLock(bsls::SpinLock::s_unlocked)
+, d_registry_sp()
+, d_collectorLock(bsls::SpinLock::s_unlocked)
+, d_collector_sp()
+, d_systemLock(bsls::SpinLock::s_unlocked)
+, d_system_sp()
+, d_publisherLock(bsls::SpinLock::s_unlocked)
+, d_logPublisher_sp()
+{
+}
+
+MonitorableUtil::State::~State()
+{
+}
 
 void MonitorableUtil::initialize()
 {
@@ -893,27 +884,31 @@ void MonitorableUtil::enableMonitorableRegistry(
     bsl::shared_ptr<ntcm::MonitorableRegistry> monitorableRegistry;
     monitorableRegistry.createInplace(allocator, configuration, allocator);
 
-    bsls::SpinLockGuard guard(&s_monitorableRegistryLock);
-    s_monitorableRegistry_sp = monitorableRegistry;
+    bsls::SpinLockGuard guard(
+        &MonitorableUtil::State::s_global.d_registryLock);
+    MonitorableUtil::State::s_global.d_registry_sp = monitorableRegistry;
 }
 
 void MonitorableUtil::enableMonitorableRegistry(
     const bsl::shared_ptr<ntci::MonitorableRegistry>& monitorableRegistry)
 {
-    bsls::SpinLockGuard guard(&s_monitorableRegistryLock);
-    s_monitorableRegistry_sp = monitorableRegistry;
+    bsls::SpinLockGuard guard(
+        &MonitorableUtil::State::s_global.d_registryLock);
+    MonitorableUtil::State::s_global.d_registry_sp = monitorableRegistry;
 }
 
 void MonitorableUtil::disableMonitorableRegistry()
 {
     {
-        bsls::SpinLockGuard guard(&s_monitorableSystemLock);
-        s_monitorableSystem_sp.reset();
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_systemLock);
+        MonitorableUtil::State::s_global.d_system_sp.reset();
     }
 
     {
-        bsls::SpinLockGuard guard(&s_monitorableRegistryLock);
-        s_monitorableRegistry_sp.reset();
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_registryLock);
+        MonitorableUtil::State::s_global.d_registry_sp.reset();
     }
 }
 
@@ -925,24 +920,15 @@ void MonitorableUtil::enableMonitorableCollector(
         basicAllocator ? basicAllocator : bslma::Default::globalAllocator();
 
     bsl::shared_ptr<ntci::MonitorableCollector> monitorableCollector;
-
-    if (!configuration.period().isNull() && configuration.period().value() > 0)
     {
-        bsl::shared_ptr<ntcm::PeriodicCollector> concreteMonitorableCollector;
+        bsl::shared_ptr<ntcm::MonitorableCollector>
+            concreteMonitorableCollector;
         concreteMonitorableCollector.createInplace(
             allocator,
             configuration,
             ntcm::MonitorableUtil::loadCallback(),
             allocator);
-        monitorableCollector = concreteMonitorableCollector;
-    }
-    else {
-        bsl::shared_ptr<ntcm::Collector> concreteMonitorableCollector;
-        concreteMonitorableCollector.createInplace(
-            allocator,
-            configuration,
-            ntcm::MonitorableUtil::loadCallback(),
-            allocator);
+
         monitorableCollector = concreteMonitorableCollector;
     }
 
@@ -950,9 +936,11 @@ void MonitorableUtil::enableMonitorableCollector(
 
     bsl::shared_ptr<ntci::MonitorableCollector> previousMonitorableCollector;
     {
-        bsls::SpinLockGuard guard(&s_monitorableCollectorLock);
-        previousMonitorableCollector = s_monitorableCollector_sp;
-        s_monitorableCollector_sp    = monitorableCollector;
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_collectorLock);
+        previousMonitorableCollector =
+            MonitorableUtil::State::s_global.d_collector_sp;
+        MonitorableUtil::State::s_global.d_collector_sp = monitorableCollector;
     }
 
     if (previousMonitorableCollector) {
@@ -965,9 +953,11 @@ void MonitorableUtil::enableMonitorableCollector(
 {
     bsl::shared_ptr<ntci::MonitorableCollector> previousMonitorableCollector;
     {
-        bsls::SpinLockGuard guard(&s_monitorableCollectorLock);
-        previousMonitorableCollector = s_monitorableCollector_sp;
-        s_monitorableCollector_sp    = monitorableCollector;
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_collectorLock);
+        previousMonitorableCollector =
+            MonitorableUtil::State::s_global.d_collector_sp;
+        MonitorableUtil::State::s_global.d_collector_sp = monitorableCollector;
     }
 
     if (previousMonitorableCollector &&
@@ -981,9 +971,11 @@ void MonitorableUtil::disableMonitorableCollector()
 {
     bsl::shared_ptr<ntci::MonitorableCollector> previousMonitorableCollector;
     {
-        bsls::SpinLockGuard guard(&s_monitorableCollectorLock);
-        previousMonitorableCollector = s_monitorableCollector_sp;
-        s_monitorableCollector_sp.reset();
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_collectorLock);
+        previousMonitorableCollector =
+            MonitorableUtil::State::s_global.d_collector_sp;
+        MonitorableUtil::State::s_global.d_collector_sp.reset();
     }
 
     if (previousMonitorableCollector) {
@@ -996,8 +988,9 @@ void MonitorableUtil::registerMonitorable(
 {
     bsl::shared_ptr<ntci::MonitorableRegistry> monitorableRegistry;
     {
-        bsls::SpinLockGuard guard(&s_monitorableRegistryLock);
-        monitorableRegistry = s_monitorableRegistry_sp;
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_registryLock);
+        monitorableRegistry = MonitorableUtil::State::s_global.d_registry_sp;
     }
 
     if (monitorableRegistry) {
@@ -1010,8 +1003,9 @@ void MonitorableUtil::deregisterMonitorable(
 {
     bsl::shared_ptr<ntci::MonitorableRegistry> monitorableRegistry;
     {
-        bsls::SpinLockGuard guard(&s_monitorableRegistryLock);
-        monitorableRegistry = s_monitorableRegistry_sp;
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_registryLock);
+        monitorableRegistry = MonitorableUtil::State::s_global.d_registry_sp;
     }
 
     if (monitorableRegistry) {
@@ -1023,12 +1017,13 @@ void MonitorableUtil::registerMonitorableProcess(
     const bsl::shared_ptr<ntci::Monitorable>& monitorable)
 {
     {
-        bsls::SpinLockGuard guard(&s_monitorableSystemLock);
-        if (s_monitorableSystem_sp) {
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_systemLock);
+        if (MonitorableUtil::State::s_global.d_system_sp) {
             return;
         }
 
-        s_monitorableSystem_sp = monitorable;
+        MonitorableUtil::State::s_global.d_system_sp = monitorable;
     }
 
     MonitorableUtil::registerMonitorable(monitorable);
@@ -1039,12 +1034,13 @@ void MonitorableUtil::deregisterMonitorableProcess()
     bsl::shared_ptr<ntci::Monitorable> monitorable;
 
     {
-        bsls::SpinLockGuard guard(&s_monitorableSystemLock);
-        if (!s_monitorableSystem_sp) {
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_systemLock);
+        if (!MonitorableUtil::State::s_global.d_system_sp) {
             return;
         }
 
-        s_monitorableSystem_sp.swap(monitorable);
+        MonitorableUtil::State::s_global.d_system_sp.swap(monitorable);
     }
 
     MonitorableUtil::deregisterMonitorable(monitorable);
@@ -1055,8 +1051,9 @@ void MonitorableUtil::registerMonitorablePublisher(
 {
     bsl::shared_ptr<ntci::MonitorableCollector> monitorableCollector;
     {
-        bsls::SpinLockGuard guard(&s_monitorableCollectorLock);
-        monitorableCollector = s_monitorableCollector_sp;
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_collectorLock);
+        monitorableCollector = MonitorableUtil::State::s_global.d_collector_sp;
     }
 
     if (monitorableCollector) {
@@ -1069,8 +1066,9 @@ void MonitorableUtil::deregisterMonitorablePublisher(
 {
     bsl::shared_ptr<ntci::MonitorableCollector> monitorableCollector;
     {
-        bsls::SpinLockGuard guard(&s_monitorableCollectorLock);
-        monitorableCollector = s_monitorableCollector_sp;
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_collectorLock);
+        monitorableCollector = MonitorableUtil::State::s_global.d_collector_sp;
     }
 
     if (monitorableCollector) {
@@ -1083,23 +1081,27 @@ void MonitorableUtil::registerMonitorablePublisher(
 {
     bsl::shared_ptr<ntci::MonitorableCollector> monitorableCollector;
     {
-        bsls::SpinLockGuard guard(&s_monitorableCollectorLock);
-        monitorableCollector = s_monitorableCollector_sp;
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_collectorLock);
+        monitorableCollector = MonitorableUtil::State::s_global.d_collector_sp;
     }
 
     bsl::shared_ptr<ntcm::MonitorableLog> logPublisher;
     {
-        bsls::SpinLockGuard guard(&s_logPublisherLock);
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_publisherLock);
 
-        if (s_logPublisher_sp) {
-            s_logPublisher_sp->setSeverityLevel(severityLevel);
+        if (MonitorableUtil::State::s_global.d_logPublisher_sp) {
+            MonitorableUtil::State::s_global.d_logPublisher_sp
+                ->setSeverityLevel(severityLevel);
             return;
         }
         else {
-            s_logPublisher_sp.createInplace(bslma::Default::globalAllocator(),
-                                            severityLevel,
-                                            bslma::Default::globalAllocator());
-            logPublisher = s_logPublisher_sp;
+            MonitorableUtil::State::s_global.d_logPublisher_sp.createInplace(
+                bslma::Default::globalAllocator(),
+                severityLevel,
+                bslma::Default::globalAllocator());
+            logPublisher = MonitorableUtil::State::s_global.d_logPublisher_sp;
         }
     }
 
@@ -1115,14 +1117,16 @@ void MonitorableUtil::deregisterMonitorablePublisher(
 
     bsl::shared_ptr<ntci::MonitorableCollector> monitorableCollector;
     {
-        bsls::SpinLockGuard guard(&s_monitorableCollectorLock);
-        monitorableCollector = s_monitorableCollector_sp;
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_collectorLock);
+        monitorableCollector = MonitorableUtil::State::s_global.d_collector_sp;
     }
 
     bsl::shared_ptr<ntcm::MonitorableLog> logPublisher;
     {
-        bsls::SpinLockGuard guard(&s_logPublisherLock);
-        logPublisher.swap(s_logPublisher_sp);
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_publisherLock);
+        logPublisher.swap(MonitorableUtil::State::s_global.d_logPublisher_sp);
     }
 
     if (monitorableCollector) {
@@ -1134,8 +1138,9 @@ void MonitorableUtil::collectMetrics()
 {
     bsl::shared_ptr<ntci::MonitorableCollector> monitorableCollector;
     {
-        bsls::SpinLockGuard guard(&s_monitorableCollectorLock);
-        monitorableCollector = s_monitorableCollector_sp;
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_collectorLock);
+        monitorableCollector = MonitorableUtil::State::s_global.d_collector_sp;
     }
 
     if (monitorableCollector) {
@@ -1148,8 +1153,9 @@ void MonitorableUtil::loadRegisteredObjects(
 {
     bsl::shared_ptr<ntci::MonitorableRegistry> monitorableRegistry;
     {
-        bsls::SpinLockGuard guard(&s_monitorableRegistryLock);
-        monitorableRegistry = s_monitorableRegistry_sp;
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_registryLock);
+        monitorableRegistry = MonitorableUtil::State::s_global.d_registry_sp;
     }
 
     if (monitorableRegistry) {
@@ -1165,23 +1171,27 @@ MonitorableUtil::LoadCallback MonitorableUtil::loadCallback()
 void MonitorableUtil::exit()
 {
     {
-        bsls::SpinLockGuard guard(&s_logPublisherLock);
-        s_logPublisher_sp.reset();
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_publisherLock);
+        MonitorableUtil::State::s_global.d_logPublisher_sp.reset();
     }
 
     {
-        bsls::SpinLockGuard guard(&s_monitorableSystemLock);
-        s_monitorableSystem_sp.reset();
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_systemLock);
+        MonitorableUtil::State::s_global.d_system_sp.reset();
     }
 
     {
-        bsls::SpinLockGuard guard(&s_monitorableCollectorLock);
-        s_monitorableCollector_sp.reset();
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_collectorLock);
+        MonitorableUtil::State::s_global.d_collector_sp.reset();
     }
 
     {
-        bsls::SpinLockGuard guard(&s_monitorableRegistryLock);
-        s_monitorableRegistry_sp.reset();
+        bsls::SpinLockGuard guard(
+            &MonitorableUtil::State::s_global.d_registryLock);
+        MonitorableUtil::State::s_global.d_registry_sp.reset();
     }
 }
 

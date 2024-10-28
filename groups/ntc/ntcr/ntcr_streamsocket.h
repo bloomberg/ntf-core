@@ -158,6 +158,13 @@ class StreamSocket : public ntci::StreamSocket,
     ntca::StreamSocketOptions                  d_options;
     bslma::Allocator*                          d_allocator_p;
 
+    /// The zero-copy threshold value that results in no transmission ever
+    /// attempted to be zero-copied.
+    static const bsl::size_t k_ZERO_COPY_NEVER;
+
+    /// The default zero-copy threshold value if none is explicitly specified.
+    static const bsl::size_t k_ZERO_COPY_DEFAULT;
+
   private:
     StreamSocket(const StreamSocket&) BSLS_KEYWORD_DELETED;
     StreamSocket& operator=(const StreamSocket&) BSLS_KEYWORD_DELETED;

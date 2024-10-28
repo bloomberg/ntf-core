@@ -170,8 +170,12 @@ struct Global {
     /// Return the global executor.
     static bsl::shared_ptr<ntci::Executor> executor();
 
-    // Stop and destroy all global objects.
+    /// Stop and destroy all global objects.
     static void exit();
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 NTCCFG_INLINE

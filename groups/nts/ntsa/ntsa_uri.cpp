@@ -31,35 +31,101 @@ BSLS_IDENT_RCSID(ntsa_uri_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
-
-// Encode using the default URL encoding rules.
-const bsl::size_t k_ENCODE_DEFAULT = 0;
-
-// Encode for application/x-www-form-urlencoded.
-const bsl::size_t k_ENCODE_FORM_DATA = 1;
-
-const char k_CHARACTER_TABLE[16] = {'0',
-                                    '1',
-                                    '2',
-                                    '3',
-                                    '4',
-                                    '5',
-                                    '6',
-                                    '7',
-                                    '8',
-                                    '9',
-                                    'a',
-                                    'b',
-                                    'c',
-                                    'd',
-                                    'e',
-                                    'f'};
-
-ntsa::Error decodeHex(char* result, char character)
+/// Provide functions to implement URIs.
+class UriUtil
 {
-    // Return a integer value from the specified hex 'character'.
+  public:
+    /// Return a integer value from the specified hex 'character'.
+    static ntsa::Error decodeHex(char* result, char character);
 
+    /// Return the hex character for the specified integer 'code'.
+    static ntsa::Error encodeHex(char* result, char code);
+
+    /// Load into the specified 'destination' the specified 'source' after it
+    /// is percent-encoded (i.e., URL-encoded).  Optionally specify a set of
+    /// encoding 'options' to control the behavior of the encoder.  Return 0 on
+    /// success and a non-zero value otherwise.
+    static ntsa::Error encodeUrl(bsl::string*             destination,
+                                 const bslstl::StringRef& source,
+                                 bsl::size_t              options);
+
+    /// Load into the specified 'destination' the specified 'source' after it
+    /// is decode according the percent encoding (i.e., URL encoding).  Return
+    /// 0 on success and a non-zero value otherwise.
+    static ntsa::Error decodeUrl(bsl::string*             destination,
+                                 const bslstl::StringRef& source);
+
+    /// Scan from the specified 'current' position to the specified 'end'
+    /// stopping at the first occurrence of the specified 'ch'.
+    static char scanChar(const char** current, const char* end, char ch);
+
+    /// Scan from the specified 'current' position to the specified 'end'
+    /// stopping at the first occurrence of the specified 'ch1' or 'ch2'.
+    static char scanChar(const char** current,
+                         const char*  end,
+                         char         ch1,
+                         char         ch2);
+
+    /// Scan from the specified 'current' position to the specified 'end'
+    /// stopping at the first occurrence of the specified 'ch1' or 'ch2' or
+    /// 'ch3'.
+    static char scanChar(const char** current,
+                         const char*  end,
+                         char         ch1,
+                         char         ch2,
+                         char         ch3);
+
+    /// Scan from the specified 'current' position to the specified 'end'
+    /// stopping at the first occurrence of the specified 'ch1' or 'ch2' or
+    /// 'ch3' or 'ch4'.
+    static char scanChar(const char** current,
+                         const char*  end,
+                         char         ch1,
+                         char         ch2,
+                         char         ch3,
+                         char         ch4);
+
+    /// Scan from the specified 'current' position to the specified 'end'
+    /// stopping at the first occurrence of the specified 'ch1' or 'ch2' or
+    /// 'ch3' or 'ch4' or 'ch5'.
+    static char scanChar(const char** current,
+                         const char*  end,
+                         char         ch1,
+                         char         ch2,
+                         char         ch3,
+                         char         ch4,
+                         char         ch5);
+
+    // Compare the content of the buffer, starting from the current position,
+    // with the specified string 'str'.  If matches, advance the current
+    // position by the length of 'str' and return 'true'; otherwise return
+    // 'false' and the current position is unmodified.
+    static bool skipMatch(const char** current,
+                          const char*  end,
+                          const char*  match);
+
+    // Encode using the default URL encoding rules.
+    static const bsl::size_t k_ENCODE_DEFAULT;
+
+    // Encode for application/x-www-form-urlencoded.
+    static const bsl::size_t k_ENCODE_FORM_DATA;
+
+    // The hexadecimal conversion table.
+    static const char k_CHARACTER_TABLE[16];
+};
+
+const bsl::size_t UriUtil::k_ENCODE_DEFAULT   = 0;
+const bsl::size_t UriUtil::k_ENCODE_FORM_DATA = 1;
+
+// clang-format off
+const char UriUtil::k_CHARACTER_TABLE[16] = {
+    '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+};
+// clang-format on
+
+ntsa::Error UriUtil::decodeHex(char* result, char character)
+{
     if (bdlb::CharType::isDigit(character)) {
         *result = static_cast<char>(character - '0');
     }
@@ -71,23 +137,16 @@ ntsa::Error decodeHex(char* result, char character)
     return ntsa::Error();
 }
 
-ntsa::Error encodeHex(char* result, char code)
+ntsa::Error UriUtil::encodeHex(char* result, char code)
 {
-    // Return the hex character for the specified integer 'code'.
-
     *result = k_CHARACTER_TABLE[static_cast<bsl::size_t>(code & 15)];
     return ntsa::Error();
 }
 
-ntsa::Error encodeUrl(bsl::string*             destination,
-                      const bslstl::StringRef& source,
-                      bsl::size_t              options = k_ENCODE_DEFAULT)
+ntsa::Error UriUtil::encodeUrl(bsl::string*             destination,
+                               const bslstl::StringRef& source,
+                               bsl::size_t              options)
 {
-    // Load into the specified 'destination' the specified 'source' after it is
-    // percent-encoded (i.e., URL-encoded).  Optionally specify a set of
-    // encoding 'options' to control the behavior of the encoder.  Return 0 on
-    // success and a non-zero value otherwise.
-
     ntsa::Error error;
 
     if (source.empty()) {
@@ -138,13 +197,9 @@ ntsa::Error encodeUrl(bsl::string*             destination,
     return ntsa::Error();
 }
 
-ntsa::Error decodeUrl(bsl::string*             destination,
-                      const bslstl::StringRef& source)
+ntsa::Error UriUtil::decodeUrl(bsl::string*             destination,
+                               const bslstl::StringRef& source)
 {
-    // Load into the specified 'destination' the specified 'source' after it is
-    // decode according the percent encoding (i.e., URL encoding).  Return 0 on
-    // success and a non-zero value otherwise.
-
     ntsa::Error error;
 
     if (source.empty()) {
@@ -198,11 +253,8 @@ ntsa::Error decodeUrl(bsl::string*             destination,
     return ntsa::Error();
 }
 
-char scanChar(const char** current, const char* end, char ch)
+char UriUtil::scanChar(const char** current, const char* end, char ch)
 {
-    // Scan from the specified 'current' position to the specified 'end'
-    // stopping at the first occurrence of the specified 'ch'.
-
     while (*current != end && **current != ch) {
         ++*current;
     }
@@ -210,11 +262,11 @@ char scanChar(const char** current, const char* end, char ch)
     return **current;
 }
 
-char scanChar(const char** current, const char* end, char ch1, char ch2)
+char UriUtil::scanChar(const char** current,
+                       const char*  end,
+                       char         ch1,
+                       char         ch2)
 {
-    // Scan from the specified 'current' position to the specified 'end'
-    // stopping at the first occurrence of the specified 'ch1' or 'ch2'.
-
     while (*current != end && **current != ch1 && **current != ch2) {
         ++*current;
     }
@@ -222,16 +274,12 @@ char scanChar(const char** current, const char* end, char ch1, char ch2)
     return **current;
 }
 
-char scanChar(const char** current,
-              const char*  end,
-              char         ch1,
-              char         ch2,
-              char         ch3)
+char UriUtil::scanChar(const char** current,
+                       const char*  end,
+                       char         ch1,
+                       char         ch2,
+                       char         ch3)
 {
-    // Scan from the specified 'current' position to the specified 'end'
-    // stopping at the first occurrence of the specified 'ch1' or 'ch2' or
-    // 'ch3'.
-
     while (*current != end && **current != ch1 && **current != ch2 &&
            **current != ch3)
     {
@@ -241,17 +289,13 @@ char scanChar(const char** current,
     return **current;
 }
 
-char scanChar(const char** current,
-              const char*  end,
-              char         ch1,
-              char         ch2,
-              char         ch3,
-              char         ch4)
+char UriUtil::scanChar(const char** current,
+                       const char*  end,
+                       char         ch1,
+                       char         ch2,
+                       char         ch3,
+                       char         ch4)
 {
-    // Scan from the specified 'current' position to the specified 'end'
-    // stopping at the first occurrence of the specified 'ch1' or 'ch2' or
-    // 'ch3' or 'ch4'.
-
     while (*current != end && **current != ch1 && **current != ch2 &&
            **current != ch3 && **current != ch4)
     {
@@ -261,18 +305,14 @@ char scanChar(const char** current,
     return **current;
 }
 
-char scanChar(const char** current,
-              const char*  end,
-              char         ch1,
-              char         ch2,
-              char         ch3,
-              char         ch4,
-              char         ch5)
+char UriUtil::scanChar(const char** current,
+                       const char*  end,
+                       char         ch1,
+                       char         ch2,
+                       char         ch3,
+                       char         ch4,
+                       char         ch5)
 {
-    // Scan from the specified 'current' position to the specified 'end'
-    // stopping at the first occurrence of the specified 'ch1' or 'ch2' or
-    // 'ch3' or 'ch4' or 'ch5'.
-
     while (*current != end && **current != ch1 && **current != ch2 &&
            **current != ch3 && **current != ch4 && **current != ch5)
     {
@@ -282,13 +322,10 @@ char scanChar(const char** current,
     return **current;
 }
 
-bool skipMatch(const char** current, const char* end, const char* match)
+bool UriUtil::skipMatch(const char** current,
+                        const char*  end,
+                        const char*  match)
 {
-    // Compare the content of the buffer, starting from the current position,
-    // with the specified string 'str'.  If matches, advance the current
-    // position by the length of 'str' and return 'true'; otherwise return
-    // 'false' and the current position is unmodified.
-
     const char* begin = *current;
 
     while (*current != end && *match && **current == *match) {
@@ -304,8 +341,6 @@ bool skipMatch(const char** current, const char* end, const char* match)
         return false;
     }
 }
-
-}  // close unnamed namespace
 
 UriAuthority::UriAuthority(bslma::Allocator* basicAllocator)
 : d_user(basicAllocator)
@@ -1364,7 +1399,7 @@ bool Uri::parse(const bslstl::StringRef& text)
     const char* end     = current + text.size();
     const char* mark    = current;
 
-    scanChar(&current, end, ':');
+    UriUtil::scanChar(&current, end, ':');
     if (current != end) {
         if ((current + 1 != end && *(current + 1) == '/') &&
             (current + 2 != end && *(current + 2) == '/'))
@@ -1380,9 +1415,9 @@ bool Uri::parse(const bslstl::StringRef& text)
         current = begin;
     }
 
-    if (current == begin || skipMatch(&current, end, "//")) {
+    if (current == begin || UriUtil::skipMatch(&current, end, "//")) {
         mark = current;
-        scanChar(&current, end, '@', ':', '/', '?', '#');
+        UriUtil::scanChar(&current, end, '@', ':', '/', '?', '#');
         if (current == end) {
             d_authority.makeValue();
             error =
@@ -1400,7 +1435,8 @@ bool Uri::parse(const bslstl::StringRef& text)
             }
 
             bsl::string user;
-            error = decodeUrl(&user, bslstl::StringRef(mark, current));
+            error =
+                UriUtil::decodeUrl(&user, bslstl::StringRef(mark, current));
             if (error) {
                 return false;
             }
@@ -1413,7 +1449,7 @@ bool Uri::parse(const bslstl::StringRef& text)
             ++current;
 
             mark = current;
-            scanChar(&current, end, ':', '/', '?', '#');
+            UriUtil::scanChar(&current, end, ':', '/', '?', '#');
             if (current == end) {
                 error = d_authority.value().setHost(
                     bslstl::StringRef(mark, current));
@@ -1439,7 +1475,7 @@ bool Uri::parse(const bslstl::StringRef& text)
             ++current;
 
             mark = current;
-            scanChar(&current, end, '/', '?', '#');
+            UriUtil::scanChar(&current, end, '/', '?', '#');
             if (current == end) {
                 ntsa::Port port;
                 if (!ntsa::PortUtil::parse(&port, mark, current - mark)) {
@@ -1493,7 +1529,7 @@ bool Uri::parse(const bslstl::StringRef& text)
         }
 
         mark = current;
-        scanChar(&current, end, '?', '#');
+        UriUtil::scanChar(&current, end, '?', '#');
 
         if (mark != begin) {
             d_path.makeValue().assign(mark - 1, current);
@@ -1514,10 +1550,11 @@ bool Uri::parse(const bslstl::StringRef& text)
             ++current;
 
             mark = current;
-            scanChar(&current, end, '#', '&', '=');
+            UriUtil::scanChar(&current, end, '#', '&', '=');
             if (current == end) {
                 bsl::string name;
-                error = decodeUrl(&name, bslstl::StringRef(mark, current));
+                error = UriUtil::decodeUrl(&name,
+                                           bslstl::StringRef(mark, current));
                 if (error) {
                     return false;
                 }
@@ -1532,7 +1569,8 @@ bool Uri::parse(const bslstl::StringRef& text)
 
             if (*current == '=') {
                 bsl::string name;
-                error = decodeUrl(&name, bslstl::StringRef(mark, current));
+                error = UriUtil::decodeUrl(&name,
+                                           bslstl::StringRef(mark, current));
                 if (error) {
                     return false;
                 }
@@ -1540,10 +1578,11 @@ bool Uri::parse(const bslstl::StringRef& text)
                 ++current;
 
                 mark = current;
-                scanChar(&current, end, '#', '&');
+                UriUtil::scanChar(&current, end, '#', '&');
 
                 bsl::string value;
-                error = decodeUrl(&value, bslstl::StringRef(mark, current));
+                error = UriUtil::decodeUrl(&value,
+                                           bslstl::StringRef(mark, current));
                 if (error) {
                     return false;
                 }
@@ -1567,8 +1606,8 @@ bool Uri::parse(const bslstl::StringRef& text)
     if (*current == '#') {
         ++current;
 
-        error = decodeUrl(&d_fragment.makeValue(),
-                          bslstl::StringRef(current, end));
+        error = UriUtil::decodeUrl(&d_fragment.makeValue(),
+                                   bslstl::StringRef(current, end));
         if (error) {
             return false;
         }
@@ -1678,7 +1717,9 @@ bsl::ostream& Uri::print(bsl::ostream& stream,
         if (!d_authority.value().user().isNull()) {
             if (!d_authority.value().user().value().empty()) {
                 bsl::string user;
-                error = encodeUrl(&user, d_authority.value().user().value());
+                error = UriUtil::encodeUrl(&user,
+                                           d_authority.value().user().value(),
+                                           UriUtil::k_ENCODE_DEFAULT);
                 if (error) {
                     return stream;
                 }
@@ -1751,14 +1792,18 @@ bsl::ostream& Uri::print(bsl::ostream& stream,
                 const ntsa::UriParameter& parameter = *it;
 
                 bsl::string name;
-                error = encodeUrl(&name, parameter.name());
+                error = UriUtil::encodeUrl(&name,
+                                           parameter.name(),
+                                           UriUtil::k_ENCODE_DEFAULT);
                 if (error) {
                     return stream;
                 }
 
                 bsl::string value;
                 if (!parameter.value().isNull()) {
-                    error = encodeUrl(&value, parameter.value().value());
+                    error = UriUtil::encodeUrl(&value,
+                                               parameter.value().value(),
+                                               UriUtil::k_ENCODE_DEFAULT);
                     if (error) {
                         return stream;
                     }
@@ -1779,7 +1824,9 @@ bsl::ostream& Uri::print(bsl::ostream& stream,
     if (!d_fragment.isNull()) {
         if (!d_fragment.value().empty()) {
             bsl::string fragment;
-            error = encodeUrl(&fragment, d_fragment.value());
+            error = UriUtil::encodeUrl(&fragment,
+                                       d_fragment.value(),
+                                       UriUtil::k_ENCODE_DEFAULT);
             if (error) {
                 return stream;
             }

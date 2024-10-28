@@ -59,31 +59,49 @@ BSLS_IDENT_RCSID(ntsscm_version_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsscm {
 
-namespace {
-
-static int s_systemVersionError = 0;
-static int s_systemVersionMajor = 0;
-static int s_systemVersionMinor = 0;
-static int s_systemVersionPatch = 0;
-static int s_systemBuild        = 0;
-
 /// @internal @brief
-/// Provide utilities for detecting the operating system version.
+/// Provide a private implementation.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsscm
-struct VersionUtil {
+class Version::Impl
+{
+  public:
     /// Load into the specified 'major', 'minor', 'patch', and 'build' the
     /// version information of the operating system running the current
     /// process.  Return 0 on success and a non-zero value otherwise.
     static int systemVersion(int* major, int* minor, int* patch, int* build);
+
+    /// The error detected when attempting to get the system version.
+    static int s_systemVersionError;
+
+    /// The cached system major version.
+    static int s_systemVersionMajor;
+
+    /// The cached system minor version.
+    static int s_systemVersionMinor;
+
+    /// The cached system patch version.
+    static int s_systemVersionPatch;
+
+    /// The cached system build number.
+    static int s_systemBuild;
 };
+
+int Version::Impl::s_systemVersionError = 0;
+int Version::Impl::s_systemVersionMajor = 0;
+int Version::Impl::s_systemVersionMinor = 0;
+int Version::Impl::s_systemVersionPatch = 0;
+int Version::Impl::s_systemBuild        = 0;
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-int VersionUtil::systemVersion(int* major, int* minor, int* patch, int* build)
+int Version::Impl::systemVersion(int* major,
+                                 int* minor,
+                                 int* patch,
+                                 int* build)
 {
     int rc;
 
@@ -241,7 +259,10 @@ int VersionUtil::systemVersion(int* major, int* minor, int* patch, int* build)
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
-int VersionUtil::systemVersion(int* major, int* minor, int* patch, int* build)
+int Version::Impl::systemVersion(int* major,
+                                 int* minor,
+                                 int* patch,
+                                 int* build)
 {
     *major = 0;
     *minor = 0;
@@ -271,8 +292,6 @@ int VersionUtil::systemVersion(int* major, int* minor, int* patch, int* build)
 #error Not implemented
 #endif
 
-}  // close unnnamed namespace
-
 #define STRINGIFY2(a) #a
 #define STRINGIFY(a) STRINGIFY2(a)
 
@@ -293,19 +312,19 @@ int Version::systemVersion(int* major, int* minor, int* patch, int* build)
 {
     BSLMT_ONCE_DO
     {
-        s_systemVersionError =
-            VersionUtil::systemVersion(&s_systemVersionMajor,
-                                       &s_systemVersionMinor,
-                                       &s_systemVersionPatch,
-                                       &s_systemBuild);
+        Version::Impl::s_systemVersionError =
+            Version::Impl::systemVersion(&Version::Impl::s_systemVersionMajor,
+                                         &Version::Impl::s_systemVersionMinor,
+                                         &Version::Impl::s_systemVersionPatch,
+                                         &Version::Impl::s_systemBuild);
     }
 
-    *major = s_systemVersionMajor;
-    *minor = s_systemVersionMinor;
-    *patch = s_systemVersionPatch;
-    *build = s_systemBuild;
+    *major = Version::Impl::s_systemVersionMajor;
+    *minor = Version::Impl::s_systemVersionMinor;
+    *patch = Version::Impl::s_systemVersionPatch;
+    *build = Version::Impl::s_systemBuild;
 
-    return s_systemVersionError;
+    return Version::Impl::s_systemVersionError;
 }
 
 }  // close namespace ntsscm

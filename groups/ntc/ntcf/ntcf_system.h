@@ -1267,6 +1267,10 @@ struct System {
 
     /// Release the resources necessary for this library's implementation.
     static void exit();
+
+  private:
+    /// Provide functions to implement 'ntcf::System'.
+    class Impl;
 };
 
 /// Provide a guard to automatically initialize the resources required by this

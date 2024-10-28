@@ -104,11 +104,36 @@ BSLS_IDENT_RCSID(ntcs_controller_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcs {
 
-namespace {
+/// Provide a private implementation.
+class Controller::Impl
+{
+  public:
+#if (NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET) ||                \
+    (NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET)
+    static ntsa::Error initTcpPair(ntsa::Handle* clientHandle,
+                                   ntsa::Handle* serverHandle);
+#endif
+
+#if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
+    static ntsa::Error initUdsPair(ntsa::Handle* clientHandle,
+                                   ntsa::Handle* serverHandle);
+#endif
+
+#if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_ANONYMOUS_PIPE
+    static ntsa::Error initPipePair(ntsa::Handle* clientHandle,
+                                    ntsa::Handle* serverHandle);
+#endif
+
+#if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_EVENTFD
+    static ntsa::Error initEventFdPair(ntsa::Handle* clientHandle,
+                                       ntsa::Handle* serverHandle);
+#endif
+};
 
 #if (NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET) ||                \
     (NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET)
-ntsa::Error initTcpPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
+ntsa::Error Controller::Impl::initTcpPair(ntsa::Handle* clientHandle,
+                                          ntsa::Handle* serverHandle)
 {
     NTCI_LOG_CONTEXT();
 
@@ -175,7 +200,8 @@ ntsa::Error initTcpPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
 #endif
 
 #if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
-ntsa::Error initUdsPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
+ntsa::Error Controller::Impl::initUdsPair(ntsa::Handle* clientHandle,
+                                          ntsa::Handle* serverHandle)
 {
     NTCI_LOG_CONTEXT();
 
@@ -229,8 +255,8 @@ ntsa::Error initUdsPair(ntsa::Handle* clientHandle, ntsa::Handle* serverHandle)
 #endif
 
 #if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_ANONYMOUS_PIPE
-ntsa::Error initPipePair(ntsa::Handle* clientHandle,
-                         ntsa::Handle* serverHandle)
+ntsa::Error Controller::Impl::initPipePair(ntsa::Handle* clientHandle,
+                                           ntsa::Handle* serverHandle)
 {
     NTCI_LOG_CONTEXT();
 
@@ -264,8 +290,8 @@ ntsa::Error initPipePair(ntsa::Handle* clientHandle,
 #endif
 
 #if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_EVENTFD
-ntsa::Error initEventFdPair(ntsa::Handle* clientHandle,
-                            ntsa::Handle* serverHandle)
+ntsa::Error Controller::Impl::initEventFdPair(ntsa::Handle* clientHandle,
+                                              ntsa::Handle* serverHandle)
 {
     NTCI_LOG_CONTEXT();
 
@@ -284,8 +310,6 @@ ntsa::Error initEventFdPair(ntsa::Handle* clientHandle,
     return ntsa::Error();
 }
 #endif
-
-}  // close unnamed namespace
 
 void Controller::processSocketReadable(const ntca::ReactorEvent& event)
 {
@@ -339,7 +363,7 @@ ntsa::Error Controller::open()
 
 #if NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_TCP_SOCKET
 
-    error = initTcpPair(&d_clientHandle, &d_serverHandle);
+    error = Controller::Impl::initTcpPair(&d_clientHandle, &d_serverHandle);
     if (error) {
         return error;
     }
@@ -349,9 +373,10 @@ ntsa::Error Controller::open()
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_UNIX_DOMAIN_SOCKET
 
-    error = initUdsPair(&d_clientHandle, &d_serverHandle);
+    error = Controller::Impl::initUdsPair(&d_clientHandle, &d_serverHandle);
     if (error) {
-        error = initTcpPair(&d_clientHandle, &d_serverHandle);
+        error =
+            Controller::Impl::initTcpPair(&d_clientHandle, &d_serverHandle);
         if (error) {
             return error;
         }
@@ -364,7 +389,7 @@ ntsa::Error Controller::open()
     }
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_ANONYMOUS_PIPE
-    error = initPipePair(&d_clientHandle, &d_serverHandle);
+    error = Controller::Impl::initPipePair(&d_clientHandle, &d_serverHandle);
     if (error) {
         return error;
     }
@@ -374,7 +399,8 @@ ntsa::Error Controller::open()
 
 #elif NTCS_CONTROLLER_IMP == NTCS_CONTROLLER_IMP_EVENTFD
 
-    error = initEventFdPair(&d_clientHandle, &d_serverHandle);
+    error =
+        Controller::Impl::initEventFdPair(&d_clientHandle, &d_serverHandle);
     if (error) {
         return error;
     }

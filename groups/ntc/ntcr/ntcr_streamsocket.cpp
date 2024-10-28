@@ -274,16 +274,9 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcr {
 
-namespace {
+const bsl::size_t StreamSocket::k_ZERO_COPY_NEVER = (bsl::size_t)(-1);
 
-// The zero-copy threshold value that results in no transmission ever attempted
-// to be zero-copied.
-const bsl::size_t k_ZERO_COPY_NEVER = (bsl::size_t)(-1);
-
-// The default zero-copy threshold value if none is explicitly specified.
-const bsl::size_t k_ZERO_COPY_DEFAULT = k_ZERO_COPY_NEVER;
-
-}  // close unnamed namespace
+const bsl::size_t StreamSocket::k_ZERO_COPY_DEFAULT = (bsl::size_t)(-1);
 
 void StreamSocket::processSocketReadable(const ntca::ReactorEvent& event)
 {

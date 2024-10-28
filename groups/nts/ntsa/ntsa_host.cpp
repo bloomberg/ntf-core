@@ -24,9 +24,16 @@ BSLS_IDENT_RCSID(ntsa_host_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
+/// Provide a private implementation.
+class Host::Impl
+{
+  public:
+    /// Throw an exception indicating the specified 'text' is in an invalid
+    /// format.
+    static void throwAddressInvalidFormat(const bslstl::StringRef& text);
+};
 
-void throwAddressInvalidFormat(const bslstl::StringRef& text)
+void Host::Impl::throwAddressInvalidFormat(const bslstl::StringRef& text)
 {
     bsl::stringstream ss;
     ss << "Failed to parse address: the text '" << text << "' is invalid";
@@ -34,13 +41,11 @@ void throwAddressInvalidFormat(const bslstl::StringRef& text)
     NTSCFG_THROW(ss.str());
 }
 
-}  // close unnamed namespace
-
 Host::Host(const bslstl::StringRef& text)
 : d_type(ntsa::HostType::e_UNDEFINED)
 {
     if (!this->parse(text)) {
-        throwAddressInvalidFormat(text);
+        Impl::throwAddressInvalidFormat(text);
     }
 }
 
@@ -150,7 +155,7 @@ Host& Host::operator=(const bslstl::StringRef& text)
 
     this->reset();
 
-    throwAddressInvalidFormat(text);
+    Impl::throwAddressInvalidFormat(text);
     return *this;
 }
 

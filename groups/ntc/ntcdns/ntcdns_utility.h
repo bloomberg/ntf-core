@@ -152,6 +152,8 @@ struct Utility {
 
     /// Ensure sensible defaults for the specified 'config'.
     static void sanitize(ntcdns::ResolverConfig* config);
+
+    class Impl;
 };
 
 /// @internal @brief

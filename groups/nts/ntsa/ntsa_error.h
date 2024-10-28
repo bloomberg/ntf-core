@@ -155,6 +155,8 @@ class Error
 
     ValueType d_value;
 
+    class Impl;
+
   private:
     /// Return the code that classifies the specified system error 'number'.
     static ntsa::Error::Code translate(ntsa::Error::Number number);

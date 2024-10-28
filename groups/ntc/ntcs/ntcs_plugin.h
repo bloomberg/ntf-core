@@ -131,6 +131,10 @@ struct Plugin {
 
     /// Clean up the plugin manager.
     static void exit();
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 }  // end namespace ntcs

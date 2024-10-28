@@ -41,15 +41,13 @@ class LogTest
 
 NTSCFG_TEST_FUNCTION(ntci::LogTest::verifyCase1)
 {
-    ntci::Log::initialize(true);
-
     ntci::LogContext logContext;
 
-    logContext.d_owner = "incoming";
+    logContext.setOwner("incoming");
 
-    logContext.d_threadIndex      = 5;
-    logContext.d_descriptorHandle = 68;
-    logContext.d_sourceEndpoint   = ntsa::Endpoint("127.0.0.1:12345");
+    logContext.setThreadIndex(5);
+    logContext.setDescriptorHandle(68);
+    logContext.setSourceEndpoint(ntsa::Endpoint("127.0.0.1:12345"));
 
     ntci::Log::write(0,
                      bsls::LogSeverity::e_INFO,
@@ -64,9 +62,6 @@ NTSCFG_TEST_FUNCTION(ntci::LogTest::verifyCase1)
                      __LINE__,
                      "Object received %d bytes",
                      84730);
-
-    ntci::Log::flush();
-    ntci::Log::exit();
 }
 
 NTSCFG_TEST_FUNCTION(ntci::LogTest::verifyCase2)

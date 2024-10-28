@@ -25,9 +25,16 @@ BSLS_IDENT_RCSID(ntsa_ipaddress_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
+/// Provide a private implementation.
+class IpAddress::Impl
+{
+  public:
+    /// Throw an exception indicating the specified 'text' is in an invalid
+    /// format.
+    static void throwIpInvalidFormat(const bslstl::StringRef& text);
+};
 
-void throwIpInvalidFormat(const bslstl::StringRef& text)
+void IpAddress::Impl::throwIpInvalidFormat(const bslstl::StringRef& text)
 {
     bsl::stringstream ss;
     ss << "Failed to parse IP address: the text '" << text << "' is invalid";
@@ -35,13 +42,11 @@ void throwIpInvalidFormat(const bslstl::StringRef& text)
     NTSCFG_THROW(ss.str());
 }
 
-}  // close unnamed namespace
-
 IpAddress::IpAddress(const bslstl::StringRef& text)
 : d_type(ntsa::IpAddressType::e_UNDEFINED)
 {
     if (!this->parse(text)) {
-        throwIpInvalidFormat(text);
+        Impl::throwIpInvalidFormat(text);
     }
 }
 
@@ -67,7 +72,7 @@ IpAddress& IpAddress::operator=(const bslstl::StringRef& text)
 
     this->reset();
 
-    throwIpInvalidFormat(text);
+    Impl::throwIpInvalidFormat(text);
     return *this;
 }
 

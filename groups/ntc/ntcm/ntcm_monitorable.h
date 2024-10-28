@@ -180,6 +180,24 @@ class MonitorableLog : public ntci::MonitorablePublisher
     MonitorableLog(const MonitorableLog&) BSLS_KEYWORD_DELETED;
     MonitorableLog& operator=(const MonitorableLog&) BSLS_KEYWORD_DELETED;
 
+  private:
+    /// Return the string description of the specified statistic 'type'.
+    static const char* describeStatisticType(
+        ntci::Monitorable::StatisticType type);
+
+    /// Return the full metric name for the specified 'objectName', 'prefix',
+    /// and 'fieldName'.
+    static bsl::string formatMetricName(const bsl::string& objectName,
+                                        const bsl::string& prefix,
+                                        const bsl::string& fieldName);
+
+    /// Return the string description of the specified 'value', in
+    /// human-readable units.
+    static bsl::string formatValue(double value);
+
+    /// Provide a functor to sort two records.
+    class RecordSorter;
+
   public:
     /// Create a new log publisher to the BSLS log at the DEBUG severity
     /// level. Optionally specify a 'basicAllocator' used to supply memory.
@@ -214,19 +232,13 @@ class MonitorableLog : public ntci::MonitorablePublisher
 };
 
 /// @internal @brief
-/// Provide a collector of statistics from monitorable objects.
-///
-/// @details
-/// Provide a mechanism that provides a collector of statistics
-/// from monitorable objects. Each set of collected statistics are published,
-/// along with the monitorable object that measured them, through various
-/// registered publishers.
+/// Provide a periodic collector of statistics in a separate thread.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
 ///
 /// @ingroup module_ntcm
-class Collector : public ntci::MonitorableCollector
+class MonitorableCollector : public ntci::MonitorableCollector
 {
   public:
     /// This typedef defines a function to load the set of currently active
@@ -238,6 +250,9 @@ class Collector : public ntci::MonitorableCollector
   private:
     /// The constants used by this implementation.
     enum Constants {
+        /// The default collection interval, in seconds.
+        k_DEFAULT_INTERVAL = 30,
+
         /// The number of pools with which to configure a multipool allocator
         /// such that the smallest pool allocates 8 bytes and the largest pool
         /// allocates 1K.
@@ -255,110 +270,34 @@ class Collector : public ntci::MonitorableCollector
     /// Define a type alias for a mutex lock guard.
     typedef ntccfg::LockGuard LockGuard;
 
-    Mutex                               d_mutex;
-    PublisherSet                        d_publishers;
-    bdlma::ConcurrentMultipoolAllocator d_memoryPools;
-    LoadCallback                        d_loader;
-    ntca::MonitorableCollectorConfig    d_config;
-    bslma::Allocator*                   d_allocator_p;
-
-  private:
-    Collector(const Collector&) BSLS_KEYWORD_DELETED;
-    Collector& operator=(const Collector&) BSLS_KEYWORD_DELETED;
-
-  public:
-    /// Create a new collector having a default configuration that collects
-    /// statistics on-demand from all monitorable objects loaded from the
-    /// specified 'loadCallback'. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
-    explicit Collector(const LoadCallback& loadCallback,
-                       bslma::Allocator*   basicAllocator = 0);
-
-    /// Create a new collector having the specified 'configuration' that
-    /// collects statistics on-demand from all monitorable objects loaded
-    /// from the specified 'loadCallback'.  Optionally specify
-    /// a 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
-    /// the currently installed default allocator is used.
-    explicit Collector(const ntca::MonitorableCollectorConfig& configuration,
-                       const LoadCallback&                     loadCallback,
-                       bslma::Allocator* basicAllocator = 0);
-
-    /// Destroy this object.
-    ~Collector() BSLS_KEYWORD_OVERRIDE;
-
-    /// Register the specified 'publisher' to publish statistics measured
-    /// by each monitorable object.
-    void registerPublisher(const bsl::shared_ptr<ntci::MonitorablePublisher>&
-                               publisher) BSLS_KEYWORD_OVERRIDE;
-
-    /// Deregister the specified 'publisher' to no longer publish statistics
-    /// measured by each monitorable object.
-    void deregisterPublisher(const bsl::shared_ptr<ntci::MonitorablePublisher>&
-                                 publisher) BSLS_KEYWORD_OVERRIDE;
-
-    /// Start the background thread periodically collecting statistics.
-    void start() BSLS_KEYWORD_OVERRIDE;
-
-    /// Stop the background thread periodically collecting statistics.
-    void stop() BSLS_KEYWORD_OVERRIDE;
-
-    /// Collect statistics from each monitorable object registered with
-    /// the default monitorable object registry and publish their statistics
-    /// through each registered publisher.
-    void collect() BSLS_KEYWORD_OVERRIDE;
-
-    /// Return the configuration of this object.
-    const ntca::MonitorableCollectorConfig& configuration() const;
-};
-
-/// @internal @brief
-/// Provide a periodic collector of statistics in a separate thread.
-///
-/// @par Thread Safety
-/// This class is thread safe.
-///
-/// @ingroup module_ntcm
-class PeriodicCollector : public ntci::MonitorableCollector
-{
-    enum Constants { k_DEFAULT_INTERVAL = 30 };
-
+    Mutex                                       d_mutex;
     bdlmt::EventScheduler                       d_scheduler;
     bdlmt::EventScheduler::RecurringEventHandle d_event;
+    PublisherSet                                d_publishers;
+    bdlma::ConcurrentMultipoolAllocator         d_memoryPools;
+    LoadCallback                                d_loader;
     bsls::TimeInterval                          d_interval;
-    ntcm::Collector                             d_collector;
+    ntca::MonitorableCollectorConfig            d_config;
+    bslma::Allocator*                           d_allocator_p;
 
   private:
-    PeriodicCollector(const PeriodicCollector&) BSLS_KEYWORD_DELETED;
-    PeriodicCollector& operator=(const PeriodicCollector&)
+    MonitorableCollector(const MonitorableCollector&) BSLS_KEYWORD_DELETED;
+    MonitorableCollector& operator=(const MonitorableCollector&)
         BSLS_KEYWORD_DELETED;
 
   public:
-    /// This typedef defines a function to load the set of currently active
-    /// monitorable objects.
-    typedef ntcm::Collector::LoadCallback LoadCallback;
-
-    /// Create a new collector that periodically collects statistcs from all
-    /// monitorable objects loaded from the specified 'loadCallback' at the
-    /// specified 'interval'. Optionally specify a 'basicAllocator' used to
-    /// supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used.
-    explicit PeriodicCollector(const bsls::TimeInterval& interval,
-                               const LoadCallback&       loadCallback,
-                               bslma::Allocator*         basicAllocator = 0);
-
     /// Create a new collector having the specified 'configuration' that
     /// periodically collects statistics from all monitorable objects loaded
     /// from the specified 'loadCallback'. Optionally specify
     /// a 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
     /// the currently installed default allocator is used.
-    explicit PeriodicCollector(
+    explicit MonitorableCollector(
         const ntca::MonitorableCollectorConfig& configuration,
         const LoadCallback&                     loadCallback,
         bslma::Allocator*                       basicAllocator = 0);
 
     /// Destroy this object.
-    ~PeriodicCollector() BSLS_KEYWORD_OVERRIDE;
+    ~MonitorableCollector() BSLS_KEYWORD_OVERRIDE;
 
     /// Register the specified 'publisher' to publish statistics measured
     /// by each monitorable object.
@@ -380,6 +319,9 @@ class PeriodicCollector : public ntci::MonitorableCollector
     /// registered with the default monitorable object registry and publish
     /// their statistics through each registered publisher.
     void collect() BSLS_KEYWORD_OVERRIDE;
+
+    /// Return the configuration of this object.
+    const ntca::MonitorableCollectorConfig& configuration() const;
 };
 
 /// @internal @brief
@@ -578,6 +520,10 @@ struct MonitorableUtil {
 
     /// Cleanup the resources used by this component.
     static void exit();
+
+  private:
+    /// Provide global monitorable state.
+    class State;
 };
 
 }  // close namespace ntcm

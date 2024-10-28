@@ -89,12 +89,6 @@ BSLS_IDENT_RCSID(ntcs_blobbufferfactory_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcs {
 
-namespace {
-
-enum { MAX_BLOCKS_PER_CHUNK = 1 };
-
-}  // close unnamed namespace
-
 const ntci::MetricMetadata BlobBufferFactoryMetrics::STATISTICS[] = {
 #if NTCI_METRIC_PREFIX
 
@@ -403,7 +397,7 @@ BlobBufferFactory::BlobBufferFactory(bsl::size_t       blobBufferSize,
                                      bslma::Allocator* basicAllocator)
 : d_memoryPoolAllocator(basicAllocator)
 , d_memoryPool(bsls::BlockGrowth::BSLS_CONSTANT,
-               MAX_BLOCKS_PER_CHUNK,
+               k_MAX_BLOCKS_PER_CHUNK,
                &d_memoryPoolAllocator)
 , d_blobBufferSize(blobBufferSize)
 , d_blockSize(0)

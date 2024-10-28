@@ -27,9 +27,23 @@ BSLS_IDENT_RCSID(ntsa_ipv6address_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
+class Ipv6Address::Impl
+{
+  public:
+    /// Throw an exception indicating the specified 'text' is in an invalid
+    /// format.
+    static void throwIpv6InvalidFormat(const bslstl::StringRef& text);
 
-void throwIpv6InvalidFormat(const bslstl::StringRef& text)
+    /// Return true if the specified 'size' will cause a read underflow,
+    /// otherwise return false.
+    static bool checkIpv6BufferUnderflow(bsl::size_t size);
+
+    /// Return true if the specified 'size' will cause a write overflow,
+    /// otherwise return false.
+    static bool checkIpv6BufferOverflow(bsl::size_t size);
+};
+
+void Ipv6Address::Impl::throwIpv6InvalidFormat(const bslstl::StringRef& text)
 {
     bsl::stringstream ss;
     ss << "Failed to parse IPv6 address: the text '" << text << "' is invalid";
@@ -37,7 +51,7 @@ void throwIpv6InvalidFormat(const bslstl::StringRef& text)
     NTSCFG_THROW(ss.str());
 }
 
-bool checkIpv6BufferUnderflow(bsl::size_t size)
+bool Ipv6Address::Impl::checkIpv6BufferUnderflow(bsl::size_t size)
 {
     if (size < 16) {
         return false;
@@ -46,7 +60,7 @@ bool checkIpv6BufferUnderflow(bsl::size_t size)
     return true;
 }
 
-bool checkIpv6BufferOverflow(bsl::size_t size)
+bool Ipv6Address::Impl::checkIpv6BufferOverflow(bsl::size_t size)
 {
     if (size < 16) {
         return false;
@@ -54,8 +68,6 @@ bool checkIpv6BufferOverflow(bsl::size_t size)
 
     return true;
 }
-
-}  // close unnamed namespace
 
 Ipv6Address::Ipv6Address(const bslstl::StringRef& text)
 {
@@ -64,14 +76,14 @@ Ipv6Address::Ipv6Address(const bslstl::StringRef& text)
     d_scopeId            = 0;
 
     if (!this->parse(text)) {
-        throwIpv6InvalidFormat(text);
+        Impl::throwIpv6InvalidFormat(text);
     }
 }
 
 Ipv6Address& Ipv6Address::operator=(const bslstl::StringRef& text)
 {
     if (!this->parse(text)) {
-        throwIpv6InvalidFormat(text);
+        Impl::throwIpv6InvalidFormat(text);
     }
 
     return *this;
@@ -192,7 +204,7 @@ bool Ipv6Address::parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT
 bsl::size_t Ipv6Address::copyFrom(const void* source,
                                   bsl::size_t size) NTSCFG_NOEXCEPT
 {
-    if (!checkIpv6BufferUnderflow(size)) {
+    if (!Impl::checkIpv6BufferUnderflow(size)) {
         return 0;
     }
 
@@ -205,7 +217,7 @@ bsl::size_t Ipv6Address::copyFrom(const void* source,
 bsl::size_t Ipv6Address::copyTo(void*       destination,
                                 bsl::size_t capacity) const NTSCFG_NOEXCEPT
 {
-    if (!checkIpv6BufferOverflow(capacity)) {
+    if (!Impl::checkIpv6BufferOverflow(capacity)) {
         return 0;
     }
 

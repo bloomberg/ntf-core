@@ -51,14 +51,6 @@ BSLS_IDENT_RCSID(ntcr_thread_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcr {
 
-namespace {
-
-const int RUN_STATE_STOPPED  = 0;
-const int RUN_STATE_STARTED  = 1;
-const int RUN_STATE_STOPPING = 2;
-
-}  // close unnamed namespace
-
 void* Thread::run(ntcr::Thread* thread)
 {
     if (!thread->d_threadAttributes.threadName().empty()) {
@@ -80,7 +72,7 @@ void* Thread::run(ntcr::Thread* thread)
 
     {
         ntccfg::ConditionMutexGuard guard(&thread->d_runMutex);
-        thread->d_runState = RUN_STATE_STARTED;
+        thread->d_runState = k_RUN_STATE_STARTED;
         thread->d_runCondition.signal();
     }
 
@@ -174,7 +166,7 @@ Thread::Thread(const ntca::ThreadConfig&                    configuration,
 , d_threadAttributes(basicAllocator)
 , d_runMutex()
 , d_runCondition()
-, d_runState(RUN_STATE_STOPPED)
+, d_runState(k_RUN_STATE_STOPPED)
 , d_config(configuration, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -236,7 +228,7 @@ Thread::Thread(const ntca::ThreadConfig&             configuration,
 , d_threadHandle(bslmt::ThreadUtil::invalidHandle())
 , d_runMutex()
 , d_runCondition()
-, d_runState(RUN_STATE_STOPPED)
+, d_runState(k_RUN_STATE_STOPPED)
 , d_config(configuration, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -294,7 +286,7 @@ ntsa::Error Thread::start(const bslmt::ThreadAttributes& threadAttributes)
     }
 
     ntccfg::ConditionMutexGuard guard(&d_runMutex);
-    while (d_runState != RUN_STATE_STARTED) {
+    while (d_runState != k_RUN_STATE_STARTED) {
         d_runCondition.wait(&d_runMutex);
     }
 
@@ -309,14 +301,14 @@ void Thread::shutdown()
 
     ntccfg::ConditionMutexGuard guard(&d_runMutex);
 
-    if (d_runState != RUN_STATE_STARTED) {
+    if (d_runState != k_RUN_STATE_STARTED) {
         return;
     }
 
     NTCI_LOG_TRACE("Thread '%s' is stopping",
                    d_config.threadName().value().c_str());
 
-    d_runState = RUN_STATE_STOPPING;
+    d_runState = k_RUN_STATE_STOPPING;
 
     d_reactor_sp->stop();
 }
@@ -329,7 +321,7 @@ void Thread::linger()
 
     int rc;
 
-    if (d_runState == RUN_STATE_STOPPED) {
+    if (d_runState == k_RUN_STATE_STOPPED) {
         return;
     }
 
@@ -340,7 +332,7 @@ void Thread::linger()
         NTCCFG_ABORT();
     }
 
-    d_runState = RUN_STATE_STOPPED;
+    d_runState = k_RUN_STATE_STOPPED;
 
     d_reactor_sp->restart();
 

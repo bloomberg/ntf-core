@@ -29,29 +29,26 @@ BSLS_IDENT_RCSID(ntsa_distinguisedname_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
-
-const char* COMMON_ID_NAME_TABLE[9] =
+const char* const DistinguishedName::k_OID_TABLE[9] =
     {"DC", "CN", "OU", "O", "STREET", "L", "ST", "C", "UID"};
 
-char fromHex(char character)
-{
-    // Return a integer value from the specified hex 'character'.
+const char DistinguishedName::k_HEX_TABLE[17] = "0123456789ABCDEF";
 
+char DistinguishedName::fromHex(char character)
+{
     return static_cast<char>(bsl::isdigit(character)
                                  ? character - '0'
                                  : bsl::tolower(character) - 'a' + 10);
 }
 
-char toHex(char code)
+char DistinguishedName::toHex(char code)
 {
-    // Return the hex character for the specified integer 'code'.
-
-    static char TABLE[] = "0123456789ABCDEF";
-    return TABLE[code & 15];
+    return k_HEX_TABLE[code & 15];
 }
 
-int parseAttribute(bsl::string* result, const char** current, const char* end)
+int DistinguishedName::parseAttribute(bsl::string* result,
+                                      const char** current,
+                                      const char*  end)
 {
     while (*current != end && **current != ',' && **current != '/') {
         if (**current == '\\') {
@@ -79,7 +76,8 @@ int parseAttribute(bsl::string* result, const char** current, const char* end)
     return 0;
 }
 
-void generateAttribute(bsl::string* result, const bsl::string& value)
+void DistinguishedName::generateAttribute(bsl::string*       result,
+                                          const bsl::string& value)
 {
     const char* current = value.c_str();
     const char* end     = value.c_str() + value.size();
@@ -106,8 +104,9 @@ void generateAttribute(bsl::string* result, const bsl::string& value)
     }
 }
 
-int generateComponent(bsl::string*                        result,
-                      const DistinguishedName::Component& component)
+int DistinguishedName::generateComponent(
+    bsl::string*                        result,
+    const DistinguishedName::Component& component)
 {
     for (int i = 0; i < component.numAttributes(); ++i) {
         if (!result->empty()) {
@@ -124,8 +123,6 @@ int generateComponent(bsl::string*                        result,
 
     return 0;
 }
-
-}  // close unnamed namespace
 
 DistinguishedName::DistinguishedName(bslma::Allocator* basicAllocator)
 : d_componentList(basicAllocator)
@@ -186,7 +183,7 @@ DistinguishedName::Component& DistinguishedName::operator[](
 
 DistinguishedName::Component& DistinguishedName::operator[](CommonId id)
 {
-    return this->operator[](COMMON_ID_NAME_TABLE[id]);
+    return this->operator[](k_OID_TABLE[id]);
 }
 
 void DistinguishedName::reset()
@@ -264,7 +261,7 @@ bool DistinguishedName::findDomainComponent(
     bsl::vector<bsl::string>* result) const
 {
     ComponentMap::const_iterator it =
-        d_componentMap.find(COMMON_ID_NAME_TABLE[e_DOMAIN_COMPONENT]);
+        d_componentMap.find(k_OID_TABLE[e_DOMAIN_COMPONENT]);
     if (it != d_componentMap.end()) {
         const Component& component = *it->second;
         if (component.numAttributes() > 0) {
@@ -282,7 +279,7 @@ bool DistinguishedName::findDomainComponent(
 bool DistinguishedName::findCommonName(bsl::vector<bsl::string>* result) const
 {
     ComponentMap::const_iterator it =
-        d_componentMap.find(COMMON_ID_NAME_TABLE[e_COMMON_NAME]);
+        d_componentMap.find(k_OID_TABLE[e_COMMON_NAME]);
     if (it != d_componentMap.end()) {
         const Component& component = *it->second;
         if (component.numAttributes() > 0) {
@@ -301,7 +298,7 @@ bool DistinguishedName::findOrganizationName(
     bsl::vector<bsl::string>* result) const
 {
     ComponentMap::const_iterator it =
-        d_componentMap.find(COMMON_ID_NAME_TABLE[e_ORGANIZATION_NAME]);
+        d_componentMap.find(k_OID_TABLE[e_ORGANIZATION_NAME]);
     if (it != d_componentMap.end()) {
         const Component& component = *it->second;
         if (component.numAttributes() > 0) {
@@ -320,7 +317,7 @@ bool DistinguishedName::findOrganizationalUnitName(
     bsl::vector<bsl::string>* result) const
 {
     ComponentMap::const_iterator it =
-        d_componentMap.find(COMMON_ID_NAME_TABLE[e_ORGANIZATIONAL_UNIT_NAME]);
+        d_componentMap.find(k_OID_TABLE[e_ORGANIZATIONAL_UNIT_NAME]);
     if (it != d_componentMap.end()) {
         const Component& component = *it->second;
         if (component.numAttributes() > 0) {
@@ -339,7 +336,7 @@ bool DistinguishedName::findStreetAddress(
     bsl::vector<bsl::string>* result) const
 {
     ComponentMap::const_iterator it =
-        d_componentMap.find(COMMON_ID_NAME_TABLE[e_STREET_ADDRESS]);
+        d_componentMap.find(k_OID_TABLE[e_STREET_ADDRESS]);
     if (it != d_componentMap.end()) {
         const Component& component = *it->second;
         if (component.numAttributes() > 0) {
@@ -358,7 +355,7 @@ bool DistinguishedName::findLocalityName(
     bsl::vector<bsl::string>* result) const
 {
     ComponentMap::const_iterator it =
-        d_componentMap.find(COMMON_ID_NAME_TABLE[e_LOCALITY_NAME]);
+        d_componentMap.find(k_OID_TABLE[e_LOCALITY_NAME]);
     if (it != d_componentMap.end()) {
         const Component& component = *it->second;
         if (component.numAttributes() > 0) {
@@ -376,7 +373,7 @@ bool DistinguishedName::findLocalityName(
 bool DistinguishedName::findState(bsl::vector<bsl::string>* result) const
 {
     ComponentMap::const_iterator it =
-        d_componentMap.find(COMMON_ID_NAME_TABLE[e_STATE]);
+        d_componentMap.find(k_OID_TABLE[e_STATE]);
     if (it != d_componentMap.end()) {
         const Component& component = *it->second;
         if (component.numAttributes() > 0) {
@@ -394,7 +391,7 @@ bool DistinguishedName::findState(bsl::vector<bsl::string>* result) const
 bool DistinguishedName::findCountryName(bsl::vector<bsl::string>* result) const
 {
     ComponentMap::const_iterator it =
-        d_componentMap.find(COMMON_ID_NAME_TABLE[e_COUNTRY_NAME]);
+        d_componentMap.find(k_OID_TABLE[e_COUNTRY_NAME]);
     if (it != d_componentMap.end()) {
         const Component& component = *it->second;
         if (component.numAttributes() > 0) {
@@ -412,7 +409,7 @@ bool DistinguishedName::findCountryName(bsl::vector<bsl::string>* result) const
 bool DistinguishedName::findUserId(bsl::vector<bsl::string>* result) const
 {
     ComponentMap::const_iterator it =
-        d_componentMap.find(COMMON_ID_NAME_TABLE[e_USERID]);
+        d_componentMap.find(k_OID_TABLE[e_USERID]);
     if (it != d_componentMap.end()) {
         const Component& component = *it->second;
         if (component.numAttributes() > 0) {
@@ -440,7 +437,7 @@ int DistinguishedName::find(Component** result, const bsl::string& id)
 
 int DistinguishedName::find(Component** result, CommonId id)
 {
-    return this->find(result, COMMON_ID_NAME_TABLE[id]);
+    return this->find(result, k_OID_TABLE[id]);
 }
 
 int DistinguishedName::find(const Component**  result,
@@ -457,7 +454,7 @@ int DistinguishedName::find(const Component**  result,
 
 int DistinguishedName::find(const Component** result, CommonId id) const
 {
-    return this->find(result, COMMON_ID_NAME_TABLE[id]);
+    return this->find(result, k_OID_TABLE[id]);
 }
 
 int DistinguishedName::parse(const bsl::string& source)

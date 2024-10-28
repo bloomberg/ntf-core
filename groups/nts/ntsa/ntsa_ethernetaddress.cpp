@@ -28,9 +28,25 @@ BSLS_IDENT_RCSID(ntsa_ethernetaddress_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
+/// Provide a private implementation.
+class EthernetAddress::Impl
+{
+  public:
+    /// Throw an exception indicating the specified 'text' is in an invalid
+    /// format.
+    static void throwEthernetInvalidFormat(const bslstl::StringRef& text);
 
-void throwEthernetInvalidFormat(const bslstl::StringRef& text)
+    /// Return true if the specified 'size' will cause a read underflow,
+    /// otherwise return false.
+    static bool checkEthernetBufferUnderflow(bsl::size_t size);
+
+    /// Return true if the specified 'size' will cause a write overflow,
+    /// otherwise return false.
+    static bool checkEthernetBufferOverflow(bsl::size_t size);
+};
+
+void EthernetAddress::Impl::throwEthernetInvalidFormat(
+    const bslstl::StringRef& text)
 {
     bsl::stringstream ss;
     ss << "Failed to parse Ethernet address: the text '" << text
@@ -39,7 +55,7 @@ void throwEthernetInvalidFormat(const bslstl::StringRef& text)
     NTSCFG_THROW(ss.str());
 }
 
-bool checkEthernetBufferUnderflow(bsl::size_t size)
+bool EthernetAddress::Impl::checkEthernetBufferUnderflow(bsl::size_t size)
 {
     if (size < 6) {
         return false;
@@ -48,7 +64,7 @@ bool checkEthernetBufferUnderflow(bsl::size_t size)
     return true;
 }
 
-bool checkEthernetBufferOverflow(bsl::size_t size)
+bool EthernetAddress::Impl::checkEthernetBufferOverflow(bsl::size_t size)
 {
     if (size < 6) {
         return false;
@@ -56,21 +72,19 @@ bool checkEthernetBufferOverflow(bsl::size_t size)
 
     return true;
 }
-
-}  // close unnamed namespace
 
 EthernetAddress::EthernetAddress(const bslstl::StringRef& text)
 {
     bsl::memset(d_value, 0, sizeof d_value);
 
     if (!this->parse(text)) {
-        throwEthernetInvalidFormat(text);
+        Impl::throwEthernetInvalidFormat(text);
     }
 }
 
 bsl::size_t EthernetAddress::copyFrom(const void* source, bsl::size_t size)
 {
-    if (!checkEthernetBufferUnderflow(size)) {
+    if (!Impl::checkEthernetBufferUnderflow(size)) {
         return 0;
     }
 
@@ -81,7 +95,7 @@ bsl::size_t EthernetAddress::copyFrom(const void* source, bsl::size_t size)
 bsl::size_t EthernetAddress::copyTo(void*       destination,
                                     bsl::size_t capacity) const
 {
-    if (!checkEthernetBufferOverflow(capacity)) {
+    if (!Impl::checkEthernetBufferOverflow(capacity)) {
         return 0;
     }
 

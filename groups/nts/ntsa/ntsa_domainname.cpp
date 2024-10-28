@@ -28,9 +28,25 @@ BSLS_IDENT_RCSID(ntsa_domainname_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
+/// Provide a private implementation.
+class DomainName::Impl
+{
+  public:
+    /// Throw an exception indicating the specified 'text' is in an invalid
+    /// format.
+    static void throwDomainNameInvalidFormat(const bslstl::StringRef& text);
 
-void throwDomainNameInvalidFormat(const bslstl::StringRef& text)
+    /// Throw an exception indicating the specified 'name' within the specified
+    /// 'domain' is in an invalid format.
+    static void throwDomainNameInvalidFormat(const bslstl::StringRef& name,
+                                             const bslstl::StringRef& domain);
+
+    /// Throw an exception indicating the domain name is too long.
+    static void throwDomainNameTooLong();
+};
+
+void DomainName::Impl::throwDomainNameInvalidFormat(
+    const bslstl::StringRef& text)
 {
     bsl::stringstream ss;
     ss << "Failed to parse domain name: the text '" << text << "' is invalid";
@@ -38,8 +54,9 @@ void throwDomainNameInvalidFormat(const bslstl::StringRef& text)
     NTSCFG_THROW(ss.str());
 }
 
-void throwDomainNameInvalidFormat(const bslstl::StringRef& name,
-                                  const bslstl::StringRef& domain)
+void DomainName::Impl::throwDomainNameInvalidFormat(
+    const bslstl::StringRef& name,
+    const bslstl::StringRef& domain)
 {
     bsl::stringstream ss;
     ss << "Failed to parse domain name: the text '" << name << "." << domain
@@ -48,15 +65,13 @@ void throwDomainNameInvalidFormat(const bslstl::StringRef& name,
     NTSCFG_THROW(ss.str());
 }
 
-void throwDomainNameTooLong()
+void DomainName::Impl::throwDomainNameTooLong()
 {
     bsl::stringstream ss;
     ss << "Failed to make domain name absolute: too long";
 
     NTSCFG_THROW(ss.str());
 }
-
-}  // close unnamed namespace
 
 DomainName::DomainName(const bslstl::StringRef& text)
 : d_size(0)
@@ -67,7 +82,7 @@ DomainName::DomainName(const bslstl::StringRef& text)
     d_buffer[0] = 0;
 
     if (!this->parse(text)) {
-        throwDomainNameInvalidFormat(text);
+        Impl::throwDomainNameInvalidFormat(text);
     }
 }
 
@@ -81,7 +96,7 @@ DomainName::DomainName(const bslstl::StringRef& name,
     d_buffer[0] = 0;
 
     if (!this->parse(name, domain)) {
-        throwDomainNameInvalidFormat(name, domain);
+        Impl::throwDomainNameInvalidFormat(name, domain);
     }
 }
 
@@ -123,7 +138,7 @@ DomainName& DomainName::operator=(const DomainName& other)
 DomainName& DomainName::operator=(const bslstl::StringRef& text)
 {
     if (!this->parse(text)) {
-        throwDomainNameInvalidFormat(text);
+        Impl::throwDomainNameInvalidFormat(text);
     }
 
     return *this;
@@ -254,7 +269,7 @@ bool DomainName::parse(const bslstl::StringRef& name,
 void DomainName::makeAbsolute()
 {
     if (d_size >= MAX_TEXT_LENGTH) {
-        throwDomainNameTooLong();
+        Impl::throwDomainNameTooLong();
     }
 
     if (this->isRelative()) {

@@ -49,6 +49,10 @@ IF NOT DEFINED NTF_CONFIGURE_UFID (
     set NTF_CONFIGURE_UFID=opt_dbg_exc_mt_64
 )
 
+IF NOT DEFINED NTF_CONFIGURE_UNITY (
+    set NTF_CONFIGURE_UNITY=0
+)
+
 IF NOT DEFINED NTF_CONFIGURE_JOBS (
     set NTF_CONFIGURE_JOBS=8
 )
@@ -231,6 +235,9 @@ if not "%1"=="" (
     if "%1"=="--ufid" (
         set NTF_CONFIGURE_UFID=%2
         shift
+    )
+    if "%1"=="--unity" (
+        set NTF_CONFIGURE_UNITY=1
     )
     if "%1"=="--generator" (
         set NTF_CONFIGURE_GENERATOR=%2
@@ -843,6 +850,7 @@ echo     --clean                          Remove the previous build output, if a
 echo     --keep                           Retain the previous build output, if any, while configuring
 echo     --debug                          Build the standard debug UFID
 echo     --release                        Build the standard release UFID
+echo     --unity                          Perform a unity, or almagamated build
 
 echo     --with-bde                       Enable and build features that depend on BDE classic
 echo     --with-nts                       Enable and build features that depend on NTS

@@ -50,19 +50,26 @@
 namespace BloombergLP {
 namespace ntsu {
 
-namespace {
+/// Provide a private implementation.
+class TimestampUtil::Impl
+{
+  public:
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    struct OptionSupport {
+        int option;
+        int versionMajor;
+        int versionMinor;
+        int versionPatch;
+    };
+
+    static const TimestampUtil::Impl::OptionSupport s_support[17];
+#endif
+};
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
-struct TimestampOtionSupport {
-    int option;
-    int versionMajor;
-    int versionMinor;
-    int versionPatch;
-};
-
 // clang-format off
-static TimestampOtionSupport s_timestampOptionSupport[] = {
+const TimestampUtil::Impl::OptionSupport TimestampUtil::Impl::s_support[17] = {
     { ntsu::TimestampUtil::e_SCM_TSTAMP_SND,                4, 18, 0 },
     { ntsu::TimestampUtil::e_SCM_TSTAMP_SCHED,              4, 18, 0 },
     { ntsu::TimestampUtil::e_SCM_TSTAMP_ACK,                4, 18, 0 },
@@ -88,8 +95,6 @@ static TimestampOtionSupport s_timestampOptionSupport[] = {
 // clang-format on
 
 #endif
-
-}  // close unnamed namespace
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
@@ -166,16 +171,16 @@ bool TimestampUtil::supportsOption(int option,
                                                             versionMinor,
                                                             versionPatch);
 
-    const bsl::size_t count =
-        sizeof(s_timestampOptionSupport) / sizeof(s_timestampOptionSupport[0]);
+    const bsl::size_t count = sizeof(TimestampUtil::Impl::s_support) /
+                              sizeof(TimestampUtil::Impl::s_support[0]);
 
     for (bsl::size_t i = 0; i < count; ++i) {
-        if ((option & s_timestampOptionSupport[i].option) != 0) {
+        if ((option & TimestampUtil::Impl::s_support[i].option) != 0) {
             return NTSU_TIMESTAMP_UTIL_LINUX_VERSION_GE(
                 version,
-                s_timestampOptionSupport[i].versionMajor,
-                s_timestampOptionSupport[i].versionMinor,
-                s_timestampOptionSupport[i].versionPatch);
+                TimestampUtil::Impl::s_support[i].versionMajor,
+                TimestampUtil::Impl::s_support[i].versionMinor,
+                TimestampUtil::Impl::s_support[i].versionPatch);
         }
     }
 

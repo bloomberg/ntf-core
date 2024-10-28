@@ -57,45 +57,8 @@ extern char** environ;
 // clang-format on
 #endif
 
-// Set to 1 to automatically initialize the library during C++ static
-// initialization.
-#define NTCCFG_PLATFORM_AUTO_INITIALIZE 0
-
 namespace BloombergLP {
 namespace ntccfg {
-
-namespace {
-
-#if NTCCFG_PLATFORM_AUTO_INITIALIZE
-
-struct Initializer {
-    // This struct defines a guard class to automatically initialize and
-    // cleanup the necessary library state and platform conditions.
-
-    Initializer();
-    // Initialize the library state.
-
-    ~Initializer();
-    // Clean up the library state.
-};
-
-// The static object to automatically initialize and clean up the library
-// state.
-Initializer s_initializer;
-
-Initializer::Initializer()
-{
-    ntccfg::Platform::initialize();
-}
-
-Initializer::~Initializer()
-{
-    ntccfg::Platform::exit();
-}
-
-#endif
-
-}  // close unnamed namespace
 
 int Platform::initialize()
 {

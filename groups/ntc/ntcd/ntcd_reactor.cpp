@@ -73,13 +73,7 @@ BSLS_IDENT_RCSID(ntcd_reactor_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcd {
 
-namespace {
-
-// The flag that defines whether all waiters are interrupted when the polling
-// device gains or loses interest in socket events.
-const bool k_INTERRUPT_ALL = false;
-
-}  // close unnamed namespace
+const bool Reactor::k_INTERRUPT_ALL = false;
 
 /// This struct describes the context of a waiter.
 struct Reactor::Result {

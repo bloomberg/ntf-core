@@ -23,10 +23,15 @@ BSLS_IDENT_RCSID(ntca_encryptionoptions_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
-namespace {
+class EncryptionOptions::Impl
+{
+  public:
+    static bool sortResource(const ntca::EncryptionResource& lhs,
+                             const ntca::EncryptionResource& rhs);
+};
 
-bool sortResource(const ntca::EncryptionResource& lhs,
-                  const ntca::EncryptionResource& rhs)
+bool EncryptionOptions::Impl::sortResource(const ntca::EncryptionResource& lhs,
+                                           const ntca::EncryptionResource& rhs)
 {
     ntca::EncryptionResourceOptions::Hint lhsHint =
         ntca::EncryptionResourceOptions::e_ANY;
@@ -44,8 +49,6 @@ bool sortResource(const ntca::EncryptionResource& lhs,
 
     return static_cast<int>(lhsHint) < static_cast<int>(rhsHint);
 }
-
-}  // close unnamed namespace
 
 EncryptionOptions::EncryptionOptions(bslma::Allocator* basicAllocator)
 : d_minMethod(ntca::EncryptionMethod::e_DEFAULT)
@@ -400,7 +403,9 @@ void EncryptionOptions::addResource(const ntca::EncryptionResource& resource)
 {
     d_resourceVector.push_back(resource);
 
-    bsl::sort(d_resourceVector.begin(), d_resourceVector.end(), &sortResource);
+    bsl::sort(d_resourceVector.begin(),
+              d_resourceVector.end(),
+              &EncryptionOptions::Impl::sortResource);
 }
 
 void EncryptionOptions::addResourceData(const bsl::vector<char>& resourceData)

@@ -232,65 +232,7 @@ class Metrics : public ntci::Monitorable, public ntccfg::Shared<Metrics>
     /// Return the parent metrics object into which these metrics are
     /// aggregated, or null if no such parent object is defined.
     const bsl::shared_ptr<ntcs::Metrics>& parent() const;
-
-    /// Set the specified 'metrics' as the metrics to use by this thread.
-    /// Return the previous metrics used by this thread, if any.
-    static ntcs::Metrics* setThreadLocal(ntcs::Metrics* metrics);
-
-    /// Return the metrics to use by the current thread, if any.
-    static ntcs::Metrics* getThreadLocal();
 };
-
-/// @internal @brief
-/// Provide a guard to install and uninstall socket metrics into thread-local
-/// storage.
-///
-/// @details
-/// Provide a guard to automatically install a socket metrics
-/// object into thread local storage when the object is constructed and
-/// un-install it from thread local storage when the object is destroyed.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntcs
-class MetricsGuard
-{
-    ntcs::Metrics* d_current_p;
-    ntcs::Metrics* d_previous_p;
-
-  private:
-    MetricsGuard(const MetricsGuard&) BSLS_KEYWORD_DELETED;
-    MetricsGuard& operator=(const MetricsGuard&) BSLS_KEYWORD_DELETED;
-
-  public:
-    /// Create a new metrics guard that installs the specified 'metrics'
-    /// object into thread local storage and uninstalls it when this object
-    /// is destroyed.
-    explicit MetricsGuard(ntcs::Metrics* metrics);
-
-    /// Uninstall the underlying metrics object from thread local storage
-    /// then destroy this object.
-    ~MetricsGuard();
-};
-
-NTCCFG_INLINE
-MetricsGuard::MetricsGuard(ntcs::Metrics* metrics)
-: d_current_p(metrics)
-, d_previous_p(0)
-{
-    if (d_current_p) {
-        d_previous_p = ntcs::Metrics::setThreadLocal(d_current_p);
-    }
-}
-
-NTCCFG_INLINE
-MetricsGuard::~MetricsGuard()
-{
-    if (d_current_p) {
-        ntcs::Metrics::setThreadLocal(d_previous_p);
-    }
-}
 
 #if NTC_BUILD_WITH_METRICS
 

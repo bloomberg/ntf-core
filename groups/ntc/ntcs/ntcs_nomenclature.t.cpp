@@ -30,11 +30,60 @@ class NomenclatureTest
 {
   public:
     // TODO
-    static void verify();
+    static void verifyReactorName();
+
+    // TODO
+    static void verifyProactorName();
+
+    // TODO
+    static void verifyThreadName();
+
+    // TODO
+    static void verifyInterfaceName();
 };
 
-NTSCFG_TEST_FUNCTION(ntcs::NomenclatureTest::verify)
+NTSCFG_TEST_FUNCTION(ntcs::NomenclatureTest::verifyReactorName)
 {
+    bsl::string n0 = ntcs::Nomenclature::createReactorName();
+    bsl::string n1 = ntcs::Nomenclature::createReactorName();
+    bsl::string n2 = ntcs::Nomenclature::createReactorName();
+
+    NTSCFG_TEST_EQ(n0, "reactor-0");
+    NTSCFG_TEST_EQ(n1, "reactor-1");
+    NTSCFG_TEST_EQ(n2, "reactor-2");
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::NomenclatureTest::verifyProactorName)
+{
+    bsl::string n0 = ntcs::Nomenclature::createProactorName();
+    bsl::string n1 = ntcs::Nomenclature::createProactorName();
+    bsl::string n2 = ntcs::Nomenclature::createProactorName();
+
+    NTSCFG_TEST_EQ(n0, "proactor-0");
+    NTSCFG_TEST_EQ(n1, "proactor-1");
+    NTSCFG_TEST_EQ(n2, "proactor-2");
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::NomenclatureTest::verifyThreadName)
+{
+    bsl::string n0 = ntcs::Nomenclature::createThreadName();
+    bsl::string n1 = ntcs::Nomenclature::createThreadName();
+    bsl::string n2 = ntcs::Nomenclature::createThreadName();
+
+    NTSCFG_TEST_EQ(n0, "thread-0");
+    NTSCFG_TEST_EQ(n1, "thread-1");
+    NTSCFG_TEST_EQ(n2, "thread-2");
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::NomenclatureTest::verifyInterfaceName)
+{
+    bsl::string n0 = ntcs::Nomenclature::createInterfaceName();
+    bsl::string n1 = ntcs::Nomenclature::createInterfaceName();
+    bsl::string n2 = ntcs::Nomenclature::createInterfaceName();
+
+    NTSCFG_TEST_EQ(n0, "interface-0");
+    NTSCFG_TEST_EQ(n1, "interface-1");
+    NTSCFG_TEST_EQ(n2, "interface-2");
 }
 
 }  // close namespace ntcs

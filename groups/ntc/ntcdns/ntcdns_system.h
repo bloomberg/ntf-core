@@ -88,6 +88,10 @@ class System : public ntci::Executor,
     bsls::AtomicInt                    d_state;
     bslma::Allocator*                  d_allocator_p;
 
+    static const int k_DEFAULT_MIN_THREADS;
+    static const int k_DEFAULT_MAX_THREADS;
+    static const int k_DEFAULT_MAX_IDLE_TIME;
+
   private:
     System(const System&) BSLS_KEYWORD_DELETED;
     System& operator=(const System&) BSLS_KEYWORD_DELETED;

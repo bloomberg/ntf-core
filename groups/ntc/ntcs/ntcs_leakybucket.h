@@ -357,6 +357,24 @@ class LeakyBucket
     LeakyBucket& operator=(const LeakyBucket&) BSLS_KEYWORD_DELETED;
     LeakyBucket(const LeakyBucket&) BSLS_KEYWORD_DELETED;
 
+  private:
+    /// Return the number of units that would be drained from a leaky bucket
+    /// over the specified 'timeInterval' at the specified 'drainRate', plus the
+    /// specified 'fractionalUnitDrainedInNanoUnits', representing a fractional
+    /// remainder from a previous call to 'calculateNumberOfUnitsToDrain'.  Load
+    /// into 'fractionalUnitDrainedInNanoUnits' the fractional remainder
+    /// (between 0.0 and 1.0, represented in nano-units) from this caculation.
+    /// The behavior is undefined unless
+    /// '0 <= *fractionalUnitDrainedInNanoUnits < 1000000000' (i.e., it
+    /// represents a value between 0 and 1 unit) and
+    /// 'timeInterval.seconds() * drainRate <= ULLONG_MAX'.  Note that
+    /// 'fractionalUnitDrainedInNanoUnits' is represented in nano-units to avoid
+    /// using a floating point representation.
+    static bsl::uint64_t calculateNumberOfUnitsToDrain(
+        bsl::uint64_t*            fractionalUnitDrainedInNanoUnits,
+        bsl::uint64_t             drainRate,
+        const bsls::TimeInterval& timeInterval);
+
   public:
     /// Return the time interval required to drain the specified 'numUnits'
     /// at the specified 'drainRate', round up the number of nanoseconds in

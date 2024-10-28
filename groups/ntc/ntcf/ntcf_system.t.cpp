@@ -16,11 +16,16 @@
 #include <ntcf_system.h>
 
 #include <ntccfg_bind.h>
+#include <ntccfg_config.h>
+#include <ntccfg_platform.h>
 #include <ntcd_datautil.h>
 #include <ntci_log.h>
 #include <ntcs_blobutil.h>
 #include <ntcs_datapool.h>
 #include <ntcs_ratelimiter.h>
+#include <ntcscm_version.h>
+#include <ntcu_datagramsocketeventqueue.h>
+#include <ntcu_streamsocketeventqueue.h>
 #include <ntsa_adapter.h>
 #include <ntsa_endpoint.h>
 #include <ntsa_ipaddress.h>
@@ -33,33 +38,10 @@
 #include <ntsi_datagramsocket.h>
 #include <ntsi_streamsocket.h>
 #include <ntsu_adapterutil.h>
-#include <ntccfg_config.h>
-#include <ntccfg_platform.h>
-#include <ntcscm_version.h>
-#include <ntcu_streamsocketeventqueue.h>
-#include <ntcu_datagramsocketeventqueue.h>
-#include <bdlb_nullablevalue.h>
-#include <bdlt_currenttime.h>
-#include <bdlt_datetime.h>
-#include <bdlt_epochutil.h>
-#include <bslma_mallocfreeallocator.h>
-#include <bslma_testallocator.h>
-#include <bslmf_issame.h>
-#include <bslmt_threadutil.h>
-#include <bsls_log.h>
-#include <bsls_logseverity.h>
-#include <bsls_platform.h>
-#include <bsls_types.h>
-#include <bsl_cstdio.h>
-#include <bsl_cstdlib.h>
-#include <bsl_cstring.h>
-#include <bsl_list.h>
-#include <bsl_ostream.h>
-#include <bsl_sstream.h>
-#include <bsl_stdexcept.h>
 #include <bdlb_bigendian.h>
 #include <bdlb_guid.h>
 #include <bdlb_guidutil.h>
+#include <bdlb_nullablevalue.h>
 #include <bdlbb_blob.h>
 #include <bdlbb_blobstreambuf.h>
 #include <bdlbb_blobutil.h>
@@ -71,20 +53,35 @@
 #include <bdlf_placeholder.h>
 #include <bdlmt_eventscheduler.h>
 #include <bdls_processutil.h>
+#include <bdlt_currenttime.h>
+#include <bdlt_datetime.h>
+#include <bdlt_epochutil.h>
 #include <bslma_defaultallocatorguard.h>
+#include <bslma_mallocfreeallocator.h>
 #include <bslma_testallocator.h>
+#include <bslmf_issame.h>
 #include <bslmt_barrier.h>
 #include <bslmt_latch.h>
 #include <bslmt_lockguard.h>
 #include <bslmt_semaphore.h>
+#include <bslmt_threadutil.h>
+#include <bsls_log.h>
+#include <bsls_logseverity.h>
+#include <bsls_platform.h>
+#include <bsls_types.h>
 #include <bslx_genericinstream.h>
 #include <bslx_genericoutstream.h>
 #include <bsl_algorithm.h>
 #include <bsl_cctype.h>
+#include <bsl_cstdio.h>
 #include <bsl_cstdlib.h>
+#include <bsl_cstring.h>
 #include <bsl_fstream.h>
 #include <bsl_iostream.h>
+#include <bsl_list.h>
+#include <bsl_ostream.h>
 #include <bsl_sstream.h>
+#include <bsl_stdexcept.h>
 #include <bsl_unordered_map.h>
 #include <bsl_unordered_set.h>
 #include <balst_stacktracetestallocator.h>
@@ -92,7 +89,6 @@
 #if NTC_BUILD_WITH_STACK_TRACE_TEST_ALLOCATOR
 #include <balst_stacktracetestallocator.h>
 #endif
-
 
 using namespace BloombergLP;
 
@@ -219,31 +215,26 @@ class TestAllocator : public bslma::Allocator
     bsl::int64_t numBlocksInUse() const;
 };
 
-inline
-TestAllocator::TestAllocator()
+inline TestAllocator::TestAllocator()
 : d_base(64)
 {
 }
 
-inline
-TestAllocator::~TestAllocator()
+inline TestAllocator::~TestAllocator()
 {
 }
 
-inline
-void* TestAllocator::allocate(size_type size)
+inline void* TestAllocator::allocate(size_type size)
 {
     return d_base.allocate(size);
 }
 
-inline
-void TestAllocator::deallocate(void* address)
+inline void TestAllocator::deallocate(void* address)
 {
     d_base.deallocate(address);
 }
 
-inline
-bsl::int64_t TestAllocator::numBlocksInUse() const
+inline bsl::int64_t TestAllocator::numBlocksInUse() const
 {
     // Intentionally report 0 blocks in use and assert in the destructor.
     return 0;
@@ -295,31 +286,26 @@ class TestAllocator : public bslma::Allocator
     bsl::int64_t numBlocksInUse() const;
 };
 
-inline
-TestAllocator::TestAllocator()
+inline TestAllocator::TestAllocator()
 : d_base()
 {
 }
 
-inline
-TestAllocator::~TestAllocator()
+inline TestAllocator::~TestAllocator()
 {
 }
 
-inline
-void* TestAllocator::allocate(size_type size)
+inline void* TestAllocator::allocate(size_type size)
 {
     return d_base.allocate(size);
 }
 
-inline
-void TestAllocator::deallocate(void* address)
+inline void TestAllocator::deallocate(void* address)
 {
     d_base.deallocate(address);
 }
 
-inline
-bsl::int64_t TestAllocator::numBlocksInUse() const
+inline bsl::int64_t TestAllocator::numBlocksInUse() const
 {
     return d_base.numBlocksInUse();
 }
@@ -15325,8 +15311,6 @@ NTCCFG_TEST_CASE(82)
     NTCCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
 
-
-
 // Provide utilities for TLS tests.
 class TlsTestUtil
 {
@@ -15394,12 +15378,11 @@ void TlsTestUtil::processConnect(
     NTCCFG_WARNING_UNUSED(connector);
 
     if (event.type() == ntca::ConnectEventType::e_COMPLETE) {
-        NTCCFG_TEST_LOG_INFO << "Stream socket descriptor "
-                                   << streamSocket->handle() << " at "
-                                   << streamSocket->sourceEndpoint() << " to "
-                                   << streamSocket->remoteEndpoint()
-                                   << " connect complete: " << event.context()
-                                   << NTCCFG_TEST_LOG_END;
+        NTCCFG_TEST_LOG_INFO
+            << "Stream socket descriptor " << streamSocket->handle() << " at "
+            << streamSocket->sourceEndpoint() << " to "
+            << streamSocket->remoteEndpoint()
+            << " connect complete: " << event.context() << NTCCFG_TEST_LOG_END;
 
         NTCCFG_TEST_LOG_INFO
             << "Stream socket descriptor " << streamSocket->handle() << " at "
@@ -15408,12 +15391,11 @@ void TlsTestUtil::processConnect(
             << " connection has been established" << NTCCFG_TEST_LOG_END;
     }
     else if (event.type() == ntca::ConnectEventType::e_ERROR) {
-        NTCCFG_TEST_LOG_INFO << "Stream socket descriptor "
-                                   << streamSocket->handle() << " at "
-                                   << streamSocket->sourceEndpoint() << " to "
-                                   << streamSocket->remoteEndpoint()
-                                   << " connect error: " << event.context()
-                                   << NTCCFG_TEST_LOG_END;
+        NTCCFG_TEST_LOG_INFO
+            << "Stream socket descriptor " << streamSocket->handle() << " at "
+            << streamSocket->sourceEndpoint() << " to "
+            << streamSocket->remoteEndpoint()
+            << " connect error: " << event.context() << NTCCFG_TEST_LOG_END;
 
         NTCCFG_TEST_TRUE(false);
     }
@@ -15436,11 +15418,10 @@ void TlsTestUtil::processAccept(
     NTCCFG_WARNING_UNUSED(acceptor);
 
     if (event.type() == ntca::AcceptEventType::e_COMPLETE) {
-        NTCCFG_TEST_LOG_INFO << "Listener socket descriptor "
-                                   << listenerSocket->handle() << " at "
-                                   << listenerSocket->sourceEndpoint()
-                                   << " accept complete: " << event.context()
-                                   << NTCCFG_TEST_LOG_END;
+        NTCCFG_TEST_LOG_INFO
+            << "Listener socket descriptor " << listenerSocket->handle()
+            << " at " << listenerSocket->sourceEndpoint()
+            << " accept complete: " << event.context() << NTCCFG_TEST_LOG_END;
 
         NTCCFG_TEST_LOG_INFO
             << "Stream socket descriptor " << streamSocket->handle() << " at "
@@ -15449,11 +15430,10 @@ void TlsTestUtil::processAccept(
             << " connection has been established" << NTCCFG_TEST_LOG_END;
     }
     else if (event.type() == ntca::AcceptEventType::e_ERROR) {
-        NTCCFG_TEST_LOG_INFO << "Listener socket descriptor "
-                                   << listenerSocket->handle() << " at "
-                                   << listenerSocket->sourceEndpoint()
-                                   << " accept error: " << event.context()
-                                   << NTCCFG_TEST_LOG_END;
+        NTCCFG_TEST_LOG_INFO
+            << "Listener socket descriptor " << listenerSocket->handle()
+            << " at " << listenerSocket->sourceEndpoint()
+            << " accept error: " << event.context() << NTCCFG_TEST_LOG_END;
 
         NTCCFG_TEST_TRUE(false);
     }
@@ -15481,12 +15461,12 @@ void TlsTestUtil::processUpgrade(
             ntca::EncryptionCertificate remoteCertificateRecord;
             remoteCertificate->unwrap(&remoteCertificateRecord);
 
-            NTCCFG_TEST_LOG_INFO
-                << "Stream socket descriptor " << streamSocket->handle()
-                << " at " << streamSocket->sourceEndpoint() << " to "
-                << streamSocket->remoteEndpoint()
-                << " upgrade complete: " << event.context()
-                << NTCCFG_TEST_LOG_END;
+            NTCCFG_TEST_LOG_INFO << "Stream socket descriptor "
+                                 << streamSocket->handle() << " at "
+                                 << streamSocket->sourceEndpoint() << " to "
+                                 << streamSocket->remoteEndpoint()
+                                 << " upgrade complete: " << event.context()
+                                 << NTCCFG_TEST_LOG_END;
 
             NTCCFG_TEST_LOG_INFO
                 << "Stream socket descriptor " << streamSocket->handle()
@@ -15498,21 +15478,20 @@ void TlsTestUtil::processUpgrade(
                 << remoteCertificateRecord << NTCCFG_TEST_LOG_END;
         }
         else {
-            NTCCFG_TEST_LOG_INFO
-                << "Stream socket descriptor " << streamSocket->handle()
-                << " at " << streamSocket->sourceEndpoint() << " to "
-                << streamSocket->remoteEndpoint()
-                << " encryption session has been established"
-                << NTCCFG_TEST_LOG_END;
+            NTCCFG_TEST_LOG_INFO << "Stream socket descriptor "
+                                 << streamSocket->handle() << " at "
+                                 << streamSocket->sourceEndpoint() << " to "
+                                 << streamSocket->remoteEndpoint()
+                                 << " encryption session has been established"
+                                 << NTCCFG_TEST_LOG_END;
         }
     }
     else if (event.type() == ntca::UpgradeEventType::e_ERROR) {
-        NTCCFG_TEST_LOG_DEBUG << "Stream socket descriptor "
-                                    << streamSocket->handle() << " at "
-                                    << streamSocket->sourceEndpoint() << " to "
-                                    << streamSocket->remoteEndpoint()
-                                    << " upgrade error: " << event.context()
-                                    << NTCCFG_TEST_LOG_END;
+        NTCCFG_TEST_LOG_DEBUG
+            << "Stream socket descriptor " << streamSocket->handle() << " at "
+            << streamSocket->sourceEndpoint() << " to "
+            << streamSocket->remoteEndpoint()
+            << " upgrade error: " << event.context() << NTCCFG_TEST_LOG_END;
 
         NTCCFG_TEST_TRUE(false);
     }
@@ -15572,12 +15551,11 @@ void TlsTestUtil::processReceive(
             << NTCCFG_TEST_LOG_END;
     }
     else if (event.type() == ntca::ReceiveEventType::e_ERROR) {
-        NTCCFG_TEST_LOG_INFO << "Stream socket descriptor "
-                                   << streamSocket->handle() << " at "
-                                   << streamSocket->sourceEndpoint() << " to "
-                                   << streamSocket->remoteEndpoint()
-                                   << " receive error: " << event.context()
-                                   << NTCCFG_TEST_LOG_END;
+        NTCCFG_TEST_LOG_INFO
+            << "Stream socket descriptor " << streamSocket->handle() << " at "
+            << streamSocket->sourceEndpoint() << " to "
+            << streamSocket->remoteEndpoint()
+            << " receive error: " << event.context() << NTCCFG_TEST_LOG_END;
 
         NTCCFG_TEST_TRUE(false);
     }
@@ -15598,7 +15576,7 @@ bool TlsTestUtil::processValidation(
     const ntca::EncryptionCertificate& certificate)
 {
     NTCCFG_TEST_LOG_INFO << "Validating certificate " << certificate
-                               << NTCCFG_TEST_LOG_END;
+                         << NTCCFG_TEST_LOG_END;
 
     return true;
 }
@@ -16057,8 +16035,7 @@ void TlsTest::verifyShutdown(bslma::Allocator* allocator)
     // The client socket is now connected and the server socket is now
     // accepted.
 
-    bsl::shared_ptr<ntcu::StreamSocketEventQueue>
-        clientSocketEventQueue;
+    bsl::shared_ptr<ntcu::StreamSocketEventQueue> clientSocketEventQueue;
 
     clientSocketEventQueue.createInplace(allocator, allocator);
     clientSocketEventQueue->hideAll();
@@ -16068,8 +16045,7 @@ void TlsTest::verifyShutdown(bslma::Allocator* allocator)
     error = clientSocket->registerSession(clientSocketEventQueue);
     NTCCFG_TEST_FALSE(error);
 
-    bsl::shared_ptr<ntcu::StreamSocketEventQueue>
-        serverSocketEventQueue;
+    bsl::shared_ptr<ntcu::StreamSocketEventQueue> serverSocketEventQueue;
 
     serverSocketEventQueue.createInplace(allocator, allocator);
     serverSocketEventQueue->hideAll();

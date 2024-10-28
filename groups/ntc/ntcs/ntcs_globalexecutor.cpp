@@ -18,6 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcs_globalexecutor_cpp, "$Id$ $CSID$")
 
+#include <ntcs_async.h>
 #include <bsls_assert.h>
 #include <bsls_atomicoperations.h>
 #include <bsls_objectbuffer.h>
@@ -27,33 +28,48 @@ BSLS_IDENT_RCSID(ntcs_globalexecutor_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcs {
 
-namespace {
+/// Provide a private implementation.
+class GlobalExecutor::Impl
+{
+  public:
+    typedef bsls::ObjectBuffer<ntcs::GlobalExecutor> Storage;
 
-typedef bsls::ObjectBuffer<ntcs::GlobalExecutor> GlobalExecutorStorage;
+    static ntcs::GlobalExecutor* initialize(Storage* address);
 
-GlobalExecutorStorage                        s_globalExecutorStorage;
-bsls::AtomicOperations::AtomicTypes::Pointer s_globalExecutor_p = {0};
+    static Storage                                      s_storage;
+    static bsls::AtomicOperations::AtomicTypes::Pointer s_object_p;
+};
 
 NTCCFG_INLINE
-ntcs::GlobalExecutor* initSingleton(GlobalExecutorStorage* address)
+ntcs::GlobalExecutor* GlobalExecutor::Impl::initialize(Storage* address)
 {
     // See the implementation of bslma_newdeleteallocator for an explanation
     // of the singleton initialization.
 
-    GlobalExecutorStorage stackTemp;
-    void*                 v = new (stackTemp.buffer()) ntcs::GlobalExecutor();
+    Storage stackTemp;
+    void*   v = new (stackTemp.buffer()) ntcs::GlobalExecutor();
 
-    *address = *(static_cast<GlobalExecutorStorage*>(v));
+    *address = *(static_cast<Storage*>(v));
     return &address->object();
 }
 
-typedef bsls::ObjectBuffer<ntcs::GlobalExecutorRep> GlobalExecutorRepStorage;
+GlobalExecutor::Impl::Storage                GlobalExecutor::Impl::s_storage;
+bsls::AtomicOperations::AtomicTypes::Pointer GlobalExecutor::Impl::s_object_p;
 
-GlobalExecutorRepStorage                 s_globalExecutorRepStorage;
-bsls::AtomicOperations::AtomicTypes::Int s_globalExecutorRepLock = {0};
-bool                                     s_globalExecutorRepInit = false;
+/// Provide a private implementation.
+class GlobalExecutorRep::Impl
+{
+  public:
+    typedef bsls::ObjectBuffer<ntcs::GlobalExecutorRep> Storage;
 
-}  // close unnamed namespace
+    static Storage                                  s_storage;
+    static bsls::AtomicOperations::AtomicTypes::Int s_lock;
+    static bool                                     s_init;
+};
+
+GlobalExecutorRep::Impl::Storage         GlobalExecutorRep::Impl::s_storage;
+bsls::AtomicOperations::AtomicTypes::Int GlobalExecutorRep::Impl::s_lock;
+bool                                     GlobalExecutorRep::Impl::s_init;
 
 GlobalExecutor::GlobalExecutor()
 {
@@ -65,18 +81,13 @@ GlobalExecutor::~GlobalExecutor()
 
 void GlobalExecutor::execute(const Functor& functor)
 {
-    NTCCFG_WARNING_UNUSED(functor);
-
-    NTCCFG_NOT_IMPLEMENTED();
+    ntcs::Async::execute(functor);
 }
 
 void GlobalExecutor::moveAndExecute(FunctorSequence* functorSequence,
                                     const Functor&   functor)
 {
-    NTCCFG_WARNING_UNUSED(functorSequence);
-    NTCCFG_WARNING_UNUSED(functor);
-
-    NTCCFG_NOT_IMPLEMENTED();
+    ntcs::Async::moveAndExecute(functorSequence, functor);
 }
 
 GlobalExecutor* GlobalExecutor::singleton()
@@ -84,14 +95,14 @@ GlobalExecutor* GlobalExecutor::singleton()
     // See the implementation of bslma_newdeleteallocator for an explanation
     // of the singleton initialization.
 
-    if (!bsls::AtomicOperations::getPtrAcquire(&s_globalExecutor_p)) {
+    if (!bsls::AtomicOperations::getPtrAcquire(&Impl::s_object_p)) {
         bsls::AtomicOperations::setPtrRelease(
-            &s_globalExecutor_p,
-            initSingleton(&s_globalExecutorStorage));
+            &Impl::s_object_p,
+            Impl::initialize(&Impl::s_storage));
     }
 
     return static_cast<ntcs::GlobalExecutor*>(const_cast<void*>(
-        bsls::AtomicOperations::getPtrRelaxed(&s_globalExecutor_p)));
+        bsls::AtomicOperations::getPtrRelaxed(&Impl::s_object_p)));
 }
 
 GlobalExecutorRep::GlobalExecutorRep()
@@ -132,9 +143,7 @@ GlobalExecutorRep* GlobalExecutorRep::singleton()
     // Acquire the spin lock.
 
     while (true) {
-        if (0 ==
-            bsls::AtomicOperations::swapIntAcqRel(&s_globalExecutorRepLock, 1))
-        {
+        if (0 == bsls::AtomicOperations::swapIntAcqRel(&Impl::s_lock, 1)) {
             break;
         }
     }
@@ -142,19 +151,18 @@ GlobalExecutorRep* GlobalExecutorRep::singleton()
     // Create the global executor shared pointer representation storage, if
     // necessary.
 
-    if (s_globalExecutorRepInit) {
-        result = s_globalExecutorRepStorage.address();
+    if (Impl::s_init) {
+        result = Impl::s_storage.address();
     }
     else {
-        result = new (s_globalExecutorRepStorage.buffer())
-            ntcs::GlobalExecutorRep();
+        result = new (Impl::s_storage.buffer()) ntcs::GlobalExecutorRep();
         result->acquireRef();
-        s_globalExecutorRepInit = true;
+        Impl::s_init = true;
     }
 
     // Unlock the spin lock.
 
-    bsls::AtomicOperations::setIntRelease(&s_globalExecutorRepLock, 0);
+    bsls::AtomicOperations::setIntRelease(&Impl::s_lock, 0);
 
     // Return the global shared pointer representation.
 

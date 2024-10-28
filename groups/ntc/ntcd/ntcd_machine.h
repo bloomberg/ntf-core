@@ -60,24 +60,13 @@ BSLS_IDENT("$Id: $")
 
 namespace BloombergLP {
 namespace ntcd {
+
 class Packet;
-}
-namespace ntcd {
 class PacketQueue;
-}
-namespace ntcd {
 class Session;
-}
-namespace ntcd {
 class SessionQueue;
-}
-namespace ntcd {
 class Monitor;
-}
-namespace ntcd {
 class Machine;
-}
-namespace ntcd {
 
 /// @internal @brief
 /// Enumerate simulated packet types.
@@ -157,6 +146,8 @@ class Packet
     bdlb::NullableValue<bsls::TimeInterval> d_rxTimestamp;
     bdlbb::BlobBufferFactory*               d_blobBufferFactory_p;
     bslma::Allocator*                       d_allocator_p;
+
+    static const bsl::size_t k_MTU;
 
   private:
     Packet(const Packet&) BSLS_KEYWORD_DELETED;
@@ -383,6 +374,9 @@ class PacketQueue
     bsls::AtomicUint64 d_highWatermark;
     bsls::AtomicBool   d_shutdown;
     bslma::Allocator*  d_allocator_p;
+
+    static const bsl::size_t k_DEFAULT_LOW_WATERMARK;
+    static const bsl::size_t k_DEFAULT_HIGH_WATERMARK;
 
   private:
     PacketQueue(const PacketQueue&) BSLS_KEYWORD_DELETED;
@@ -740,6 +734,28 @@ class Session : public ntsi::DatagramSocket,
     bsl::size_t                                 d_backlog;
     bdlcc::SingleConsumerQueue<ntsa::Timestamp> d_feedbackQueue;
     bslma::Allocator*                           d_allocator_p;
+
+    static const bool        k_DEFAULT_REUSE_ADDRESS;
+    static const bool        k_DEFAULT_KEEP_ALIVE;
+    static const bool        k_DEFAULT_CORK;
+    static const bool        k_DEFAULT_DELAY_TRANSMISSION;
+    static const bool        k_DEFAULT_DELAY_ACKNOWLEDGEMENT;
+    static const bsl::size_t k_DEFAULT_SEND_BUFFER_SIZE;
+    static const bsl::size_t k_DEFAULT_SEND_BUFFER_LOW_WATERMARK;
+    static const bsl::size_t k_DEFAULT_RECEIVE_BUFFER_SIZE;
+    static const bsl::size_t k_DEFAULT_RECEIVE_BUFFER_LOW_WATERMARK;
+    static const bsl::size_t k_DEFAULT_BACKLOG;
+    static const bool        k_DEFAULT_DEBUG;
+    static const bool        k_DEFAULT_LINGER_ENABLED;
+    static const bsl::size_t k_DEFAULT_LINGER_DURATION_IN_SECONDS;
+    static const bool        k_DEFAULT_BROADCAST;
+    static const bool        k_DEFAULT_BYPASS_ROUTING;
+    static const bool        k_DEFAULT_INLINE_OUT_OF_BAND_DATA;
+
+    static const bsl::size_t k_MAX_BUFFERS_PER_SEND;
+    static const bsl::size_t k_MAX_BUFFERS_PER_RECEIVE;
+
+    class Impl;
 
   private:
     Session(const Session&) BSLS_KEYWORD_DELETED;
@@ -1219,6 +1235,13 @@ class Machine : public ntccfg::Shared<Machine>
     bsls::AtomicBool               d_stop;
     bsls::AtomicBool               d_update;
     bslma::Allocator*              d_allocator_p;
+
+    static const ntsa::Handle k_MIN_HANDLE;
+    static const ntsa::Handle k_MAX_HANDLE;
+
+    static const int k_DEFAULT_BLOB_BUFFER_SIZE;
+
+    class Impl;
 
   private:
     Machine(const Machine&) BSLS_KEYWORD_DELETED;

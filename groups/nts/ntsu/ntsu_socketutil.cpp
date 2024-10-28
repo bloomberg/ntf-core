@@ -309,19 +309,70 @@ BSLMF_ASSERT(sizeof(BloombergLP::ntsa::Handle) == sizeof(int));
 namespace BloombergLP {
 namespace ntsu {
 
-namespace {
+/// Provide a private implementation.
+class SocketUtil::Impl
+{
+  public:
+#if NTSU_SOCKETUTIL_DEBUG_HANDLE_MAP
+    typedef bsl::set<ntsa::Handle> HandleSet;
+#endif
+
+#if NTSU_SOCKETUTIL_DEBUG_SENDMSG
+    // Describe the statistics measured for 'sendmsg'.
+    class OutoingDataStats;
+#endif
+
+#if NTSU_SOCKETUTIL_DEBUG_RECVMSG
+    // Describe the statistics measured for 'recvmsg'.
+    class IncomingDataStats;
+#endif
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    // Provide a buffer suitable for attaching to a call to 'sendmsg' to send
+    // control data to the peer of a socket.
+    class SendControl;
+
+    // Provide a buffer suitable for attaching to a call to 'recvmsg' to
+    // receive control data from the peer of a socket.
+    class ReceiveControl;
+#endif
+
+    /// Initialize the specified 'socketAddress'. Load into the specified
+    /// 'socketAddressSize' the size of the resulting 'socketAddress'.
+    static void initialize(sockaddr_storage* socketAddress,
+                           socklen_t*        socketAddressSize);
+
+    /// Load into the specified 'endpoint' the conversion of the specified
+    /// 'socketAddress' having the specified 'socketAddressSize'. Return
+    /// the error.
+    static ntsa::Error convert(ntsa::Endpoint*         endpoint,
+                               const sockaddr_storage* socketAddress,
+                               socklen_t               socketAddressSize);
+
+    /// Load into the specified 'socketAddress' and 'socketAddressSize' the
+    /// conversion of the specified 'endpoint'. Return the error.
+    static ntsa::Error convert(sockaddr_storage*     socketAddress,
+                               socklen_t*            socketAddressSize,
+                               const ntsa::Endpoint& endpoint);
 
 #if NTSU_SOCKETUTIL_DEBUG_HANDLE_MAP
-bsls::SpinLock s_handleSetLock = BSLS_SPINLOCK_UNLOCKED;
-
-typedef bsl::set<ntsa::Handle> HandleSet;
-HandleSet                      s_handleSet(bslma::Default::globalAllocator());
+    static bsls::SpinLock s_handleSetLock;
+    static HandleSet      s_handleSet;
 #endif
+
+#if NTSU_SOCKETUTIL_DEBUG_SENDMSG
+    static OutoingDataStats s_outgoingDataStats;
+#endif
+
+#if NTSU_SOCKETUTIL_DEBUG_RECVMSG
+    static IncomingDataStats s_incomingDataStats;
+#endif
+};
 
 #if NTSU_SOCKETUTIL_DEBUG_SENDMSG
 
 // Describe the statistics measured for 'sendmsg'.
-class OutoingDataStats
+class SocketUtil::Impl::OutoingDataStats
 {
     bsls::AtomicUint64 d_numSyscalls;
     bsls::AtomicUint64 d_totalBuffersSendable;
@@ -340,9 +391,7 @@ class OutoingDataStats
                 int                 errorNumber);
 };
 
-OutoingDataStats s_outgoingDataStats;
-
-OutoingDataStats::OutoingDataStats()
+SocketUtil::Impl::OutoingDataStats::OutoingDataStats()
 : d_numSyscalls(0)
 , d_totalBuffersSendable(0)
 , d_totalBytesSendable(0)
@@ -351,7 +400,7 @@ OutoingDataStats::OutoingDataStats()
 {
 }
 
-OutoingDataStats::~OutoingDataStats()
+SocketUtil::Impl::OutoingDataStats::~OutoingDataStats()
 {
     if (d_numSyscalls == 0) {
         return;
@@ -389,10 +438,11 @@ OutoingDataStats::~OutoingDataStats()
     bsl::fflush(stdout);
 }
 
-void OutoingDataStats::update(const struct iovec* buffersSendable,
-                              bsl::size_t         numBuffersSendable,
-                              ssize_t             numBytesSent,
-                              int                 errorNumber)
+void SocketUtil::Impl::OutoingDataStats::update(
+    const struct iovec* buffersSendable,
+    bsl::size_t         numBuffersSendable,
+    ssize_t             numBytesSent,
+    int                 errorNumber)
 {
     bsl::size_t bytesSendable = 0;
     for (bsl::size_t i = 0; i < numBuffersSendable; ++i) {
@@ -423,10 +473,10 @@ void OutoingDataStats::update(const struct iovec* buffersSendable,
                                              numBuffersSendable,              \
                                              numBytesSent,                    \
                                              errorNumber)                     \
-    s_outgoingDataStats.update(buffersSendable,                               \
-                               numBuffersSendable,                            \
-                               numBytesSent,                                  \
-                               errorNumber);
+    SocketUtil::Impl::s_outgoingDataStats.update(buffersSendable,             \
+                                                 numBuffersSendable,          \
+                                                 numBytesSent,                \
+                                                 errorNumber);
 
 #else
 
@@ -440,7 +490,7 @@ void OutoingDataStats::update(const struct iovec* buffersSendable,
 #if NTSU_SOCKETUTIL_DEBUG_RECVMSG
 
 // Describe the statistics measured for 'recvmsg'.
-class IncomingDataStats
+class SocketUtil::Impl::IncomingDataStats
 {
     bsls::AtomicUint64 d_numSyscalls;
     bsls::AtomicUint64 d_totalBuffersReceivable;
@@ -459,9 +509,7 @@ class IncomingDataStats
                 int                 errorNumber);
 };
 
-IncomingDataStats s_incomingDataStats;
-
-IncomingDataStats::IncomingDataStats()
+SocketUtil::Impl::IncomingDataStats::IncomingDataStats()
 : d_numSyscalls(0)
 , d_totalBuffersReceivable(0)
 , d_totalBytesReceivable(0)
@@ -470,7 +518,7 @@ IncomingDataStats::IncomingDataStats()
 {
 }
 
-IncomingDataStats::~IncomingDataStats()
+SocketUtil::Impl::IncomingDataStats::~IncomingDataStats()
 {
     if (d_numSyscalls == 0) {
         return;
@@ -509,10 +557,11 @@ IncomingDataStats::~IncomingDataStats()
     bsl::fflush(stdout);
 }
 
-void IncomingDataStats::update(const struct iovec* buffersReceivable,
-                               bsl::size_t         numBuffersReceivable,
-                               ssize_t             numBytesReceived,
-                               int                 errorNumber)
+void SocketUtil::Impl::IncomingDataStats::update(
+    const struct iovec* buffersReceivable,
+    bsl::size_t         numBuffersReceivable,
+    ssize_t             numBytesReceived,
+    int                 errorNumber)
 {
     bsl::size_t bytesReceivable = 0;
     for (bsl::size_t i = 0; i < numBuffersReceivable; ++i) {
@@ -545,10 +594,10 @@ void IncomingDataStats::update(const struct iovec* buffersReceivable,
                                              numBuffersReceivable,            \
                                              numBytesReceived,                \
                                              errorNumber)                     \
-    s_incomingDataStats.update(buffersReceivable,                             \
-                               numBuffersReceivable,                          \
-                               numBytesReceived,                              \
-                               errorNumber);
+    SocketUtil::Impl::s_incomingDataStats.update(buffersReceivable,           \
+                                                 numBuffersReceivable,        \
+                                                 numBytesReceived,            \
+                                                 errorNumber);
 
 #else
 
@@ -563,7 +612,7 @@ void IncomingDataStats::update(const struct iovec* buffersReceivable,
 
 // Provide a buffer suitable for attaching to a call to 'sendmsg' to send
 // control data to the peer of a socket.
-class SendControl
+class SocketUtil::Impl::SendControl
 {
     enum {
         // The payload size required to send any meta-data (viz. open file
@@ -602,7 +651,7 @@ class SendControl
 
 // Provide a buffer suitable for attaching to a call to 'recvmsg' to receive
 // control data from the peer of a socket.
-class ReceiveControl
+class SocketUtil::Impl::ReceiveControl
 {
     enum {
         // The payload size required to receive any meta-data  (e.g. open
@@ -652,16 +701,18 @@ class ReceiveControl
 };
 
 NTSCFG_INLINE
-SendControl::SendControl()
+SocketUtil::Impl::SendControl::SendControl()
 {
 }
 
 NTSCFG_INLINE
-SendControl::~SendControl()
+SocketUtil::Impl::SendControl::~SendControl()
 {
 }
 
-ntsa::Error SendControl::encode(msghdr* msg, const ntsa::SendOptions& options)
+ntsa::Error SocketUtil::Impl::SendControl::encode(
+    msghdr*                  msg,
+    const ntsa::SendOptions& options)
 {
     if (options.foreignHandle().isNull()) {
         return ntsa::Error();
@@ -686,16 +737,16 @@ ntsa::Error SendControl::encode(msghdr* msg, const ntsa::SendOptions& options)
 }
 
 NTSCFG_INLINE
-ReceiveControl::ReceiveControl()
+SocketUtil::Impl::ReceiveControl::ReceiveControl()
 {
 }
 
 NTSCFG_INLINE
-ReceiveControl::~ReceiveControl()
+SocketUtil::Impl::ReceiveControl::~ReceiveControl()
 {
 }
 
-void ReceiveControl::initialize(msghdr* msg)
+void SocketUtil::Impl::ReceiveControl::initialize(msghdr* msg)
 {
     bsl::memset(d_arena.buffer(), 0, k_RECEIVE_CONTROL_BUFFER_SIZE);
 
@@ -704,9 +755,10 @@ void ReceiveControl::initialize(msghdr* msg)
         static_cast<socklen_t>(k_RECEIVE_CONTROL_BUFFER_SIZE);
 }
 
-ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
-                                   const msghdr&               msg,
-                                   const ntsa::ReceiveOptions& options)
+ntsa::Error SocketUtil::Impl::ReceiveControl::decode(
+    ntsa::ReceiveContext*       context,
+    const msghdr&               msg,
+    const ntsa::ReceiveOptions& options)
 {
     for (cmsghdr* hdr = CMSG_FIRSTHDR(&msg); hdr != 0;
          hdr          = CMSG_NXTHDR(const_cast<msghdr*>(&msg), hdr))
@@ -789,38 +841,16 @@ ntsa::Error ReceiveControl::decode(ntsa::ReceiveContext*       context,
 
 #endif
 
-/// Provide utilities for converting between 'ntsa::Endpoint'
-/// the platform 'struct sockaddr_storage'.
-struct SocketStorageUtil {
-    /// Initialize the specified 'socketAddress'. Load into the specified
-    /// 'socketAddressSize' the size of the resulting 'socketAddress'.
-    static void initialize(sockaddr_storage* socketAddress,
-                           socklen_t*        socketAddressSize);
-
-    /// Load into the specified 'endpoint' the conversion of the specified
-    /// 'socketAddress' having the specified 'socketAddressSize'. Return
-    /// the error.
-    static ntsa::Error convert(ntsa::Endpoint*         endpoint,
-                               const sockaddr_storage* socketAddress,
-                               socklen_t               socketAddressSize);
-
-    /// Load into the specified 'socketAddress' and 'socketAddressSize' the
-    /// conversion of the specified 'endpoint'. Return the error.
-    static ntsa::Error convert(sockaddr_storage*     socketAddress,
-                               socklen_t*            socketAddressSize,
-                               const ntsa::Endpoint& endpoint);
-};
-
-void SocketStorageUtil::initialize(sockaddr_storage* socketAddress,
-                                   socklen_t*        socketAddressSize)
+void SocketUtil::Impl::initialize(sockaddr_storage* socketAddress,
+                                  socklen_t*        socketAddressSize)
 {
     bsl::memset(socketAddress, 0, sizeof(sockaddr_storage));
     *socketAddressSize = static_cast<socklen_t>(sizeof(sockaddr_storage));
 }
 
-ntsa::Error SocketStorageUtil::convert(ntsa::Endpoint*         endpoint,
-                                       const sockaddr_storage* socketAddress,
-                                       socklen_t socketAddressSize)
+ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
+                                      const sockaddr_storage* socketAddress,
+                                      socklen_t socketAddressSize)
 {
     endpoint->reset();
 
@@ -945,9 +975,9 @@ ntsa::Error SocketStorageUtil::convert(ntsa::Endpoint*         endpoint,
     return ntsa::Error();
 }
 
-ntsa::Error SocketStorageUtil::convert(sockaddr_storage*     socketAddress,
-                                       socklen_t*            socketAddressSize,
-                                       const ntsa::Endpoint& endpoint)
+ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
+                                      socklen_t*            socketAddressSize,
+                                      const ntsa::Endpoint& endpoint)
 {
     bsl::memset(socketAddress, 0, sizeof(sockaddr_storage));
     *socketAddressSize = 0;
@@ -1033,7 +1063,19 @@ ntsa::Error SocketStorageUtil::convert(sockaddr_storage*     socketAddress,
     return ntsa::Error();
 }
 
-}  // close unnamed namespace
+#if NTSU_SOCKETUTIL_DEBUG_HANDLE_MAP
+bsls::SpinLock SocketUtil::Impl::s_handleSetLock = BSLS_SPINLOCK_UNLOCKED;
+SocketUtil::Impl::HandleSet SocketUtil::Impl::s_handleSet(
+    &bslma::NewDeleteAllocator::singleton());
+#endif
+
+#if NTSU_SOCKETUTIL_DEBUG_SENDMSG
+SocketUtil::Impl::OutoingDataStats SocketUtil::Impl::s_outgoingDataStats;
+#endif
+
+#if NTSU_SOCKETUTIL_DEBUG_RECVMSG
+SocketUtil::Impl::IncomingDataStats SocketUtil::Impl::s_incomingDataStats;
+#endif
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
@@ -1160,9 +1202,7 @@ ntsa::Error SocketUtil::bind(const ntsa::Endpoint& endpoint,
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
-    error = SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       endpoint);
+    error = Impl::convert(&socketAddress, &socketAddressSize, endpoint);
     if (error) {
         return error;
     }
@@ -1290,9 +1330,9 @@ ntsa::Error SocketUtil::connect(const ntsa::Endpoint& endpoint,
     sockaddr_storage remoteSocketAddress;
     socklen_t        remoteSocketAddressSize;
 
-    error = SocketStorageUtil::convert(&remoteSocketAddress,
-                                       &remoteSocketAddressSize,
-                                       endpoint);
+    error = Impl::convert(&remoteSocketAddress,
+                          &remoteSocketAddressSize,
+                          endpoint);
     if (error) {
         return error;
     }
@@ -1373,9 +1413,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -1384,7 +1424,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -1459,9 +1499,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -1470,7 +1510,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -1549,9 +1589,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -1560,7 +1600,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -1634,9 +1674,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*            context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -1645,7 +1685,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*            context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -1719,9 +1759,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*               context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -1730,7 +1770,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*               context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -1804,9 +1844,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -1815,7 +1855,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -1894,9 +1934,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -1905,7 +1945,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -1979,9 +2019,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*              context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -1990,7 +2030,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*              context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -2064,9 +2104,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*                 context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -2075,7 +2115,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*                 context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -2148,9 +2188,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -2159,7 +2199,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -2236,9 +2276,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -2247,7 +2287,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -2370,9 +2410,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        error = SocketStorageUtil::convert(&socketAddress,
-                                           &socketAddressSize,
-                                           options.endpoint().value());
+        error = Impl::convert(&socketAddress,
+                              &socketAddressSize,
+                              options.endpoint().value());
         if (error) {
             return error;
         }
@@ -2381,7 +2421,7 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
         msg.msg_namelen = socketAddressSize;
     }
 
-    SendControl control;
+    Impl::SendControl control;
     if (specifyMetaData) {
         error = control.encode(&msg, options);
         if (error) {
@@ -2612,10 +2652,9 @@ ntsa::Error SocketUtil::sendToMultiple(bsl::size_t* numBytesSendable,
 
         socklen_t socketAddressSize;
         {
-            ntsa::Error error =
-                SocketStorageUtil::convert(&socketAddress[mmsgIndex],
-                                           &socketAddressSize,
-                                           messages[mmsgIndex].endpoint());
+            ntsa::Error error = Impl::convert(&socketAddress[mmsgIndex],
+                                              &socketAddressSize,
+                                              messages[mmsgIndex].endpoint());
             if (error) {
                 return error;
             }
@@ -2706,13 +2745,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         msg.msg_name    = &socketAddress;
         msg.msg_namelen = socketAddressSize;
     }
 
-    ReceiveControl control;
+    Impl::ReceiveControl control;
     if (wantMetaData) {
         control.initialize(&msg);
     }
@@ -2744,10 +2783,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        SocketStorageUtil::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -2778,13 +2816,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         msg.msg_name    = &socketAddress;
         msg.msg_namelen = socketAddressSize;
     }
 
-    ReceiveControl control;
+    Impl::ReceiveControl control;
     if (wantMetaData) {
         control.initialize(&msg);
     }
@@ -2819,10 +2857,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        SocketStorageUtil::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -2854,13 +2891,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         msg.msg_name    = &socketAddress;
         msg.msg_namelen = socketAddressSize;
     }
 
-    ReceiveControl control;
+    Impl::ReceiveControl control;
     if (wantMetaData) {
         control.initialize(&msg);
     }
@@ -2890,10 +2927,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        SocketStorageUtil::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -2924,13 +2960,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         msg.msg_name    = &socketAddress;
         msg.msg_namelen = socketAddressSize;
     }
 
-    ReceiveControl control;
+    Impl::ReceiveControl control;
     if (wantMetaData) {
         control.initialize(&msg);
     }
@@ -2964,10 +3000,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        SocketStorageUtil::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -2998,13 +3033,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         msg.msg_name    = &socketAddress;
         msg.msg_namelen = socketAddressSize;
     }
 
-    ReceiveControl control;
+    Impl::ReceiveControl control;
     if (wantMetaData) {
         control.initialize(&msg);
     }
@@ -3038,10 +3073,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        SocketStorageUtil::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -3072,13 +3106,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         msg.msg_name    = &socketAddress;
         msg.msg_namelen = socketAddressSize;
     }
 
-    ReceiveControl control;
+    Impl::ReceiveControl control;
     if (wantMetaData) {
         control.initialize(&msg);
     }
@@ -3114,10 +3148,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        SocketStorageUtil::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -3149,13 +3182,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         msg.msg_name    = &socketAddress;
         msg.msg_namelen = socketAddressSize;
     }
 
-    ReceiveControl control;
+    Impl::ReceiveControl control;
     if (wantMetaData) {
         control.initialize(&msg);
     }
@@ -3211,10 +3244,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        SocketStorageUtil::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -3246,13 +3278,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     socklen_t        socketAddressSize;
 
     if (wantEndpoint) {
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         msg.msg_name    = &socketAddress;
         msg.msg_namelen = socketAddressSize;
     }
 
-    ReceiveControl control;
+    Impl::ReceiveControl control;
     if (wantMetaData) {
         control.initialize(&msg);
     }
@@ -3286,10 +3318,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        SocketStorageUtil::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -3425,8 +3456,8 @@ ntsa::Error SocketUtil::receiveFromMultiple(bsl::size_t* numBytesReceivable,
             *numBytesReceivable += numBytesTotal;
         }
 
-        SocketStorageUtil::initialize(&socketAddress[mmsgIndex],
-                                      &socketAddressSize[mmsgIndex]);
+        Impl::initialize(&socketAddress[mmsgIndex],
+                         &socketAddressSize[mmsgIndex]);
 
         msg.msg_name    = &socketAddress[mmsgIndex];
         msg.msg_namelen = socketAddressSize[mmsgIndex];
@@ -3451,10 +3482,9 @@ ntsa::Error SocketUtil::receiveFromMultiple(bsl::size_t* numBytesReceivable,
         msghdr& msg = mmsg[mmsgIndex].msg_hdr;
 
         ntsa::Endpoint endpoint;
-        SocketStorageUtil::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         messages[mmsgIndex].setEndpoint(endpoint);
         messages[mmsgIndex].setSize(
@@ -3680,7 +3710,7 @@ ntsa::Error SocketUtil::unlink(ntsa::Handle socket)
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
-    SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+    Impl::initialize(&socketAddress, &socketAddressSize);
 
     rc = ::getsockname(socket,
                        reinterpret_cast<sockaddr*>(&socketAddress),
@@ -3800,7 +3830,7 @@ ntsa::Error SocketUtil::sourceEndpoint(ntsa::Endpoint* result,
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
-    SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+    Impl::initialize(&socketAddress, &socketAddressSize);
 
     int rc = ::getsockname(socket,
                            reinterpret_cast<sockaddr*>(&socketAddress),
@@ -3810,7 +3840,7 @@ ntsa::Error SocketUtil::sourceEndpoint(ntsa::Endpoint* result,
     }
 
     ntsa::Error error =
-        SocketStorageUtil::convert(result, &socketAddress, socketAddressSize);
+        Impl::convert(result, &socketAddress, socketAddressSize);
     if (error) {
         return error;
     }
@@ -3836,7 +3866,7 @@ ntsa::Error SocketUtil::remoteEndpoint(ntsa::Endpoint* result,
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
-    SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+    Impl::initialize(&socketAddress, &socketAddressSize);
 
     int rc = ::getpeername(socket,
                            reinterpret_cast<sockaddr*>(&socketAddress),
@@ -3846,7 +3876,7 @@ ntsa::Error SocketUtil::remoteEndpoint(ntsa::Endpoint* result,
     }
 
     ntsa::Error error =
-        SocketStorageUtil::convert(result, &socketAddress, socketAddressSize);
+        Impl::convert(result, &socketAddress, socketAddressSize);
     if (error) {
         return error;
     }
@@ -5406,9 +5436,7 @@ ntsa::Error SocketUtil::bind(const ntsa::Endpoint& endpoint,
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
-    error = SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       endpoint);
+    error = Impl::convert(&socketAddress, &socketAddressSize, endpoint);
     if (error) {
         return error;
     }
@@ -5532,9 +5560,9 @@ ntsa::Error SocketUtil::connect(const ntsa::Endpoint& endpoint,
     sockaddr_storage remoteSocketAddress;
     socklen_t        remoteSocketAddressSize;
 
-    error = SocketStorageUtil::convert(&remoteSocketAddress,
-                                       &remoteSocketAddressSize,
-                                       endpoint);
+    error = Impl::convert(&remoteSocketAddress,
+                          &remoteSocketAddressSize,
+                          endpoint);
     if (error) {
         return error;
     }
@@ -5589,10 +5617,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -5678,10 +5705,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -5768,10 +5794,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -5862,10 +5887,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*            context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -5956,10 +5980,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*               context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -6047,10 +6070,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -6137,10 +6159,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*         context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -6231,10 +6252,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*              context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -6325,10 +6345,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*                 context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -6420,10 +6439,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -6535,10 +6553,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -6631,10 +6648,9 @@ ntsa::Error SocketUtil::send(ntsa::SendContext*       context,
     socklen_t        socketAddressSize;
 
     if (specifyEndpoint) {
-        ntsa::Error error =
-            SocketStorageUtil::convert(&socketAddress,
-                                       &socketAddressSize,
-                                       options.endpoint().value());
+        ntsa::Error error = Impl::convert(&socketAddress,
+                                          &socketAddressSize,
+                                          options.endpoint().value());
         if (error) {
             return error;
         }
@@ -6886,7 +6902,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         sockaddr_storage socketAddress;
         socklen_t        socketAddressSize;
 
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         WSABUF wsaBuf;
         wsaBuf.buf = static_cast<char*>(data);
@@ -6912,9 +6928,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
         ntsa::Endpoint endpoint;
         ntsa::Error    endpointError =
-            SocketStorageUtil::convert(&endpoint,
-                                       &socketAddress,
-                                       socketAddressSize);
+            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
         if (endpointError) {
             endpointError =
                 ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
@@ -6969,7 +6983,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         sockaddr_storage socketAddress;
         socklen_t        socketAddressSize;
 
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         DWORD wsaNumBytesReceived = 0;
         DWORD wsaFlags            = 0;
@@ -6991,9 +7005,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
         ntsa::Endpoint endpoint;
         ntsa::Error    endpointError =
-            SocketStorageUtil::convert(&endpoint,
-                                       &socketAddress,
-                                       socketAddressSize);
+            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
         if (endpointError) {
             endpointError =
                 ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
@@ -7051,7 +7063,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         sockaddr_storage socketAddress;
         socklen_t        socketAddressSize;
 
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         DWORD wsaNumBytesReceived = 0;
         DWORD wsaFlags            = 0;
@@ -7073,9 +7085,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
         ntsa::Endpoint endpoint;
         ntsa::Error    endpointError =
-            SocketStorageUtil::convert(&endpoint,
-                                       &socketAddress,
-                                       socketAddressSize);
+            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
         if (endpointError) {
             endpointError =
                 ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
@@ -7136,7 +7146,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         sockaddr_storage socketAddress;
         socklen_t        socketAddressSize;
 
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         DWORD wsaNumBytesReceived = 0;
         DWORD wsaFlags            = 0;
@@ -7158,9 +7168,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
         ntsa::Endpoint endpoint;
         ntsa::Error    endpointError =
-            SocketStorageUtil::convert(&endpoint,
-                                       &socketAddress,
-                                       socketAddressSize);
+            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
         if (endpointError) {
             endpointError =
                 ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
@@ -7222,7 +7230,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
         sockaddr_storage socketAddress;
         socklen_t        socketAddressSize;
 
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         DWORD wsaNumBytesReceived = 0;
         DWORD wsaFlags            = 0;
@@ -7244,9 +7252,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
 
         ntsa::Endpoint endpoint;
         ntsa::Error    endpointError =
-            SocketStorageUtil::convert(&endpoint,
-                                       &socketAddress,
-                                       socketAddressSize);
+            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
         if (endpointError) {
             endpointError =
                 ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
@@ -7308,7 +7314,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         sockaddr_storage socketAddress;
         socklen_t        socketAddressSize;
 
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         DWORD wsaNumBytesReceived = 0;
         DWORD wsaFlags            = 0;
@@ -7330,9 +7336,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
         ntsa::Endpoint endpoint;
         ntsa::Error    endpointError =
-            SocketStorageUtil::convert(&endpoint,
-                                       &socketAddress,
-                                       socketAddressSize);
+            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
         if (endpointError) {
             endpointError =
                 ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
@@ -7416,7 +7420,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         sockaddr_storage socketAddress;
         socklen_t        socketAddressSize;
 
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         DWORD wsaNumBytesReceived = 0;
         DWORD wsaFlags            = 0;
@@ -7438,9 +7442,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
         ntsa::Endpoint endpoint;
         ntsa::Error    endpointError =
-            SocketStorageUtil::convert(&endpoint,
-                                       &socketAddress,
-                                       socketAddressSize);
+            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
         if (endpointError) {
             endpointError =
                 ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
@@ -7501,7 +7503,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         sockaddr_storage socketAddress;
         socklen_t        socketAddressSize;
 
-        SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+        Impl::initialize(&socketAddress, &socketAddressSize);
 
         WSABUF wsaBuf;
         wsaBuf.buf = static_cast<char*>(data);
@@ -7527,9 +7529,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
         ntsa::Endpoint endpoint;
         ntsa::Error    endpointError =
-            SocketStorageUtil::convert(&endpoint,
-                                       &socketAddress,
-                                       socketAddressSize);
+            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
         if (endpointError) {
             endpointError =
                 ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
@@ -7686,7 +7686,7 @@ ntsa::Error SocketUtil::unlink(ntsa::Handle socket)
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
-    SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+    Impl::initialize(&socketAddress, &socketAddressSize);
 
     rc = ::getsockname(socket,
                        reinterpret_cast<sockaddr*>(&socketAddress),
@@ -7802,7 +7802,7 @@ ntsa::Error SocketUtil::sourceEndpoint(ntsa::Endpoint* result,
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
-    SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+    Impl::initialize(&socketAddress, &socketAddressSize);
 
     int rc = ::getsockname(socket,
                            reinterpret_cast<sockaddr*>(&socketAddress),
@@ -7812,7 +7812,7 @@ ntsa::Error SocketUtil::sourceEndpoint(ntsa::Endpoint* result,
     }
 
     ntsa::Error error =
-        SocketStorageUtil::convert(result, &socketAddress, socketAddressSize);
+        Impl::convert(result, &socketAddress, socketAddressSize);
     if (error) {
         return error;
     }
@@ -7838,7 +7838,7 @@ ntsa::Error SocketUtil::remoteEndpoint(ntsa::Endpoint* result,
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
-    SocketStorageUtil::initialize(&socketAddress, &socketAddressSize);
+    Impl::initialize(&socketAddress, &socketAddressSize);
 
     int rc = ::getpeername(socket,
                            reinterpret_cast<sockaddr*>(&socketAddress),
@@ -7848,7 +7848,7 @@ ntsa::Error SocketUtil::remoteEndpoint(ntsa::Endpoint* result,
     }
 
     ntsa::Error error =
-        SocketStorageUtil::convert(result, &socketAddress, socketAddressSize);
+        Impl::convert(result, &socketAddress, socketAddressSize);
     if (error) {
         return error;
     }
@@ -8334,7 +8334,7 @@ ntsa::Error SocketUtil::decodeEndpoint(ntsa::Endpoint* endpoint,
                                        const void*     socketAddress,
                                        bsl::size_t     socketAddressSize)
 {
-    return SocketStorageUtil::convert(
+    return Impl::convert(
         endpoint,
         reinterpret_cast<const sockaddr_storage*>(socketAddress),
         static_cast<socklen_t>(socketAddressSize));
@@ -8346,14 +8346,13 @@ ntsa::Error SocketUtil::encodeEndpoint(void*                 socketAddress,
 {
     socklen_t length = 0;
 
-    SocketStorageUtil::initialize(
-        reinterpret_cast<sockaddr_storage*>(socketAddress),
-        &length);
+    Impl::initialize(reinterpret_cast<sockaddr_storage*>(socketAddress),
+                     &length);
 
-    ntsa::Error error = SocketStorageUtil::convert(
-        reinterpret_cast<sockaddr_storage*>(socketAddress),
-        &length,
-        endpoint);
+    ntsa::Error error =
+        Impl::convert(reinterpret_cast<sockaddr_storage*>(socketAddress),
+                      &length,
+                      endpoint);
 
     if (error) {
         return error;

@@ -80,9 +80,46 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcf {
 
-namespace {
+/// Provide functions to implement 'ntcf::System'.
+class System::Impl
+{
+  public:
+    /// Return the default driver name.
+    static bsl::string defaultDriverName();
 
-bsl::string defaultDriverName()
+    /// Return the default reactor driver name.
+    static bsl::string defaultReactorDriverName();
+
+    /// Return the default proactor driver name.
+    static bsl::string defaultProactorDriverName();
+
+    /// Load into the specified 'result' the default executor for the process.
+    static void createDefaultExecutor(bsl::shared_ptr<ntci::Executor>* result,
+                                      bslma::Allocator* allocator);
+
+    /// Load into the specified 'result' the default driver for the process.
+    static void createDefaultDriver(bsl::shared_ptr<ntci::Driver>* result,
+                                    bslma::Allocator*              allocator);
+
+    /// Load into the specified 'result' the default reactor for the process.
+    static void createDefaultReactor(bsl::shared_ptr<ntci::Reactor>* result,
+                                     bslma::Allocator* allocator);
+
+    /// Load into the specified 'result' the default proactor for the process.
+    static void createDefaultProactor(bsl::shared_ptr<ntci::Proactor>* result,
+                                      bslma::Allocator* allocator);
+
+    /// Load into the specified 'result' the default interface for the process.
+    static void createDefaultInterface(
+        bsl::shared_ptr<ntci::Interface>* result,
+        bslma::Allocator*                 allocator);
+
+    /// Load into the specified 'result' the default resolver for the process.
+    static void createDefaultResolver(bsl::shared_ptr<ntci::Resolver>* result,
+                                      bslma::Allocator* allocator);
+};
+
+bsl::string System::Impl::defaultDriverName()
 {
 #if defined(BSLS_PLATFORM_OS_AIX)
     return "POLLSET";
@@ -103,7 +140,7 @@ bsl::string defaultDriverName()
 #endif
 }
 
-bsl::string defaultReactorDriverName()
+bsl::string System::Impl::defaultReactorDriverName()
 {
 #if defined(BSLS_PLATFORM_OS_AIX)
     return "POLLSET";
@@ -124,7 +161,7 @@ bsl::string defaultReactorDriverName()
 #endif
 }
 
-bsl::string defaultProactorDriverName()
+bsl::string System::Impl::defaultProactorDriverName()
 {
 #if defined(BSLS_PLATFORM_OS_AIX)
     return "UNSUPPORTED";
@@ -145,8 +182,9 @@ bsl::string defaultProactorDriverName()
 #endif
 }
 
-void createDefaultExecutor(bsl::shared_ptr<ntci::Executor>* result,
-                           bslma::Allocator*                allocator)
+void System::Impl::createDefaultExecutor(
+    bsl::shared_ptr<ntci::Executor>* result,
+    bslma::Allocator*                allocator)
 {
     ntsa::Error error;
 
@@ -165,8 +203,8 @@ void createDefaultExecutor(bsl::shared_ptr<ntci::Executor>* result,
     *result = thread;
 }
 
-void createDefaultDriver(bsl::shared_ptr<ntci::Driver>* result,
-                         bslma::Allocator*              allocator)
+void System::Impl::createDefaultDriver(bsl::shared_ptr<ntci::Driver>* result,
+                                       bslma::Allocator* allocator)
 {
     allocator =
         allocator ? allocator : &bslma::NewDeleteAllocator::singleton();
@@ -181,8 +219,8 @@ void createDefaultDriver(bsl::shared_ptr<ntci::Driver>* result,
     *result = driver;
 }
 
-void createDefaultReactor(bsl::shared_ptr<ntci::Reactor>* result,
-                          bslma::Allocator*               allocator)
+void System::Impl::createDefaultReactor(bsl::shared_ptr<ntci::Reactor>* result,
+                                        bslma::Allocator* allocator)
 {
     allocator =
         allocator ? allocator : &bslma::NewDeleteAllocator::singleton();
@@ -197,8 +235,9 @@ void createDefaultReactor(bsl::shared_ptr<ntci::Reactor>* result,
     *result = reactor;
 }
 
-void createDefaultProactor(bsl::shared_ptr<ntci::Proactor>* result,
-                           bslma::Allocator*                allocator)
+void System::Impl::createDefaultProactor(
+    bsl::shared_ptr<ntci::Proactor>* result,
+    bslma::Allocator*                allocator)
 {
     allocator =
         allocator ? allocator : &bslma::NewDeleteAllocator::singleton();
@@ -213,8 +252,9 @@ void createDefaultProactor(bsl::shared_ptr<ntci::Proactor>* result,
     *result = proactor;
 }
 
-void createDefaultInterface(bsl::shared_ptr<ntci::Interface>* result,
-                            bslma::Allocator*                 allocator)
+void System::Impl::createDefaultInterface(
+    bsl::shared_ptr<ntci::Interface>* result,
+    bslma::Allocator*                 allocator)
 {
     ntsa::Error error;
 
@@ -235,8 +275,9 @@ void createDefaultInterface(bsl::shared_ptr<ntci::Interface>* result,
     *result = interface;
 }
 
-void createDefaultResolver(bsl::shared_ptr<ntci::Resolver>* result,
-                           bslma::Allocator*                allocator)
+void System::Impl::createDefaultResolver(
+    bsl::shared_ptr<ntci::Resolver>* result,
+    bslma::Allocator*                allocator)
 {
     ntsa::Error error;
 
@@ -253,8 +294,6 @@ void createDefaultResolver(bsl::shared_ptr<ntci::Resolver>* result,
 
     *result = resolver;
 }
-
-}  // close unnamed namespace
 
 ntsa::Error System::initialize()
 {
@@ -363,12 +402,12 @@ ntsa::Error System::initialize()
 #endif
 #endif
 
-        ntcs::Global::setDefault(&createDefaultExecutor);
-        ntcs::Global::setDefault(&createDefaultDriver);
-        ntcs::Global::setDefault(&createDefaultReactor);
-        ntcs::Global::setDefault(&createDefaultProactor);
-        ntcs::Global::setDefault(&createDefaultInterface);
-        ntcs::Global::setDefault(&createDefaultResolver);
+        ntcs::Global::setDefault(&System::Impl::createDefaultExecutor);
+        ntcs::Global::setDefault(&System::Impl::createDefaultDriver);
+        ntcs::Global::setDefault(&System::Impl::createDefaultReactor);
+        ntcs::Global::setDefault(&System::Impl::createDefaultProactor);
+        ntcs::Global::setDefault(&System::Impl::createDefaultInterface);
+        ntcs::Global::setDefault(&System::Impl::createDefaultResolver);
 
         bsl::atexit(&System::exit);
     }
@@ -482,7 +521,7 @@ bsl::shared_ptr<ntci::Interface> System::createInterface(
     ntcs::Compat::sanitize(&effectiveConfig);
 
     if (effectiveConfig.driverName().empty()) {
-        effectiveConfig.setDriverName(defaultDriverName());
+        effectiveConfig.setDriverName(System::Impl::defaultDriverName());
     }
 
     {
@@ -543,7 +582,7 @@ bsl::shared_ptr<ntci::Thread> System::createThread(
     if (effectiveConfig.driverName().isNull() ||
         effectiveConfig.driverName().value().empty())
     {
-        effectiveConfig.setDriverName(defaultDriverName());
+        effectiveConfig.setDriverName(System::Impl::defaultDriverName());
     }
 
     {
@@ -640,7 +679,7 @@ bsl::shared_ptr<ntci::Driver> System::createDriver(
     if (effectiveConfig.driverName().isNull() ||
         effectiveConfig.driverName().value().empty())
     {
-        effectiveConfig.setDriverName(defaultDriverName());
+        effectiveConfig.setDriverName(System::Impl::defaultDriverName());
     }
 
     {
@@ -776,7 +815,8 @@ bsl::shared_ptr<ntci::Reactor> System::createReactor(
     if (effectiveConfig.driverName().isNull() ||
         effectiveConfig.driverName().value().empty())
     {
-        effectiveConfig.setDriverName(defaultReactorDriverName());
+        effectiveConfig.setDriverName(
+            System::Impl::defaultReactorDriverName());
     }
 
     {
@@ -854,7 +894,8 @@ bsl::shared_ptr<ntci::Proactor> System::createProactor(
     if (effectiveConfig.driverName().isNull() ||
         effectiveConfig.driverName().value().empty())
     {
-        effectiveConfig.setDriverName(defaultProactorDriverName());
+        effectiveConfig.setDriverName(
+            System::Impl::defaultProactorDriverName());
     }
 
     {

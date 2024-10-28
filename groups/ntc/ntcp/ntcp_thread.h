@@ -60,6 +60,12 @@ namespace ntcp {
 /// @ingroup module_ntcp
 class Thread : public ntci::Thread, public ntccfg::Shared<Thread>
 {
+    enum {
+        k_RUN_STATE_STOPPED  = 0,
+        k_RUN_STATE_STARTED  = 1,
+        k_RUN_STATE_STOPPING = 2
+    };
+
     ntccfg::Object                  d_object;
     bsl::shared_ptr<ntci::Proactor> d_proactor_sp;
     bslmt::ThreadUtil::Handle       d_threadHandle;

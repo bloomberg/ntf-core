@@ -75,6 +75,8 @@ class Data
     bdlbb::BlobBufferFactory* d_blobBufferFactory_p;
     bslma::Allocator*         d_allocator_p;
 
+    class Impl;
+
   public:
     /// Create a new object representing no data. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
@@ -587,6 +589,10 @@ struct DataUtil {
     /// data referenced by 'lhs' or 'rhs', including any data referenced in a
     /// file.
     static bool equals(const ntsa::Data& lhs, const ntsa::Data& rhs);
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 NTSCFG_INLINE

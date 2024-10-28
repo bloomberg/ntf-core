@@ -33,29 +33,15 @@
 namespace BloombergLP {
 namespace ntcdns {
 
-namespace {
+const bsl::size_t Validation::k_TYPICAL_NAME_LENGTH                  = 128;
+const bsl::size_t Validation::k_MAX_LABEL_LENGTH                     = 63;
+const bsl::size_t Validation::k_MAX_CHARACTER_STRING_LENGTH          = 255;
+const bsl::size_t Validation::k_MAX_RDATA_LENGTH                     = 65535;
+const bsl::size_t Validation::k_MAX_LABEL_RESOLUTION_RECURSION_DEPTH = 32;
 
-// The length of a typical domain name.
-const bsl::size_t k_TYPICAL_NAME_LENGTH = 128;
-
-// The maximum length of a single label within a domain name.
-const bsl::size_t k_MAX_LABEL_LENGTH = 63;
-
-// The maximum length of a character-string.
-const bsl::size_t k_MAX_CHARACTER_STRING_LENGTH = 255;
-
-// The maximum data of raw resource record data.
-const bsl::size_t k_MAX_RDATA_LENGTH = 65535;
-
-// The maximum recursion depth to follow when recursively decompressing labels.
-const bsl::size_t k_MAX_LABEL_RESOLUTION_RECURSION_DEPTH = 32;
-
-ntsa::Error checkOverflow(bsl::size_t numBytesRemaining,
-                          bsl::size_t numBytesNeeded)
+ntsa::Error Validation::checkOverflow(bsl::size_t numBytesRemaining,
+                                      bsl::size_t numBytesNeeded)
 {
-    // Verify the specified 'numBytesRemaining' is sufficient to store the
-    // specified 'numBytesNeeded'. Return the error.
-
     NTCI_LOG_CONTEXT();
 
     if (numBytesRemaining < numBytesNeeded) {
@@ -70,12 +56,9 @@ ntsa::Error checkOverflow(bsl::size_t numBytesRemaining,
     return ntsa::Error();
 }
 
-ntsa::Error checkUnderflow(bsl::size_t numBytesRemaining,
-                           bsl::size_t numBytesNeeded)
+ntsa::Error Validation::checkUnderflow(bsl::size_t numBytesRemaining,
+                                       bsl::size_t numBytesNeeded)
 {
-    // Verify the specified 'numBytesRemaining' is sufficient to store the
-    // specified 'numBytesNeeded'. Return the error.
-
     NTCI_LOG_CONTEXT();
 
     if (numBytesRemaining < numBytesNeeded) {
@@ -90,10 +73,9 @@ ntsa::Error checkUnderflow(bsl::size_t numBytesRemaining,
     return ntsa::Error();
 }
 
-ntsa::Error checkToken(const bsl::string& name, const bslstl::StringRef& token)
+ntsa::Error Validation::checkToken(const bsl::string&       name,
+                                   const bslstl::StringRef& token)
 {
-    // Verify the specified 'token' in the specified 'name'. Return the error.
-
     NTCI_LOG_CONTEXT();
 
     if (token.size() > k_MAX_LABEL_LENGTH) {
@@ -107,10 +89,8 @@ ntsa::Error checkToken(const bsl::string& name, const bslstl::StringRef& token)
     return ntsa::Error();
 }
 
-ntsa::Error checkCharacterString(const bsl::string& value)
+ntsa::Error Validation::checkCharacterString(const bsl::string& value)
 {
-    // Verify the specify character-string 'value'. Return the error.
-
     NTCI_LOG_CONTEXT();
 
     if (value.size() > k_MAX_CHARACTER_STRING_LENGTH) {
@@ -125,10 +105,8 @@ ntsa::Error checkCharacterString(const bsl::string& value)
     return ntsa::Error();
 }
 
-ntsa::Error checkRdata(const bdlbb::Blob& value)
+ntsa::Error Validation::checkRdata(const bdlbb::Blob& value)
 {
-    // Verify the specify resource record 'value'. Return the error.
-
     NTCI_LOG_CONTEXT();
 
     if (NTCCFG_WARNING_PROMOTE(bsl::size_t, value.length()) >
@@ -145,11 +123,9 @@ ntsa::Error checkRdata(const bdlbb::Blob& value)
     return ntsa::Error();
 }
 
-ntsa::Error checkExpectedRdataLength(bsl::size_t expected, bsl::size_t found)
+ntsa::Error Validation::checkExpectedRdataLength(bsl::size_t expected,
+                                                 bsl::size_t found)
 {
-    // Verify the specified 'expected' RDATA length matches the specified
-    // 'found' RDATA length. Return the error.
-
     NTCI_LOG_CONTEXT();
 
     if (found != expected) {
@@ -163,11 +139,9 @@ ntsa::Error checkExpectedRdataLength(bsl::size_t expected, bsl::size_t found)
     return ntsa::Error();
 }
 
-ntsa::Error checkCoherentRdataLength(bsl::size_t expected, bsl::size_t found)
+ntsa::Error Validation::checkCoherentRdataLength(bsl::size_t expected,
+                                                 bsl::size_t found)
 {
-    // Verify the specified 'expected' RDATA length matches the specified
-    // 'found' RDATA length. Return the error.
-
     NTCI_LOG_CONTEXT();
 
     if (found != expected) {
@@ -180,8 +154,6 @@ ntsa::Error checkCoherentRdataLength(bsl::size_t expected, bsl::size_t found)
 
     return ntsa::Error();
 }
-
-}  // close unnamed namespace
 
 MemoryEncoder::MemoryEncoder(uint8_t* data, bsl::size_t size)
 : d_begin(data)
@@ -196,7 +168,8 @@ MemoryEncoder::~MemoryEncoder()
 
 ntsa::Error MemoryEncoder::encodeUint8(bsl::uint8_t value)
 {
-    ntsa::Error error = checkOverflow(d_end - d_current, sizeof value);
+    ntsa::Error error =
+        Validation::checkOverflow(d_end - d_current, sizeof value);
     if (error) {
         return error;
     }
@@ -215,7 +188,8 @@ ntsa::Error MemoryEncoder::encodeUint16(bsl::uint16_t value)
 
 ntsa::Error MemoryEncoder::encodeUint16(const bdlb::BigEndianUint16& value)
 {
-    ntsa::Error error = checkOverflow(d_end - d_current, sizeof value);
+    ntsa::Error error =
+        Validation::checkOverflow(d_end - d_current, sizeof value);
     if (error) {
         return error;
     }
@@ -234,7 +208,8 @@ ntsa::Error MemoryEncoder::encodeUint32(bsl::uint32_t value)
 
 ntsa::Error MemoryEncoder::encodeUint32(const bdlb::BigEndianUint32& value)
 {
-    ntsa::Error error = checkOverflow(d_end - d_current, sizeof value);
+    ntsa::Error error =
+        Validation::checkOverflow(d_end - d_current, sizeof value);
     if (error) {
         return error;
     }
@@ -254,14 +229,14 @@ ntsa::Error MemoryEncoder::encodeDomainName(const bsl::string& value)
     while (tokenizer.isValid()) {
         bslstl::StringRef token = tokenizer.token();
 
-        error = checkToken(value, token);
+        error = Validation::checkToken(value, token);
         if (error) {
             return error;
         }
 
         bsl::uint8_t length = static_cast<bsl::uint8_t>(token.size());
 
-        error = checkOverflow(d_end - d_current, sizeof length);
+        error = Validation::checkOverflow(d_end - d_current, sizeof length);
         if (error) {
             return error;
         }
@@ -269,7 +244,7 @@ ntsa::Error MemoryEncoder::encodeDomainName(const bsl::string& value)
         *d_current  = length;
         d_current  += sizeof length;
 
-        error = checkOverflow(d_end - d_current, token.size());
+        error = Validation::checkOverflow(d_end - d_current, token.size());
         if (error) {
             return error;
         }
@@ -280,7 +255,7 @@ ntsa::Error MemoryEncoder::encodeDomainName(const bsl::string& value)
         ++tokenizer;
     }
 
-    error = checkOverflow(d_end - d_current, 1);
+    error = Validation::checkOverflow(d_end - d_current, 1);
     if (error) {
         return error;
     }
@@ -295,14 +270,14 @@ ntsa::Error MemoryEncoder::encodeCharacterString(const bsl::string& value)
 {
     ntsa::Error error;
 
-    error = checkCharacterString(value);
+    error = Validation::checkCharacterString(value);
     if (error) {
         return error;
     }
 
     bsl::uint8_t length = static_cast<bsl::uint8_t>(value.size());
 
-    error = checkOverflow(d_end - d_current, sizeof length);
+    error = Validation::checkOverflow(d_end - d_current, sizeof length);
     if (error) {
         return error;
     }
@@ -310,7 +285,7 @@ ntsa::Error MemoryEncoder::encodeCharacterString(const bsl::string& value)
     *d_current  = length;
     d_current  += sizeof length;
 
-    error = checkOverflow(d_end - d_current, value.size());
+    error = Validation::checkOverflow(d_end - d_current, value.size());
     if (error) {
         return error;
     }
@@ -325,7 +300,7 @@ ntsa::Error MemoryEncoder::encodeRdata(const bdlbb::Blob& value)
 {
     ntsa::Error error;
 
-    error = checkRdata(value);
+    error = Validation::checkRdata(value);
     if (error) {
         return error;
     }
@@ -335,7 +310,8 @@ ntsa::Error MemoryEncoder::encodeRdata(const bdlbb::Blob& value)
     bdlb::BigEndianUint16 bigEndianRdataLength =
         bdlb::BigEndianUint16::make(rdataLength);
 
-    error = checkOverflow(d_end - d_current, sizeof bigEndianRdataLength);
+    error = Validation::checkOverflow(d_end - d_current,
+                                      sizeof bigEndianRdataLength);
     if (error) {
         return error;
     }
@@ -344,7 +320,7 @@ ntsa::Error MemoryEncoder::encodeRdata(const bdlbb::Blob& value)
     d_current += sizeof bigEndianRdataLength;
 
     if (rdataLength > 0) {
-        error = checkOverflow(d_end - d_current, rdataLength);
+        error = Validation::checkOverflow(d_end - d_current, rdataLength);
         if (error) {
             return error;
         }
@@ -361,7 +337,7 @@ ntsa::Error MemoryEncoder::encodeRdata(const bdlbb::Blob& value)
 
 ntsa::Error MemoryEncoder::encodeRaw(const void* value, bsl::size_t size)
 {
-    ntsa::Error error = checkOverflow(d_end - d_current, size);
+    ntsa::Error error = Validation::checkOverflow(d_end - d_current, size);
     if (error) {
         return error;
     }
@@ -449,7 +425,8 @@ MemoryDecoder::~MemoryDecoder()
 
 ntsa::Error MemoryDecoder::decodeUint8(bsl::uint8_t* value)
 {
-    ntsa::Error error = checkUnderflow(d_end - d_current, sizeof *value);
+    ntsa::Error error =
+        Validation::checkUnderflow(d_end - d_current, sizeof *value);
     if (error) {
         return error;
     }
@@ -475,7 +452,8 @@ ntsa::Error MemoryDecoder::decodeUint16(bsl::uint16_t* value)
 
 ntsa::Error MemoryDecoder::decodeUint16(bdlb::BigEndianUint16* value)
 {
-    ntsa::Error error = checkUnderflow(d_end - d_current, sizeof *value);
+    ntsa::Error error =
+        Validation::checkUnderflow(d_end - d_current, sizeof *value);
     if (error) {
         return error;
     }
@@ -501,7 +479,8 @@ ntsa::Error MemoryDecoder::decodeUint32(bsl::uint32_t* value)
 
 ntsa::Error MemoryDecoder::decodeUint32(bdlb::BigEndianUint32* value)
 {
-    ntsa::Error error = checkUnderflow(d_end - d_current, sizeof *value);
+    ntsa::Error error =
+        Validation::checkUnderflow(d_end - d_current, sizeof *value);
     if (error) {
         return error;
     }
@@ -519,12 +498,12 @@ ntsa::Error MemoryDecoder::decodeDomainName(bsl::string* value)
     ntsa::Error error;
 
     value->clear();
-    value->reserve(k_TYPICAL_NAME_LENGTH);
+    value->reserve(Validation::k_TYPICAL_NAME_LENGTH);
 
     while (true) {
         bsl::uint8_t length = 0;
 
-        error = checkUnderflow(d_end - d_current, sizeof length);
+        error = Validation::checkUnderflow(d_end - d_current, sizeof length);
         if (error) {
             return error;
         }
@@ -536,12 +515,12 @@ ntsa::Error MemoryDecoder::decodeDomainName(bsl::string* value)
             break;
         }
 
-        if (length <= k_MAX_LABEL_LENGTH) {
+        if (length <= Validation::k_MAX_LABEL_LENGTH) {
             if (!value->empty()) {
                 value->append(1, '.');
             }
 
-            error = checkUnderflow(d_end - d_current, length);
+            error = Validation::checkUnderflow(d_end - d_current, length);
             if (error) {
                 return error;
             }
@@ -556,7 +535,8 @@ ntsa::Error MemoryDecoder::decodeDomainName(bsl::string* value)
                 bsl::uint8_t offsetUpper = length & 0x3F;
                 bsl::uint8_t offsetLower = 0;
 
-                error = checkUnderflow(d_end - d_current, sizeof offsetLower);
+                error = Validation::checkUnderflow(d_end - d_current,
+                                                   sizeof offsetLower);
                 if (error) {
                     return error;
                 }
@@ -612,12 +592,12 @@ ntsa::Error MemoryDecoder::decodeLabel(bsl::string* value,
     const bsl::uint8_t* current = d_begin + offset;
 
     value->clear();
-    value->reserve(k_TYPICAL_NAME_LENGTH);
+    value->reserve(Validation::k_TYPICAL_NAME_LENGTH);
 
     while (true) {
         bsl::uint8_t length = 0;
 
-        error = checkUnderflow(d_end - current, sizeof length);
+        error = Validation::checkUnderflow(d_end - current, sizeof length);
         if (error) {
             return error;
         }
@@ -629,12 +609,12 @@ ntsa::Error MemoryDecoder::decodeLabel(bsl::string* value,
             break;
         }
 
-        if (length <= k_MAX_LABEL_LENGTH) {
+        if (length <= Validation::k_MAX_LABEL_LENGTH) {
             if (!value->empty()) {
                 value->append(1, '.');
             }
 
-            error = checkUnderflow(d_end - current, length);
+            error = Validation::checkUnderflow(d_end - current, length);
             if (error) {
                 return error;
             }
@@ -644,12 +624,13 @@ ntsa::Error MemoryDecoder::decodeLabel(bsl::string* value,
 
             current += length;
         }
-        else if (depth < k_MAX_LABEL_RESOLUTION_RECURSION_DEPTH) {
+        else if (depth < Validation::k_MAX_LABEL_RESOLUTION_RECURSION_DEPTH) {
             if ((length & 0xC0) == 0xC0) {
                 bsl::uint8_t offsetUpper = length & 0x3F;
                 bsl::uint8_t offsetLower = 0;
 
-                error = checkUnderflow(d_end - current, sizeof offsetLower);
+                error = Validation::checkUnderflow(d_end - current,
+                                                   sizeof offsetLower);
                 if (error) {
                     return error;
                 }
@@ -697,7 +678,7 @@ ntsa::Error MemoryDecoder::decodeCharacterString(bsl::string* value)
 
     bsl::uint8_t length = 0;
 
-    error = checkUnderflow(d_end - d_current, sizeof length);
+    error = Validation::checkUnderflow(d_end - d_current, sizeof length);
     if (error) {
         return error;
     }
@@ -706,7 +687,7 @@ ntsa::Error MemoryDecoder::decodeCharacterString(bsl::string* value)
     d_current += sizeof length;
 
     if (length > 0) {
-        error = checkUnderflow(d_end - d_current, length);
+        error = Validation::checkUnderflow(d_end - d_current, length);
         if (error) {
             return error;
         }
@@ -726,7 +707,8 @@ ntsa::Error MemoryDecoder::decodeRdata(bdlbb::Blob* value)
 
     bdlb::BigEndianUint16 bigEndianRdataLength;
 
-    error = checkUnderflow(d_end - d_current, sizeof bigEndianRdataLength);
+    error = Validation::checkUnderflow(d_end - d_current,
+                                       sizeof bigEndianRdataLength);
     if (error) {
         return error;
     }
@@ -738,7 +720,7 @@ ntsa::Error MemoryDecoder::decodeRdata(bdlbb::Blob* value)
         static_cast<bsl::uint16_t>(bigEndianRdataLength);
 
     if (rdataLength > 0) {
-        error = checkUnderflow(d_end - d_current, rdataLength);
+        error = Validation::checkUnderflow(d_end - d_current, rdataLength);
         if (error) {
             return error;
         }
@@ -755,7 +737,7 @@ ntsa::Error MemoryDecoder::decodeRdata(bdlbb::Blob* value)
 
 ntsa::Error MemoryDecoder::decodeRaw(void* value, bsl::size_t size)
 {
-    ntsa::Error error = checkUnderflow(d_end - d_current, size);
+    ntsa::Error error = Validation::checkUnderflow(d_end - d_current, size);
     if (error) {
         return error;
     }
@@ -1575,7 +1557,8 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
             ntcdns::ResourceRecordDataA& rdata = d_rdata.makeIpv4();
 
             BSLMF_ASSERT(sizeof rdata == 4);
-            error = checkExpectedRdataLength(sizeof rdata, rdataLength);
+            error = Validation::checkExpectedRdataLength(sizeof rdata,
+                                                         rdataLength);
             if (error) {
                 return error;
             }
@@ -1740,7 +1723,8 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
             ntcdns::ResourceRecordDataAAAA& rdata = d_rdata.makeIpv6();
 
             BSLMF_ASSERT(sizeof rdata == 16);
-            error = checkExpectedRdataLength(sizeof rdata, rdataLength);
+            error = Validation::checkExpectedRdataLength(sizeof rdata,
+                                                         rdataLength);
             if (error) {
                 return error;
             }
@@ -1776,7 +1760,7 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
 
         bsl::size_t p1 = decoder->position();
 
-        error = checkCoherentRdataLength(rdataLength, p1 - p0);
+        error = Validation::checkCoherentRdataLength(rdataLength, p1 - p0);
         if (error) {
             return error;
         }

@@ -1,5 +1,7 @@
 ntccfg_bind
+ntccfg_bit
 ntccfg_foreach
+ntccfg_format
 ntccfg_function
 ntccfg_inline
 ntccfg_likely

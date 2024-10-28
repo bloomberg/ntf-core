@@ -101,6 +101,9 @@ class DomainName
     char          d_buffer[BUFFER_SIZE];
     bsl::uint32_t d_size;
 
+    // Provide a private implementation.
+    class Impl;
+
   public:
     enum {
         /// The maximum length of any domain name, not including the null

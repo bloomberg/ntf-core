@@ -95,6 +95,10 @@ class GlobalAllocator : public bslma::Allocator
     /// this method should generally not be called directly by typical
     /// clients (see 'ntcs_global' for more information).
     static bslma::Allocator* allocator(bslma::Allocator* basicAllocator);
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 NTCCFG_INLINE

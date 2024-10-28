@@ -411,11 +411,8 @@ namespace ntci {
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntci_log
-struct LogContext {
-    LogContext()
-    : d_owner(0)
-    {
-    }
+class LogContext
+{
     const char*                         d_owner;
     bdlb::NullableValue<bsl::size_t>    d_monitorIndex;
     bdlb::NullableValue<bsl::size_t>    d_threadIndex;
@@ -426,8 +423,217 @@ struct LogContext {
     bdlb::NullableValue<ntsa::Endpoint> d_sourceEndpoint;
     bdlb::NullableValue<ntsa::Endpoint> d_remoteEndpoint;
 
+  public:
+    /// Create a new log context.
+    LogContext();
+
+    /// Destroy this object.
+    ~LogContext();
+
+    /// Format the specified 'context' into the specified 'destination'
+    /// having the specified 'destinationCapacity'. Always null-terminate
+    /// 'destination' but never exceed 'capacity'. The behavior is undefined
+    /// unless 'capacity > 0'.
+    bsl::size_t format(char* destination, bsl::size_t capacity) const;
+
+    /// Set the owner to the specified 'value'.
+    void setOwner(const char* value);
+
+    /// Set the "monitor" (i.e., the reactor or proactor) index to the
+    /// specified 'value'.
+    void setMonitorIndex(bsl::size_t value);
+
+    /// Set the "monitor" (i.e., the reactor or proactor) index to the
+    /// specified 'value'.
+    void setMonitorIndex(const bdlb::NullableValue<bsl::size_t>& value);
+
+    /// Set the thread index to the specified 'value'.
+    void setThreadIndex(bsl::size_t value);
+
+    /// Set the thread index to the specified 'value'.
+    void setThreadIndex(const bdlb::NullableValue<bsl::size_t>& value);
+
+    /// Set the source ID to the specified 'value'.
+    void setSourceId(int value);
+
+    /// Set the source ID to the specified 'value'.
+    void setSourceId(const bdlb::NullableValue<int>& value);
+
+    /// Set the channel ID to the specified 'value'.
+    void setChannelId(int value);
+
+    /// Set the channel ID to the specified 'value'.
+    void setChannelId(const bdlb::NullableValue<int>& value);
+
+    /// Set the session handle to the specified 'value'.
+    void setSessionHandle(int value);
+
+    /// Set the session handle to the specified 'value'.
+    void setSessionHandle(const bdlb::NullableValue<int>& value);
+
+    /// Set the descriptor handle to the specified 'value'.
+    void setDescriptorHandle(ntsa::Handle value);
+
+    /// Set the descriptor handle to the specified 'value'.
+    void setDescriptorHandle(const bdlb::NullableValue<ntsa::Handle>& value);
+
+    /// Set the source endpoint to the specified 'value'.
+    void setSourceEndpoint(const ntsa::Endpoint& value);
+
+    /// Set the source endpoint to the specified 'value'.
+    void setSourceEndpoint(const bdlb::NullableValue<ntsa::Endpoint>& value);
+
+    /// Set the remote endpoint to the specified 'value'.
+    void setRemoteEndpoint(const ntsa::Endpoint& value);
+
+    /// Set the remote endpoint to the specified 'value'.
+    void setRemoteEndpoint(const bdlb::NullableValue<ntsa::Endpoint>& value);
+
+    /// Return the owner.
+    const char* owner() const;
+
+    /// Return the "monitor" (i.e., the reactor or proactor) index.
+    const bdlb::NullableValue<bsl::size_t>& monitorIndex() const;
+
+    /// Return the thread index.
+    const bdlb::NullableValue<bsl::size_t>& threadIndex() const;
+
+    /// Return the source ID.
+    const bdlb::NullableValue<int>& sourceId() const;
+
+    /// Return the channel ID.
+    const bdlb::NullableValue<int>& channelId() const;
+
+    /// Return the session handle.
+    const bdlb::NullableValue<int>& sessionHandle() const;
+
+    /// Return the descriptor handle.
+    const bdlb::NullableValue<ntsa::Handle>& descriptorHandle() const;
+
+    /// Return the source endpoint.
+    const bdlb::NullableValue<ntsa::Endpoint>& sourceEndpoint() const;
+
+    /// Return the remote endpoint.
+    const bdlb::NullableValue<ntsa::Endpoint>& remoteEndpoint() const;
+
     /// Return the log context to use by the current thread, if any.
     static ntci::LogContext* getThreadLocal();
+};
+
+/// Describe a single record in the log.
+class LogRecord
+{
+  public:
+    /// Enumerate the constants used by the implementation.
+    enum Constant {
+        /// The maximum number of log records stored in memory.
+        k_MAX_LENGTH = 2048
+    };
+
+  private:
+    bsls::LogSeverity::Enum d_severity;
+    const char*             d_file;
+    int                     d_line;
+    char                    d_buffer[LogRecord::k_MAX_LENGTH];
+    int                     d_length;
+
+  public:
+    /// Create a new log record.
+    LogRecord();
+
+    /// Log the specified 'format' in the specified 'context'.
+    void write(const ntci::LogContext* logContext,
+               bsls::LogSeverity::Enum severity,
+               const char*             file,
+               int                     line,
+               const char*             format,
+               ...);
+
+    /// Log the specified 'format' having the specified 'args' in the
+    /// specified 'logContext'.
+    void writeArgs(const ntci::LogContext* logContext,
+                   bsls::LogSeverity::Enum severity,
+                   const char*             file,
+                   int                     line,
+                   const char*             format,
+                   bsl::va_list            args);
+
+    /// Log the specified 'format' having the specified 'args' in the
+    /// specified 'logContext'.
+    void writeRaw(const ntci::LogContext* logContext,
+                  bsls::LogSeverity::Enum severity,
+                  const char*             file,
+                  int                     line,
+                  const char*             data,
+                  bsl::size_t             size);
+
+    /// Flush the log record to the system log.
+    void flush();
+};
+
+/// Describe an in-memory representation of the log.
+class LogJournal
+{
+    /// Define a type alias for a mutex.
+    typedef ntccfg::Mutex Mutex;
+
+    /// Define a type alias for a mutex lock guard.
+    typedef ntccfg::LockGuard LockGuard;
+
+    Mutex                  d_mutex;
+    bsl::vector<LogRecord> d_records;
+    int                    d_position;
+    bslma::Allocator*      d_allocator_p;
+
+  private:
+    LogJournal(const LogJournal&);
+    LogJournal& operator=(const LogJournal&);
+
+  public:
+    /// Enumerate the constants used by the implementation.
+    enum Constant {
+        /// The maximum number of log records stored in memory.
+        k_MAX_LOG_RECORDS = 256
+    };
+
+    /// Create a new log journal. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
+    explicit LogJournal(bslma::Allocator* basicAllocator = 0);
+
+    /// Destroy this object.
+    ~LogJournal();
+
+    /// Log the specified 'format' in the specified 'context'.
+    void write(const ntci::LogContext* logContext,
+               bsls::LogSeverity::Enum severity,
+               const char*             file,
+               int                     line,
+               const char*             format,
+               ...);
+
+    /// Log the specified 'format' having the specified 'args' in the
+    /// specified 'logContext'.
+    void writeArgs(const ntci::LogContext* logContext,
+                   bsls::LogSeverity::Enum severity,
+                   const char*             file,
+                   int                     line,
+                   const char*             format,
+                   bsl::va_list            args);
+
+    /// Log the specified 'format' having the specified 'args' in the
+    /// specified 'logContext'.
+    void writeRaw(const ntci::LogContext* logContext,
+                  bsls::LogSeverity::Enum severity,
+                  const char*             file,
+                  int                     line,
+                  const char*             data,
+                  bsl::size_t             size);
+
+    // MRM: Document 'write' and 'writeRaw'.
+
+    /// Flush the journal.
+    void flush();
 };
 
 /// @internal @brief
@@ -514,41 +720,6 @@ struct Log {
 
     /// Clean up the log.
     static void exit();
-};
-
-/// @internal @brief
-/// Provide utilities for the implementation of logging.
-///
-/// @par Thread Safety
-/// This class is thread safe.
-///
-/// @ingroup module_ntci_log
-struct LogUtil {
-    /// Format the specified 'context' into the specified 'destination'
-    /// having the specified 'destinationCapacity'. Always null-terminate
-    /// 'destination' but never exceed 'destianationCapacity'. The behavior
-    /// is undefined unless 'destinationCapacity > 0'.
-    static bsl::size_t formatContext(char*                   destination,
-                                     bsl::size_t             capacity,
-                                     const ntci::LogContext& context);
-
-    /// Copy to the specified 'destination' having the specified 'capacity'
-    /// the specified 'format' string replacing the escaped characters with
-    /// the values in their respective variable number of arguments. Return
-    /// the number of characters written.
-    static bsl::size_t formatBuffer(char*       destination,
-                                    bsl::size_t capacity,
-                                    const char* format,
-                                    ...);
-
-    /// Copy to the specified 'destination' having the specified 'capacity'
-    /// the specified 'format' string replacing the escaped characters with
-    /// the values in their respective variable number of arguments. Return
-    /// the number of characters written.
-    static bsl::size_t formatBufferArgs(char*        destination,
-                                        bsl::size_t  capacity,
-                                        const char*  format,
-                                        bsl::va_list args);
 };
 
 /// @internal @brief
@@ -810,12 +981,171 @@ class LogRemoteEndpointGuard
 };
 
 NTCCFG_INLINE
+void LogContext::setOwner(const char* value)
+{
+    d_owner = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setMonitorIndex(bsl::size_t value)
+{
+    d_monitorIndex = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setMonitorIndex(const bdlb::NullableValue<bsl::size_t>& value)
+{
+    d_monitorIndex = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setThreadIndex(bsl::size_t value)
+{
+    d_threadIndex = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setThreadIndex(const bdlb::NullableValue<bsl::size_t>& value)
+{
+    d_threadIndex = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setSourceId(int value)
+{
+    d_sourceId = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setSourceId(const bdlb::NullableValue<int>& value)
+{
+    d_sourceId = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setChannelId(int value)
+{
+    d_channelId = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setChannelId(const bdlb::NullableValue<int>& value)
+{
+    d_channelId = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setSessionHandle(int value)
+{
+    d_sessionHandle = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setSessionHandle(const bdlb::NullableValue<int>& value)
+{
+    d_sessionHandle = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setDescriptorHandle(ntsa::Handle value)
+{
+    d_descriptorHandle = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setDescriptorHandle(
+    const bdlb::NullableValue<ntsa::Handle>& value)
+{
+    d_descriptorHandle = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setSourceEndpoint(const ntsa::Endpoint& value)
+{
+    d_sourceEndpoint = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setSourceEndpoint(
+    const bdlb::NullableValue<ntsa::Endpoint>& value)
+{
+    d_sourceEndpoint = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setRemoteEndpoint(const ntsa::Endpoint& value)
+{
+    d_remoteEndpoint = value;
+}
+
+NTCCFG_INLINE
+void LogContext::setRemoteEndpoint(
+    const bdlb::NullableValue<ntsa::Endpoint>& value)
+{
+    d_remoteEndpoint = value;
+}
+
+NTCCFG_INLINE
+const char* LogContext::owner() const
+{
+    return d_owner;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<bsl::size_t>& LogContext::monitorIndex() const
+{
+    return d_monitorIndex;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<bsl::size_t>& LogContext::threadIndex() const
+{
+    return d_threadIndex;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<int>& LogContext::sourceId() const
+{
+    return d_sourceId;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<int>& LogContext::channelId() const
+{
+    return d_channelId;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<int>& LogContext::sessionHandle() const
+{
+    return d_sessionHandle;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntsa::Handle>& LogContext::descriptorHandle() const
+{
+    return d_descriptorHandle;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntsa::Endpoint>& LogContext::sourceEndpoint() const
+{
+    return d_sourceEndpoint;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntsa::Endpoint>& LogContext::remoteEndpoint() const
+{
+    return d_remoteEndpoint;
+}
+
+NTCCFG_INLINE
 LogOwnerGuard::LogOwnerGuard(ntci::LogContext* logContext, const char* owner)
 : d_logContext_p(logContext)
 {
     if (d_logContext_p) {
-        d_previous              = d_logContext_p->d_owner;
-        d_logContext_p->d_owner = owner;
+        d_previous = d_logContext_p->owner();
+        d_logContext_p->setOwner(owner);
     }
 }
 
@@ -823,7 +1153,7 @@ NTCCFG_INLINE
 LogOwnerGuard::~LogOwnerGuard()
 {
     if (d_logContext_p) {
-        d_logContext_p->d_owner = d_previous;
+        d_logContext_p->setOwner(d_previous);
     }
 }
 
@@ -833,8 +1163,8 @@ LogMonitorGuard::LogMonitorGuard(ntci::LogContext* logContext,
 : d_logContext_p(logContext)
 {
     if (d_logContext_p) {
-        d_previous                     = d_logContext_p->d_monitorIndex;
-        d_logContext_p->d_monitorIndex = monitorIndex;
+        d_previous = d_logContext_p->monitorIndex();
+        d_logContext_p->setMonitorIndex(monitorIndex);
     }
 }
 
@@ -842,7 +1172,7 @@ NTCCFG_INLINE
 LogMonitorGuard::~LogMonitorGuard()
 {
     if (d_logContext_p) {
-        d_logContext_p->d_monitorIndex = d_previous;
+        d_logContext_p->setMonitorIndex(d_previous);
     }
 }
 
@@ -852,8 +1182,8 @@ LogThreadGuard::LogThreadGuard(ntci::LogContext* logContext,
 : d_logContext_p(logContext)
 {
     if (d_logContext_p) {
-        d_previous                    = d_logContext_p->d_threadIndex;
-        d_logContext_p->d_threadIndex = threadIndex;
+        d_previous = d_logContext_p->threadIndex();
+        d_logContext_p->setThreadIndex(threadIndex);
     }
 }
 
@@ -861,7 +1191,7 @@ NTCCFG_INLINE
 LogThreadGuard::~LogThreadGuard()
 {
     if (d_logContext_p) {
-        d_logContext_p->d_threadIndex = d_previous;
+        d_logContext_p->setThreadIndex(d_previous);
     }
 }
 
@@ -870,8 +1200,8 @@ LogSourceGuard::LogSourceGuard(ntci::LogContext* logContext, int sourceId)
 : d_logContext_p(logContext)
 {
     if (d_logContext_p) {
-        d_previous                 = d_logContext_p->d_sourceId;
-        d_logContext_p->d_sourceId = sourceId;
+        d_previous = d_logContext_p->sourceId();
+        d_logContext_p->setSourceId(sourceId);
     }
 }
 
@@ -879,7 +1209,7 @@ NTCCFG_INLINE
 LogSourceGuard::~LogSourceGuard()
 {
     if (d_logContext_p) {
-        d_logContext_p->d_sourceId = d_previous;
+        d_logContext_p->setSourceId(d_previous);
     }
 }
 
@@ -888,8 +1218,8 @@ LogChannelGuard::LogChannelGuard(ntci::LogContext* logContext, int channelId)
 : d_logContext_p(logContext)
 {
     if (d_logContext_p) {
-        d_previous                  = d_logContext_p->d_channelId;
-        d_logContext_p->d_channelId = channelId;
+        d_previous = d_logContext_p->channelId();
+        d_logContext_p->setChannelId(channelId);
     }
 }
 
@@ -897,7 +1227,7 @@ NTCCFG_INLINE
 LogChannelGuard::~LogChannelGuard()
 {
     if (d_logContext_p) {
-        d_logContext_p->d_channelId = d_previous;
+        d_logContext_p->setChannelId(d_previous);
     }
 }
 
@@ -907,8 +1237,8 @@ LogSessionGuard::LogSessionGuard(ntci::LogContext* logContext,
 : d_logContext_p(logContext)
 {
     if (d_logContext_p) {
-        d_previous                      = d_logContext_p->d_sessionHandle;
-        d_logContext_p->d_sessionHandle = sessionHandle;
+        d_previous = d_logContext_p->sessionHandle();
+        d_logContext_p->setSessionHandle(sessionHandle);
     }
 }
 
@@ -916,7 +1246,7 @@ NTCCFG_INLINE
 LogSessionGuard::~LogSessionGuard()
 {
     if (d_logContext_p) {
-        d_logContext_p->d_sessionHandle = d_previous;
+        d_logContext_p->setSessionHandle(d_previous);
     }
 }
 
@@ -926,8 +1256,8 @@ LogDescriptorGuard::LogDescriptorGuard(ntci::LogContext* logContext,
 : d_logContext_p(logContext)
 {
     if (d_logContext_p) {
-        d_previous = d_logContext_p->d_descriptorHandle;
-        d_logContext_p->d_descriptorHandle = descriptorHandle;
+        d_previous = d_logContext_p->descriptorHandle();
+        d_logContext_p->setDescriptorHandle(descriptorHandle);
     }
 }
 
@@ -935,7 +1265,7 @@ NTCCFG_INLINE
 LogDescriptorGuard::~LogDescriptorGuard()
 {
     if (d_logContext_p) {
-        d_logContext_p->d_descriptorHandle = d_previous;
+        d_logContext_p->setDescriptorHandle(d_previous);
     }
 }
 
@@ -946,8 +1276,8 @@ LogSourceEndpointGuard::LogSourceEndpointGuard(
 : d_logContext_p(logContext)
 {
     if (d_logContext_p) {
-        d_previous                       = d_logContext_p->d_sourceEndpoint;
-        d_logContext_p->d_sourceEndpoint = sourceEndpoint;
+        d_previous = d_logContext_p->sourceEndpoint();
+        d_logContext_p->setSourceEndpoint(sourceEndpoint);
     }
 }
 
@@ -955,7 +1285,7 @@ NTCCFG_INLINE
 LogSourceEndpointGuard::~LogSourceEndpointGuard()
 {
     if (d_logContext_p) {
-        d_logContext_p->d_sourceEndpoint = d_previous;
+        d_logContext_p->setSourceEndpoint(d_previous);
     }
 }
 
@@ -966,8 +1296,8 @@ LogRemoteEndpointGuard::LogRemoteEndpointGuard(
 : d_logContext_p(logContext)
 {
     if (d_logContext_p) {
-        d_previous                       = d_logContext_p->d_remoteEndpoint;
-        d_logContext_p->d_remoteEndpoint = remoteEndpoint;
+        d_previous = d_logContext_p->remoteEndpoint();
+        d_logContext_p->setRemoteEndpoint(remoteEndpoint);
     }
 }
 
@@ -975,7 +1305,7 @@ NTCCFG_INLINE
 LogRemoteEndpointGuard::~LogRemoteEndpointGuard()
 {
     if (d_logContext_p) {
-        d_logContext_p->d_remoteEndpoint = d_previous;
+        d_logContext_p->setRemoteEndpoint(d_previous);
     }
 }
 

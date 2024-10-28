@@ -135,24 +135,24 @@ struct sockaddr_un_win32 {
 // cancelled using 'ntcs::Driver::cancel()'. The contract for this function
 // currently states that pending operations are not explicitly announced to
 // have been cancelled as a result of this function.
-// #define NTCP_IOCP_ANNOUNCE_CANCELLATIONS 1
+// #define NTCO_IOCP_ANNOUNCE_CANCELLATIONS 1
 
-#define NTCP_IOCP_LOG_WAIT_INDEFINITE()                                       \
+#define NTCO_IOCP_LOG_WAIT_INDEFINITE()                                       \
     NTCI_LOG_TRACE("Polling for socket events indefinitely")
 
-#define NTCP_IOCP_LOG_WAIT_TIMED(timeout)                                     \
+#define NTCO_IOCP_LOG_WAIT_TIMED(timeout)                                     \
     NTCI_LOG_TRACE(                                                           \
         "Polling for sockets events or until %d milliseconds have elapsed",   \
         timeout)
 
-#define NTCP_IOCP_LOG_WAIT_FAILURE(error)                                     \
+#define NTCO_IOCP_LOG_WAIT_FAILURE(error)                                     \
     NTCI_LOG_ERROR("Failed to poll for socket events: %s",                    \
                    error.text().c_str())
 
-#define NTCP_IOCP_LOG_WAIT_TIMEOUT()                                          \
+#define NTCO_IOCP_LOG_WAIT_TIMEOUT()                                          \
     NTCI_LOG_TRACE("Timed out polling for socket events")
 
-#define NTCP_IOCP_LOG_EVENT_STATUS(event, status)                             \
+#define NTCO_IOCP_LOG_EVENT_STATUS(event, status)                             \
     do {                                                                      \
         if (event->d_type == ntcs::EventType::e_CALLBACK) {                   \
             NTCI_LOG_TRACE("Event %p type %s %s",                             \
@@ -170,35 +170,27 @@ struct sockaddr_un_win32 {
         }                                                                     \
     } while (false)
 
-#define NTCP_IOCP_LOG_EVENT_STARTING(event)                                   \
-    NTCP_IOCP_LOG_EVENT_STATUS(event, "starting")
+#define NTCO_IOCP_LOG_EVENT_STARTING(event)                                   \
+    NTCO_IOCP_LOG_EVENT_STATUS(event, "starting")
 
-#define NTCP_IOCP_LOG_EVENT_COMPLETE(event)                                   \
-    NTCP_IOCP_LOG_EVENT_STATUS(event, "complete")
+#define NTCO_IOCP_LOG_EVENT_COMPLETE(event)                                   \
+    NTCO_IOCP_LOG_EVENT_STATUS(event, "complete")
 
-#define NTCP_IOCP_LOG_EVENT_CANCELLED(event)                                  \
-    NTCP_IOCP_LOG_EVENT_STATUS(event, "cancelled")
+#define NTCO_IOCP_LOG_EVENT_CANCELLED(event)                                  \
+    NTCO_IOCP_LOG_EVENT_STATUS(event, "cancelled")
 
-#define NTCP_IOCP_LOG_EVENT_ABANDONED(event)                                  \
-    NTCP_IOCP_LOG_EVENT_STATUS(event, "abandoned")
+#define NTCO_IOCP_LOG_EVENT_ABANDONED(event)                                  \
+    NTCO_IOCP_LOG_EVENT_STATUS(event, "abandoned")
 
-#define NTCP_IOCP_LOG_EVENT_IGNORED(event)                                    \
-    NTCP_IOCP_LOG_EVENT_STATUS(event, "ignored")
-
-namespace BloombergLP {
-namespace ntco {
-
-namespace {
+#define NTCO_IOCP_LOG_EVENT_IGNORED(event)                                    \
+    NTCO_IOCP_LOG_EVENT_STATUS(event, "ignored")
 
 // The maximum number of iovec buffers to submit to a call to 'WSASend' or
 // 'WSARecv'.
-#define NTCP_COMPLETIONPORT_WSABUF_MAX 64
+#define NTCO_IOCP_WSABUF_MAX 64
 
-void noop()
-{
-}
-
-}  // close unnamed namespace
+namespace BloombergLP {
+namespace ntco {
 
 // Provide a proactor context for an implementation of the 'ntci::Proactor'
 // interface implemented using the I/O completion port API.
@@ -343,6 +335,9 @@ class Iocp : public ntci::Proactor,
 
     bsl::size_t maxThreads() const BSLS_KEYWORD_OVERRIDE;
     // Return the maximum number of threads in the thread pool.
+
+    static void noop();
+    // The no-op function.
 
   public:
     typedef NTCCFG_FUNCTION() Functor;
@@ -723,7 +718,7 @@ void Iocp::flush()
             }
             else {
                 error = ntsa::Error(lastError);
-                NTCP_IOCP_LOG_WAIT_FAILURE(error);
+                NTCO_IOCP_LOG_WAIT_FAILURE(error);
                 break;
             }
         }
@@ -746,11 +741,11 @@ void Iocp::flush()
 
         if (error && error == ntsa::Error::e_CANCELLED) {
             BSLS_ASSERT(lastError == ERROR_OPERATION_ABORTED);
-            NTCP_IOCP_LOG_EVENT_CANCELLED(event);
+            NTCO_IOCP_LOG_EVENT_CANCELLED(event);
             continue;
         }
 
-        NTCP_IOCP_LOG_EVENT_ABANDONED(event);
+        NTCO_IOCP_LOG_EVENT_ABANDONED(event);
     }
 
     if (d_chronology.hasAnyScheduledOrDeferred()) {
@@ -781,11 +776,11 @@ void Iocp::wait(ntci::Waiter waiter)
 
     if (timeout >= 0) {
         milliseconds = timeout;
-        NTCP_IOCP_LOG_WAIT_TIMED(milliseconds);
+        NTCO_IOCP_LOG_WAIT_TIMED(milliseconds);
     }
     else {
         milliseconds = INFINITE;
-        NTCP_IOCP_LOG_WAIT_INDEFINITE();
+        NTCO_IOCP_LOG_WAIT_INDEFINITE();
     }
 
     SetLastError(0);
@@ -804,12 +799,12 @@ void Iocp::wait(ntci::Waiter waiter)
             error = ntsa::Error(lastError);
         }
         else if (lastError == WAIT_TIMEOUT) {
-            NTCP_IOCP_LOG_WAIT_TIMEOUT();
+            NTCO_IOCP_LOG_WAIT_TIMEOUT();
             return;
         }
         else {
             error = ntsa::Error(lastError);
-            NTCP_IOCP_LOG_WAIT_FAILURE(error);
+            NTCO_IOCP_LOG_WAIT_FAILURE(error);
             return;
         }
     }
@@ -822,11 +817,11 @@ void Iocp::wait(ntci::Waiter waiter)
 
     if (error && error == ntsa::Error::e_CANCELLED) {
         BSLS_ASSERT(lastError == ERROR_OPERATION_ABORTED);
-        NTCP_IOCP_LOG_EVENT_CANCELLED(event);
+        NTCO_IOCP_LOG_EVENT_CANCELLED(event);
         return;
     }
 
-    NTCP_IOCP_LOG_EVENT_COMPLETE(event);
+    NTCO_IOCP_LOG_EVENT_COMPLETE(event);
 
     if (event->d_type == ntcs::EventType::e_CALLBACK) {
         event->d_function();
@@ -1021,7 +1016,7 @@ void Iocp::wait(ntci::Waiter waiter)
                                          event->d_socket->strand());
     }
     else {
-        NTCP_IOCP_LOG_EVENT_IGNORED(event);
+        NTCO_IOCP_LOG_EVENT_IGNORED(event);
         return;
     }
 }
@@ -1082,6 +1077,10 @@ bsl::size_t Iocp::minThreads() const
 bsl::size_t Iocp::maxThreads() const
 {
     return d_config.maxThreads().value();
+}
+
+void Iocp::noop()
+{
 }
 
 Iocp::Iocp(const ntca::ProactorConfig&        configuration,
@@ -1394,7 +1393,7 @@ ntsa::Error Iocp::accept(const bsl::shared_ptr<ntci::ProactorSocket>& socket)
 
     event->d_type = ntcs::EventType::e_ACCEPT;
 
-    NTCP_IOCP_LOG_EVENT_STARTING(event);
+    NTCO_IOCP_LOG_EVENT_STARTING(event);
 
     ntsa::Error error;
 
@@ -1537,7 +1536,7 @@ ntsa::Error Iocp::connect(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     event->d_type = ntcs::EventType::e_CONNECT;
 
-    NTCP_IOCP_LOG_EVENT_STARTING(event);
+    NTCO_IOCP_LOG_EVENT_STARTING(event);
 
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
@@ -1632,7 +1631,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     event->d_type = ntcs::EventType::e_SEND;
 
-    NTCP_IOCP_LOG_EVENT_STARTING(event);
+    NTCO_IOCP_LOG_EVENT_STARTING(event);
 
     ntsa::Handle descriptorHandle = socket->handle();
 
@@ -1643,13 +1642,13 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     bsl::size_t numBuffersMax = options.maxBuffers();
     if (numBuffersMax == 0) {
-        numBuffersMax = NTCP_COMPLETIONPORT_WSABUF_MAX;
+        numBuffersMax = NTCO_IOCP_WSABUF_MAX;
     }
-    else if (numBuffersMax > NTCP_COMPLETIONPORT_WSABUF_MAX) {
-        numBuffersMax = NTCP_COMPLETIONPORT_WSABUF_MAX;
+    else if (numBuffersMax > NTCO_IOCP_WSABUF_MAX) {
+        numBuffersMax = NTCO_IOCP_WSABUF_MAX;
     }
 
-    WSABUF wsaBufArray[NTCP_COMPLETIONPORT_WSABUF_MAX];
+    WSABUF wsaBufArray[NTCO_IOCP_WSABUF_MAX];
 
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
@@ -1755,7 +1754,7 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     event->d_type = ntcs::EventType::e_SEND;
 
-    NTCP_IOCP_LOG_EVENT_STARTING(event);
+    NTCO_IOCP_LOG_EVENT_STARTING(event);
 
     ntsa::Handle descriptorHandle  = socket->handle();
     socklen_t    socketAddressSize = 0;
@@ -1784,13 +1783,13 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
         bsl::size_t numBuffersMax = options.maxBuffers();
         if (numBuffersMax == 0) {
-            numBuffersMax = NTCP_COMPLETIONPORT_WSABUF_MAX;
+            numBuffersMax = NTCO_IOCP_WSABUF_MAX;
         }
-        else if (numBuffersMax > NTCP_COMPLETIONPORT_WSABUF_MAX) {
-            numBuffersMax = NTCP_COMPLETIONPORT_WSABUF_MAX;
+        else if (numBuffersMax > NTCO_IOCP_WSABUF_MAX) {
+            numBuffersMax = NTCO_IOCP_WSABUF_MAX;
         }
 
-        WSABUF wsaBufArray[NTCP_COMPLETIONPORT_WSABUF_MAX];
+        WSABUF wsaBufArray[NTCO_IOCP_WSABUF_MAX];
 
         bsl::size_t numBuffersTotal;
         bsl::size_t numBytesTotal;
@@ -1850,13 +1849,13 @@ ntsa::Error Iocp::send(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
         bsl::size_t numBuffersMax = options.maxBuffers();
         if (numBuffersMax == 0) {
-            numBuffersMax = NTCP_COMPLETIONPORT_WSABUF_MAX;
+            numBuffersMax = NTCO_IOCP_WSABUF_MAX;
         }
-        else if (numBuffersMax > NTCP_COMPLETIONPORT_WSABUF_MAX) {
-            numBuffersMax = NTCP_COMPLETIONPORT_WSABUF_MAX;
+        else if (numBuffersMax > NTCO_IOCP_WSABUF_MAX) {
+            numBuffersMax = NTCO_IOCP_WSABUF_MAX;
         }
 
-        WSABUF wsaBufArray[NTCP_COMPLETIONPORT_WSABUF_MAX];
+        WSABUF wsaBufArray[NTCO_IOCP_WSABUF_MAX];
 
         bsl::size_t numBuffersTotal;
         bsl::size_t numBytesTotal;
@@ -2331,7 +2330,7 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
         event->d_numBytesIndicated = sizeof(sockaddr_storage) + 1;
     }
 
-    NTCP_IOCP_LOG_EVENT_STARTING(event);
+    NTCO_IOCP_LOG_EVENT_STARTING(event);
 
     ntsa::Handle descriptorHandle = socket->handle();
 
@@ -2342,13 +2341,13 @@ ntsa::Error Iocp::receive(const bsl::shared_ptr<ntci::ProactorSocket>& socket,
 
     bsl::size_t numBuffersMax = options.maxBuffers();
     if (numBuffersMax == 0) {
-        numBuffersMax = NTCP_COMPLETIONPORT_WSABUF_MAX;
+        numBuffersMax = NTCO_IOCP_WSABUF_MAX;
     }
-    else if (numBuffersMax > NTCP_COMPLETIONPORT_WSABUF_MAX) {
-        numBuffersMax = NTCP_COMPLETIONPORT_WSABUF_MAX;
+    else if (numBuffersMax > NTCO_IOCP_WSABUF_MAX) {
+        numBuffersMax = NTCO_IOCP_WSABUF_MAX;
     }
 
-    WSABUF wsaBufArray[NTCP_COMPLETIONPORT_WSABUF_MAX];
+    WSABUF wsaBufArray[NTCO_IOCP_WSABUF_MAX];
 
     bsl::size_t numBuffersTotal;
     bsl::size_t numBytesTotal;
@@ -2583,7 +2582,7 @@ void Iocp::interruptOne()
     bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
 
     event->d_type     = ntcs::EventType::e_CALLBACK;
-    event->d_function = &noop;
+    event->d_function = &Iocp::noop;
 
     this->submit(event);
 }
@@ -2598,7 +2597,7 @@ void Iocp::interruptAll()
         bslma::ManagedPtr<ntcs::Event> event = d_eventPool.getManagedObject();
 
         event->d_type     = ntcs::EventType::e_CALLBACK;
-        event->d_function = &noop;
+        event->d_function = &Iocp::noop;
 
         this->submit(event);
     }
@@ -2614,7 +2613,7 @@ void Iocp::interruptAll()
                 d_eventPool.getManagedObject();
 
             event->d_type     = ntcs::EventType::e_CALLBACK;
-            event->d_function = &noop;
+            event->d_function = &Iocp::noop;
 
             this->submit(event);
         }

@@ -60,18 +60,6 @@ BSLS_IDENT_RCSID(ntcs_event_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcs {
 
-namespace {
-
-void createEvent(void* arena, bslma::Allocator* allocator)
-{
-    // Create a new completion event in the specified 'arena'. Allocate
-    // memory using the specified 'allocator'.
-
-    new (arena) ntcs::Event(allocator);
-}
-
-}  // close unnamed namespace
-
 int EventType::fromInt(EventType::Value* result, int number)
 {
     switch (number) {
@@ -304,6 +292,11 @@ void Overlapped::reset()
     d_rsv4 = 0;
 }
 
+void Event::createEvent(void* arena, bslma::Allocator* allocator)
+{
+    new (arena) ntcs::Event(allocator);
+}
+
 Event::Event(bslma::Allocator* basicAllocator)
 : d_overlapped()
 , d_type(ntcs::EventType::e_UNDEFINED)
@@ -470,7 +463,7 @@ bsl::ostream& operator<<(bsl::ostream& stream, const ntcs::Event& object)
 }
 
 EventPool::EventPool(bslma::Allocator* basicAllocator)
-: d_pool(&createEvent, basicAllocator)
+: d_pool(&Event::createEvent, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }

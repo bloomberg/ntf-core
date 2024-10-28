@@ -353,71 +353,6 @@ BSLS_IDENT_RCSID(ntcd_machine_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcd {
 
-namespace {
-
-const bool        k_DEFAULT_REUSE_ADDRESS                = false;
-const bool        k_DEFAULT_KEEP_ALIVE                   = false;
-const bool        k_DEFAULT_CORK                         = false;
-const bool        k_DEFAULT_DELAY_TRANSMISSION           = false;
-const bool        k_DEFAULT_DELAY_ACKNOWLEDGEMENT        = false;
-const bsl::size_t k_DEFAULT_SEND_BUFFER_SIZE             = 1024 * 256;
-const bsl::size_t k_DEFAULT_SEND_BUFFER_LOW_WATERMARK    = 1;
-const bsl::size_t k_DEFAULT_RECEIVE_BUFFER_SIZE          = 1024 * 256;
-const bsl::size_t k_DEFAULT_RECEIVE_BUFFER_LOW_WATERMARK = 1;
-const bsl::size_t k_DEFAULT_BACKLOG                      = 4096;
-const bool        k_DEFAULT_DEBUG                        = false;
-const bool        k_DEFAULT_LINGER_ENABLED               = true;
-const bsl::size_t k_DEFAULT_LINGER_DURATION_IN_SECONDS   = 10;
-const bool        k_DEFAULT_BROADCAST                    = false;
-const bool        k_DEFAULT_BYPASS_ROUTING               = false;
-const bool        k_DEFAULT_INLINE_OUT_OF_BAND_DATA      = false;
-
-const bsl::size_t k_MAX_BUFFERS_PER_SEND    = 64;
-const bsl::size_t k_MAX_BUFFERS_PER_RECEIVE = 64;
-
-const ntsa::Handle k_MIN_HANDLE = 3;
-const ntsa::Handle k_MAX_HANDLE = 32767;
-
-const bsl::size_t k_DEFAULT_LOW_WATERMARK  = 1;
-const bsl::size_t k_DEFAULT_HIGH_WATERMARK = 1024 * 256;
-
-const int k_DEFAULT_BLOB_BUFFER_SIZE = 4096;
-
-const bsl::size_t k_MTU = 64 * 1024;
-
-bsls::SpinLock       s_defaultMachineLock  = BSLS_SPINLOCK_UNLOCKED;
-ntcd::Machine*       s_defaultMachine_p    = 0;
-bslma::SharedPtrRep* s_defaultMachineRep_p = 0;
-
-/// For the specified 'packet' generate and set id based on the specified
-/// 'tsKey' and generate ntsa::Timestamp with type e_SCHEDULED, then put it
-/// into the specified 'errorQueue'. Use the specified 'idIncrement' to
-/// modify the specified 'tsKey'.
-void generateTransmitTimestampScheduled(
-    ntcd::Packet*                                   packet,
-    bsl::uint32_t*                                  tsKey,
-    bsl::shared_ptr<bsl::list<ntsa::Notification> > errorQueue,
-    bsl::uint32_t                                   idIncrement)
-{
-    *tsKey                       += idIncrement;
-    const bsl::uint32_t packetId  = *tsKey - 1;
-    packet->setId(packetId);
-    ntsa::Notification n;
-    ntsa::Timestamp&   t = n.makeTimestamp();
-    t.setType(ntsa::TimestampType::e_SCHEDULED);
-    t.setTime(bdlt::CurrentTime::now());
-    t.setId(packetId);
-    errorQueue->push_back(n);
-}
-
-/// For the specified 'packet' set current time as a timestamp.
-void generateReceiveTimestamp(ntcd::Packet* packet)
-{
-    packet->setRxTimestamp(bdlt::CurrentTime::now());
-}
-
-}  // close unnamed namespace
-
 int PacketType::fromInt(PacketType::Value* result, int number)
 {
     switch (number) {
@@ -501,6 +436,8 @@ bsl::ostream& operator<<(bsl::ostream& stream, PacketType::Value rhs)
 {
     return PacketType::print(stream, rhs);
 }
+
+const bsl::size_t Packet::k_MTU = 64 * 1024;
 
 Packet::Packet(bdlbb::BlobBufferFactory* blobBufferFactory,
                bslma::Allocator*         basicAllocator)
@@ -1088,6 +1025,9 @@ bool operator<(const Packet& lhs, const Packet& rhs)
 {
     return lhs.less(rhs);
 }
+
+const bsl::size_t PacketQueue::k_DEFAULT_LOW_WATERMARK  = 1;
+const bsl::size_t PacketQueue::k_DEFAULT_HIGH_WATERMARK = 1024 * 256;
 
 PacketQueue::PacketQueue(bslma::Allocator* basicAllocator)
 : d_allowDequeue()
@@ -2128,6 +2068,66 @@ bool Session::privateHasNotification() const
     }
 }
 
+// Provide functions for the implementation of 'ntcd::Session'.
+class Session::Impl
+{
+  public:
+    /// For the specified 'packet' generate and set id based on the specified
+    /// 'tsKey' and generate ntsa::Timestamp with type e_SCHEDULED, then put it
+    /// into the specified 'errorQueue'. Use the specified 'idIncrement' to
+    /// modify the specified 'tsKey'.
+    static void generateTransmitTimestampScheduled(
+        ntcd::Packet*                                   packet,
+        bsl::uint32_t*                                  tsKey,
+        bsl::shared_ptr<bsl::list<ntsa::Notification> > errorQueue,
+        bsl::uint32_t                                   idIncrement);
+
+    /// For the specified 'packet' set current time as a timestamp.
+    static void generateReceiveTimestamp(ntcd::Packet* packet);
+};
+
+void Session::Impl::generateTransmitTimestampScheduled(
+    ntcd::Packet*                                   packet,
+    bsl::uint32_t*                                  tsKey,
+    bsl::shared_ptr<bsl::list<ntsa::Notification> > errorQueue,
+    bsl::uint32_t                                   idIncrement)
+{
+    *tsKey                       += idIncrement;
+    const bsl::uint32_t packetId  = *tsKey - 1;
+    packet->setId(packetId);
+    ntsa::Notification n;
+    ntsa::Timestamp&   t = n.makeTimestamp();
+    t.setType(ntsa::TimestampType::e_SCHEDULED);
+    t.setTime(bdlt::CurrentTime::now());
+    t.setId(packetId);
+    errorQueue->push_back(n);
+}
+
+void Session::Impl::generateReceiveTimestamp(ntcd::Packet* packet)
+{
+    packet->setRxTimestamp(bdlt::CurrentTime::now());
+}
+
+const bool        Session::k_DEFAULT_REUSE_ADDRESS                = false;
+const bool        Session::k_DEFAULT_KEEP_ALIVE                   = false;
+const bool        Session::k_DEFAULT_CORK                         = false;
+const bool        Session::k_DEFAULT_DELAY_TRANSMISSION           = false;
+const bool        Session::k_DEFAULT_DELAY_ACKNOWLEDGEMENT        = false;
+const bsl::size_t Session::k_DEFAULT_SEND_BUFFER_SIZE             = 1024 * 256;
+const bsl::size_t Session::k_DEFAULT_SEND_BUFFER_LOW_WATERMARK    = 1;
+const bsl::size_t Session::k_DEFAULT_RECEIVE_BUFFER_SIZE          = 1024 * 256;
+const bsl::size_t Session::k_DEFAULT_RECEIVE_BUFFER_LOW_WATERMARK = 1;
+const bsl::size_t Session::k_DEFAULT_BACKLOG                      = 4096;
+const bool        Session::k_DEFAULT_DEBUG                        = false;
+const bool        Session::k_DEFAULT_LINGER_ENABLED               = true;
+const bsl::size_t Session::k_DEFAULT_LINGER_DURATION_IN_SECONDS   = 10;
+const bool        Session::k_DEFAULT_BROADCAST                    = false;
+const bool        Session::k_DEFAULT_BYPASS_ROUTING               = false;
+const bool        Session::k_DEFAULT_INLINE_OUT_OF_BAND_DATA      = false;
+
+const bsl::size_t Session::k_MAX_BUFFERS_PER_SEND    = 64;
+const bsl::size_t Session::k_MAX_BUFFERS_PER_RECEIVE = 64;
+
 Session::Session(const bsl::shared_ptr<ntcd::Machine>& machine,
                  bslma::Allocator*                     basicAllocator)
 : d_mutex()
@@ -2728,11 +2728,12 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
 
         ntcd::PacketQueue::PacketFunctor functor;
         if (d_socketOptions.timestampOutgoingData().value_or(false)) {
-            functor = NTCCFG_BIND(&generateTransmitTimestampScheduled,
-                                  NTCCFG_BIND_PLACEHOLDER_1,
-                                  &d_tsKey,
-                                  d_socketErrorQueue_sp,
-                                  1);
+            functor =
+                NTCCFG_BIND(&Session::Impl::generateTransmitTimestampScheduled,
+                            NTCCFG_BIND_PLACEHOLDER_1,
+                            &d_tsKey,
+                            d_socketErrorQueue_sp,
+                            1);
         }
 
         error = d_outgoingPacketQueue_sp->enqueue(&d_mutex,
@@ -2789,11 +2790,12 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
 
             ntcd::PacketQueue::PacketFunctor functor;
             if (d_socketOptions.timestampOutgoingData().value_or(false)) {
-                functor = NTCCFG_BIND(&generateTransmitTimestampScheduled,
-                                      NTCCFG_BIND_PLACEHOLDER_1,
-                                      &d_tsKey,
-                                      d_socketErrorQueue_sp,
-                                      perPacketContext.bytesSent());
+                functor = NTCCFG_BIND(
+                    &Session::Impl::generateTransmitTimestampScheduled,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    &d_tsKey,
+                    d_socketErrorQueue_sp,
+                    perPacketContext.bytesSent());
             }
 
             error = d_outgoingPacketQueue_sp->enqueue(&d_mutex,
@@ -2961,11 +2963,12 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
 
         ntcd::PacketQueue::PacketFunctor functor;
         if (d_socketOptions.timestampOutgoingData().value_or(false)) {
-            functor = NTCCFG_BIND(&generateTransmitTimestampScheduled,
-                                  NTCCFG_BIND_PLACEHOLDER_1,
-                                  &d_tsKey,
-                                  d_socketErrorQueue_sp,
-                                  1);
+            functor =
+                NTCCFG_BIND(&Session::Impl::generateTransmitTimestampScheduled,
+                            NTCCFG_BIND_PLACEHOLDER_1,
+                            &d_tsKey,
+                            d_socketErrorQueue_sp,
+                            1);
         }
 
         error = d_outgoingPacketQueue_sp->enqueue(&d_mutex,
@@ -3020,11 +3023,12 @@ ntsa::Error Session::send(ntsa::SendContext*       context,
 
             ntcd::PacketQueue::PacketFunctor functor;
             if (d_socketOptions.timestampOutgoingData().value_or(false)) {
-                functor = NTCCFG_BIND(&generateTransmitTimestampScheduled,
-                                      NTCCFG_BIND_PLACEHOLDER_1,
-                                      &d_tsKey,
-                                      d_socketErrorQueue_sp,
-                                      perPacketContext.bytesSent());
+                functor = NTCCFG_BIND(
+                    &Session::Impl::generateTransmitTimestampScheduled,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    &d_tsKey,
+                    d_socketErrorQueue_sp,
+                    perPacketContext.bytesSent());
             }
 
             error = d_outgoingPacketQueue_sp->enqueue(&d_mutex,
@@ -3648,7 +3652,7 @@ ntsa::Error Session::step(bool block)
         if (remoteSession->d_socketOptions.timestampIncomingData().value_or(
                 false))
         {
-            functor = NTCCFG_BIND(&generateReceiveTimestamp,
+            functor = NTCCFG_BIND(&Session::Impl::generateReceiveTimestamp,
                                   NTCCFG_BIND_PLACEHOLDER_1);
         }
 
@@ -5184,6 +5188,23 @@ bool Monitor::supportsTrigger(ntca::ReactorEventTrigger::Value trigger) const
     }
 }
 
+class Machine::Impl
+{
+  public:
+    static bsls::SpinLock       s_defaultMachineLock;
+    static ntcd::Machine*       s_defaultMachine_p;
+    static bslma::SharedPtrRep* s_defaultMachineRep_p;
+};
+
+bsls::SpinLock Machine::Impl::s_defaultMachineLock = BSLS_SPINLOCK_UNLOCKED;
+ntcd::Machine* Machine::Impl::s_defaultMachine_p   = 0;
+bslma::SharedPtrRep* Machine::Impl::s_defaultMachineRep_p = 0;
+
+const ntsa::Handle Machine::k_MIN_HANDLE = 3;
+const ntsa::Handle Machine::k_MAX_HANDLE = 32767;
+
+const int Machine::k_DEFAULT_BLOB_BUFFER_SIZE = 4096;
+
 Machine::Machine(bslma::Allocator* basicAllocator)
 : d_mutex()
 , d_condition()
@@ -6168,12 +6189,13 @@ bsl::shared_ptr<ntci::Resolver> Machine::resolver() const
 
 bsl::shared_ptr<ntcd::Machine> Machine::initialize()
 {
-    bsls::SpinLockGuard lock(&s_defaultMachineLock);
+    bsls::SpinLockGuard lock(&Machine::Impl::s_defaultMachineLock);
 
-    if (s_defaultMachine_p) {
-        s_defaultMachineRep_p->acquireRef();
-        return bsl::shared_ptr<ntcd::Machine>(s_defaultMachine_p,
-                                              s_defaultMachineRep_p);
+    if (Machine::Impl::s_defaultMachine_p) {
+        Machine::Impl::s_defaultMachineRep_p->acquireRef();
+        return bsl::shared_ptr<ntcd::Machine>(
+            Machine::Impl::s_defaultMachine_p,
+            Machine::Impl::s_defaultMachineRep_p);
     }
 
     bslma::Allocator* allocator = bslma::Default::globalAllocator();
@@ -6183,38 +6205,40 @@ bsl::shared_ptr<ntcd::Machine> Machine::initialize()
 
     bsl::pair<ntcd::Machine*, bslma::SharedPtrRep*> pair = machine.release();
 
-    s_defaultMachine_p    = pair.first;
-    s_defaultMachineRep_p = pair.second;
+    Machine::Impl::s_defaultMachine_p    = pair.first;
+    Machine::Impl::s_defaultMachineRep_p = pair.second;
 
-    return bsl::shared_ptr<ntcd::Machine>(s_defaultMachine_p,
-                                          s_defaultMachineRep_p);
+    return bsl::shared_ptr<ntcd::Machine>(
+        Machine::Impl::s_defaultMachine_p,
+        Machine::Impl::s_defaultMachineRep_p);
 }
 
 void Machine::setDefault(const bsl::shared_ptr<ntcd::Machine>& machine)
 {
-    bsls::SpinLockGuard lock(&s_defaultMachineLock);
+    bsls::SpinLockGuard lock(&Machine::Impl::s_defaultMachineLock);
 
-    if (s_defaultMachine_p) {
-        s_defaultMachineRep_p->releaseRef();
-        s_defaultMachineRep_p = 0;
-        s_defaultMachine_p    = 0;
+    if (Machine::Impl::s_defaultMachine_p) {
+        Machine::Impl::s_defaultMachineRep_p->releaseRef();
+        Machine::Impl::s_defaultMachineRep_p = 0;
+        Machine::Impl::s_defaultMachine_p    = 0;
     }
 
     if (machine) {
-        s_defaultMachine_p    = machine.get();
-        s_defaultMachineRep_p = machine.rep();
-        s_defaultMachineRep_p->acquireRef();
+        Machine::Impl::s_defaultMachine_p    = machine.get();
+        Machine::Impl::s_defaultMachineRep_p = machine.rep();
+        Machine::Impl::s_defaultMachineRep_p->acquireRef();
     }
 }
 
 bsl::shared_ptr<ntcd::Machine> Machine::getDefault()
 {
-    bsls::SpinLockGuard lock(&s_defaultMachineLock);
+    bsls::SpinLockGuard lock(&Machine::Impl::s_defaultMachineLock);
 
-    if (s_defaultMachine_p) {
-        s_defaultMachineRep_p->acquireRef();
-        return bsl::shared_ptr<ntcd::Machine>(s_defaultMachine_p,
-                                              s_defaultMachineRep_p);
+    if (Machine::Impl::s_defaultMachine_p) {
+        Machine::Impl::s_defaultMachineRep_p->acquireRef();
+        return bsl::shared_ptr<ntcd::Machine>(
+            Machine::Impl::s_defaultMachine_p,
+            Machine::Impl::s_defaultMachineRep_p);
     }
     else {
         return bsl::shared_ptr<ntcd::Machine>();
@@ -6223,10 +6247,10 @@ bsl::shared_ptr<ntcd::Machine> Machine::getDefault()
 
 void Machine::exit()
 {
-    if (s_defaultMachine_p) {
-        s_defaultMachineRep_p->releaseRef();
-        s_defaultMachineRep_p = 0;
-        s_defaultMachine_p    = 0;
+    if (Machine::Impl::s_defaultMachine_p) {
+        Machine::Impl::s_defaultMachineRep_p->releaseRef();
+        Machine::Impl::s_defaultMachineRep_p = 0;
+        Machine::Impl::s_defaultMachine_p    = 0;
     }
 }
 

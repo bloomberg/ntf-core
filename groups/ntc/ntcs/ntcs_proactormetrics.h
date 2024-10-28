@@ -181,67 +181,7 @@ class ProactorMetrics : public ntci::ProactorMetrics,
     /// Return the parent metrics object into which these metrics are
     /// aggregated, or null if no such parent object is defined.
     const bsl::shared_ptr<ntci::ProactorMetrics>& parent() const;
-
-    /// Set the specified 'metrics' as the metrics to use by this thread.
-    /// Return the previous metrics used by this thread, if any.
-    static ntcs::ProactorMetrics* setThreadLocal(
-        ntcs::ProactorMetrics* metrics);
-
-    /// Return the metrics to use by the current thread, if any.
-    static ntcs::ProactorMetrics* getThreadLocal();
 };
-
-/// @internal @brief
-/// Provide a guard to install and uninstall proactor metrics into thread-local
-/// storage.
-///
-/// @details
-/// Provide a guard to automatically install a proactor metrics
-/// object into thread local storage when the object is constructed and
-/// un-install it from thread local storage when the object is destroyed.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntcs
-class ProactorMetricsGuard
-{
-    ntcs::ProactorMetrics* d_current_p;
-    ntcs::ProactorMetrics* d_previous_p;
-
-  private:
-    ProactorMetricsGuard(const ProactorMetricsGuard&) BSLS_KEYWORD_DELETED;
-    ProactorMetricsGuard& operator=(const ProactorMetricsGuard&)
-        BSLS_KEYWORD_DELETED;
-
-  public:
-    /// Create a new metrics guard that installs the specified 'metrics'
-    /// object into thread local storage and uninstalls it when this object
-    /// is destroyed.
-    explicit ProactorMetricsGuard(ntcs::ProactorMetrics* metrics);
-
-    /// Uninstall the underlying metrics object from thread local storage
-    /// then destroy this object.
-    ~ProactorMetricsGuard();
-};
-
-NTCCFG_INLINE
-ProactorMetricsGuard::ProactorMetricsGuard(ntcs::ProactorMetrics* metrics)
-: d_current_p(metrics)
-, d_previous_p(0)
-{
-    if (d_current_p) {
-        d_previous_p = ntcs::ProactorMetrics::setThreadLocal(d_current_p);
-    }
-}
-
-NTCCFG_INLINE
-ProactorMetricsGuard::~ProactorMetricsGuard()
-{
-    if (d_current_p) {
-        ntcs::ProactorMetrics::setThreadLocal(d_previous_p);
-    }
-}
 
 #if NTC_BUILD_WITH_METRICS
 

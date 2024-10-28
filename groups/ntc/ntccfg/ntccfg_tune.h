@@ -58,7 +58,8 @@ namespace ntccfg {
 // This class is thread safe.
 ///
 /// @ingroup module_ntccfg
-struct Tune {
+class Tune
+{
   public:
     /// Load into the specified 'result' the vlaue of the environment
     /// variable having the specified 'name'. Return true if such an
@@ -241,6 +242,9 @@ struct Tune {
     static void configure(bdlb::NullableValue<TYPE>* result,
                           const char*                name,
                           const TYPE&                defaultValue);
+
+  private:
+    class Impl;
 };
 
 template <typename TYPE>

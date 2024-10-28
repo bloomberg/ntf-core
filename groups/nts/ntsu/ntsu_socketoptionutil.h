@@ -42,7 +42,9 @@ namespace ntsu {
 /// This struct is thread safe.
 ///
 /// @ingroup module_ntsu
-struct SocketOptionUtil {
+class SocketOptionUtil
+{
+  public:
     /// Set the specified 'option' for the specified 'socket'. Return the
     /// error.
     static ntsa::Error setOption(ntsa::Handle              socket,
@@ -348,6 +350,10 @@ struct SocketOptionUtil {
     /// Return true if the specified 'socket' supports zero-copy, otherwise
     /// return false.
     static bool supportsZeroCopy(ntsa::Handle socket);
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 }  // end namespace ntsu

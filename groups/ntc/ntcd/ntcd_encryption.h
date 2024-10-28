@@ -51,6 +51,8 @@ class EncryptionKey : public ntci::EncryptionKey
 {
     bsl::uint32_t d_value;
 
+    class Impl;
+
   private:
     EncryptionKey(const EncryptionKey&) BSLS_KEYWORD_DELETED;
     EncryptionKey& operator=(const EncryptionKey&) BSLS_KEYWORD_DELETED;
@@ -109,6 +111,8 @@ class EncryptionCertificate : public ntci::EncryptionCertificate
     ntsa::DistinguishedName              d_issuer;
     bsl::shared_ptr<ntcd::EncryptionKey> d_issuerKey_sp;
     bslma::Allocator*                    d_allocator_p;
+
+    class Impl;
 
   private:
     EncryptionCertificate(const EncryptionCertificate&) BSLS_KEYWORD_DELETED;

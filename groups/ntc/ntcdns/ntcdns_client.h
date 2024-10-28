@@ -62,13 +62,13 @@ namespace BloombergLP {
 namespace ntci {
 class Resolver;
 }
+}
+
+namespace BloombergLP {
 namespace ntcdns {
+
 class Client;
-}
-namespace ntcdns {
 class ClientNameServer;
-}
-namespace ntcdns {
 
 /// @internal @brief
 /// Provide an interface for any operation performed by the client.
@@ -119,6 +119,10 @@ class ClientOperation
     /// Prepare the operation to target the next name in the search list.
     /// Return true if such a name exists, and false otherwise.
     virtual bool tryNextSearch() = 0;
+
+  protected:
+    // The maximum DNS payload size.
+    static const bsl::size_t k_DNS_MAX_PAYLOAD_SIZE;
 };
 
 /// @internal @brief
@@ -415,6 +419,11 @@ class ClientNameServer : public ntci::DatagramSocketSession,
     const ntcdns::ClientConfig                   d_config;
     bslma::Allocator*                            d_allocator_p;
 
+    /// The maximum UDP payload size.
+    static const bsl::size_t k_UDP_MAX_PAYLOAD_SIZE;
+
+    class Impl;
+
   private:
     ClientNameServer(ClientNameServer&) BSLS_KEYWORD_DELETED;
     ClientNameServer& operator=(const ClientNameServer&) BSLS_KEYWORD_DELETED;
@@ -647,6 +656,9 @@ class Client : public ntccfg::Shared<Client>
     bool                                         d_initialized;
     ntcdns::ClientConfig                         d_config;
     bslma::Allocator*                            d_allocator_p;
+
+    // The default DNS port.
+    static const ntsa::Port k_DNS_PORT;
 
   private:
     Client(const Client&) BSLS_KEYWORD_DELETED;

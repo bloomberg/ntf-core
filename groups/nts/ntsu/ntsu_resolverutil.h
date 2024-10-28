@@ -41,7 +41,9 @@ namespace ntsu {
 /// This struct is thread safe.
 ///
 /// @ingroup module_ntsu
-struct ResolverUtil {
+class ResolverUtil
+{
+  public:
     /// Load into the specified 'result' the IP addresses assigned to
     /// the specified 'domainName'. Perform all resolution and validation of
     /// the characteristics of the desired 'result' according to the
@@ -95,6 +97,10 @@ struct ResolverUtil {
     /// take precedence over all the IPv6 addresses. Retain the relative
     /// order of the addresses in each family.
     static void sortIpAddressList(bsl::vector<ntsa::IpAddress>* ipAddressList);
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 }  // end namespace ntsu

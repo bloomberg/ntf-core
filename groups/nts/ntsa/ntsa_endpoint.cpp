@@ -24,9 +24,16 @@ BSLS_IDENT_RCSID(ntsa_endpoint_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
+/// Provide a private implementation.
+class Endpoint::Impl
+{
+  public:
+    /// Throw an exception indicating the specified 'text' is in an invalid
+    /// format.
+    static void throwEndpointInvalidFormat(const bslstl::StringRef& text);
+};
 
-void throwEndpointInvalidFormat(const bslstl::StringRef& text)
+void Endpoint::Impl::throwEndpointInvalidFormat(const bslstl::StringRef& text)
 {
     bsl::stringstream ss;
     ss << "Failed to parse address: the text '" << text << "' is invalid";
@@ -34,13 +41,11 @@ void throwEndpointInvalidFormat(const bslstl::StringRef& text)
     NTSCFG_THROW(ss.str());
 }
 
-}  // close unnamed namespace
-
 Endpoint::Endpoint(const bslstl::StringRef& text)
 : d_type(ntsa::EndpointType::e_UNDEFINED)
 {
     if (!this->parse(text)) {
-        throwEndpointInvalidFormat(text);
+        Impl::throwEndpointInvalidFormat(text);
     }
 }
 

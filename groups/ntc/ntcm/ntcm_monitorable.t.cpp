@@ -589,11 +589,17 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyForegroundCollection)
 
     // Create a monitorable object statistics collector.
 
-    ntcm::Collector::LoadCallback loadCallback = bdlf::MemFnUtil::memFn(
-        &ntcm::MonitorableRegistry::loadRegisteredObjects,
-        monitorableRegistry);
+    ntca::MonitorableCollectorConfig monitorableCollectorConfig;
+    monitorableCollectorConfig.setPeriod(0);
 
-    ntcm::Collector collector(loadCallback, NTSCFG_TEST_ALLOCATOR);
+    ntcm::MonitorableCollector::LoadCallback loadCallback =
+        bdlf::MemFnUtil::memFn(
+            &ntcm::MonitorableRegistry::loadRegisteredObjects,
+            monitorableRegistry);
+
+    ntcm::MonitorableCollector collector(monitorableCollectorConfig,
+                                         loadCallback,
+                                         NTSCFG_TEST_ALLOCATOR);
 
     // Create and register a test publisher with the collector.
 
@@ -687,14 +693,14 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyBackgroundCollection)
     collectorConfig.setThreadName("metrics");
     collectorConfig.setPeriod(3);
 
-    ntcm::PeriodicCollector::LoadCallback loadCallback =
+    ntcm::MonitorableCollector::LoadCallback loadCallback =
         bdlf::MemFnUtil::memFn(
             &ntcm::MonitorableRegistry::loadRegisteredObjects,
             monitorableRegistry);
 
-    ntcm::PeriodicCollector collector(collectorConfig,
-                                      loadCallback,
-                                      NTSCFG_TEST_ALLOCATOR);
+    ntcm::MonitorableCollector collector(collectorConfig,
+                                         loadCallback,
+                                         NTSCFG_TEST_ALLOCATOR);
 
     // Create and register a test publisher with the collector.
 

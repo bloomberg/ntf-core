@@ -249,6 +249,8 @@ class ListenerSocketOptions
     bdlb::NullableValue<bsl::size_t>    d_zeroCopyThreshold;
     ntca::LoadBalancingOptions          d_loadBalancingOptions;
 
+    static const bool k_DEFAULT_REUSE_ADDRESS;
+
   public:
     /// Create new listener socket options.
     ListenerSocketOptions();

@@ -131,13 +131,6 @@ BSLS_IDENT_RCSID(ntco_devpoll_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntco {
 
-namespace {
-
-// The default value of a poll structure.
-struct ::pollfd k_DEFAULT_POLLFD;
-
-}  // close unnamed namespace
-
 class Devpoll : public ntci::Reactor,
                 public ntcs::Driver,
                 public ntccfg::Shared<Devpoll>
