@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcm_monitorable_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntcs_monitorable_cpp, "$Id$ $CSID$")
 
 #include <ntci_log.h>
 #include <bdld_datum.h>
@@ -44,7 +44,7 @@ BSLS_IDENT_RCSID(ntcm_monitorable_cpp, "$Id$ $CSID$")
 #define NTCM_LOGPUBLISHER_SORTED 1
 
 namespace BloombergLP {
-namespace ntcm {
+namespace ntcs {
 
 MonitorableLogRecord::MonitorableLogRecord(bslma::Allocator* basicAllocator)
 : d_guid(basicAllocator)
@@ -666,7 +666,7 @@ void MonitorableCollector::start()
         d_scheduler.scheduleRecurringEvent(
             &d_event,
             d_interval,
-            bdlf::MemFnUtil::memFn(&ntcm::MonitorableCollector::collect,
+            bdlf::MemFnUtil::memFn(&ntcs::MonitorableCollector::collect,
                                    this));
 
         bslmt::ThreadAttributes threadAttributes;
@@ -842,7 +842,7 @@ class MonitorableUtil::State
     bsls::SpinLock d_publisherLock;
 
     /// The installed log publisher.
-    bsl::shared_ptr<ntcm::MonitorableLog> d_logPublisher_sp;
+    bsl::shared_ptr<ntcs::MonitorableLog> d_logPublisher_sp;
 
     /// The instance of the global monitorable state.
     static State s_global;
@@ -881,7 +881,7 @@ void MonitorableUtil::enableMonitorableRegistry(
     bslma::Allocator* allocator =
         basicAllocator ? basicAllocator : bslma::Default::globalAllocator();
 
-    bsl::shared_ptr<ntcm::MonitorableRegistry> monitorableRegistry;
+    bsl::shared_ptr<ntcs::MonitorableRegistry> monitorableRegistry;
     monitorableRegistry.createInplace(allocator, configuration, allocator);
 
     bsls::SpinLockGuard guard(
@@ -921,12 +921,12 @@ void MonitorableUtil::enableMonitorableCollector(
 
     bsl::shared_ptr<ntci::MonitorableCollector> monitorableCollector;
     {
-        bsl::shared_ptr<ntcm::MonitorableCollector>
+        bsl::shared_ptr<ntcs::MonitorableCollector>
             concreteMonitorableCollector;
         concreteMonitorableCollector.createInplace(
             allocator,
             configuration,
-            ntcm::MonitorableUtil::loadCallback(),
+            ntcs::MonitorableUtil::loadCallback(),
             allocator);
 
         monitorableCollector = concreteMonitorableCollector;
@@ -1086,7 +1086,7 @@ void MonitorableUtil::registerMonitorablePublisher(
         monitorableCollector = MonitorableUtil::State::s_global.d_collector_sp;
     }
 
-    bsl::shared_ptr<ntcm::MonitorableLog> logPublisher;
+    bsl::shared_ptr<ntcs::MonitorableLog> logPublisher;
     {
         bsls::SpinLockGuard guard(
             &MonitorableUtil::State::s_global.d_publisherLock);
@@ -1122,7 +1122,7 @@ void MonitorableUtil::deregisterMonitorablePublisher(
         monitorableCollector = MonitorableUtil::State::s_global.d_collector_sp;
     }
 
-    bsl::shared_ptr<ntcm::MonitorableLog> logPublisher;
+    bsl::shared_ptr<ntcs::MonitorableLog> logPublisher;
     {
         bsls::SpinLockGuard guard(
             &MonitorableUtil::State::s_global.d_publisherLock);
@@ -1195,5 +1195,5 @@ void MonitorableUtil::exit()
     }
 }
 
-}  // close namespace ntcm
+}  // close namespace ntcs
 }  // close namespace BloombergLP

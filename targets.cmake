@@ -632,28 +632,12 @@ if (${NTF_BUILD_WITH_NTC})
 
     ntf_package(
         NAME
-            ntcm
-        REQUIRES
-            ntcscm
-            ntccfg
-            ntca
-            ntci
-        PRIVATE
-    )
-
-    ntf_component(NAME ntcm_monitorable)
-
-    ntf_package_end(NAME ntcm)
-
-    ntf_package(
-        NAME
             ntcs
         REQUIRES
             ntcscm
             ntccfg
             ntca
             ntci
-            ntcm
         PRIVATE
     )
 
@@ -680,6 +664,7 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntcs_leakybucket)
     ntf_component(NAME ntcs_memorymap)
     ntf_component(NAME ntcs_metrics)
+    ntf_component(NAME ntcs_monitorable)
     ntf_component(NAME ntcs_nomenclature)
     ntf_component(NAME ntcs_observer)
     ntf_component(NAME ntcs_openstate)
@@ -712,7 +697,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
         PRIVATE
     )
@@ -734,7 +718,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
         PRIVATE
@@ -765,7 +748,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -793,7 +775,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -813,7 +794,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -843,7 +823,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -869,7 +848,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -895,7 +873,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -928,7 +905,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd

@@ -22,7 +22,7 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 #include <ntccfg_tune.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_authorization.h>
 #include <ntcs_compat.h>
 #include <ntcs_datapool.h>
@@ -304,7 +304,7 @@ ntsa::Error System::initialize()
             return error;
         }
 
-        ntcm::MonitorableUtil::initialize();
+        ntcs::MonitorableUtil::initialize();
         ntcs::Plugin::initialize();
         ntcs::Global::initialize();
 
@@ -2674,7 +2674,7 @@ void System::enableMonitorableRegistry(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::enableMonitorableRegistry(configuration,
+    ntcs::MonitorableUtil::enableMonitorableRegistry(configuration,
                                                      basicAllocator);
 }
 
@@ -2686,7 +2686,7 @@ void System::enableMonitorableRegistry(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::enableMonitorableRegistry(monitorableRegistry);
+    ntcs::MonitorableUtil::enableMonitorableRegistry(monitorableRegistry);
 }
 
 void System::disableMonitorableRegistry()
@@ -2696,7 +2696,7 @@ void System::disableMonitorableRegistry()
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::disableMonitorableRegistry();
+    ntcs::MonitorableUtil::disableMonitorableRegistry();
 }
 
 void System::enableMonitorableCollector(
@@ -2708,7 +2708,7 @@ void System::enableMonitorableCollector(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::enableMonitorableCollector(configuration,
+    ntcs::MonitorableUtil::enableMonitorableCollector(configuration,
                                                       basicAllocator);
 }
 
@@ -2720,7 +2720,7 @@ void System::enableMonitorableCollector(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::enableMonitorableCollector(monitorableCollector);
+    ntcs::MonitorableUtil::enableMonitorableCollector(monitorableCollector);
 }
 
 void System::disableMonitorableCollector()
@@ -2730,7 +2730,7 @@ void System::disableMonitorableCollector()
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::disableMonitorableCollector();
+    ntcs::MonitorableUtil::disableMonitorableCollector();
 }
 
 void System::enableProcessMetrics()
@@ -2745,7 +2745,7 @@ void System::enableProcessMetrics()
     bsl::shared_ptr<ntcs::ProcessMetrics> processMetrics;
     processMetrics.createInplace(allocator, "process", "global");
 
-    ntcm::MonitorableUtil::registerMonitorableProcess(processMetrics);
+    ntcs::MonitorableUtil::registerMonitorableProcess(processMetrics);
 }
 
 void System::disableProcessMetrics()
@@ -2755,7 +2755,7 @@ void System::disableProcessMetrics()
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::deregisterMonitorableProcess();
+    ntcs::MonitorableUtil::deregisterMonitorableProcess();
 }
 
 void System::registerMonitorable(
@@ -2766,7 +2766,7 @@ void System::registerMonitorable(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::registerMonitorable(monitorable);
+    ntcs::MonitorableUtil::registerMonitorable(monitorable);
 }
 
 void System::deregisterMonitorable(
@@ -2777,7 +2777,7 @@ void System::deregisterMonitorable(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::deregisterMonitorable(monitorable);
+    ntcs::MonitorableUtil::deregisterMonitorable(monitorable);
 }
 
 void System::registerMonitorablePublisher(
@@ -2788,7 +2788,7 @@ void System::registerMonitorablePublisher(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::registerMonitorablePublisher(monitorablePublisher);
+    ntcs::MonitorableUtil::registerMonitorablePublisher(monitorablePublisher);
 }
 
 void System::deregisterMonitorablePublisher(
@@ -2799,13 +2799,13 @@ void System::deregisterMonitorablePublisher(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::deregisterMonitorablePublisher(
+    ntcs::MonitorableUtil::deregisterMonitorablePublisher(
         monitorablePublisher);
 }
 
 void System::collectMetrics()
 {
-    ntcm::MonitorableUtil::collectMetrics();
+    ntcs::MonitorableUtil::collectMetrics();
 }
 
 void System::registerMonitorablePublisher(
@@ -2816,7 +2816,7 @@ void System::registerMonitorablePublisher(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::registerMonitorablePublisher(severityLevel);
+    ntcs::MonitorableUtil::registerMonitorablePublisher(severityLevel);
 }
 
 void System::deregisterMonitorablePublisher(
@@ -2827,7 +2827,7 @@ void System::deregisterMonitorablePublisher(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntcm::MonitorableUtil::deregisterMonitorablePublisher(severityLevel);
+    ntcs::MonitorableUtil::deregisterMonitorablePublisher(severityLevel);
 }
 
 bool System::testDriverSupport(const bsl::string& driverName,
@@ -3137,7 +3137,7 @@ void System::exit()
     {
         ntcs::Global::exit();
         ntcs::Plugin::exit();
-        ntcm::MonitorableUtil::exit();
+        ntcs::MonitorableUtil::exit();
 
         ntsf::System::exit();
     }

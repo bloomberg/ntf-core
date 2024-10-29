@@ -27,7 +27,7 @@ BSLS_IDENT_RCSID(ntcp_datagramsocket_t_cpp, "$Id$ $CSID$")
 #include <ntcd_proactor.h>
 #include <ntcd_simulation.h>
 #include <ntci_log.h>
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_datapool.h>
 #include <ntcs_ratelimiter.h>
 #include <ntcs_user.h>
@@ -1072,7 +1072,7 @@ void DatagramSocketTest::DatagramSocketManager::run()
     ntsa::Error error;
 
     ntca::MonitorableRegistryConfig monitorableRegistryConfig;
-    ntcm::MonitorableUtil::enableMonitorableRegistry(
+    ntcs::MonitorableUtil::enableMonitorableRegistry(
         monitorableRegistryConfig);
 
     // Create all the datagram socket pairs.
@@ -1227,7 +1227,7 @@ void DatagramSocketTest::DatagramSocketManager::run()
         }
 
         bsl::vector<bsl::shared_ptr<ntci::Monitorable> > monitorables;
-        ntcm::MonitorableUtil::loadRegisteredObjects(&monitorables);
+        ntcs::MonitorableUtil::loadRegisteredObjects(&monitorables);
         for (bsl::vector<bsl::shared_ptr<ntci::Monitorable> >::iterator it =
                  monitorables.begin();
              it != monitorables.end();

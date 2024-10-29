@@ -21,6 +21,7 @@ ntcs_interest
 ntcs_leakybucket
 ntcs_memorymap
 ntcs_metrics
+ntcs_monitorable
 ntcs_nomenclature
 ntcs_observer
 ntcs_openstate

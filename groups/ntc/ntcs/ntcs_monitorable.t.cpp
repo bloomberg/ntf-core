@@ -16,16 +16,16 @@
 #include <ntscfg_test.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcm_monitorable_t_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntcs_monitorable_t_cpp, "$Id$ $CSID$")
 
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 
 using namespace BloombergLP;
 
 namespace BloombergLP {
-namespace ntcm {
+namespace ntcs {
 
-// Provide tests for 'ntcm::Monitorable'.
+// Provide tests for 'ntcs::Monitorable'.
 class MonitorableTest
 {
   public:
@@ -536,7 +536,7 @@ void MonitorableTest::ObjectUtil::getStats(bsl::int64_t             result[4],
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyForegroundCollection)
+NTSCFG_TEST_FUNCTION(ntcs::MonitorableTest::verifyForegroundCollection)
 {
     // Concerns:
     //   The statistics measured by registered monitorable objects are
@@ -567,7 +567,7 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyForegroundCollection)
     // Create the monitorable object registry and set it as the
     // default monitorable registry.
 
-    bsl::shared_ptr<ntcm::MonitorableRegistry> monitorableRegistry;
+    bsl::shared_ptr<ntcs::MonitorableRegistry> monitorableRegistry;
     monitorableRegistry.createInplace(NTSCFG_TEST_ALLOCATOR,
                                       NTSCFG_TEST_ALLOCATOR);
 
@@ -592,18 +592,18 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyForegroundCollection)
     ntca::MonitorableCollectorConfig monitorableCollectorConfig;
     monitorableCollectorConfig.setPeriod(0);
 
-    ntcm::MonitorableCollector::LoadCallback loadCallback =
+    ntcs::MonitorableCollector::LoadCallback loadCallback =
         bdlf::MemFnUtil::memFn(
-            &ntcm::MonitorableRegistry::loadRegisteredObjects,
+            &ntcs::MonitorableRegistry::loadRegisteredObjects,
             monitorableRegistry);
 
-    ntcm::MonitorableCollector collector(monitorableCollectorConfig,
+    ntcs::MonitorableCollector collector(monitorableCollectorConfig,
                                          loadCallback,
                                          NTSCFG_TEST_ALLOCATOR);
 
     // Create and register a test publisher with the collector.
 
-    bsl::shared_ptr<ntcm::MonitorableLog> publisher;
+    bsl::shared_ptr<ntcs::MonitorableLog> publisher;
     publisher.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     collector.registerPublisher(publisher);
@@ -636,7 +636,7 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyForegroundCollection)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyBackgroundCollection)
+NTSCFG_TEST_FUNCTION(ntcs::MonitorableTest::verifyBackgroundCollection)
 {
     // Concerns:
     //   The statistics measured by registered monitorable objects are
@@ -667,7 +667,7 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyBackgroundCollection)
     // Create the monitorable object registry and set it as the
     // default monitorable registry.
 
-    bsl::shared_ptr<ntcm::MonitorableRegistry> monitorableRegistry;
+    bsl::shared_ptr<ntcs::MonitorableRegistry> monitorableRegistry;
     monitorableRegistry.createInplace(NTSCFG_TEST_ALLOCATOR,
                                       NTSCFG_TEST_ALLOCATOR);
 
@@ -693,18 +693,18 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyBackgroundCollection)
     collectorConfig.setThreadName("metrics");
     collectorConfig.setPeriod(3);
 
-    ntcm::MonitorableCollector::LoadCallback loadCallback =
+    ntcs::MonitorableCollector::LoadCallback loadCallback =
         bdlf::MemFnUtil::memFn(
-            &ntcm::MonitorableRegistry::loadRegisteredObjects,
+            &ntcs::MonitorableRegistry::loadRegisteredObjects,
             monitorableRegistry);
 
-    ntcm::MonitorableCollector collector(collectorConfig,
+    ntcs::MonitorableCollector collector(collectorConfig,
                                          loadCallback,
                                          NTSCFG_TEST_ALLOCATOR);
 
     // Create and register a test publisher with the collector.
 
-    bsl::shared_ptr<ntcm::MonitorableLog> publisher;
+    bsl::shared_ptr<ntcs::MonitorableLog> publisher;
     publisher.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     collector.registerPublisher(publisher);
@@ -746,7 +746,7 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyBackgroundCollection)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyUsage)
+NTSCFG_TEST_FUNCTION(ntcs::MonitorableTest::verifyUsage)
 {
     // Concerns:
     //   Monitorable objects measure statistics governed by a control
@@ -772,7 +772,7 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyUsage)
     bsl::shared_ptr<MonitorableTest::ObjectRegistry> objectRegistry;
     objectRegistry.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
-    ntcm::MonitorableUtil::enableMonitorableRegistry(objectRegistry);
+    ntcs::MonitorableUtil::enableMonitorableRegistry(objectRegistry);
 
     // Create a monitorable object and register it with the default
     // monitorable registry.
@@ -780,14 +780,14 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyUsage)
     bsl::shared_ptr<MonitorableTest::Object> object;
     object.createInplace(NTSCFG_TEST_ALLOCATOR);
 
-    ntcm::MonitorableUtil::registerMonitorable(object);
+    ntcs::MonitorableUtil::registerMonitorable(object);
 
     // Ensure the registry is tracking this monitorable object.
 
     {
         bsl::vector<bsl::shared_ptr<ntci::Monitorable> > registeredObjects;
 
-        ntcm::MonitorableUtil::loadRegisteredObjects(&registeredObjects);
+        ntcs::MonitorableUtil::loadRegisteredObjects(&registeredObjects);
 
         NTSCFG_TEST_EQ(registeredObjects.size(), 1);
         NTSCFG_TEST_EQ(registeredObjects[0], object);
@@ -842,7 +842,7 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyUsage)
 
     // Deregister the monitorable object.
 
-    ntcm::MonitorableUtil::deregisterMonitorable(object);
+    ntcs::MonitorableUtil::deregisterMonitorable(object);
 
     // Ensure the registry is no longer tracking this monitorable
     // object.
@@ -850,15 +850,15 @@ NTSCFG_TEST_FUNCTION(ntcm::MonitorableTest::verifyUsage)
     {
         bsl::vector<bsl::shared_ptr<ntci::Monitorable> > registeredObjects;
 
-        ntcm::MonitorableUtil::loadRegisteredObjects(&registeredObjects);
+        ntcs::MonitorableUtil::loadRegisteredObjects(&registeredObjects);
 
         NTSCFG_TEST_EQ(registeredObjects.size(), 0);
     }
 
     // Reset the default monitorable object registry.
 
-    ntcm::MonitorableUtil::disableMonitorableRegistry();
+    ntcs::MonitorableUtil::disableMonitorableRegistry();
 }
 
-}  // close namespace ntcm
+}  // close namespace ntcs
 }  // close namespace BloombergLP

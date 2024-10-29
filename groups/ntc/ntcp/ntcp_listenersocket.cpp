@@ -23,7 +23,7 @@ BSLS_IDENT_RCSID(ntcp_listenersocket_cpp, "$Id$ $CSID$")
 #include <ntccfg_limits.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_async.h>
 #include <ntcs_compat.h>
 #include <ntcs_dispatch.h>
@@ -1595,7 +1595,7 @@ ListenerSocket::ListenerSocket(
                                    metrics,
                                    d_allocator_p);
 
-        ntcm::MonitorableUtil::registerMonitorable(d_metrics_sp);
+        ntcs::MonitorableUtil::registerMonitorable(d_metrics_sp);
     }
     else {
         d_metrics_sp = metrics;
@@ -1606,7 +1606,7 @@ ListenerSocket::~ListenerSocket()
 {
     if (!d_options.metrics().isNull() && d_options.metrics().value()) {
         if (d_metrics_sp) {
-            ntcm::MonitorableUtil::deregisterMonitorable(d_metrics_sp);
+            ntcs::MonitorableUtil::deregisterMonitorable(d_metrics_sp);
         }
     }
 }

@@ -23,7 +23,7 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 #include <ntci_encryptioncertificate.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_async.h>
 #include <ntcs_blobbufferutil.h>
 #include <ntcs_blobutil.h>
@@ -4699,7 +4699,7 @@ StreamSocket::StreamSocket(
                                    metrics,
                                    d_allocator_p);
 
-        ntcm::MonitorableUtil::registerMonitorable(d_metrics_sp);
+        ntcs::MonitorableUtil::registerMonitorable(d_metrics_sp);
     }
     else {
         d_metrics_sp = metrics;
@@ -4710,7 +4710,7 @@ StreamSocket::~StreamSocket()
 {
     if (!d_options.metrics().isNull() && d_options.metrics().value()) {
         if (d_metrics_sp) {
-            ntcm::MonitorableUtil::deregisterMonitorable(d_metrics_sp);
+            ntcs::MonitorableUtil::deregisterMonitorable(d_metrics_sp);
         }
     }
 }

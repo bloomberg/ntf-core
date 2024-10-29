@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCM_MONITORABLE
-#define INCLUDED_NTCM_MONITORABLE
+#ifndef INCLUDED_NTCS_MONITORABLE
+#define INCLUDED_NTCS_MONITORABLE
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
@@ -41,7 +41,7 @@ BSLS_IDENT("$Id: $")
 #include <bsl_vector.h>
 
 namespace BloombergLP {
-namespace ntcm {
+namespace ntcs {
 
 /// @internal @brief
 /// Describe a collected metric from a monitorable object that will be
@@ -50,7 +50,7 @@ namespace ntcm {
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcm
+/// @ingroup module_ntcs
 class MonitorableLogRecord
 {
     bsl::string                      d_guid;
@@ -140,14 +140,14 @@ class MonitorableLogRecord
 /// Return true if the specified 'lhs' has the same value as the specified
 /// 'rhs', otherwise return false.
 ///
-/// @related ntcm::MonitorableLogRecord
+/// @related ntcs::MonitorableLogRecord
 bool operator==(const MonitorableLogRecord& lhs,
                 const MonitorableLogRecord& rhs);
 
 /// Return true if the specified 'lhs' does not have the same value as the
 /// specified 'rhs', otherwise return false.
 ///
-/// @related ntcm::MonitorableLogRecord
+/// @related ntcs::MonitorableLogRecord
 bool operator!=(const MonitorableLogRecord& lhs,
                 const MonitorableLogRecord& rhs);
 
@@ -157,7 +157,7 @@ bool operator!=(const MonitorableLogRecord& lhs,
 /// @par Thread Safety
 /// This class is thread safe.
 ///
-/// @ingroup module_ntcm
+/// @ingroup module_ntcs
 class MonitorableLog : public ntci::MonitorablePublisher
 {
     /// Define a type alias for a vector of published
@@ -237,7 +237,7 @@ class MonitorableLog : public ntci::MonitorablePublisher
 /// @par Thread Safety
 /// This class is thread safe.
 ///
-/// @ingroup module_ntcm
+/// @ingroup module_ntcs
 class MonitorableCollector : public ntci::MonitorableCollector
 {
   public:
@@ -335,7 +335,7 @@ class MonitorableCollector : public ntci::MonitorableCollector
 /// @par Thread Safety
 /// This class is thread safe.
 ///
-/// @ingroup module_ntcm
+/// @ingroup module_ntcs
 class MonitorableRegistry : public ntci::MonitorableRegistry
 {
     /// Define a type alias for a map of locally-unique object
@@ -400,7 +400,7 @@ class MonitorableRegistry : public ntci::MonitorableRegistry
 /// @par Thread Safety
 /// This struct is thread safe.
 ///
-/// @ingroup module_ntcm
+/// @ingroup module_ntcs
 struct MonitorableUtil {
     /// This typedef defines a function to load the set of currently active
     /// monitorable objects.
@@ -526,6 +526,6 @@ struct MonitorableUtil {
     class State;
 };
 
-}  // close namespace ntcm
+}  // close namespace ntcs
 }  // close namespace BloombergLP
 #endif
