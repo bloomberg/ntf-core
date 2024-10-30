@@ -46,7 +46,31 @@ build() {
     build_bde
 }
 
-sudo apt-get install -y libopenssl-dev
+list_directory() {
+    local path=${1}
+
+    if [[ -e "${path}" ]]; then
+        echo "Contents of ${path}:"
+        ls ${path}
+    fi
+}
+
+list_directory "/usr/lib"
+list_directory "/usr/lib/pkgconfig"
+list_directory "/usr/lib64"
+list_directory "/usr/lib64/pkgconfig"
+list_directory "/usr/local/lib"
+list_directory "/usr/local/lib/pkgconfig"
+list_directory "/usr/local/lib64"
+list_directory "/usr/local/lib64/pkgconfig"
+list_directory "/opt/bb/lib"
+list_directory "/opt/bb/lib/pkgconfig"
+list_directory "/opt/bb/lib64"
+list_directory "/opt/bb/lib64/pkgconfig"
+
+echo "Artifically terminating to debug"
+exit 1
+
 
 fetch_deps
 configure
