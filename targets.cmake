@@ -43,6 +43,9 @@ ntf_repository_enable_documentation_internal(
 ntf_repository_enable_coverage(
     ${NTF_BUILD_WITH_COVERAGE})
 
+ntf_repository_enable_valgrind(
+    ${NTF_BUILD_WITH_VALGRIND})
+
 if (${NTF_BUILD_WITH_NTS})
     ntf_group(
         NAME
@@ -51,6 +54,10 @@ if (${NTF_BUILD_WITH_NTS})
             groups/nts
         DESCRIPTION
             "Blocking and non-blocking sockets for network programming")
+
+    if (${NTF_BUILD_UNITY})
+        ntf_group_unity(NAME nts VALUE TRUE)
+    endif()
 
     if (${NTF_BUILD_WITH_BAL})
         ntf_group_requires(NAME nts DEPENDENCY bal)
@@ -313,6 +320,10 @@ if (${NTF_BUILD_WITH_NTC})
         DESCRIPTION
             "Asynchronous sockets, timers, event loops, and thread pools for network programming"
     )
+
+    if (${NTF_BUILD_UNITY})
+        ntf_group_unity(NAME ntc VALUE TRUE)
+    endif()
 
     if (${NTF_BUILD_WITH_BAL})
         ntf_group_requires(NAME ntc DEPENDENCY bal)

@@ -327,6 +327,42 @@ function (ntf_target_pseudo_get)
     set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
 
+# Set the "unity" variable scoped to a target.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_unity_set)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "")
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "unity" VALUE ${ARG_VALUE})
+    else()
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "unity" VALUE "")
+    endif()
+endfunction()
+
+# Get the "unity" variable scoped to a target.
+#
+# TARGET - The target.
+# OUTPUT - The variable name set in the parent scope.
+function (ntf_target_unity_get)
+    cmake_parse_arguments(
+        ARG "" "TARGET;OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+    ntf_assert_defined(${ARG_OUTPUT})
+
+    ntf_target_variable_get(
+        TARGET ${ARG_TARGET} VARIABLE "unity" OUTPUT result)
+
+    set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
+endfunction()
+
 # Set the "requires" variable scoped to a target.
 #
 # TARGET - The target.
@@ -449,8 +485,14 @@ function (ntf_target_build_definition)
 
     ntf_nomenclature_target(TARGET ${ARG_TARGET} OUTPUT target)
 
+    get_property(target_type TARGET ${target} PROPERTY "TYPE")
+
     foreach(value ${ARG_VALUE})
-        target_compile_definitions(${target} PRIVATE ${value})
+        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+            target_compile_definitions(${target} INTERFACE ${value})
+        else()
+            target_compile_definitions(${target} PRIVATE ${value})
+        endif()
     endforeach()
 
 endfunction()
@@ -485,18 +527,52 @@ function (ntf_target_build_option)
         set(include_when_linking FALSE)
     endif()
 
+    get_property(target_type TARGET ${target} PROPERTY "TYPE")
+
     foreach(value ${ARG_VALUE})
         if (${include_when_compiling})
-            target_compile_options(${target} PRIVATE ${value})
+            if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+                target_compile_options(${target} INTERFACE ${value})
+            else()
+                target_compile_options(${target} PRIVATE ${value})
+            endif()
         endif()
 
         if (${include_when_linking})
-            target_link_options(${target} PRIVATE ${value})
+            if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+                target_link_options(${target} INTERFACE ${value})
+            else()
+                target_link_options(${target} PRIVATE ${value})
+            endif()
         endif()
     endforeach()
 
 endfunction()
 
+# Add target link libraries.
+#
+# TARGET - The target.
+# VALUE  - The list of targets or libraries.
+function (ntf_target_build_dependency)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+    ntf_assert_defined(${ARG_VALUE})
+
+    ntf_nomenclature_target(TARGET ${ARG_TARGET} OUTPUT target)
+
+    get_property(target_type TARGET ${target} PROPERTY "TYPE")
+
+    foreach(value ${ARG_VALUE})
+        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+            target_link_libraries(${target} INTERFACE ${value})
+        else()
+            target_link_libraries(${target} PUBLIC ${value})
+        endif()
+    endforeach()
+
+endfunction()
 
 # Set the compiler and linker options for a target common to all UFIDs.
 function (ntf_target_options_common_prolog target)
@@ -839,6 +915,8 @@ function (ntf_target_options_common_epilog target)
 
     ntf_target_thirdparty_get(TARGET ${target} OUTPUT target_thirdparty)
 
+    get_property(target_type TARGET ${target} PROPERTY "TYPE")
+
     if (${target_thirdparty})
         set(enable_warnings FALSE)
         set(enable_warnings_as_errors FALSE)
@@ -931,65 +1009,65 @@ function (ntf_target_options_common_epilog target)
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-            target_link_libraries(${target} PUBLIC Threads::Threads)
+            ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
         elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-            target_link_libraries(${target} PUBLIC execinfo)
-            target_link_libraries(${target} PUBLIC util)
-            target_link_libraries(${target} PUBLIC dl)
-            target_link_libraries(${target} PUBLIC Threads::Threads)
+            ntf_target_build_dependency(TARGET ${target} VALUE execinfo)
+            ntf_target_build_dependency(TARGET ${target} VALUE util)
+            ntf_target_build_dependency(TARGET ${target} VALUE dl)
+            ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
         elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-            target_link_libraries(${target} PUBLIC dl)
-            target_link_libraries(${target} PUBLIC rt)
-            target_link_libraries(${target} PUBLIC Threads::Threads)
+            ntf_target_build_dependency(TARGET ${target} VALUE dl)
+            ntf_target_build_dependency(TARGET ${target} VALUE rt)
+            ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
         endif()
     endif()
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-            target_link_libraries(${target} PUBLIC Threads::Threads)
+            ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
         elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-            target_link_libraries(${target} PUBLIC execinfo)
-            target_link_libraries(${target} PUBLIC util)
-            target_link_libraries(${target} PUBLIC dl)
-            target_link_libraries(${target} PUBLIC Threads::Threads)
+            ntf_target_build_dependency(TARGET ${target} VALUE execinfo)
+            ntf_target_build_dependency(TARGET ${target} VALUE util)
+            ntf_target_build_dependency(TARGET ${target} VALUE dl)
+            ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
         elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-            target_link_libraries(${target} PUBLIC dl)
-            target_link_libraries(${target} PUBLIC rt)
-            target_link_libraries(${target} PUBLIC Threads::Threads)
+            ntf_target_build_dependency(TARGET ${target} VALUE dl)
+            ntf_target_build_dependency(TARGET ${target} VALUE rt)
+            ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
         endif()
     endif()
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "SunPro")
-        target_link_libraries(${target} PUBLIC sendfile)
-        target_link_libraries(${target} PUBLIC socket)
-        target_link_libraries(${target} PUBLIC resolv)
-        target_link_libraries(${target} PUBLIC nsl)
-        target_link_libraries(${target} PUBLIC dl)
-        target_link_libraries(${target} PUBLIC Threads::Threads)
+        ntf_target_build_dependency(TARGET ${target} VALUE sendfile)
+        ntf_target_build_dependency(TARGET ${target} VALUE socket)
+        ntf_target_build_dependency(TARGET ${target} VALUE resolv)
+        ntf_target_build_dependency(TARGET ${target} VALUE nsl)
+        ntf_target_build_dependency(TARGET ${target} VALUE dl)
+        ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
         if (${is_stlport})
-            target_link_libraries(${target} PUBLIC -library=stlport4)
+            ntf_target_build_dependency(TARGET ${target} VALUE -library=stlport4)
         endif()
     endif()
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "XL")
-        target_link_libraries(${target} PUBLIC Threads::Threads)
+        ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
     endif()
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        target_link_libraries(${target} PUBLIC kernel32.lib)
-        target_link_libraries(${target} PUBLIC user32.lib)
-        target_link_libraries(${target} PUBLIC gdi32.lib)
-        target_link_libraries(${target} PUBLIC winspool.lib)
-        target_link_libraries(${target} PUBLIC comdlg32.lib)
-        target_link_libraries(${target} PUBLIC advapi32.lib)
-        target_link_libraries(${target} PUBLIC shell32.lib)
-        target_link_libraries(${target} PUBLIC ole32.lib)
-        target_link_libraries(${target} PUBLIC oleaut32.lib)
-        target_link_libraries(${target} PUBLIC uuid.lib)
-        target_link_libraries(${target} PUBLIC odbc32.lib)
-        target_link_libraries(${target} PUBLIC odbccp32.lib)
-        target_link_libraries(${target} PUBLIC ws2_32.lib)
-        target_link_libraries(${target} PUBLIC userenv.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE kernel32.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE user32.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE gdi32.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE winspool.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE comdlg32.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE advapi32.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE shell32.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE ole32.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE oleaut32.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE uuid.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE odbc32.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE odbccp32.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE ws2_32.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE userenv.lib)
     endif()
 
 endfunction()
@@ -1765,7 +1843,9 @@ function (ntf_executable)
             test_usage_executable
             ${runtime_output_path} ${target})
 
-        if (${NTF_BUILD_WITH_VALGRIND})
+        ntf_repository_build_valgrind_get(OUTPUT use_valgrind)
+
+        if (${use_valgrind})
             if (NOT DEFINED VALGRIND_PATH)
                 message(FATAL_ERROR "Valgrind is not found")
             endif()
@@ -3211,7 +3291,7 @@ endfunction()
 #               and should not be installed.
 function (ntf_group)
     cmake_parse_arguments(
-        NTF_GROUP "PRIVATE;THIRDPARTY" "NAME;PATH;DESCRIPTION" "REQUIRES" ${ARGN})
+        NTF_GROUP "PRIVATE;THIRDPARTY;UNITY" "NAME;PATH;DESCRIPTION" "REQUIRES" ${ARGN})
 
     if ("${NTF_GROUP_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -3246,6 +3326,11 @@ function (ntf_group)
     set(target_thirdparty ${NTF_GROUP_THIRDPARTY})
     if ("${target_thirdparty}" STREQUAL "")
         set(target_thirdparty FALSE)
+    endif()
+
+    set(target_unity ${NTF_GROUP_UNITY})
+    if ("${target_unity}" STREQUAL "")
+        set(target_unity FALSE)
     endif()
 
     ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
@@ -3290,6 +3375,9 @@ function (ntf_group)
 
     ntf_target_thirdparty_set(
         TARGET ${target} VALUE ${target_thirdparty})
+
+    ntf_target_unity_set(
+        TARGET ${target} VALUE ${target_unity})
 
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_GROUP_REQUIRES})
@@ -3354,6 +3442,25 @@ function (ntf_group_requires)
     endforeach()
 endfunction()
 
+# Unify the build of all the components in a group.
+#
+# NAME       - The group.
+# VALUE      - The flag that indicates components should be unified.
+function (ntf_group_unity)
+    cmake_parse_arguments(
+        ARG "" "NAME;VALUE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_NAME})
+    ntf_assert_defined(${ARG_VALUE})
+
+    ntf_nomenclature_target(TARGET ${ARG_NAME} OUTPUT target)
+
+    ntf_assert_target_defined(${target})
+
+    ntf_target_unity_set(TARGET ${target} VALUE ${ARG_VALUE})
+
+endfunction()
+
 # End the definition of a group.
 function (ntf_group_end)
     cmake_parse_arguments(
@@ -3366,6 +3473,139 @@ function (ntf_group_end)
     ntf_assert_target_defined(${target})
 
     ntf_target_private_get(TARGET ${target} OUTPUT target_private)
+    ntf_target_thirdparty_get(TARGET ${target} OUTPUT target_thirdparty)
+    ntf_target_unity_get(TARGET ${target} OUTPUT target_unity)
+
+    if (${target_unity})
+        ntf_target_path_get(TARGET ${target} OUTPUT target_path)
+
+        cmake_path(
+            APPEND
+            component_header_path "${target_path}" "${target}.h"
+        )
+
+        cmake_path(
+            APPEND
+            component_source_path "${target_path}" "${target}.cpp"
+        )
+
+        cmake_path(
+            APPEND
+            component_driver_path "${target_path}" "${target}.t.cpp"
+        )
+
+        set(component_impl_build_target "${target}")
+        set(component_test_build_target "${target}.t")
+
+        if (VERBOSE)
+            message(STATUS "Unifying ${target_path}")
+            message(STATUS "         * header = ${component_header_path}")
+            message(STATUS "         * source = ${component_source_path}")
+            message(STATUS "         * driver = ${component_driver_path}")
+        endif()
+
+        target_sources(${target} PRIVATE ${component_source_path})
+
+        if (NOT ${target_thirdparty} AND EXISTS ${component_driver_path})
+            ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
+            ntf_repository_library_output_path_get(OUTPUT library_output_path)
+            ntf_repository_runtime_output_path_get(OUTPUT runtime_output_path)
+
+            add_executable(
+                ${component_test_build_target}
+                EXCLUDE_FROM_ALL
+                ${component_driver_path}
+            )
+
+            # Set the C standard.
+
+            set_property(TARGET ${component_test_build_target}
+                         PROPERTY C_STANDARD 11)
+
+            # Set the C++ standard version unless using xlc, which requires
+            # special, non-portable flag for some C++03-like behavior.
+
+            if (NOT CMAKE_CXX_COMPILER_ID MATCHES "XL")
+                ntf_repository_standard_get(OUTPUT cxx_standard)
+                set_property(TARGET ${component_test_build_target}
+                             PROPERTY CXX_STANDARD ${cxx_standard})
+            endif()
+
+            set_property(TARGET ${component_test_build_target}
+                         PROPERTY EXPORT_COMPILE_COMMANDS TRUE)
+
+            set_property(TARGET ${component_test_build_target}
+                         PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${archive_output_path})
+
+            set_property(TARGET ${component_test_build_target}
+                        PROPERTY LIBRARY_OUTPUT_DIRECTORY ${library_output_path})
+
+            set_property(TARGET ${component_test_build_target}
+                        PROPERTY RUNTIME_OUTPUT_DIRECTORY ${runtime_output_path})
+
+            ntf_target_options(TARGET ${component_test_build_target})
+
+            add_dependencies(
+                ${component_test_build_target}
+                ${target}
+            )
+
+            add_dependencies(
+                build_test
+                ${component_test_build_target}
+            )
+
+            target_link_libraries(
+                ${component_test_build_target}
+                PUBLIC
+                ${target}
+            )
+
+            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
+
+            foreach(entry ${target_requires})
+                set(dependency ${entry})
+
+                if (VERBOSE)
+                    message(STATUS "NTF Build: linking component test driver '${component_test_build_target}' to target '${dependency}'")
+                    message(STATUS "         * target_link_libraries(${component_test_build_target} ${dependency})")
+                endif()
+
+                target_link_libraries(${component_test_build_target} PUBLIC ${dependency})
+            endforeach()
+
+            ntf_target_options_common_epilog(${target})
+
+            cmake_path(
+                APPEND
+                component_test_build_target_path
+                ${runtime_output_path} ${component_test_build_target})
+
+            ntf_repository_build_valgrind_get(OUTPUT use_valgrind)
+
+            if (${use_valgrind})
+                add_test(
+                    NAME ${component_test_build_target}
+                    COMMAND ${VALGRIND_PATH} --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1 ${component_test_build_target_path}
+                )
+
+            else()
+                add_test(
+                    NAME ${component_test_build_target}
+                    COMMAND ${component_test_build_target}
+                )
+            endif()
+
+            set_tests_properties(${component_test_build_target} PROPERTIES TIMEOUT 600)
+
+            # add_custom_target(
+            #     test_${target}
+            #     COMMAND ${CMAKE_CTEST_COMMAND} --stop-on-failure --output-on-failure -R ${component})
+
+            ntf_ide_vs_code_tasks_add_target(${component_test_build_target})
+            ntf_ide_vs_code_launch_add_target(${component_test_build_target})
+        endif()
+    endif()
 
     ntf_target_options_common_epilog(${target})
 
@@ -3783,7 +4023,7 @@ endfunction()
 # REQUIRES - The intra-group package dependencies of this package.
 function (ntf_package)
     cmake_parse_arguments(
-        NTF_PACKAGE "PRIVATE;THIRDPARTY" "NAME;PATH;GROUP" "REQUIRES" ${ARGN})
+        NTF_PACKAGE "PRIVATE;THIRDPARTY;UNITY" "NAME;PATH;GROUP" "REQUIRES" ${ARGN})
 
     if ("${NTF_PACKAGE_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -3808,6 +4048,7 @@ function (ntf_package)
 
         ntf_target_private_get(TARGET ${group} OUTPUT group_private)
         ntf_target_thirdparty_get(TARGET ${group} OUTPUT group_thirdparty)
+        ntf_target_unity_get(TARGET ${group} OUTPUT group_unity)
     else()
         string(SUBSTRING ${target} 0 3 group)
 
@@ -3822,6 +4063,7 @@ function (ntf_package)
 
         ntf_target_private_get(TARGET ${group} OUTPUT group_private)
         ntf_target_thirdparty_get(TARGET ${group} OUTPUT group_thirdparty)
+        ntf_target_unity_get(TARGET ${group} OUTPUT group_unity)
     endif()
 
     if (NOT "${NTF_PACKAGE_PATH}" STREQUAL "")
@@ -3846,11 +4088,22 @@ function (ntf_package)
         set(target_thirdparty TRUE)
     endif()
 
+    set(target_unity ${NTF_PACKAGE_UNITY})
+    if (NOT ${target_unity} AND ${group_unity})
+        set(target_unity TRUE)
+    endif()
+
     ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
     ntf_repository_library_output_path_get(OUTPUT library_output_path)
     ntf_repository_runtime_output_path_get(OUTPUT runtime_output_path)
 
-    add_library(${target} OBJECT)
+    if (${target_unity})
+        add_library(${target} INTERFACE)
+    else()
+        add_library(${target} OBJECT)
+    endif()
+
+    get_property(target_type TARGET ${target} PROPERTY "TYPE")
 
     # Set the C standard.
 
@@ -3886,17 +4139,30 @@ function (ntf_package)
     ntf_target_thirdparty_set(
         TARGET ${target} VALUE ${target_thirdparty})
 
+    ntf_target_unity_set(
+        TARGET ${target} VALUE ${target_unity})
+
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_PACKAGE_REQUIRES})
 
     if (${target_thirdparty})
-        target_include_directories(
-            ${target}
-            SYSTEM PUBLIC
-            $<INSTALL_INTERFACE:include>
-            $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
-            $<BUILD_INTERFACE:${target_path}>
-        )
+        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+            target_include_directories(
+                ${target}
+                SYSTEM INTERFACE
+                $<INSTALL_INTERFACE:include>
+                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
+                $<BUILD_INTERFACE:${target_path}>
+            )
+        else()
+            target_include_directories(
+                ${target}
+                SYSTEM PUBLIC
+                $<INSTALL_INTERFACE:include>
+                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
+                $<BUILD_INTERFACE:${target_path}>
+            )
+        endif()
 
         target_include_directories(
             ${group}
@@ -3906,13 +4172,23 @@ function (ntf_package)
             $<BUILD_INTERFACE:${target_path}>
         )
     else()
-        target_include_directories(
-            ${target}
-            PUBLIC
-            $<INSTALL_INTERFACE:include>
-            $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
-            $<BUILD_INTERFACE:${target_path}>
-        )
+        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+            target_include_directories(
+                ${target}
+                INTERFACE
+                $<INSTALL_INTERFACE:include>
+                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
+                $<BUILD_INTERFACE:${target_path}>
+            )
+        else()
+            target_include_directories(
+                ${target}
+                PUBLIC
+                $<INSTALL_INTERFACE:include>
+                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
+                $<BUILD_INTERFACE:${target_path}>
+            )
+        endif()
 
         target_include_directories(
             ${group}
@@ -3928,7 +4204,9 @@ function (ntf_package)
         message(STATUS "         * target_link_libraries(${group} ${target})")
     endif()
 
-    target_sources(${group} PRIVATE $<TARGET_OBJECTS:${target}>)
+    if (NOT ${target_unity})
+        target_sources(${group} PRIVATE $<TARGET_OBJECTS:${target}>)
+    endif()
 
     foreach(entry ${NTF_PACKAGE_REQUIRES})
         set(dependency ${entry})
@@ -3938,7 +4216,11 @@ function (ntf_package)
             message(STATUS "         * target_link_libraries(${target} ${dependency})")
         endif()
 
-        target_link_libraries(${target} PUBLIC ${dependency})
+        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+            target_link_libraries(${target} INTERFACE ${dependency})
+        else()
+            target_link_libraries(${target} PUBLIC ${dependency})
+        endif()
     endforeach()
 
     get_property(
@@ -3961,7 +4243,11 @@ function (ntf_package)
                     message(STATUS "         * target_link_libraries(${target} ${group_link_library})")
                 endif()
 
-                target_link_libraries(${target} PUBLIC ${group_link_library})
+                if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+                    target_link_libraries(${target} INTERFACE ${group_link_library})
+                else()
+                    target_link_libraries(${target} PUBLIC ${group_link_library})
+                endif()
             endif()
         endif()
     endforeach()
@@ -4429,26 +4715,50 @@ function (ntf_component)
         message(STATUS "         * driver = ${component_driver_path}")
     endif()
 
-    # Must be private to avoid the object file being compiled twice.
-    target_sources(${target} PRIVATE ${component_source_path})
+    ntf_target_unity_get(TARGET ${target} OUTPUT target_unity)
 
-    if (${target_thirdparty})
-        target_include_directories(
-            ${target}
-            SYSTEM PUBLIC
-            $<INSTALL_INTERFACE:include>
-            $<BUILD_INTERFACE:${directory}>
-        )
-    else()
-        target_include_directories(
-            ${target}
-            PUBLIC
-            $<INSTALL_INTERFACE:include>
-            $<BUILD_INTERFACE:${directory}>
-        )
+    get_property(target_type TARGET ${target} PROPERTY "TYPE")
+
+    if (NOT ${target_unity})
+        # Must be private to avoid the object file being compiled twice.
+        target_sources(${target} PRIVATE ${component_source_path})
     endif()
 
-    if(NOT ${target_thirdparty} AND EXISTS ${component_driver_path})
+    if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+        if (${target_thirdparty})
+            target_include_directories(
+                ${target}
+                SYSTEM INTERFACE
+                $<INSTALL_INTERFACE:include>
+                $<BUILD_INTERFACE:${directory}>
+            )
+        else()
+            target_include_directories(
+                ${target}
+                INTERFACE
+                $<INSTALL_INTERFACE:include>
+                $<BUILD_INTERFACE:${directory}>
+            )
+        endif()
+    else()
+        if (${target_thirdparty})
+            target_include_directories(
+                ${target}
+                SYSTEM PUBLIC
+                $<INSTALL_INTERFACE:include>
+                $<BUILD_INTERFACE:${directory}>
+            )
+        else()
+            target_include_directories(
+                ${target}
+                PUBLIC
+                $<INSTALL_INTERFACE:include>
+                $<BUILD_INTERFACE:${directory}>
+            )
+        endif()
+    endif()
+
+    if (NOT ${target_unity} AND NOT ${target_thirdparty} AND EXISTS ${component_driver_path})
         ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
         ntf_repository_library_output_path_get(OUTPUT library_output_path)
         ntf_repository_runtime_output_path_get(OUTPUT runtime_output_path)
@@ -4523,7 +4833,9 @@ function (ntf_component)
             component_test_build_target_path
             ${runtime_output_path} ${component_test_build_target})
 
-        if (${NTF_BUILD_WITH_VALGRIND})
+        ntf_repository_build_valgrind_get(OUTPUT use_valgrind)
+
+        if (${use_valgrind})
             add_test(
                 NAME ${component_test_build_target}
                 COMMAND ${VALGRIND_PATH} --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1 ${component_test_build_target_path}
@@ -5846,6 +6158,37 @@ function (ntf_repository_build_coverage_get)
     endif()
 endfunction()
 
+# Set the "build_valgrind" variable scoped to a repository.
+#
+# VALUE  - The variable value.
+function (ntf_repository_build_valgrind_set)
+    cmake_parse_arguments(
+        ARG "" "VALUE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_VALUE})
+
+    ntf_repository_variable_set(
+        VARIABLE "build_valgrind" VALUE ${ARG_VALUE})
+endfunction()
+
+# Get the "build_valgrind" variable scoped to a repository.
+#
+# OUTPUT - The variable set in the parent scope.
+function (ntf_repository_build_valgrind_get)
+    cmake_parse_arguments(
+        ARG "" "OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_OUTPUT})
+
+    ntf_repository_variable_get(VARIABLE "build_valgrind" OUTPUT result)
+
+    if ("${result}" STREQUAL "")
+        set(${ARG_OUTPUT} FALSE PARENT_SCOPE)
+    else()
+        set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
+    endif()
+endfunction()
+
 # Set the "toolchain_link_static" variable scoped to a repository.
 #
 # VALUE  - The variable value.
@@ -6496,7 +6839,7 @@ function (ntf_repository_end)
     set(CPACK_PACKAGE_DESCRIPTION ${PROJECT_NAME} PARENT_SCOPE)
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION} PARENT_SCOPE)
     set(CPACK_PACKAGE_CONTACT
-        "Matthew Millett <mmillett2@bloomberg.net>"
+        "Matthew Millett <mmillett@mailbox.org>"
         PARENT_SCOPE)
     set(CPACK_PACKAGE_FILE_NAME
         ${PROJECT_NAME}-${PROJECT_VERSION}
@@ -6710,6 +7053,15 @@ function (ntf_repository_enable_coverage flag)
         ntf_repository_build_coverage_set(VALUE TRUE)
     else()
         ntf_repository_build_coverage_set(VALUE FALSE)
+    endif()
+endfunction()
+
+# Enable or disable integration with valgrind during testing.
+function (ntf_repository_enable_valgrind flag)
+    if (${flag})
+        ntf_repository_build_valgrind_set(VALUE TRUE)
+    else()
+        ntf_repository_build_valgrind_set(VALUE FALSE)
     endif()
 endfunction()
 
