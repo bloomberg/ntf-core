@@ -148,7 +148,7 @@ bool Ipv4Address::parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT
     else {
         bsl::uint64_t numOctetsLeft = 4 - index;
 
-#if defined(BSLS_PLATFORM_CMP_SUN)
+#if defined(BSLS_PLATFORM_CMP_SUN) || defined(BSLS_PLATFORM_CMP_MSVC)
         bsl::uint64_t product = 1;
         for (bsl::size_t i = 0; i < numOctetsLeft; ++i) {
             product *= 256;

@@ -105,7 +105,8 @@ class AdapterUtil::Impl
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
     // Load into the specified 'destination' string the specified
     // wide-character 'source' string converted into UTF-8.
-    void convertWideString(bsl::string* destination, const WCHAR* source);
+    static void convertWideString(bsl::string* destination,
+                                  const WCHAR* source);
 #endif
 };
 

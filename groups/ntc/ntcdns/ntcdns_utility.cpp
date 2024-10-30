@@ -1387,12 +1387,12 @@ ntsa::Error Utility::loadClientConfig(ntcdns::ClientConfig* result)
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
-    ntsa::Error error = loadNameServers(&result->nameServer());
+    ntsa::Error error = Utility::Impl::loadNameServers(&result->nameServer());
     if (error) {
         return error;
     }
 
-    sanitizeClientConfig(result);
+    Utility::Impl::sanitizeClientConfig(result);
 
     return ntsa::Error();
 

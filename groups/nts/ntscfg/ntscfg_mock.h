@@ -114,45 +114,45 @@ struct Mock {
         }
     };
 
-    template <class OUT, class IN>
+    template <class OUTPUT, class INPUT>
     struct DerefSetter {
-        static void set(OUT out, const IN& in)
+        static void set(OUTPUT output, const INPUT& input)
         {
-            *out = in;
+            *output = input;
         }
     };
 
-    template <class OUT, class IN>
+    template <class OUTPUT, class INPUT>
     struct DefaultSetter {
-        static void set(OUT out, const IN& in)
+        static void set(OUTPUT output, const INPUT& input)
         {
-            out = in;
+            output = input;
         }
     };
 
-    template <class IN, template <class, class> class SET_POLICY>
+    template <class INPUT, template <class, class> class SET_POLICY>
     struct Setter {
         template <class ARG>
         struct SetterImpl {
             typedef typename PassTraits<ARG>::PassType PassType;
-            static void process(PassType arg, const IN& in)
+            static void process(PassType arg, const INPUT& input)
             {
-                SET_POLICY<PassType, IN>::set(arg, in);
+                SET_POLICY<PassType, INPUT>::set(arg, input);
             }
         };
 
-        explicit Setter(const IN& in)
-        : d_in(in)
+        explicit Setter(const INPUT& input)
+        : d_in(input)
         {
         }
 
-        const IN& d_in;
+        const INPUT& d_in;
     };
 
-    template <template <class, class> class SET_POLICY, class IN>
-    static Setter<IN, SET_POLICY> createSetter(const IN& val)
+    template <template <class, class> class SET_POLICY, class INPUT>
+    static Setter<INPUT, SET_POLICY> createSetter(const INPUT& val)
     {
-        Setter<IN, SET_POLICY> setter(val);
+        Setter<INPUT, SET_POLICY> setter(val);
         return setter;
     }
 

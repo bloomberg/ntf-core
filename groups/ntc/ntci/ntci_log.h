@@ -535,7 +535,7 @@ class LogRecord
     const char*             d_file;
     int                     d_line;
     char                    d_buffer[LogRecord::k_MAX_LENGTH];
-    int                     d_length;
+    bsl::size_t             d_length;
 
   public:
     /// Create a new log record.

@@ -773,7 +773,8 @@ ntsa::Error::Number Error::translate(ntsa::Error::Code code)
 
 bsl::ostream& operator<<(bsl::ostream& stream, const Error& object)
 {
-    printErrorString(stream, object.d_value.d_pair.d_number, 0, -1);
+    Error::Impl::printErrorString(
+        stream, object.d_value.d_pair.d_number, 0, -1);
     return stream;
 }
 
