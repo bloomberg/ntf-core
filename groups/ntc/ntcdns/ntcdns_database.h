@@ -214,6 +214,9 @@ class PortDatabase
         }
     };
 
+    /// Provide a functor to sort port entries by port.
+    class PortEntrySorter;
+
 #if NTCDNS_DATABASE_FIXED_CAPACITY_ARRAYS
     typedef ntcdns::PortArray PortArray;
     // Define a type alias for a fixed-capacity array of

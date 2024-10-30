@@ -24,9 +24,15 @@ BSLS_IDENT_RCSID(ntsa_ipendpoint_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
+/// Provide a private implementation.
+class IpEndpoint::Impl
+{
+  public:
+    static void throwEndpointInvalidFormat(const bslstl::StringRef& text);
+};
 
-void throwEndpointInvalidFormat(const bslstl::StringRef& text)
+void IpEndpoint::Impl::throwEndpointInvalidFormat(
+    const bslstl::StringRef& text)
 {
     bsl::stringstream ss;
     ss << "Failed to parse endpoint: the text '" << text << "' is invalid";
@@ -34,12 +40,10 @@ void throwEndpointInvalidFormat(const bslstl::StringRef& text)
     NTSCFG_THROW(ss.str());
 }
 
-}  // close unnamed namespace
-
 IpEndpoint::IpEndpoint(const bslstl::StringRef& text)
 {
     if (!this->parse(text)) {
-        throwEndpointInvalidFormat(text);
+        Impl::throwEndpointInvalidFormat(text);
     }
 }
 
@@ -52,7 +56,7 @@ IpEndpoint::IpEndpoint(const bslstl::StringRef& addressText, ntsa::Port port)
 IpEndpoint& IpEndpoint::operator=(const bslstl::StringRef& text)
 {
     if (!this->parse(text)) {
-        throwEndpointInvalidFormat(text);
+        Impl::throwEndpointInvalidFormat(text);
     }
 
     return *this;

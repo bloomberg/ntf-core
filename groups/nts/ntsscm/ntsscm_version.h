@@ -112,6 +112,10 @@ struct Version {
     /// version information of the operating system running the current
     /// process.  Return 0 on success and a non-zero value otherwise.
     static int systemVersion(int* major, int* minor, int* patch, int* build);
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 inline const char* Version::version()

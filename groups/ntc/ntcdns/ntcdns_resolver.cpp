@@ -48,21 +48,19 @@
 namespace BloombergLP {
 namespace ntcdns {
 
-namespace {
+const bool Resolver::k_DEFAULT_HOST_DATABASE_ENABLED = false;
+const bool Resolver::k_DEFAULT_PORT_DATABASE_ENABLED = false;
 
-const bool k_DEFAULT_HOST_DATABASE_ENABLED = false;
-const bool k_DEFAULT_PORT_DATABASE_ENABLED = false;
+const bool Resolver::k_DEFAULT_POSITIVE_CACHE_ENABLED = false;
+const bool Resolver::k_DEFAULT_NEGATIVE_CACHE_ENABLED = false;
 
-const bool k_DEFAULT_POSITIVE_CACHE_ENABLED = false;
-const bool k_DEFAULT_NEGATIVE_CACHE_ENABLED = false;
+const bool Resolver::k_DEFAULT_CLIENT_ENABLED = false;
 
-const bool k_DEFAULT_CLIENT_ENABLED = false;
+const int Resolver::k_DEFAULT_SYSTEM_MIN_THREADS   = 0;
+const int Resolver::k_DEFAULT_SYSTEM_MAX_THREADS   = 1;
+const int Resolver::k_DEFAULT_SYSTEM_MAX_IDLE_TIME = 10;
 
-const int k_DEFAULT_SYSTEM_MIN_THREADS   = 0;
-const int k_DEFAULT_SYSTEM_MAX_THREADS   = 1;
-const int k_DEFAULT_SYSTEM_MAX_IDLE_TIME = 10;
-
-void processGetIpAddressResult(
+void Resolver::processGetIpAddressResult(
     const bsl::shared_ptr<ntci::Resolver>& resolver,
     const bsl::vector<ntsa::IpAddress>&    ipAddressList,
     const bsls::TimeInterval&              startTime,
@@ -144,8 +142,6 @@ void processGetIpAddressResult(
 
     callback(resolver, endpoint, getEndpointEvent, ntci::Strand::unknown());
 }
-
-}  // close unnamed namespace
 
 ntsa::Error Resolver::initialize()
 {
@@ -1814,7 +1810,7 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
     if (!unresolvedDomainName.empty()) {
         ntci::GetIpAddressCallback getIpAddressCallback =
             this->createGetIpAddressCallback(
-                bdlf::BindUtil::bind(&processGetIpAddressResult,
+                bdlf::BindUtil::bind(&Resolver::processGetIpAddressResult,
                                      bdlf::PlaceHolders::_1,
                                      bdlf::PlaceHolders::_2,
                                      startTime,

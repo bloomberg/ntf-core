@@ -25,7 +25,7 @@ BSLS_IDENT_RCSID(ntco_kqueue_cpp, "$Id$ $CSID$")
 #include <ntcr_listenersocket.h>
 #include <ntcr_streamsocket.h>
 
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 
 #include <ntci_log.h>
 #include <ntci_mutex.h>
@@ -1298,7 +1298,7 @@ ntci::Waiter Kqueue::registerWaiter(const ntca::WaiterOptions& waiterOptions)
 
                 result->d_metrics_sp = metrics;
 
-                ntcm::MonitorableUtil::registerMonitorable(
+                ntcs::MonitorableUtil::registerMonitorable(
                     result->d_metrics_sp);
             }
             else {
@@ -1342,7 +1342,7 @@ void Kqueue::deregisterWaiter(ntci::Waiter waiter)
 
     if (d_config.metricCollection().value()) {
         if (d_config.metricCollectionPerWaiter().value()) {
-            ntcm::MonitorableUtil::deregisterMonitorable(result->d_metrics_sp);
+            ntcs::MonitorableUtil::deregisterMonitorable(result->d_metrics_sp);
         }
     }
 

@@ -51,11 +51,11 @@ BSLS_IDENT_RCSID(ntsa_temporary_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
-
 // Provide utilities for implementing temporary directory and file guards.
 // This struct is thread safe.
-struct TempUtil {
+class TempUtil
+{
+  public:
     // Return the effective temporary directory defined for the user and
     // the system. The result is guaranteed to have a trailing path
     // separator, even if the definition of the environment variable does
@@ -138,8 +138,6 @@ bsl::string TempUtil::tempDir()
 #else
 #error Not implemented
 #endif
-
-}  // close unnamed namespace
 
 TemporaryDirectory::TemporaryDirectory(bslma::Allocator* basicAllocator)
 : d_path(basicAllocator)

@@ -103,6 +103,36 @@ class DistinguishedName
     ComponentList d_componentList;
     ComponentMap  d_componentMap;
 
+  private:
+    /// Return a integer value from the specified hex 'character'.
+    static char fromHex(char character);
+
+    /// Return the hex character for the specified integer 'code'.
+    static char toHex(char code);
+
+    /// Parse the attribute at the specified 'current' position scanning until
+    /// the specified 'end' position, advance the 'current' position, and load
+    /// the result into the specified 'result'. Return 0 on success and
+    /// non-zero value otherwise.
+    static int parseAttribute(bsl::string* result,
+                              const char** current,
+                              const char*  end);
+
+    /// Load into the specified 'result' the specified attribute 'value'.
+    static void generateAttribute(bsl::string*       result,
+                                  const bsl::string& value);
+
+    /// Load into the specified 'result' the specified 'component' value.
+    static int generateComponent(
+        bsl::string*                        result,
+        const DistinguishedName::Component& component);
+
+    /// The table of human-readable abbreviations of common object identifiers.
+    static const char* const k_OID_TABLE[9];
+
+    // The table of integer to hexadecimal characters.
+    static const char k_HEX_TABLE[17];
+
   public:
     /// Create a new Distinguished Name.  Optionally specify a
     /// 'basicAllocator' used to supply memory.  If 'basicAllocator' is 0,

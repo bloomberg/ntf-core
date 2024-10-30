@@ -21,7 +21,7 @@ BSLS_IDENT_RCSID(ntcp_interface_cpp, "$Id$ $CSID$")
 #include <ntccfg_limits.h>
 #include <ntcdns_resolver.h>
 #include <ntci_log.h>
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 #include <ntcp_datagramsocket.h>
 #include <ntcp_listenersocket.h>
 #include <ntcp_streamsocket.h>
@@ -528,7 +528,7 @@ Interface::Interface(
 
         // TODO: Register socket metrics in d_user_sp.
 
-        ntcm::MonitorableUtil::registerMonitorable(d_socketMetrics_sp);
+        ntcs::MonitorableUtil::registerMonitorable(d_socketMetrics_sp);
     }
 
     if (d_config.driverMetrics().valueOr(NTCCFG_DEFAULT_DRIVER_METRICS)) {
@@ -541,7 +541,7 @@ Interface::Interface(
         d_proactorMetrics_sp = proactorMetrics;
         d_user_sp->setProactorMetrics(d_proactorMetrics_sp);
 
-        ntcm::MonitorableUtil::registerMonitorable(d_proactorMetrics_sp);
+        ntcs::MonitorableUtil::registerMonitorable(d_proactorMetrics_sp);
     }
 
     if (!d_config.maxConnections().isNull() &&
@@ -588,11 +588,11 @@ Interface::~Interface()
     d_proactorVector.clear();
 
     if (d_proactorMetrics_sp) {
-        ntcm::MonitorableUtil::deregisterMonitorable(d_proactorMetrics_sp);
+        ntcs::MonitorableUtil::deregisterMonitorable(d_proactorMetrics_sp);
     }
 
     if (d_socketMetrics_sp) {
-        ntcm::MonitorableUtil::deregisterMonitorable(d_socketMetrics_sp);
+        ntcs::MonitorableUtil::deregisterMonitorable(d_socketMetrics_sp);
     }
 }
 

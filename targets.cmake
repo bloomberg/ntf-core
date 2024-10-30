@@ -43,6 +43,9 @@ ntf_repository_enable_documentation_internal(
 ntf_repository_enable_coverage(
     ${NTF_BUILD_WITH_COVERAGE})
 
+ntf_repository_enable_valgrind(
+    ${NTF_BUILD_WITH_VALGRIND})
+
 if (${NTF_BUILD_WITH_NTS})
     ntf_group(
         NAME
@@ -51,6 +54,10 @@ if (${NTF_BUILD_WITH_NTS})
             groups/nts
         DESCRIPTION
             "Blocking and non-blocking sockets for network programming")
+
+    if (${NTF_BUILD_UNITY})
+        ntf_group_unity(NAME nts VALUE TRUE)
+    endif()
 
     if (${NTF_BUILD_WITH_BAL})
         ntf_group_requires(NAME nts DEPENDENCY bal)
@@ -314,6 +321,10 @@ if (${NTF_BUILD_WITH_NTC})
             "Asynchronous sockets, timers, event loops, and thread pools for network programming"
     )
 
+    if (${NTF_BUILD_UNITY})
+        ntf_group_unity(NAME ntc VALUE TRUE)
+    endif()
+
     if (${NTF_BUILD_WITH_BAL})
         ntf_group_requires(NAME ntc DEPENDENCY bal)
     endif()
@@ -357,7 +368,9 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(PATH ${CMAKE_BINARY_DIR}/ntccfg_config.cpp)
 
     ntf_component(NAME ntccfg_bind)
+    ntf_component(NAME ntccfg_bit)
     ntf_component(NAME ntccfg_foreach)
+    ntf_component(NAME ntccfg_format)
     ntf_component(NAME ntccfg_function)
     ntf_component(NAME ntccfg_inline)
     ntf_component(NAME ntccfg_likely)
@@ -630,28 +643,12 @@ if (${NTF_BUILD_WITH_NTC})
 
     ntf_package(
         NAME
-            ntcm
-        REQUIRES
-            ntcscm
-            ntccfg
-            ntca
-            ntci
-        PRIVATE
-    )
-
-    ntf_component(NAME ntcm_monitorable)
-
-    ntf_package_end(NAME ntcm)
-
-    ntf_package(
-        NAME
             ntcs
         REQUIRES
             ntcscm
             ntccfg
             ntca
             ntci
-            ntcm
         PRIVATE
     )
 
@@ -678,6 +675,7 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntcs_leakybucket)
     ntf_component(NAME ntcs_memorymap)
     ntf_component(NAME ntcs_metrics)
+    ntf_component(NAME ntcs_monitorable)
     ntf_component(NAME ntcs_nomenclature)
     ntf_component(NAME ntcs_observer)
     ntf_component(NAME ntcs_openstate)
@@ -710,7 +708,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
         PRIVATE
     )
@@ -732,7 +729,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
         PRIVATE
@@ -763,7 +759,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -791,7 +786,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -811,7 +805,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -841,7 +834,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -867,7 +859,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -893,7 +884,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd
@@ -926,7 +916,6 @@ if (${NTF_BUILD_WITH_NTC})
             ntccfg
             ntca
             ntci
-            ntcm
             ntcs
             ntcq
             ntcd

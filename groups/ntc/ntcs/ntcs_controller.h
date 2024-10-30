@@ -96,6 +96,9 @@ class Controller : public ntci::ReactorSocket
     /// Return the strand on which this object's functions should be called.
     const bsl::shared_ptr<ntci::Strand>& strand() const BSLS_KEYWORD_OVERRIDE;
 
+    // Provide a private implementation.
+    class Impl;
+
   public:
     /// Create a new controller and automatically open it.
     Controller();

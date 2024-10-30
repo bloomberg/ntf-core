@@ -141,6 +141,10 @@ if [[ -z "${NTF_CONFIGURE_UFID}" ]]; then
     NTF_CONFIGURE_UFID="opt_dbg_exc_mt_64"
 fi
 
+if [[ -z "${NTF_CONFIGURE_UNITY}" ]]; then
+    NTF_CONFIGURE_UNITY=0
+fi
+
 if [[ -z "${NTF_CONFIGURE_REFROOT}" ]]; then
     if [[ -z "${DISTRIBUTION_REFROOT}" ]]; then
         NTF_CONFIGURE_REFROOT=""
@@ -456,6 +460,7 @@ usage()
 
     echo "    --multiplatform                    Decorate prefix, refroot, and output directories with uname and ufid [${NTF_CONFIGURE_MULTIPLATFORM}]"
     echo "    --standalone                       Do not decorate prefix, refroot, and output directories with uname and ufid"
+    echo "    --unity                            Perform a unity, or almagamated build"
 
     echo "    --with-bsl                         Enable and build features that depend on BSL [${NTF_CONFIGURE_WITH_BSL}]"
     echo "    --with-bdl                         Enable and build features that depend on BDL [${NTF_CONFIGURE_WITH_BDL}]"
@@ -570,6 +575,9 @@ while true ; do
             fi
 
             shift 2 ;;
+
+        --unity)
+            NTF_CONFIGURE_UNITY=1 ; shift ;;
         --generator)
             NTF_CONFIGURE_GENERATOR=$2 ; shift 2 ;;
         --toolchain)
@@ -854,6 +862,7 @@ fi
 
 export NTF_CONFIGURE_UNAME
 export NTF_CONFIGURE_UFID
+export NTF_CONFIGURE_UNITY
 
 export NTF_CONFIGURE_PREFIX
 export NTF_CONFIGURE_REFROOT

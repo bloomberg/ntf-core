@@ -48,12 +48,28 @@ BSLS_IDENT_RCSID(ntcd_encryption_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcd {
 
-namespace {
+class EncryptionKey::Impl
+{
+  public:
+    static bsls::SpinLock s_seedLock;
+    static int            s_seed;
+};
 
-bsls::SpinLock s_seedLock = BSLS_SPINLOCK_UNLOCKED;
-int            s_seed     = 12345;
+bsls::SpinLock EncryptionKey::Impl::s_seedLock = BSLS_SPINLOCK_UNLOCKED;
+int            EncryptionKey::Impl::s_seed     = 12345;
 
-ntsa::Error encodeDistinguishedName(
+class EncryptionCertificate::Impl
+{
+  public:
+    static ntsa::Error encodeDistinguishedName(
+        bsl::streambuf*                destination,
+        const ntsa::DistinguishedName& distinguishedName);
+
+    static ntsa::Error decodeDistinguishedName(ntsa::DistinguishedName* result,
+                                               bsl::streambuf* source);
+};
+
+ntsa::Error EncryptionCertificate::Impl::encodeDistinguishedName(
     bsl::streambuf*                destination,
     const ntsa::DistinguishedName& distinguishedName)
 {
@@ -88,8 +104,9 @@ ntsa::Error encodeDistinguishedName(
     return ntsa::Error();
 }
 
-ntsa::Error decodeDistinguishedName(ntsa::DistinguishedName* result,
-                                    bsl::streambuf*          source)
+ntsa::Error EncryptionCertificate::Impl::decodeDistinguishedName(
+    ntsa::DistinguishedName* result,
+    bsl::streambuf*          source)
 {
     int rc;
 
@@ -126,8 +143,6 @@ ntsa::Error decodeDistinguishedName(ntsa::DistinguishedName* result,
     return ntsa::Error();
 }
 
-}  // close unnamed namespace
-
 EncryptionKey::EncryptionKey()
 : d_value(0)
 {
@@ -149,15 +164,15 @@ ntsa::Error EncryptionKey::generate(const ntca::EncryptionKeyOptions& options)
     bsl::uint32_t value = 0;
 
     {
-        bsls::SpinLockGuard lock(&s_seedLock);
+        bsls::SpinLockGuard lock(&Impl::s_seedLock);
 
-        int seed     = s_seed;
+        int seed     = Impl::s_seed;
         int nextSeed = 0;
 
         int random15 = bdlb::Random::generate15(&nextSeed, seed);
         value        = static_cast<bsl::uint32_t>(random15);
 
-        s_seed = nextSeed;
+        Impl::s_seed = nextSeed;
     }
 
     d_value = value;
@@ -310,7 +325,7 @@ ntsa::Error EncryptionCertificate::decode(
     ntsa::Error                     error;
     ntca::EncryptionResourceOptions keyStorageOptions;
 
-    error = decodeDistinguishedName(&d_subject, source);
+    error = Impl::decodeDistinguishedName(&d_subject, source);
     if (error) {
         return error;
     }
@@ -321,7 +336,7 @@ ntsa::Error EncryptionCertificate::decode(
         return error;
     }
 
-    error = decodeDistinguishedName(&d_issuer, source);
+    error = Impl::decodeDistinguishedName(&d_issuer, source);
     if (error) {
         return error;
     }
@@ -346,7 +361,7 @@ ntsa::Error EncryptionCertificate::encode(
     ntsa::Error                     error;
     ntca::EncryptionResourceOptions keyStorageOptions;
 
-    error = encodeDistinguishedName(destination, d_subject);
+    error = Impl::encodeDistinguishedName(destination, d_subject);
     if (error) {
         return error;
     }
@@ -360,7 +375,7 @@ ntsa::Error EncryptionCertificate::encode(
         return error;
     }
 
-    error = encodeDistinguishedName(destination, d_issuer);
+    error = Impl::encodeDistinguishedName(destination, d_issuer);
     if (error) {
         return error;
     }

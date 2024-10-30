@@ -33,7 +33,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_reactor.h>
 #include <ntci_reactorfactory.h>
 #include <ntci_user.h>
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_datapool.h>
 #include <ntcs_strand.h>
 #include <ntcs_user.h>

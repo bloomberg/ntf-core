@@ -226,6 +226,12 @@ class BlobBufferFactoryAllocator : public bslma::Allocator
 class BlobBufferFactory : public bdlbb::BlobBufferFactory,
                           private bslma::Allocator
 {
+    /// Enumerate the constants used in the implementation.
+    enum Constants {
+        /// The maximum memory blocks per pooled chunk of memory.
+        k_MAX_BLOCKS_PER_CHUNK = 1
+    };
+
     ntcs::BlobBufferFactoryAllocator d_memoryPoolAllocator;
     bdlma::ConcurrentPoolAllocator   d_memoryPool;
     bsl::size_t                      d_blobBufferSize;

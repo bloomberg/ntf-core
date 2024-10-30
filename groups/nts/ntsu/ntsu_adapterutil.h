@@ -147,6 +147,10 @@ struct AdapterUtil {
     /// Return true if the current machine supports the specified
     /// 'transport', otherwise return false.
     static bool supportsTransport(ntsa::Transport::Value transport);
+
+  public:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 }  // end namespace ntsu

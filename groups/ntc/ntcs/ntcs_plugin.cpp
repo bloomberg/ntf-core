@@ -25,44 +25,82 @@ BSLS_IDENT_RCSID(ntcs_plugin_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcs {
 
-namespace {
+/// Provide a private implementation.
+class Plugin::Impl
+{
+  public:
+    /// Enumerate the constants used by this implementation.
+    enum Constant {
+        /// The maximum number of entries.
+        k_MAX_ENTRY_CAPACITY = 16,
 
-enum {
-    k_MAX_ENTRY_CAPACITY = 16,
-    k_MAX_NAME_CAPACITY  = 32,
-    k_MAX_NAME_LENGTH    = k_MAX_NAME_CAPACITY - 1
+        /// The maximum capacity, including the null terminator, of each name.
+        k_MAX_NAME_CAPACITY = 32,
+
+        /// The maximum length, not including the null terminator, or each
+        /// name.
+        k_MAX_NAME_LENGTH = k_MAX_NAME_CAPACITY - 1
+    };
+
+    /// Describe an encryption driver.
+    struct EncryptionDriverEntry {
+        char                    d_name[k_MAX_NAME_CAPACITY];
+        ntci::EncryptionDriver* d_driver_p;
+        bslma::SharedPtrRep*    d_driverRep_p;
+    };
+
+    /// Describe a reactor factory.
+    struct ReactorFactoryEntry {
+        char                  d_name[k_MAX_NAME_CAPACITY];
+        ntci::ReactorFactory* d_reactorFactory_p;
+        bslma::SharedPtrRep*  d_reactorFactoryRep_p;
+    };
+
+    /// Describe a proactor factory.
+    struct ProactorFactoryEntry {
+        char                   d_name[k_MAX_NAME_CAPACITY];
+        ntci::ProactorFactory* d_proactorFactory_p;
+        bslma::SharedPtrRep*   d_proactorFactoryRep_p;
+    };
+
+    /// The lock.
+    static bsls::SpinLock s_lock;
+
+    /// The registered encryption drivers.
+    static struct EncryptionDriverEntry
+        s_encryptionDriverArray[k_MAX_ENTRY_CAPACITY];
+
+    /// The number of registered encryption drivers.
+    static bsl::size_t s_encryptionDriverCount;
+
+    /// The registered reactor factories.
+    static struct ReactorFactoryEntry
+        s_reactorFactoryArray[k_MAX_ENTRY_CAPACITY];
+
+    /// The number of registered reactor factories.
+    static bsl::size_t s_reactorFactoryCount;
+
+    /// The registered proactor factories.
+    static struct ProactorFactoryEntry
+        s_proactorFactoryArray[k_MAX_ENTRY_CAPACITY];
+
+    /// The number of registered proactor factories.
+    static bsl::size_t s_proactorFactoryCount;
 };
 
-struct EncryptionDriverEntry {
-    char                    d_name[k_MAX_NAME_CAPACITY];
-    ntci::EncryptionDriver* d_driver_p;
-    bslma::SharedPtrRep*    d_driverRep_p;
-};
+bsls::SpinLock Plugin::Impl::s_lock;
 
-struct ReactorFactoryEntry {
-    char                  d_name[k_MAX_NAME_CAPACITY];
-    ntci::ReactorFactory* d_reactorFactory_p;
-    bslma::SharedPtrRep*  d_reactorFactoryRep_p;
-};
+struct Plugin::Impl::EncryptionDriverEntry
+            Plugin::Impl::s_encryptionDriverArray[k_MAX_ENTRY_CAPACITY];
+bsl::size_t Plugin::Impl::s_encryptionDriverCount;
 
-struct ProactorFactoryEntry {
-    char                   d_name[k_MAX_NAME_CAPACITY];
-    ntci::ProactorFactory* d_proactorFactory_p;
-    bslma::SharedPtrRep*   d_proactorFactoryRep_p;
-};
+struct Plugin::Impl::ReactorFactoryEntry
+            Plugin::Impl::s_reactorFactoryArray[k_MAX_ENTRY_CAPACITY];
+bsl::size_t Plugin::Impl::s_reactorFactoryCount;
 
-bsls::SpinLock s_lock = BSLS_SPINLOCK_UNLOCKED;
-
-struct EncryptionDriverEntry s_encryptionDriverArray[k_MAX_ENTRY_CAPACITY];
-bsl::size_t                  s_encryptionDriverCount;
-
-struct ReactorFactoryEntry s_reactorFactoryArray[k_MAX_ENTRY_CAPACITY];
-bsl::size_t                s_reactorFactoryCount;
-
-struct ProactorFactoryEntry s_proactorFactoryArray[k_MAX_ENTRY_CAPACITY];
-bsl::size_t                 s_proactorFactoryCount;
-
-}  // close unnamed namespace
+struct Plugin::Impl::ProactorFactoryEntry
+            Plugin::Impl::s_proactorFactoryArray[k_MAX_ENTRY_CAPACITY];
+bsl::size_t Plugin::Impl::s_proactorFactoryCount;
 
 void Plugin::initialize()
 {
@@ -71,20 +109,20 @@ void Plugin::initialize()
 ntsa::Error Plugin::registerEncryptionDriver(
     const bsl::shared_ptr<ntci::EncryptionDriver>& encryptionDriver)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
     bool wasRegistered = false;
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (s_encryptionDriverArray[i].d_driver_p == 0) {
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (Impl::s_encryptionDriverArray[i].d_driver_p == 0) {
             bsl::shared_ptr<ntci::EncryptionDriver> temp = encryptionDriver;
             if (!temp) {
                 return ntsa::Error(ntsa::Error::e_INVALID);
             }
             bsl::pair<ntci::EncryptionDriver*, bslma::SharedPtrRep*> state =
                 temp.release();
-            s_encryptionDriverArray[i].d_driver_p    = state.first;
-            s_encryptionDriverArray[i].d_driverRep_p = state.second;
-            ++s_encryptionDriverCount;
+            Impl::s_encryptionDriverArray[i].d_driver_p    = state.first;
+            Impl::s_encryptionDriverArray[i].d_driverRep_p = state.second;
+            ++Impl::s_encryptionDriverCount;
             wasRegistered = true;
             break;
         }
@@ -100,15 +138,17 @@ ntsa::Error Plugin::registerEncryptionDriver(
 ntsa::Error Plugin::deregisterEncryptionDriver(
     const bsl::shared_ptr<ntci::EncryptionDriver>& encryptionDriver)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
     bool wasDeregistered = false;
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (s_encryptionDriverArray[i].d_driver_p == encryptionDriver.get()) {
-            s_encryptionDriverArray[i].d_driverRep_p->releaseRef();
-            s_encryptionDriverArray[i].d_driver_p    = 0;
-            s_encryptionDriverArray[i].d_driverRep_p = 0;
-            --s_encryptionDriverCount;
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (Impl::s_encryptionDriverArray[i].d_driver_p ==
+            encryptionDriver.get())
+        {
+            Impl::s_encryptionDriverArray[i].d_driverRep_p->releaseRef();
+            Impl::s_encryptionDriverArray[i].d_driver_p    = 0;
+            Impl::s_encryptionDriverArray[i].d_driverRep_p = 0;
+            --Impl::s_encryptionDriverCount;
             wasDeregistered = true;
             break;
         }
@@ -124,16 +164,16 @@ ntsa::Error Plugin::deregisterEncryptionDriver(
 ntsa::Error Plugin::lookupEncryptionDriver(
     bsl::shared_ptr<ntci::EncryptionDriver>* result)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
     result->reset();
 
     bool wasFound = false;
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (s_encryptionDriverArray[i].d_driver_p != 0) {
-            s_encryptionDriverArray[i].d_driverRep_p->acquireRef();
-            result->reset(s_encryptionDriverArray[i].d_driver_p,
-                          s_encryptionDriverArray[i].d_driverRep_p);
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (Impl::s_encryptionDriverArray[i].d_driver_p != 0) {
+            Impl::s_encryptionDriverArray[i].d_driverRep_p->acquireRef();
+            result->reset(Impl::s_encryptionDriverArray[i].d_driver_p,
+                          Impl::s_encryptionDriverArray[i].d_driverRep_p);
             wasFound = true;
             break;
         }
@@ -148,21 +188,21 @@ ntsa::Error Plugin::lookupEncryptionDriver(
 
 bool Plugin::supportsEncryptionDriver()
 {
-    bsls::SpinLockGuard guard(&s_lock);
-    return s_encryptionDriverCount > 0;
+    bsls::SpinLockGuard guard(&Impl::s_lock);
+    return Impl::s_encryptionDriverCount > 0;
 }
 
 ntsa::Error Plugin::registerReactorFactory(
     const bsl::string&                           driverName,
     const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
     if (driverName.empty()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (driverName.size() > k_MAX_NAME_LENGTH) {
+    if (driverName.size() > Impl::k_MAX_NAME_LENGTH) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -171,8 +211,8 @@ ntsa::Error Plugin::registerReactorFactory(
     }
 
     bool wasRegistered = false;
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (s_reactorFactoryArray[i].d_reactorFactory_p == 0) {
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (Impl::s_reactorFactoryArray[i].d_reactorFactory_p == 0) {
             bsl::shared_ptr<ntci::ReactorFactory> temp = reactorFactory;
             if (!temp) {
                 return ntsa::Error(ntsa::Error::e_INVALID);
@@ -181,15 +221,17 @@ ntsa::Error Plugin::registerReactorFactory(
             bsl::pair<ntci::ReactorFactory*, bslma::SharedPtrRep*> state =
                 temp.release();
 
-            bsl::memset(s_reactorFactoryArray[i].d_name,
+            bsl::memset(Impl::s_reactorFactoryArray[i].d_name,
                         0,
-                        k_MAX_NAME_CAPACITY);
-            bsl::strcpy(s_reactorFactoryArray[i].d_name, driverName.c_str());
+                        Impl::k_MAX_NAME_CAPACITY);
+            bsl::strcpy(Impl::s_reactorFactoryArray[i].d_name,
+                        driverName.c_str());
 
-            s_reactorFactoryArray[i].d_reactorFactory_p    = state.first;
-            s_reactorFactoryArray[i].d_reactorFactoryRep_p = state.second;
+            Impl::s_reactorFactoryArray[i].d_reactorFactory_p = state.first;
+            Impl::s_reactorFactoryArray[i].d_reactorFactoryRep_p =
+                state.second;
 
-            ++s_reactorFactoryCount;
+            ++Impl::s_reactorFactoryCount;
             wasRegistered = true;
             break;
         }
@@ -206,13 +248,13 @@ ntsa::Error Plugin::deregisterReactorFactory(
     const bsl::string&                           driverName,
     const bsl::shared_ptr<ntci::ReactorFactory>& reactorFactory)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
     if (driverName.empty()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (driverName.size() > k_MAX_NAME_LENGTH) {
+    if (driverName.size() > Impl::k_MAX_NAME_LENGTH) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -221,23 +263,25 @@ ntsa::Error Plugin::deregisterReactorFactory(
     }
 
     bool wasDeregistered = false;
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (bdlb::String::areEqualCaseless(driverName,
-                                           s_reactorFactoryArray[i].d_name))
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (bdlb::String::areEqualCaseless(
+                driverName,
+                Impl::s_reactorFactoryArray[i].d_name))
         {
-            if (s_reactorFactoryArray[i].d_reactorFactory_p ==
+            if (Impl::s_reactorFactoryArray[i].d_reactorFactory_p ==
                 reactorFactory.get())
             {
-                s_reactorFactoryArray[i].d_reactorFactoryRep_p->releaseRef();
+                Impl::s_reactorFactoryArray[i]
+                    .d_reactorFactoryRep_p->releaseRef();
 
-                bsl::memset(s_reactorFactoryArray[i].d_name,
+                bsl::memset(Impl::s_reactorFactoryArray[i].d_name,
                             0,
-                            k_MAX_NAME_CAPACITY);
+                            Impl::k_MAX_NAME_CAPACITY);
 
-                s_reactorFactoryArray[i].d_reactorFactory_p    = 0;
-                s_reactorFactoryArray[i].d_reactorFactoryRep_p = 0;
+                Impl::s_reactorFactoryArray[i].d_reactorFactory_p    = 0;
+                Impl::s_reactorFactoryArray[i].d_reactorFactoryRep_p = 0;
 
-                --s_reactorFactoryCount;
+                --Impl::s_reactorFactoryCount;
                 wasDeregistered = true;
                 break;
             }
@@ -255,7 +299,7 @@ ntsa::Error Plugin::lookupReactorFactory(
     bsl::shared_ptr<ntci::ReactorFactory>* result,
     const bsl::string&                     driverName)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
     result->reset();
 
@@ -264,14 +308,17 @@ ntsa::Error Plugin::lookupReactorFactory(
     }
 
     bool wasFound = false;
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (bdlb::String::areEqualCaseless(driverName,
-                                           s_reactorFactoryArray[i].d_name))
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (bdlb::String::areEqualCaseless(
+                driverName,
+                Impl::s_reactorFactoryArray[i].d_name))
         {
-            if (s_reactorFactoryArray[i].d_reactorFactory_p != 0) {
-                s_reactorFactoryArray[i].d_reactorFactoryRep_p->acquireRef();
-                result->reset(s_reactorFactoryArray[i].d_reactorFactory_p,
-                              s_reactorFactoryArray[i].d_reactorFactoryRep_p);
+            if (Impl::s_reactorFactoryArray[i].d_reactorFactory_p != 0) {
+                Impl::s_reactorFactoryArray[i]
+                    .d_reactorFactoryRep_p->acquireRef();
+                result->reset(
+                    Impl::s_reactorFactoryArray[i].d_reactorFactory_p,
+                    Impl::s_reactorFactoryArray[i].d_reactorFactoryRep_p);
                 wasFound = true;
                 break;
             }
@@ -287,18 +334,19 @@ ntsa::Error Plugin::lookupReactorFactory(
 
 bool Plugin::supportsReactorFactory(const bsl::string& driverName)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
     if (driverName.empty()) {
         return false;
     }
 
     bool wasFound = false;
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (bdlb::String::areEqualCaseless(driverName,
-                                           s_reactorFactoryArray[i].d_name))
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (bdlb::String::areEqualCaseless(
+                driverName,
+                Impl::s_reactorFactoryArray[i].d_name))
         {
-            if (s_reactorFactoryArray[i].d_reactorFactory_p != 0) {
+            if (Impl::s_reactorFactoryArray[i].d_reactorFactory_p != 0) {
                 wasFound = true;
                 break;
             }
@@ -311,12 +359,12 @@ bool Plugin::supportsReactorFactory(const bsl::string& driverName)
 void Plugin::loadSupportedReactorFactoryDriverNames(
     bsl::vector<bsl::string>* driverNames)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (bsl::strlen(s_reactorFactoryArray[i].d_name) > 0) {
-            if (s_reactorFactoryArray[i].d_reactorFactory_p != 0) {
-                driverNames->push_back(s_reactorFactoryArray[i].d_name);
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (bsl::strlen(Impl::s_reactorFactoryArray[i].d_name) > 0) {
+            if (Impl::s_reactorFactoryArray[i].d_reactorFactory_p != 0) {
+                driverNames->push_back(Impl::s_reactorFactoryArray[i].d_name);
             }
         }
     }
@@ -326,13 +374,13 @@ ntsa::Error Plugin::registerProactorFactory(
     const bsl::string&                            driverName,
     const bsl::shared_ptr<ntci::ProactorFactory>& proactorFactory)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
     if (driverName.empty()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (driverName.size() > k_MAX_NAME_LENGTH) {
+    if (driverName.size() > Impl::k_MAX_NAME_LENGTH) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -341,8 +389,8 @@ ntsa::Error Plugin::registerProactorFactory(
     }
 
     bool wasRegistered = false;
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (s_proactorFactoryArray[i].d_proactorFactory_p == 0) {
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (Impl::s_proactorFactoryArray[i].d_proactorFactory_p == 0) {
             bsl::shared_ptr<ntci::ProactorFactory> temp = proactorFactory;
             if (!temp) {
                 return ntsa::Error(ntsa::Error::e_INVALID);
@@ -351,15 +399,17 @@ ntsa::Error Plugin::registerProactorFactory(
             bsl::pair<ntci::ProactorFactory*, bslma::SharedPtrRep*> state =
                 temp.release();
 
-            bsl::memset(s_proactorFactoryArray[i].d_name,
+            bsl::memset(Impl::s_proactorFactoryArray[i].d_name,
                         0,
-                        k_MAX_NAME_CAPACITY);
-            bsl::strcpy(s_proactorFactoryArray[i].d_name, driverName.c_str());
+                        Impl::k_MAX_NAME_CAPACITY);
+            bsl::strcpy(Impl::s_proactorFactoryArray[i].d_name,
+                        driverName.c_str());
 
-            s_proactorFactoryArray[i].d_proactorFactory_p    = state.first;
-            s_proactorFactoryArray[i].d_proactorFactoryRep_p = state.second;
+            Impl::s_proactorFactoryArray[i].d_proactorFactory_p = state.first;
+            Impl::s_proactorFactoryArray[i].d_proactorFactoryRep_p =
+                state.second;
 
-            ++s_proactorFactoryCount;
+            ++Impl::s_proactorFactoryCount;
             wasRegistered = true;
             break;
         }
@@ -376,13 +426,13 @@ ntsa::Error Plugin::deregisterProactorFactory(
     const bsl::string&                            driverName,
     const bsl::shared_ptr<ntci::ProactorFactory>& proactorFactory)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
     if (driverName.empty()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (driverName.size() > k_MAX_NAME_LENGTH) {
+    if (driverName.size() > Impl::k_MAX_NAME_LENGTH) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -391,23 +441,25 @@ ntsa::Error Plugin::deregisterProactorFactory(
     }
 
     bool wasDeregistered = false;
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (bdlb::String::areEqualCaseless(driverName,
-                                           s_proactorFactoryArray[i].d_name))
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (bdlb::String::areEqualCaseless(
+                driverName,
+                Impl::s_proactorFactoryArray[i].d_name))
         {
-            if (s_proactorFactoryArray[i].d_proactorFactory_p ==
+            if (Impl::s_proactorFactoryArray[i].d_proactorFactory_p ==
                 proactorFactory.get())
             {
-                s_proactorFactoryArray[i].d_proactorFactoryRep_p->releaseRef();
+                Impl::s_proactorFactoryArray[i]
+                    .d_proactorFactoryRep_p->releaseRef();
 
-                bsl::memset(s_proactorFactoryArray[i].d_name,
+                bsl::memset(Impl::s_proactorFactoryArray[i].d_name,
                             0,
-                            k_MAX_NAME_CAPACITY);
+                            Impl::k_MAX_NAME_CAPACITY);
 
-                s_proactorFactoryArray[i].d_proactorFactory_p    = 0;
-                s_proactorFactoryArray[i].d_proactorFactoryRep_p = 0;
+                Impl::s_proactorFactoryArray[i].d_proactorFactory_p    = 0;
+                Impl::s_proactorFactoryArray[i].d_proactorFactoryRep_p = 0;
 
-                --s_proactorFactoryCount;
+                --Impl::s_proactorFactoryCount;
                 wasDeregistered = true;
                 break;
             }
@@ -425,7 +477,7 @@ ntsa::Error Plugin::lookupProactorFactory(
     bsl::shared_ptr<ntci::ProactorFactory>* result,
     const bsl::string&                      driverName)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
     result->reset();
 
@@ -434,15 +486,17 @@ ntsa::Error Plugin::lookupProactorFactory(
     }
 
     bool wasFound = false;
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (bdlb::String::areEqualCaseless(driverName,
-                                           s_proactorFactoryArray[i].d_name))
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (bdlb::String::areEqualCaseless(
+                driverName,
+                Impl::s_proactorFactoryArray[i].d_name))
         {
-            if (s_proactorFactoryArray[i].d_proactorFactory_p != 0) {
-                s_proactorFactoryArray[i].d_proactorFactoryRep_p->acquireRef();
+            if (Impl::s_proactorFactoryArray[i].d_proactorFactory_p != 0) {
+                Impl::s_proactorFactoryArray[i]
+                    .d_proactorFactoryRep_p->acquireRef();
                 result->reset(
-                    s_proactorFactoryArray[i].d_proactorFactory_p,
-                    s_proactorFactoryArray[i].d_proactorFactoryRep_p);
+                    Impl::s_proactorFactoryArray[i].d_proactorFactory_p,
+                    Impl::s_proactorFactoryArray[i].d_proactorFactoryRep_p);
                 wasFound = true;
                 break;
             }
@@ -458,18 +512,19 @@ ntsa::Error Plugin::lookupProactorFactory(
 
 bool Plugin::supportsProactorFactory(const bsl::string& driverName)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
     if (driverName.empty()) {
         return false;
     }
 
     bool wasFound = false;
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (bdlb::String::areEqualCaseless(driverName,
-                                           s_proactorFactoryArray[i].d_name))
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (bdlb::String::areEqualCaseless(
+                driverName,
+                Impl::s_proactorFactoryArray[i].d_name))
         {
-            if (s_proactorFactoryArray[i].d_proactorFactory_p != 0) {
+            if (Impl::s_proactorFactoryArray[i].d_proactorFactory_p != 0) {
                 wasFound = true;
                 break;
             }
@@ -482,12 +537,12 @@ bool Plugin::supportsProactorFactory(const bsl::string& driverName)
 void Plugin::loadSupportedProactorFactoryDriverNames(
     bsl::vector<bsl::string>* driverNames)
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (bsl::strlen(s_proactorFactoryArray[i].d_name) > 0) {
-            if (s_proactorFactoryArray[i].d_proactorFactory_p != 0) {
-                driverNames->push_back(s_proactorFactoryArray[i].d_name);
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (bsl::strlen(Impl::s_proactorFactoryArray[i].d_name) > 0) {
+            if (Impl::s_proactorFactoryArray[i].d_proactorFactory_p != 0) {
+                driverNames->push_back(Impl::s_proactorFactoryArray[i].d_name);
             }
         }
     }
@@ -495,44 +550,45 @@ void Plugin::loadSupportedProactorFactoryDriverNames(
 
 void Plugin::exit()
 {
-    bsls::SpinLockGuard guard(&s_lock);
+    bsls::SpinLockGuard guard(&Impl::s_lock);
 
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (s_reactorFactoryArray[i].d_reactorFactory_p != 0) {
-            s_reactorFactoryArray[i].d_reactorFactoryRep_p->releaseRef();
-            bsl::memset(s_reactorFactoryArray[i].d_name,
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (Impl::s_reactorFactoryArray[i].d_reactorFactory_p != 0) {
+            Impl::s_reactorFactoryArray[i].d_reactorFactoryRep_p->releaseRef();
+            bsl::memset(Impl::s_reactorFactoryArray[i].d_name,
                         0,
-                        k_MAX_NAME_CAPACITY);
-            s_reactorFactoryArray[i].d_reactorFactory_p    = 0;
-            s_reactorFactoryArray[i].d_reactorFactoryRep_p = 0;
-            --s_reactorFactoryCount;
+                        Impl::k_MAX_NAME_CAPACITY);
+            Impl::s_reactorFactoryArray[i].d_reactorFactory_p    = 0;
+            Impl::s_reactorFactoryArray[i].d_reactorFactoryRep_p = 0;
+            --Impl::s_reactorFactoryCount;
         }
     }
 
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (s_proactorFactoryArray[i].d_proactorFactory_p != 0) {
-            s_proactorFactoryArray[i].d_proactorFactoryRep_p->releaseRef();
-            bsl::memset(s_proactorFactoryArray[i].d_name,
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (Impl::s_proactorFactoryArray[i].d_proactorFactory_p != 0) {
+            Impl::s_proactorFactoryArray[i]
+                .d_proactorFactoryRep_p->releaseRef();
+            bsl::memset(Impl::s_proactorFactoryArray[i].d_name,
                         0,
-                        k_MAX_NAME_CAPACITY);
-            s_proactorFactoryArray[i].d_proactorFactory_p    = 0;
-            s_proactorFactoryArray[i].d_proactorFactoryRep_p = 0;
-            --s_proactorFactoryCount;
+                        Impl::k_MAX_NAME_CAPACITY);
+            Impl::s_proactorFactoryArray[i].d_proactorFactory_p    = 0;
+            Impl::s_proactorFactoryArray[i].d_proactorFactoryRep_p = 0;
+            --Impl::s_proactorFactoryCount;
         }
     }
 
-    for (bsl::size_t i = 0; i < k_MAX_ENTRY_CAPACITY; ++i) {
-        if (s_encryptionDriverArray[i].d_driver_p != 0) {
-            s_encryptionDriverArray[i].d_driverRep_p->releaseRef();
-            s_encryptionDriverArray[i].d_driver_p    = 0;
-            s_encryptionDriverArray[i].d_driverRep_p = 0;
-            --s_encryptionDriverCount;
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (Impl::s_encryptionDriverArray[i].d_driver_p != 0) {
+            Impl::s_encryptionDriverArray[i].d_driverRep_p->releaseRef();
+            Impl::s_encryptionDriverArray[i].d_driver_p    = 0;
+            Impl::s_encryptionDriverArray[i].d_driverRep_p = 0;
+            --Impl::s_encryptionDriverCount;
         }
     }
 
-    BSLS_ASSERT(s_reactorFactoryCount == 0);
-    BSLS_ASSERT(s_proactorFactoryCount == 0);
-    BSLS_ASSERT(s_encryptionDriverCount == 0);
+    BSLS_ASSERT(Impl::s_reactorFactoryCount == 0);
+    BSLS_ASSERT(Impl::s_proactorFactoryCount == 0);
+    BSLS_ASSERT(Impl::s_encryptionDriverCount == 0);
 }
 
 }  // close package namespace

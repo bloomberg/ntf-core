@@ -43,25 +43,23 @@ NTSCFG_TEST_FUNCTION(ntcf::TestTest::verify)
     bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket;
     bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket;
 
-    error = ntcf::Test::createStreamSocketPair(
-        &interface,
-        &clientStreamSocket,
-        &serverStreamSocket,
-        ntsa::Transport::e_TCP_IPV4_STREAM,
-        NTSCFG_TEST_ALLOCATOR);
+    error =
+        ntcf::Test::createStreamSocketPair(&interface,
+                                           &clientStreamSocket,
+                                           &serverStreamSocket,
+                                           ntsa::Transport::e_TCP_IPV4_STREAM,
+                                           NTSCFG_TEST_ALLOCATOR);
     NTSCFG_TEST_OK(error);
 
-    ntcf::TestGuard guard(interface,
-                            clientStreamSocket,
-                            serverStreamSocket);
+    ntcf::TestGuard guard(interface, clientStreamSocket, serverStreamSocket);
 
     BSLS_LOG_DEBUG("Client stream socket at %s to %s",
-                    clientStreamSocket->sourceEndpoint().text().c_str(),
-                    clientStreamSocket->remoteEndpoint().text().c_str());
+                   clientStreamSocket->sourceEndpoint().text().c_str(),
+                   clientStreamSocket->remoteEndpoint().text().c_str());
 
     BSLS_LOG_DEBUG("Server stream socket at %s to %s",
-                    serverStreamSocket->sourceEndpoint().text().c_str(),
-                    serverStreamSocket->remoteEndpoint().text().c_str());
+                   serverStreamSocket->sourceEndpoint().text().c_str(),
+                   serverStreamSocket->remoteEndpoint().text().c_str());
 
     // Send data from the client to the server.
 
@@ -70,8 +68,7 @@ NTSCFG_TEST_FUNCTION(ntcf::TestTest::verify)
     {
         ntci::SendFuture sendFuture;
         error = clientStreamSocket->send(
-            ntsa::Data(
-                ntsa::ConstBuffer(CLIENT_DATA, sizeof CLIENT_DATA - 1)),
+            ntsa::Data(ntsa::ConstBuffer(CLIENT_DATA, sizeof CLIENT_DATA - 1)),
             ntca::SendOptions(),
             sendFuture);
         NTSCFG_TEST_OK(error);
@@ -81,7 +78,7 @@ NTSCFG_TEST_FUNCTION(ntcf::TestTest::verify)
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(sendResult.event().type(),
-                        ntca::SendEventType::e_COMPLETE);
+                       ntca::SendEventType::e_COMPLETE);
     }
 
     // Receive data at the server from the client.
@@ -99,7 +96,7 @@ NTSCFG_TEST_FUNCTION(ntcf::TestTest::verify)
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(receiveResult.event().type(),
-                        ntca::ReceiveEventType::e_COMPLETE);
+                       ntca::ReceiveEventType::e_COMPLETE);
     }
 
     // Send data from the server to the client.
@@ -109,8 +106,7 @@ NTSCFG_TEST_FUNCTION(ntcf::TestTest::verify)
     {
         ntci::SendFuture sendFuture;
         error = serverStreamSocket->send(
-            ntsa::Data(
-                ntsa::ConstBuffer(SERVER_DATA, sizeof SERVER_DATA - 1)),
+            ntsa::Data(ntsa::ConstBuffer(SERVER_DATA, sizeof SERVER_DATA - 1)),
             ntca::SendOptions(),
             sendFuture);
         NTSCFG_TEST_OK(error);
@@ -120,7 +116,7 @@ NTSCFG_TEST_FUNCTION(ntcf::TestTest::verify)
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(sendResult.event().type(),
-                        ntca::SendEventType::e_COMPLETE);
+                       ntca::SendEventType::e_COMPLETE);
     }
 
     // Receive data at the client from the server.
@@ -138,7 +134,7 @@ NTSCFG_TEST_FUNCTION(ntcf::TestTest::verify)
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(receiveResult.event().type(),
-                        ntca::ReceiveEventType::e_COMPLETE);
+                       ntca::ReceiveEventType::e_COMPLETE);
     }
 }
 

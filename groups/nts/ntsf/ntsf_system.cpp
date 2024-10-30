@@ -48,14 +48,20 @@ BSLS_IDENT_RCSID(ntsf_system_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsf {
 
-namespace {
+/// Provide a private implementation.
+class System::Impl
+{
+  public:
+    static bslma::Allocator*    s_globalAllocator_p;
+    static ntscfg::Mutex*       s_globalMutex_p;
+    static ntsi::Resolver*      s_globalResolver_p;
+    static bslma::SharedPtrRep* s_globalResolverRep_p;
+};
 
-bslma::Allocator*    s_globalAllocator_p;
-ntscfg::Mutex*       s_globalMutex_p;
-ntsi::Resolver*      s_globalResolver_p;
-bslma::SharedPtrRep* s_globalResolverRep_p;
-
-}  // close unnamed namespace
+bslma::Allocator*    System::Impl::s_globalAllocator_p;
+ntscfg::Mutex*       System::Impl::s_globalMutex_p;
+ntsi::Resolver*      System::Impl::s_globalResolver_p;
+bslma::SharedPtrRep* System::Impl::s_globalResolverRep_p;
 
 ntsa::Error System::initialize()
 {
@@ -71,9 +77,11 @@ ntsa::Error System::initialize()
         // allocator has been replaced in main.  This is because the memory
         // allocated by the plugins won't be freed until the application exits.
 
-        s_globalAllocator_p = &bslma::NewDeleteAllocator::singleton();
+        System::Impl::s_globalAllocator_p =
+            &bslma::NewDeleteAllocator::singleton();
 
-        s_globalMutex_p = new (*s_globalAllocator_p) ntscfg::Mutex();
+        System::Impl::s_globalMutex_p =
+            new (*System::Impl::s_globalAllocator_p) ntscfg::Mutex();
 
         bsl::atexit(&System::exit);
     }
@@ -1227,30 +1235,30 @@ void System::setDefault(const bsl::shared_ptr<ntsi::Resolver>& resolver)
     error = ntsf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntscfg::LockGuard lock(s_globalMutex_p);
+    ntscfg::LockGuard lock(System::Impl::s_globalMutex_p);
 
-    if (s_globalResolver_p != 0) {
-        BSLS_ASSERT_OPT(s_globalResolverRep_p);
+    if (System::Impl::s_globalResolver_p != 0) {
+        BSLS_ASSERT_OPT(System::Impl::s_globalResolverRep_p);
 
-        s_globalResolverRep_p->releaseRef();
+        System::Impl::s_globalResolverRep_p->releaseRef();
 
-        s_globalResolver_p    = 0;
-        s_globalResolverRep_p = 0;
+        System::Impl::s_globalResolver_p    = 0;
+        System::Impl::s_globalResolverRep_p = 0;
     }
 
-    BSLS_ASSERT_OPT(s_globalResolver_p == 0);
-    BSLS_ASSERT_OPT(s_globalResolverRep_p == 0);
+    BSLS_ASSERT_OPT(System::Impl::s_globalResolver_p == 0);
+    BSLS_ASSERT_OPT(System::Impl::s_globalResolverRep_p == 0);
 
     bsl::shared_ptr<ntsi::Resolver>                  temp = resolver;
     bsl::pair<ntsi::Resolver*, bslma::SharedPtrRep*> pair = temp.release();
 
     temp.reset();
 
-    s_globalResolver_p    = pair.first;
-    s_globalResolverRep_p = pair.second;
+    System::Impl::s_globalResolver_p    = pair.first;
+    System::Impl::s_globalResolverRep_p = pair.second;
 
-    BSLS_ASSERT_OPT(s_globalResolver_p);
-    BSLS_ASSERT_OPT(s_globalResolverRep_p);
+    BSLS_ASSERT_OPT(System::Impl::s_globalResolver_p);
+    BSLS_ASSERT_OPT(System::Impl::s_globalResolverRep_p);
 }
 
 void System::getDefault(bsl::shared_ptr<ntsi::Resolver>* result)
@@ -1260,32 +1268,35 @@ void System::getDefault(bsl::shared_ptr<ntsi::Resolver>* result)
     error = ntsf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    ntscfg::LockGuard lock(s_globalMutex_p);
+    ntscfg::LockGuard lock(System::Impl::s_globalMutex_p);
 
-    if (NTSCFG_UNLIKELY(s_globalResolver_p == 0)) {
-        BSLS_ASSERT_OPT(s_globalAllocator_p);
+    if (NTSCFG_UNLIKELY(System::Impl::s_globalResolver_p == 0)) {
+        BSLS_ASSERT_OPT(System::Impl::s_globalAllocator_p);
 
         bsl::shared_ptr<ntsb::Resolver> resolver;
-        resolver.createInplace(s_globalAllocator_p, s_globalAllocator_p);
+        resolver.createInplace(System::Impl::s_globalAllocator_p,
+                               System::Impl::s_globalAllocator_p);
 
         bsl::pair<ntsb::Resolver*, bslma::SharedPtrRep*> pair =
             resolver.release();
 
         resolver.reset();
 
-        s_globalResolver_p    = pair.first;
-        s_globalResolverRep_p = pair.second;
+        System::Impl::s_globalResolver_p    = pair.first;
+        System::Impl::s_globalResolverRep_p = pair.second;
 
-        BSLS_ASSERT_OPT(s_globalResolverRep_p->numReferences() == 1);
+        BSLS_ASSERT_OPT(System::Impl::s_globalResolverRep_p->numReferences() ==
+                        1);
     }
 
-    BSLS_ASSERT_OPT(s_globalResolver_p);
-    BSLS_ASSERT_OPT(s_globalResolverRep_p);
+    BSLS_ASSERT_OPT(System::Impl::s_globalResolver_p);
+    BSLS_ASSERT_OPT(System::Impl::s_globalResolverRep_p);
 
-    s_globalResolverRep_p->acquireRef();
+    System::Impl::s_globalResolverRep_p->acquireRef();
 
-    *result = bsl::shared_ptr<ntsi::Resolver>(s_globalResolver_p,
-                                              s_globalResolverRep_p);
+    *result =
+        bsl::shared_ptr<ntsi::Resolver>(System::Impl::s_globalResolver_p,
+                                        System::Impl::s_globalResolverRep_p);
     BSLS_ASSERT_OPT(*result);
 }
 
@@ -1440,20 +1451,21 @@ void System::exit()
 {
     BSLMT_ONCE_DO
     {
-        if (s_globalResolver_p != 0) {
-            BSLS_ASSERT_OPT(s_globalResolverRep_p);
-            s_globalResolverRep_p->releaseRef();
-            s_globalResolver_p    = 0;
-            s_globalResolverRep_p = 0;
+        if (System::Impl::s_globalResolver_p != 0) {
+            BSLS_ASSERT_OPT(System::Impl::s_globalResolverRep_p);
+            System::Impl::s_globalResolverRep_p->releaseRef();
+            System::Impl::s_globalResolver_p    = 0;
+            System::Impl::s_globalResolverRep_p = 0;
         }
 
-        if (s_globalMutex_p != 0) {
-            BSLS_ASSERT_OPT(s_globalAllocator_p);
-            s_globalAllocator_p->deleteObject(s_globalMutex_p);
-            s_globalMutex_p = 0;
+        if (System::Impl::s_globalMutex_p != 0) {
+            BSLS_ASSERT_OPT(System::Impl::s_globalAllocator_p);
+            System::Impl::s_globalAllocator_p->deleteObject(
+                System::Impl::s_globalMutex_p);
+            System::Impl::s_globalMutex_p = 0;
         }
 
-        s_globalAllocator_p = 0;
+        System::Impl::s_globalAllocator_p = 0;
 
         int rc = ntscfg::Platform::exit();
         BSLS_ASSERT_OPT(rc == 0);

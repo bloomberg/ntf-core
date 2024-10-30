@@ -37,17 +37,6 @@
 namespace BloombergLP {
 namespace ntcdns {
 
-namespace {
-
-/// Provide a functor to sort port entries by port.
-struct PortEntrySorter {
-    bool operator()(const ntcdns::PortEntry& lhs,
-                    const ntcdns::PortEntry& rhs) const
-    {
-        return lhs.port() < rhs.port();
-    }
-};
-
 /// Provide a scanner of contiguous character data.
 class Scanner
 {
@@ -481,8 +470,6 @@ bool Scanner::isSlash(char current) const
     return current == '/';
 }
 
-}  // close unnamed namespace
-
 bsl::size_t HostDatabaseUtil::hashIpv6(const ntsa::Ipv6Address& ipv6Address)
 {
     bsl::size_t result = 0;
@@ -804,6 +791,17 @@ ntsa::Error HostDatabase::getDomainName(
 
     return ntsa::Error();
 }
+
+/// Provide a functor to sort port entries by port.
+class PortDatabase::PortEntrySorter
+{
+  public:
+    bool operator()(const ntcdns::PortEntry& lhs,
+                    const ntcdns::PortEntry& rhs) const
+    {
+        return lhs.port() < rhs.port();
+    }
+};
 
 ntsa::Error PortDatabase::load(const bsl::shared_ptr<ntcdns::File>& file)
 {

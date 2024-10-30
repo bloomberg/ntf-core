@@ -186,45 +186,7 @@
 namespace BloombergLP {
 namespace ntcdns {
 
-namespace {
-
-// The maximum UDP payload size.
-const bsl::size_t k_UDP_MAX_PAYLOAD_SIZE = 65527;
-
-// The maximum DNS payload size.
-const bsl::size_t k_DNS_MAX_PAYLOAD_SIZE = 512;
-
-// The default DNS port.
-const ntsa::Port k_DNS_PORT = 53;
-
-bsls::AtomicUint s_generation;
-
-bsl::uint16_t generateTransactionId()
-{
-    bsl::uint16_t result = 0;
-
-    while (true) {
-        unsigned int old = s_generation.load();
-        if (old >= 65535) {
-            result                = 1;
-            unsigned int previous = s_generation.testAndSwap(old, result);
-            if (previous == old) {
-                break;
-            }
-        }
-        else {
-            result = NTCCFG_WARNING_NARROW(bsl::uint16_t, old + 1);
-            unsigned int previous = s_generation.testAndSwap(old, result);
-            if (previous == old) {
-                break;
-            }
-        }
-    }
-
-    return result;
-}
-
-}  // close unnamed namespace
+const bsl::size_t ClientOperation::k_DNS_MAX_PAYLOAD_SIZE = 512;
 
 ClientOperation::~ClientOperation()
 {
@@ -907,6 +869,46 @@ bsl::size_t ClientGetDomainNameOperation::searchIndex() const
     return 0;
 }
 
+// Provide functions for the implementation of 'ntcdns::ClientNameServer'.
+class ClientNameServer::Impl
+{
+  public:
+    // Return a unique transaction ID.
+    static bsl::uint16_t generateTransactionId();
+
+  private:
+    static bsls::AtomicUint s_generation;
+};
+
+bsls::AtomicUint ClientNameServer::Impl::s_generation;
+
+bsl::uint16_t ClientNameServer::Impl::generateTransactionId()
+{
+    bsl::uint16_t result = 0;
+
+    while (true) {
+        unsigned int old = s_generation.load();
+        if (old >= 65535) {
+            result                = 1;
+            unsigned int previous = s_generation.testAndSwap(old, result);
+            if (previous == old) {
+                break;
+            }
+        }
+        else {
+            result = NTCCFG_WARNING_NARROW(bsl::uint16_t, old + 1);
+            unsigned int previous = s_generation.testAndSwap(old, result);
+            if (previous == old) {
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
+const bsl::size_t ClientNameServer::k_UDP_MAX_PAYLOAD_SIZE = 65527;
+
 void ClientNameServer::processReadQueueLowWatermark(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const ntca::ReadQueueEvent&                  event)
@@ -982,7 +984,8 @@ void ClientNameServer::processReadQueueLowWatermark(
             // different name prefixed with the next scope.
 
             if (operation->tryNextSearch()) {
-                bsl::uint16_t transactionId = generateTransactionId();
+                bsl::uint16_t transactionId =
+                    ClientNameServer::Impl::generateTransactionId();
 
                 if (!d_operationMap.add(transactionId, operation)) {
                     operation->processError(
@@ -1430,7 +1433,8 @@ void ClientNameServer::flush()
 
     bsl::shared_ptr<ntcdns::ClientOperation> operation;
     while (d_operationQueue.pop(&operation)) {
-        bsl::uint16_t transactionId = generateTransactionId();
+        bsl::uint16_t transactionId =
+            ClientNameServer::Impl::generateTransactionId();
 
         if (!d_operationMap.add(transactionId, operation)) {
             return;  // MRM: transaction ID collision
@@ -1675,6 +1679,8 @@ const ntsa::Endpoint& ClientNameServer::endpoint() const
 {
     return d_endpoint;
 }
+
+const ntsa::Port Client::k_DNS_PORT = 53;
 
 ntsa::Error Client::initialize()
 {

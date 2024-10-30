@@ -27,26 +27,6 @@ BSLS_IDENT_RCSID(ntcs_reactormetrics_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcs {
 
-namespace {
-
-bslmt::ThreadUtil::Key s_key;
-
-struct Initializer {
-    Initializer()
-    {
-        int rc = bslmt::ThreadUtil::createKey(&s_key, 0);
-        BSLS_ASSERT_OPT(rc == 0);
-    }
-
-    ~Initializer()
-    {
-        // MRM: int rc = bslmt::ThreadUtil::deleteKey(s_key);
-        // MRM: BSLS_ASSERT_OPT(rc == 0);
-    }
-} s_initializer;
-
-}  // close unnamed namespace
-
 const ntci::MetricMetadata ReactorMetrics::STATISTICS[] = {
     NTCI_METRIC_METADATA_SUMMARY(interrupts),
     NTCI_METRIC_METADATA_SUMMARY(socketsReadable),
@@ -287,28 +267,6 @@ const char* ReactorMetrics::objectName() const
 const bsl::shared_ptr<ntci::ReactorMetrics>& ReactorMetrics::parent() const
 {
     return d_parent_sp;
-}
-
-ntcs::ReactorMetrics* ReactorMetrics::setThreadLocal(
-    ntcs::ReactorMetrics* metrics)
-{
-    ntcs::ReactorMetrics* previous = reinterpret_cast<ntcs::ReactorMetrics*>(
-        bslmt::ThreadUtil::getSpecific(s_key));
-
-    int rc = bslmt::ThreadUtil::setSpecific(
-        s_key,
-        const_cast<const void*>(static_cast<void*>(metrics)));
-    BSLS_ASSERT_OPT(rc == 0);
-
-    return previous;
-}
-
-ntcs::ReactorMetrics* ReactorMetrics::getThreadLocal()
-{
-    ntcs::ReactorMetrics* current = reinterpret_cast<ntcs::ReactorMetrics*>(
-        bslmt::ThreadUtil::getSpecific(s_key));
-
-    return current;
 }
 
 }  // close package namespace

@@ -42,6 +42,9 @@ namespace ntccfg {
 // The build commit hash, abbreviated.
 #define NTC_BUILD_COMMIT_HASH_ABBREV "@NTC_BUILD_COMMIT_HASH_ABBREV@"
 
+// Build with component unification, or amalgamation.
+#define NTC_BUILD_UNITY @NTF_BUILD_UNITY@
+
 // Build with BSL.
 #define NTC_BUILD_WITH_BSL @NTF_BUILD_WITH_BSL@
 

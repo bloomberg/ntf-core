@@ -59,9 +59,27 @@ BSLS_IDENT_RCSID(ntsa_error_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
+/// Provide a private implementation.
+class Error::Impl
+{
+  public:
+    /// Return the string description of the specified error 'code'.
+    static const char* describeErrorCode(ntsa::Error::Code code);
 
-const char* describeErrorCode(ntsa::Error::Code code)
+    /// Print the specified error 'code' to the specified 'stream'.
+    static bsl::ostream& printErrorCode(bsl::ostream&     stream,
+                                        ntsa::Error::Code code,
+                                        int               level,
+                                        int               spacesPerLevel);
+
+    /// Print the specified error 'number' to the specified 'stream'.
+    static bsl::ostream& printErrorString(bsl::ostream&       stream,
+                                          ntsa::Error::Number number,
+                                          int                 level,
+                                          int                 spacesPerLevel);
+};
+
+const char* Error::Impl::describeErrorCode(ntsa::Error::Code code)
 {
     switch (code) {
     case ntsa::Error::e_OK:
@@ -107,10 +125,10 @@ const char* describeErrorCode(ntsa::Error::Code code)
     return "???";
 }
 
-bsl::ostream& printErrorCode(bsl::ostream&     stream,
-                             ntsa::Error::Code code,
-                             int               level,
-                             int               spacesPerLevel)
+bsl::ostream& Error::Impl::printErrorCode(bsl::ostream&     stream,
+                                          ntsa::Error::Code code,
+                                          int               level,
+                                          int               spacesPerLevel)
 {
     NTSCFG_WARNING_UNUSED(level);
     NTSCFG_WARNING_UNUSED(spacesPerLevel);
@@ -121,10 +139,10 @@ bsl::ostream& printErrorCode(bsl::ostream&     stream,
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
-bsl::ostream& printErrorString(bsl::ostream&       stream,
-                               ntsa::Error::Number number,
-                               int                 level,
-                               int                 spacesPerLevel)
+bsl::ostream& Error::Impl::printErrorString(bsl::ostream&       stream,
+                                            ntsa::Error::Number number,
+                                            int                 level,
+                                            int                 spacesPerLevel)
 {
     NTSCFG_WARNING_UNUSED(level);
     NTSCFG_WARNING_UNUSED(spacesPerLevel);
@@ -309,10 +327,10 @@ bsl::ostream& printErrorString(bsl::ostream&       stream,
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
-bsl::ostream& printErrorString(bsl::ostream&       stream,
-                               ntsa::Error::Number number,
-                               int                 level,
-                               int                 spacesPerLevel)
+bsl::ostream& Error::Impl::printErrorString(bsl::ostream&       stream,
+                                            ntsa::Error::Number number,
+                                            int                 level,
+                                            int                 spacesPerLevel)
 {
     char buffer[512];
 
@@ -344,8 +362,6 @@ bsl::ostream& printErrorString(bsl::ostream&       stream,
 #else
 #error Not implemented
 #endif
-
-}  // close unnamed namespace
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
@@ -555,7 +571,11 @@ ntsa::Error::Number Error::translate(ntsa::Error::Code code)
 
 bsl::ostream& operator<<(bsl::ostream& stream, const Error& object)
 {
-    printErrorString(stream, object.d_value.d_pair.d_number, 0, -1);
+    Error::Impl::printErrorString(stream,
+                                  object.d_value.d_pair.d_number,
+                                  0,
+                                  -1);
+
     return stream;
 }
 
@@ -753,7 +773,8 @@ ntsa::Error::Number Error::translate(ntsa::Error::Code code)
 
 bsl::ostream& operator<<(bsl::ostream& stream, const Error& object)
 {
-    printErrorString(stream, object.d_value.d_pair.d_number, 0, -1);
+    Error::Impl::printErrorString(
+        stream, object.d_value.d_pair.d_number, 0, -1);
     return stream;
 }
 
@@ -795,10 +816,12 @@ bsl::ostream& Error::print(bsl::ostream& stream,
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     if (d_value.d_pair.d_code != ntsa::Error::e_OK) {
-        printer.printForeign(d_value.d_pair.d_code, &printErrorCode, "code");
+        printer.printForeign(d_value.d_pair.d_code,
+                             &Error::Impl::printErrorCode,
+                             "code");
         printer.printAttribute("number", d_value.d_pair.d_number);
         printer.printForeign(d_value.d_pair.d_number,
-                             &printErrorString,
+                             &Error::Impl::printErrorString,
                              "description");
     }
     printer.end();

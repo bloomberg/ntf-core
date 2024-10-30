@@ -32,6 +32,64 @@ namespace BloombergLP {
 namespace ntcdns {
 
 /// @internal @brief
+/// Provide utilities for validating the correctness of the serialization of
+/// the DNS protocol.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntcdns
+class Validation
+{
+  public:
+    /// Verify the specified 'numBytesRemaining' is sufficient to store the
+    /// specified 'numBytesNeeded'. Return the error.
+    static ntsa::Error checkOverflow(bsl::size_t numBytesRemaining,
+                                     bsl::size_t numBytesNeeded);
+
+    /// Verify the specified 'numBytesRemaining' is sufficient to store the
+    /// specified 'numBytesNeeded'. Return the error.
+    static ntsa::Error checkUnderflow(bsl::size_t numBytesRemaining,
+                                      bsl::size_t numBytesNeeded);
+
+    /// Verify the specified 'token' in the specified 'name'. Return the error.
+    static ntsa::Error checkToken(const bsl::string&       name,
+                                  const bslstl::StringRef& token);
+
+    /// Verify the specify character-string 'value'. Return the error.
+    static ntsa::Error checkCharacterString(const bsl::string& value);
+
+    /// Verify the specify resource record 'value'. Return the error.
+    static ntsa::Error checkRdata(const bdlbb::Blob& value);
+
+    /// Verify the specified 'expected' RDATA length matches the specified
+    /// 'found' RDATA length. Return the error.
+    static ntsa::Error checkExpectedRdataLength(bsl::size_t expected,
+                                                bsl::size_t found);
+
+    /// Verify the specified 'expected' RDATA length matches the specified
+    /// 'found' RDATA length. Return the error.
+    static ntsa::Error checkCoherentRdataLength(bsl::size_t expected,
+                                                bsl::size_t found);
+
+    /// The length of a typical domain name.
+    static const bsl::size_t k_TYPICAL_NAME_LENGTH;
+
+    /// The maximum length of a single label within a domain name.
+    static const bsl::size_t k_MAX_LABEL_LENGTH;
+
+    /// The maximum length of a character-string.
+    static const bsl::size_t k_MAX_CHARACTER_STRING_LENGTH;
+
+    /// The maximum data of raw resource record data.
+    static const bsl::size_t k_MAX_RDATA_LENGTH;
+
+    /// The maximum recursion depth to follow when recursively decompressing
+    /// labels.
+    static const bsl::size_t k_MAX_LABEL_RESOLUTION_RECURSION_DEPTH;
+};
+
+/// @internal @brief
 /// Provide an encoder of DNS vocabulary to a contiguous range of a memory.
 ///
 /// @par Thread Safety

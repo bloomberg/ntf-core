@@ -65,50 +65,12 @@ BSLS_IDENT_RCSID(ntscfg_platform_cpp, "$Id$ $CSID$")
 // clang-format on
 #endif
 
-// Set to 1 to automatically initialize the library during C++ static
-// initialization.
-#define NTSCFG_PLATFORM_AUTO_INITIALIZE 0
-
 // Set to 1 to automatically ignore SIGPIPE (causing functions to return EPIPE
 // instead of having SIGPIPE raised) during C++ static initialization.
 #define NTSCFG_PLATFORM_AUTO_IGNORE_SIGPIPE 0
 
 namespace BloombergLP {
 namespace ntscfg {
-
-namespace {
-
-#if NTSCFG_PLATFORM_AUTO_INITIALIZE
-
-// This struct defines a guard class to automatically initialize and
-// cleanup the necessary library state and platform conditions.
-struct Initializer {
-    // Initialize the library state.
-    Initializer();
-
-    // Clean up the library state.
-    ~Initializer();
-};
-
-// The static object to automatically initialize and clean up the library
-// state.
-Initializer s_initializer;
-
-Initializer::Initializer()
-{
-    int rc = ntscfg::Platform::initialize();
-    BSLS_ASSERT_OPT(rc == 0);
-}
-
-Initializer::~Initializer()
-{
-    int rc = ntscfg::Platform::exit();
-    BSLS_ASSERT_OPT(rc == 0);
-}
-
-#endif
-
-}  // close unnamed namespace
 
 int Platform::initialize()
 {

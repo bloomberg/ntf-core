@@ -95,6 +95,8 @@ class Endpoint
 
     ntsa::EndpointType::Value d_type;
 
+    class Impl;
+
   public:
     /// Defines a type alias for the base serialization type customized by this
     /// type.

@@ -2411,6 +2411,10 @@ struct AbstractIntegerBase {
     /// specified enumeration 'value'.  Return a reference to the modifiable
     /// 'stream'.
     static bsl::ostream& print(bsl::ostream& stream, Value value);
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 /// Format the specified 'rhs' to the specified output 'stream' and return a

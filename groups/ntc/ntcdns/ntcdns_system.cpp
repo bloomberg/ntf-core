@@ -35,13 +35,9 @@
 namespace BloombergLP {
 namespace ntcdns {
 
-namespace {
-
-const int k_DEFAULT_MIN_THREADS   = 0;
-const int k_DEFAULT_MAX_THREADS   = 1;
-const int k_DEFAULT_MAX_IDLE_TIME = 10;
-
-}  // close unnamed namespace
+const int System::k_DEFAULT_MIN_THREADS   = 0;
+const int System::k_DEFAULT_MAX_THREADS   = 1;
+const int System::k_DEFAULT_MAX_IDLE_TIME = 10;
 
 ntsa::Error System::initialize()
 {

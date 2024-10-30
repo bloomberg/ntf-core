@@ -524,7 +524,9 @@ bool operator!=(const ErrorStack& lhs, const ErrorStack& rhs);
 /// This class is thread safe.
 ///
 /// @ingroup module_ntctls
-struct Internal {
+class Internal
+{
+  public:
     /// Initialize the internal state.
     static void initialize();
 
@@ -586,7 +588,534 @@ struct Internal {
 
     /// Clean up the internal state.
     static void exit();
+
+  public:
+    /// Provide implementation details.
+    class Impl;
 };
+
+/// Provide implementation details.
+class Internal::Impl
+{
+  public:
+    /// Provide a guard to save and restore a the read position in a stream
+    /// buffer.
+    class StreamBufferPositionGuard;
+
+    /// The "virtual table" of functions for blob-based BIOs.
+    static BIO_METHOD* s_blobMethods;
+
+    /// The "virtual table" of functions for streambuf-based BIOs.
+    static BIO_METHOD* s_streambufMethods;
+
+    /// The lock for the user data index.
+    static bsls::SpinLock s_userDataIndexLock;
+
+    /// The user data index for this implementation.
+    static int s_userDataIndex;
+
+    /// The flag that indicates whether the user data index for this
+    /// implementation has been reserved.
+    static bool s_userDataIndexDefined;
+
+    /// The list of supported ciphers when using TLSv1.0 through TLSv1.2. This
+    /// list is the default recommendations from OpenSSL 1.1.x.
+    static const char k_DEFAULT_CIPHER_SPEC[174];
+
+    /// The list of supported cipher suites when using TLSv1.3 and later. This
+    /// list is the default recommendations from OpenSSL 1.1.x.
+    static const char k_DEFAULT_CIPHER_SUITES[75];
+
+    static int  bio_blob_new(BIO* bio);
+    static int  bio_blob_free(BIO* bio);
+    static int  bio_blob_write(BIO* bio, const char* data, int size);
+    static int  bio_blob_read(BIO* bio, char* data, int size);
+    static int  bio_blob_puts(BIO* bio, const char* data);
+    static int  bio_blob_gets(BIO* bio, char* data, int size);
+    static long bio_blob_ctrl(BIO* bio, int cmd, long num, void* ptr);
+
+    static int  bio_streambuf_new(BIO* bio);
+    static int  bio_streambuf_free(BIO* bio);
+    static int  bio_streambuf_write(BIO* bio, const char* data, int size);
+    static int  bio_streambuf_read(BIO* bio, char* data, int size);
+    static int  bio_streambuf_puts(BIO* bio, const char* data);
+    static int  bio_streambuf_gets(BIO* bio, char* data, int size);
+    static long bio_streambuf_ctrl(BIO* bio, int cmd, long num, void* ptr);
+
+    static BIO* BIO_new_blob(bdlbb::Blob* blob);
+    static BIO* BIO_new_streambuf(bsl::streambuf* buffer);
+};
+
+BIO_METHOD*    Internal::Impl::s_blobMethods;
+BIO_METHOD*    Internal::Impl::s_streambufMethods;
+bsls::SpinLock Internal::Impl::s_userDataIndexLock;
+int            Internal::Impl::s_userDataIndex;
+bool           Internal::Impl::s_userDataIndexDefined;
+
+// clang-format off
+
+// The list of supported ciphers when using TLSv1.0 through TLSv1.2. This list
+// is the default recommendations from OpenSSL 1.1.x.
+const char Internal::Impl::k_DEFAULT_CIPHER_SPEC[174] =
+    "ECDHE-ECDSA-AES128-GCM-SHA256:"
+    "ECDHE-RSA-AES128-GCM-SHA256:"
+    "ECDHE-ECDSA-AES256-GCM-SHA384:"
+    "ECDHE-RSA-AES256-GCM-SHA384:"
+    "ECDHE-ECDSA-CHACHA20-POLY1305:"
+    "ECDHE-RSA-CHACHA20-POLY1305";
+
+// The list of supported cipher suites when using TLSv1.3 and later. This list
+// is the default recommendations from OpenSSL 1.1.x.
+const char Internal::Impl::k_DEFAULT_CIPHER_SUITES[75] =
+    "TLS_AES_256_GCM_SHA384:"
+    "TLS_CHACHA20_POLY1305_SHA256:"
+    "TLS_AES_128_GCM_SHA256";
+
+// clang-format on
+
+/// Provide a guard to save and restore a the read position in a stream buffer.
+class Internal::Impl::StreamBufferPositionGuard
+{
+    bsl::streambuf* d_buffer_p;
+    bsl::streampos  d_start;
+
+    StreamBufferPositionGuard(const StreamBufferPositionGuard&)
+        BSLS_KEYWORD_DELETED;
+    StreamBufferPositionGuard& operator=(const StreamBufferPositionGuard&)
+        BSLS_KEYWORD_DELETED;
+
+  public:
+    explicit StreamBufferPositionGuard(bsl::streambuf* buffer);
+    ~StreamBufferPositionGuard();
+
+    void release();
+};
+
+Internal::Impl::StreamBufferPositionGuard::StreamBufferPositionGuard(
+    bsl::streambuf* buffer)
+: d_buffer_p(buffer)
+, d_start(d_buffer_p->pubseekoff(0, bsl::ios_base::cur, bsl::ios_base::in))
+{
+}
+
+Internal::Impl::StreamBufferPositionGuard::~StreamBufferPositionGuard()
+{
+    if (d_buffer_p) {
+        if (d_start >= 0) {
+            bsl::streampos current = d_buffer_p->pubseekoff(0,
+                                                            bsl::ios_base::cur,
+                                                            bsl::ios_base::in);
+
+            if (current > d_start) {
+                bsl::streamoff distance =
+                    static_cast<bsl::streamoff>(current - d_start);
+                d_buffer_p->pubseekoff(-distance,
+                                       bsl::ios_base::cur,
+                                       bsl::ios_base::in);
+            }
+        }
+    }
+}
+
+void Internal::Impl::StreamBufferPositionGuard::release()
+{
+    d_buffer_p = 0;
+    d_start    = -1;
+}
+
+int Internal::Impl::bio_blob_new(BIO* bio)
+{
+    BIO_set_init(bio, 1);
+    return 1;
+}
+
+int Internal::Impl::bio_blob_free(BIO* bio)
+{
+    if (bio == 0) {
+        return 0;
+    }
+
+    BIO_set_init(bio, 0);
+    BIO_set_data(bio, 0);
+
+    return 1;
+}
+
+int Internal::Impl::bio_blob_write(BIO* bio, const char* data, int size)
+{
+    bdlbb::Blob* blob = reinterpret_cast<bdlbb::Blob*>(BIO_get_data(bio));
+
+    BIO_clear_retry_flags(bio);
+
+    if (size < 0) {
+        return -1;
+    }
+
+    if (size == 0) {
+        return 0;
+    }
+
+    bdlbb::BlobUtil::append(blob, data, size);
+
+    return size;
+}
+
+int Internal::Impl::bio_blob_read(BIO* bio, char* data, int size)
+{
+    bdlbb::Blob* blob = reinterpret_cast<bdlbb::Blob*>(BIO_get_data(bio));
+
+    BIO_clear_retry_flags(bio);
+
+    if (size < 0) {
+        return -1;
+    }
+
+    if (size == 0) {
+        return 0;
+    }
+
+    const int available = blob->length();
+
+    if (available == 0) {
+        BIO_set_retry_read(bio);
+        return -1;
+    }
+
+    int n = size;
+    if (n > available) {
+        n = available;
+    }
+
+    bdlbb::BlobUtil::copy(data, *blob, 0, n);
+    bdlbb::BlobUtil::erase(blob, 0, n);
+
+    BSLS_ASSERT(n > 0);
+    return n;
+}
+
+int Internal::Impl::bio_blob_puts(BIO* bio, const char* data)
+{
+    bdlbb::Blob* blob = reinterpret_cast<bdlbb::Blob*>(BIO_get_data(bio));
+    const int    size = static_cast<int>(bsl::strlen(data));
+
+    bdlbb::BlobUtil::append(blob, data, 0, size);
+
+    return size;
+}
+
+int Internal::Impl::bio_blob_gets(BIO* bio, char* data, int size)
+{
+    bdlbb::Blob* blob = reinterpret_cast<bdlbb::Blob*>(BIO_get_data(bio));
+
+    if (size == 0) {
+        return 0;
+    }
+
+    if (size == 1) {
+        *data = 0;
+        return 0;
+    }
+
+    if (blob->length() == 0) {
+        *data = 0;
+        return 0;
+    }
+
+    char* current = data;
+    char* end     = data + size - 1;
+
+    int bufferIndex  = 0;
+    int bufferOffset = 0;
+
+    const bdlbb::BlobBuffer* buffer = &blob->buffer(bufferIndex);
+
+    while (true) {
+        if (current == end) {
+            break;
+        }
+
+        if (bufferOffset == buffer->size()) {
+            bufferOffset = 0;
+            ++bufferIndex;
+            if (bufferIndex == blob->numDataBuffers()) {
+                break;
+            }
+            buffer = &blob->buffer(bufferIndex);
+        }
+
+        const char ch = buffer->data()[bufferOffset];
+        ++bufferOffset;
+
+        *current = ch;
+        ++current;
+
+        if (ch == '\n') {
+            break;
+        }
+    }
+
+    BSLS_ASSERT(current < data + size);
+    *current = 0;
+
+    int n = static_cast<int>(current - data);
+    BSLS_ASSERT(n >= 0);
+
+    bdlbb::BlobUtil::erase(blob, 0, n);
+
+    return n;
+}
+
+long Internal::Impl::bio_blob_ctrl(BIO* bio, int cmd, long num, void* ptr)
+{
+    NTCCFG_WARNING_UNUSED(num);
+    NTCCFG_WARNING_UNUSED(ptr);
+
+    if (cmd == BIO_CTRL_FLUSH) {
+        return 1;
+    }
+
+    if (cmd == BIO_CTRL_RESET) {
+        return 1;
+    }
+
+    if (cmd == BIO_CTRL_DUP) {
+        return 1;
+    }
+
+    if (cmd == BIO_CTRL_PUSH) {
+        return 0;
+    }
+
+    if (cmd == BIO_CTRL_POP) {
+        return 0;
+    }
+
+    if (cmd == BIO_CTRL_EOF) {
+        return 0;
+    }
+
+    if (cmd == BIO_CTRL_GET_CLOSE) {
+        return BIO_CLOSE;
+    }
+
+    if (cmd == BIO_CTRL_SET_CLOSE) {
+        return 1;
+    }
+
+    if (cmd == BIO_CTRL_WPENDING) {
+        return 0;
+    }
+
+    if (cmd == BIO_CTRL_PENDING) {
+        bdlbb::Blob* blob = reinterpret_cast<bdlbb::Blob*>(BIO_get_data(bio));
+        return static_cast<long>(blob->length());
+    }
+
+    return 1;
+}
+
+int Internal::Impl::bio_streambuf_new(BIO* bio)
+{
+    BIO_set_init(bio, 1);
+    return 1;
+}
+
+int Internal::Impl::bio_streambuf_free(BIO* bio)
+{
+    if (bio == 0) {
+        return 0;
+    }
+
+    BIO_set_init(bio, 0);
+    BIO_set_data(bio, 0);
+    return 1;
+}
+
+int Internal::Impl::bio_streambuf_write(BIO* bio, const char* data, int size)
+{
+    bsl::streambuf* sb = reinterpret_cast<bsl::streambuf*>(BIO_get_data(bio));
+
+    BIO_clear_retry_flags(bio);
+
+    if (size < 0) {
+        return -1;
+    }
+
+    if (size == 0) {
+        return 0;
+    }
+
+    bsl::streamsize n = sb->sputn(data, size);
+    if (n <= 0) {
+        return -1;
+    }
+
+    return static_cast<int>(n);
+}
+
+int Internal::Impl::bio_streambuf_read(BIO* bio, char* data, int size)
+{
+    bsl::streambuf* sb = reinterpret_cast<bsl::streambuf*>(BIO_get_data(bio));
+
+    BIO_clear_retry_flags(bio);
+
+    if (size < 0) {
+        return -1;
+    }
+
+    if (size == 0) {
+        return 0;
+    }
+
+    bsl::streamsize n = sb->sgetn(data, size);
+    if (n == 0) {
+        BIO_set_retry_read(bio);
+        return -1;
+    }
+
+    return static_cast<int>(n);
+}
+
+int Internal::Impl::bio_streambuf_puts(BIO* bio, const char* data)
+{
+    bsl::streambuf* sb = reinterpret_cast<bsl::streambuf*>(BIO_get_data(bio));
+
+    const int size = static_cast<int>(bsl::strlen(data));
+
+    bsl::streamsize n = sb->sputn(data, size);
+    if (n < 0) {
+        return -1;
+    }
+
+    return static_cast<int>(n);
+}
+
+int Internal::Impl::bio_streambuf_gets(BIO* bio, char* data, int size)
+{
+    bsl::streambuf* sb = reinterpret_cast<bsl::streambuf*>(BIO_get_data(bio));
+
+    if (size == 0) {
+        return 0;
+    }
+
+    if (size == 1) {
+        *data = 0;
+        return 0;
+    }
+
+    char* current = data;
+    char* end     = data + size - 1;
+
+    while (true) {
+        if (current == end) {
+            break;
+        }
+
+        bsl::streambuf::int_type meta = sb->sbumpc();
+
+        if (bsl::streambuf::traits_type::eq_int_type(
+                meta,
+                bsl::streambuf::traits_type::eof()))
+        {
+            break;
+        }
+
+        char ch = bsl::streambuf::traits_type::to_char_type(meta);
+
+        if (ch == '\r') {
+            continue;
+        }
+
+        *current = ch;
+        ++current;
+
+        if (ch == '\n') {
+            break;
+        }
+    }
+
+    BSLS_ASSERT(current < data + size);
+    *current = 0;
+
+    int n = static_cast<int>(current - data);
+    BSLS_ASSERT(n >= 0);
+
+    return n;
+}
+
+long Internal::Impl::bio_streambuf_ctrl(BIO* bio, int cmd, long num, void* ptr)
+{
+    NTCCFG_WARNING_UNUSED(num);
+    NTCCFG_WARNING_UNUSED(ptr);
+
+    bsl::streambuf* sb = reinterpret_cast<bsl::streambuf*>(BIO_get_data(bio));
+
+    if (cmd == BIO_CTRL_FLUSH) {
+        int rc = sb->pubsync();
+        if (rc != 0) {
+            return 0;
+        }
+        return 1;
+    }
+
+    if (cmd == BIO_CTRL_RESET) {
+        return 1;
+    }
+
+    if (cmd == BIO_CTRL_DUP) {
+        return 1;
+    }
+
+    if (cmd == BIO_CTRL_PUSH) {
+        return 0;
+    }
+
+    if (cmd == BIO_CTRL_POP) {
+        return 0;
+    }
+
+    if (cmd == BIO_CTRL_EOF) {
+        return 0;
+    }
+
+    if (cmd == BIO_CTRL_GET_CLOSE) {
+        return BIO_CLOSE;
+    }
+
+    if (cmd == BIO_CTRL_SET_CLOSE) {
+        return 1;
+    }
+
+    if (cmd == BIO_CTRL_WPENDING) {
+        return 0;
+    }
+
+    if (cmd == BIO_CTRL_PENDING) {
+        return static_cast<long>(sb->in_avail());
+    }
+
+    return 1;
+}
+
+BIO* Internal::Impl::BIO_new_blob(bdlbb::Blob* blob)
+{
+    BIO* bio = BIO_new(Internal::Impl::s_blobMethods);
+    BSLS_ASSERT_OPT(bio);
+
+    BIO_set_data(bio, blob);
+
+    return bio;
+}
+
+BIO* Internal::Impl::BIO_new_streambuf(bsl::streambuf* buffer)
+{
+    BIO* bio = BIO_new(Internal::Impl::s_streambufMethods);
+    BSLS_ASSERT_OPT(bio);
+
+    BIO_set_data(bio, buffer);
+
+    return bio;
+}
 
 template <typename TYPE>
 NTCCFG_INLINE Handle<TYPE>::Handle()
@@ -811,411 +1340,6 @@ HandleUtil::Deleter HandleUtil::deleter(PKCS8_PRIV_KEY_INFO*)
 {
     return reinterpret_cast<HandleUtil::Deleter>(&PKCS8_PRIV_KEY_INFO_free);
 }
-
-namespace {
-
-static int bio_blob_new(BIO* bio)
-{
-    BIO_set_init(bio, 1);
-    return 1;
-}
-
-static int bio_blob_free(BIO* bio)
-{
-    if (bio == 0) {
-        return 0;
-    }
-
-    BIO_set_init(bio, 0);
-    BIO_set_data(bio, 0);
-
-    return 1;
-}
-
-static int bio_blob_write(BIO* bio, const char* data, int size)
-{
-    bdlbb::Blob* blob = reinterpret_cast<bdlbb::Blob*>(BIO_get_data(bio));
-
-    BIO_clear_retry_flags(bio);
-
-    if (size < 0) {
-        return -1;
-    }
-
-    if (size == 0) {
-        return 0;
-    }
-
-    bdlbb::BlobUtil::append(blob, data, size);
-
-    return size;
-}
-
-static int bio_blob_read(BIO* bio, char* data, int size)
-{
-    bdlbb::Blob* blob = reinterpret_cast<bdlbb::Blob*>(BIO_get_data(bio));
-
-    BIO_clear_retry_flags(bio);
-
-    if (size < 0) {
-        return -1;
-    }
-
-    if (size == 0) {
-        return 0;
-    }
-
-    const int available = blob->length();
-
-    if (available == 0) {
-        BIO_set_retry_read(bio);
-        return -1;
-    }
-
-    int n = size;
-    if (n > available) {
-        n = available;
-    }
-
-    bdlbb::BlobUtil::copy(data, *blob, 0, n);
-    bdlbb::BlobUtil::erase(blob, 0, n);
-
-    BSLS_ASSERT(n > 0);
-    return n;
-}
-
-static int bio_blob_puts(BIO* bio, const char* data)
-{
-    bdlbb::Blob* blob = reinterpret_cast<bdlbb::Blob*>(BIO_get_data(bio));
-    const int    size = static_cast<int>(bsl::strlen(data));
-
-    bdlbb::BlobUtil::append(blob, data, 0, size);
-
-    return size;
-}
-
-static int bio_blob_gets(BIO* bio, char* data, int size)
-{
-    bdlbb::Blob* blob = reinterpret_cast<bdlbb::Blob*>(BIO_get_data(bio));
-
-    if (size == 0) {
-        return 0;
-    }
-
-    if (size == 1) {
-        *data = 0;
-        return 0;
-    }
-
-    if (blob->length() == 0) {
-        *data = 0;
-        return 0;
-    }
-
-    char* current = data;
-    char* end     = data + size - 1;
-
-    int bufferIndex  = 0;
-    int bufferOffset = 0;
-
-    const bdlbb::BlobBuffer* buffer = &blob->buffer(bufferIndex);
-
-    while (true) {
-        if (current == end) {
-            break;
-        }
-
-        if (bufferOffset == buffer->size()) {
-            bufferOffset = 0;
-            ++bufferIndex;
-            if (bufferIndex == blob->numDataBuffers()) {
-                break;
-            }
-            buffer = &blob->buffer(bufferIndex);
-        }
-
-        const char ch = buffer->data()[bufferOffset];
-        ++bufferOffset;
-
-        *current = ch;
-        ++current;
-
-        if (ch == '\n') {
-            break;
-        }
-    }
-
-    BSLS_ASSERT(current < data + size);
-    *current = 0;
-
-    int n = static_cast<int>(current - data);
-    BSLS_ASSERT(n >= 0);
-
-    bdlbb::BlobUtil::erase(blob, 0, n);
-
-    return n;
-}
-
-static long bio_blob_ctrl(BIO* bio, int cmd, long num, void* ptr)
-{
-    NTCCFG_WARNING_UNUSED(num);
-    NTCCFG_WARNING_UNUSED(ptr);
-
-    if (cmd == BIO_CTRL_FLUSH) {
-        return 1;
-    }
-
-    if (cmd == BIO_CTRL_RESET) {
-        return 1;
-    }
-
-    if (cmd == BIO_CTRL_DUP) {
-        return 1;
-    }
-
-    if (cmd == BIO_CTRL_PUSH) {
-        return 0;
-    }
-
-    if (cmd == BIO_CTRL_POP) {
-        return 0;
-    }
-
-    if (cmd == BIO_CTRL_EOF) {
-        return 0;
-    }
-
-    if (cmd == BIO_CTRL_GET_CLOSE) {
-        return BIO_CLOSE;
-    }
-
-    if (cmd == BIO_CTRL_SET_CLOSE) {
-        return 1;
-    }
-
-    if (cmd == BIO_CTRL_WPENDING) {
-        return 0;
-    }
-
-    if (cmd == BIO_CTRL_PENDING) {
-        bdlbb::Blob* blob = reinterpret_cast<bdlbb::Blob*>(BIO_get_data(bio));
-        return static_cast<long>(blob->length());
-    }
-
-    return 1;
-}
-
-static int bio_streambuf_new(BIO* bio)
-{
-    BIO_set_init(bio, 1);
-    return 1;
-}
-
-static int bio_streambuf_free(BIO* bio)
-{
-    if (bio == 0) {
-        return 0;
-    }
-
-    BIO_set_init(bio, 0);
-    BIO_set_data(bio, 0);
-    return 1;
-}
-
-static int bio_streambuf_write(BIO* bio, const char* data, int size)
-{
-    bsl::streambuf* sb = reinterpret_cast<bsl::streambuf*>(BIO_get_data(bio));
-
-    BIO_clear_retry_flags(bio);
-
-    if (size < 0) {
-        return -1;
-    }
-
-    if (size == 0) {
-        return 0;
-    }
-
-    bsl::streamsize n = sb->sputn(data, size);
-    if (n <= 0) {
-        return -1;
-    }
-
-    return static_cast<int>(n);
-}
-
-static int bio_streambuf_read(BIO* bio, char* data, int size)
-{
-    bsl::streambuf* sb = reinterpret_cast<bsl::streambuf*>(BIO_get_data(bio));
-
-    BIO_clear_retry_flags(bio);
-
-    if (size < 0) {
-        return -1;
-    }
-
-    if (size == 0) {
-        return 0;
-    }
-
-    bsl::streamsize n = sb->sgetn(data, size);
-    if (n == 0) {
-        BIO_set_retry_read(bio);
-        return -1;
-    }
-
-    return static_cast<int>(n);
-}
-
-static int bio_streambuf_puts(BIO* bio, const char* data)
-{
-    bsl::streambuf* sb = reinterpret_cast<bsl::streambuf*>(BIO_get_data(bio));
-
-    const int size = static_cast<int>(bsl::strlen(data));
-
-    bsl::streamsize n = sb->sputn(data, size);
-    if (n < 0) {
-        return -1;
-    }
-
-    return static_cast<int>(n);
-}
-
-static int bio_streambuf_gets(BIO* bio, char* data, int size)
-{
-    bsl::streambuf* sb = reinterpret_cast<bsl::streambuf*>(BIO_get_data(bio));
-
-    if (size == 0) {
-        return 0;
-    }
-
-    if (size == 1) {
-        *data = 0;
-        return 0;
-    }
-
-    char* current = data;
-    char* end     = data + size - 1;
-
-    while (true) {
-        if (current == end) {
-            break;
-        }
-
-        bsl::streambuf::int_type meta = sb->sbumpc();
-
-        if (bsl::streambuf::traits_type::eq_int_type(
-                meta,
-                bsl::streambuf::traits_type::eof()))
-        {
-            break;
-        }
-
-        char ch = bsl::streambuf::traits_type::to_char_type(meta);
-
-        if (ch == '\r') {
-            continue;
-        }
-
-        *current = ch;
-        ++current;
-
-        if (ch == '\n') {
-            break;
-        }
-    }
-
-    BSLS_ASSERT(current < data + size);
-    *current = 0;
-
-    int n = static_cast<int>(current - data);
-    BSLS_ASSERT(n >= 0);
-
-    return n;
-}
-
-static long bio_streambuf_ctrl(BIO* bio, int cmd, long num, void* ptr)
-{
-    NTCCFG_WARNING_UNUSED(num);
-    NTCCFG_WARNING_UNUSED(ptr);
-
-    bsl::streambuf* sb = reinterpret_cast<bsl::streambuf*>(BIO_get_data(bio));
-
-    if (cmd == BIO_CTRL_FLUSH) {
-        int rc = sb->pubsync();
-        if (rc != 0) {
-            return 0;
-        }
-        return 1;
-    }
-
-    if (cmd == BIO_CTRL_RESET) {
-        return 1;
-    }
-
-    if (cmd == BIO_CTRL_DUP) {
-        return 1;
-    }
-
-    if (cmd == BIO_CTRL_PUSH) {
-        return 0;
-    }
-
-    if (cmd == BIO_CTRL_POP) {
-        return 0;
-    }
-
-    if (cmd == BIO_CTRL_EOF) {
-        return 0;
-    }
-
-    if (cmd == BIO_CTRL_GET_CLOSE) {
-        return BIO_CLOSE;
-    }
-
-    if (cmd == BIO_CTRL_SET_CLOSE) {
-        return 1;
-    }
-
-    if (cmd == BIO_CTRL_WPENDING) {
-        return 0;
-    }
-
-    if (cmd == BIO_CTRL_PENDING) {
-        return static_cast<long>(sb->in_avail());
-    }
-
-    return 1;
-}
-
-struct StreamState {
-    BIO_METHOD* d_blobMethods;
-    BIO_METHOD* d_streambufMethods;
-};
-
-StreamState s_streamState;
-
-BIO* BIO_new_blob(bdlbb::Blob* blob)
-{
-    BIO* bio = BIO_new(s_streamState.d_blobMethods);
-    BSLS_ASSERT_OPT(bio);
-
-    BIO_set_data(bio, blob);
-
-    return bio;
-}
-
-BIO* BIO_new_streambuf(bsl::streambuf* buffer)
-{
-    BIO* bio = BIO_new(s_streamState.d_streambufMethods);
-    BSLS_ASSERT_OPT(bio);
-
-    BIO_set_data(bio, buffer);
-
-    return bio;
-}
-
-}  // close unnamed namespace
 
 ErrorInfo::ErrorInfo(bslma::Allocator* basicAllocator)
 : d_number(0)
@@ -1587,7 +1711,7 @@ bsl::shared_ptr<BIO> Internal::createStream(bsl::streambuf*   buffer,
 
     bsl::shared_ptr<BIO> bio_sp;
 
-    BIO* bio = BIO_new_streambuf(buffer);
+    BIO* bio = Internal::Impl::BIO_new_streambuf(buffer);
     if (bio) {
         bio_sp.reset(bio, &BIO_free, allocator);
     }
@@ -1598,7 +1722,7 @@ bsl::shared_ptr<BIO> Internal::createStream(bsl::streambuf*   buffer,
 BIO* Internal::createStreamRaw(bsl::streambuf* buffer)
 {
     ntctls::Internal::initialize();
-    return BIO_new_streambuf(buffer);
+    return Internal::Impl::BIO_new_streambuf(buffer);
 }
 
 bsl::shared_ptr<BIO> Internal::createStream(bdlbb::Blob*      blob,
@@ -1610,7 +1734,7 @@ bsl::shared_ptr<BIO> Internal::createStream(bdlbb::Blob*      blob,
 
     bsl::shared_ptr<BIO> bio_sp;
 
-    BIO* bio = BIO_new_blob(blob);
+    BIO* bio = Internal::Impl::BIO_new_blob(blob);
     if (bio) {
         bio_sp.reset(bio, &BIO_free, allocator);
     }
@@ -1621,7 +1745,7 @@ bsl::shared_ptr<BIO> Internal::createStream(bdlbb::Blob*      blob,
 BIO* Internal::createStreamRaw(bdlbb::Blob* blob)
 {
     ntctls::Internal::initialize();
-    return BIO_new_blob(blob);
+    return Internal::Impl::BIO_new_blob(blob);
 }
 
 void Internal::destroyStream(BIO* bio)
@@ -1637,6 +1761,13 @@ void Internal::destroyStream(BIO* bio)
 /// @ingroup module_ntctls
 class Key : public ntci::EncryptionKey, public ntccfg::Shared<Key>
 {
+    /// Enumerate the constants used by the implementation.
+    enum Constant {
+        k_DEFAULT_DSA_BITS     = 2048,
+        k_DEFAULT_RSA_BITS     = 2048,
+        k_DEFAULT_RSA_EXPONENT = 65537
+    };
+
     ntctls::Handle<EVP_PKEY> d_pkey;
     ntca::EncryptionKey      d_record;
     bslma::Allocator*        d_allocator_p;
@@ -1750,6 +1881,8 @@ class Certificate : public ntci::EncryptionCertificate,
     ntsa::DistinguishedName     d_subject;
     ntsa::DistinguishedName     d_issuer;
     bslma::Allocator*           d_allocator_p;
+
+    class Impl;
 
   private:
     Certificate(const Certificate&) BSLS_KEYWORD_DELETED;
@@ -2223,13 +2356,35 @@ class Resource : public ntci::EncryptionResource
 #define NTCTLS_RESOURCE_LOG_INVALID_DRIVER()                                  \
     BSLS_LOG_ERROR("The parameters are implemented with a different driver")
 
-namespace {
+/// Provide a private implementation.
+class Certificate::Impl
+{
+  public:
+    /// Convert the specified 'name' into the specified 'identity'.
+    static void parseDistinguishedName(ntsa::DistinguishedName* identity,
+                                       X509_NAME*               name);
 
-const int k_DEFAULT_DSA_BITS     = 2048;
-const int k_DEFAULT_RSA_BITS     = 2048;
-const int k_DEFAULT_RSA_EXPONENT = 65537;
+    /// Append the specified Distinguished Name 'component' to the specified
+    /// 'result'. Return 0 on success and a non-zero value otherwise.
+    static int generateX509Name(
+        X509_NAME*                                result,
+        const ntsa::DistinguishedName::Component& component);
 
-void parseDistinguishedName(ntsa::DistinguishedName* identity, X509_NAME* name)
+    /// Add the specified 'extension' identified by the specified 'nid' to the
+    /// specified 'x509' have the specified 'x509v3Ctx'. Return the error.
+    static ntsa::Error addExtension(X509*       x509,
+                                    X509V3_CTX* x509v3Ctx,
+                                    int         nid,
+                                    const char* extension);
+
+    /// Return the extension in the specified 'x509' identified by the
+    /// specified 'nid', or null if no such extension is found.
+    static X509_EXTENSION* getExtension(const X509* x509, int nid);
+};
+
+void Certificate::Impl::parseDistinguishedName(
+    ntsa::DistinguishedName* identity,
+    X509_NAME*               name)
 {
     identity->reset();
 
@@ -2280,8 +2435,9 @@ void parseDistinguishedName(ntsa::DistinguishedName* identity, X509_NAME* name)
     }
 }
 
-int generateX509Name(X509_NAME*                                result,
-                     const ntsa::DistinguishedName::Component& component)
+int Certificate::Impl::generateX509Name(
+    X509_NAME*                                result,
+    const ntsa::DistinguishedName::Component& component)
 {
     for (int i = 0; i < component.numAttributes(); ++i) {
         int loc = -1;
@@ -2303,10 +2459,10 @@ int generateX509Name(X509_NAME*                                result,
     return 0;
 }
 
-ntsa::Error addExtension(X509*       x509,
-                         X509V3_CTX* x509v3Ctx,
-                         int         nid,
-                         const char* extension)
+ntsa::Error Certificate::Impl::addExtension(X509*       x509,
+                                            X509V3_CTX* x509v3Ctx,
+                                            int         nid,
+                                            const char* extension)
 {
     int rc;
 
@@ -2326,7 +2482,7 @@ ntsa::Error addExtension(X509*       x509,
     return ntsa::Error();
 }
 
-X509_EXTENSION* getExtension(const X509* x509, int nid)
+X509_EXTENSION* Certificate::Impl::getExtension(const X509* x509, int nid)
 {
     int rc = X509_get_ext_by_NID(x509, nid, -1);
     if (rc < 0) {
@@ -2334,54 +2490,6 @@ X509_EXTENSION* getExtension(const X509* x509, int nid)
     }
 
     return X509_get_ext(x509, rc);
-}
-
-class StreamBufferPositionGuard
-{
-    bsl::streambuf* d_buffer_p;
-    bsl::streampos  d_start;
-
-    StreamBufferPositionGuard(const StreamBufferPositionGuard&)
-        BSLS_KEYWORD_DELETED;
-    StreamBufferPositionGuard& operator=(const StreamBufferPositionGuard&)
-        BSLS_KEYWORD_DELETED;
-
-  public:
-    explicit StreamBufferPositionGuard(bsl::streambuf* buffer);
-    ~StreamBufferPositionGuard();
-
-    void release();
-};
-
-StreamBufferPositionGuard::StreamBufferPositionGuard(bsl::streambuf* buffer)
-: d_buffer_p(buffer)
-, d_start(d_buffer_p->pubseekoff(0, bsl::ios_base::cur, bsl::ios_base::in))
-{
-}
-
-StreamBufferPositionGuard::~StreamBufferPositionGuard()
-{
-    if (d_buffer_p) {
-        if (d_start >= 0) {
-            bsl::streampos current = d_buffer_p->pubseekoff(0,
-                                                            bsl::ios_base::cur,
-                                                            bsl::ios_base::in);
-
-            if (current > d_start) {
-                bsl::streamoff distance =
-                    static_cast<bsl::streamoff>(current - d_start);
-                d_buffer_p->pubseekoff(-distance,
-                                       bsl::ios_base::cur,
-                                       bsl::ios_base::in);
-            }
-        }
-    }
-}
-
-void StreamBufferPositionGuard::release()
-{
-    d_buffer_p = 0;
-    d_start    = -1;
 }
 
 // Provide utilities to encode and decode certificates and keys to and from
@@ -2800,7 +2908,7 @@ void ResourceUtil::chomp(bsl::streambuf* source)
     // PEM-encoded certificates and keys.
 
     while (true) {
-        StreamBufferPositionGuard guard(source);
+        Internal::Impl::StreamBufferPositionGuard guard(source);
 
         bsl::istream is(source);
 
@@ -3654,7 +3762,7 @@ ntsa::Error ResourceUtil::decodeKeyAsn1(
     NTCCFG_WARNING_UNUSED(options);
     NTCCFG_WARNING_UNUSED(allocator);
 
-    StreamBufferPositionGuard guard(source);
+    Internal::Impl::StreamBufferPositionGuard guard(source);
 
     bsl::shared_ptr<BIO> bio = Internal::createStream(source);
     if (!bio) {
@@ -3720,7 +3828,7 @@ ntsa::Error ResourceUtil::decodeCertificateAsn1(
 
     certificate->reset();
 
-    StreamBufferPositionGuard guard(source);
+    Internal::Impl::StreamBufferPositionGuard guard(source);
 
     bsl::shared_ptr<BIO> bio = Internal::createStream(source);
     if (!bio) {
@@ -3787,7 +3895,7 @@ ntsa::Error ResourceUtil::decodeKeyAsn1Pem(
 
     ResourceUtil::chomp(source);
 
-    StreamBufferPositionGuard guard(source);
+    Internal::Impl::StreamBufferPositionGuard guard(source);
 
     bsl::shared_ptr<BIO> bio = Internal::createStream(source);
     if (!bio) {
@@ -3864,7 +3972,7 @@ ntsa::Error ResourceUtil::decodeCertificateAsn1Pem(
 
     ResourceUtil::chomp(source);
 
-    StreamBufferPositionGuard guard(source);
+    Internal::Impl::StreamBufferPositionGuard guard(source);
 
     bsl::shared_ptr<BIO> bio = Internal::createStream(source);
     if (!bio) {
@@ -3975,7 +4083,7 @@ ntsa::Error ResourceUtil::decodeKeyPkcs8E(
 
     ntsa::Error error;
 
-    StreamBufferPositionGuard guard(source);
+    Internal::Impl::StreamBufferPositionGuard guard(source);
 
     bsl::shared_ptr<BIO> bio = Internal::createStream(source);
     if (!bio) {
@@ -4053,7 +4161,7 @@ ntsa::Error ResourceUtil::decodeKeyPkcs8U(
     NTCCFG_WARNING_UNUSED(options);
     NTCCFG_WARNING_UNUSED(allocator);
 
-    StreamBufferPositionGuard guard(source);
+    Internal::Impl::StreamBufferPositionGuard guard(source);
 
     bsl::shared_ptr<BIO> bio = Internal::createStream(source);
     if (!bio) {
@@ -4188,7 +4296,7 @@ ntsa::Error ResourceUtil::decodeKeyPkcs8PemE(
 
     ResourceUtil::chomp(source);
 
-    StreamBufferPositionGuard guard(source);
+    Internal::Impl::StreamBufferPositionGuard guard(source);
 
     bsl::shared_ptr<BIO> bio = Internal::createStream(source);
     if (!bio) {
@@ -4279,7 +4387,7 @@ ntsa::Error ResourceUtil::decodeKeyPkcs8PemU(
 
     ResourceUtil::chomp(source);
 
-    StreamBufferPositionGuard guard(source);
+    Internal::Impl::StreamBufferPositionGuard guard(source);
 
     bsl::shared_ptr<BIO> bio = Internal::createStream(source);
     if (!bio) {
@@ -4366,7 +4474,7 @@ ntsa::Error ResourceUtil::decodeResourcePkcs12(
     certificate->reset();
     caList->clear();
 
-    StreamBufferPositionGuard guard(source);
+    Internal::Impl::StreamBufferPositionGuard guard(source);
 
     bsl::shared_ptr<BIO> bio = Internal::createStream(source);
     if (!bio) {
@@ -4519,7 +4627,7 @@ ntsa::Error ResourceUtil::decodeResourcePkcs7(
     certificate->reset();
     caList->clear();
 
-    StreamBufferPositionGuard guard(source);
+    Internal::Impl::StreamBufferPositionGuard guard(source);
 
     bsl::shared_ptr<BIO> bio = Internal::createStream(source);
     if (!bio) {
@@ -4610,7 +4718,7 @@ ntsa::Error ResourceUtil::decodeResourcePkcs7Pem(
     certificate->reset();
     caList->clear();
 
-    StreamBufferPositionGuard guard(source);
+    Internal::Impl::StreamBufferPositionGuard guard(source);
 
     bsl::shared_ptr<BIO> bio = Internal::createStream(source);
     if (!bio) {
@@ -5130,8 +5238,6 @@ ntsa::Error ResourceUtil::convertKey(ntca::EncryptionKey*            result,
     return ntsa::Error();
 }
 
-}  // close unnamed namespace
-
 Key::Key(bslma_Allocator* basicAllocator)
 : d_pkey()
 , d_record(basicAllocator)
@@ -5507,8 +5613,8 @@ Certificate::Certificate(X509* x509, bslma_Allocator* basicAllocator)
         BSLS_LOG_ERROR("Failed to decode certificate");
     }
 
-    parseDistinguishedName(&d_subject, X509_get_subject_name(x509));
-    parseDistinguishedName(&d_issuer, X509_get_issuer_name(x509));
+    Impl::parseDistinguishedName(&d_subject, X509_get_subject_name(x509));
+    Impl::parseDistinguishedName(&d_issuer, X509_get_issuer_name(x509));
 }
 
 Certificate::~Certificate()
@@ -5562,7 +5668,7 @@ ntsa::Error Certificate::generate(
              it != userIdentity.end();
              ++it)
         {
-            rc = generateX509Name(x509Name.get(), *it);
+            rc = Impl::generateX509Name(x509Name.get(), *it);
             if (0 != rc) {
                 NTCTLS_CERTIFICATE_LOG_X509_NAME_ERROR_GENERATE();
                 return ntsa::Error(ntsa::Error::e_INVALID);
@@ -5590,44 +5696,44 @@ ntsa::Error Certificate::generate(
     X509V3_set_ctx(&x509v3Ctx, x509.get(), x509.get(), 0, 0, 0);
 
     if (configuration.authority()) {
-        error = addExtension(x509.get(),
-                             &x509v3Ctx,
-                             NID_basic_constraints,
-                             "critical,CA:TRUE");
+        error = Impl::addExtension(x509.get(),
+                                   &x509v3Ctx,
+                                   NID_basic_constraints,
+                                   "critical,CA:TRUE");
         if (error) {
             return error;
         }
 
-        error = addExtension(x509.get(),
-                             &x509v3Ctx,
-                             NID_key_usage,
-                             "keyCertSign,cRLSign");
+        error = Impl::addExtension(x509.get(),
+                                   &x509v3Ctx,
+                                   NID_key_usage,
+                                   "keyCertSign,cRLSign");
         if (error) {
             return error;
         }
     }
     else {
-        error = addExtension(x509.get(),
-                             &x509v3Ctx,
-                             NID_basic_constraints,
-                             "critical,CA:FALSE");
+        error = Impl::addExtension(x509.get(),
+                                   &x509v3Ctx,
+                                   NID_basic_constraints,
+                                   "critical,CA:FALSE");
         if (error) {
             return error;
         }
     }
 
-    error = addExtension(x509.get(),
-                         &x509v3Ctx,
-                         NID_subject_key_identifier,
-                         "hash");
+    error = Impl::addExtension(x509.get(),
+                               &x509v3Ctx,
+                               NID_subject_key_identifier,
+                               "hash");
     if (error) {
         return error;
     }
 
-    error = addExtension(x509.get(),
-                         &x509v3Ctx,
-                         NID_authority_key_identifier,
-                         "keyid:always");
+    error = Impl::addExtension(x509.get(),
+                               &x509v3Ctx,
+                               NID_authority_key_identifier,
+                               "keyid:always");
     if (error) {
         return error;
     }
@@ -5653,10 +5759,10 @@ ntsa::Error Certificate::generate(
             subjectAlternativeName = ss.str();
         }
 
-        error = addExtension(x509.get(),
-                             &x509v3Ctx,
-                             NID_subject_alt_name,
-                             subjectAlternativeName.c_str());
+        error = Impl::addExtension(x509.get(),
+                                   &x509v3Ctx,
+                                   NID_subject_alt_name,
+                                   subjectAlternativeName.c_str());
         if (error) {
             return error;
         }
@@ -5684,8 +5790,10 @@ ntsa::Error Certificate::generate(
         return error;
     }
 
-    parseDistinguishedName(&d_subject, X509_get_subject_name(d_x509.get()));
-    parseDistinguishedName(&d_issuer, X509_get_issuer_name(d_x509.get()));
+    Impl::parseDistinguishedName(&d_subject,
+                                 X509_get_subject_name(d_x509.get()));
+    Impl::parseDistinguishedName(&d_issuer,
+                                 X509_get_issuer_name(d_x509.get()));
 
     return ntsa::Error();
 }
@@ -5749,7 +5857,7 @@ ntsa::Error Certificate::generate(
              it != userIdentity.end();
              ++it)
         {
-            rc = generateX509Name(x509Name.get(), *it);
+            rc = Impl::generateX509Name(x509Name.get(), *it);
             if (0 != rc) {
                 NTCTLS_CERTIFICATE_LOG_X509_NAME_ERROR_GENERATE();
                 return ntsa::Error(ntsa::Error::e_INVALID);
@@ -5785,44 +5893,44 @@ ntsa::Error Certificate::generate(
                    0);
 
     if (configuration.authority()) {
-        error = addExtension(x509.get(),
-                             &x509v3Ctx,
-                             NID_basic_constraints,
-                             "critical,CA:TRUE");
+        error = Impl::addExtension(x509.get(),
+                                   &x509v3Ctx,
+                                   NID_basic_constraints,
+                                   "critical,CA:TRUE");
         if (error) {
             return error;
         }
 
-        error = addExtension(x509.get(),
-                             &x509v3Ctx,
-                             NID_key_usage,
-                             "keyCertSign,cRLSign");
+        error = Impl::addExtension(x509.get(),
+                                   &x509v3Ctx,
+                                   NID_key_usage,
+                                   "keyCertSign,cRLSign");
         if (error) {
             return error;
         }
     }
     else {
-        error = addExtension(x509.get(),
-                             &x509v3Ctx,
-                             NID_basic_constraints,
-                             "critical,CA:FALSE");
+        error = Impl::addExtension(x509.get(),
+                                   &x509v3Ctx,
+                                   NID_basic_constraints,
+                                   "critical,CA:FALSE");
         if (error) {
             return error;
         }
     }
 
-    error = addExtension(x509.get(),
-                         &x509v3Ctx,
-                         NID_subject_key_identifier,
-                         "hash");
+    error = Impl::addExtension(x509.get(),
+                               &x509v3Ctx,
+                               NID_subject_key_identifier,
+                               "hash");
     if (error) {
         return error;
     }
 
-    error = addExtension(x509.get(),
-                         &x509v3Ctx,
-                         NID_authority_key_identifier,
-                         "keyid:always");
+    error = Impl::addExtension(x509.get(),
+                               &x509v3Ctx,
+                               NID_authority_key_identifier,
+                               "keyid:always");
     if (error) {
         return error;
     }
@@ -5848,10 +5956,10 @@ ntsa::Error Certificate::generate(
             subjectAlternativeName = ss.str();
         }
 
-        error = addExtension(x509.get(),
-                             &x509v3Ctx,
-                             NID_subject_alt_name,
-                             subjectAlternativeName.c_str());
+        error = Impl::addExtension(x509.get(),
+                                   &x509v3Ctx,
+                                   NID_subject_alt_name,
+                                   subjectAlternativeName.c_str());
         if (error) {
             return error;
         }
@@ -5882,8 +5990,10 @@ ntsa::Error Certificate::generate(
         return error;
     }
 
-    parseDistinguishedName(&d_subject, X509_get_subject_name(d_x509.get()));
-    parseDistinguishedName(&d_issuer, X509_get_issuer_name(d_x509.get()));
+    Impl::parseDistinguishedName(&d_subject,
+                                 X509_get_subject_name(d_x509.get()));
+    Impl::parseDistinguishedName(&d_issuer,
+                                 X509_get_issuer_name(d_x509.get()));
 
     return ntsa::Error();
 }
@@ -5979,7 +6089,7 @@ bool Certificate::isAuthority() const
     bool result = false;
 
     X509_EXTENSION* extension =
-        getExtension(d_x509.get(), NID_basic_constraints);
+        Impl::getExtension(d_x509.get(), NID_basic_constraints);
     if (extension == 0) {
         return false;
     }
@@ -6654,6 +6764,9 @@ ntsa::Error Resource::convert(ntca::EncryptionKey*            result,
 /// @ingroup module_ntctls
 class Session : public ntci::Encryption
 {
+    // Enumerates the OpenSSL shutdown state flags.
+    enum { k_TLS_SHUTDOWN_SENT = 0x01, k_TLS_SHUTDOWN_RECEIVED = 0x02 };
+
     typedef ntci::Mutex       Mutex;
     typedef ntci::LockGuard   LockGuard;
     typedef ntci::UnLockGuard UnLockGuard;
@@ -6685,6 +6798,9 @@ class Session : public ntci::Encryption
     /// Process the available data through the TLS state machine under the
     /// specified 'lock' guard. Return the error.
     ntsa::Error process(LockGuard* lock);
+
+    static void infoCallback(const SSL* ssl, int where, int ret);
+    static bool check(SSL* ssl, int result);
 
   public:
     /// Create a new session in the specified 'sessionManager'. Allocate blob
@@ -7263,33 +7379,6 @@ class SessionServer : public ntci::EncryptionServer
         }                                                                     \
     } while (false)
 
-namespace {
-
-// clang-format off
-
-// The list of supported ciphers when using TLSv1.0 through TLSv1.2. This list
-// is the default recommendations from OpenSSL 1.1.x.
-const char k_DEFAULT_CIPHER_SPEC[] =
-    "ECDHE-ECDSA-AES128-GCM-SHA256:"
-    "ECDHE-RSA-AES128-GCM-SHA256:"
-    "ECDHE-ECDSA-AES256-GCM-SHA384:"
-    "ECDHE-RSA-AES256-GCM-SHA384:"
-    "ECDHE-ECDSA-CHACHA20-POLY1305:"
-    "ECDHE-RSA-CHACHA20-POLY1305";
-
-// The list of supported cipher suites when using TLSv1.3 and later. This list
-// is the default recommendations from OpenSSL 1.1.x.
-const char k_DEFAULT_CIPHER_SUITES[] =
-    "TLS_AES_256_GCM_SHA384:"
-    "TLS_CHACHA20_POLY1305_SHA256:"
-    "TLS_AES_128_GCM_SHA256";
-
-// clang-format on
-
-bsls::SpinLock s_userDataIndexLock    = BSLS_SPINLOCK_UNLOCKED;
-static int     s_userDataIndex        = 0;
-static bool    s_userDataIndexDefined = false;
-
 extern "C" int ntctls_context_sni_callback(SSL* ssl, int* al, void* userData)
 {
     // SSL_TLSEXT_ERR_OK
@@ -7343,7 +7432,7 @@ extern "C" int ntctls_context_sni_callback(SSL* ssl, int* al, void* userData)
     bsl::string serverName(serverNamePtr, serverNamePtr + serverNameLength);
 
     ntctls::Session* session = reinterpret_cast<ntctls::Session*>(
-        SSL_get_ex_data(ssl, s_userDataIndex));
+        SSL_get_ex_data(ssl, Internal::Impl::s_userDataIndex));
 
     if (session == 0) {
         return SSL_TLSEXT_ERR_ALERT_FATAL;
@@ -7395,7 +7484,7 @@ extern "C" int ntctls_context_verify_callback(X509_STORE_CTX* x509StoreCtx,
     }
 
     ntctls::Session* session = reinterpret_cast<ntctls::Session*>(
-        SSL_get_ex_data(ssl, s_userDataIndex));
+        SSL_get_ex_data(ssl, Internal::Impl::s_userDataIndex));
     if (session == 0) {
         NTCTLS_SESSION_LOG_ERROR(
             "Failed to verify certificate: invalid session");
@@ -7521,13 +7610,6 @@ void BlobBufferUtil::reserveCapacity(
                 bsl::min(minReceiveSize, maxReceiveSize));
 }
 
-enum {
-    // Enumerates the OpenSSL shutdown state flags.
-
-    TLS_SHUTDOWN_SENT     = 0x01,
-    TLS_SHUTDOWN_RECEIVED = 0x02
-};
-
 #if NTCTLS_SESSION_LOG_CALLBACK_VERBOSE
 #define NTCTLS_SESSION_LOG_CALLBACK(message) NTCI_LOG_DEBUG(message)
 #define NTCTLS_SESSION_LOG_CALLBACK_STATE(message, state)                     \
@@ -7543,7 +7625,7 @@ enum {
 #define NTCTLS_SESSION_LOG_CHECK_ERROR(message)
 #endif
 
-void infoCallback(const SSL* ssl, int where, int ret)
+void Session::infoCallback(const SSL* ssl, int where, int ret)
 {
     NTCCFG_WARNING_UNUSED(ssl);
     NTCCFG_WARNING_UNUSED(ret);
@@ -7580,7 +7662,7 @@ void infoCallback(const SSL* ssl, int where, int ret)
     }
 }
 
-bool check(SSL* ssl, int result)
+bool Session::check(SSL* ssl, int result)
 {
     int error = SSL_get_error(ssl, result);
 
@@ -7633,8 +7715,6 @@ bool check(SSL* ssl, int result)
     return false;
 }
 
-}  // close unnamed namespace
-
 ntsa::Error Session::init()
 {
     NTCI_LOG_CONTEXT();
@@ -7647,10 +7727,11 @@ ntsa::Error Session::init()
     }
 
     {
-        bsls::SpinLockGuard lock(&s_userDataIndexLock);
-        if (!s_userDataIndexDefined) {
-            s_userDataIndex = SSL_get_ex_new_index(0, 0, NULL, NULL, NULL);
-            s_userDataIndexDefined = true;
+        bsls::SpinLockGuard lock(&Internal::Impl::s_userDataIndexLock);
+        if (!Internal::Impl::s_userDataIndexDefined) {
+            Internal::Impl::s_userDataIndex =
+                SSL_get_ex_new_index(0, 0, NULL, NULL, NULL);
+            Internal::Impl::s_userDataIndexDefined = true;
         }
     }
 
@@ -7688,7 +7769,7 @@ ntsa::Error Session::init()
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
-        rc = SSL_set_ex_data(d_ssl_p, s_userDataIndex, this);
+        rc = SSL_set_ex_data(d_ssl_p, Internal::Impl::s_userDataIndex, this);
         if (rc == 0) {
             bsl::string description;
             Internal::drainErrorQueue(&description);
@@ -7741,7 +7822,7 @@ ntsa::Error Session::init()
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
-        rc = SSL_set_ex_data(d_ssl_p, s_userDataIndex, this);
+        rc = SSL_set_ex_data(d_ssl_p, Internal::Impl::s_userDataIndex, this);
         if (rc == 0) {
             bsl::string description;
             Internal::drainErrorQueue(&description);
@@ -8267,7 +8348,7 @@ ntsa::Error Session::pushIncomingCipherText(const bdlbb::Blob& input)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if ((SSL_get_shutdown(d_ssl_p) & TLS_SHUTDOWN_RECEIVED) != 0) {
+    if ((SSL_get_shutdown(d_ssl_p) & k_TLS_SHUTDOWN_RECEIVED) != 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -8284,7 +8365,7 @@ ntsa::Error Session::pushIncomingCipherText(const ntsa::Data& input)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if ((SSL_get_shutdown(d_ssl_p) & TLS_SHUTDOWN_RECEIVED) != 0) {
+    if ((SSL_get_shutdown(d_ssl_p) & k_TLS_SHUTDOWN_RECEIVED) != 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -8301,7 +8382,7 @@ ntsa::Error Session::pushOutgoingPlainText(const bdlbb::Blob& input)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if ((SSL_get_shutdown(d_ssl_p) & TLS_SHUTDOWN_SENT) != 0) {
+    if ((SSL_get_shutdown(d_ssl_p) & k_TLS_SHUTDOWN_SENT) != 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -8318,7 +8399,7 @@ ntsa::Error Session::pushOutgoingPlainText(const ntsa::Data& input)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if ((SSL_get_shutdown(d_ssl_p) & TLS_SHUTDOWN_SENT) != 0) {
+    if ((SSL_get_shutdown(d_ssl_p) & k_TLS_SHUTDOWN_SENT) != 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -8383,7 +8464,7 @@ ntsa::Error Session::shutdown()
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if ((SSL_get_shutdown(d_ssl_p) & TLS_SHUTDOWN_SENT) != 0) {
+    if ((SSL_get_shutdown(d_ssl_p) & k_TLS_SHUTDOWN_SENT) != 0) {
         // Redundant shutdown is not an error.
         return ntsa::Error();
     }
@@ -8532,7 +8613,7 @@ bool Session::isShutdownSent() const
 
     int shutdownState = SSL_get_shutdown(d_ssl_p);
 
-    if ((shutdownState & TLS_SHUTDOWN_SENT) != 0) {
+    if ((shutdownState & k_TLS_SHUTDOWN_SENT) != 0) {
         return true;
     }
 
@@ -8549,7 +8630,7 @@ bool Session::isShutdownReceived() const
 
     int shutdownState = SSL_get_shutdown(d_ssl_p);
 
-    if ((shutdownState & TLS_SHUTDOWN_RECEIVED) != 0) {
+    if ((shutdownState & k_TLS_SHUTDOWN_RECEIVED) != 0) {
         return true;
     }
 
@@ -8566,11 +8647,11 @@ bool Session::isShutdownFinished() const
 
     int shutdownState = SSL_get_shutdown(d_ssl_p);
 
-    if ((shutdownState & TLS_SHUTDOWN_SENT) == 0) {
+    if ((shutdownState & k_TLS_SHUTDOWN_SENT) == 0) {
         return false;
     }
 
-    if ((shutdownState & TLS_SHUTDOWN_RECEIVED) == 0) {
+    if ((shutdownState & k_TLS_SHUTDOWN_RECEIVED) == 0) {
         return false;
     }
 
@@ -8974,7 +9055,8 @@ ntsa::Error SessionContext::configure(ntca::EncryptionRole::Value    role,
 
     // Set the ciphers supported for TLSv1.0 through TLSv1.2.
 
-    rc = SSL_CTX_set_cipher_list(d_context.get(), k_DEFAULT_CIPHER_SPEC);
+    rc = SSL_CTX_set_cipher_list(d_context.get(),
+                                 Internal::Impl::k_DEFAULT_CIPHER_SPEC);
     if (rc == 0) {
         NTCTLS_SESSION_LOG_ERROR(
             "Failed to configure SSL context cipher spec");
@@ -8983,7 +9065,8 @@ ntsa::Error SessionContext::configure(ntca::EncryptionRole::Value    role,
 
     // Set the cipher suites supported for TLSv1.3 and later.
 
-    rc = SSL_CTX_set_ciphersuites(d_context.get(), k_DEFAULT_CIPHER_SUITES);
+    rc = SSL_CTX_set_ciphersuites(d_context.get(),
+                                  Internal::Impl::k_DEFAULT_CIPHER_SUITES);
     if (rc == 0) {
         NTCTLS_SESSION_LOG_ERROR(
             "Failed to configure SSL context cipher suites");
@@ -10462,29 +10545,42 @@ Initializer::Initializer()
 
     const int blobTypeIndex = BIO_get_new_index() | BIO_TYPE_SOURCE_SINK;
 
-    s_streamState.d_blobMethods = BIO_meth_new(blobTypeIndex, "blob");
+    Internal::Impl::s_blobMethods = BIO_meth_new(blobTypeIndex, "blob");
 
-    BIO_meth_set_write(s_streamState.d_blobMethods, &bio_blob_write);
-    BIO_meth_set_read(s_streamState.d_blobMethods, &bio_blob_read);
-    BIO_meth_set_puts(s_streamState.d_blobMethods, &bio_blob_puts);
-    BIO_meth_set_gets(s_streamState.d_blobMethods, &bio_blob_gets);
-    BIO_meth_set_ctrl(s_streamState.d_blobMethods, &bio_blob_ctrl);
-    BIO_meth_set_create(s_streamState.d_blobMethods, &bio_blob_new);
-    BIO_meth_set_destroy(s_streamState.d_blobMethods, &bio_blob_free);
+    BIO_meth_set_write(Internal::Impl::s_blobMethods,
+                       &Internal::Impl::bio_blob_write);
+    BIO_meth_set_read(Internal::Impl::s_blobMethods,
+                      &Internal::Impl::bio_blob_read);
+    BIO_meth_set_puts(Internal::Impl::s_blobMethods,
+                      &Internal::Impl::bio_blob_puts);
+    BIO_meth_set_gets(Internal::Impl::s_blobMethods,
+                      &Internal::Impl::bio_blob_gets);
+    BIO_meth_set_ctrl(Internal::Impl::s_blobMethods,
+                      &Internal::Impl::bio_blob_ctrl);
+    BIO_meth_set_create(Internal::Impl::s_blobMethods,
+                        &Internal::Impl::bio_blob_new);
+    BIO_meth_set_destroy(Internal::Impl::s_blobMethods,
+                         &Internal::Impl::bio_blob_free);
 
     const int streamTypeIndex = BIO_get_new_index() | BIO_TYPE_SOURCE_SINK;
 
-    s_streamState.d_streambufMethods =
+    Internal::Impl::s_streambufMethods =
         BIO_meth_new(streamTypeIndex, "streambuf");
 
-    BIO_meth_set_write(s_streamState.d_streambufMethods, &bio_streambuf_write);
-    BIO_meth_set_read(s_streamState.d_streambufMethods, &bio_streambuf_read);
-    BIO_meth_set_puts(s_streamState.d_streambufMethods, &bio_streambuf_puts);
-    BIO_meth_set_gets(s_streamState.d_streambufMethods, &bio_streambuf_gets);
-    BIO_meth_set_ctrl(s_streamState.d_streambufMethods, &bio_streambuf_ctrl);
-    BIO_meth_set_create(s_streamState.d_streambufMethods, &bio_streambuf_new);
-    BIO_meth_set_destroy(s_streamState.d_streambufMethods,
-                         &bio_streambuf_free);
+    BIO_meth_set_write(Internal::Impl::s_streambufMethods,
+                       &Internal::Impl::bio_streambuf_write);
+    BIO_meth_set_read(Internal::Impl::s_streambufMethods,
+                      &Internal::Impl::bio_streambuf_read);
+    BIO_meth_set_puts(Internal::Impl::s_streambufMethods,
+                      &Internal::Impl::bio_streambuf_puts);
+    BIO_meth_set_gets(Internal::Impl::s_streambufMethods,
+                      &Internal::Impl::bio_streambuf_gets);
+    BIO_meth_set_ctrl(Internal::Impl::s_streambufMethods,
+                      &Internal::Impl::bio_streambuf_ctrl);
+    BIO_meth_set_create(Internal::Impl::s_streambufMethods,
+                        &Internal::Impl::bio_streambuf_new);
+    BIO_meth_set_destroy(Internal::Impl::s_streambufMethods,
+                         &Internal::Impl::bio_streambuf_free);
 
     bslma::Allocator* allocator = &bslma::NewDeleteAllocator::singleton();
 
@@ -10497,11 +10593,11 @@ Initializer::Initializer()
 
 Initializer::~Initializer()
 {
-    BIO_meth_free(s_streamState.d_blobMethods);
-    s_streamState.d_blobMethods = 0;
+    BIO_meth_free(Internal::Impl::s_blobMethods);
+    Internal::Impl::s_blobMethods = 0;
 
-    BIO_meth_free(s_streamState.d_streambufMethods);
-    s_streamState.d_streambufMethods = 0;
+    BIO_meth_free(Internal::Impl::s_streambufMethods);
+    Internal::Impl::s_streambufMethods = 0;
 }
 
 void Plugin::initialize(bslma::Allocator* basicAllocator)

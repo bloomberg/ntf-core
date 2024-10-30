@@ -55,6 +55,8 @@ class Ipv6Endpoint
     ntsa::Ipv6Address d_host;
     ntsa::Port        d_port;
 
+    class Impl;
+
   public:
     enum {
         /// The maximum required capacity of a buffer to store the longest

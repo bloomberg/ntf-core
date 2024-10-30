@@ -27,9 +27,57 @@ BSLS_IDENT_RCSID(ntccfg_tune_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntccfg {
 
-namespace {
+// Provide a suite of functions for the implementation of 'ntccfg::Tune'.
+class Tune::Impl
+{
+  public:
+    static bool configureBoolean(bool* result, const char* variableName);
 
-bool configureBoolean(bool* result, const char* variableName)
+    static void configureBoolean(bool*       result,
+                                 const char* variableName,
+                                 bool        defaultValue);
+
+    template <typename TYPE>
+    static bool configureSignedInteger(TYPE* result, const char* variableName);
+
+    template <typename TYPE>
+    static void configureSignedInteger(TYPE*       result,
+                                       const char* variableName,
+                                       const TYPE& defaultValue);
+
+    template <typename TYPE>
+    static bool configureUnsignedInteger(TYPE*       result,
+                                         const char* variableName);
+
+    template <typename TYPE>
+    static void configureUnsignedInteger(TYPE*       result,
+                                         const char* variableName,
+                                         const TYPE& defaultValue);
+
+    template <typename TYPE>
+    static bool configureDecimal(TYPE* result, const char* variableName);
+
+    template <typename TYPE>
+    static void configureDecimal(TYPE*       result,
+                                 const char* variableName,
+                                 const TYPE& defaultValue);
+
+    template <typename TYPE>
+    static bool configureCharacter(TYPE* result, const char* variableName);
+
+    template <typename TYPE>
+    static void configureCharacter(TYPE*       result,
+                                   const char* variableName,
+                                   const TYPE& defaultValue);
+
+    static bool configureString(bsl::string* result, const char* variableName);
+
+    static void configureString(bsl::string*             result,
+                                const char*              variableName,
+                                const bslstl::StringRef& defaultValue);
+};
+
+bool Tune::Impl::configureBoolean(bool* result, const char* variableName)
 {
     const char* variableValue = bsl::getenv(variableName);
     if (variableValue) {
@@ -61,9 +109,9 @@ bool configureBoolean(bool* result, const char* variableName)
     }
 }
 
-void configureBoolean(bool*       result,
-                      const char* variableName,
-                      bool        defaultValue)
+void Tune::Impl::configureBoolean(bool*       result,
+                                  const char* variableName,
+                                  bool        defaultValue)
 {
     if (!configureBoolean(result, variableName)) {
         *result = defaultValue;
@@ -71,7 +119,7 @@ void configureBoolean(bool*       result,
 }
 
 template <typename TYPE>
-bool configureSignedInteger(TYPE* result, const char* variableName)
+bool Tune::Impl::configureSignedInteger(TYPE* result, const char* variableName)
 {
     using namespace std;
 
@@ -105,9 +153,9 @@ bool configureSignedInteger(TYPE* result, const char* variableName)
 }
 
 template <typename TYPE>
-void configureSignedInteger(TYPE*       result,
-                            const char* variableName,
-                            const TYPE& defaultValue)
+void Tune::Impl::configureSignedInteger(TYPE*       result,
+                                        const char* variableName,
+                                        const TYPE& defaultValue)
 {
     if (!configureSignedInteger(result, variableName)) {
         *result = defaultValue;
@@ -115,7 +163,8 @@ void configureSignedInteger(TYPE*       result,
 }
 
 template <typename TYPE>
-bool configureUnsignedInteger(TYPE* result, const char* variableName)
+bool Tune::Impl::configureUnsignedInteger(TYPE*       result,
+                                          const char* variableName)
 {
     using namespace std;
 
@@ -149,9 +198,9 @@ bool configureUnsignedInteger(TYPE* result, const char* variableName)
 }
 
 template <typename TYPE>
-void configureUnsignedInteger(TYPE*       result,
-                              const char* variableName,
-                              const TYPE& defaultValue)
+void Tune::Impl::configureUnsignedInteger(TYPE*       result,
+                                          const char* variableName,
+                                          const TYPE& defaultValue)
 {
     if (!configureUnsignedInteger(result, variableName)) {
         *result = defaultValue;
@@ -159,7 +208,7 @@ void configureUnsignedInteger(TYPE*       result,
 }
 
 template <typename TYPE>
-bool configureDecimal(TYPE* result, const char* variableName)
+bool Tune::Impl::configureDecimal(TYPE* result, const char* variableName)
 {
     const char* variableValue = bsl::getenv(variableName);
     if (variableValue) {
@@ -182,9 +231,9 @@ bool configureDecimal(TYPE* result, const char* variableName)
 }
 
 template <typename TYPE>
-void configureDecimal(TYPE*       result,
-                      const char* variableName,
-                      const TYPE& defaultValue)
+void Tune::Impl::configureDecimal(TYPE*       result,
+                                  const char* variableName,
+                                  const TYPE& defaultValue)
 {
     if (!configureDecimal(result, variableName)) {
         *result = defaultValue;
@@ -192,7 +241,7 @@ void configureDecimal(TYPE*       result,
 }
 
 template <typename TYPE>
-bool configureCharacter(TYPE* result, const char* variableName)
+bool Tune::Impl::configureCharacter(TYPE* result, const char* variableName)
 {
     const char* variableValue = bsl::getenv(variableName);
     if (variableValue) {
@@ -205,16 +254,16 @@ bool configureCharacter(TYPE* result, const char* variableName)
 }
 
 template <typename TYPE>
-void configureCharacter(TYPE*       result,
-                        const char* variableName,
-                        const TYPE& defaultValue)
+void Tune::Impl::configureCharacter(TYPE*       result,
+                                    const char* variableName,
+                                    const TYPE& defaultValue)
 {
     if (!configureCharacter(result, variableName)) {
         *result = defaultValue;
     }
 }
 
-bool configureString(bsl::string* result, const char* variableName)
+bool Tune::Impl::configureString(bsl::string* result, const char* variableName)
 {
     const char* variableValue = bsl::getenv(variableName);
     if (variableValue) {
@@ -226,181 +275,179 @@ bool configureString(bsl::string* result, const char* variableName)
     }
 }
 
-void configureString(bsl::string*             result,
-                     const char*              variableName,
-                     const bslstl::StringRef& defaultValue)
+void Tune::Impl::configureString(bsl::string*             result,
+                                 const char*              variableName,
+                                 const bslstl::StringRef& defaultValue)
 {
     if (!configureString(result, variableName)) {
         *result = defaultValue;
     }
 }
 
-}  // close unnamed namespace
-
 bool Tune::configure(bool* result, const char* name)
 {
-    return configureBoolean(result, name);
+    return Tune::Impl::configureBoolean(result, name);
 }
 
 void Tune::configure(bool* result, const char* name, bool defaultValue)
 {
-    configureBoolean(result, name, defaultValue);
+    Tune::Impl::configureBoolean(result, name, defaultValue);
 }
 
 bool Tune::configure(char* result, const char* name)
 {
-    return configureCharacter(result, name);
+    return Tune::Impl::configureCharacter(result, name);
 }
 
 void Tune::configure(char* result, const char* name, char defaultValue)
 {
-    configureCharacter(result, name, defaultValue);
+    Tune::Impl::configureCharacter(result, name, defaultValue);
 }
 
 bool Tune::configure(unsigned char* result, const char* name)
 {
-    return configureCharacter(result, name);
+    return Tune::Impl::configureCharacter(result, name);
 }
 
 void Tune::configure(unsigned char* result,
                      const char*    name,
                      unsigned char  defaultValue)
 {
-    configureCharacter(result, name, defaultValue);
+    Tune::Impl::configureCharacter(result, name, defaultValue);
 }
 
 bool Tune::configure(short* result, const char* name)
 {
-    return configureSignedInteger(result, name);
+    return Tune::Impl::configureSignedInteger(result, name);
 }
 
 void Tune::configure(short* result, const char* name, short defaultValue)
 {
-    configureSignedInteger(result, name, defaultValue);
+    Tune::Impl::configureSignedInteger(result, name, defaultValue);
 }
 
 bool Tune::configure(unsigned short* result, const char* name)
 {
-    return configureUnsignedInteger(result, name);
+    return Tune::Impl::configureUnsignedInteger(result, name);
 }
 
 void Tune::configure(unsigned short* result,
                      const char*     name,
                      unsigned short  defaultValue)
 {
-    configureUnsignedInteger(result, name, defaultValue);
+    Tune::Impl::configureUnsignedInteger(result, name, defaultValue);
 }
 
 bool Tune::configure(int* result, const char* name)
 {
-    return configureSignedInteger(result, name);
+    return Tune::Impl::configureSignedInteger(result, name);
 }
 
 void Tune::configure(int* result, const char* name, int defaultValue)
 {
-    configureSignedInteger(result, name, defaultValue);
+    Tune::Impl::configureSignedInteger(result, name, defaultValue);
 }
 
 bool Tune::configure(unsigned int* result, const char* name)
 {
-    return configureUnsignedInteger(result, name);
+    return Tune::Impl::configureUnsignedInteger(result, name);
 }
 
 void Tune::configure(unsigned int* result,
                      const char*   name,
                      unsigned int  defaultValue)
 {
-    configureUnsignedInteger(result, name, defaultValue);
+    Tune::Impl::configureUnsignedInteger(result, name, defaultValue);
 }
 
 bool Tune::configure(long* result, const char* name)
 {
-    return configureSignedInteger(result, name);
+    return Tune::Impl::configureSignedInteger(result, name);
 }
 
 void Tune::configure(long* result, const char* name, long defaultValue)
 {
-    configureSignedInteger(result, name, defaultValue);
+    Tune::Impl::configureSignedInteger(result, name, defaultValue);
 }
 
 bool Tune::configure(unsigned long* result, const char* name)
 {
-    return configureUnsignedInteger(result, name);
+    return Tune::Impl::configureUnsignedInteger(result, name);
 }
 
 void Tune::configure(unsigned long* result,
                      const char*    name,
                      unsigned long  defaultValue)
 {
-    configureUnsignedInteger(result, name, defaultValue);
+    Tune::Impl::configureUnsignedInteger(result, name, defaultValue);
 }
 
 bool Tune::configure(long long* result, const char* name)
 {
-    return configureSignedInteger(result, name);
+    return Tune::Impl::configureSignedInteger(result, name);
 }
 
 void Tune::configure(long long*  result,
                      const char* name,
                      long long   defaultValue)
 {
-    configureSignedInteger(result, name, defaultValue);
+    Tune::Impl::configureSignedInteger(result, name, defaultValue);
 }
 
 bool Tune::configure(unsigned long long* result, const char* name)
 {
-    return configureUnsignedInteger(result, name);
+    return Tune::Impl::configureUnsignedInteger(result, name);
 }
 
 void Tune::configure(unsigned long long* result,
                      const char*         name,
                      unsigned long long  defaultValue)
 {
-    configureUnsignedInteger(result, name, defaultValue);
+    Tune::Impl::configureUnsignedInteger(result, name, defaultValue);
 }
 
 bool Tune::configure(float* result, const char* name)
 {
-    return configureDecimal(result, name);
+    return Tune::Impl::configureDecimal(result, name);
 }
 
 void Tune::configure(float* result, const char* name, float defaultValue)
 {
-    configureDecimal(result, name, defaultValue);
+    Tune::Impl::configureDecimal(result, name, defaultValue);
 }
 
 bool Tune::configure(double* result, const char* name)
 {
-    return configureDecimal(result, name);
+    return Tune::Impl::configureDecimal(result, name);
 }
 
 void Tune::configure(double* result, const char* name, double defaultValue)
 {
-    configureDecimal(result, name, defaultValue);
+    Tune::Impl::configureDecimal(result, name, defaultValue);
 }
 
 bool Tune::configure(long double* result, const char* name)
 {
-    return configureDecimal(result, name);
+    return Tune::Impl::configureDecimal(result, name);
 }
 
 void Tune::configure(long double* result,
                      const char*  name,
                      long double  defaultValue)
 {
-    configureDecimal(result, name, defaultValue);
+    Tune::Impl::configureDecimal(result, name, defaultValue);
 }
 
 bool Tune::configure(bsl::string* result, const char* name)
 {
-    return configureString(result, name);
+    return Tune::Impl::configureString(result, name);
 }
 
 void Tune::configure(bsl::string*             result,
                      const char*              name,
                      const bslstl::StringRef& defaultValue)
 {
-    configureString(result, name, defaultValue);
+    Tune::Impl::configureString(result, name, defaultValue);
 }
 
 }  // close package namespace

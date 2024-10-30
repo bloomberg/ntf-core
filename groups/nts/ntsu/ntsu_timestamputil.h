@@ -127,6 +127,10 @@ struct TimestampUtil {
     /// Return a formatted, human readable description of the specified
     /// 'duration'.
     static bsl::string describeDelay(const bsls::TimeInterval& duration);
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 }  // close package namespace

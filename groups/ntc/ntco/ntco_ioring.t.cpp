@@ -24,8 +24,8 @@ BSLS_IDENT_RCSID(ntco_ioring_t_cpp, "$Id$ $CSID$")
 #include <ntci_log.h>
 #include <ntci_proactor.h>
 #include <ntci_proactorsocket.h>
-#include <ntsf_system.h>
 #include <ntco_test.h>
+#include <ntsf_system.h>
 
 using namespace BloombergLP;
 
@@ -91,7 +91,8 @@ NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase1)
     NTSCFG_TEST_TRUE(ntco::IoRingFactory::isSupported());
 
     bsl::shared_ptr<ntco::IoRingFactory> proactorFactory;
-    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                  NTSCFG_TEST_ALLOCATOR);
 
     bsl::shared_ptr<ntco::IoRingValidator> test =
         proactorFactory->createTest(k_QUEUE_DEPTH, NTSCFG_TEST_ALLOCATOR);
@@ -100,8 +101,7 @@ NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase1)
     NTSCFG_TEST_EQ(test->completionQueueCapacity(), k_QUEUE_DEPTH * 2);
 
     const bsl::size_t k_SUBMISSION_COUNT =
-        test->completionQueueCapacity() + test->submissionQueueCapacity() -
-        1;
+        test->completionQueueCapacity() + test->submissionQueueCapacity() - 1;
 
     // We shall not overflow completion queue, so at maximum we push
     // k_SUBMISSION_COUNT entries
@@ -155,7 +155,7 @@ NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase2)
     }
 
     bsl::shared_ptr<ntco::IoRingFactory> proactorFactory;
-    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, 
+    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorSockets(proactorFactory);
@@ -168,7 +168,7 @@ NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase3)
     }
 
     bsl::shared_ptr<ntco::IoRingFactory> proactorFactory;
-    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, 
+    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorTimers(proactorFactory);
@@ -181,7 +181,7 @@ NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase4)
     }
 
     bsl::shared_ptr<ntco::IoRingFactory> proactorFactory;
-    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, 
+    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorFunctions(proactorFactory);

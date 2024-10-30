@@ -580,7 +580,10 @@ a.code.hl_exception { /* style for links to exception names in code snippets */ 
 a.code.hl_service { /* style for links to service names in code snippets */ }
 a.code.hl_singleton { /* style for links to singleton names in code snippets */ }
 a.code.hl_concept { /* style for links to concept names in code snippets */ }
-a.code.hl_namespace { /* style for links to namespace names in code snippets */ }
+a.code.hl_namespace 
+{ 
+	/* style for links to namespace names in code snippets */ 
+}
 a.code.hl_package { /* style for links to package names in code snippets */ }
 a.code.hl_define { /* style for links to macro names in code snippets */ }
 a.code.hl_function { /* style for links to function names in code snippets */ }

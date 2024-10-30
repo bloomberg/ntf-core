@@ -1516,6 +1516,36 @@ int main(int argc, char** argv)
 #define NTSCFG_TEST_VERBOSITY BloombergLP::ntscfg::testVerbosity
 
 /// @internal @brief
+/// The error verbosity level.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TEST_VERBOSITY_ERROR 1
+
+/// @internal @brief
+/// The warning verbosity level.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TEST_VERBOSITY_WARN 2
+
+/// @internal @brief
+/// The information verbosity level.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TEST_VERBOSITY_INFO 3
+
+/// @internal @brief
+/// The debug verbosity level.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TEST_VERBOSITY_DEBUG 4
+
+/// @internal @brief
+/// The trace verbosity level.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_TEST_VERBOSITY_TRACE 5
+
+/// @internal @brief
 /// The number of command line arguments.
 ///
 /// @ingroup module_ntscfg

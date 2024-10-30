@@ -28,9 +28,24 @@ BSLS_IDENT_RCSID(ntsa_ipv4address_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
+/// Provide a private implementation.
+class Ipv4Address::Impl
+{
+  public:
+    /// Throw an exception indicating the specified 'text' is in an invalid
+    /// format.
+    static void throwIpv4InvalidFormat(const bslstl::StringRef& text);
 
-void throwIpv4InvalidFormat(const bslstl::StringRef& text)
+    /// Return true if the specified 'size' will cause a read underflow,
+    /// otherwise return false.
+    static bool checkIpv4BufferUnderflow(bsl::size_t size);
+
+    /// Return true if the specified 'size' will cause a write overflow,
+    /// otherwise return false.
+    static bool checkIpv4BufferOverflow(bsl::size_t size);
+};
+
+void Ipv4Address::Impl::throwIpv4InvalidFormat(const bslstl::StringRef& text)
 {
     bsl::stringstream ss;
     ss << "Failed to parse IPv4 address: the text '" << text << "' is invalid";
@@ -38,7 +53,7 @@ void throwIpv4InvalidFormat(const bslstl::StringRef& text)
     NTSCFG_THROW(ss.str());
 }
 
-bool checkIpv4BufferUnderflow(bsl::size_t size)
+bool Ipv4Address::Impl::checkIpv4BufferUnderflow(bsl::size_t size)
 {
     if (size < 4) {
         return false;
@@ -47,7 +62,7 @@ bool checkIpv4BufferUnderflow(bsl::size_t size)
     return true;
 }
 
-bool checkIpv4BufferOverflow(bsl::size_t size)
+bool Ipv4Address::Impl::checkIpv4BufferOverflow(bsl::size_t size)
 {
     if (size < 4) {
         return false;
@@ -55,22 +70,20 @@ bool checkIpv4BufferOverflow(bsl::size_t size)
 
     return true;
 }
-
-}  // close unnamed namespace
 
 Ipv4Address::Ipv4Address(const bslstl::StringRef& text)
 {
     d_value.d_asDword = 0;
 
     if (!this->parse(text)) {
-        throwIpv4InvalidFormat(text);
+        Impl::throwIpv4InvalidFormat(text);
     }
 }
 
 Ipv4Address& Ipv4Address::operator=(const bslstl::StringRef& text)
 {
     if (!this->parse(text)) {
-        throwIpv4InvalidFormat(text);
+        Impl::throwIpv4InvalidFormat(text);
     }
 
     return *this;
@@ -135,7 +148,7 @@ bool Ipv4Address::parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT
     else {
         bsl::uint64_t numOctetsLeft = 4 - index;
 
-#if defined(BSLS_PLATFORM_CMP_SUN)
+#if defined(BSLS_PLATFORM_CMP_SUN) || defined(BSLS_PLATFORM_CMP_MSVC)
         bsl::uint64_t product = 1;
         for (bsl::size_t i = 0; i < numOctetsLeft; ++i) {
             product *= 256;
@@ -152,7 +165,7 @@ bool Ipv4Address::parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT
             bsl::uint8_t octet =
                 NTSCFG_WARNING_NARROW(bsl::uint8_t, numAtIndex % 256);
             newValue.d_asBytes[3 - i]  = octet;
-            numAtIndex /= 256;
+            numAtIndex                /= 256;
         }
     }
 
@@ -164,7 +177,7 @@ bool Ipv4Address::parse(const bslstl::StringRef& text) NTSCFG_NOEXCEPT
 bsl::size_t Ipv4Address::copyFrom(const void* source,
                                   bsl::size_t size) NTSCFG_NOEXCEPT
 {
-    if (!checkIpv4BufferUnderflow(size)) {
+    if (!Impl::checkIpv4BufferUnderflow(size)) {
         return 0;
     }
 
@@ -175,7 +188,7 @@ bsl::size_t Ipv4Address::copyFrom(const void* source,
 bsl::size_t Ipv4Address::copyTo(void*       destination,
                                 bsl::size_t capacity) const NTSCFG_NOEXCEPT
 {
-    if (!checkIpv4BufferOverflow(capacity)) {
+    if (!Impl::checkIpv4BufferOverflow(capacity)) {
         return 0;
     }
 

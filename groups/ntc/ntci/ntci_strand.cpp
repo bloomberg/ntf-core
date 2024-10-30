@@ -23,38 +23,43 @@ BSLS_IDENT_RCSID(ntci_strand_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntci {
 
-namespace {
-
-bslmt::ThreadUtil::Key        s_key;
-bsl::shared_ptr<ntci::Strand> s_null_sp;
-
-/// Provide utilities for process-wide initialization of the
-/// state necessary to manage strands.
-class Initializer
+/// Describe the process-wide strand state.
+class StrandState
 {
   public:
     /// Create the process-wide state necessary to manage strands.
-    Initializer();
+    StrandState();
 
     /// Destroy the process-wide state necessary to manage strands.
-    ~Initializer();
+    ~StrandState();
+
+    /// The process-wide strand thread-local key.
+    bslmt::ThreadUtil::Key d_key;
+
+    /// The null strand indicating the unknown or unspecified strand.
+    bsl::shared_ptr<ntci::Strand> d_null_sp;
+
+    /// The global strand state.
+    static StrandState s_global;
+
+  private:
+    StrandState(const StrandState&);
+    StrandState& operator=(const StrandState&);
 };
 
-Initializer::Initializer()
+StrandState StrandState::s_global;
+
+StrandState::StrandState()
 {
-    int rc = bslmt::ThreadUtil::createKey(&s_key, 0);
+    int rc = bslmt::ThreadUtil::createKey(&StrandState::s_global.d_key, 0);
     BSLS_ASSERT_OPT(rc == 0);
 }
 
-Initializer::~Initializer()
+StrandState::~StrandState()
 {
-    // int rc = bslmt::ThreadUtil::deleteKey(s_key);
+    // int rc = bslmt::ThreadUtil::deleteKey(StrandState::s_global.d_key);
     // BSLS_ASSERT_OPT(rc == 0);
 }
-
-Initializer s_initializer;
-
-}  // close unnamed namespace
 
 Strand::~Strand()
 {
@@ -62,21 +67,23 @@ Strand::~Strand()
 
 const bsl::shared_ptr<ntci::Strand>& Strand::unspecified()
 {
-    return s_null_sp;
+    return StrandState::s_global.d_null_sp;
 }
 
 const bsl::shared_ptr<ntci::Strand>& Strand::unknown()
 {
-    return s_null_sp;
+    return StrandState::s_global.d_null_sp;
 }
 
 ntci::Strand* Strand::setThreadLocal(ntci::Strand* strand)
 {
-    ntci::Strand* previous =
-        reinterpret_cast<ntci::Strand*>(bslmt::ThreadUtil::getSpecific(s_key));
+    int rc;
 
-    int rc = bslmt::ThreadUtil::setSpecific(
-        s_key,
+    ntci::Strand* previous = reinterpret_cast<ntci::Strand*>(
+        bslmt::ThreadUtil::getSpecific(StrandState::s_global.d_key));
+
+    rc = bslmt::ThreadUtil::setSpecific(
+        StrandState::s_global.d_key,
         const_cast<const void*>(static_cast<void*>(strand)));
     BSLS_ASSERT_OPT(rc == 0);
 
@@ -85,8 +92,8 @@ ntci::Strand* Strand::setThreadLocal(ntci::Strand* strand)
 
 ntci::Strand* Strand::getThreadLocal()
 {
-    ntci::Strand* current =
-        reinterpret_cast<ntci::Strand*>(bslmt::ThreadUtil::getSpecific(s_key));
+    ntci::Strand* current = reinterpret_cast<ntci::Strand*>(
+        bslmt::ThreadUtil::getSpecific(StrandState::s_global.d_key));
 
     return current;
 }

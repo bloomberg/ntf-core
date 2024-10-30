@@ -21,13 +21,8 @@ BSLS_IDENT_RCSID(ntcs_ratelimiter_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcs {
 
-namespace {
-
-/// Return 'true' if the specified 'limit' and 'window' are legal values
-/// with which to initialize a 'ntcs_LeakyBucket' object, and if so, whether
-/// a 'ntcs_LeakyBucket' object so initialized would preserve the value of
-/// 'window'.
-bool supportsExactly(bsl::uint64_t limit, const bsls::TimeInterval& window)
+bool RateLimiter::supportsExactly(bsl::uint64_t             limit,
+                                  const bsls::TimeInterval& window)
 {
     // Aside from checking that the capacity calculated from 'window' and
     // 'limit' can back out the same 'window' value, we also include checks on
@@ -42,8 +37,6 @@ bool supportsExactly(bsl::uint64_t limit, const bsls::TimeInterval& window)
            window == ntcs::LeakyBucket::calculateTimeWindow(
                          limit,
                          ntcs::LeakyBucket::calculateCapacity(limit, window));
-}
-
 }
 
 RateLimiter::RateLimiter(bsl::uint64_t             sustainedRateLimit,

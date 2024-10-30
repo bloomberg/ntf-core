@@ -29,19 +29,6 @@
 namespace BloombergLP {
 namespace ntcdns {
 
-namespace {
-
-const bool        k_DEFAULT_POSITIVE_CACHE_ENABLED          = true;
-const bsl::size_t k_DEFAULT_POSITIVE_CACHE_MIN_TIME_TO_LIVE = 0;
-const bsl::size_t k_DEFAULT_POSITIVE_CACHE_MAX_TIME_TO_LIVE =
-    (bsl::size_t)(-1);
-const bool        k_DEFAULT_NEGATIVE_CACHE_ENABLED          = true;
-const bsl::size_t k_DEFAULT_NEGATIVE_CACHE_MIN_TIME_TO_LIVE = 0;
-const bsl::size_t k_DEFAULT_NEGATIVE_CACHE_MAX_TIME_TO_LIVE =
-    (bsl::size_t)(-1);
-
-}  // close unnamed namespace
-
 CacheHostEntry::CacheHostEntry(bslma::Allocator* basicAllocator)
 : d_domainName(basicAllocator)
 , d_ipAddress()
@@ -162,6 +149,15 @@ bsl::ostream& operator<<(bsl::ostream& stream, const CacheHostEntry& object)
 {
     return object.print(stream, 0, -1);
 }
+
+const bool        Cache::k_DEFAULT_POSITIVE_CACHE_ENABLED          = true;
+const bsl::size_t Cache::k_DEFAULT_POSITIVE_CACHE_MIN_TIME_TO_LIVE = 0;
+const bsl::size_t Cache::k_DEFAULT_POSITIVE_CACHE_MAX_TIME_TO_LIVE =
+    (bsl::size_t)(-1);
+const bool        Cache::k_DEFAULT_NEGATIVE_CACHE_ENABLED          = true;
+const bsl::size_t Cache::k_DEFAULT_NEGATIVE_CACHE_MIN_TIME_TO_LIVE = 0;
+const bsl::size_t Cache::k_DEFAULT_NEGATIVE_CACHE_MAX_TIME_TO_LIVE =
+    (bsl::size_t)(-1);
 
 void Cache::privateRemove(
     const bsl::shared_ptr<ntcdns::CacheHostEntry>& cacheEntry)

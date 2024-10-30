@@ -66,6 +66,10 @@ class GlobalExecutor : public ntci::Executor
     /// method should generally not be used directly by typical clients (see
     /// 'ntcs_global' for more information).
     static GlobalExecutor* singleton();
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 /// @internal @brief
@@ -134,6 +138,10 @@ class GlobalExecutorRep : public bslma::SharedPtrRep
     /// method should generally not be used directly by typical clients (see
     /// 'ntcs_global' for more information).
     static GlobalExecutorRep* singleton();
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 }  // close package namespace

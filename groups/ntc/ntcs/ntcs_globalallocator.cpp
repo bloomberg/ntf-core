@@ -29,35 +29,48 @@ BSLS_IDENT_RCSID(ntcs_globalallocator_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcs {
 
-namespace {
+/// Provide private implementation.
+class GlobalAllocator::Impl
+{
+  public:
+    typedef bsls::ObjectBuffer<ntcs::GlobalAllocator> Storage;
 
-typedef bsls::ObjectBuffer<ntcs::GlobalAllocator> GlobalAllocatorStorage;
+    static ntcs::GlobalAllocator* initialize(Storage* address);
 
-GlobalAllocatorStorage                       s_globalAllocatorStorage;
-bsls::AtomicOperations::AtomicTypes::Pointer s_globalAllocator_p = {0};
+    static Storage                                      s_storage;
+    static bsls::AtomicOperations::AtomicTypes::Pointer s_object_p;
+    static bsls::AtomicOperations::AtomicTypes::Int     s_lock;
+    static bsl::uint8_t*                                s_page;
+    static bsl::uint8_t*                                s_pageCurrent;
+    static bsl::uint8_t*                                s_pageEnd;
+    static bsls::AtomicOperations::AtomicTypes::Int     s_pagesInUse;
+    static bsls::AtomicOperations::AtomicTypes::Int     s_blocksInUse;
+};
 
-ntcs::GlobalAllocator* initSingleton(GlobalAllocatorStorage* address)
+ntcs::GlobalAllocator* GlobalAllocator::Impl::initialize(Storage* address)
 {
     // See the implementation of bslma_newdeleteallocator for an explanation
     // of the singleton initialization.
 
-    GlobalAllocatorStorage stackTemp;
-    void* v = new (stackTemp.buffer()) ntcs::GlobalAllocator();
+    Storage stackTemp;
+    void*   v = new (stackTemp.buffer()) ntcs::GlobalAllocator();
 
-    *address = *(static_cast<GlobalAllocatorStorage*>(v));
+    *address = *(static_cast<Storage*>(v));
     return &address->object();
 }
 
-bsls::AtomicOperations::AtomicTypes::Int s_lock = {0};
+GlobalAllocator::Impl::Storage GlobalAllocator::Impl::s_storage;
 
-bsl::uint8_t* s_page        = 0;
-bsl::uint8_t* s_pageCurrent = 0;
-bsl::uint8_t* s_pageEnd     = 0;
+bsls::AtomicOperations::AtomicTypes::Pointer GlobalAllocator::Impl::s_object_p;
 
-bsls::AtomicOperations::AtomicTypes::Int s_numPagesInUse  = {0};
-bsls::AtomicOperations::AtomicTypes::Int s_numBlocksInUse = {0};
+bsls::AtomicOperations::AtomicTypes::Int GlobalAllocator::Impl::s_lock;
 
-}  // close unnamed namespace
+bsl::uint8_t* GlobalAllocator::Impl::s_page;
+bsl::uint8_t* GlobalAllocator::Impl::s_pageCurrent;
+bsl::uint8_t* GlobalAllocator::Impl::s_pageEnd;
+
+bsls::AtomicOperations::AtomicTypes::Int GlobalAllocator::Impl::s_pagesInUse;
+bsls::AtomicOperations::AtomicTypes::Int GlobalAllocator::Impl::s_blocksInUse;
 
 GlobalAllocator::GlobalAllocator()
 {
@@ -76,7 +89,7 @@ void* GlobalAllocator::allocate(size_type size)
     bsl::uint8_t* result = 0;
 
     while (true) {
-        if (0 == bsls::AtomicOperations::swapIntAcqRel(&s_lock, 1)) {
+        if (0 == bsls::AtomicOperations::swapIntAcqRel(&Impl::s_lock, 1)) {
             break;
         }
     }
@@ -87,10 +100,10 @@ void* GlobalAllocator::allocate(size_type size)
 
         const bsl::size_t alignmentOffset = static_cast<bsl::size_t>(
             bsls::AlignmentUtil::calculateAlignmentOffset(
-                s_pageCurrent,
+                Impl::s_pageCurrent,
                 static_cast<int>(alignment)));
 
-        result = s_pageCurrent + alignmentOffset;
+        result = Impl::s_pageCurrent + alignmentOffset;
         BSLS_ASSERT_OPT(static_cast<bsl::size_t>(
                             reinterpret_cast<bsl::uintptr_t>(result)) %
                             alignment ==
@@ -98,7 +111,7 @@ void* GlobalAllocator::allocate(size_type size)
 
         bsl::uint8_t* resultEnd = result + size;
 
-        if (resultEnd > s_pageEnd) {
+        if (resultEnd > Impl::s_pageEnd) {
             const bsl::size_t pageSize = ntcs::MemoryMap::pageSize();
             BSLS_ASSERT_OPT(pageSize > 0);
             BSLS_ASSERT_OPT(pageSize % 2 == 0);
@@ -107,27 +120,27 @@ void* GlobalAllocator::allocate(size_type size)
                 (size / pageSize) + (size % pageSize == 0 ? 0 : 1);
             BSLS_ASSERT_OPT(numPages < INT_MAX);
 
-            s_page = reinterpret_cast<bsl::uint8_t*>(
+            Impl::s_page = reinterpret_cast<bsl::uint8_t*>(
                 ntcs::MemoryMap::acquire(numPages));
-            BSLS_ASSERT_OPT(s_page != 0);
+            BSLS_ASSERT_OPT(Impl::s_page != 0);
 
-            s_pageCurrent = s_page;
-            s_pageEnd     = s_page + (numPages * pageSize);
+            Impl::s_pageCurrent = Impl::s_page;
+            Impl::s_pageEnd     = Impl::s_page + (numPages * pageSize);
 
-            bsls::AtomicOperations::addIntRelaxed(&s_numPagesInUse,
+            bsls::AtomicOperations::addIntRelaxed(&Impl::s_pagesInUse,
                                                   static_cast<int>(numPages));
 
             continue;
         }
 
-        s_pageCurrent = resultEnd;
+        Impl::s_pageCurrent = resultEnd;
 
-        bsls::AtomicOperations::addIntRelaxed(&s_numBlocksInUse, 1);
+        bsls::AtomicOperations::addIntRelaxed(&Impl::s_blocksInUse, 1);
 
         break;
     }
 
-    bsls::AtomicOperations::setIntRelease(&s_lock, 0);
+    bsls::AtomicOperations::setIntRelease(&Impl::s_lock, 0);
 
     BSLS_ASSERT_OPT(result != 0);
 
@@ -142,13 +155,13 @@ void GlobalAllocator::deallocate(void* address)
 bsl::size_t GlobalAllocator::numBlocksInUse() const
 {
     return static_cast<bsl::size_t>(
-        bsls::AtomicOperations::getIntRelaxed(&s_numBlocksInUse));
+        bsls::AtomicOperations::getIntRelaxed(&Impl::s_blocksInUse));
 }
 
 bsl::size_t GlobalAllocator::numPagesInUse() const
 {
     return static_cast<bsl::size_t>(
-        bsls::AtomicOperations::getIntRelaxed(&s_numPagesInUse));
+        bsls::AtomicOperations::getIntRelaxed(&Impl::s_pagesInUse));
 }
 
 bsl::size_t GlobalAllocator::pageSize() const
@@ -161,14 +174,14 @@ GlobalAllocator* GlobalAllocator::singleton()
     // See the implementation of bslma_newdeleteallocator for an explanation
     // of the singleton initialization.
 
-    if (!bsls::AtomicOperations::getPtrAcquire(&s_globalAllocator_p)) {
+    if (!bsls::AtomicOperations::getPtrAcquire(&Impl::s_object_p)) {
         bsls::AtomicOperations::setPtrRelease(
-            &s_globalAllocator_p,
-            initSingleton(&s_globalAllocatorStorage));
+            &Impl::s_object_p,
+            Impl::initialize(&Impl::s_storage));
     }
 
     return static_cast<ntcs::GlobalAllocator*>(const_cast<void*>(
-        bsls::AtomicOperations::getPtrRelaxed(&s_globalAllocator_p)));
+        bsls::AtomicOperations::getPtrRelaxed(&Impl::s_object_p)));
 }
 
 }  // close package namespace

@@ -122,7 +122,7 @@ class Test
 };
 
 class Test::ProactorStreamSocket : public ntci::ProactorSocket,
-                             public ntccfg::Shared<ProactorStreamSocket>
+                                   public ntccfg::Shared<ProactorStreamSocket>
 {
     // Provide an implementation of a proactor socket for use by
     // this test driver.
@@ -368,16 +368,16 @@ class Test::ProactorStreamSocket : public ntci::ProactorSocket,
     // Return the last asynchrously notified error.
 };
 
-class Test::ProactorListenerSocket : public ntci::ProactorSocket,
-                               public ntccfg::Shared<ProactorListenerSocket>
+class Test::ProactorListenerSocket
+: public ntci::ProactorSocket,
+  public ntccfg::Shared<ProactorListenerSocket>
 {
     // Provide an implementation of a proactor listener socket for
     // use by this test driver. This class is thread safe.
 
   public:
-    typedef NTCCFG_FUNCTION(
-        const bsl::shared_ptr<Test::ProactorStreamSocket>&
-            acceptedSocket) AcceptCallback;
+    typedef NTCCFG_FUNCTION(const bsl::shared_ptr<Test::ProactorStreamSocket>&
+                                acceptedSocket) AcceptCallback;
     // Define a type alias for a function invoked when the
     // socket has accepted a connection from a peer.
 
@@ -746,8 +746,9 @@ void Test::ProactorStreamSocket::processSocketReceived(
     }
 }
 
-void Test::ProactorStreamSocket::processSocketSent(const ntsa::Error& asyncError,
-                                             const ntsa::SendContext& context)
+void Test::ProactorStreamSocket::processSocketSent(
+    const ntsa::Error&       asyncError,
+    const ntsa::SendContext& context)
 {
     if (asyncError) {
         if (asyncError == ntsa::Error::e_CANCELLED) {
@@ -980,7 +981,8 @@ Test::ProactorStreamSocket::~ProactorStreamSocket()
                           << NTSCFG_TEST_LOG_END;
 }
 
-void Test::ProactorStreamSocket::setConnectCallback(const ConnectCallback& callback)
+void Test::ProactorStreamSocket::setConnectCallback(
+    const ConnectCallback& callback)
 {
     d_connectCallback = callback;
 }
@@ -990,7 +992,8 @@ void Test::ProactorStreamSocket::setSendCallback(const SendCallback& callback)
     d_sendCallback = callback;
 }
 
-void Test::ProactorStreamSocket::setReceiveCallback(const ReceiveCallback& callback)
+void Test::ProactorStreamSocket::setReceiveCallback(
+    const ReceiveCallback& callback)
 {
     d_receiveCallback = callback;
 }
@@ -1001,17 +1004,20 @@ void Test::ProactorStreamSocket::setShutdownCallback(
     d_shutdownCallback = callback;
 }
 
-void Test::ProactorStreamSocket::setErrorCallback(const ErrorCallback& callback)
+void Test::ProactorStreamSocket::setErrorCallback(
+    const ErrorCallback& callback)
 {
     d_errorCallback = callback;
 }
 
-void Test::ProactorStreamSocket::setDetachCallback(const DetachCallback& callback)
+void Test::ProactorStreamSocket::setDetachCallback(
+    const DetachCallback& callback)
 {
     d_detachCallback = callback;
 }
 
-ntsa::Error Test::ProactorStreamSocket::bind(const ntsa::Endpoint& sourceEndpoint)
+ntsa::Error Test::ProactorStreamSocket::bind(
+    const ntsa::Endpoint& sourceEndpoint)
 {
     ntsa::Error error;
 
@@ -1030,7 +1036,8 @@ ntsa::Error Test::ProactorStreamSocket::bind(const ntsa::Endpoint& sourceEndpoin
     return ntsa::Error();
 }
 
-ntsa::Error Test::ProactorStreamSocket::connect(const ntsa::Endpoint& remoteEndpoint)
+ntsa::Error Test::ProactorStreamSocket::connect(
+    const ntsa::Endpoint& remoteEndpoint)
 {
     d_remoteEndpoint = remoteEndpoint;
 
@@ -1082,7 +1089,8 @@ ntsa::Error Test::ProactorStreamSocket::receive(
     return d_proactor_sp->receive(self, data.get(), ntsa::ReceiveOptions());
 }
 
-ntsa::Error Test::ProactorStreamSocket::shutdown(ntsa::ShutdownType::Value direction)
+ntsa::Error Test::ProactorStreamSocket::shutdown(
+    ntsa::ShutdownType::Value direction)
 {
     bsl::shared_ptr<ProactorStreamSocket> self = this->getSelf(this);
 
@@ -1317,7 +1325,8 @@ bool Test::ProactorListenerSocket::isListener() const
     return true;
 }
 
-const bsl::shared_ptr<ntci::Strand>& Test::ProactorListenerSocket::strand() const
+const bsl::shared_ptr<ntci::Strand>& Test::ProactorListenerSocket::strand()
+    const
 {
     return d_strand_sp;
 }
@@ -1389,22 +1398,26 @@ Test::ProactorListenerSocket::~ProactorListenerSocket()
                           << NTSCFG_TEST_LOG_END;
 }
 
-void Test::ProactorListenerSocket::setAcceptCallback(const AcceptCallback& callback)
+void Test::ProactorListenerSocket::setAcceptCallback(
+    const AcceptCallback& callback)
 {
     d_acceptCallback = callback;
 }
 
-void Test::ProactorListenerSocket::setErrorCallback(const ErrorCallback& callback)
+void Test::ProactorListenerSocket::setErrorCallback(
+    const ErrorCallback& callback)
 {
     d_errorCallback = callback;
 }
 
-void Test::ProactorListenerSocket::setDetachCallback(const DetachCallback& callback)
+void Test::ProactorListenerSocket::setDetachCallback(
+    const DetachCallback& callback)
 {
     d_detachCallback = callback;
 }
 
-ntsa::Error Test::ProactorListenerSocket::bind(const ntsa::Endpoint& sourceEndpoint)
+ntsa::Error Test::ProactorListenerSocket::bind(
+    const ntsa::Endpoint& sourceEndpoint)
 {
     ntsa::Error error;
 
@@ -1455,8 +1468,7 @@ bsl::shared_ptr<Test::ProactorStreamSocket> Test::ProactorListenerSocket::
 {
     NTSCFG_TEST_FALSE(d_acceptQueue.empty());
 
-    bsl::shared_ptr<Test::ProactorStreamSocket> result =
-        d_acceptQueue.front();
+    bsl::shared_ptr<Test::ProactorStreamSocket> result = d_acceptQueue.front();
     d_acceptQueue.pop_front();
 
     return result;
@@ -2294,7 +2306,8 @@ void Test::verifyProactorSocketsParams(
 
     // Create the blob buffer factory.
 
-    bdlbb::PooledBlobBufferFactory blobBufferFactory(32, NTSCFG_TEST_ALLOCATOR);
+    bdlbb::PooledBlobBufferFactory blobBufferFactory(32,
+                                                     NTSCFG_TEST_ALLOCATOR);
 
     // Define the user.
 
@@ -2308,8 +2321,9 @@ void Test::verifyProactorSocketsParams(
     proactorConfig.setMaxThreads(1);
 
     bsl::shared_ptr<ntci::Proactor> proactor =
-        proactorFactory->createProactor(
-            proactorConfig, user, NTSCFG_TEST_ALLOCATOR);
+        proactorFactory->createProactor(proactorConfig,
+                                        user,
+                                        NTSCFG_TEST_ALLOCATOR);
 
     // Register this thread as the thread that will wait on the
     // proactor.
@@ -2321,8 +2335,9 @@ void Test::verifyProactorSocketsParams(
     // listener.
 
     bsl::shared_ptr<Test::ProactorListenerSocket> listener;
-    listener.createInplace(
-        NTSCFG_TEST_ALLOCATOR, proactor, NTSCFG_TEST_ALLOCATOR);
+    listener.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           proactor,
+                           NTSCFG_TEST_ALLOCATOR);
 
     listener->abortOnError(true);
 
@@ -2340,8 +2355,9 @@ void Test::verifyProactorSocketsParams(
     // the client.
 
     bsl::shared_ptr<Test::ProactorStreamSocket> client;
-    client.createInplace(
-        NTSCFG_TEST_ALLOCATOR, proactor, NTSCFG_TEST_ALLOCATOR);
+    client.createInplace(NTSCFG_TEST_ALLOCATOR,
+                         proactor,
+                         NTSCFG_TEST_ALLOCATOR);
 
     client->abortOnError(true);
 
@@ -2372,8 +2388,7 @@ void Test::verifyProactorSocketsParams(
         proactor->poll(waiter);
     }
 
-    bsl::shared_ptr<Test::ProactorStreamSocket> server =
-        listener->accepted();
+    bsl::shared_ptr<Test::ProactorStreamSocket> server = listener->accepted();
 
     server->abortOnError(true);
 
@@ -2406,8 +2421,9 @@ void Test::verifyProactorSocketsParams(
 
     {
         bsl::shared_ptr<bdlbb::Blob> data;
-        data.createInplace(
-            NTSCFG_TEST_ALLOCATOR, &blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
 
         bdlbb::BlobUtil::append(data.get(), "X", 1);
 
@@ -2426,8 +2442,9 @@ void Test::verifyProactorSocketsParams(
 
     {
         bsl::shared_ptr<bdlbb::Blob> data;
-        data.createInplace(
-            NTSCFG_TEST_ALLOCATOR, &blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
 
         data->setLength(1);
         data->setLength(0);
@@ -2459,8 +2476,9 @@ void Test::verifyProactorSocketsParams(
 
     {
         bsl::shared_ptr<bdlbb::Blob> data;
-        data.createInplace(
-            NTSCFG_TEST_ALLOCATOR, &blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
 
         bdlbb::BlobUtil::append(data.get(), "X", 1);
 
@@ -2486,8 +2504,9 @@ void Test::verifyProactorSocketsParams(
 
     {
         bsl::shared_ptr<bdlbb::Blob> data;
-        data.createInplace(
-            NTSCFG_TEST_ALLOCATOR, &blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
 
         data->setLength(1);
         data->setLength(0);
@@ -2513,8 +2532,9 @@ void Test::verifyProactorSocketsParams(
 
     {
         bsl::shared_ptr<bdlbb::Blob> data;
-        data.createInplace(
-            NTSCFG_TEST_ALLOCATOR, &blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
 
         bdlbb::BlobUtil::append(data.get(), "X", 1);
 
@@ -2541,8 +2561,9 @@ void Test::verifyProactorSocketsParams(
 
     {
         bsl::shared_ptr<bdlbb::Blob> data;
-        data.createInplace(
-            NTSCFG_TEST_ALLOCATOR, &blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
 
         data->setLength(1);
         data->setLength(0);
@@ -2571,8 +2592,9 @@ void Test::verifyProactorSocketsParams(
 
     {
         bsl::shared_ptr<bdlbb::Blob> data;
-        data.createInplace(
-            NTSCFG_TEST_ALLOCATOR, &blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
 
         data->setLength(1);
         data->setLength(0);
@@ -2601,8 +2623,9 @@ void Test::verifyProactorSocketsParams(
 
     {
         bsl::shared_ptr<bdlbb::Blob> data;
-        data.createInplace(
-            NTSCFG_TEST_ALLOCATOR, &blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+        data.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           &blobBufferFactory,
+                           NTSCFG_TEST_ALLOCATOR);
 
         data->setLength(1);
         data->setLength(0);
@@ -2921,8 +2944,8 @@ void Test::verifyProactorTimersParams(
 
     bsl::shared_ptr<ntci::Proactor> proactor =
         proactorFactory->createProactor(proactorConfig,
-                                      user,
-                                      NTSCFG_TEST_ALLOCATOR);
+                                        user,
+                                        NTSCFG_TEST_ALLOCATOR);
 
     // Register this thread as a thread that will wait on the proactor.
 

@@ -21,7 +21,7 @@ BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
 #include <ntccfg_limits.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_async.h>
 #include <ntcs_blobbufferutil.h>
 #include <ntcs_blobutil.h>
@@ -218,16 +218,9 @@ BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcr {
 
-namespace {
+const bsl::size_t DatagramSocket::k_ZERO_COPY_NEVER = (bsl::size_t)(-1);
 
-// The zero-copy threshold value that results in no transmission ever attempted
-// to be zero-copied.
-const bsl::size_t k_ZERO_COPY_NEVER = (bsl::size_t)(-1);
-
-// The default zero-copy threshold value if none is explicitly specified.
-const bsl::size_t k_ZERO_COPY_DEFAULT = k_ZERO_COPY_NEVER;
-
-}  // close unnamed namespace
+const bsl::size_t DatagramSocket::k_ZERO_COPY_DEFAULT = (bsl::size_t)(-1);
 
 void DatagramSocket::processSocketReadable(const ntca::ReactorEvent& event)
 {
@@ -2837,7 +2830,7 @@ DatagramSocket::DatagramSocket(
                                    metrics,
                                    d_allocator_p);
 
-        ntcm::MonitorableUtil::registerMonitorable(d_metrics_sp);
+        ntcs::MonitorableUtil::registerMonitorable(d_metrics_sp);
     }
     else {
         d_metrics_sp = metrics;
@@ -2848,7 +2841,7 @@ DatagramSocket::~DatagramSocket()
 {
     if (!d_options.metrics().isNull() && d_options.metrics().value()) {
         if (d_metrics_sp) {
-            ntcm::MonitorableUtil::deregisterMonitorable(d_metrics_sp);
+            ntcs::MonitorableUtil::deregisterMonitorable(d_metrics_sp);
         }
     }
 }

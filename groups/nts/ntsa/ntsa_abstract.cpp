@@ -38,40 +38,6 @@ BSLS_IDENT_RCSID(ntsa_abstract_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
-
-const bsl::uint8_t k_TAG_MASK_CLASS  = 0xC0;
-const bsl::uint8_t k_TAG_MASK_TYPE   = 0x20;
-const bsl::uint8_t k_TAG_MASK_NUMBER = 0x1F;
-
-const bsl::size_t k_NUM_VALUE_BITS_IN_TAG_OCTET = 7;
-const bsl::size_t k_MAX_TAG_NUMBER_OCTETS =
-    (4 * 8) / k_NUM_VALUE_BITS_IN_TAG_OCTET + 1;
-
-const ntsa::AbstractIntegerBase::Value k_DEFAULT_BASE =
-    AbstractIntegerBase::e_NATIVE;
-
-struct AbstractIntegerBaseTraits {
-    bsl::uint64_t d_radix;
-    bsl::uint64_t d_minValue;
-    bsl::uint64_t d_maxValue;
-};
-
-// clang-format off
-static const AbstractIntegerBaseTraits k_TRAITS[5] = {
-    {  1ULL << (sizeof(AbstractIntegerRepresentation::Block) * 8),
-       0,
-       (1ULL << (sizeof(AbstractIntegerRepresentation::Block) * 8)) - 1
-    },
-    {     2, 0,     1 },
-    {     8, 0,     7 },
-    {    10, 0,     9 },
-    {    16, 0,    15 }
-};
-// clang-format on
-
-}  // close unnamed namespace
-
 ntsa::Error AbstractSyntaxTagClass::fromValue(Value* result, bsl::size_t value)
 {
     switch (value) {
@@ -3324,6 +3290,14 @@ ntsa::Error AbstractSyntaxDecoderUtil::decodeTag(
     *tagType   = ntsa::AbstractSyntaxTagType::e_PRIMITIVE;
     *tagNumber = 0;
 
+    const bsl::uint8_t k_TAG_MASK_CLASS  = 0xC0;
+    const bsl::uint8_t k_TAG_MASK_TYPE   = 0x20;
+    const bsl::uint8_t k_TAG_MASK_NUMBER = 0x1F;
+
+    const bsl::size_t k_NUM_VALUE_BITS_IN_TAG_OCTET = 7;
+    const bsl::size_t k_MAX_TAG_NUMBER_OCTETS =
+        (4 * 8) / k_NUM_VALUE_BITS_IN_TAG_OCTET + 1;
+
     bsl::uint8_t nextOctet;
 
     error = AbstractSyntaxDecoderUtil::read(&nextOctet, source);
@@ -5181,15 +5155,45 @@ bsl::ostream& operator<<(bsl::ostream& stream, AbstractIntegerSign::Value rhs)
     return AbstractIntegerSign::print(stream, rhs);
 }
 
+/// Provide a private implementation.
+class AbstractIntegerBase::Impl
+{
+  public:
+    struct Traits {
+        bsl::uint64_t d_radix;
+        bsl::uint64_t d_minValue;
+        bsl::uint64_t d_maxValue;
+    };
+
+    static const AbstractIntegerBase::Impl::Traits k_TRAITS[5];
+};
+
+// clang-format off
+const AbstractIntegerBase::Impl::Traits 
+AbstractIntegerBase::Impl::k_TRAITS[5] = {
+    {  1ULL << (sizeof(AbstractIntegerRepresentation::Block) * 8),
+       0,
+       (1ULL << (sizeof(AbstractIntegerRepresentation::Block) * 8)) - 1
+    },
+    {     2, 0,     1 },
+    {     8, 0,     7 },
+    {    10, 0,     9 },
+    {    16, 0,    15 }
+};
+// clang-format on
+
 bsl::uint64_t AbstractIntegerBase::radix(AbstractIntegerBase::Value base)
 {
-    return k_TRAITS[static_cast<bsl::size_t>(base)].d_radix;
+    return AbstractIntegerBase::Impl::k_TRAITS[static_cast<bsl::size_t>(base)]
+        .d_radix;
 }
 
 bool AbstractIntegerBase::validate(AbstractIntegerBase::Value base,
                                    bsl::uint64_t              value)
 {
-    return value <= k_TRAITS[static_cast<bsl::size_t>(base)].d_maxValue;
+    return value <=
+           AbstractIntegerBase::Impl::k_TRAITS[static_cast<bsl::size_t>(base)]
+               .d_maxValue;
 }
 
 const char* AbstractIntegerBase::toString(Value value)
@@ -5288,7 +5292,7 @@ bsl::size_t AbstractIntegerRepresentation::countLeadingZeroes(
 
 AbstractIntegerRepresentation::AbstractIntegerRepresentation(
     bslma::Allocator* basicAllocator)
-: d_base(k_DEFAULT_BASE)
+: d_base(AbstractIntegerBase::e_NATIVE)
 , d_data(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -5325,7 +5329,7 @@ AbstractIntegerRepresentation& AbstractIntegerRepresentation::operator=(
 
 void AbstractIntegerRepresentation::reset()
 {
-    d_base = k_DEFAULT_BASE;
+    d_base = AbstractIntegerBase::e_NATIVE;
 
     d_data.clear();
     d_data.shrink_to_fit();

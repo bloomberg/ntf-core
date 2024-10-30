@@ -90,11 +90,10 @@ BSLS_IDENT_RCSID(ntsu_socketoptionutil_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsu {
 
-namespace {
-
-/// Provide utilities for converting between 'ntsa::Endpoint'
-/// the platform 'struct sockaddr_storage'.
-struct SocketStorageUtil {
+/// Provide a private implementation.
+class SocketOptionUtil::Impl
+{
+  public:
     /// Load into the specified 'socketAddress' and 'socketAddressSize' the
     /// conversion of the specified 'endpoint'. Return the error.
     static ntsa::Error convert(sockaddr_storage*      socketAddress,
@@ -102,9 +101,9 @@ struct SocketStorageUtil {
                                const ntsa::IpAddress& ipAddress);
 };
 
-ntsa::Error SocketStorageUtil::convert(sockaddr_storage* socketAddress,
-                                       socklen_t*        socketAddressSize,
-                                       const ntsa::IpAddress& ipAddress)
+ntsa::Error SocketOptionUtil::Impl::convert(sockaddr_storage* socketAddress,
+                                            socklen_t* socketAddressSize,
+                                            const ntsa::IpAddress& ipAddress)
 {
     bsl::memset(socketAddress, 0, sizeof(sockaddr_storage));
     *socketAddressSize = 0;
@@ -141,8 +140,6 @@ ntsa::Error SocketStorageUtil::convert(sockaddr_storage* socketAddress,
 
     return ntsa::Error();
 }
-
-}  // close unnamed namespace
 
 ntsa::Error SocketOptionUtil::setOption(ntsa::Handle              socket,
                                         const ntsa::SocketOption& option)
@@ -1844,16 +1841,13 @@ ntsa::Error SocketOptionUtil::joinMulticastGroupSource(
     req.gsr_interface = interfaceIndex;
 
     socklen_t groupAddressSize = 0;
-    error =
-        SocketStorageUtil::convert(&req.gsr_group, &groupAddressSize, group);
+    error = Impl::convert(&req.gsr_group, &groupAddressSize, group);
     if (error) {
         return error;
     }
 
     socklen_t sourceAddressSize = 0;
-    error                       = SocketStorageUtil::convert(&req.gsr_source,
-                                       &sourceAddressSize,
-                                       source);
+    error = Impl::convert(&req.gsr_source, &sourceAddressSize, source);
     if (error) {
         return error;
     }
@@ -1964,16 +1958,13 @@ ntsa::Error SocketOptionUtil::leaveMulticastGroupSource(
     req.gsr_interface = interfaceIndex;
 
     socklen_t groupAddressSize = 0;
-    error =
-        SocketStorageUtil::convert(&req.gsr_group, &groupAddressSize, group);
+    error = Impl::convert(&req.gsr_group, &groupAddressSize, group);
     if (error) {
         return error;
     }
 
     socklen_t sourceAddressSize = 0;
-    error                       = SocketStorageUtil::convert(&req.gsr_source,
-                                       &sourceAddressSize,
-                                       source);
+    error = Impl::convert(&req.gsr_source, &sourceAddressSize, source);
     if (error) {
         return error;
     }

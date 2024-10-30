@@ -24,8 +24,8 @@ BSLS_IDENT_RCSID(ntco_iocp_t_cpp, "$Id$ $CSID$")
 #include <ntci_log.h>
 #include <ntci_proactor.h>
 #include <ntci_proactorsocket.h>
-#include <ntsf_system.h>
 #include <ntco_test.h>
+#include <ntsf_system.h>
 
 using namespace BloombergLP;
 
@@ -53,13 +53,12 @@ class IocpTest
 
 NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase1)
 {
-    
 }
 
 NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase2)
 {
     bsl::shared_ptr<ntco::IocpFactory> proactorFactory;
-    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, 
+    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorSockets(proactorFactory);
@@ -68,7 +67,7 @@ NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase2)
 NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase3)
 {
     bsl::shared_ptr<ntco::IocpFactory> proactorFactory;
-    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, 
+    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorTimers(proactorFactory);
@@ -77,7 +76,7 @@ NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase3)
 NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase4)
 {
     bsl::shared_ptr<ntco::IocpFactory> proactorFactory;
-    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, 
+    proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorFunctions(proactorFactory);

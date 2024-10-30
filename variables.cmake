@@ -130,6 +130,16 @@ if (NOT DEFINED NTF_BUILD_UFID)
     endif()
 endif()
 
+if (NOT DEFINED NTF_BUILD_UNITY)
+    if (DEFINED NTF_CONFIGURE_UNITY)
+        set(NTF_BUILD_UNITY ${NTF_CONFIGURE_UNITY} CACHE INTERNAL "")
+    elseif (DEFINED ENV{NTF_CONFIGURE_UNITY})
+        set(NTF_BUILD_UNITY $ENV{NTF_CONFIGURE_UNITY} CACHE INTERNAL "")
+    else()
+        set(NTF_BUILD_UNITY ${CMAKE_SYSTEM_NAME} CACHE INTERNAL "")
+    endif()
+endif()
+
 if (NOT DEFINED NTF_BUILD_WITH_DEPRECATED_FEATURES)
     if (DEFINED NTF_CONFIGURE_WITH_DEPRECATED_FEATURES)
         set(NTF_BUILD_WITH_DEPRECATED_FEATURES
@@ -829,7 +839,6 @@ message(STATUS "NTF: Installation prefix:                       ${NTF_BUILD_PREF
 message(STATUS "NTF: Installation prefix path:                  ${NTF_BUILD_PREFIX_PATH}")
 message(STATUS "NTF: Platform:                                  ${NTF_BUILD_UNAME}")
 message(STATUS "NTF: UFID:                                      ${NTF_BUILD_UFID}")
-
 message(STATUS "NTF: Bitness:                                   ${CMAKE_SIZEOF_VOID_P}")
 
 if (${NTF_BUILD_FROM_SUPERPROJECT})
@@ -1120,3 +1129,8 @@ else()
     message(STATUS "NTF: Building with valgrind:                    no")
 endif()
 
+if (${NTF_BUILD_UNITY})
+    message(STATUS "NTF: Unity:                                     yes")
+else()
+    message(STATUS "NTF: Unity:                                     no")
+endif()

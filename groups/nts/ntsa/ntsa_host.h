@@ -87,6 +87,8 @@ class Host
 
     ntsa::HostType::Value d_type;
 
+    class Impl;
+
   public:
     /// Create a new host having an undefined type.
     Host();

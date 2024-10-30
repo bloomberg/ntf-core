@@ -44,53 +44,35 @@ BSLS_IDENT_RCSID(ntsa_guid_cpp, "$Id$ $CSID$")
 #include <ws2tcpip.h>
 #endif
 
-namespace {
+namespace BloombergLP {
+namespace ntsa {
 
-const char MY_INT_2_HEX[16] = {'0',
-                               '1',
-                               '2',
-                               '3',
-                               '4',
-                               '5',
-                               '6',
-                               '7',
-                               '8',
-                               '9',
-                               'A',
-                               'B',
-                               'C',
-                               'D',
-                               'E',
-                               'F'};
+class Guid::Impl
+{
+  public:
+    // Resolve the local IPv4 address of the host machine.
+    static int getLocalIpv4Address();
 
-const signed char MY_HEX_2_INT[24] = {0,  1,  2,  3,  4,  5,  6,  7,
-                                      8,  9,  -1, -1, -1, -1, -1, -1,
-                                      -1, 10, 11, 12, 13, 14, 15, -1};
+    static const char MY_INT_2_HEX[16];
 
-// This defines the order in which the IP address is stored in the Guid
-const int MY_IP_ADDRESS_SIGNIFICANCE_ORDER[sizeof(int)] = {13, 12, 6, 4};
+    static const signed char MY_HEX_2_INT[24];
 
-#if defined(BSLS_PLATFORM_IS_LITTLE_ENDIAN)
+    // This defines the order in which the IP address is stored in the Guid
+    static const int MY_IP_ADDRESS_SIGNIFICANCE_ORDER[sizeof(int)];
 
-// This defines the order in which the process id is stored in the Guid
-const int MY_PROCESS_ID_SIGNIFICANCE_ORDER[sizeof(int)] = {1, 3, 8, 9};
+    const int MY_PROCESS_ID_SIGNIFICANCE_ORDER[sizeof(int)];
 
-// This defines the order in which the timestamp is stored in the Guid
-const int MY_TIMESTAMP_SIGNIFICANCE_ORDER[sizeof(bsl::uint64_t)] =
-    {2, 0, 5, 7, 10, 11, 14, 15};
+    const int MY_TIMESTAMP_SIGNIFICANCE_ORDER[sizeof(bsl::uint64_t)];
 
-#else
+    static bsl::uint64_t  s_lastTimestamp;
+    static int            s_localProcessId;
+    static int            s_localIpAddress;
+    static bsls::SpinLock s_lock;
+};
 
-// This defines the order in which the process id is stored in the Guid
-const int MY_PROCESS_ID_SIGNIFICANCE_ORDER[sizeof(int)] = {9, 8, 3, 1};
+// clang-format off
 
-// This defines the order in which the timestamp is stored in the Guid
-const int MY_TIMESTAMP_SIGNIFICANCE_ORDER[sizeof(bsl::uint64_t)] =
-    {15, 14, 11, 10, 7, 5, 0, 2};
-
-#endif
-
-int getLocalIpv4Address()
+int Guid::Impl::getLocalIpv4Address()
 {
     // Return the IPv4 address that is resolution of the local hostname, in
     // network byte order.
@@ -148,15 +130,43 @@ int getLocalIpv4Address()
     return result;
 }
 
-}  // close unnamed namespace
+const char Guid::Impl::MY_INT_2_HEX[16] = {
+    '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+};
 
-namespace BloombergLP {
-namespace ntsa {
+const signed char MY_HEX_2_INT[24] = {
+     0,  1,  2,  3,  4,  5,  6,  7,
+     8,  9, -1, -1, -1, -1, -1, -1,
+    -1, 10, 11, 12, 13, 14, 15, -1
+};
 
-bsl::uint64_t  Guid::s_lastTimestamp  = 0;
-int            Guid::s_localProcessId = 0;
-int            Guid::s_localIpAddress = 0;
-bsls::SpinLock Guid::s_lock           = BSLS_SPINLOCK_UNLOCKED;
+const int MY_IP_ADDRESS_SIGNIFICANCE_ORDER[sizeof(int)] = { 13, 12, 6, 4 };
+
+#if defined(BSLS_PLATFORM_IS_LITTLE_ENDIAN)
+
+const int MY_PROCESS_ID_SIGNIFICANCE_ORDER[sizeof(int)] = { 1, 3, 8, 9 };
+
+const int MY_TIMESTAMP_SIGNIFICANCE_ORDER[sizeof(bsl::uint64_t)] = {
+    2, 0, 5, 7, 10, 11, 14, 15
+};
+
+#else
+
+const int MY_PROCESS_ID_SIGNIFICANCE_ORDER[sizeof(int)] = { 9, 8, 3, 1 };
+
+const int MY_TIMESTAMP_SIGNIFICANCE_ORDER[sizeof(bsl::uint64_t)] = {
+    15, 14, 11, 10, 7, 5, 0, 2
+};
+
+#endif
+
+// clang-format on
+
+bsl::uint64_t  Guid::Impl::s_lastTimestamp  = 0;
+int            Guid::Impl::s_localProcessId = 0;
+int            Guid::Impl::s_localIpAddress = 0;
+bsls::SpinLock Guid::Impl::s_lock           = BSLS_SPINLOCK_UNLOCKED;
 
 void Guid::setIpAddress(int ipAddress)
 {
@@ -187,23 +197,23 @@ void Guid::setTimestamp(bsl::uint64_t timestamp)
 
 Guid Guid::generate()
 {
-    bsls::SpinLockGuard g(&s_lock);
+    bsls::SpinLockGuard g(&Guid::Impl::s_lock);
 
     Guid result;
-    if (s_localIpAddress == 0) {
-        s_localIpAddress = getLocalIpv4Address();
-        s_localProcessId = bdls::ProcessUtil::getProcessId();
+    if (Guid::Impl::s_localIpAddress == 0) {
+        Guid::Impl::s_localIpAddress = Guid::Impl::getLocalIpv4Address();
+        Guid::Impl::s_localProcessId = bdls::ProcessUtil::getProcessId();
     }
 
     bsls::TimeInterval currentTime = bdlt::CurrentTime::currentTimeDefault();
     bsl::uint64_t      timestamp   = currentTime.totalMicroseconds();
-    if (timestamp <= s_lastTimestamp) {
-        timestamp = s_lastTimestamp + 1;
+    if (timestamp <= Guid::Impl::s_lastTimestamp) {
+        timestamp = Guid::Impl::s_lastTimestamp + 1;
     }
-    s_lastTimestamp = timestamp;
+    Guid::Impl::s_lastTimestamp = timestamp;
 
-    result.setIpAddress(s_localIpAddress);
-    result.setProcessId(s_localProcessId);
+    result.setIpAddress(Guid::Impl::s_localIpAddress);
+    result.setProcessId(Guid::Impl::s_localProcessId);
     result.setTimestamp(timestamp);
 
     return result;
@@ -263,8 +273,8 @@ void Guid::writeText(char* destination) const
     const unsigned char* value =
         reinterpret_cast<const unsigned char*>(d_bytes);
     for (int i = 0; i < SIZE_BINARY; ++i) {
-        *destination++ = MY_INT_2_HEX[value[i] / 16];
-        *destination++ = MY_INT_2_HEX[value[i] % 16];
+        *destination++ = Guid::Impl::MY_INT_2_HEX[value[i] / 16];
+        *destination++ = Guid::Impl::MY_INT_2_HEX[value[i] % 16];
     }
 }
 

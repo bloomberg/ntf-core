@@ -96,6 +96,8 @@ class EncryptionOptions
     bdlb::NullableValue<bsl::string>                d_authorityDirectory;
     bdlb::NullableValue<bsl::string>                d_cipherSpec;
 
+    class Impl;
+
   public:
     /// Create new encryption options.  Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently

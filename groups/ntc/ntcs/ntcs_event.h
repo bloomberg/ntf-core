@@ -354,6 +354,10 @@ class Event
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
+    /// Construct in the specified 'arena' a new event. Use the specified
+    /// 'allocator' to supply memory.
+    static void createEvent(void* arena, bslma::Allocator* allocator);
+
     /// Defines the traits of this type. These traits can be used to select,
     /// at compile-time, the most efficient algorithm to manipulate objects
     /// of this type.

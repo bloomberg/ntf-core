@@ -25,7 +25,7 @@ BSLS_IDENT_RCSID(ntco_eventport_cpp, "$Id$ $CSID$")
 #include <ntcr_listenersocket.h>
 #include <ntcr_streamsocket.h>
 
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 
 #include <ntci_log.h>
 #include <ntci_mutex.h>
@@ -138,13 +138,6 @@ BSLS_IDENT_RCSID(ntco_eventport_cpp, "$Id$ $CSID$")
 
 namespace BloombergLP {
 namespace ntco {
-
-namespace {
-
-// The default value of a poll structure.
-struct ::pollfd k_DEFAULT_POLLFD;
-
-}  // close unnamed namespace
 
 class EventPort : public ntci::Reactor,
                   public ntcs::Driver,
@@ -1123,7 +1116,7 @@ ntci::Waiter EventPort::registerWaiter(
 
                 result->d_metrics_sp = metrics;
 
-                ntcm::MonitorableUtil::registerMonitorable(
+                ntcs::MonitorableUtil::registerMonitorable(
                     result->d_metrics_sp);
             }
             else {
@@ -1167,7 +1160,7 @@ void EventPort::deregisterWaiter(ntci::Waiter waiter)
 
     if (d_config.metricCollection().value()) {
         if (d_config.metricCollectionPerWaiter().value()) {
-            ntcm::MonitorableUtil::deregisterMonitorable(result->d_metrics_sp);
+            ntcs::MonitorableUtil::deregisterMonitorable(result->d_metrics_sp);
         }
     }
 

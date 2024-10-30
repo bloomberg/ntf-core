@@ -247,7 +247,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase3)
     NTSCFG_TEST_TRUE(localName.isAbsolute());
     NTSCFG_TEST_FALSE(localName.isRelative());
 
-    if (NTSCFG_TEST_VERBOSITY) {
+    if (NTSCFG_TEST_VERBOSITY >= NTSCFG_TEST_VERBOSITY_DEBUG) {
         bsl::cout << "Local name = '" << localName
                   << "' (size = " << localName.value().size() << ")"
                   << bsl::endl;

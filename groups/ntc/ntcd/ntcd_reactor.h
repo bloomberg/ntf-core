@@ -107,6 +107,10 @@ class Reactor : public ntci::Reactor,
     ntca::ReactorConfig                         d_config;
     bslma::Allocator*                           d_allocator_p;
 
+    /// The flag that defines whether all waiters are interrupted when the
+    /// polling device gains or loses interest in socket events.
+    static const bool k_INTERRUPT_ALL;
+
   private:
     Reactor(const Reactor&) BSLS_KEYWORD_DELETED;
     Reactor& operator=(const Reactor&) BSLS_KEYWORD_DELETED;

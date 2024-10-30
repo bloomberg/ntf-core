@@ -41,6 +41,9 @@ namespace ntscfg {
 // The build commit hash, abbreviated.
 #define NTS_BUILD_COMMIT_HASH_ABBREV "@NTS_BUILD_COMMIT_HASH_ABBREV@"
 
+// Build with component unification, or amalgamation.
+#define NTS_BUILD_UNITY @NTF_BUILD_UNITY@
+
 // Build with BSL.
 #define NTS_BUILD_WITH_BSL @NTF_BUILD_WITH_BSL@
 
@@ -59,7 +62,7 @@ namespace ntscfg {
 // Build with support for the local (a.k.a. Unix) address family.
 #define NTSCFG_BUILD_WITH_ADDRESS_FAMILY_LOCAL @NTF_BUILD_WITH_ADDRESS_FAMILY_LOCAL@
 
-// Build with support for the Transmission Control Protocol (TCP) transport 
+// Build with support for the Transmission Control Protocol (TCP) transport
 // protocol.
 #define NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_TCP @NTF_BUILD_WITH_TRANSPORT_PROTOCOL_TCP@
 

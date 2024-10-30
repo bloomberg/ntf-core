@@ -20,7 +20,7 @@ BSLS_IDENT_RCSID(ntcd_proactor_cpp, "$Id$ $CSID$")
 
 #include <ntccfg_limits.h>
 #include <ntci_log.h>
-#include <ntcm_monitorable.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_datapool.h>
 #include <ntcs_dispatch.h>
 #include <ntcs_nomenclature.h>
@@ -1274,7 +1274,7 @@ ntci::Waiter Proactor::registerWaiter(const ntca::WaiterOptions& waiterOptions)
                                       d_metrics_sp,
                                       d_allocator_p);
 
-                ntcm::MonitorableUtil::registerMonitorable(
+                ntcs::MonitorableUtil::registerMonitorable(
                     result->d_metrics_sp);
             }
             else {
@@ -1318,7 +1318,7 @@ void Proactor::deregisterWaiter(ntci::Waiter waiter)
         if (!d_config.metricCollectionPerWaiter().isNull() &&
             d_config.metricCollectionPerWaiter().value())
         {
-            ntcm::MonitorableUtil::deregisterMonitorable(result->d_metrics_sp);
+            ntcs::MonitorableUtil::deregisterMonitorable(result->d_metrics_sp);
         }
     }
 

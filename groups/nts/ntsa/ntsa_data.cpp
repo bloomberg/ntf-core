@@ -30,17 +30,23 @@ BSLS_IDENT_RCSID(ntsa_data_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-namespace {
-
-typedef void (*DataRepManipulator)(ntsa::DataRep*            destination,
-                                   const void*               source,
-                                   bdlbb::BlobBufferFactory* blobBufferFactory,
-                                   bslma::Allocator*         allocator);
-
-typedef bsl::size_t (*DataRepSize)(const ntsa::DataRep& source);
-
 /// Provide utilities for implementing data representations.
-struct DataRepUtil {
+class Data::Impl
+{
+  public:
+    /// Define a type alias for a function to manipulator the specified
+    /// 'destination' from the specified 'source' using the specified
+    /// 'blobBufferFactory' to supply buffers and the specified 'allocator' to
+    /// supply memory.
+    typedef void (*Modify)(ntsa::DataRep*            destination,
+                           const void*               source,
+                           bdlbb::BlobBufferFactory* blobBufferFactory,
+                           bslma::Allocator*         allocator);
+
+    /// Define a type alias for a function to return the size of the specified
+    /// 'source'.
+    typedef bsl::size_t (*Size)(const ntsa::DataRep& source);
+
     /// Default construct the specified 'destination' assuming the
     /// 'destination' is represented as undefined.
     static void defaultConstructUndefined(
@@ -440,9 +446,15 @@ struct DataRepUtil {
     /// Return the size of the specified 'source' assuming the 'source'
     /// is represented as a file.
     static bsl::size_t getSizeFile(const ntsa::DataRep& source);
+
+    static const Data::Impl::Modify s_defaultConstruct[12];
+    static const Data::Impl::Modify s_copyConstruct[12];
+    static const Data::Impl::Modify s_constructInitialize[12];
+    static const Data::Impl::Modify s_destruct[12];
+    static const Data::Impl::Size   s_getSize[12];
 };
 
-void DataRepUtil::defaultConstructUndefined(
+void Data::Impl::defaultConstructUndefined(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -454,7 +466,7 @@ void DataRepUtil::defaultConstructUndefined(
     NTSCFG_WARNING_UNUSED(allocator);
 }
 
-void DataRepUtil::defaultConstructBlobBuffer(
+void Data::Impl::defaultConstructBlobBuffer(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -467,7 +479,7 @@ void DataRepUtil::defaultConstructBlobBuffer(
     new (destination->d_blobBuffer.buffer()) bdlbb::BlobBuffer();
 }
 
-void DataRepUtil::defaultConstructConstBuffer(
+void Data::Impl::defaultConstructConstBuffer(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -480,7 +492,7 @@ void DataRepUtil::defaultConstructConstBuffer(
     new (destination->d_constBuffer.buffer()) ntsa::ConstBuffer();
 }
 
-void DataRepUtil::defaultConstructConstBufferArray(
+void Data::Impl::defaultConstructConstBufferArray(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -493,7 +505,7 @@ void DataRepUtil::defaultConstructConstBufferArray(
         ntsa::ConstBufferArray(allocator);
 }
 
-void DataRepUtil::defaultConstructConstBufferPtrArray(
+void Data::Impl::defaultConstructConstBufferPtrArray(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -507,7 +519,7 @@ void DataRepUtil::defaultConstructConstBufferPtrArray(
         ntsa::ConstBufferPtrArray();
 }
 
-void DataRepUtil::defaultConstructMutableBuffer(
+void Data::Impl::defaultConstructMutableBuffer(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -520,7 +532,7 @@ void DataRepUtil::defaultConstructMutableBuffer(
     new (destination->d_mutableBuffer.buffer()) ntsa::MutableBuffer();
 }
 
-void DataRepUtil::defaultConstructMutableBufferArray(
+void Data::Impl::defaultConstructMutableBufferArray(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -533,7 +545,7 @@ void DataRepUtil::defaultConstructMutableBufferArray(
         ntsa::MutableBufferArray(allocator);
 }
 
-void DataRepUtil::defaultConstructMutableBufferPtrArray(
+void Data::Impl::defaultConstructMutableBufferPtrArray(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -547,7 +559,7 @@ void DataRepUtil::defaultConstructMutableBufferPtrArray(
         ntsa::MutableBufferPtrArray();
 }
 
-void DataRepUtil::defaultConstructBlob(
+void Data::Impl::defaultConstructBlob(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -564,7 +576,7 @@ void DataRepUtil::defaultConstructBlob(
     }
 }
 
-void DataRepUtil::defaultConstructSharedBlob(
+void Data::Impl::defaultConstructSharedBlob(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -577,7 +589,7 @@ void DataRepUtil::defaultConstructSharedBlob(
     new (destination->d_sharedBlob.buffer()) bsl::shared_ptr<bdlbb::Blob>();
 }
 
-void DataRepUtil::defaultConstructString(
+void Data::Impl::defaultConstructString(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -589,7 +601,7 @@ void DataRepUtil::defaultConstructString(
     new (destination->d_string.buffer()) bsl::string(allocator);
 }
 
-void DataRepUtil::defaultConstructFile(
+void Data::Impl::defaultConstructFile(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -604,7 +616,7 @@ void DataRepUtil::defaultConstructFile(
 
 // *** Copy Constructors ***
 
-void DataRepUtil::copyConstructUndefined(
+void Data::Impl::copyConstructUndefined(
     ntsa::DataRep*            destination,
     const ntsa::DataRep*      source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -616,7 +628,7 @@ void DataRepUtil::copyConstructUndefined(
     NTSCFG_WARNING_UNUSED(allocator);
 }
 
-void DataRepUtil::copyConstructBlobBuffer(
+void Data::Impl::copyConstructBlobBuffer(
     ntsa::DataRep*            destination,
     const ntsa::DataRep*      source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -629,7 +641,7 @@ void DataRepUtil::copyConstructBlobBuffer(
         bdlbb::BlobBuffer(source->d_blobBuffer.object());
 }
 
-void DataRepUtil::copyConstructConstBuffer(
+void Data::Impl::copyConstructConstBuffer(
     ntsa::DataRep*            destination,
     const ntsa::DataRep*      source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -642,7 +654,7 @@ void DataRepUtil::copyConstructConstBuffer(
         ntsa::ConstBuffer(source->d_constBuffer.object());
 }
 
-void DataRepUtil::copyConstructConstBufferArray(
+void Data::Impl::copyConstructConstBufferArray(
     ntsa::DataRep*            destination,
     const ntsa::DataRep*      source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -654,7 +666,7 @@ void DataRepUtil::copyConstructConstBufferArray(
         ntsa::ConstBufferArray(source->d_constBufferArray.object(), allocator);
 }
 
-void DataRepUtil::copyConstructConstBufferPtrArray(
+void Data::Impl::copyConstructConstBufferPtrArray(
     ntsa::DataRep*            destination,
     const ntsa::DataRep*      source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -667,7 +679,7 @@ void DataRepUtil::copyConstructConstBufferPtrArray(
         ntsa::ConstBufferPtrArray(source->d_constBufferPtrArray.object());
 }
 
-void DataRepUtil::copyConstructMutableBuffer(
+void Data::Impl::copyConstructMutableBuffer(
     ntsa::DataRep*            destination,
     const ntsa::DataRep*      source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -680,7 +692,7 @@ void DataRepUtil::copyConstructMutableBuffer(
         ntsa::MutableBuffer(source->d_mutableBuffer.object());
 }
 
-void DataRepUtil::copyConstructMutableBufferArray(
+void Data::Impl::copyConstructMutableBufferArray(
     ntsa::DataRep*            destination,
     const ntsa::DataRep*      source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -693,7 +705,7 @@ void DataRepUtil::copyConstructMutableBufferArray(
                                  allocator);
 }
 
-void DataRepUtil::copyConstructMutableBufferPtrArray(
+void Data::Impl::copyConstructMutableBufferPtrArray(
     ntsa::DataRep*            destination,
     const ntsa::DataRep*      source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -706,11 +718,10 @@ void DataRepUtil::copyConstructMutableBufferPtrArray(
         ntsa::MutableBufferPtrArray(source->d_mutableBufferPtrArray.object());
 }
 
-void DataRepUtil::copyConstructBlob(
-    ntsa::DataRep*            destination,
-    const ntsa::DataRep*      source,
-    bdlbb::BlobBufferFactory* blobBufferFactory,
-    bslma::Allocator*         allocator)
+void Data::Impl::copyConstructBlob(ntsa::DataRep*            destination,
+                                   const ntsa::DataRep*      source,
+                                   bdlbb::BlobBufferFactory* blobBufferFactory,
+                                   bslma::Allocator*         allocator)
 {
     if (blobBufferFactory) {
         new (destination->d_blob.buffer())
@@ -722,7 +733,7 @@ void DataRepUtil::copyConstructBlob(
     }
 }
 
-void DataRepUtil::copyConstructSharedBlob(
+void Data::Impl::copyConstructSharedBlob(
     ntsa::DataRep*            destination,
     const ntsa::DataRep*      source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -735,7 +746,7 @@ void DataRepUtil::copyConstructSharedBlob(
         bsl::shared_ptr<bdlbb::Blob>(source->d_sharedBlob.object());
 }
 
-void DataRepUtil::copyConstructString(
+void Data::Impl::copyConstructString(
     ntsa::DataRep*            destination,
     const ntsa::DataRep*      source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -747,11 +758,10 @@ void DataRepUtil::copyConstructString(
         bsl::string(source->d_string.object(), allocator);
 }
 
-void DataRepUtil::copyConstructFile(
-    ntsa::DataRep*            destination,
-    const ntsa::DataRep*      source,
-    bdlbb::BlobBufferFactory* blobBufferFactory,
-    bslma::Allocator*         allocator)
+void Data::Impl::copyConstructFile(ntsa::DataRep*            destination,
+                                   const ntsa::DataRep*      source,
+                                   bdlbb::BlobBufferFactory* blobBufferFactory,
+                                   bslma::Allocator*         allocator)
 {
     NTSCFG_WARNING_UNUSED(blobBufferFactory);
     NTSCFG_WARNING_UNUSED(allocator);
@@ -761,7 +771,7 @@ void DataRepUtil::copyConstructFile(
 
 // *** Initializers ***
 
-void DataRepUtil::constructInitializeUndefined(
+void Data::Impl::constructInitializeUndefined(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -773,7 +783,7 @@ void DataRepUtil::constructInitializeUndefined(
     NTSCFG_WARNING_UNUSED(allocator);
 }
 
-void DataRepUtil::constructInitializeBlobBuffer(
+void Data::Impl::constructInitializeBlobBuffer(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -786,7 +796,7 @@ void DataRepUtil::constructInitializeBlobBuffer(
         bdlbb::BlobBuffer(*static_cast<const bdlbb::BlobBuffer*>(source));
 }
 
-void DataRepUtil::constructInitializeConstBuffer(
+void Data::Impl::constructInitializeConstBuffer(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -799,7 +809,7 @@ void DataRepUtil::constructInitializeConstBuffer(
         ntsa::ConstBuffer(*static_cast<const ntsa::ConstBuffer*>(source));
 }
 
-void DataRepUtil::constructInitializeConstBufferArray(
+void Data::Impl::constructInitializeConstBufferArray(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -812,7 +822,7 @@ void DataRepUtil::constructInitializeConstBufferArray(
         allocator);
 }
 
-void DataRepUtil::constructInitializeConstBufferPtrArray(
+void Data::Impl::constructInitializeConstBufferPtrArray(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -826,7 +836,7 @@ void DataRepUtil::constructInitializeConstBufferPtrArray(
             *static_cast<const ntsa::ConstBufferPtrArray*>(source));
 }
 
-void DataRepUtil::constructInitializeMutableBuffer(
+void Data::Impl::constructInitializeMutableBuffer(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -839,7 +849,7 @@ void DataRepUtil::constructInitializeMutableBuffer(
         ntsa::MutableBuffer(*static_cast<const ntsa::MutableBuffer*>(source));
 }
 
-void DataRepUtil::constructInitializeMutableBufferArray(
+void Data::Impl::constructInitializeMutableBufferArray(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -852,7 +862,7 @@ void DataRepUtil::constructInitializeMutableBufferArray(
         allocator);
 }
 
-void DataRepUtil::constructInitializeMutableBufferPtrArray(
+void Data::Impl::constructInitializeMutableBufferPtrArray(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -866,7 +876,7 @@ void DataRepUtil::constructInitializeMutableBufferPtrArray(
             *static_cast<const ntsa::MutableBufferPtrArray*>(source));
 }
 
-void DataRepUtil::constructInitializeBlob(
+void Data::Impl::constructInitializeBlob(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -884,7 +894,7 @@ void DataRepUtil::constructInitializeBlob(
     }
 }
 
-void DataRepUtil::constructInitializeSharedBlob(
+void Data::Impl::constructInitializeSharedBlob(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -897,7 +907,7 @@ void DataRepUtil::constructInitializeSharedBlob(
         *static_cast<const bsl::shared_ptr<bdlbb::Blob>*>(source));
 }
 
-void DataRepUtil::constructInitializeString(
+void Data::Impl::constructInitializeString(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -909,7 +919,7 @@ void DataRepUtil::constructInitializeString(
         bsl::string(*static_cast<const bsl::string*>(source), allocator);
 }
 
-void DataRepUtil::constructInitializeFile(
+void Data::Impl::constructInitializeFile(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -924,10 +934,10 @@ void DataRepUtil::constructInitializeFile(
 
 // *** Destructors ***
 
-void DataRepUtil::destructTrivial(ntsa::DataRep*            destination,
-                                  const void*               source,
-                                  bdlbb::BlobBufferFactory* blobBufferFactory,
-                                  bslma::Allocator*         allocator)
+void Data::Impl::destructTrivial(ntsa::DataRep*            destination,
+                                 const void*               source,
+                                 bdlbb::BlobBufferFactory* blobBufferFactory,
+                                 bslma::Allocator*         allocator)
 {
     NTSCFG_WARNING_UNUSED(destination);
     NTSCFG_WARNING_UNUSED(source);
@@ -935,7 +945,7 @@ void DataRepUtil::destructTrivial(ntsa::DataRep*            destination,
     NTSCFG_WARNING_UNUSED(allocator);
 }
 
-void DataRepUtil::destructBlobBuffer(
+void Data::Impl::destructBlobBuffer(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -949,7 +959,7 @@ void DataRepUtil::destructBlobBuffer(
     destination->d_blobBuffer.object().~Type();
 }
 
-void DataRepUtil::destructConstBufferArray(
+void Data::Impl::destructConstBufferArray(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -963,7 +973,7 @@ void DataRepUtil::destructConstBufferArray(
     destination->d_constBufferArray.object().~Type();
 }
 
-void DataRepUtil::destructMutableBufferArray(
+void Data::Impl::destructMutableBufferArray(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -977,10 +987,10 @@ void DataRepUtil::destructMutableBufferArray(
     destination->d_mutableBufferArray.object().~Type();
 }
 
-void DataRepUtil::destructBlob(ntsa::DataRep*            destination,
-                               const void*               source,
-                               bdlbb::BlobBufferFactory* blobBufferFactory,
-                               bslma::Allocator*         allocator)
+void Data::Impl::destructBlob(ntsa::DataRep*            destination,
+                              const void*               source,
+                              bdlbb::BlobBufferFactory* blobBufferFactory,
+                              bslma::Allocator*         allocator)
 {
     NTSCFG_WARNING_UNUSED(source);
     NTSCFG_WARNING_UNUSED(blobBufferFactory);
@@ -990,7 +1000,7 @@ void DataRepUtil::destructBlob(ntsa::DataRep*            destination,
     destination->d_blob.object().~Type();
 }
 
-void DataRepUtil::destructSharedBlob(
+void Data::Impl::destructSharedBlob(
     ntsa::DataRep*            destination,
     const void*               source,
     bdlbb::BlobBufferFactory* blobBufferFactory,
@@ -1004,10 +1014,10 @@ void DataRepUtil::destructSharedBlob(
     destination->d_sharedBlob.object().~Type();
 }
 
-void DataRepUtil::destructString(ntsa::DataRep*            destination,
-                                 const void*               source,
-                                 bdlbb::BlobBufferFactory* blobBufferFactory,
-                                 bslma::Allocator*         allocator)
+void Data::Impl::destructString(ntsa::DataRep*            destination,
+                                const void*               source,
+                                bdlbb::BlobBufferFactory* blobBufferFactory,
+                                bslma::Allocator*         allocator)
 {
     NTSCFG_WARNING_UNUSED(source);
     NTSCFG_WARNING_UNUSED(blobBufferFactory);
@@ -1019,152 +1029,149 @@ void DataRepUtil::destructString(ntsa::DataRep*            destination,
 
 // *** Size ***
 
-bsl::size_t DataRepUtil::getSizeUndefined(const ntsa::DataRep& source)
+bsl::size_t Data::Impl::getSizeUndefined(const ntsa::DataRep& source)
 {
     NTSCFG_WARNING_UNUSED(source);
 
     return 0;
 }
 
-bsl::size_t DataRepUtil::getSizeBlobBuffer(const ntsa::DataRep& source)
+bsl::size_t Data::Impl::getSizeBlobBuffer(const ntsa::DataRep& source)
 {
     return source.d_blobBuffer.object().size();
 }
 
-bsl::size_t DataRepUtil::getSizeConstBuffer(const ntsa::DataRep& source)
+bsl::size_t Data::Impl::getSizeConstBuffer(const ntsa::DataRep& source)
 {
     return source.d_constBuffer.object().size();
 }
 
-bsl::size_t DataRepUtil::getSizeConstBufferArray(const ntsa::DataRep& source)
+bsl::size_t Data::Impl::getSizeConstBufferArray(const ntsa::DataRep& source)
 {
     return source.d_constBufferArray.object().numBytes();
 }
 
-bsl::size_t DataRepUtil::getSizeConstBufferPtrArray(
-    const ntsa::DataRep& source)
+bsl::size_t Data::Impl::getSizeConstBufferPtrArray(const ntsa::DataRep& source)
 {
     return source.d_constBufferPtrArray.object().numBytes();
 }
 
-bsl::size_t DataRepUtil::getSizeMutableBuffer(const ntsa::DataRep& source)
+bsl::size_t Data::Impl::getSizeMutableBuffer(const ntsa::DataRep& source)
 {
     return source.d_mutableBuffer.object().size();
 }
 
-bsl::size_t DataRepUtil::getSizeMutableBufferArray(const ntsa::DataRep& source)
+bsl::size_t Data::Impl::getSizeMutableBufferArray(const ntsa::DataRep& source)
 {
     return source.d_mutableBufferArray.object().numBytes();
 }
 
-bsl::size_t DataRepUtil::getSizeMutableBufferPtrArray(
+bsl::size_t Data::Impl::getSizeMutableBufferPtrArray(
     const ntsa::DataRep& source)
 {
     return source.d_mutableBufferPtrArray.object().numBytes();
 }
 
-bsl::size_t DataRepUtil::getSizeBlob(const ntsa::DataRep& source)
+bsl::size_t Data::Impl::getSizeBlob(const ntsa::DataRep& source)
 {
     return source.d_blob.object().length();
 }
 
-bsl::size_t DataRepUtil::getSizeSharedBlob(const ntsa::DataRep& source)
+bsl::size_t Data::Impl::getSizeSharedBlob(const ntsa::DataRep& source)
 {
     return source.d_sharedBlob.object()->length();
 }
 
-bsl::size_t DataRepUtil::getSizeString(const ntsa::DataRep& source)
+bsl::size_t Data::Impl::getSizeString(const ntsa::DataRep& source)
 {
     return source.d_string.object().size();
 }
 
-bsl::size_t DataRepUtil::getSizeFile(const ntsa::DataRep& source)
+bsl::size_t Data::Impl::getSizeFile(const ntsa::DataRep& source)
 {
     return NTSCFG_WARNING_NARROW(bsl::size_t,
                                  source.d_file.object().bytesRemaining());
 }
 
-DataRepManipulator s_defaultConstruct[12] = {
-    (DataRepManipulator)&DataRepUtil::defaultConstructUndefined,
-    (DataRepManipulator)&DataRepUtil::defaultConstructBlobBuffer,
-    (DataRepManipulator)&DataRepUtil::defaultConstructConstBuffer,
-    (DataRepManipulator)&DataRepUtil::defaultConstructConstBufferArray,
-    (DataRepManipulator)&DataRepUtil::defaultConstructConstBufferPtrArray,
-    (DataRepManipulator)&DataRepUtil::defaultConstructMutableBuffer,
-    (DataRepManipulator)&DataRepUtil::defaultConstructMutableBufferArray,
-    (DataRepManipulator)&DataRepUtil::defaultConstructMutableBufferPtrArray,
-    (DataRepManipulator)&DataRepUtil::defaultConstructBlob,
-    (DataRepManipulator)&DataRepUtil::defaultConstructSharedBlob,
-    (DataRepManipulator)&DataRepUtil::defaultConstructString,
-    (DataRepManipulator)&DataRepUtil::defaultConstructFile};
+const Data::Impl::Modify Data::Impl::s_defaultConstruct[12] = {
+    (Data::Impl::Modify)&Data::Impl::defaultConstructUndefined,
+    (Data::Impl::Modify)&Data::Impl::defaultConstructBlobBuffer,
+    (Data::Impl::Modify)&Data::Impl::defaultConstructConstBuffer,
+    (Data::Impl::Modify)&Data::Impl::defaultConstructConstBufferArray,
+    (Data::Impl::Modify)&Data::Impl::defaultConstructConstBufferPtrArray,
+    (Data::Impl::Modify)&Data::Impl::defaultConstructMutableBuffer,
+    (Data::Impl::Modify)&Data::Impl::defaultConstructMutableBufferArray,
+    (Data::Impl::Modify)&Data::Impl::defaultConstructMutableBufferPtrArray,
+    (Data::Impl::Modify)&Data::Impl::defaultConstructBlob,
+    (Data::Impl::Modify)&Data::Impl::defaultConstructSharedBlob,
+    (Data::Impl::Modify)&Data::Impl::defaultConstructString,
+    (Data::Impl::Modify)&Data::Impl::defaultConstructFile};
 
-DataRepManipulator s_copyConstruct[12] = {
-    (DataRepManipulator)&DataRepUtil::copyConstructUndefined,
-    (DataRepManipulator)&DataRepUtil::copyConstructBlobBuffer,
-    (DataRepManipulator)&DataRepUtil::copyConstructConstBuffer,
-    (DataRepManipulator)&DataRepUtil::copyConstructConstBufferArray,
-    (DataRepManipulator)&DataRepUtil::copyConstructConstBufferPtrArray,
-    (DataRepManipulator)&DataRepUtil::copyConstructMutableBuffer,
-    (DataRepManipulator)&DataRepUtil::copyConstructMutableBufferArray,
-    (DataRepManipulator)&DataRepUtil::copyConstructMutableBufferPtrArray,
-    (DataRepManipulator)&DataRepUtil::copyConstructBlob,
-    (DataRepManipulator)&DataRepUtil::copyConstructSharedBlob,
-    (DataRepManipulator)&DataRepUtil::copyConstructString,
-    (DataRepManipulator)&DataRepUtil::copyConstructFile};
+const Data::Impl::Modify Data::Impl::s_copyConstruct[12] = {
+    (Data::Impl::Modify)&Data::Impl::copyConstructUndefined,
+    (Data::Impl::Modify)&Data::Impl::copyConstructBlobBuffer,
+    (Data::Impl::Modify)&Data::Impl::copyConstructConstBuffer,
+    (Data::Impl::Modify)&Data::Impl::copyConstructConstBufferArray,
+    (Data::Impl::Modify)&Data::Impl::copyConstructConstBufferPtrArray,
+    (Data::Impl::Modify)&Data::Impl::copyConstructMutableBuffer,
+    (Data::Impl::Modify)&Data::Impl::copyConstructMutableBufferArray,
+    (Data::Impl::Modify)&Data::Impl::copyConstructMutableBufferPtrArray,
+    (Data::Impl::Modify)&Data::Impl::copyConstructBlob,
+    (Data::Impl::Modify)&Data::Impl::copyConstructSharedBlob,
+    (Data::Impl::Modify)&Data::Impl::copyConstructString,
+    (Data::Impl::Modify)&Data::Impl::copyConstructFile};
 
-DataRepManipulator s_constructInitialize[12] = {
-    (DataRepManipulator)&DataRepUtil::constructInitializeUndefined,
-    (DataRepManipulator)&DataRepUtil::constructInitializeBlobBuffer,
-    (DataRepManipulator)&DataRepUtil::constructInitializeConstBuffer,
-    (DataRepManipulator)&DataRepUtil::constructInitializeConstBufferArray,
-    (DataRepManipulator)&DataRepUtil::constructInitializeConstBufferPtrArray,
-    (DataRepManipulator)&DataRepUtil::constructInitializeMutableBuffer,
-    (DataRepManipulator)&DataRepUtil::constructInitializeMutableBufferArray,
-    (DataRepManipulator)&DataRepUtil::constructInitializeMutableBufferPtrArray,
-    (DataRepManipulator)&DataRepUtil::constructInitializeBlob,
-    (DataRepManipulator)&DataRepUtil::constructInitializeSharedBlob,
-    (DataRepManipulator)&DataRepUtil::constructInitializeString,
-    (DataRepManipulator)&DataRepUtil::constructInitializeFile};
+const Data::Impl::Modify Data::Impl::s_constructInitialize[12] = {
+    (Data::Impl::Modify)&Data::Impl::constructInitializeUndefined,
+    (Data::Impl::Modify)&Data::Impl::constructInitializeBlobBuffer,
+    (Data::Impl::Modify)&Data::Impl::constructInitializeConstBuffer,
+    (Data::Impl::Modify)&Data::Impl::constructInitializeConstBufferArray,
+    (Data::Impl::Modify)&Data::Impl::constructInitializeConstBufferPtrArray,
+    (Data::Impl::Modify)&Data::Impl::constructInitializeMutableBuffer,
+    (Data::Impl::Modify)&Data::Impl::constructInitializeMutableBufferArray,
+    (Data::Impl::Modify)&Data::Impl::constructInitializeMutableBufferPtrArray,
+    (Data::Impl::Modify)&Data::Impl::constructInitializeBlob,
+    (Data::Impl::Modify)&Data::Impl::constructInitializeSharedBlob,
+    (Data::Impl::Modify)&Data::Impl::constructInitializeString,
+    (Data::Impl::Modify)&Data::Impl::constructInitializeFile};
 
-DataRepManipulator s_destruct[12] = {
-    (DataRepManipulator)&DataRepUtil::destructTrivial,
-    (DataRepManipulator)&DataRepUtil::destructBlobBuffer,
-    (DataRepManipulator)&DataRepUtil::destructTrivial,
-    (DataRepManipulator)&DataRepUtil::destructConstBufferArray,
-    (DataRepManipulator)&DataRepUtil::destructTrivial,
-    (DataRepManipulator)&DataRepUtil::destructTrivial,
-    (DataRepManipulator)&DataRepUtil::destructMutableBufferArray,
-    (DataRepManipulator)&DataRepUtil::destructTrivial,
-    (DataRepManipulator)&DataRepUtil::destructBlob,
-    (DataRepManipulator)&DataRepUtil::destructSharedBlob,
-    (DataRepManipulator)&DataRepUtil::destructString,
-    (DataRepManipulator)&DataRepUtil::destructTrivial};
+const Data::Impl::Modify Data::Impl::s_destruct[12] = {
+    (Data::Impl::Modify)&Data::Impl::destructTrivial,
+    (Data::Impl::Modify)&Data::Impl::destructBlobBuffer,
+    (Data::Impl::Modify)&Data::Impl::destructTrivial,
+    (Data::Impl::Modify)&Data::Impl::destructConstBufferArray,
+    (Data::Impl::Modify)&Data::Impl::destructTrivial,
+    (Data::Impl::Modify)&Data::Impl::destructTrivial,
+    (Data::Impl::Modify)&Data::Impl::destructMutableBufferArray,
+    (Data::Impl::Modify)&Data::Impl::destructTrivial,
+    (Data::Impl::Modify)&Data::Impl::destructBlob,
+    (Data::Impl::Modify)&Data::Impl::destructSharedBlob,
+    (Data::Impl::Modify)&Data::Impl::destructString,
+    (Data::Impl::Modify)&Data::Impl::destructTrivial};
 
-DataRepSize s_getSize[12] = {
-    (DataRepSize)&DataRepUtil::getSizeUndefined,
-    (DataRepSize)&DataRepUtil::getSizeBlobBuffer,
-    (DataRepSize)&DataRepUtil::getSizeConstBuffer,
-    (DataRepSize)&DataRepUtil::getSizeConstBufferArray,
-    (DataRepSize)&DataRepUtil::getSizeConstBufferPtrArray,
-    (DataRepSize)&DataRepUtil::getSizeMutableBuffer,
-    (DataRepSize)&DataRepUtil::getSizeMutableBufferArray,
-    (DataRepSize)&DataRepUtil::getSizeMutableBufferPtrArray,
-    (DataRepSize)&DataRepUtil::getSizeBlob,
-    (DataRepSize)&DataRepUtil::getSizeSharedBlob,
-    (DataRepSize)&DataRepUtil::getSizeString,
-    (DataRepSize)&DataRepUtil::getSizeFile};
-
-}  // close unnamed namespace
+const Data::Impl::Size Data::Impl::s_getSize[12] = {
+    (Data::Impl::Size)&Data::Impl::getSizeUndefined,
+    (Data::Impl::Size)&Data::Impl::getSizeBlobBuffer,
+    (Data::Impl::Size)&Data::Impl::getSizeConstBuffer,
+    (Data::Impl::Size)&Data::Impl::getSizeConstBufferArray,
+    (Data::Impl::Size)&Data::Impl::getSizeConstBufferPtrArray,
+    (Data::Impl::Size)&Data::Impl::getSizeMutableBuffer,
+    (Data::Impl::Size)&Data::Impl::getSizeMutableBufferArray,
+    (Data::Impl::Size)&Data::Impl::getSizeMutableBufferPtrArray,
+    (Data::Impl::Size)&Data::Impl::getSizeBlob,
+    (Data::Impl::Size)&Data::Impl::getSizeSharedBlob,
+    (Data::Impl::Size)&Data::Impl::getSizeString,
+    (Data::Impl::Size)&Data::Impl::getSizeFile};
 
 Data::Data(const Data& original, bslma::Allocator* basicAllocator)
 : d_type(original.d_type)
 , d_blobBufferFactory_p(original.d_blobBufferFactory_p)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_copyConstruct[d_type](&d_value,
-                            &original.d_value,
-                            d_blobBufferFactory_p,
-                            d_allocator_p);
+    Data::Impl::s_copyConstruct[d_type](&d_value,
+                                        &original.d_value,
+                                        d_blobBufferFactory_p,
+                                        d_allocator_p);
 }
 
 Data::Data(const Data&               original,
@@ -1174,10 +1181,10 @@ Data::Data(const Data&               original,
 , d_blobBufferFactory_p(blobBufferFactory)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_copyConstruct[d_type](&d_value,
-                            &original.d_value,
-                            d_blobBufferFactory_p,
-                            d_allocator_p);
+    Data::Impl::s_copyConstruct[d_type](&d_value,
+                                        &original.d_value,
+                                        d_blobBufferFactory_p,
+                                        d_allocator_p);
 }
 
 Data::Data(const bdlbb::BlobBuffer& other, bslma::Allocator* basicAllocator)
@@ -1185,10 +1192,11 @@ Data::Data(const bdlbb::BlobBuffer& other, bslma::Allocator* basicAllocator)
 , d_blobBufferFactory_p(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_BLOB_BUFFER](&d_value,
-                                                         &other,
-                                                         d_blobBufferFactory_p,
-                                                         d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_BLOB_BUFFER](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
 }
 
 Data::Data(const ntsa::ConstBuffer& other, bslma::Allocator* basicAllocator)
@@ -1196,7 +1204,7 @@ Data::Data(const ntsa::ConstBuffer& other, bslma::Allocator* basicAllocator)
 , d_blobBufferFactory_p(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_CONST_BUFFER](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_CONST_BUFFER](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1209,7 +1217,7 @@ Data::Data(const ntsa::ConstBufferArray& other,
 , d_blobBufferFactory_p(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_CONST_BUFFER_ARRAY](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_CONST_BUFFER_ARRAY](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1222,11 +1230,11 @@ Data::Data(const ntsa::ConstBufferPtrArray& other,
 , d_blobBufferFactory_p(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_CONST_BUFFER_PTR_ARRAY](
-        &d_value,
-        &other,
-        d_blobBufferFactory_p,
-        d_allocator_p);
+    Data::Impl::s_constructInitialize
+        [ntsa::DataType::e_CONST_BUFFER_PTR_ARRAY](&d_value,
+                                                   &other,
+                                                   d_blobBufferFactory_p,
+                                                   d_allocator_p);
 }
 
 Data::Data(const ntsa::MutableBuffer& other, bslma::Allocator* basicAllocator)
@@ -1234,7 +1242,7 @@ Data::Data(const ntsa::MutableBuffer& other, bslma::Allocator* basicAllocator)
 , d_blobBufferFactory_p(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1247,7 +1255,7 @@ Data::Data(const ntsa::MutableBufferArray& other,
 , d_blobBufferFactory_p(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER_ARRAY](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER_ARRAY](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1260,11 +1268,11 @@ Data::Data(const ntsa::MutableBufferPtrArray& other,
 , d_blobBufferFactory_p(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER_PTR_ARRAY](
-        &d_value,
-        &other,
-        d_blobBufferFactory_p,
-        d_allocator_p);
+    Data::Impl::s_constructInitialize
+        [ntsa::DataType::e_MUTABLE_BUFFER_PTR_ARRAY](&d_value,
+                                                     &other,
+                                                     d_blobBufferFactory_p,
+                                                     d_allocator_p);
 }
 
 Data::Data(const bdlbb::Blob& other, bslma::Allocator* basicAllocator)
@@ -1272,10 +1280,11 @@ Data::Data(const bdlbb::Blob& other, bslma::Allocator* basicAllocator)
 , d_blobBufferFactory_p(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_BLOB](&d_value,
-                                                  &other,
-                                                  d_blobBufferFactory_p,
-                                                  d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_BLOB](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
 }
 
 Data::Data(const bdlbb::Blob&        other,
@@ -1285,10 +1294,11 @@ Data::Data(const bdlbb::Blob&        other,
 , d_blobBufferFactory_p(blobBufferFactory)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_BLOB](&d_value,
-                                                  &other,
-                                                  d_blobBufferFactory_p,
-                                                  d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_BLOB](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
 }
 
 Data::Data(const bsl::shared_ptr<bdlbb::Blob>& other,
@@ -1297,10 +1307,11 @@ Data::Data(const bsl::shared_ptr<bdlbb::Blob>& other,
 , d_blobBufferFactory_p(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_SHARED_BLOB](&d_value,
-                                                         &other,
-                                                         d_blobBufferFactory_p,
-                                                         d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_SHARED_BLOB](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
 }
 
 Data::Data(const bsl::string& other, bslma::Allocator* basicAllocator)
@@ -1308,10 +1319,11 @@ Data::Data(const bsl::string& other, bslma::Allocator* basicAllocator)
 , d_blobBufferFactory_p(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_STRING](&d_value,
-                                                    &other,
-                                                    d_blobBufferFactory_p,
-                                                    d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_STRING](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
 }
 
 Data::Data(const ntsa::File& other, bslma::Allocator* basicAllocator)
@@ -1319,45 +1331,59 @@ Data::Data(const ntsa::File& other, bslma::Allocator* basicAllocator)
 , d_blobBufferFactory_p(0)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    s_constructInitialize[ntsa::DataType::e_FILE](&d_value,
-                                                  &other,
-                                                  d_blobBufferFactory_p,
-                                                  d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_FILE](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
 }
 
 Data::~Data()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_UNDEFINED;
 }
 
 Data& Data::operator=(const Data& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = other.d_type;
-    s_copyConstruct[d_type](&d_value,
-                            &other,
-                            d_blobBufferFactory_p,
-                            d_allocator_p);
+    Data::Impl::s_copyConstruct[d_type](&d_value,
+                                        &other,
+                                        d_blobBufferFactory_p,
+                                        d_allocator_p);
     return *this;
 }
 
 Data& Data::operator=(const bdlbb::BlobBuffer& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_BLOB_BUFFER;
-    s_constructInitialize[ntsa::DataType::e_BLOB_BUFFER](&d_value,
-                                                         &other,
-                                                         d_blobBufferFactory_p,
-                                                         d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_BLOB_BUFFER](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return *this;
 }
 
 Data& Data::operator=(const ntsa::ConstBuffer& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_CONST_BUFFER;
-    s_constructInitialize[ntsa::DataType::e_CONST_BUFFER](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_CONST_BUFFER](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1367,9 +1393,12 @@ Data& Data::operator=(const ntsa::ConstBuffer& other)
 
 Data& Data::operator=(const ntsa::ConstBufferArray& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_CONST_BUFFER_ARRAY;
-    s_constructInitialize[ntsa::DataType::e_CONST_BUFFER_ARRAY](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_CONST_BUFFER_ARRAY](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1379,21 +1408,27 @@ Data& Data::operator=(const ntsa::ConstBufferArray& other)
 
 Data& Data::operator=(const ntsa::ConstBufferPtrArray& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_CONST_BUFFER_PTR_ARRAY;
-    s_constructInitialize[ntsa::DataType::e_CONST_BUFFER_PTR_ARRAY](
-        &d_value,
-        &other,
-        d_blobBufferFactory_p,
-        d_allocator_p);
+    Data::Impl::s_constructInitialize
+        [ntsa::DataType::e_CONST_BUFFER_PTR_ARRAY](&d_value,
+                                                   &other,
+                                                   d_blobBufferFactory_p,
+                                                   d_allocator_p);
     return *this;
 }
 
 Data& Data::operator=(const ntsa::MutableBuffer& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_MUTABLE_BUFFER;
-    s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1403,9 +1438,12 @@ Data& Data::operator=(const ntsa::MutableBuffer& other)
 
 Data& Data::operator=(const ntsa::MutableBufferArray& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_MUTABLE_BUFFER_ARRAY;
-    s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER_ARRAY](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER_ARRAY](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1415,9 +1453,27 @@ Data& Data::operator=(const ntsa::MutableBufferArray& other)
 
 Data& Data::operator=(const ntsa::MutableBufferPtrArray& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_MUTABLE_BUFFER_PTR_ARRAY;
-    s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER_PTR_ARRAY](
+    Data::Impl::s_constructInitialize
+        [ntsa::DataType::e_MUTABLE_BUFFER_PTR_ARRAY](&d_value,
+                                                     &other,
+                                                     d_blobBufferFactory_p,
+                                                     d_allocator_p);
+    return *this;
+}
+
+Data& Data::operator=(const bdlbb::Blob& other)
+{
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
+    d_type = ntsa::DataType::e_BLOB;
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_BLOB](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1425,104 +1481,126 @@ Data& Data::operator=(const ntsa::MutableBufferPtrArray& other)
     return *this;
 }
 
-Data& Data::operator=(const bdlbb::Blob& other)
-{
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
-    d_type = ntsa::DataType::e_BLOB;
-    s_constructInitialize[ntsa::DataType::e_BLOB](&d_value,
-                                                  &other,
-                                                  d_blobBufferFactory_p,
-                                                  d_allocator_p);
-    return *this;
-}
-
 Data& Data::operator=(const bsl::shared_ptr<bdlbb::Blob>& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_SHARED_BLOB;
-    s_constructInitialize[ntsa::DataType::e_SHARED_BLOB](&d_value,
-                                                         &other,
-                                                         d_blobBufferFactory_p,
-                                                         d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_SHARED_BLOB](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return *this;
 }
 
 Data& Data::operator=(const bsl::string& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_STRING;
-    s_constructInitialize[ntsa::DataType::e_STRING](&d_value,
-                                                    &other,
-                                                    d_blobBufferFactory_p,
-                                                    d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_STRING](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return *this;
 }
 
 Data& Data::operator=(const ntsa::File& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_FILE;
-    s_constructInitialize[ntsa::DataType::e_FILE](&d_value,
-                                                  &other,
-                                                  d_blobBufferFactory_p,
-                                                  d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_FILE](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return *this;
 }
 
 void Data::reset()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_UNDEFINED;
 }
 
 void Data::make(ntsa::DataType::Value type)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = type;
-    s_defaultConstruct[d_type](&d_value,
-                               0,
-                               d_blobBufferFactory_p,
-                               d_allocator_p);
+    Data::Impl::s_defaultConstruct[d_type](&d_value,
+                                           0,
+                                           d_blobBufferFactory_p,
+                                           d_allocator_p);
 }
 
 bdlbb::BlobBuffer& Data::makeBlobBuffer()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_BLOB_BUFFER;
-    s_defaultConstruct[ntsa::DataType::e_BLOB_BUFFER](&d_value,
-                                                      0,
-                                                      d_blobBufferFactory_p,
-                                                      d_allocator_p);
+    Data::Impl::s_defaultConstruct[ntsa::DataType::e_BLOB_BUFFER](
+        &d_value,
+        0,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_blobBuffer.object();
 }
 
 bdlbb::BlobBuffer& Data::makeBlobBuffer(const bdlbb::BlobBuffer& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_BLOB_BUFFER;
-    s_constructInitialize[ntsa::DataType::e_BLOB_BUFFER](&d_value,
-                                                         &other,
-                                                         d_blobBufferFactory_p,
-                                                         d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_BLOB_BUFFER](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_blobBuffer.object();
 }
 
 ntsa::ConstBuffer& Data::makeConstBuffer()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_CONST_BUFFER;
-    s_defaultConstruct[ntsa::DataType::e_CONST_BUFFER](&d_value,
-                                                       0,
-                                                       d_blobBufferFactory_p,
-                                                       d_allocator_p);
+    Data::Impl::s_defaultConstruct[ntsa::DataType::e_CONST_BUFFER](
+        &d_value,
+        0,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_constBuffer.object();
 }
 
 ntsa::ConstBuffer& Data::makeConstBuffer(const ntsa::ConstBuffer& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_CONST_BUFFER;
-    s_constructInitialize[ntsa::DataType::e_CONST_BUFFER](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_CONST_BUFFER](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1532,9 +1610,12 @@ ntsa::ConstBuffer& Data::makeConstBuffer(const ntsa::ConstBuffer& other)
 
 ntsa::ConstBufferArray& Data::makeConstBufferArray()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_CONST_BUFFER_ARRAY;
-    s_defaultConstruct[ntsa::DataType::e_CONST_BUFFER_ARRAY](
+    Data::Impl::s_defaultConstruct[ntsa::DataType::e_CONST_BUFFER_ARRAY](
         &d_value,
         0,
         d_blobBufferFactory_p,
@@ -1545,9 +1626,12 @@ ntsa::ConstBufferArray& Data::makeConstBufferArray()
 ntsa::ConstBufferArray& Data::makeConstBufferArray(
     const ntsa::ConstBufferArray& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_CONST_BUFFER_ARRAY;
-    s_constructInitialize[ntsa::DataType::e_CONST_BUFFER_ARRAY](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_CONST_BUFFER_ARRAY](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1557,9 +1641,12 @@ ntsa::ConstBufferArray& Data::makeConstBufferArray(
 
 ntsa::ConstBufferPtrArray& Data::makeConstBufferPtrArray()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_CONST_BUFFER_PTR_ARRAY;
-    s_defaultConstruct[ntsa::DataType::e_CONST_BUFFER_PTR_ARRAY](
+    Data::Impl::s_defaultConstruct[ntsa::DataType::e_CONST_BUFFER_PTR_ARRAY](
         &d_value,
         0,
         d_blobBufferFactory_p,
@@ -1570,32 +1657,42 @@ ntsa::ConstBufferPtrArray& Data::makeConstBufferPtrArray()
 ntsa::ConstBufferPtrArray& Data::makeConstBufferPtrArray(
     const ntsa::ConstBufferPtrArray& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_CONST_BUFFER_PTR_ARRAY;
-    s_constructInitialize[ntsa::DataType::e_CONST_BUFFER_PTR_ARRAY](
-        &d_value,
-        &other,
-        d_blobBufferFactory_p,
-        d_allocator_p);
+    Data::Impl::s_constructInitialize
+        [ntsa::DataType::e_CONST_BUFFER_PTR_ARRAY](&d_value,
+                                                   &other,
+                                                   d_blobBufferFactory_p,
+                                                   d_allocator_p);
     return d_value.d_constBufferPtrArray.object();
 }
 
 ntsa::MutableBuffer& Data::makeMutableBuffer()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_MUTABLE_BUFFER;
-    s_defaultConstruct[ntsa::DataType::e_MUTABLE_BUFFER](&d_value,
-                                                         0,
-                                                         d_blobBufferFactory_p,
-                                                         d_allocator_p);
+    Data::Impl::s_defaultConstruct[ntsa::DataType::e_MUTABLE_BUFFER](
+        &d_value,
+        0,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_mutableBuffer.object();
 }
 
 ntsa::MutableBuffer& Data::makeMutableBuffer(const ntsa::MutableBuffer& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_MUTABLE_BUFFER;
-    s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1605,9 +1702,12 @@ ntsa::MutableBuffer& Data::makeMutableBuffer(const ntsa::MutableBuffer& other)
 
 ntsa::MutableBufferArray& Data::makeMutableBufferArray()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_MUTABLE_BUFFER_ARRAY;
-    s_defaultConstruct[ntsa::DataType::e_MUTABLE_BUFFER_ARRAY](
+    Data::Impl::s_defaultConstruct[ntsa::DataType::e_MUTABLE_BUFFER_ARRAY](
         &d_value,
         0,
         d_blobBufferFactory_p,
@@ -1618,9 +1718,12 @@ ntsa::MutableBufferArray& Data::makeMutableBufferArray()
 ntsa::MutableBufferArray& Data::makeMutableBufferArray(
     const ntsa::MutableBufferArray& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_MUTABLE_BUFFER_ARRAY;
-    s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER_ARRAY](
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER_ARRAY](
         &d_value,
         &other,
         d_blobBufferFactory_p,
@@ -1630,9 +1733,12 @@ ntsa::MutableBufferArray& Data::makeMutableBufferArray(
 
 ntsa::MutableBufferPtrArray& Data::makeMutableBufferPtrArray()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_MUTABLE_BUFFER_PTR_ARRAY;
-    s_defaultConstruct[ntsa::DataType::e_MUTABLE_BUFFER_PTR_ARRAY](
+    Data::Impl::s_defaultConstruct[ntsa::DataType::e_MUTABLE_BUFFER_PTR_ARRAY](
         &d_value,
         0,
         d_blobBufferFactory_p,
@@ -1643,120 +1749,159 @@ ntsa::MutableBufferPtrArray& Data::makeMutableBufferPtrArray()
 ntsa::MutableBufferPtrArray& Data::makeMutableBufferPtrArray(
     const ntsa::MutableBufferPtrArray& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_MUTABLE_BUFFER_PTR_ARRAY;
-    s_constructInitialize[ntsa::DataType::e_MUTABLE_BUFFER_PTR_ARRAY](
-        &d_value,
-        &other,
-        d_blobBufferFactory_p,
-        d_allocator_p);
+    Data::Impl::s_constructInitialize
+        [ntsa::DataType::e_MUTABLE_BUFFER_PTR_ARRAY](&d_value,
+                                                     &other,
+                                                     d_blobBufferFactory_p,
+                                                     d_allocator_p);
     return d_value.d_mutableBufferPtrArray.object();
 }
 
 bdlbb::Blob& Data::makeBlob()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_BLOB;
-    s_defaultConstruct[ntsa::DataType::e_BLOB](&d_value,
-                                               0,
-                                               d_blobBufferFactory_p,
-                                               d_allocator_p);
+    Data::Impl::s_defaultConstruct[ntsa::DataType::e_BLOB](
+        &d_value,
+        0,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_blob.object();
 }
 
 bdlbb::Blob& Data::makeBlob(const bdlbb::Blob& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_BLOB;
-    s_constructInitialize[ntsa::DataType::e_BLOB](&d_value,
-                                                  &other,
-                                                  d_blobBufferFactory_p,
-                                                  d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_BLOB](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_blob.object();
 }
 
 bsl::shared_ptr<bdlbb::Blob>& Data::makeSharedBlob()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_SHARED_BLOB;
-    s_defaultConstruct[ntsa::DataType::e_SHARED_BLOB](&d_value,
-                                                      0,
-                                                      d_blobBufferFactory_p,
-                                                      d_allocator_p);
+    Data::Impl::s_defaultConstruct[ntsa::DataType::e_SHARED_BLOB](
+        &d_value,
+        0,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_sharedBlob.object();
 }
 
 bsl::shared_ptr<bdlbb::Blob>& Data::makeSharedBlob(
     const bsl::shared_ptr<bdlbb::Blob>& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_SHARED_BLOB;
-    s_constructInitialize[ntsa::DataType::e_SHARED_BLOB](&d_value,
-                                                         &other,
-                                                         d_blobBufferFactory_p,
-                                                         d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_SHARED_BLOB](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_sharedBlob.object();
 }
 
 bsl::string& Data::makeString()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_STRING;
-    s_defaultConstruct[ntsa::DataType::e_STRING](&d_value,
-                                                 0,
-                                                 d_blobBufferFactory_p,
-                                                 d_allocator_p);
+    Data::Impl::s_defaultConstruct[ntsa::DataType::e_STRING](
+        &d_value,
+        0,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_string.object();
 }
 
 bsl::string& Data::makeString(const bsl::string& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_STRING;
-    s_constructInitialize[ntsa::DataType::e_STRING](&d_value,
-                                                    &other,
-                                                    d_blobBufferFactory_p,
-                                                    d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_STRING](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_string.object();
 }
 
 ntsa::File& Data::makeFile()
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_FILE;
-    s_defaultConstruct[ntsa::DataType::e_FILE](&d_value,
-                                               0,
-                                               d_blobBufferFactory_p,
-                                               d_allocator_p);
+    Data::Impl::s_defaultConstruct[ntsa::DataType::e_FILE](
+        &d_value,
+        0,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_file.object();
 }
 
 ntsa::File& Data::makeFile(const ntsa::File& other)
 {
-    s_destruct[d_type](&d_value, 0, d_blobBufferFactory_p, d_allocator_p);
+    Data::Impl::s_destruct[d_type](&d_value,
+                                   0,
+                                   d_blobBufferFactory_p,
+                                   d_allocator_p);
     d_type = ntsa::DataType::e_FILE;
-    s_constructInitialize[ntsa::DataType::e_FILE](&d_value,
-                                                  &other,
-                                                  d_blobBufferFactory_p,
-                                                  d_allocator_p);
+    Data::Impl::s_constructInitialize[ntsa::DataType::e_FILE](
+        &d_value,
+        &other,
+        d_blobBufferFactory_p,
+        d_allocator_p);
     return d_value.d_file.object();
 }
 
 bsl::size_t Data::size() const
 {
-    return s_getSize[d_type](d_value);
+    return Data::Impl::s_getSize[d_type](d_value);
 }
-
-namespace {
-
-typedef bsl::size_t (*DataUtilImplAppend)(bdlbb::Blob*      destination,
-                                          const ntsa::Data& source);
-
-typedef void (*DataUtilImplPop)(ntsa::Data* data, bsl::size_t numBytes);
 
 /// Provide algorithms for data containers. This struct is
 /// thread safe.
-struct DataUtilImpl {
+class DataUtil::Impl
+{
+  public:
+    /// Define a type alias for a function to append the specified 'source' to
+    /// the specified 'destination'.
+    typedef bsl::size_t (*Append)(bdlbb::Blob*      destination,
+                                  const ntsa::Data& source);
+
+    /// Define a type alias for a function to pop the specified 'numBytes'
+    /// from the specified 'data'.
+    typedef void (*Pop)(ntsa::Data* data, bsl::size_t numBytes);
+
     /// Append the specified 'source' to the specified 'destination',
     /// assuming the 'source' is represented as undefined.
     static bsl::size_t appendUndefined(bdlbb::Blob*      destination,
@@ -1925,10 +2070,13 @@ struct DataUtilImpl {
     /// the error.
     static ntsa::Error copyString(bsl::streambuf*    destination,
                                   const bsl::string& source);
+
+    static const DataUtil::Impl::Append s_append[12];
+    static const DataUtil::Impl::Pop    s_pop[12];
 };
 
-bsl::size_t DataUtilImpl::appendUndefined(bdlbb::Blob*      destination,
-                                          const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendUndefined(bdlbb::Blob*      destination,
+                                            const ntsa::Data& source)
 {
     NTSCFG_WARNING_UNUSED(destination);
     NTSCFG_WARNING_UNUSED(source);
@@ -1936,8 +2084,8 @@ bsl::size_t DataUtilImpl::appendUndefined(bdlbb::Blob*      destination,
     return 0;
 }
 
-bsl::size_t DataUtilImpl::appendBlobBuffer(bdlbb::Blob*      destination,
-                                           const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendBlobBuffer(bdlbb::Blob*      destination,
+                                             const ntsa::Data& source)
 {
     const bdlbb::BlobBuffer& blobBuffer = source.blobBuffer();
 
@@ -1945,8 +2093,8 @@ bsl::size_t DataUtilImpl::appendBlobBuffer(bdlbb::Blob*      destination,
     return blobBuffer.size();
 }
 
-bsl::size_t DataUtilImpl::appendConstBuffer(bdlbb::Blob*      destination,
-                                            const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendConstBuffer(bdlbb::Blob*      destination,
+                                              const ntsa::Data& source)
 {
     const ntsa::ConstBuffer& constBuffer = source.constBuffer();
 
@@ -1957,8 +2105,8 @@ bsl::size_t DataUtilImpl::appendConstBuffer(bdlbb::Blob*      destination,
     return constBuffer.size();
 }
 
-bsl::size_t DataUtilImpl::appendConstBufferArray(bdlbb::Blob*      destination,
-                                                 const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendConstBufferArray(bdlbb::Blob* destination,
+                                                   const ntsa::Data& source)
 {
     const ntsa::ConstBufferArray& constBufferArray = source.constBufferArray();
 
@@ -1979,8 +2127,8 @@ bsl::size_t DataUtilImpl::appendConstBufferArray(bdlbb::Blob*      destination,
     return total;
 }
 
-bsl::size_t DataUtilImpl::appendConstBufferPtrArray(bdlbb::Blob* destination,
-                                                    const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendConstBufferPtrArray(bdlbb::Blob* destination,
+                                                      const ntsa::Data& source)
 {
     const ntsa::ConstBufferPtrArray& constBufferPtrArray =
         source.constBufferPtrArray();
@@ -2002,8 +2150,8 @@ bsl::size_t DataUtilImpl::appendConstBufferPtrArray(bdlbb::Blob* destination,
     return total;
 }
 
-bsl::size_t DataUtilImpl::appendMutableBuffer(bdlbb::Blob*      destination,
-                                              const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendMutableBuffer(bdlbb::Blob*      destination,
+                                                const ntsa::Data& source)
 {
     const ntsa::MutableBuffer& mutableBuffer = source.mutableBuffer();
 
@@ -2014,8 +2162,8 @@ bsl::size_t DataUtilImpl::appendMutableBuffer(bdlbb::Blob*      destination,
     return mutableBuffer.size();
 }
 
-bsl::size_t DataUtilImpl::appendMutableBufferArray(bdlbb::Blob* destination,
-                                                   const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendMutableBufferArray(bdlbb::Blob* destination,
+                                                     const ntsa::Data& source)
 {
     const ntsa::MutableBufferArray& mutableBufferArray =
         source.mutableBufferArray();
@@ -2038,8 +2186,9 @@ bsl::size_t DataUtilImpl::appendMutableBufferArray(bdlbb::Blob* destination,
     return total;
 }
 
-bsl::size_t DataUtilImpl::appendMutableBufferPtrArray(bdlbb::Blob* destination,
-                                                      const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendMutableBufferPtrArray(
+    bdlbb::Blob*      destination,
+    const ntsa::Data& source)
 {
     const ntsa::MutableBufferPtrArray& mutableBufferPtrArray =
         source.mutableBufferPtrArray();
@@ -2062,8 +2211,8 @@ bsl::size_t DataUtilImpl::appendMutableBufferPtrArray(bdlbb::Blob* destination,
     return total;
 }
 
-bsl::size_t DataUtilImpl::appendBlob(bdlbb::Blob*      destination,
-                                     const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendBlob(bdlbb::Blob*      destination,
+                                       const ntsa::Data& source)
 {
     const bdlbb::Blob& blob = source.blob();
 
@@ -2071,8 +2220,8 @@ bsl::size_t DataUtilImpl::appendBlob(bdlbb::Blob*      destination,
     return blob.length();
 }
 
-bsl::size_t DataUtilImpl::appendSharedBlob(bdlbb::Blob*      destination,
-                                           const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendSharedBlob(bdlbb::Blob*      destination,
+                                             const ntsa::Data& source)
 {
     const bsl::shared_ptr<bdlbb::Blob>& sharedBlob = source.sharedBlob();
 
@@ -2080,8 +2229,8 @@ bsl::size_t DataUtilImpl::appendSharedBlob(bdlbb::Blob*      destination,
     return sharedBlob->length();
 }
 
-bsl::size_t DataUtilImpl::appendString(bdlbb::Blob*      destination,
-                                       const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendString(bdlbb::Blob*      destination,
+                                         const ntsa::Data& source)
 {
     const bsl::string& string = source.string();
 
@@ -2091,8 +2240,8 @@ bsl::size_t DataUtilImpl::appendString(bdlbb::Blob*      destination,
     return string.size();
 }
 
-bsl::size_t DataUtilImpl::appendFile(bdlbb::Blob*      destination,
-                                     const ntsa::Data& source)
+bsl::size_t DataUtil::Impl::appendFile(bdlbb::Blob*      destination,
+                                       const ntsa::Data& source)
 {
     const ntsa::File& file = source.file();
 
@@ -2169,13 +2318,13 @@ bsl::size_t DataUtilImpl::appendFile(bdlbb::Blob*      destination,
 
 // *** Pop ***
 
-void DataUtilImpl::popUndefined(ntsa::Data* data, bsl::size_t numBytes)
+void DataUtil::Impl::popUndefined(ntsa::Data* data, bsl::size_t numBytes)
 {
     NTSCFG_WARNING_UNUSED(data);
     NTSCFG_WARNING_UNUSED(numBytes);
 }
 
-void DataUtilImpl::popBlobBuffer(ntsa::Data* data, bsl::size_t numBytes)
+void DataUtil::Impl::popBlobBuffer(ntsa::Data* data, bsl::size_t numBytes)
 {
     bdlbb::BlobBuffer* blobBuffer = &data->blobBuffer();
 
@@ -2194,22 +2343,23 @@ void DataUtilImpl::popBlobBuffer(ntsa::Data* data, bsl::size_t numBytes)
     blobBuffer->reset(newBuffer, NTSCFG_WARNING_NARROW(int, newSize));
 }
 
-void DataUtilImpl::popConstBuffer(ntsa::Data* data, bsl::size_t numBytes)
+void DataUtil::Impl::popConstBuffer(ntsa::Data* data, bsl::size_t numBytes)
 {
     ntsa::ConstBuffer* constBuffer = &data->constBuffer();
 
     constBuffer->advance(numBytes);
 }
 
-void DataUtilImpl::popConstBufferArray(ntsa::Data* data, bsl::size_t numBytes)
+void DataUtil::Impl::popConstBufferArray(ntsa::Data* data,
+                                         bsl::size_t numBytes)
 {
     ntsa::ConstBufferArray* constBufferArray = &data->constBufferArray();
 
     constBufferArray->pop(numBytes);
 }
 
-void DataUtilImpl::popConstBufferPtrArray(ntsa::Data* data,
-                                          bsl::size_t numBytes)
+void DataUtil::Impl::popConstBufferPtrArray(ntsa::Data* data,
+                                            bsl::size_t numBytes)
 {
     ntsa::ConstBufferPtrArray* constBufferPtrArray =
         &data->constBufferPtrArray();
@@ -2217,23 +2367,23 @@ void DataUtilImpl::popConstBufferPtrArray(ntsa::Data* data,
     constBufferPtrArray->pop(numBytes);
 }
 
-void DataUtilImpl::popMutableBuffer(ntsa::Data* data, bsl::size_t numBytes)
+void DataUtil::Impl::popMutableBuffer(ntsa::Data* data, bsl::size_t numBytes)
 {
     ntsa::MutableBuffer* mutableBuffer = &data->mutableBuffer();
 
     mutableBuffer->advance(numBytes);
 }
 
-void DataUtilImpl::popMutableBufferArray(ntsa::Data* data,
-                                         bsl::size_t numBytes)
+void DataUtil::Impl::popMutableBufferArray(ntsa::Data* data,
+                                           bsl::size_t numBytes)
 {
     ntsa::MutableBufferArray* mutableBufferArray = &data->mutableBufferArray();
 
     mutableBufferArray->pop(numBytes);
 }
 
-void DataUtilImpl::popMutableBufferPtrArray(ntsa::Data* data,
-                                            bsl::size_t numBytes)
+void DataUtil::Impl::popMutableBufferPtrArray(ntsa::Data* data,
+                                              bsl::size_t numBytes)
 {
     ntsa::MutableBufferPtrArray* mutableBufferPtrArray =
         &data->mutableBufferPtrArray();
@@ -2241,7 +2391,7 @@ void DataUtilImpl::popMutableBufferPtrArray(ntsa::Data* data,
     mutableBufferPtrArray->pop(numBytes);
 }
 
-void DataUtilImpl::popBlob(ntsa::Data* data, bsl::size_t numBytes)
+void DataUtil::Impl::popBlob(ntsa::Data* data, bsl::size_t numBytes)
 {
     bdlbb::Blob* blob = &data->blob();
 
@@ -2252,7 +2402,7 @@ void DataUtilImpl::popBlob(ntsa::Data* data, bsl::size_t numBytes)
     bdlbb::BlobUtil::erase(blob, 0, NTSCFG_WARNING_NARROW(int, numBytes));
 }
 
-void DataUtilImpl::popSharedBlob(ntsa::Data* data, bsl::size_t numBytes)
+void DataUtil::Impl::popSharedBlob(ntsa::Data* data, bsl::size_t numBytes)
 {
     bsl::shared_ptr<bdlbb::Blob>* sharedBlob = &data->sharedBlob();
 
@@ -2267,7 +2417,7 @@ void DataUtilImpl::popSharedBlob(ntsa::Data* data, bsl::size_t numBytes)
                            NTSCFG_WARNING_NARROW(int, numBytes));
 }
 
-void DataUtilImpl::popString(ntsa::Data* data, bsl::size_t numBytes)
+void DataUtil::Impl::popString(ntsa::Data* data, bsl::size_t numBytes)
 {
     bsl::string* string = &data->string();
 
@@ -2278,7 +2428,7 @@ void DataUtilImpl::popString(ntsa::Data* data, bsl::size_t numBytes)
     string->erase(0, numBytes);
 }
 
-void DataUtilImpl::popFile(ntsa::Data* data, bsl::size_t numBytes)
+void DataUtil::Impl::popFile(ntsa::Data* data, bsl::size_t numBytes)
 {
     ntsa::File* file = &data->file();
 
@@ -2293,8 +2443,8 @@ void DataUtilImpl::popFile(ntsa::Data* data, bsl::size_t numBytes)
     file->setBytesRemaining(file->bytesRemaining() - numBytesToPop);
 }
 
-ntsa::Error DataUtilImpl::copyBlob(bsl::streambuf*    destination,
-                                   const bdlbb::Blob& source)
+ntsa::Error DataUtil::Impl::copyBlob(bsl::streambuf*    destination,
+                                     const bdlbb::Blob& source)
 {
     ntsa::Error error;
 
@@ -2313,8 +2463,8 @@ ntsa::Error DataUtilImpl::copyBlob(bsl::streambuf*    destination,
 
         const char* data = buffer.data();
 
-        error = DataUtilImpl::copyConstBuffer(destination,
-                                              ntsa::ConstBuffer(data, size));
+        error = DataUtil::Impl::copyConstBuffer(destination,
+                                                ntsa::ConstBuffer(data, size));
         if (error) {
             return error;
         }
@@ -2323,16 +2473,16 @@ ntsa::Error DataUtilImpl::copyBlob(bsl::streambuf*    destination,
     return ntsa::Error();
 }
 
-ntsa::Error DataUtilImpl::copyBlobBuffer(bsl::streambuf*          destination,
-                                         const bdlbb::BlobBuffer& source)
+ntsa::Error DataUtil::Impl::copyBlobBuffer(bsl::streambuf* destination,
+                                           const bdlbb::BlobBuffer& source)
 {
-    return DataUtilImpl::copyConstBuffer(
+    return DataUtil::Impl::copyConstBuffer(
         destination,
         ntsa::ConstBuffer(source.data(), source.size()));
 }
 
-ntsa::Error DataUtilImpl::copyConstBuffer(bsl::streambuf*          destination,
-                                          const ntsa::ConstBuffer& source)
+ntsa::Error DataUtil::Impl::copyConstBuffer(bsl::streambuf* destination,
+                                            const ntsa::ConstBuffer& source)
 {
     const std::streamsize numBytesToCopyMax =
         bsl::numeric_limits<std::streamsize>::max();
@@ -2371,7 +2521,7 @@ ntsa::Error DataUtilImpl::copyConstBuffer(bsl::streambuf*          destination,
     return ntsa::Error();
 }
 
-ntsa::Error DataUtilImpl::copyConstBufferArray(
+ntsa::Error DataUtil::Impl::copyConstBufferArray(
     bsl::streambuf*               destination,
     const ntsa::ConstBufferArray& source)
 {
@@ -2380,7 +2530,7 @@ ntsa::Error DataUtilImpl::copyConstBufferArray(
     const bsl::size_t numBuffers = source.numBuffers();
 
     for (bsl::size_t i = 0; i < numBuffers; ++i) {
-        error = DataUtilImpl::copyConstBuffer(destination, source.buffer(i));
+        error = DataUtil::Impl::copyConstBuffer(destination, source.buffer(i));
         if (error) {
             return error;
         }
@@ -2389,7 +2539,7 @@ ntsa::Error DataUtilImpl::copyConstBufferArray(
     return ntsa::Error();
 }
 
-ntsa::Error DataUtilImpl::copyConstBufferPtrArray(
+ntsa::Error DataUtil::Impl::copyConstBufferPtrArray(
     bsl::streambuf*                  destination,
     const ntsa::ConstBufferPtrArray& source)
 {
@@ -2398,7 +2548,7 @@ ntsa::Error DataUtilImpl::copyConstBufferPtrArray(
     const bsl::size_t numBuffers = source.numBuffers();
 
     for (bsl::size_t i = 0; i < numBuffers; ++i) {
-        error = DataUtilImpl::copyConstBuffer(destination, source.buffer(i));
+        error = DataUtil::Impl::copyConstBuffer(destination, source.buffer(i));
         if (error) {
             return error;
         }
@@ -2407,14 +2557,15 @@ ntsa::Error DataUtilImpl::copyConstBufferPtrArray(
     return ntsa::Error();
 }
 
-ntsa::Error DataUtilImpl::copyMutableBuffer(bsl::streambuf* destination,
-                                            const ntsa::MutableBuffer& source)
+ntsa::Error DataUtil::Impl::copyMutableBuffer(
+    bsl::streambuf*            destination,
+    const ntsa::MutableBuffer& source)
 {
-    return DataUtilImpl::copyConstBuffer(destination,
-                                         ntsa::ConstBuffer(source));
+    return DataUtil::Impl::copyConstBuffer(destination,
+                                           ntsa::ConstBuffer(source));
 }
 
-ntsa::Error DataUtilImpl::copyMutableBufferArray(
+ntsa::Error DataUtil::Impl::copyMutableBufferArray(
     bsl::streambuf*                 destination,
     const ntsa::MutableBufferArray& source)
 {
@@ -2423,9 +2574,9 @@ ntsa::Error DataUtilImpl::copyMutableBufferArray(
     const bsl::size_t numBuffers = source.numBuffers();
 
     for (bsl::size_t i = 0; i < numBuffers; ++i) {
-        error =
-            DataUtilImpl::copyConstBuffer(destination,
-                                          ntsa::ConstBuffer(source.buffer(i)));
+        error = DataUtil::Impl::copyConstBuffer(
+            destination,
+            ntsa::ConstBuffer(source.buffer(i)));
         if (error) {
             return error;
         }
@@ -2434,7 +2585,7 @@ ntsa::Error DataUtilImpl::copyMutableBufferArray(
     return ntsa::Error();
 }
 
-ntsa::Error DataUtilImpl::copyMutableBufferPtrArray(
+ntsa::Error DataUtil::Impl::copyMutableBufferPtrArray(
     bsl::streambuf*                    destination,
     const ntsa::MutableBufferPtrArray& source)
 {
@@ -2443,9 +2594,9 @@ ntsa::Error DataUtilImpl::copyMutableBufferPtrArray(
     const bsl::size_t numBuffers = source.numBuffers();
 
     for (bsl::size_t i = 0; i < numBuffers; ++i) {
-        error =
-            DataUtilImpl::copyConstBuffer(destination,
-                                          ntsa::ConstBuffer(source.buffer(i)));
+        error = DataUtil::Impl::copyConstBuffer(
+            destination,
+            ntsa::ConstBuffer(source.buffer(i)));
         if (error) {
             return error;
         }
@@ -2454,8 +2605,8 @@ ntsa::Error DataUtilImpl::copyMutableBufferPtrArray(
     return ntsa::Error();
 }
 
-ntsa::Error DataUtilImpl::copyFile(bsl::streambuf*   destination,
-                                   const ntsa::File& source)
+ntsa::Error DataUtil::Impl::copyFile(bsl::streambuf*   destination,
+                                     const ntsa::File& source)
 {
     ntsa::Error error;
 
@@ -2505,7 +2656,7 @@ ntsa::Error DataUtilImpl::copyFile(bsl::streambuf*   destination,
         BSLS_ASSERT(numBytesRead <= numBytesToRead);
 
         if (numBytesRead > 0) {
-            error = DataUtilImpl::copyConstBuffer(
+            error = DataUtil::Impl::copyConstBuffer(
                 destination,
                 ntsa::ConstBuffer(buffer,
                                   static_cast<bsl::size_t>(numBytesRead)));
@@ -2529,53 +2680,51 @@ ntsa::Error DataUtilImpl::copyFile(bsl::streambuf*   destination,
     return ntsa::Error();
 }
 
-ntsa::Error DataUtilImpl::copyString(bsl::streambuf*    destination,
-                                     const bsl::string& source)
+ntsa::Error DataUtil::Impl::copyString(bsl::streambuf*    destination,
+                                       const bsl::string& source)
 {
-    return DataUtilImpl::copyConstBuffer(
+    return DataUtil::Impl::copyConstBuffer(
         destination,
         ntsa::ConstBuffer(source.data(), source.size()));
 }
 
-DataUtilImplAppend s_append[12] = {
-    (DataUtilImplAppend)&DataUtilImpl::appendUndefined,
-    (DataUtilImplAppend)&DataUtilImpl::appendBlobBuffer,
-    (DataUtilImplAppend)&DataUtilImpl::appendConstBuffer,
-    (DataUtilImplAppend)&DataUtilImpl::appendConstBufferArray,
-    (DataUtilImplAppend)&DataUtilImpl::appendConstBufferPtrArray,
-    (DataUtilImplAppend)&DataUtilImpl::appendMutableBuffer,
-    (DataUtilImplAppend)&DataUtilImpl::appendMutableBufferArray,
-    (DataUtilImplAppend)&DataUtilImpl::appendMutableBufferPtrArray,
-    (DataUtilImplAppend)&DataUtilImpl::appendBlob,
-    (DataUtilImplAppend)&DataUtilImpl::appendSharedBlob,
-    (DataUtilImplAppend)&DataUtilImpl::appendString,
-    (DataUtilImplAppend)&DataUtilImpl::appendFile};
+const DataUtil::Impl::Append DataUtil::Impl::s_append[12] = {
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendUndefined,
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendBlobBuffer,
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendConstBuffer,
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendConstBufferArray,
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendConstBufferPtrArray,
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendMutableBuffer,
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendMutableBufferArray,
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendMutableBufferPtrArray,
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendBlob,
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendSharedBlob,
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendString,
+    (DataUtil::Impl::Append)&DataUtil::Impl::appendFile};
 
-DataUtilImplPop s_pop[12] = {
-    (DataUtilImplPop)&DataUtilImpl::popUndefined,
-    (DataUtilImplPop)&DataUtilImpl::popBlobBuffer,
-    (DataUtilImplPop)&DataUtilImpl::popConstBuffer,
-    (DataUtilImplPop)&DataUtilImpl::popConstBufferArray,
-    (DataUtilImplPop)&DataUtilImpl::popConstBufferPtrArray,
-    (DataUtilImplPop)&DataUtilImpl::popMutableBuffer,
-    (DataUtilImplPop)&DataUtilImpl::popMutableBufferArray,
-    (DataUtilImplPop)&DataUtilImpl::popMutableBufferPtrArray,
-    (DataUtilImplPop)&DataUtilImpl::popBlob,
-    (DataUtilImplPop)&DataUtilImpl::popSharedBlob,
-    (DataUtilImplPop)&DataUtilImpl::popString,
-    (DataUtilImplPop)&DataUtilImpl::popFile};
-
-}  // close unnamed namespace
+const DataUtil::Impl::Pop DataUtil::Impl::s_pop[12] = {
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popUndefined,
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popBlobBuffer,
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popConstBuffer,
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popConstBufferArray,
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popConstBufferPtrArray,
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popMutableBuffer,
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popMutableBufferArray,
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popMutableBufferPtrArray,
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popBlob,
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popSharedBlob,
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popString,
+    (DataUtil::Impl::Pop)&DataUtil::Impl::popFile};
 
 bsl::size_t DataUtil::append(bdlbb::Blob*      destination,
                              const ntsa::Data& source)
 {
-    return s_append[source.type()](destination, source);
+    return DataUtil::Impl::s_append[source.type()](destination, source);
 }
 
 void DataUtil::pop(ntsa::Data* data, bsl::size_t numBytes)
 {
-    s_pop[data->type()](data, numBytes);
+    DataUtil::Impl::s_pop[data->type()](data, numBytes);
 }
 
 ntsa::Error DataUtil::copy(bsl::streambuf*   destination,
@@ -2585,47 +2734,48 @@ ntsa::Error DataUtil::copy(bsl::streambuf*   destination,
         return ntsa::Error();
     }
     else if (source.isBlob()) {
-        return DataUtilImpl::copyBlob(destination, source.blob());
+        return DataUtil::Impl::copyBlob(destination, source.blob());
     }
     else if (source.isBlobBuffer()) {
-        return DataUtilImpl::copyBlobBuffer(destination, source.blobBuffer());
+        return DataUtil::Impl::copyBlobBuffer(destination,
+                                              source.blobBuffer());
     }
     else if (source.isConstBuffer()) {
-        return DataUtilImpl::copyConstBuffer(destination,
-                                             source.constBuffer());
+        return DataUtil::Impl::copyConstBuffer(destination,
+                                               source.constBuffer());
     }
     else if (source.isConstBufferArray()) {
-        return DataUtilImpl::copyConstBufferArray(destination,
-                                                  source.constBufferArray());
+        return DataUtil::Impl::copyConstBufferArray(destination,
+                                                    source.constBufferArray());
     }
     else if (source.isConstBufferPtrArray()) {
-        return DataUtilImpl::copyConstBufferPtrArray(
+        return DataUtil::Impl::copyConstBufferPtrArray(
             destination,
             source.constBufferPtrArray());
     }
     else if (source.isMutableBuffer()) {
-        return DataUtilImpl::copyMutableBuffer(destination,
-                                               source.mutableBuffer());
+        return DataUtil::Impl::copyMutableBuffer(destination,
+                                                 source.mutableBuffer());
     }
     else if (source.isMutableBufferArray()) {
-        return DataUtilImpl::copyMutableBufferArray(
+        return DataUtil::Impl::copyMutableBufferArray(
             destination,
             source.mutableBufferArray());
     }
     else if (source.isMutableBufferPtrArray()) {
-        return DataUtilImpl::copyMutableBufferPtrArray(
+        return DataUtil::Impl::copyMutableBufferPtrArray(
             destination,
             source.mutableBufferPtrArray());
     }
     else if (source.isFile()) {
-        return DataUtilImpl::copyFile(destination, source.file());
+        return DataUtil::Impl::copyFile(destination, source.file());
     }
     else if (source.isString()) {
-        return DataUtilImpl::copyString(destination, source.string());
+        return DataUtil::Impl::copyString(destination, source.string());
     }
     else if (source.isSharedBlob()) {
         if (source.sharedBlob()) {
-            return DataUtilImpl::copyBlob(destination, *source.sharedBlob());
+            return DataUtil::Impl::copyBlob(destination, *source.sharedBlob());
         }
         else {
             return ntsa::Error();

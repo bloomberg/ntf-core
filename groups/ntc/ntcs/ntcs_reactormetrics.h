@@ -181,66 +181,7 @@ class ReactorMetrics : public ntci::ReactorMetrics,
     /// Return the parent metrics object into which these metrics are
     /// aggregated, or null if no such parent object is defined.
     const bsl::shared_ptr<ntci::ReactorMetrics>& parent() const;
-
-    /// Set the specified 'metrics' as the metrics to use by this thread.
-    /// Return the previous metrics used by this thread, if any.
-    static ntcs::ReactorMetrics* setThreadLocal(ntcs::ReactorMetrics* metrics);
-
-    /// Return the metrics to use by the current thread, if any.
-    static ntcs::ReactorMetrics* getThreadLocal();
 };
-
-/// @internal @brief
-/// Provide a guard to install and uninstall reactor metrics into thread-local
-/// storage.
-///
-/// @details
-/// Provide a guard to automatically install a reactor metrics
-/// object into thread local storage when the object is constructed and
-/// un-install it from thread local storage when the object is destroyed.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntcs
-class ReactorMetricsGuard
-{
-    ntcs::ReactorMetrics* d_current_p;
-    ntcs::ReactorMetrics* d_previous_p;
-
-  private:
-    ReactorMetricsGuard(const ReactorMetricsGuard&) BSLS_KEYWORD_DELETED;
-    ReactorMetricsGuard& operator=(const ReactorMetricsGuard&)
-        BSLS_KEYWORD_DELETED;
-
-  public:
-    /// Create a new metrics guard that installs the specified 'metrics'
-    /// object into thread local storage and uninstalls it when this object
-    /// is destroyed.
-    explicit ReactorMetricsGuard(ntcs::ReactorMetrics* metrics);
-
-    /// Uninstall the underlying metrics object from thread local storage
-    /// then destroy this object.
-    ~ReactorMetricsGuard();
-};
-
-NTCCFG_INLINE
-ReactorMetricsGuard::ReactorMetricsGuard(ntcs::ReactorMetrics* metrics)
-: d_current_p(metrics)
-, d_previous_p(0)
-{
-    if (d_current_p) {
-        d_previous_p = ntcs::ReactorMetrics::setThreadLocal(d_current_p);
-    }
-}
-
-NTCCFG_INLINE
-ReactorMetricsGuard::~ReactorMetricsGuard()
-{
-    if (d_current_p) {
-        ntcs::ReactorMetrics::setThreadLocal(d_previous_p);
-    }
-}
 
 #if NTC_BUILD_WITH_METRICS
 

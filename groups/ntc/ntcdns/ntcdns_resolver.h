@@ -85,14 +85,38 @@ class Resolver : public ntci::Resolver, public ntccfg::Shared<Resolver>
     bslma::Allocator*                            d_allocator_p;
 
   private:
-    Resolver(const Resolver&) BSLS_KEYWORD_DELETED;
-    Resolver& operator=(const Resolver&) BSLS_KEYWORD_DELETED;
-
-  private:
     /// Initialize the host database, port database, cache, client, and
     /// system, according to whether each are enabled. Return the error.
     ntsa::Error initialize();
 
+    /// Process the completion of an operation to resolve a domain name to
+    /// an IP address. Invoke the specified 'callback'.
+    static void processGetIpAddressResult(
+        const bsl::shared_ptr<ntci::Resolver>& resolver,
+        const bsl::vector<ntsa::IpAddress>&    ipAddressList,
+        const bsls::TimeInterval&              startTime,
+        const bsl::string&                     serviceName,
+        ntsa::Port                             port,
+        const ntca::GetIpAddressEvent&         event,
+        const ntci::GetEndpointCallback&       callback);
+
+    static const bool k_DEFAULT_HOST_DATABASE_ENABLED;
+    static const bool k_DEFAULT_PORT_DATABASE_ENABLED;
+
+    static const bool k_DEFAULT_POSITIVE_CACHE_ENABLED;
+    static const bool k_DEFAULT_NEGATIVE_CACHE_ENABLED;
+
+    static const bool k_DEFAULT_CLIENT_ENABLED;
+
+    static const int k_DEFAULT_SYSTEM_MIN_THREADS;
+    static const int k_DEFAULT_SYSTEM_MAX_THREADS;
+    static const int k_DEFAULT_SYSTEM_MAX_IDLE_TIME;
+
+  private:
+    Resolver(const Resolver&) BSLS_KEYWORD_DELETED;
+    Resolver& operator=(const Resolver&) BSLS_KEYWORD_DELETED;
+
+  private:
   public:
     enum {
         k_UDP_MAX_PAYLOAD_SIZE = 65527,

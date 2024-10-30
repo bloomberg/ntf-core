@@ -778,6 +778,10 @@ struct SocketUtil {
     /// Return the error.
     static ntsa::Error reportInfo(bsl::vector<ntsa::SocketInfo>* result,
                                   const ntsa::SocketInfoFilter&  filter);
+
+  private:
+    /// Provide a private implementation.
+    class Impl;
 };
 
 /// @internal @brief

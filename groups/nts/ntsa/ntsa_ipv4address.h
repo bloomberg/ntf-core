@@ -57,6 +57,8 @@ class Ipv4Address
 
     Representation d_value;
 
+    class Impl;
+
   public:
     /// Declare constants used by this implementation.
     enum Constant {

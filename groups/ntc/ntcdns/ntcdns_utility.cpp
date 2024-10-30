@@ -66,41 +66,115 @@
 namespace BloombergLP {
 namespace ntcdns {
 
-namespace {
+/// @internal @brief
+/// Provide functions for implementing 'ntcdns::Utility'.
+class Utility::Impl
+{
+  public:
+    /// Provide a guard to automatically free address information.
+    class AddrInfoGuard;
 
-// The default timeout, in seconds.
-const bsl::size_t k_DEFAULT_TIMEOUT = 5;
+    /// Load into the specified 'result' the fully-qualified domain name of
+    /// the local host. Return the error.
+    static ntsa::Error getHostnameFullyQualified(bsl::string* result);
 
-// The default flag that indicates whether the name servers should be
-// tried n a round-robin order.
-const bool k_DEFAULT_ROTATE = false;
+    /// Parse the specified 'data' having the specified 'size' and load the
+    /// result into the specified 'result'. Return the error.
+    static ntsa::Error parseUnsignedInteger(unsigned short* result,
+                                            const char*     data,
+                                            bsl::size_t     size);
 
-// The default flag that indicates whether debug information should be
-// generated.
-const bool k_DEFAULT_DEBUG = false;
+    /// Parse the specified 'data' having the specified 'size' and load the
+    /// result into the specified 'result'. Return the error.
+    static ntsa::Error parseUnsignedInteger(unsigned int* result,
+                                            const char*   data,
+                                            bsl::size_t   size);
 
-// The default dot count threshold before a name is assumed to be an absolute
-// name.
-const bsl::size_t k_DEFAULT_NDOTS = 1;
+    /// Parse the specified 'data' having the specified 'size' and load the
+    /// result into the specified 'result'. Return the error.
+    static ntsa::Error parseUnsignedInteger(unsigned short*          result,
+                                            const bslstl::StringRef& token);
 
-// The default DNS port.
-const ntsa::Port k_DEFAULT_PORT = 53;
+    /// Parse the specified 'data' having the specified 'size' and load the
+    /// result into the specified 'result'. Return the error.
+    static ntsa::Error parseUnsignedInteger(unsigned int*            result,
+                                            const bslstl::StringRef& token);
 
-// The maximum number of search entries.
-// const bsl::size_t k_MAX_SEARCH_ENTRIES = 6;
+    // Load into the specified 'config' the DNS resolver configuration parsed
+    // from the specified 'line'.
+    static ntsa::Error parseClientConfigLine(ntcdns::ClientConfig*    config,
+                                             const bslstl::StringRef& line);
 
-// The maximum number of resolution attempts.
-const bsl::size_t k_MAX_ATTEMPTS = 5;
+    // Load into the specified 'config' the DNS resolver configuration parsed
+    // from the specified 'line'.
+    static ntsa::Error parseHostLine(ntcdns::HostDatabaseConfig* config,
+                                     const bslstl::StringRef&    line);
 
-// The maximum timeout, in seconds.
-const bsl::size_t k_MAX_TIMEOUT = 30;
+    // Load into the specified 'config' the DNS resolver configuration parsed
+    // from the specified 'line'.
+    static ntsa::Error parsePortLine(ntcdns::PortDatabaseConfig* config,
+                                     const bslstl::StringRef&    line);
 
-// The maximum dot count threshold before a name is assumed to be an absolute
-// name.
-const bsl::size_t k_MAX_NDOTS = 15;
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+
+    /// Load into the specified 'destination' string the specified
+    /// wide-character 'source' string converted into UTF-8.
+    static ntsa::Error convertWideString(bsl::string* destination,
+                                         const WCHAR* source);
+
+    /// Load into the specified 'name_servers' the name servers assigned by
+    /// DHCP.
+    static ntsa::Error loadNameServers(
+        bsl::vector<ntcdns::NameServerConfig>* nameServers);
+
+#endif
+
+    static void sanitizeClientConfig(ntcdns::ClientConfig* config);
+
+    /// The default timeout, in seconds.
+    static const bsl::size_t k_DEFAULT_TIMEOUT;
+
+    /// The default flag that indicates whether the name servers should be
+    /// tried n a round-robin order.
+    static const bool k_DEFAULT_ROTATE;
+
+    /// The default flag that indicates whether debug information should be
+    /// generated.
+    static const bool k_DEFAULT_DEBUG;
+
+    /// The default dot count threshold before a name is assumed to be an
+    /// absolute name.
+    static const bsl::size_t k_DEFAULT_NDOTS;
+
+    /// The default DNS port.
+    static const ntsa::Port k_DEFAULT_PORT;
+
+    /// The maximum number of search entries.
+    /// static const bsl::size_t k_MAX_SEARCH_ENTRIES;
+
+    /// The maximum number of resolution attempts.
+    static const bsl::size_t k_MAX_ATTEMPTS;
+
+    /// The maximum timeout, in seconds.
+    static const bsl::size_t k_MAX_TIMEOUT;
+
+    /// The maximum dot count threshold before a name is assumed to be an
+    /// absolute name.
+    static const bsl::size_t k_MAX_NDOTS;
+};
+
+const bsl::size_t Utility::Impl::k_DEFAULT_TIMEOUT = 5;
+const bool        Utility::Impl::k_DEFAULT_ROTATE  = false;
+const bool        Utility::Impl::k_DEFAULT_DEBUG   = false;
+const bsl::size_t Utility::Impl::k_DEFAULT_NDOTS   = 1;
+const ntsa::Port  Utility::Impl::k_DEFAULT_PORT    = 53;
+// const bsl::size_t Utility::Impl::k_MAX_SEARCH_ENTRIES = 6;
+const bsl::size_t Utility::Impl::k_MAX_ATTEMPTS = 5;
+const bsl::size_t Utility::Impl::k_MAX_TIMEOUT  = 30;
+const bsl::size_t Utility::Impl::k_MAX_NDOTS    = 15;
 
 /// Provide a guard to automatically free address information.
-class AddrInfoGuard
+class Utility::Impl::AddrInfoGuard
 {
     struct addrinfo* d_info_p;
 
@@ -117,21 +191,18 @@ class AddrInfoGuard
     ~AddrInfoGuard();
 };
 
-AddrInfoGuard::AddrInfoGuard(struct addrinfo* info)
+Utility::Impl::AddrInfoGuard::AddrInfoGuard(struct addrinfo* info)
 : d_info_p(info)
 {
 }
 
-AddrInfoGuard::~AddrInfoGuard()
+Utility::Impl::AddrInfoGuard::~AddrInfoGuard()
 {
     freeaddrinfo(d_info_p);
 }
 
-ntsa::Error getHostnameFullyQualified(bsl::string* result)
+ntsa::Error Utility::Impl::getHostnameFullyQualified(bsl::string* result)
 {
-    // Load into the specified 'result' the fully-qualified domain name of
-    // the local host. Return the error.
-
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
     int rc;
@@ -176,9 +247,9 @@ ntsa::Error getHostnameFullyQualified(bsl::string* result)
 #endif
 }
 
-ntsa::Error parseUnsignedInteger(unsigned short* result,
-                                 const char*     data,
-                                 bsl::size_t     size)
+ntsa::Error Utility::Impl::parseUnsignedInteger(unsigned short* result,
+                                                const char*     data,
+                                                bsl::size_t     size)
 {
     bsl::string       s(data, size);
     bsl::stringstream ss;
@@ -187,9 +258,9 @@ ntsa::Error parseUnsignedInteger(unsigned short* result,
     return ntsa::Error();
 }
 
-ntsa::Error parseUnsignedInteger(unsigned int* result,
-                                 const char*   data,
-                                 bsl::size_t   size)
+ntsa::Error Utility::Impl::parseUnsignedInteger(unsigned int* result,
+                                                const char*   data,
+                                                bsl::size_t   size)
 {
     bsl::string       s(data, size);
     bsl::stringstream ss;
@@ -198,24 +269,21 @@ ntsa::Error parseUnsignedInteger(unsigned int* result,
     return ntsa::Error();
 }
 
-ntsa::Error parseUnsignedInteger(unsigned short*          result,
-                                 const bslstl::StringRef& token)
+ntsa::Error Utility::Impl::parseUnsignedInteger(unsigned short* result,
+                                                const bslstl::StringRef& token)
 {
     return parseUnsignedInteger(result, token.data(), token.size());
 }
 
-ntsa::Error parseUnsignedInteger(unsigned int*            result,
-                                 const bslstl::StringRef& token)
+ntsa::Error Utility::Impl::parseUnsignedInteger(unsigned int* result,
+                                                const bslstl::StringRef& token)
 {
     return parseUnsignedInteger(result, token.data(), token.size());
 }
 
-ntsa::Error parseClientConfigLine(ntcdns::ClientConfig*    config,
-                                  const bslstl::StringRef& line)
+ntsa::Error Utility::Impl::parseClientConfigLine(ntcdns::ClientConfig* config,
+                                                 const bslstl::StringRef& line)
 {
-    // Load into the specified 'config' the DNS resolver configuration parsed
-    // from the specified 'line'.
-
     NTCI_LOG_CONTEXT();
 
     bslstl::StringRef uncommentedLine = line;
@@ -457,12 +525,9 @@ ntsa::Error parseClientConfigLine(ntcdns::ClientConfig*    config,
     return ntsa::Error();
 }
 
-ntsa::Error parseHostLine(ntcdns::HostDatabaseConfig* config,
-                          const bslstl::StringRef&    line)
+ntsa::Error Utility::Impl::parseHostLine(ntcdns::HostDatabaseConfig* config,
+                                         const bslstl::StringRef&    line)
 {
-    // Load into the specified 'config' the DNS resolver configuration parsed
-    // from the specified 'line'.
-
     NTCI_LOG_CONTEXT();
 
     bslstl::StringRef uncommentedLine = line;
@@ -532,12 +597,9 @@ ntsa::Error parseHostLine(ntcdns::HostDatabaseConfig* config,
     return ntsa::Error();
 }
 
-ntsa::Error parsePortLine(ntcdns::PortDatabaseConfig* config,
-                          const bslstl::StringRef&    line)
+ntsa::Error Utility::Impl::parsePortLine(ntcdns::PortDatabaseConfig* config,
+                                         const bslstl::StringRef&    line)
 {
-    // Load into the specified 'config' the DNS resolver configuration parsed
-    // from the specified 'line'.
-
     NTCI_LOG_CONTEXT();
 
     bslstl::StringRef uncommentedLine = line;
@@ -680,11 +742,9 @@ ntsa::Error parsePortLine(ntcdns::PortDatabaseConfig* config,
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 
-ntsa::Error convertWideString(bsl::string* destination, const WCHAR* source)
+ntsa::Error Utility::Impl::convertWideString(bsl::string* destination,
+                                             const WCHAR* source)
 {
-    // Load into the specified 'destination' string the specified
-    // wide-character 'source' string converted into UTF-8.
-
     destination->clear();
 
     bsl::size_t sourceLength = wcslen(source);
@@ -726,11 +786,9 @@ ntsa::Error convertWideString(bsl::string* destination, const WCHAR* source)
     return ntsa::Error();
 }
 
-ntsa::Error loadNameServers(bsl::vector<ntcdns::NameServerConfig>* nameServers)
+ntsa::Error Utility::Impl::loadNameServers(
+    bsl::vector<ntcdns::NameServerConfig>* nameServers)
 {
-    // Load into the specified 'name_servers' the name servers assigned by
-    // DHCP.
-
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -835,7 +893,7 @@ ntsa::Error loadNameServers(bsl::vector<ntcdns::NameServerConfig>* nameServers)
 
 #endif
 
-void sanitizeClientConfig(ntcdns::ClientConfig* config)
+void Utility::Impl::sanitizeClientConfig(ntcdns::ClientConfig* config)
 {
     if (config->nameServer().size() > 0) {
         for (bsl::size_t i = 0; i < config->nameServer().size(); ++i) {
@@ -914,8 +972,6 @@ void sanitizeClientConfig(ntcdns::ClientConfig* config)
         config->debug() = k_DEFAULT_DEBUG;
     }
 }
-
-}  // close unnamed namespace
 
 File::File(bslma::Allocator* basicAllocator)
 : d_data("")
@@ -1250,7 +1306,8 @@ ntsa::Error Utility::loadResolverConfig(ntcdns::ResolverConfig* result)
     BSLS_ASSERT(!result->client().isNull());
     BSLS_ASSERT(result->client().value().isConfigurationValue());
 
-    sanitizeClientConfig(&result->client().value().configuration());
+    Utility::Impl::sanitizeClientConfig(
+        &result->client().value().configuration());
 
     if (result->hostDatabase().isNull()) {
         error = loadHostDatabaseConfig(
@@ -1324,18 +1381,18 @@ ntsa::Error Utility::loadClientConfig(ntcdns::ClientConfig* result)
     }
     else {
         result->reset();
-        sanitizeClientConfig(result);
+        Utility::Impl::sanitizeClientConfig(result);
         return ntsa::Error();
     }
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
 
-    ntsa::Error error = loadNameServers(&result->nameServer());
+    ntsa::Error error = Utility::Impl::loadNameServers(&result->nameServer());
     if (error) {
         return error;
     }
 
-    sanitizeClientConfig(result);
+    Utility::Impl::sanitizeClientConfig(result);
 
     return ntsa::Error();
 
@@ -1389,7 +1446,8 @@ ntsa::Error Utility::loadClientConfigFromText(ntcdns::ClientConfig* result,
 
     while (tokenizer.isValid()) {
         bslstl::StringRef line = tokenizer.token();
-        error                  = parseClientConfigLine(result, line);
+
+        error = Utility::Impl::parseClientConfigLine(result, line);
         if (error) {
             return error;
         }
@@ -1404,7 +1462,7 @@ ntsa::Error Utility::loadClientConfigFromText(ntcdns::ClientConfig* result,
         << bsls::TimeInterval(stopwatch.elapsedTime()).totalMilliseconds()
         << " milliseconds" << NTCI_LOG_STREAM_END;
 
-    sanitizeClientConfig(result);
+    Utility::Impl::sanitizeClientConfig(result);
 
     return ntsa::Error();
 }
@@ -1488,7 +1546,8 @@ ntsa::Error Utility::loadHostDatabaseConfigFromText(
 
     while (tokenizer.isValid()) {
         bslstl::StringRef line = tokenizer.token();
-        error                  = parseHostLine(result, line);
+
+        error = Utility::Impl::parseHostLine(result, line);
         if (error) {
             return error;
         }
@@ -1585,7 +1644,8 @@ ntsa::Error Utility::loadPortDatabaseConfigFromText(
 
     while (tokenizer.isValid()) {
         bslstl::StringRef line = tokenizer.token();
-        error                  = parsePortLine(result, line);
+
+        error = Utility::Impl::parsePortLine(result, line);
         if (error) {
             return error;
         }
@@ -1609,7 +1669,8 @@ void Utility::sanitize(ntcdns::ResolverConfig* config)
         config->client().makeValue().makeConfiguration();
     }
 
-    sanitizeClientConfig(&config->client().value().configuration());
+    Utility::Impl::sanitizeClientConfig(
+        &config->client().value().configuration());
 
     if (config->hostDatabase().isNull()) {
         config->hostDatabase().makeValue().makeConfiguration();

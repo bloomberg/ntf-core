@@ -225,6 +225,13 @@ class Cache
     bsl::size_t                                d_negativeCacheMaxTimeToLive;
     bslma::Allocator*                          d_allocator_p;
 
+    static const bool        k_DEFAULT_POSITIVE_CACHE_ENABLED;
+    static const bsl::size_t k_DEFAULT_POSITIVE_CACHE_MIN_TIME_TO_LIVE;
+    static const bsl::size_t k_DEFAULT_POSITIVE_CACHE_MAX_TIME_TO_LIVE;
+    static const bool        k_DEFAULT_NEGATIVE_CACHE_ENABLED;
+    static const bsl::size_t k_DEFAULT_NEGATIVE_CACHE_MIN_TIME_TO_LIVE;
+    static const bsl::size_t k_DEFAULT_NEGATIVE_CACHE_MAX_TIME_TO_LIVE;
+
   private:
     Cache(const Cache&) BSLS_KEYWORD_DELETED;
     Cache& operator=(const Cache&) BSLS_KEYWORD_DELETED;

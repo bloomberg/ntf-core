@@ -318,6 +318,13 @@ class RateLimiter : public ntci::RateLimiter
     /// behavior is undefined unless 'd_lock' is acquired.
     bsl::uint64_t unitsReservedLocked() const;
 
+    /// Return 'true' if the specified 'limit' and 'window' are legal values
+    /// with which to initialize a 'ntcs_LeakyBucket' object, and if so,
+    /// whether a 'ntcs_LeakyBucket' object so initialized would preserve the
+    /// value of 'window'.
+    static bool supportsExactly(bsl::uint64_t             limit,
+                                const bsls::TimeInterval& window);
+
   public:
     /// Create a RateLimiter object, having the specified
     /// 'sustainedRateLimit', the specified 'sustainedRateWindow', the

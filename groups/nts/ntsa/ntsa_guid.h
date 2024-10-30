@@ -134,11 +134,6 @@ class Guid
         bsl::uint64_t d_uint64s[2];
     };
 
-    static bsl::uint64_t  s_lastTimestamp;
-    static int            s_localProcessId;
-    static int            s_localIpAddress;
-    static bsls::SpinLock s_lock;
-
     /// Set the IP address component of this GUID to the specified
     /// 'ipAddress'.
     void setIpAddress(int ipAddress);
@@ -150,6 +145,9 @@ class Guid
     /// Set the timestamp component of this GUID to the specified
     /// 'timestamp', in microseconds since the Unix epoch.
     void setTimestamp(bsl::uint64_t timestamp);
+
+    /// Provide a private implementation.
+    class Impl;
 
   public:
     /// This typedef defines a tag type used to disambiguate constructors

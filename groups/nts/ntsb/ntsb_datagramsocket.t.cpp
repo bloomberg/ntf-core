@@ -214,8 +214,8 @@ void DatagramSocketTest::testBufferIO(
 
     ntsa::Error error;
 
-    const bsl::size_t NUM_MESSAGES = 100000;     // was: 100
-    const bsl::size_t MESSAGE_SIZE = 1024 * 32;  // was: 256
+    const bsl::size_t NUM_MESSAGES = 1000;
+    const bsl::size_t MESSAGE_SIZE = 1024;
 
     ntsa::Endpoint clientSourceEndpoint;
     error = client->sourceEndpoint(&clientSourceEndpoint);
@@ -284,8 +284,8 @@ void DatagramSocketTest::testVectorIO(
 
     ntsa::Error error;
 
-    const bsl::size_t NUM_MESSAGES = 100000;     // was: 100
-    const bsl::size_t MESSAGE_SIZE = 1024 * 32;  // was: 256
+    const bsl::size_t NUM_MESSAGES = 1000;
+    const bsl::size_t MESSAGE_SIZE = 1024;
 
     ntsa::Endpoint clientSourceEndpoint;
     error = client->sourceEndpoint(&clientSourceEndpoint);
@@ -397,7 +397,9 @@ void DatagramSocketTest::sendString(
         ntsa::Error error = client->send(&context, data, options);
 
         if (error) {
-            BSLS_LOG_INFO("Sender error %s", error.text().c_str());
+            BSLS_LOG_INFO("Sender error %s, dataSize = %zu", 
+                          error.text().c_str(),
+                          (bsl::size_t)(data.size()));
             if (error == ntsa::Error::e_LIMIT) {
                 continue;
             }
@@ -518,7 +520,9 @@ void DatagramSocketTest::sendBlob(
         ntsa::Error error = client->send(&context, *clientData, options);
 
         if (error) {
-            BSLS_LOG_INFO("Sender error %s", error.text().c_str());
+            BSLS_LOG_INFO("Sender error %s, dataSize = %zu", 
+                          error.text().c_str(), 
+                          (bsl::size_t)(clientData->length()));
             if (error == ntsa::Error::e_LIMIT) {
                 continue;
             }

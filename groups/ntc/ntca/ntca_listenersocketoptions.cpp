@@ -23,16 +23,12 @@ BSLS_IDENT_RCSID(ntca_listenersocketoptions_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
-namespace {
-
-const bool DEFAULT_REUSE_ADDRESS = true;
-
-}  // close unnamed namespace
+const bool ListenerSocketOptions::k_DEFAULT_REUSE_ADDRESS = true;
 
 ListenerSocketOptions::ListenerSocketOptions()
 : d_transport(ntsa::Transport::e_UNDEFINED)
 , d_sourceEndpoint()
-, d_reuseAddress(DEFAULT_REUSE_ADDRESS)
+, d_reuseAddress(k_DEFAULT_REUSE_ADDRESS)
 , d_backlog()
 , d_acceptQueueLowWatermark()
 , d_acceptQueueHighWatermark()

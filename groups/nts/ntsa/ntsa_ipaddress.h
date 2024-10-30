@@ -71,6 +71,8 @@ class IpAddress
 
     ntsa::IpAddressType::Value d_type;
 
+    class Impl;
+
   public:
     /// Create a new IP address having an undefined selection.
     IpAddress();
