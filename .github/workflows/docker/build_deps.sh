@@ -49,7 +49,7 @@ build() {
 list_directory() {
     local path=${1}
 
-    if [[ -e "${path}" ]]; then
+    if [ -e "${path}" ]; then
         echo "Contents of ${path}:"
         ls ${path}
     fi
