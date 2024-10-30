@@ -46,6 +46,8 @@ build() {
     build_bde
 }
 
+sudo apt-get install -y libopenssl-dev
+
 fetch_deps
 configure
 build
