@@ -137,6 +137,18 @@ BSLS_IDENT_RCSID(ntctls_plugin_cpp, "$Id$ $CSID$")
 #pragma warning(disable : 4996)
 #endif
 
+#if defined(BSLS_PLATFORM_CMP_CLANG)
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
+#if defined(BSLS_PLATFORM_CMP_GNU)
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#define PKCS12_R_PKCS12_PBE_CRYPT_ERROR PKCS12_R_PKCS12_CIPHERFINAL_ERROR
+#endif
+
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -1396,7 +1408,11 @@ int ErrorInfo::library() const
 
 int ErrorInfo::function() const
 {
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+    return 0;
+#else
     return ERR_GET_FUNC(d_number);
+#endif
 }
 
 int ErrorInfo::reason() const
@@ -1431,7 +1447,11 @@ bsl::ostream& ErrorInfo::print(bsl::ostream& stream,
 
     if (d_number != 0) {
         const int library  = ERR_GET_LIB(d_number);
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+        const int function = 0;
+#else
         const int function = ERR_GET_FUNC(d_number);
+#endif
         const int reason   = ERR_GET_REASON(d_number);
 
         printer.printAttribute("library", library);
