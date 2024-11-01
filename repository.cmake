@@ -5292,7 +5292,7 @@ function (ntf_target_link_dependency_by_pkgconfig)
         return()
     endif()
 
-    if (VERBOSE)
+    if (VERBOSE OR TRUE)
         message(STATUS "Dependency '${dependency}' found using pkg-config")
         message(STATUS "NTF: ${DEPENDENCY_STATIC_INCLUDE_DIRS}:   ${${DEPENDENCY_STATIC_INCLUDE_DIRS}}")
         message(STATUS "NTF: ${DEPENDENCY_STATIC_LIBRARY_DIRS}:   ${${DEPENDENCY_STATIC_LIBRARY_DIRS}}")

@@ -50,17 +50,24 @@ build_ntf() {
         exit ${rc}
     fi
 
-    make build
+    VERBOSE=1 make build
     rc=${?}
     if [ ${rc} -ne 0 ]; then
         echo "Failed to build: rc = ${rc}"
         exit ${rc}
     fi
 
-    make build_test
+    VERBOSE=1 make build_test
     rc=${?}
     if [ ${rc} -ne 0 ]; then
         echo "Failed to build tests: rc = ${rc}"
+        exit ${rc}
+    fi
+
+    /workspace/ntf-core/build/bin/ntctls_plugin.t -v 3
+    rc=${?}
+    if [ ${rc} -ne 0 ]; then
+        echo "Failed to run tests successfully: rc = ${rc}"
         exit ${rc}
     fi
 
