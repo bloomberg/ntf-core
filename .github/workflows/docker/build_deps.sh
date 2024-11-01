@@ -51,10 +51,11 @@ list_directory() {
 
     if [ -e "${path}" ]; then
         echo "Contents of ${path}:"
-        ls ${path}
+        ls -l ${path}
     fi
 }
 
+list_directory "/"
 list_directory "/usr/lib"
 list_directory "/usr/lib/pkgconfig"
 list_directory "/usr/lib64"
@@ -67,6 +68,7 @@ list_directory "/opt/bb/lib"
 list_directory "/opt/bb/lib/pkgconfig"
 list_directory "/opt/bb/lib64"
 list_directory "/opt/bb/lib64/pkgconfig"
+list_directory "/workspace"
 
 echo "Artifically terminating to debug"
 exit 1
