@@ -2371,6 +2371,18 @@ if (NOT TARGET ${target})\n\
     set(target_requires_reversed ${target_requires})
     list(REVERSE target_requires_reversed)
     foreach (dependency ${target_requires_reversed})
+        if ("${dependency}" STREQUAL "openssl")
+            string(APPEND target_config_cmake_content "\
+    find_dependency(OpenSSL REQUIRED COMPONENTS SSL Crypto PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
+")
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET openssl)
+        add_library(openssl ALIAS OpenSSL::SSL)
+    endif()
+")
+            continue()
+        endif()
+
             string(APPEND target_config_cmake_content "\
     find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
 ")
@@ -2987,6 +2999,18 @@ if (NOT TARGET ${target})\n\
     set(target_requires_reversed ${target_requires})
     list(REVERSE target_requires_reversed)
     foreach (dependency ${target_requires_reversed})
+        if ("${dependency}" STREQUAL "openssl")
+            string(APPEND target_config_cmake_content "\
+    find_dependency(OpenSSL REQUIRED COMPONENTS SSL Crypto PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
+")
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET openssl)
+        add_library(openssl ALIAS OpenSSL::SSL)
+    endif()
+")
+            continue()
+        endif()
+
             string(APPEND target_config_cmake_content "\
     find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
 ")
@@ -3555,24 +3579,34 @@ function (ntf_group_end)
                 ${component_test_build_target}
             )
 
+            if (VERBOSE)
+                message(STATUS "NTF Build: linking component test driver '${component_test_build_target}' to target '${target}'")
+                message(STATUS "         * target_link_libraries(${component_test_build_target} ${target})")
+            endif()
+
             target_link_libraries(
                 ${component_test_build_target}
                 PUBLIC
                 ${target}
             )
 
-            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
+            # Do not link against the target's dependencies, this will be
+            # automatically handled transitively by CMake.
 
-            foreach(entry ${target_requires})
-                set(dependency ${entry})
+            if (FALSE)
+                ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
 
-                if (VERBOSE)
-                    message(STATUS "NTF Build: linking component test driver '${component_test_build_target}' to target '${dependency}'")
-                    message(STATUS "         * target_link_libraries(${component_test_build_target} ${dependency})")
-                endif()
+                foreach(entry ${target_requires})
+                    set(dependency ${entry})
 
-                target_link_libraries(${component_test_build_target} PUBLIC ${dependency})
-            endforeach()
+                    if (VERBOSE)
+                        message(STATUS "NTF Build: linking component test driver '${component_test_build_target}' to target '${dependency}'")
+                        message(STATUS "         * target_link_libraries(${component_test_build_target} ${dependency})")
+                    endif()
+
+                    target_link_libraries(${component_test_build_target} PUBLIC ${dependency})
+                endforeach()
+            endif()
 
             ntf_target_options_common_epilog(${target})
 
@@ -3812,6 +3846,18 @@ if (NOT TARGET ${target})\n\
     set(target_requires_reversed ${target_requires})
     list(REVERSE target_requires_reversed)
     foreach (dependency ${target_requires_reversed})
+        if ("${dependency}" STREQUAL "openssl")
+            string(APPEND target_config_cmake_content "\
+    find_dependency(OpenSSL REQUIRED COMPONENTS SSL Crypto PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
+")
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET openssl)
+        add_library(openssl ALIAS OpenSSL::SSL)
+    endif()
+")
+            continue()
+        endif()
+
             string(APPEND target_config_cmake_content "\
     find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
 ")
@@ -5039,23 +5085,44 @@ function (ntf_target_link_dependency_by_cmake)
             continue()
         endif()
 
-        if (NOT TARGET ${dependency})
-            if (VERBOSE)
-                message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but no target defined in ${search_directory}")
+        if ("${dependency}" STREQUAL "openssl")
+            if (NOT TARGET OpenSSL::SSL AND NOT TARGET OpenSSL::Crypto)
+                if (VERBOSE)
+                    message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but both targets OpenSSL::SSL and OpenSSL::Crypto are not defined in ${search_directory}")
+                endif()
+                continue()
             endif()
-            continue()
-        endif()
 
-        if (VERBOSE)
-            message(STATUS "Dependency '${dependency}' found using cmake at '${${DEPENDENCY_CONFIG}}'")
-        endif()
+            if (VERBOSE)
+                message(STATUS "Dependency '${dependency}' found using cmake at '${${DEPENDENCY_CONFIG}}'")
+            endif()
 
-        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
-            target_link_libraries(
-                ${target} INTERFACE ${dependency})
+            if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+                target_link_libraries(
+                    ${target} INTERFACE OpenSSL::SSL OpenSSL::Crypto)
+            else()
+                target_link_libraries(
+                    ${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+            endif()
         else()
-            target_link_libraries(
-                ${target} PUBLIC ${dependency})
+            if (NOT TARGET ${dependency})
+                if (VERBOSE)
+                    message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but no target defined in ${search_directory}")
+                endif()
+                continue()
+            endif()
+
+            if (VERBOSE)
+                message(STATUS "Dependency '${dependency}' found using cmake at '${${DEPENDENCY_CONFIG}}'")
+            endif()
+
+            if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+                target_link_libraries(
+                    ${target} INTERFACE ${dependency})
+            else()
+                target_link_libraries(
+                    ${target} PUBLIC ${dependency})
+            endif()
         endif()
 
         if (NOT "${originalCmakePrefixPath}" STREQUAL "")
@@ -5316,38 +5383,42 @@ function (ntf_target_link_dependency_by_pkgconfig)
     # including those headers, to facilitate building with warnings treated as
     # errors (not all dependencies can be assumed to be warning-free.)
 
-    add_library(${dependency} INTERFACE IMPORTED GLOBAL)
+    set(NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET FALSE)
 
-    # Set the C standard.
+    if (${NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET})
+        add_library(${dependency} INTERFACE IMPORTED GLOBAL)
 
-    set_property(TARGET ${dependency} PROPERTY C_STANDARD 11)
+        # Set the C standard.
 
-    # Set the C++ standard version unless using xlc, which requires
-    # special, non-portable flag for some C++03-like behavior.
+        set_property(TARGET ${dependency} PROPERTY C_STANDARD 11)
 
-    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "XL")
-        ntf_repository_standard_get(OUTPUT cxx_standard)
-        set_property(TARGET ${dependency}
-                     PROPERTY CXX_STANDARD ${cxx_standard})
-    endif()
+        # Set the C++ standard version unless using xlc, which requires
+        # special, non-portable flag for some C++03-like behavior.
 
-    target_include_directories(
-        ${dependency}
-        SYSTEM INTERFACE ${${DEPENDENCY_STATIC_INCLUDE_DIRS}})
-
-    foreach(static_library_directory ${${DEPENDENCY_STATIC_LIBRARY_DIRS}})
-        if (EXISTS "${static_library_directory}/${install_ufid}")
-            target_link_directories(
-                ${dependency}
-                INTERFACE "${static_library_directory}/${install_ufid}")
+        if (NOT CMAKE_CXX_COMPILER_ID MATCHES "XL")
+            ntf_repository_standard_get(OUTPUT cxx_standard)
+            set_property(TARGET ${dependency}
+                         PROPERTY CXX_STANDARD ${cxx_standard})
         endif()
 
-        if (EXISTS "${static_library_directory}")
-            target_link_directories(
-                ${dependency}
-                INTERFACE "${static_library_directory}")
-        endif()
-    endforeach()
+        target_include_directories(
+            ${dependency}
+            SYSTEM INTERFACE ${${DEPENDENCY_STATIC_INCLUDE_DIRS}})
+
+        foreach(static_library_directory ${${DEPENDENCY_STATIC_LIBRARY_DIRS}})
+            if (EXISTS "${static_library_directory}/${install_ufid}")
+                target_link_directories(
+                    ${dependency}
+                    INTERFACE "${static_library_directory}/${install_ufid}")
+            endif()
+
+            if (EXISTS "${static_library_directory}")
+                target_link_directories(
+                    ${dependency}
+                    INTERFACE "${static_library_directory}")
+            endif()
+        endforeach()
+    endif() # NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET
 
     set(interface_link_libraries)
 
@@ -5357,7 +5428,6 @@ function (ntf_target_link_dependency_by_pkgconfig)
     # TODO: !!! In the ntf-core release, this is set to TRUE. Maybe set
     #           conditionally whether we are linking an executable !!!
     set(NTF_BUILD_LINK_USING_L_RULES FALSE)
-
 
     # If true use -l rules for all libraries not found in the refroot.
     set(NTF_BUILD_LINK_USING_L_RULES_FOR_SYSTEM_LIBRARIES TRUE)
@@ -5469,18 +5539,45 @@ function (ntf_target_link_dependency_by_pkgconfig)
         endforeach()
     endif()
 
-    set_property(
-        TARGET ${dependency} PROPERTY
-        INTERFACE_LINK_LIBRARIES "${interface_link_libraries}")
+    if (${NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET})
+        set_property(
+            TARGET ${dependency} PROPERTY
+            INTERFACE_LINK_LIBRARIES "${interface_link_libraries}")
 
-    if (VERBOSE)
-        ntf_target_dump("${dependency}")
-    endif()
+        # add_library(PkgConfig::${dependency} ALIAS ${dependency})
 
-    if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
-        target_link_libraries(${target} INTERFACE ${dependency})
+        if (VERBOSE OR TRUE)
+            ntf_target_dump("${dependency}")
+        endif()
+
+        # if (VERBOSE OR TRUE)
+        #     ntf_target_dump("PkgConfig::${dependency}")
+        # endif()
+
+    endif() # NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET
+
+    if (${NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET})
+        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+            target_link_libraries(${target} INTERFACE ${dependency})
+        else()
+            target_link_libraries(${target} PUBLIC ${dependency})
+        endif()
     else()
-        target_link_libraries(${target} PUBLIC ${dependency})
+        target_include_directories(
+            ${target}
+            SYSTEM PRIVATE ${${DEPENDENCY_STATIC_INCLUDE_DIRS}})
+
+        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+            target_link_libraries(
+                ${target}
+                INTERFACE
+                ${interface_link_libraries})
+        else()
+            target_link_libraries(
+                ${target}
+                PUBLIC
+                ${interface_link_libraries})
+        endif()
     endif()
 
     set(${ARG_OUTPUT} TRUE PARENT_SCOPE)
@@ -5552,6 +5649,58 @@ function (ntf_target_link_dependency)
             set(${ARG_OUTPUT} TRUE PARENT_SCOPE)
         endif()
         return()
+    endif()
+
+    # Attempt to find special packages.
+
+    if ("${dependency}" STREQUAL "openssl")
+        set(dependency_found_by_findopenssl FALSE)
+
+        if (TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
+            set(dependency_found_by_findopenssl TRUE)
+        else()
+            set(OPENSSL_ROOT_DIR "/opt/bb")
+            set(OPENSSL_USE_STATIC_LIBS TRUE)
+
+            find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
+
+            message(STATUS "OPENSSL_FOUND: ${OPENSSL_FOUND}")
+            message(STATUS "OPENSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")
+            message(STATUS "OPENSSL_LIBRARIES: ${OPENSSL_LIBRARIES}")
+            message(STATUS "OPENSSL_VERSION: ${OPENSSL_VERSION}")
+
+            if (TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
+                message(STATUS "OpenSSL has been found by FindOpenSSL.cmake")
+                set(dependency_found_by_findopenssl TRUE)
+            else()
+                message(STATUS "OpenSSL has not been found by FindOpenSSL.cmake")
+            endif()
+        endif()
+
+        if (${dependency_found_by_findopenssl})
+            if (VERBOSE OR TRUE)
+                ntf_target_dump("OpenSSL::SSL")
+            endif()
+
+            if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+                target_link_libraries(${target} INTERFACE OpenSSL::SSL)
+                target_link_libraries(${target} INTERFACE OpenSSL::Crypto)
+            else()
+                target_link_libraries(${target} PUBLIC OpenSSL::SSL)
+                target_link_libraries(${target} PUBLIC OpenSSL::Crypto)
+            endif()
+
+            if (MSVC)
+                target_link_libraries(${target} PRIVATE OpenSSL::applink)
+            endif()
+
+            ntf_target_requires_append(TARGET ${target} VALUE ${dependency})
+
+            if (NOT "${ARG_OUTPUT}" STREQUAL "")
+                set(${ARG_OUTPUT} TRUE PARENT_SCOPE)
+            endif()
+            return()
+        endif()
     endif()
 
     # Attempt to find the dependency using pkg-config.
