@@ -55,23 +55,23 @@ list_directory() {
     fi
 }
 
-list_directory "/"
-list_directory "/usr/lib"
-list_directory "/usr/lib/pkgconfig"
-list_directory "/usr/lib64"
-list_directory "/usr/lib64/pkgconfig"
-list_directory "/usr/local/lib"
-list_directory "/usr/local/lib/pkgconfig"
-list_directory "/usr/local/lib64"
-list_directory "/usr/local/lib64/pkgconfig"
-list_directory "/opt/bb/lib"
-list_directory "/opt/bb/lib/pkgconfig"
-list_directory "/opt/bb/lib64"
-list_directory "/opt/bb/lib64/pkgconfig"
-list_directory "/workspace"
+# list_directory "/"
+# list_directory "/usr/lib"
+# list_directory "/usr/lib/pkgconfig"
+# list_directory "/usr/lib64"
+# list_directory "/usr/lib64/pkgconfig"
+# list_directory "/usr/local/lib"
+# list_directory "/usr/local/lib/pkgconfig"
+# list_directory "/usr/local/lib64"
+# list_directory "/usr/local/lib64/pkgconfig"
+# list_directory "/opt/bb/lib"
+# list_directory "/opt/bb/lib/pkgconfig"
+# list_directory "/opt/bb/lib64"
+# list_directory "/opt/bb/lib64/pkgconfig"
+# list_directory "/workspace"
 
-echo "Artifically terminating to debug"
-exit 1
+# echo "Artifically terminating to debug"
+# exit 1
 
 
 fetch_deps
