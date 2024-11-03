@@ -4206,7 +4206,7 @@ class EncryptionTest
     static void verifyUsage();
 };
 
-void EncryptionTest::verifyUsage()
+NTSCFG_TEST_FUNCTION(ntctls::EncryptionTest::verifyUsage)
 {
     // Concern: Verify the behavior of encryption sessions with various
     // configuration parameters.
