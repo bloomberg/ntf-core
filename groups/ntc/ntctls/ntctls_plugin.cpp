@@ -3943,6 +3943,13 @@ ntsa::Error ResourceUtil::decodeKeyAsn1Pem(
         {
             return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
         }
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+        // error:1C80009F:Provider routes::unable to get passphrase
+        else if (currentErrorStack.find(57, 159))
+        {
+            return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
+        }
+#endif
         else {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
@@ -4020,6 +4027,13 @@ ntsa::Error ResourceUtil::decodeCertificateAsn1Pem(
         {
             return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
         }
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+        // error:1C80009F:Provider routes::unable to get passphrase
+        else if (currentErrorStack.find(57, 159))
+        {
+            return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
+        }
+#endif
         else {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
@@ -4344,6 +4358,13 @@ ntsa::Error ResourceUtil::decodeKeyPkcs8PemE(
         {
             return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
         }
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+        // error:1C80009F:Provider routes::unable to get passphrase
+        else if (currentErrorStack.find(57, 159))
+        {
+            return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
+        }
+#endif
         else {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
@@ -4438,6 +4459,13 @@ ntsa::Error ResourceUtil::decodeKeyPkcs8PemU(
         {
             return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
         }
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+        // error:1C80009F:Provider routes::unable to get passphrase
+        else if (currentErrorStack.find(57, 159))
+        {
+            return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
+        }
+#endif
         else {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }

@@ -2373,12 +2373,22 @@ if (NOT TARGET ${target})\n\
     foreach (dependency ${target_requires_reversed})
         if ("${dependency}" STREQUAL "openssl")
             string(APPEND target_config_cmake_content "\
-    find_dependency(OpenSSL REQUIRED COMPONENTS SSL Crypto PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
-")
-            string(APPEND target_config_cmake_content "\
-    if (NOT TARGET openssl)
-        add_library(openssl ALIAS OpenSSL::SSL)
-    endif()
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(\n\
+            OpenSSL QUIET COMPONENTS SSL Crypto CONFIG\n\
+            NAMES openssl OpenSSL\n\
+            PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR\}/..\"\n\
+        )\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(OpenSSL MODULE COMPONENTS SSL Crypto)\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::SSL\")\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::Crypto)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::Crypto\")\n\
+    endif()\n\
 ")
             continue()
         endif()
@@ -3001,12 +3011,22 @@ if (NOT TARGET ${target})\n\
     foreach (dependency ${target_requires_reversed})
         if ("${dependency}" STREQUAL "openssl")
             string(APPEND target_config_cmake_content "\
-    find_dependency(OpenSSL REQUIRED COMPONENTS SSL Crypto PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
-")
-            string(APPEND target_config_cmake_content "\
-    if (NOT TARGET openssl)
-        add_library(openssl ALIAS OpenSSL::SSL)
-    endif()
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(\n\
+            OpenSSL QUIET COMPONENTS SSL Crypto CONFIG\n\
+            NAMES openssl OpenSSL\n\
+            PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR\}/..\"\n\
+        )\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(OpenSSL MODULE COMPONENTS SSL Crypto)\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::SSL\")\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::Crypto)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::Crypto\")\n\
+    endif()\n\
 ")
             continue()
         endif()
@@ -3848,12 +3868,22 @@ if (NOT TARGET ${target})\n\
     foreach (dependency ${target_requires_reversed})
         if ("${dependency}" STREQUAL "openssl")
             string(APPEND target_config_cmake_content "\
-    find_dependency(OpenSSL REQUIRED COMPONENTS SSL Crypto PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
-")
-            string(APPEND target_config_cmake_content "\
-    if (NOT TARGET openssl)
-        add_library(openssl ALIAS OpenSSL::SSL)
-    endif()
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(\n\
+            OpenSSL QUIET COMPONENTS SSL Crypto CONFIG\n\
+            NAMES openssl OpenSSL\n\
+            PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR\}/..\"\n\
+        )\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(OpenSSL MODULE COMPONENTS SSL Crypto)\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::SSL\")\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::Crypto)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::Crypto\")\n\
+    endif()\n\
 ")
             continue()
         endif()
@@ -5359,7 +5389,7 @@ function (ntf_target_link_dependency_by_pkgconfig)
         return()
     endif()
 
-    if (VERBOSE OR TRUE)
+    if (VERBOSE)
         message(STATUS "Dependency '${dependency}' found using pkg-config")
         message(STATUS "NTF: ${DEPENDENCY_STATIC_INCLUDE_DIRS}:   ${${DEPENDENCY_STATIC_INCLUDE_DIRS}}")
         message(STATUS "NTF: ${DEPENDENCY_STATIC_LIBRARY_DIRS}:   ${${DEPENDENCY_STATIC_LIBRARY_DIRS}}")
@@ -5546,11 +5576,11 @@ function (ntf_target_link_dependency_by_pkgconfig)
 
         # add_library(PkgConfig::${dependency} ALIAS ${dependency})
 
-        if (VERBOSE OR TRUE)
+        if (VERBOSE)
             ntf_target_dump("${dependency}")
         endif()
 
-        # if (VERBOSE OR TRUE)
+        # if (VERBOSE)
         #     ntf_target_dump("PkgConfig::${dependency}")
         # endif()
 
@@ -5664,21 +5694,27 @@ function (ntf_target_link_dependency)
 
             find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 
-            message(STATUS "OPENSSL_FOUND: ${OPENSSL_FOUND}")
-            message(STATUS "OPENSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")
-            message(STATUS "OPENSSL_LIBRARIES: ${OPENSSL_LIBRARIES}")
-            message(STATUS "OPENSSL_VERSION: ${OPENSSL_VERSION}")
+            if (VERBOSE)
+                message(STATUS "OPENSSL_FOUND: ${OPENSSL_FOUND}")
+                message(STATUS "OPENSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")
+                message(STATUS "OPENSSL_LIBRARIES: ${OPENSSL_LIBRARIES}")
+                message(STATUS "OPENSSL_VERSION: ${OPENSSL_VERSION}")
+            endif()
 
             if (TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
-                message(STATUS "OpenSSL has been found by FindOpenSSL.cmake")
+                if (VERBOSE)
+                    message(STATUS "OpenSSL has been found by FindOpenSSL.cmake")
+                endif()
                 set(dependency_found_by_findopenssl TRUE)
             else()
-                message(STATUS "OpenSSL has not been found by FindOpenSSL.cmake")
+                if (VERBOSE)
+                    message(STATUS "OpenSSL has not been found by FindOpenSSL.cmake")
+                endif()
             endif()
         endif()
 
         if (${dependency_found_by_findopenssl})
-            if (VERBOSE OR TRUE)
+            if (VERBOSE)
                 ntf_target_dump("OpenSSL::SSL")
             endif()
 
