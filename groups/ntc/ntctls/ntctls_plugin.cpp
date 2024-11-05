@@ -125,6 +125,10 @@ BSLS_IDENT_RCSID(ntctls_plugin_cpp, "$Id$ $CSID$")
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#include <openssl/provider.h>
+#endif
+
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 #error OpenSSL 1.1.0 or greater is required
 #endif
@@ -923,7 +927,247 @@ long Internal::Impl::bio_blob_ctrl(BIO* bio, int cmd, long num, void* ptr)
         return static_cast<long>(blob->length());
     }
 
-    return 1;
+    if (cmd == BIO_CTRL_INFO) {
+        return 0;
+    }
+
+    if (cmd == BIO_CTRL_SET_CALLBACK) {
+        return 0;
+    }
+
+    if (cmd == BIO_C_SET_NBIO) {
+        return 0;
+    }
+    
+#if defined(BIO_CTRL_GET_KTLS_SEND)
+    if (cmd == BIO_CTRL_GET_KTLS_SEND) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_CTRL_GET_KTLS_RECV)
+    if (cmd == BIO_CTRL_GET_KTLS_RECV) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_CTRL_SET_KTLS_SEND)
+    if (cmd == BIO_CTRL_SET_KTLS_SEND) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG)
+    if (cmd == BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG)
+    if (cmd == BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_CTRL_GET_RPOLL_DESCRIPTOR)
+    if (cmd == BIO_CTRL_GET_RPOLL_DESCRIPTOR) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_CTRL_GET_WPOLL_DESCRIPTOR)
+    if (cmd == BIO_CTRL_GET_WPOLL_DESCRIPTOR) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SSL_MODE)
+    if (cmd == BIO_C_SSL_MODE) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_DO_STATE_MACHINE)
+    if (cmd == BIO_C_DO_STATE_MACHINE) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SET_SSL)
+    if (cmd == BIO_C_SET_SSL) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_GET_SSL)
+    if (cmd == BIO_C_GET_SSL) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT)
+    if (cmd == BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SET_SSL_RENEGOTIATE_BYTES)
+    if (cmd == BIO_C_SET_SSL_RENEGOTIATE_BYTES) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_GET_SSL_NUM_RENEGOTIATES)
+    if (cmd == BIO_C_GET_SSL_NUM_RENEGOTIATES) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_GET_FD)
+    if (cmd == BIO_C_GET_FD) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_NREAD)
+    if (cmd == BIO_C_NREAD) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_NREAD0)
+    if (cmd == BIO_C_NREAD0) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_NWRITE)
+    if (cmd == BIO_C_NWRITE) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_NWRITE0)
+    if (cmd == BIO_C_NWRITE0) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SET_EX_ARG)
+    if (cmd == BIO_C_SET_EX_ARG) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_GET_WRITE_GUARANTEE)
+    if (cmd == BIO_C_GET_WRITE_GUARANTEE) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_GET_READ_REQUEST)
+    if (cmd == BIO_C_GET_READ_REQUEST) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_RESET_READ_REQUEST)
+    if (cmd == BIO_C_RESET_READ_REQUEST) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SET_CONNECT)
+    if (cmd == BIO_C_SET_CONNECT) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SET_CONNECT_MODE)
+    if (cmd == BIO_C_SET_CONNECT_MODE) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_GET_CONNECT)
+    if (cmd == BIO_C_GET_CONNECT) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SET_ACCEPT)
+    if (cmd == BIO_C_SET_ACCEPT) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SET_BIND_MODE)
+    if (cmd == BIO_C_SET_BIND_MODE) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_GET_BIND_MODE)
+    if (cmd == BIO_C_GET_BIND_MODE) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SET_FILENAME)
+    if (cmd == BIO_C_SET_FILENAME) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SET_FILE_PTR)
+    if (cmd == BIO_C_SET_FILE_PTR) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_GET_FILE_PTR)
+    if (cmd == BIO_C_GET_FILE_PTR) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_SET_FD)
+    if (cmd == BIO_C_SET_FD) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_GET_FD)
+    if (cmd == BIO_C_GET_FD) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_FILE_SEEK)
+    if (cmd == BIO_C_FILE_SEEK) {
+        return 0;
+    }
+#endif
+
+#if defined(BIO_C_FILE_TELL)
+    if (cmd == BIO_C_FILE_TELL) {
+        return 0;
+    }
+#endif
+
+#if defined(OSSL_TRACE_CTRL_BEGIN)
+    if (cmd == OSSL_TRACE_CTRL_BEGIN) {
+        return 0;
+    }
+#endif
+
+#if defined(OSSL_TRACE_CTRL_END)
+    if (cmd == OSSL_TRACE_CTRL_END) {
+        return 0;
+    }
+#endif
+
+    return 0;
 }
 
 int Internal::Impl::bio_streambuf_new(BIO* bio)
@@ -7658,15 +7902,6 @@ void BlobBufferUtil::reserveCapacity(
                 bsl::min(minReceiveSize, maxReceiveSize));
 }
 
-#if NTCTLS_SESSION_LOG_CALLBACK_VERBOSE
-#define NTCTLS_SESSION_LOG_CALLBACK(message) NTCI_LOG_DEBUG(message)
-#define NTCTLS_SESSION_LOG_CALLBACK_STATE(message, state)                     \
-    NTCI_LOG_DEBUG(message, state)
-#else
-#define NTCTLS_SESSION_LOG_CALLBACK(message)
-#define NTCTLS_SESSION_LOG_CALLBACK_STATE(message, state)
-#endif
-
 #if NTCTLS_SESSION_LOG_CHECK_ERROR_VERBOSE
 #define NTCTLS_SESSION_LOG_CHECK_ERROR(message) NTCI_LOG_DEBUG(message)
 #else
@@ -7680,33 +7915,43 @@ void Session::infoCallback(const SSL* ssl, int where, int ret)
 
     NTCI_LOG_CONTEXT();
 
+    const bsls::LogSeverity::Enum severity = bsls::Log::severityThreshold();
+    if (static_cast<int>(severity) < 
+        static_cast<int>(bsls::LogSeverity::e_TRACE)) 
+    {
+        return;
+    }
+
     if ((where & SSL_CB_HANDSHAKE_START) != 0) {
-        NTCTLS_SESSION_LOG_CALLBACK("SSL_CB_HANDSHAKE_START");
+        NTCI_LOG_TRACE("SSL_CB_HANDSHAKE_START: %s", 
+                       SSL_state_string_long(ssl));
     }
 
     if ((where & SSL_CB_HANDSHAKE_DONE) != 0) {
-        NTCTLS_SESSION_LOG_CALLBACK("SSL_CB_HANDSHAKE_DONE");
+        NTCI_LOG_TRACE("SSL_CB_HANDSHAKE_DONE: %s", 
+                       SSL_state_string_long(ssl));
     }
 
     if ((where & SSL_CB_LOOP) != 0) {
-        NTCTLS_SESSION_LOG_CALLBACK_STATE("SSL_CB_LOOP: %s",
-                                          SSL_state_string_long(ssl));
+        NTCI_LOG_TRACE("SSL_CB_LOOP: %s", SSL_state_string_long(ssl));
     }
 
     if ((where & SSL_CB_EXIT) != 0) {
-        NTCTLS_SESSION_LOG_CALLBACK("SSL_CB_EXIT");
+        NTCI_LOG_TRACE("SSL_CB_EXIT: %s", SSL_state_string_long(ssl));
     }
 
     if ((where & SSL_CB_READ) != 0) {
-        NTCTLS_SESSION_LOG_CALLBACK("SSL_CB_READ");
+        NTCI_LOG_TRACE("SSL_CB_READ: %s", SSL_state_string_long(ssl));
     }
 
     if ((where & SSL_CB_WRITE) != 0) {
-        NTCTLS_SESSION_LOG_CALLBACK("SSL_CB_WRITE");
+        NTCI_LOG_TRACE("SSL_CB_WRITE: %s", SSL_state_string_long(ssl));
     }
 
     if ((where & SSL_CB_ALERT) != 0) {
-        NTCTLS_SESSION_LOG_CALLBACK("SSL_CB_ALERT");
+        NTCI_LOG_TRACE("SSL_CB_ALERT: %s (%s)", 
+                       SSL_state_string_long(ssl),
+                       SSL_alert_desc_string_long(ret));
     }
 }
 
@@ -7930,6 +8175,71 @@ ntsa::Error Session::process(LockGuard* lock)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
+    if (SSL_in_init(d_ssl_p)) {
+        int rc = SSL_do_handshake(d_ssl_p);
+        if (rc != 1) {
+            if (rc < 0) {
+                int error = SSL_get_error(d_ssl_p, rc);
+                if (error == SSL_ERROR_WANT_READ || 
+                    error == SSL_ERROR_WANT_WRITE)
+                {
+                    return ntsa::Error();
+                }
+            }
+
+            bsl::string description;
+            Internal::drainErrorQueue(&description);
+
+            NTCI_LOG_DEBUG("Failed to complete TLS handshake: %s",
+                           description.c_str());
+
+            ntci::Encryption::HandshakeCallback handshakeCallback =
+                d_handshakeCallback;
+
+            d_handshakeCallback = ntci::Encryption::HandshakeCallback();
+
+            lock->release()->unlock();
+
+            handshakeCallback(
+                ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED),
+                bsl::shared_ptr<ntci::EncryptionCertificate>(),
+                description);
+
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        rc = SSL_is_init_finished(d_ssl_p);
+        BSLS_ASSERT(rc == 1);
+
+        OSSL_HANDSHAKE_STATE state = SSL_get_state(d_ssl_p);
+        BSLS_ASSERT(state == TLS_ST_OK);
+
+        X509* sourceX509 = SSL_get_certificate(d_ssl_p);
+        if (sourceX509) {
+            X509_up_ref(sourceX509);
+            d_sourceCertificate_sp.createInplace(d_allocator_p,
+                                                 sourceX509,
+                                                 d_allocator_p);
+        }
+
+        X509* remoteX509 = SSL_get_peer_certificate(d_ssl_p);
+        if (remoteX509) {
+            d_remoteCertificate_sp.createInplace(d_allocator_p,
+                                                 remoteX509,
+                                                 d_allocator_p);
+        }
+
+        ntci::Encryption::HandshakeCallback handshakeCallback =
+            d_handshakeCallback;
+
+        d_handshakeCallback = ntci::Encryption::HandshakeCallback();
+
+        {
+            UnLockGuard unlock(&d_mutex);
+            handshakeCallback(ntsa::Error(), d_remoteCertificate_sp, "");
+        }
+    }
+
     if (d_outgoingPlainText.length() > 0) {
         const int numOutgoingPlainTextBuffers =
             d_outgoingPlainText.numDataBuffers();
@@ -7956,23 +8266,8 @@ ntsa::Error Session::process(LockGuard* lock)
                 bsl::string description;
                 Internal::drainErrorQueue(&description);
 
-                NTCI_LOG_DEBUG("Failed to write SSL data: %s",
+                NTCI_LOG_DEBUG("Failed to write outgoing data: %s",
                                description.c_str());
-
-                if (d_handshakeCallback) {
-                    ntci::Encryption::HandshakeCallback handshakeCallback =
-                        d_handshakeCallback;
-
-                    d_handshakeCallback =
-                        ntci::Encryption::HandshakeCallback();
-
-                    lock->release()->unlock();
-
-                    handshakeCallback(
-                        ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED),
-                        bsl::shared_ptr<ntci::EncryptionCertificate>(),
-                        description);
-                }
 
                 return ntsa::Error(ntsa::Error::e_INVALID);
             }
@@ -8051,21 +8346,8 @@ ntsa::Error Session::process(LockGuard* lock)
             bsl::string description;
             Internal::drainErrorQueue(&description);
 
-            NTCI_LOG_DEBUG("Failed to read SSL data: %s", description.c_str());
-
-            if (d_handshakeCallback) {
-                ntci::Encryption::HandshakeCallback handshakeCallback =
-                    d_handshakeCallback;
-
-                d_handshakeCallback = ntci::Encryption::HandshakeCallback();
-
-                lock->release()->unlock();
-
-                handshakeCallback(
-                    ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED),
-                    bsl::shared_ptr<ntci::EncryptionCertificate>(),
-                    description);
-            }
+            NTCI_LOG_DEBUG("Failed to read incoming data: %s", 
+                           description.c_str());
 
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
@@ -8087,37 +8369,6 @@ ntsa::Error Session::process(LockGuard* lock)
 #else
         d_incomingPlainText.setLength(d_incomingPlainText.length() + n);
 #endif
-    }
-
-    if (d_handshakeCallback) {
-        OSSL_HANDSHAKE_STATE state = SSL_get_state(d_ssl_p);
-        if (state == TLS_ST_OK) {
-            X509* sourceX509 = SSL_get_certificate(d_ssl_p);
-            if (sourceX509) {
-                X509_up_ref(sourceX509);
-                d_sourceCertificate_sp.createInplace(d_allocator_p,
-                                                     sourceX509,
-                                                     d_allocator_p);
-            }
-
-            X509* remoteX509 = SSL_get_peer_certificate(d_ssl_p);
-            if (remoteX509) {
-                d_remoteCertificate_sp.createInplace(d_allocator_p,
-                                                     remoteX509,
-                                                     d_allocator_p);
-            }
-
-            {
-                ntci::Encryption::HandshakeCallback handshakeCallback =
-                    d_handshakeCallback;
-
-                d_handshakeCallback = ntci::Encryption::HandshakeCallback();
-
-                lock->release()->unlock();
-
-                handshakeCallback(ntsa::Error(), d_remoteCertificate_sp, "");
-            }
-        }
     }
 
     return ntsa::Error();
@@ -8968,7 +9219,7 @@ ntsa::Error SessionContext::configure(ntca::EncryptionRole::Value    role,
 
     d_role           = role;
     d_minMethod      = options.minMethod();
-    d_minMethod      = options.maxMethod();
+    d_maxMethod      = options.maxMethod();
     d_authentication = options.authentication();
     d_validation     = options.validation();
 
@@ -9113,8 +9364,14 @@ ntsa::Error SessionContext::configure(ntca::EncryptionRole::Value    role,
 
     // Set the cipher suites supported for TLSv1.3 and later.
 
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+    rc = SSL_CTX_set_ciphersuites(d_context.get(),
+                                  OSSL_default_ciphersuites());
+#else
     rc = SSL_CTX_set_ciphersuites(d_context.get(),
                                   Internal::Impl::k_DEFAULT_CIPHER_SUITES);
+#endif
+                  
     if (rc == 0) {
         NTCTLS_SESSION_LOG_ERROR(
             "Failed to configure SSL context cipher suites");

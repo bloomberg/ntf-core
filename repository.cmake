@@ -5688,8 +5688,20 @@ function (ntf_target_link_dependency)
 
         if (TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
             set(dependency_found_by_findopenssl TRUE)
-        else()
-            set(OPENSSL_ROOT_DIR "/opt/bb")
+        else()                        
+            if (DEFINED ENV{OPENSSL_ROOT_DIR})
+                set(OPENSSL_ROOT_DIR "$ENV{OPENSSL_ROOT_DIR}" CACHE INTERNAL "")
+            else()
+                ntf_repository_install_refroot_get(OUTPUT install_refroot)
+                ntf_repository_install_prefix_get(OUTPUT install_prefix)
+
+                cmake_path(
+                    SET openssl_root_dir 
+                    "${install_refroot}/${install_prefix}")
+
+                set(OPENSSL_ROOT_DIR "${openssl_root_dir}" CACHE INTERNAL "")
+            endif()
+
             set(OPENSSL_USE_STATIC_LIBS TRUE)
 
             find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)

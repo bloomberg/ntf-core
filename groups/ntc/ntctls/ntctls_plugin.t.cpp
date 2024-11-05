@@ -3106,6 +3106,8 @@ class EncryptionTestParametersUtil
         const ntctls::EncryptionTestParameters& prototype);
 };
 
+#define NTCTLS_ENCRYPTION_TEST_SIMPLE 0
+
 void EncryptionTestParametersUtil::generateForEach(
     ntctls::EncryptionTestParametersVector* result)
 {
@@ -3125,6 +3127,10 @@ void EncryptionTestParametersUtil::generateForEachBufferSize(
     const ntctls::EncryptionTestParameters& prototype)
 {
     bsl::vector<int> bufferSizeVector;
+
+#if NTCTLS_ENCRYPTION_TEST_SIMPLE
+    bufferSizeVector.push_back(4096);
+#else
     bufferSizeVector.push_back(1);
     bufferSizeVector.push_back(2);
     bufferSizeVector.push_back(4);
@@ -3132,6 +3138,7 @@ void EncryptionTestParametersUtil::generateForEachBufferSize(
     bufferSizeVector.push_back(32);
     bufferSizeVector.push_back(1024);
     bufferSizeVector.push_back(4096);
+#endif
 
     for (bsl::size_t i = 0; i < bufferSizeVector.size(); ++i) {
         ntctls::EncryptionTestParameters entry = prototype;
@@ -3148,8 +3155,12 @@ void EncryptionTestParametersUtil::generateForEachClientAuthentication(
 {
     bsl::vector<ntca::EncryptionAuthentication::Value> authenticationVector;
 
+#if NTCTLS_ENCRYPTION_TEST_SIMPLE
+    authenticationVector.push_back(ntca::EncryptionAuthentication::e_VERIFY);
+#else
     authenticationVector.push_back(ntca::EncryptionAuthentication::e_NONE);
     authenticationVector.push_back(ntca::EncryptionAuthentication::e_VERIFY);
+#endif
 
     for (bsl::size_t i = 0; i < authenticationVector.size(); ++i) {
         ntctls::EncryptionTestParameters entry = prototype;
@@ -3165,9 +3176,13 @@ void EncryptionTestParametersUtil::generateForEachClientMinMethod(
 {
     bsl::vector<ntca::EncryptionMethod::Value> methodVector;
 
+#if NTCTLS_ENCRYPTION_TEST_SIMPLE
+    methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_3);
+#else
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_2);
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_3);
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_X);
+#endif
 
     for (bsl::size_t i = 0; i < methodVector.size(); ++i) {
         ntctls::EncryptionTestParameters entry = prototype;
@@ -3183,9 +3198,13 @@ void EncryptionTestParametersUtil::generateForEachClientMaxMethod(
 {
     bsl::vector<ntca::EncryptionMethod::Value> methodVector;
 
+#if NTCTLS_ENCRYPTION_TEST_SIMPLE
+    methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_3);
+#else
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_2);
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_3);
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_X);
+#endif
 
     for (bsl::size_t i = 0; i < methodVector.size(); ++i) {
         ntctls::EncryptionTestParameters entry = prototype;
@@ -3202,8 +3221,12 @@ void EncryptionTestParametersUtil::generateForEachServerAuthentication(
 {
     bsl::vector<ntca::EncryptionAuthentication::Value> authenticationVector;
 
+#if NTCTLS_ENCRYPTION_TEST_SIMPLE
+    authenticationVector.push_back(ntca::EncryptionAuthentication::e_NONE);
+#else
     authenticationVector.push_back(ntca::EncryptionAuthentication::e_NONE);
     authenticationVector.push_back(ntca::EncryptionAuthentication::e_VERIFY);
+#endif
 
     for (bsl::size_t i = 0; i < authenticationVector.size(); ++i) {
         ntctls::EncryptionTestParameters entry = prototype;
@@ -3219,9 +3242,13 @@ void EncryptionTestParametersUtil::generateForEachServerMinMethod(
 {
     bsl::vector<ntca::EncryptionMethod::Value> methodVector;
 
+#if NTCTLS_ENCRYPTION_TEST_SIMPLE
+    methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_3);
+#else
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_2);
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_3);
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_X);
+#endif
 
     for (bsl::size_t i = 0; i < methodVector.size(); ++i) {
         ntctls::EncryptionTestParameters entry = prototype;
@@ -3237,9 +3264,13 @@ void EncryptionTestParametersUtil::generateForEachServerMaxMethod(
 {
     bsl::vector<ntca::EncryptionMethod::Value> methodVector;
 
+#if NTCTLS_ENCRYPTION_TEST_SIMPLE
+    methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_3);
+#else
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_2);
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_3);
     methodVector.push_back(ntca::EncryptionMethod::e_TLS_V1_X);
+#endif
 
     for (bsl::size_t i = 0; i < methodVector.size(); ++i) {
         ntctls::EncryptionTestParameters entry = prototype;
@@ -3256,9 +3287,13 @@ void EncryptionTestParametersUtil::generateForEachServerNameIndication(
 {
     bsl::vector<bsl::string> serverNameIndicationVector;
 
+#if NTCTLS_ENCRYPTION_TEST_SIMPLE
+    serverNameIndicationVector.push_back("");
+#else
     serverNameIndicationVector.push_back("");
     serverNameIndicationVector.push_back("one");
     serverNameIndicationVector.push_back("two");
+#endif
 
     for (bsl::size_t i = 0; i < serverNameIndicationVector.size(); ++i) {
         ntctls::EncryptionTestParameters entry = prototype;
@@ -3273,9 +3308,13 @@ void EncryptionTestParametersUtil::generateForEachReuse(
 {
     bsl::vector<bsl::size_t> reuseVector;
 
+#if NTCTLS_ENCRYPTION_TEST_SIMPLE
+    reuseVector.push_back(0);
+#else
     reuseVector.push_back(0);
     reuseVector.push_back(1);
     reuseVector.push_back(2);
+#endif
 
     for (bsl::size_t i = 0; i < reuseVector.size(); ++i) {
         ntctls::EncryptionTestParameters entry = prototype;
@@ -3473,8 +3512,8 @@ bool EncryptionTestUtil::processClientAuthenticationByServer(
 {
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_STREAM_INFO << "Server authenticated client" << client
-                         << NTCI_LOG_STREAM_END;
+    NTCI_LOG_STREAM_DEBUG << "Server authenticated client" << client
+                          << NTCI_LOG_STREAM_END;
 
     return true;
 }
@@ -3486,8 +3525,8 @@ bool EncryptionTestUtil::processServerAuthenticationByClient(
 {
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_STREAM_INFO << "Client authenticated server" << server
-                         << NTCI_LOG_STREAM_END;
+    NTCI_LOG_STREAM_DEBUG << "Client authenticated server" << server
+                          << NTCI_LOG_STREAM_END;
 
     if (parameters->serverNameIndication().empty()) {
         NTSCFG_TEST_EQ(server, environment->serverCertificate());
@@ -3528,11 +3567,11 @@ void EncryptionTestUtil::processClientHandshakeComplete(
         bool        found = clientSession->getCipher(&cipher);
         NTSCFG_TEST_TRUE(found);
 
-        NTCI_LOG_INFO("Client handshake complete: %s", cipher.c_str());
+        NTCI_LOG_DEBUG("Client handshake complete: %s", cipher.c_str());
     }
     else {
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED));
-        NTCI_LOG_INFO("Client handshake failed: %s", details.c_str());
+        NTCI_LOG_DEBUG("Client handshake failed: %s", details.c_str());
     }
 
     *clientCompleteFlag = true;
@@ -3556,11 +3595,11 @@ void EncryptionTestUtil::processServerHandshakeComplete(
         bool        found = serverSession->getCipher(&cipher);
         NTSCFG_TEST_TRUE(found);
 
-        NTCI_LOG_INFO("Server handshake complete: %s", cipher.c_str());
+        NTCI_LOG_DEBUG("Server handshake complete: %s", cipher.c_str());
     }
     else {
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED));
-        NTCI_LOG_INFO("Server handshake failed: %s", details.c_str());
+        NTCI_LOG_DEBUG("Server handshake failed: %s", details.c_str());
     }
 
     *serverCompleteFlag = true;
@@ -3984,9 +4023,9 @@ void EncryptionTestUtil::execute(
          usageIteration < parameters.reuseCount() + 1;
          ++usageIteration)
     {
-        NTCI_LOG_INFO("Iteration %d/%d starting",
-                      usageIteration + 1,
-                      parameters.reuseCount() + 1);
+        NTCI_LOG_DEBUG("Iteration %d/%d starting",
+                       usageIteration + 1,
+                       parameters.reuseCount() + 1);
 
         bool clientHandshakeComplete = false;
         bool serverHandshakeComplete = false;
@@ -4004,7 +4043,7 @@ void EncryptionTestUtil::execute(
         {
             NTCTLS_PLUGIN_TEST_LOG_CONTEXT_GUARD_CLIENT();
 
-            NTCI_LOG_INFO("Client handshake initiating");
+            NTCI_LOG_DEBUG("Client handshake initiating");
 
             ntca::UpgradeOptions clientUpgradeOptions;
             if (!parameters.serverNameIndication().empty()) {
@@ -4038,7 +4077,7 @@ void EncryptionTestUtil::execute(
         {
             NTCTLS_PLUGIN_TEST_LOG_CONTEXT_GUARD_SERVER();
 
-            NTCI_LOG_INFO("Server handshake initiating");
+            NTCI_LOG_DEBUG("Server handshake initiating");
 
             ntca::UpgradeOptions serverUpgradeOptions;
 
@@ -4144,7 +4183,7 @@ void EncryptionTestUtil::execute(
         {
             NTCTLS_PLUGIN_TEST_LOG_CONTEXT_GUARD_CLIENT();
 
-            NTCI_LOG_INFO("Client shutdown initiating");
+            NTCI_LOG_DEBUG("Client shutdown initiating");
 
             error = clientSession->shutdown();
             NTSCFG_TEST_OK(error);
@@ -4155,7 +4194,7 @@ void EncryptionTestUtil::execute(
         {
             NTCTLS_PLUGIN_TEST_LOG_CONTEXT_GUARD_SERVER();
 
-            NTCI_LOG_INFO("Server shutdown initiating");
+            NTCI_LOG_DEBUG("Server shutdown initiating");
 
             error = serverSession->shutdown();
             NTSCFG_TEST_OK(error);
@@ -4189,12 +4228,12 @@ void EncryptionTestUtil::execute(
                                                 expectedServerPlaintextRead),
                        0);
 
-        NTCI_LOG_INFO("Iteration %d/%d complete",
+        NTCI_LOG_DEBUG("Iteration %d/%d complete",
                       usageIteration + 1,
                       parameters.reuseCount() + 1);
     }
 
-    NTCI_LOG_INFO("Test complete");
+    NTCI_LOG_DEBUG("Test complete");
 }
 
 // Provide utilities for executing test cases.
