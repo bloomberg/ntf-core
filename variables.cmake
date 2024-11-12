@@ -75,18 +75,6 @@ if (NOT DEFINED NTF_BUILD_PREFIX)
     endif()
 endif()
 
-if (NOT DEFINED NTF_BUILD_PREFIX_PATH)
-    if (DEFINED NTF_CONFIGURE_PREFIX_PATH)
-        set(NTF_BUILD_PREFIX_PATH
-            ${NTF_CONFIGURE_PREFIX_PATH} CACHE INTERNAL "")
-    elseif (DEFINED ENV{NTF_CONFIGURE_PREFIX_PATH})
-        set(NTF_BUILD_PREFIX_PATH
-            $ENV{NTF_CONFIGURE_PREFIX_PATH} CACHE INTERNAL "")
-    else()
-        set(NTF_BUILD_PREFIX_PATH ${CMAKE_PREFIX_PATH} CACHE INTERNAL "")
-    endif()
-endif()
-
 if (NOT DEFINED NTF_BUILD_UNAME)
     if (DEFINED NTF_CONFIGURE_UNAME)
         set(NTF_BUILD_UNAME ${NTF_CONFIGURE_UNAME} CACHE INTERNAL "")
@@ -836,7 +824,18 @@ unset(NTF_BUILD_VARIABLE_LIST)
 message(STATUS "NTF: Repository:                                ${CMAKE_CURRENT_LIST_DIR}")
 message(STATUS "NTF: Distribution refroot:                      ${NTF_BUILD_REFROOT}")
 message(STATUS "NTF: Installation prefix:                       ${NTF_BUILD_PREFIX}")
-message(STATUS "NTF: Installation prefix path:                  ${NTF_BUILD_PREFIX_PATH}")
+
+message(STATUS "NTF: CMAKE_INCLUDE_PATH:                        ${CMAKE_INCLUDE_PATH}")
+message(STATUS "NTF: CMAKE_SYSTEM_INCLUDE_PATH:                 ${CMAKE_SYSTEM_INCLUDE_PATH}")
+
+message(STATUS "NTF: CMAKE_LIBRARY_PATH:                        ${CMAKE_LIBRARY_PATH}")
+message(STATUS "NTF: CMAKE_SYSTEM_LIBRARY_PATH:                 ${CMAKE_SYSTEM_LIBRARY_PATH}")
+
+message(STATUS "NTF: CMAKE_PREFIX_PATH:                         ${CMAKE_PREFIX_PATH}")
+message(STATUS "NTF: CMAKE_SYSTEM_PREFIX_PATH:                  ${CMAKE_SYSTEM_PREFIX_PATH}")
+
+message(STATUS "NTF: PKG_CONFIG_PATH:                           $ENV{PKG_CONFIG_PATH}")
+
 message(STATUS "NTF: Platform:                                  ${NTF_BUILD_UNAME}")
 message(STATUS "NTF: UFID:                                      ${NTF_BUILD_UFID}")
 message(STATUS "NTF: Bitness:                                   ${CMAKE_SIZEOF_VOID_P}")

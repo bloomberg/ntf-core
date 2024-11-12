@@ -17,10 +17,257 @@ include_guard(GLOBAL)
 
 include(CMakePackageConfigHelpers)
 
-# Log a message.
-function (ntf_log message)
-    message(STATUS ${message})
+# Return the current log level name.
+function (ntf_log_level_name)
+    cmake_parse_arguments(
+        NTF_LOG_LEVEL_NAME "" "OUTPUT" "" ${ARGN})
+
+    if (NOT DEFINED NTF_LOG_LEVEL_NAME)
+        if ("${CMAKE_MESSAGE_LOG_LEVEL}" STREQUAL "")
+            set(NTF_LOG_LEVEL_NAME "STATUS" CACHE INTERNAL "")
+        else()
+            set(NTF_LOG_LEVEL_NAME 
+                "${CMAKE_MESSAGE_LOG_LEVEL}" CACHE INTERNAL "")
+        endif()
+    endif()
+
+    if (DEFINED NTF_LOG_LEVEL_NAME_OUTPUT)
+        set(${NTF_LOG_LEVEL_NAME_OUTPUT} ${NTF_LOG_LEVEL_NAME} PARENT_SCOPE)
+    endif()
 endfunction()
+
+# Return the current log level number.
+function (ntf_log_level_number)
+    cmake_parse_arguments(
+        NTF_LOG_LEVEL_NUMBER "" "OUTPUT" "" ${ARGN})
+
+    if (NOT DEFINED NTF_LOG_LEVEL_NUMBER)
+        ntf_log_level_name(OUTPUT log_level_name)
+
+        set(log_level_number ${NTF_LOG_LEVEL_NUMBER_OFF})
+        if("${log_level_name}" STREQUAL "ERROR")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_ERROR})
+        elseif("${log_level_name}" STREQUAL "WARNING")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_WARNING})
+        elseif("${log_level_name}" STREQUAL "NOTICE")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_NOTICE})
+        elseif("${log_level_name}" STREQUAL "STATUS")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_STATUS})
+        elseif("${log_level_name}" STREQUAL "VERBOSE")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_VERBOSE})
+        elseif("${log_level_name}" STREQUAL "DEBUG")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_DEBUG})
+        elseif("${log_level_name}" STREQUAL "TRACE")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_TRACE})
+        else()
+            message(FATAL_ERROR "Invalid log level: ${log_level_name}")
+        endif()
+
+        set(NTF_LOG_LEVEL_NUMBER "${log_level_number}" CACHE INTERNAL "")
+    endif()
+
+    if (DEFINED NTF_LOG_LEVEL_NUMBER_OUTPUT)
+        set(${NTF_LOG_LEVEL_NUMBER_OUTPUT} ${NTF_LOG_LEVEL_NUMBER} PARENT_SCOPE)
+    endif()
+
+endfunction()
+
+# Return true if the given log level is enabled.
+#
+# NUMBER - The log level number.
+# OUTPUT - The variable name set in the parent scope.
+function (ntf_log_level_enabled)
+    cmake_parse_arguments(
+        NTF_LOG_LEVEL_ENABLED "" "NUMBER;OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${NTF_LOG_LEVEL_ENABLED_NUMBER})
+    ntf_assert_defined(${NTF_LOG_LEVEL_ENABLED_OUTPUT})
+
+    ntf_log_level_number(OUTPUT threshold)
+
+    if (${NTF_LOG_LEVEL_ENABLED_NUMBER} LESS_EQUAL ${threshold})
+        set(${NTF_LOG_LEVEL_ENABLED_OUTPUT} TRUE PARENT_SCOPE)
+    else()
+        set(${NTF_LOG_LEVEL_ENABLED_OUTPUT} FALSE PARENT_SCOPE)
+    endif()
+endfunction()
+
+
+# ERROR, WARNING, NOTICE, STATUS (default), VERBOSE, DEBUG, or TRACE.
+function (ntf_log_init)
+
+    set(NTF_LOG_LEVEL_NUMBER_OFF     0 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_ERROR   1 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_WARNING 2 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_NOTICE  3 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_STATUS  3 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_VERBOSE 4 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_DEBUG   4 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_TRACE   5 CACHE INTERNAL "")
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_ERROR} 
+        OUTPUT ntf_log_error_enabled)
+    if (${ntf_log_error_enabled})
+        set(NTF_LOG_ERROR TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_ERROR CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_WARNING} 
+        OUTPUT ntf_log_warning_enabled)
+    if (${ntf_log_warning_enabled})
+        set(NTF_LOG_WARNING TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_WARNING CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_NOTICE} 
+        OUTPUT ntf_log_notice_enabled)
+    if (${ntf_log_notice_enabled})
+        set(NTF_LOG_NOTICE TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_NOTICE CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_STATUS} 
+        OUTPUT ntf_log_status_enabled)
+    if (${ntf_log_status_enabled})
+        set(NTF_LOG_STATUS TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_STATUS CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_VERBOSE} 
+        OUTPUT ntf_log_verbose_enabled)
+    if (${ntf_log_verbose_enabled})
+        set(NTF_LOG_VERBOSE TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_VERBOSE CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_DEBUG} 
+        OUTPUT ntf_log_debug_enabled)
+    if (${ntf_log_debug_enabled})
+        set(NTF_LOG_DEBUG TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_DEBUG CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_TRACE} 
+        OUTPUT ntf_log_trace_enabled)
+    if (${ntf_log_trace_enabled})
+        set(NTF_LOG_TRACE TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_TRACE CACHE)
+    endif()
+
+endfunction()
+
+# Log a message at the "info" severity level.
+macro (ntf_log_info)
+    cmake_parse_arguments(
+        NTF_LOG_INFO "" "CONTEXT" "CONTENT" ${ARGN})
+
+    if (${NTF_LOG_STATUS})
+        if ("${NTF_LOG_INFO_CONTENT}" STREQUAL "")
+            set(NTF_LOG_INFO_CONTENT ${ARGN})
+        endif()
+
+        string(
+            REPLACE 
+            ";" " " 
+            ntf_log_info_content 
+            "${NTF_LOG_INFO_CONTENT}")
+
+        string(
+            REGEX REPLACE 
+            "[ \t\r\n]+" 
+            " " 
+            ntf_log_info_content 
+            "${ntf_log_info_content}")
+
+        list(APPEND CMAKE_MESSAGE_CONTEXT "${NTF_LOG_INFO_CONTEXT}")
+        message(
+            STATUS
+                "[ INFO ][ ${CMAKE_CURRENT_FUNCTION} ]"
+                "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ]: "
+                "${ntf_log_info_content}")
+        list(POP_BACK CMAKE_MESSAGE_CONTEXT)
+    endif()
+endmacro()
+
+# Log a message at the "debug" severity level.
+macro (ntf_log_debug)
+    cmake_parse_arguments(
+        NTF_LOG_DEBUG "" "CONTEXT" "CONTENT" ${ARGN})
+
+    if (${NTF_LOG_DEBUG})
+        if ("${NTF_LOG_DEBUG_CONTENT}" STREQUAL "")
+            set(NTF_LOG_DEBUG_CONTENT ${ARGN})
+        endif()
+
+        string(
+            REPLACE 
+            ";" " " 
+            ntf_log_debug_content 
+            "${NTF_LOG_DEBUG_CONTENT}")
+
+        string(
+            REGEX REPLACE 
+            "[ \t\r\n]+" 
+            " " 
+            ntf_log_debug_content 
+            "${ntf_log_debug_content}")
+
+        list(APPEND CMAKE_MESSAGE_CONTEXT "${NTF_LOG_DEBUG_CONTEXT}")
+        message(
+            DEBUG
+                "[ INFO ][ ${CMAKE_CURRENT_FUNCTION} ]"
+                "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ]: "
+                "${ntf_log_info_content}")
+        list(POP_BACK CMAKE_MESSAGE_CONTEXT)
+    endif()
+endmacro()
+
+# Log a message at the "trace" severity level.
+macro (ntf_log_trace)
+    cmake_parse_arguments(
+        NTF_LOG_TRACE "" "CONTEXT" "CONTENT" ${ARGN})
+
+    if (${NTF_LOG_TRACE})
+        if ("${NTF_LOG_TRACE_CONTENT}" STREQUAL "")
+            set(NTF_LOG_TRACE_CONTENT ${ARGN})
+        endif()
+
+        string(
+            REPLACE 
+            ";" " " 
+            ntf_log_trace_content 
+            "${NTF_LOG_TRACE_CONTENT}")
+
+        string(
+            REGEX REPLACE 
+            "[ \t\r\n]+" 
+            " " 
+            ntf_log_trace_content 
+            "${ntf_log_trace_content}")
+
+        list(APPEND CMAKE_MESSAGE_CONTEXT "${NTF_LOG_TRACE_CONTEXT}")
+        message(
+            TRACE
+                "[ INFO ][ ${CMAKE_CURRENT_FUNCTION} ]"
+                "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ]: "
+                "${ntf_log_info_content}")
+        list(POP_BACK CMAKE_MESSAGE_CONTEXT)
+    endif()
+endmacro()
 
 # Log a message and abort with a stack trace.
 function (ntf_die message)
@@ -415,6 +662,61 @@ function (ntf_target_requires_get)
     set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
 
+# Set the "aliases" variable scoped to a target. The contents of this variable
+# are imported as aliases of the target in the CMake install metadata.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_aliases_set)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "")
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "aliases" VALUE ${ARG_VALUE})
+    else()
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "aliases" VALUE "")
+    endif()
+endfunction()
+
+# Append to the "aliases" variable scoped to a target. The contents of this 
+# variable are imported as aliases of the target in the CMake install metadata.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_aliases_append)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "")
+        ntf_target_variable_append(
+            TARGET ${ARG_TARGET} VARIABLE "aliases" VALUE ${ARG_VALUE})
+    endif()
+endfunction()
+
+# Get the "aliases" variable scoped to a target. The contents of this variable
+# are imported as aliases of the target in the CMake install metadata.
+#
+# TARGET - The target.
+# OUTPUT - The variable name set in the parent scope.
+function (ntf_target_aliases_get)
+    cmake_parse_arguments(
+        ARG "" "TARGET;OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+    ntf_assert_defined(${ARG_OUTPUT})
+
+    ntf_target_variable_get(
+        TARGET ${ARG_TARGET} VARIABLE "aliases" OUTPUT result)
+
+    set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
+endfunction()
+
 # Set the "libs" variable scoped to a target. The contents of this variable
 # is assigned to the "Libs.private" variable in pkg-config metadata.
 #
@@ -469,7 +771,6 @@ function (ntf_target_libs_get)
 
     set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
-
 
 # Add preprocessor defininitions when compiling a target. The definitions
 # are always added with private visibility.
@@ -1636,13 +1937,13 @@ endfunction()
 # Dump a property of a target.
 function (ntf_target_dump_property target property)
 
-    if(NOT TARGET ${target})
+    if (NOT TARGET ${target})
         message(STATUS "There is no target named '${target}'")
         return()
     endif()
 
     get_property(was_set TARGET ${target} PROPERTY ${property} SET)
-    if(was_set)
+    if (was_set)
         get_target_property(value ${target} ${property})
         message("NTF Build: ${target} ${property} = ${value}")
     endif()
@@ -1998,11 +2299,12 @@ endfunction()
 # DESCRIPTION - The single line description of the interface, as it should
 #               appear in package meta-data.
 # REQUIRES    - The intra-repository dependencies of the interface.
+# ALIAS       - The targets which alias this target in CMake install meta-data.
 # PRIVATE     - The flag indicating that all headers and artifacts are private
 #               and should not be installed.
 function (ntf_interface)
     cmake_parse_arguments(
-        NTF_INTERFACE "PRIVATE;THIRDPARTY" "NAME;DESCRIPTION" "REQUIRES" ${ARGN})
+        NTF_INTERFACE "PRIVATE;THIRDPARTY" "NAME;DESCRIPTION" "REQUIRES;ALIAS" ${ARGN})
 
     if ("${NTF_INTERFACE_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -2084,6 +2386,9 @@ function (ntf_interface)
 
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_INTERFACE_REQUIRES})
+
+    ntf_target_aliases_set(
+        TARGET ${target} VALUE ${NTF_INTERFACE_ALIAS})
 
     # if (${target_thirdparty})
     #     file(REAL_PATH ${target_path}/.. target_parent_path)
@@ -2363,6 +2668,7 @@ function (ntf_interface_end)
             string(APPEND target_config_cmake_content "\
 include(CMakeFindDependencyMacro)\n\
 if (NOT TARGET ${target})\n\
+    message(DEBUG \"NTF: including ${target} from \${CMAKE_CURRENT_LIST_DIR}\")\n\
     if (UNIX)\n\
         find_dependency(Threads)\n\
     endif()\n\
@@ -2400,6 +2706,19 @@ if (NOT TARGET ${target})\n\
 
             string(APPEND target_config_cmake_content "\
     include(\"\${CMAKE_CURRENT_LIST_DIR}/${install_cmake_metadata_targets}.cmake\")\n\
+")
+
+            ntf_target_aliases_get(TARGET ${target} OUTPUT target_aliases)
+
+            foreach(alias ${target_aliases})
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET ${alias})\n\
+        add_library(${alias} ALIAS ${target})\n\
+    endif()\n\
+")
+            endforeach()
+
+            string(APPEND target_config_cmake_content "\
 endif()\n\
 ")
 
@@ -2573,11 +2892,12 @@ endfunction()
 # DESCRIPTION - The single line description of the adapter, as it should
 #               appear in package meta-data.
 # REQUIRES    - The intra-repository dependencies of the adapter.
+# ALIAS       - The targets which alias this target in CMake install meta-data.
 # PRIVATE     - The flag indicating that all headers and artifacts are private
 #               and should not be installed.
 function (ntf_adapter)
     cmake_parse_arguments(
-        NTF_ADAPTER "PRIVATE;THIRDPARTY;PSEUDO" "NAME;PATH;DESCRIPTION;OUTPUT" "REQUIRES" ${ARGN})
+        NTF_ADAPTER "PRIVATE;THIRDPARTY;PSEUDO" "NAME;PATH;DESCRIPTION;OUTPUT" "REQUIRES;ALIAS" ${ARGN})
 
     if ("${NTF_ADAPTER_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -2681,6 +3001,9 @@ function (ntf_adapter)
 
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_ADAPTER_REQUIRES})
+
+    ntf_target_aliases_set(
+        TARGET ${target} VALUE ${NTF_ADAPTER_ALIAS})
 
     if (${target_thirdparty})
         file(REAL_PATH ${target_path}/.. target_parent_path)
@@ -3001,6 +3324,7 @@ function (ntf_adapter_end)
             string(APPEND target_config_cmake_content "\
 include(CMakeFindDependencyMacro)\n\
 if (NOT TARGET ${target})\n\
+    message(DEBUG \"NTF: including ${target} from \${CMAKE_CURRENT_LIST_DIR}\")\n\
     if (UNIX)\n\
         find_dependency(Threads)\n\
     endif()\n\
@@ -3038,6 +3362,19 @@ if (NOT TARGET ${target})\n\
 
             string(APPEND target_config_cmake_content "\
     include(\"\${CMAKE_CURRENT_LIST_DIR}/${install_cmake_metadata_targets}.cmake\")\n\
+")
+
+            ntf_target_aliases_get(TARGET ${target} OUTPUT target_aliases)
+
+            foreach(alias ${target_aliases})
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET ${alias})\n\
+        add_library(${alias} ALIAS ${target})\n\
+    endif()\n\
+")
+            endforeach()
+
+            string(APPEND target_config_cmake_content "\
 endif()\n\
 ")
 
@@ -3331,11 +3668,12 @@ endfunction()
 # DESCRIPTION - The single line description of the group, as it should appear
 #               in package meta-data.
 # REQUIRES    - The intra-repository dependencies of the group.
+# ALIAS       - The targets which alias this target in CMake install meta-data.
 # PRIVATE     - The flag indicating that all headers and artifacts are private
 #               and should not be installed.
 function (ntf_group)
     cmake_parse_arguments(
-        NTF_GROUP "PRIVATE;THIRDPARTY;UNITY" "NAME;PATH;DESCRIPTION" "REQUIRES" ${ARGN})
+        NTF_GROUP "PRIVATE;THIRDPARTY;UNITY" "NAME;PATH;DESCRIPTION" "REQUIRES;ALIAS" ${ARGN})
 
     if ("${NTF_GROUP_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -3425,6 +3763,9 @@ function (ntf_group)
 
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_GROUP_REQUIRES})
+
+    ntf_target_aliases_set(
+        TARGET ${target} VALUE ${NTF_GROUP_ALIAS})
 
     foreach(entry ${NTF_GROUP_REQUIRES})
         set(dependency ${entry})
@@ -3858,6 +4199,7 @@ function (ntf_group_end)
             string(APPEND target_config_cmake_content "\
 include(CMakeFindDependencyMacro)\n\
 if (NOT TARGET ${target})\n\
+    message(DEBUG \"NTF: including ${target} from \${CMAKE_CURRENT_LIST_DIR}\")\n\
     if (UNIX)\n\
         find_dependency(Threads)\n\
     endif()\n\
@@ -3895,6 +4237,19 @@ if (NOT TARGET ${target})\n\
 
             string(APPEND target_config_cmake_content "\
     include(\"\${CMAKE_CURRENT_LIST_DIR}/${install_cmake_metadata_targets}.cmake\")\n\
+")
+
+            ntf_target_aliases_get(TARGET ${target} OUTPUT target_aliases)
+
+            foreach(alias ${target_aliases})
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET ${alias})\n\
+        add_library(${alias} ALIAS ${target})\n\
+    endif()\n\
+")
+            endforeach()
+
+            string(APPEND target_config_cmake_content "\
 endif()\n\
 ")
 
@@ -5116,11 +5471,27 @@ function (ntf_target_link_dependency_by_cmake)
         endif()
 
         if ("${dependency}" STREQUAL "openssl")
-            if (NOT TARGET OpenSSL::SSL AND NOT TARGET OpenSSL::Crypto)
-                if (VERBOSE)
-                    message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but both targets OpenSSL::SSL and OpenSSL::Crypto are not defined in ${search_directory}")
+
+            if (NOT TARGET OpenSSL::SSL)
+                if (NOT TARGET libssl)
+                    if (VERBOSE)
+                        message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but neither targets OpenSSL::SSL nor libssl are defined in ${search_directory}")
+                    endif()
+                    continue()
                 endif()
-                continue()
+
+                add_library(OpenSSL::SSL ALIAS libssl)
+            endif()
+
+            if (NOT TARGET OpenSSL::Crypto)
+                if (NOT TARGET libcrypto)
+                    if (VERBOSE)
+                        message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but neither targets OpenSSL::Crypto nor libcrypto are defined in ${search_directory}")
+                    endif()
+                    continue()
+                endif()
+
+                add_library(OpenSSL::Crypto ALIAS libcrypto)
             endif()
 
             if (VERBOSE)
@@ -5702,11 +6073,9 @@ function (ntf_target_link_dependency)
                 set(OPENSSL_ROOT_DIR "${openssl_root_dir}" CACHE INTERNAL "")
             endif()
 
-            set(OPENSSL_USE_STATIC_LIBS TRUE)
-
             find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 
-            if (VERBOSE)
+            if (VERBOSE OR TRUE)
                 message(STATUS "OPENSSL_FOUND: ${OPENSSL_FOUND}")
                 message(STATUS "OPENSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")
                 message(STATUS "OPENSSL_LIBRARIES: ${OPENSSL_LIBRARIES}")
@@ -5714,8 +6083,8 @@ function (ntf_target_link_dependency)
             endif()
 
             if (TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
-                if (VERBOSE)
-                    message(STATUS "OpenSSL has been found by FindOpenSSL.cmake")
+                if (VERBOSE OR TRUE)
+                    message(STATUS "OpenSSL has been found for ${target} by FindOpenSSL.cmake")
                 endif()
                 set(dependency_found_by_findopenssl TRUE)
             else()
@@ -6676,6 +7045,8 @@ function (ntf_repository)
     cmake_parse_arguments(
         ARG "" "NAME;VERSION;PATH;URL;UFID" "" ${ARGN})
 
+    ntf_log_init()
+
     ntf_assert_defined(${ARG_NAME})
     ntf_assert_defined(${ARG_VERSION})
     ntf_assert_defined(${ARG_PATH})
@@ -6979,6 +7350,9 @@ function (ntf_repository)
     ntf_ide_vs_code_tasks_create()
     ntf_ide_vs_code_launch_create()
     ntf_ide_vs_code_c_cpp_properties_create()
+
+    set(OPENSSL_USE_STATIC_LIBS TRUE CACHE INTERNAL "")
+
 endfunction()
 
 # Dump the configuration of the repository to the log.
