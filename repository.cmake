@@ -26,7 +26,7 @@ function (ntf_log_level_name)
         if ("${CMAKE_MESSAGE_LOG_LEVEL}" STREQUAL "")
             set(NTF_LOG_LEVEL_NAME "STATUS" CACHE INTERNAL "")
         else()
-            set(NTF_LOG_LEVEL_NAME 
+            set(NTF_LOG_LEVEL_NAME
                 "${CMAKE_MESSAGE_LOG_LEVEL}" CACHE INTERNAL "")
         endif()
     endif()
@@ -106,7 +106,7 @@ function (ntf_log_init)
     set(NTF_LOG_LEVEL_NUMBER_TRACE   5 CACHE INTERNAL "")
 
     ntf_log_level_enabled(
-        NUMBER ${NTF_LOG_LEVEL_NUMBER_ERROR} 
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_ERROR}
         OUTPUT ntf_log_error_enabled)
     if (${ntf_log_error_enabled})
         set(NTF_LOG_ERROR TRUE CACHE INTERNAL "")
@@ -115,7 +115,7 @@ function (ntf_log_init)
     endif()
 
     ntf_log_level_enabled(
-        NUMBER ${NTF_LOG_LEVEL_NUMBER_WARNING} 
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_WARNING}
         OUTPUT ntf_log_warning_enabled)
     if (${ntf_log_warning_enabled})
         set(NTF_LOG_WARNING TRUE CACHE INTERNAL "")
@@ -124,7 +124,7 @@ function (ntf_log_init)
     endif()
 
     ntf_log_level_enabled(
-        NUMBER ${NTF_LOG_LEVEL_NUMBER_NOTICE} 
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_NOTICE}
         OUTPUT ntf_log_notice_enabled)
     if (${ntf_log_notice_enabled})
         set(NTF_LOG_NOTICE TRUE CACHE INTERNAL "")
@@ -133,7 +133,7 @@ function (ntf_log_init)
     endif()
 
     ntf_log_level_enabled(
-        NUMBER ${NTF_LOG_LEVEL_NUMBER_STATUS} 
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_STATUS}
         OUTPUT ntf_log_status_enabled)
     if (${ntf_log_status_enabled})
         set(NTF_LOG_STATUS TRUE CACHE INTERNAL "")
@@ -142,7 +142,7 @@ function (ntf_log_init)
     endif()
 
     ntf_log_level_enabled(
-        NUMBER ${NTF_LOG_LEVEL_NUMBER_VERBOSE} 
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_VERBOSE}
         OUTPUT ntf_log_verbose_enabled)
     if (${ntf_log_verbose_enabled})
         set(NTF_LOG_VERBOSE TRUE CACHE INTERNAL "")
@@ -151,7 +151,7 @@ function (ntf_log_init)
     endif()
 
     ntf_log_level_enabled(
-        NUMBER ${NTF_LOG_LEVEL_NUMBER_DEBUG} 
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_DEBUG}
         OUTPUT ntf_log_debug_enabled)
     if (${ntf_log_debug_enabled})
         set(NTF_LOG_DEBUG TRUE CACHE INTERNAL "")
@@ -160,7 +160,7 @@ function (ntf_log_init)
     endif()
 
     ntf_log_level_enabled(
-        NUMBER ${NTF_LOG_LEVEL_NUMBER_TRACE} 
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_TRACE}
         OUTPUT ntf_log_trace_enabled)
     if (${ntf_log_trace_enabled})
         set(NTF_LOG_TRACE TRUE CACHE INTERNAL "")
@@ -181,16 +181,16 @@ macro (ntf_log_info)
         endif()
 
         string(
-            REPLACE 
-            ";" " " 
-            ntf_log_info_content 
+            REPLACE
+            ";" " "
+            ntf_log_info_content
             "${NTF_LOG_INFO_CONTENT}")
 
         string(
-            REGEX REPLACE 
-            "[ \t\r\n]+" 
-            " " 
-            ntf_log_info_content 
+            REGEX REPLACE
+            "[ \t\r\n]+"
+            " "
+            ntf_log_info_content
             "${ntf_log_info_content}")
 
         list(APPEND CMAKE_MESSAGE_CONTEXT "${NTF_LOG_INFO_CONTEXT}")
@@ -214,16 +214,16 @@ macro (ntf_log_debug)
         endif()
 
         string(
-            REPLACE 
-            ";" " " 
-            ntf_log_debug_content 
+            REPLACE
+            ";" " "
+            ntf_log_debug_content
             "${NTF_LOG_DEBUG_CONTENT}")
 
         string(
-            REGEX REPLACE 
-            "[ \t\r\n]+" 
-            " " 
-            ntf_log_debug_content 
+            REGEX REPLACE
+            "[ \t\r\n]+"
+            " "
+            ntf_log_debug_content
             "${ntf_log_debug_content}")
 
         list(APPEND CMAKE_MESSAGE_CONTEXT "${NTF_LOG_DEBUG_CONTEXT}")
@@ -247,16 +247,16 @@ macro (ntf_log_trace)
         endif()
 
         string(
-            REPLACE 
-            ";" " " 
-            ntf_log_trace_content 
+            REPLACE
+            ";" " "
+            ntf_log_trace_content
             "${NTF_LOG_TRACE_CONTENT}")
 
         string(
-            REGEX REPLACE 
-            "[ \t\r\n]+" 
-            " " 
-            ntf_log_trace_content 
+            REGEX REPLACE
+            "[ \t\r\n]+"
+            " "
+            ntf_log_trace_content
             "${ntf_log_trace_content}")
 
         list(APPEND CMAKE_MESSAGE_CONTEXT "${NTF_LOG_TRACE_CONTEXT}")
@@ -682,7 +682,7 @@ function (ntf_target_aliases_set)
     endif()
 endfunction()
 
-# Append to the "aliases" variable scoped to a target. The contents of this 
+# Append to the "aliases" variable scoped to a target. The contents of this
 # variable are imported as aliases of the target in the CMake install metadata.
 #
 # TARGET - The target.
@@ -6059,7 +6059,7 @@ function (ntf_target_link_dependency)
 
         if (TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
             set(dependency_found_by_findopenssl TRUE)
-        else()                        
+        else()
             if (DEFINED ENV{OPENSSL_ROOT_DIR})
                 set(OPENSSL_ROOT_DIR "$ENV{OPENSSL_ROOT_DIR}" CACHE INTERNAL "")
             else()
@@ -6067,7 +6067,7 @@ function (ntf_target_link_dependency)
                 ntf_repository_install_prefix_get(OUTPUT install_prefix)
 
                 cmake_path(
-                    SET openssl_root_dir 
+                    SET openssl_root_dir
                     "${install_refroot}/${install_prefix}")
 
                 set(OPENSSL_ROOT_DIR "${openssl_root_dir}" CACHE INTERNAL "")
@@ -6075,7 +6075,7 @@ function (ntf_target_link_dependency)
 
             find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 
-            if (VERBOSE OR TRUE)
+            if (VERBOSE)
                 message(STATUS "OPENSSL_FOUND: ${OPENSSL_FOUND}")
                 message(STATUS "OPENSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")
                 message(STATUS "OPENSSL_LIBRARIES: ${OPENSSL_LIBRARIES}")
@@ -6083,7 +6083,7 @@ function (ntf_target_link_dependency)
             endif()
 
             if (TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
-                if (VERBOSE OR TRUE)
+                if (VERBOSE)
                     message(STATUS "OpenSSL has been found for ${target} by FindOpenSSL.cmake")
                 endif()
                 set(dependency_found_by_findopenssl TRUE)
