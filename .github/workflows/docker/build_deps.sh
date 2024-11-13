@@ -46,6 +46,15 @@ build() {
     build_bde
 }
 
+list_directory() {
+    local path=${1}
+
+    if [ -e "${path}" ]; then
+        echo "Contents of ${path}:"
+        ls -l ${path}
+    fi
+}
+
 fetch_deps
 configure
 build

@@ -12435,6 +12435,14 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsUsage)
     // certificate authority that signed the server's certificate.
 
     ntca::EncryptionClientOptions encryptionClientOptions;
+
+    // encryptionClientOptions.setAuthentication(
+    //     ntca::EncryptionAuthentication::e_VERIFY);
+    // encryptionClientOptions.setMinMethod(
+    //     ntca::EncryptionMethod::e_TLS_V1_2);
+    // encryptionClientOptions.setMaxMethod(
+    //     ntca::EncryptionMethod::e_TLS_V1_2);
+
     encryptionClientOptions.addAuthority(authorityCertificate);
 
     ntca::EncryptionValidation validation;
@@ -12455,6 +12463,13 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsUsage)
     // server names, when requested.
 
     ntca::EncryptionServerOptions encryptionServerOptions;
+
+    // encryptionServerOptions.setAuthentication(
+    //     ntca::EncryptionAuthentication::e_NONE);
+    // encryptionServerOptions.setMinMethod(
+    //     ntca::EncryptionMethod::e_TLS_V1_2);
+    // encryptionServerOptions.setMaxMethod(
+    //     ntca::EncryptionMethod::e_TLS_V1_2);
 
     encryptionServerOptions.setIdentity(serverCertificate);
     encryptionServerOptions.setPrivateKey(serverPrivateKey);

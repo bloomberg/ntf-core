@@ -10,6 +10,7 @@ RUN apt-get update && \
     python3.10 \
     ninja-build \
     pkg-config \
+    libssl-dev \
     libz-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*

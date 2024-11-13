@@ -17,10 +17,257 @@ include_guard(GLOBAL)
 
 include(CMakePackageConfigHelpers)
 
-# Log a message.
-function (ntf_log message)
-    message(STATUS ${message})
+# Return the current log level name.
+function (ntf_log_level_name)
+    cmake_parse_arguments(
+        NTF_LOG_LEVEL_NAME "" "OUTPUT" "" ${ARGN})
+
+    if (NOT DEFINED NTF_LOG_LEVEL_NAME)
+        if ("${CMAKE_MESSAGE_LOG_LEVEL}" STREQUAL "")
+            set(NTF_LOG_LEVEL_NAME "STATUS" CACHE INTERNAL "")
+        else()
+            set(NTF_LOG_LEVEL_NAME
+                "${CMAKE_MESSAGE_LOG_LEVEL}" CACHE INTERNAL "")
+        endif()
+    endif()
+
+    if (DEFINED NTF_LOG_LEVEL_NAME_OUTPUT)
+        set(${NTF_LOG_LEVEL_NAME_OUTPUT} ${NTF_LOG_LEVEL_NAME} PARENT_SCOPE)
+    endif()
 endfunction()
+
+# Return the current log level number.
+function (ntf_log_level_number)
+    cmake_parse_arguments(
+        NTF_LOG_LEVEL_NUMBER "" "OUTPUT" "" ${ARGN})
+
+    if (NOT DEFINED NTF_LOG_LEVEL_NUMBER)
+        ntf_log_level_name(OUTPUT log_level_name)
+
+        set(log_level_number ${NTF_LOG_LEVEL_NUMBER_OFF})
+        if("${log_level_name}" STREQUAL "ERROR")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_ERROR})
+        elseif("${log_level_name}" STREQUAL "WARNING")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_WARNING})
+        elseif("${log_level_name}" STREQUAL "NOTICE")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_NOTICE})
+        elseif("${log_level_name}" STREQUAL "STATUS")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_STATUS})
+        elseif("${log_level_name}" STREQUAL "VERBOSE")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_VERBOSE})
+        elseif("${log_level_name}" STREQUAL "DEBUG")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_DEBUG})
+        elseif("${log_level_name}" STREQUAL "TRACE")
+            set(log_level_number ${NTF_LOG_LEVEL_NUMBER_TRACE})
+        else()
+            message(FATAL_ERROR "Invalid log level: ${log_level_name}")
+        endif()
+
+        set(NTF_LOG_LEVEL_NUMBER "${log_level_number}" CACHE INTERNAL "")
+    endif()
+
+    if (DEFINED NTF_LOG_LEVEL_NUMBER_OUTPUT)
+        set(${NTF_LOG_LEVEL_NUMBER_OUTPUT} ${NTF_LOG_LEVEL_NUMBER} PARENT_SCOPE)
+    endif()
+
+endfunction()
+
+# Return true if the given log level is enabled.
+#
+# NUMBER - The log level number.
+# OUTPUT - The variable name set in the parent scope.
+function (ntf_log_level_enabled)
+    cmake_parse_arguments(
+        NTF_LOG_LEVEL_ENABLED "" "NUMBER;OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${NTF_LOG_LEVEL_ENABLED_NUMBER})
+    ntf_assert_defined(${NTF_LOG_LEVEL_ENABLED_OUTPUT})
+
+    ntf_log_level_number(OUTPUT threshold)
+
+    if (${NTF_LOG_LEVEL_ENABLED_NUMBER} LESS_EQUAL ${threshold})
+        set(${NTF_LOG_LEVEL_ENABLED_OUTPUT} TRUE PARENT_SCOPE)
+    else()
+        set(${NTF_LOG_LEVEL_ENABLED_OUTPUT} FALSE PARENT_SCOPE)
+    endif()
+endfunction()
+
+
+# ERROR, WARNING, NOTICE, STATUS (default), VERBOSE, DEBUG, or TRACE.
+function (ntf_log_init)
+
+    set(NTF_LOG_LEVEL_NUMBER_OFF     0 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_ERROR   1 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_WARNING 2 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_NOTICE  3 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_STATUS  3 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_VERBOSE 4 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_DEBUG   4 CACHE INTERNAL "")
+    set(NTF_LOG_LEVEL_NUMBER_TRACE   5 CACHE INTERNAL "")
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_ERROR}
+        OUTPUT ntf_log_error_enabled)
+    if (${ntf_log_error_enabled})
+        set(NTF_LOG_ERROR TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_ERROR CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_WARNING}
+        OUTPUT ntf_log_warning_enabled)
+    if (${ntf_log_warning_enabled})
+        set(NTF_LOG_WARNING TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_WARNING CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_NOTICE}
+        OUTPUT ntf_log_notice_enabled)
+    if (${ntf_log_notice_enabled})
+        set(NTF_LOG_NOTICE TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_NOTICE CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_STATUS}
+        OUTPUT ntf_log_status_enabled)
+    if (${ntf_log_status_enabled})
+        set(NTF_LOG_STATUS TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_STATUS CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_VERBOSE}
+        OUTPUT ntf_log_verbose_enabled)
+    if (${ntf_log_verbose_enabled})
+        set(NTF_LOG_VERBOSE TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_VERBOSE CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_DEBUG}
+        OUTPUT ntf_log_debug_enabled)
+    if (${ntf_log_debug_enabled})
+        set(NTF_LOG_DEBUG TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_DEBUG CACHE)
+    endif()
+
+    ntf_log_level_enabled(
+        NUMBER ${NTF_LOG_LEVEL_NUMBER_TRACE}
+        OUTPUT ntf_log_trace_enabled)
+    if (${ntf_log_trace_enabled})
+        set(NTF_LOG_TRACE TRUE CACHE INTERNAL "")
+    else()
+        unset(NTF_LOG_TRACE CACHE)
+    endif()
+
+endfunction()
+
+# Log a message at the "info" severity level.
+macro (ntf_log_info)
+    cmake_parse_arguments(
+        NTF_LOG_INFO "" "CONTEXT" "CONTENT" ${ARGN})
+
+    if (${NTF_LOG_STATUS})
+        if ("${NTF_LOG_INFO_CONTENT}" STREQUAL "")
+            set(NTF_LOG_INFO_CONTENT ${ARGN})
+        endif()
+
+        string(
+            REPLACE
+            ";" " "
+            ntf_log_info_content
+            "${NTF_LOG_INFO_CONTENT}")
+
+        string(
+            REGEX REPLACE
+            "[ \t\r\n]+"
+            " "
+            ntf_log_info_content
+            "${ntf_log_info_content}")
+
+        list(APPEND CMAKE_MESSAGE_CONTEXT "${NTF_LOG_INFO_CONTEXT}")
+        message(
+            STATUS
+                "[ INFO ][ ${CMAKE_CURRENT_FUNCTION} ]"
+                "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ]: "
+                "${ntf_log_info_content}")
+        list(POP_BACK CMAKE_MESSAGE_CONTEXT)
+    endif()
+endmacro()
+
+# Log a message at the "debug" severity level.
+macro (ntf_log_debug)
+    cmake_parse_arguments(
+        NTF_LOG_DEBUG "" "CONTEXT" "CONTENT" ${ARGN})
+
+    if (${NTF_LOG_DEBUG})
+        if ("${NTF_LOG_DEBUG_CONTENT}" STREQUAL "")
+            set(NTF_LOG_DEBUG_CONTENT ${ARGN})
+        endif()
+
+        string(
+            REPLACE
+            ";" " "
+            ntf_log_debug_content
+            "${NTF_LOG_DEBUG_CONTENT}")
+
+        string(
+            REGEX REPLACE
+            "[ \t\r\n]+"
+            " "
+            ntf_log_debug_content
+            "${ntf_log_debug_content}")
+
+        list(APPEND CMAKE_MESSAGE_CONTEXT "${NTF_LOG_DEBUG_CONTEXT}")
+        message(
+            DEBUG
+                "[ INFO ][ ${CMAKE_CURRENT_FUNCTION} ]"
+                "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ]: "
+                "${ntf_log_info_content}")
+        list(POP_BACK CMAKE_MESSAGE_CONTEXT)
+    endif()
+endmacro()
+
+# Log a message at the "trace" severity level.
+macro (ntf_log_trace)
+    cmake_parse_arguments(
+        NTF_LOG_TRACE "" "CONTEXT" "CONTENT" ${ARGN})
+
+    if (${NTF_LOG_TRACE})
+        if ("${NTF_LOG_TRACE_CONTENT}" STREQUAL "")
+            set(NTF_LOG_TRACE_CONTENT ${ARGN})
+        endif()
+
+        string(
+            REPLACE
+            ";" " "
+            ntf_log_trace_content
+            "${NTF_LOG_TRACE_CONTENT}")
+
+        string(
+            REGEX REPLACE
+            "[ \t\r\n]+"
+            " "
+            ntf_log_trace_content
+            "${ntf_log_trace_content}")
+
+        list(APPEND CMAKE_MESSAGE_CONTEXT "${NTF_LOG_TRACE_CONTEXT}")
+        message(
+            TRACE
+                "[ INFO ][ ${CMAKE_CURRENT_FUNCTION} ]"
+                "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ]: "
+                "${ntf_log_info_content}")
+        list(POP_BACK CMAKE_MESSAGE_CONTEXT)
+    endif()
+endmacro()
 
 # Log a message and abort with a stack trace.
 function (ntf_die message)
@@ -415,6 +662,61 @@ function (ntf_target_requires_get)
     set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
 
+# Set the "aliases" variable scoped to a target. The contents of this variable
+# are imported as aliases of the target in the CMake install metadata.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_aliases_set)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "")
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "aliases" VALUE ${ARG_VALUE})
+    else()
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "aliases" VALUE "")
+    endif()
+endfunction()
+
+# Append to the "aliases" variable scoped to a target. The contents of this
+# variable are imported as aliases of the target in the CMake install metadata.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_aliases_append)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "")
+        ntf_target_variable_append(
+            TARGET ${ARG_TARGET} VARIABLE "aliases" VALUE ${ARG_VALUE})
+    endif()
+endfunction()
+
+# Get the "aliases" variable scoped to a target. The contents of this variable
+# are imported as aliases of the target in the CMake install metadata.
+#
+# TARGET - The target.
+# OUTPUT - The variable name set in the parent scope.
+function (ntf_target_aliases_get)
+    cmake_parse_arguments(
+        ARG "" "TARGET;OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+    ntf_assert_defined(${ARG_OUTPUT})
+
+    ntf_target_variable_get(
+        TARGET ${ARG_TARGET} VARIABLE "aliases" OUTPUT result)
+
+    set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
+endfunction()
+
 # Set the "libs" variable scoped to a target. The contents of this variable
 # is assigned to the "Libs.private" variable in pkg-config metadata.
 #
@@ -469,7 +771,6 @@ function (ntf_target_libs_get)
 
     set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
-
 
 # Add preprocessor defininitions when compiling a target. The definitions
 # are always added with private visibility.
@@ -1636,13 +1937,13 @@ endfunction()
 # Dump a property of a target.
 function (ntf_target_dump_property target property)
 
-    if(NOT TARGET ${target})
+    if (NOT TARGET ${target})
         message(STATUS "There is no target named '${target}'")
         return()
     endif()
 
     get_property(was_set TARGET ${target} PROPERTY ${property} SET)
-    if(was_set)
+    if (was_set)
         get_target_property(value ${target} ${property})
         message("NTF Build: ${target} ${property} = ${value}")
     endif()
@@ -1998,11 +2299,12 @@ endfunction()
 # DESCRIPTION - The single line description of the interface, as it should
 #               appear in package meta-data.
 # REQUIRES    - The intra-repository dependencies of the interface.
+# ALIAS       - The targets which alias this target in CMake install meta-data.
 # PRIVATE     - The flag indicating that all headers and artifacts are private
 #               and should not be installed.
 function (ntf_interface)
     cmake_parse_arguments(
-        NTF_INTERFACE "PRIVATE;THIRDPARTY" "NAME;DESCRIPTION" "REQUIRES" ${ARGN})
+        NTF_INTERFACE "PRIVATE;THIRDPARTY" "NAME;DESCRIPTION" "REQUIRES;ALIAS" ${ARGN})
 
     if ("${NTF_INTERFACE_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -2084,6 +2386,9 @@ function (ntf_interface)
 
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_INTERFACE_REQUIRES})
+
+    ntf_target_aliases_set(
+        TARGET ${target} VALUE ${NTF_INTERFACE_ALIAS})
 
     # if (${target_thirdparty})
     #     file(REAL_PATH ${target_path}/.. target_parent_path)
@@ -2363,6 +2668,7 @@ function (ntf_interface_end)
             string(APPEND target_config_cmake_content "\
 include(CMakeFindDependencyMacro)\n\
 if (NOT TARGET ${target})\n\
+    message(DEBUG \"NTF: including ${target} from \${CMAKE_CURRENT_LIST_DIR}\")\n\
     if (UNIX)\n\
         find_dependency(Threads)\n\
     endif()\n\
@@ -2371,6 +2677,28 @@ if (NOT TARGET ${target})\n\
     set(target_requires_reversed ${target_requires})
     list(REVERSE target_requires_reversed)
     foreach (dependency ${target_requires_reversed})
+        if ("${dependency}" STREQUAL "openssl")
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(\n\
+            OpenSSL QUIET COMPONENTS SSL Crypto CONFIG\n\
+            NAMES openssl OpenSSL\n\
+            PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR\}/..\"\n\
+        )\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(OpenSSL MODULE COMPONENTS SSL Crypto)\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::SSL\")\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::Crypto)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::Crypto\")\n\
+    endif()\n\
+")
+            continue()
+        endif()
+
             string(APPEND target_config_cmake_content "\
     find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
 ")
@@ -2378,6 +2706,19 @@ if (NOT TARGET ${target})\n\
 
             string(APPEND target_config_cmake_content "\
     include(\"\${CMAKE_CURRENT_LIST_DIR}/${install_cmake_metadata_targets}.cmake\")\n\
+")
+
+            ntf_target_aliases_get(TARGET ${target} OUTPUT target_aliases)
+
+            foreach(alias ${target_aliases})
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET ${alias})\n\
+        add_library(${alias} ALIAS ${target})\n\
+    endif()\n\
+")
+            endforeach()
+
+            string(APPEND target_config_cmake_content "\
 endif()\n\
 ")
 
@@ -2551,11 +2892,12 @@ endfunction()
 # DESCRIPTION - The single line description of the adapter, as it should
 #               appear in package meta-data.
 # REQUIRES    - The intra-repository dependencies of the adapter.
+# ALIAS       - The targets which alias this target in CMake install meta-data.
 # PRIVATE     - The flag indicating that all headers and artifacts are private
 #               and should not be installed.
 function (ntf_adapter)
     cmake_parse_arguments(
-        NTF_ADAPTER "PRIVATE;THIRDPARTY;PSEUDO" "NAME;PATH;DESCRIPTION;OUTPUT" "REQUIRES" ${ARGN})
+        NTF_ADAPTER "PRIVATE;THIRDPARTY;PSEUDO" "NAME;PATH;DESCRIPTION;OUTPUT" "REQUIRES;ALIAS" ${ARGN})
 
     if ("${NTF_ADAPTER_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -2659,6 +3001,9 @@ function (ntf_adapter)
 
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_ADAPTER_REQUIRES})
+
+    ntf_target_aliases_set(
+        TARGET ${target} VALUE ${NTF_ADAPTER_ALIAS})
 
     if (${target_thirdparty})
         file(REAL_PATH ${target_path}/.. target_parent_path)
@@ -2979,6 +3324,7 @@ function (ntf_adapter_end)
             string(APPEND target_config_cmake_content "\
 include(CMakeFindDependencyMacro)\n\
 if (NOT TARGET ${target})\n\
+    message(DEBUG \"NTF: including ${target} from \${CMAKE_CURRENT_LIST_DIR}\")\n\
     if (UNIX)\n\
         find_dependency(Threads)\n\
     endif()\n\
@@ -2987,6 +3333,28 @@ if (NOT TARGET ${target})\n\
     set(target_requires_reversed ${target_requires})
     list(REVERSE target_requires_reversed)
     foreach (dependency ${target_requires_reversed})
+        if ("${dependency}" STREQUAL "openssl")
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(\n\
+            OpenSSL QUIET COMPONENTS SSL Crypto CONFIG\n\
+            NAMES openssl OpenSSL\n\
+            PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR\}/..\"\n\
+        )\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(OpenSSL MODULE COMPONENTS SSL Crypto)\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::SSL\")\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::Crypto)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::Crypto\")\n\
+    endif()\n\
+")
+            continue()
+        endif()
+
             string(APPEND target_config_cmake_content "\
     find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
 ")
@@ -2994,6 +3362,19 @@ if (NOT TARGET ${target})\n\
 
             string(APPEND target_config_cmake_content "\
     include(\"\${CMAKE_CURRENT_LIST_DIR}/${install_cmake_metadata_targets}.cmake\")\n\
+")
+
+            ntf_target_aliases_get(TARGET ${target} OUTPUT target_aliases)
+
+            foreach(alias ${target_aliases})
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET ${alias})\n\
+        add_library(${alias} ALIAS ${target})\n\
+    endif()\n\
+")
+            endforeach()
+
+            string(APPEND target_config_cmake_content "\
 endif()\n\
 ")
 
@@ -3287,11 +3668,12 @@ endfunction()
 # DESCRIPTION - The single line description of the group, as it should appear
 #               in package meta-data.
 # REQUIRES    - The intra-repository dependencies of the group.
+# ALIAS       - The targets which alias this target in CMake install meta-data.
 # PRIVATE     - The flag indicating that all headers and artifacts are private
 #               and should not be installed.
 function (ntf_group)
     cmake_parse_arguments(
-        NTF_GROUP "PRIVATE;THIRDPARTY;UNITY" "NAME;PATH;DESCRIPTION" "REQUIRES" ${ARGN})
+        NTF_GROUP "PRIVATE;THIRDPARTY;UNITY" "NAME;PATH;DESCRIPTION" "REQUIRES;ALIAS" ${ARGN})
 
     if ("${NTF_GROUP_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -3381,6 +3763,9 @@ function (ntf_group)
 
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_GROUP_REQUIRES})
+
+    ntf_target_aliases_set(
+        TARGET ${target} VALUE ${NTF_GROUP_ALIAS})
 
     foreach(entry ${NTF_GROUP_REQUIRES})
         set(dependency ${entry})
@@ -3555,24 +3940,34 @@ function (ntf_group_end)
                 ${component_test_build_target}
             )
 
+            if (VERBOSE)
+                message(STATUS "NTF Build: linking component test driver '${component_test_build_target}' to target '${target}'")
+                message(STATUS "         * target_link_libraries(${component_test_build_target} ${target})")
+            endif()
+
             target_link_libraries(
                 ${component_test_build_target}
                 PUBLIC
                 ${target}
             )
 
-            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
+            # Do not link against the target's dependencies, this will be
+            # automatically handled transitively by CMake.
 
-            foreach(entry ${target_requires})
-                set(dependency ${entry})
+            if (FALSE)
+                ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
 
-                if (VERBOSE)
-                    message(STATUS "NTF Build: linking component test driver '${component_test_build_target}' to target '${dependency}'")
-                    message(STATUS "         * target_link_libraries(${component_test_build_target} ${dependency})")
-                endif()
+                foreach(entry ${target_requires})
+                    set(dependency ${entry})
 
-                target_link_libraries(${component_test_build_target} PUBLIC ${dependency})
-            endforeach()
+                    if (VERBOSE)
+                        message(STATUS "NTF Build: linking component test driver '${component_test_build_target}' to target '${dependency}'")
+                        message(STATUS "         * target_link_libraries(${component_test_build_target} ${dependency})")
+                    endif()
+
+                    target_link_libraries(${component_test_build_target} PUBLIC ${dependency})
+                endforeach()
+            endif()
 
             ntf_target_options_common_epilog(${target})
 
@@ -3804,6 +4199,7 @@ function (ntf_group_end)
             string(APPEND target_config_cmake_content "\
 include(CMakeFindDependencyMacro)\n\
 if (NOT TARGET ${target})\n\
+    message(DEBUG \"NTF: including ${target} from \${CMAKE_CURRENT_LIST_DIR}\")\n\
     if (UNIX)\n\
         find_dependency(Threads)\n\
     endif()\n\
@@ -3812,6 +4208,28 @@ if (NOT TARGET ${target})\n\
     set(target_requires_reversed ${target_requires})
     list(REVERSE target_requires_reversed)
     foreach (dependency ${target_requires_reversed})
+        if ("${dependency}" STREQUAL "openssl")
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(\n\
+            OpenSSL QUIET COMPONENTS SSL Crypto CONFIG\n\
+            NAMES openssl OpenSSL\n\
+            PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR\}/..\"\n\
+        )\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(OpenSSL MODULE COMPONENTS SSL Crypto)\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::SSL\")\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::Crypto)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::Crypto\")\n\
+    endif()\n\
+")
+            continue()
+        endif()
+
             string(APPEND target_config_cmake_content "\
     find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
 ")
@@ -3819,6 +4237,19 @@ if (NOT TARGET ${target})\n\
 
             string(APPEND target_config_cmake_content "\
     include(\"\${CMAKE_CURRENT_LIST_DIR}/${install_cmake_metadata_targets}.cmake\")\n\
+")
+
+            ntf_target_aliases_get(TARGET ${target} OUTPUT target_aliases)
+
+            foreach(alias ${target_aliases})
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET ${alias})\n\
+        add_library(${alias} ALIAS ${target})\n\
+    endif()\n\
+")
+            endforeach()
+
+            string(APPEND target_config_cmake_content "\
 endif()\n\
 ")
 
@@ -5039,23 +5470,60 @@ function (ntf_target_link_dependency_by_cmake)
             continue()
         endif()
 
-        if (NOT TARGET ${dependency})
-            if (VERBOSE)
-                message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but no target defined in ${search_directory}")
+        if ("${dependency}" STREQUAL "openssl")
+
+            if (NOT TARGET OpenSSL::SSL)
+                if (NOT TARGET libssl)
+                    if (VERBOSE)
+                        message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but neither targets OpenSSL::SSL nor libssl are defined in ${search_directory}")
+                    endif()
+                    continue()
+                endif()
+
+                add_library(OpenSSL::SSL ALIAS libssl)
             endif()
-            continue()
-        endif()
 
-        if (VERBOSE)
-            message(STATUS "Dependency '${dependency}' found using cmake at '${${DEPENDENCY_CONFIG}}'")
-        endif()
+            if (NOT TARGET OpenSSL::Crypto)
+                if (NOT TARGET libcrypto)
+                    if (VERBOSE)
+                        message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but neither targets OpenSSL::Crypto nor libcrypto are defined in ${search_directory}")
+                    endif()
+                    continue()
+                endif()
 
-        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
-            target_link_libraries(
-                ${target} INTERFACE ${dependency})
+                add_library(OpenSSL::Crypto ALIAS libcrypto)
+            endif()
+
+            if (VERBOSE)
+                message(STATUS "Dependency '${dependency}' found using cmake at '${${DEPENDENCY_CONFIG}}'")
+            endif()
+
+            if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+                target_link_libraries(
+                    ${target} INTERFACE OpenSSL::SSL OpenSSL::Crypto)
+            else()
+                target_link_libraries(
+                    ${target} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+            endif()
         else()
-            target_link_libraries(
-                ${target} PUBLIC ${dependency})
+            if (NOT TARGET ${dependency})
+                if (VERBOSE)
+                    message(STATUS "Target '${target}' dependency '${dependency}' found using cmake but no target defined in ${search_directory}")
+                endif()
+                continue()
+            endif()
+
+            if (VERBOSE)
+                message(STATUS "Dependency '${dependency}' found using cmake at '${${DEPENDENCY_CONFIG}}'")
+            endif()
+
+            if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+                target_link_libraries(
+                    ${target} INTERFACE ${dependency})
+            else()
+                target_link_libraries(
+                    ${target} PUBLIC ${dependency})
+            endif()
         endif()
 
         if (NOT "${originalCmakePrefixPath}" STREQUAL "")
@@ -5316,38 +5784,42 @@ function (ntf_target_link_dependency_by_pkgconfig)
     # including those headers, to facilitate building with warnings treated as
     # errors (not all dependencies can be assumed to be warning-free.)
 
-    add_library(${dependency} INTERFACE IMPORTED GLOBAL)
+    set(NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET FALSE)
 
-    # Set the C standard.
+    if (${NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET})
+        add_library(${dependency} INTERFACE IMPORTED GLOBAL)
 
-    set_property(TARGET ${dependency} PROPERTY C_STANDARD 11)
+        # Set the C standard.
 
-    # Set the C++ standard version unless using xlc, which requires
-    # special, non-portable flag for some C++03-like behavior.
+        set_property(TARGET ${dependency} PROPERTY C_STANDARD 11)
 
-    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "XL")
-        ntf_repository_standard_get(OUTPUT cxx_standard)
-        set_property(TARGET ${dependency}
-                     PROPERTY CXX_STANDARD ${cxx_standard})
-    endif()
+        # Set the C++ standard version unless using xlc, which requires
+        # special, non-portable flag for some C++03-like behavior.
 
-    target_include_directories(
-        ${dependency}
-        SYSTEM INTERFACE ${${DEPENDENCY_STATIC_INCLUDE_DIRS}})
-
-    foreach(static_library_directory ${${DEPENDENCY_STATIC_LIBRARY_DIRS}})
-        if (EXISTS "${static_library_directory}/${install_ufid}")
-            target_link_directories(
-                ${dependency}
-                INTERFACE "${static_library_directory}/${install_ufid}")
+        if (NOT CMAKE_CXX_COMPILER_ID MATCHES "XL")
+            ntf_repository_standard_get(OUTPUT cxx_standard)
+            set_property(TARGET ${dependency}
+                         PROPERTY CXX_STANDARD ${cxx_standard})
         endif()
 
-        if (EXISTS "${static_library_directory}")
-            target_link_directories(
-                ${dependency}
-                INTERFACE "${static_library_directory}")
-        endif()
-    endforeach()
+        target_include_directories(
+            ${dependency}
+            SYSTEM INTERFACE ${${DEPENDENCY_STATIC_INCLUDE_DIRS}})
+
+        foreach(static_library_directory ${${DEPENDENCY_STATIC_LIBRARY_DIRS}})
+            if (EXISTS "${static_library_directory}/${install_ufid}")
+                target_link_directories(
+                    ${dependency}
+                    INTERFACE "${static_library_directory}/${install_ufid}")
+            endif()
+
+            if (EXISTS "${static_library_directory}")
+                target_link_directories(
+                    ${dependency}
+                    INTERFACE "${static_library_directory}")
+            endif()
+        endforeach()
+    endif() # NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET
 
     set(interface_link_libraries)
 
@@ -5357,7 +5829,6 @@ function (ntf_target_link_dependency_by_pkgconfig)
     # TODO: !!! In the ntf-core release, this is set to TRUE. Maybe set
     #           conditionally whether we are linking an executable !!!
     set(NTF_BUILD_LINK_USING_L_RULES FALSE)
-
 
     # If true use -l rules for all libraries not found in the refroot.
     set(NTF_BUILD_LINK_USING_L_RULES_FOR_SYSTEM_LIBRARIES TRUE)
@@ -5469,18 +5940,45 @@ function (ntf_target_link_dependency_by_pkgconfig)
         endforeach()
     endif()
 
-    set_property(
-        TARGET ${dependency} PROPERTY
-        INTERFACE_LINK_LIBRARIES "${interface_link_libraries}")
+    if (${NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET})
+        set_property(
+            TARGET ${dependency} PROPERTY
+            INTERFACE_LINK_LIBRARIES "${interface_link_libraries}")
 
-    if (VERBOSE)
-        ntf_target_dump("${dependency}")
-    endif()
+        # add_library(PkgConfig::${dependency} ALIAS ${dependency})
 
-    if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
-        target_link_libraries(${target} INTERFACE ${dependency})
+        if (VERBOSE)
+            ntf_target_dump("${dependency}")
+        endif()
+
+        # if (VERBOSE)
+        #     ntf_target_dump("PkgConfig::${dependency}")
+        # endif()
+
+    endif() # NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET
+
+    if (${NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET})
+        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+            target_link_libraries(${target} INTERFACE ${dependency})
+        else()
+            target_link_libraries(${target} PUBLIC ${dependency})
+        endif()
     else()
-        target_link_libraries(${target} PUBLIC ${dependency})
+        target_include_directories(
+            ${target}
+            SYSTEM PRIVATE ${${DEPENDENCY_STATIC_INCLUDE_DIRS}})
+
+        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+            target_link_libraries(
+                ${target}
+                INTERFACE
+                ${interface_link_libraries})
+        else()
+            target_link_libraries(
+                ${target}
+                PUBLIC
+                ${interface_link_libraries})
+        endif()
     endif()
 
     set(${ARG_OUTPUT} TRUE PARENT_SCOPE)
@@ -5552,6 +6050,74 @@ function (ntf_target_link_dependency)
             set(${ARG_OUTPUT} TRUE PARENT_SCOPE)
         endif()
         return()
+    endif()
+
+    # Attempt to find special packages.
+
+    if ("${dependency}" STREQUAL "openssl")
+        set(dependency_found_by_findopenssl FALSE)
+
+        if (TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
+            set(dependency_found_by_findopenssl TRUE)
+        else()
+            if (DEFINED ENV{OPENSSL_ROOT_DIR})
+                set(OPENSSL_ROOT_DIR "$ENV{OPENSSL_ROOT_DIR}" CACHE INTERNAL "")
+            else()
+                ntf_repository_install_refroot_get(OUTPUT install_refroot)
+                ntf_repository_install_prefix_get(OUTPUT install_prefix)
+
+                cmake_path(
+                    SET openssl_root_dir
+                    "${install_refroot}/${install_prefix}")
+
+                set(OPENSSL_ROOT_DIR "${openssl_root_dir}" CACHE INTERNAL "")
+            endif()
+
+            find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
+
+            if (VERBOSE)
+                message(STATUS "OPENSSL_FOUND: ${OPENSSL_FOUND}")
+                message(STATUS "OPENSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")
+                message(STATUS "OPENSSL_LIBRARIES: ${OPENSSL_LIBRARIES}")
+                message(STATUS "OPENSSL_VERSION: ${OPENSSL_VERSION}")
+            endif()
+
+            if (TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
+                if (VERBOSE)
+                    message(STATUS "OpenSSL has been found for ${target} by FindOpenSSL.cmake")
+                endif()
+                set(dependency_found_by_findopenssl TRUE)
+            else()
+                if (VERBOSE)
+                    message(STATUS "OpenSSL has not been found by FindOpenSSL.cmake")
+                endif()
+            endif()
+        endif()
+
+        if (${dependency_found_by_findopenssl})
+            if (VERBOSE)
+                ntf_target_dump("OpenSSL::SSL")
+            endif()
+
+            if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+                target_link_libraries(${target} INTERFACE OpenSSL::SSL)
+                target_link_libraries(${target} INTERFACE OpenSSL::Crypto)
+            else()
+                target_link_libraries(${target} PUBLIC OpenSSL::SSL)
+                target_link_libraries(${target} PUBLIC OpenSSL::Crypto)
+            endif()
+
+            if (MSVC)
+                target_link_libraries(${target} PRIVATE OpenSSL::applink)
+            endif()
+
+            ntf_target_requires_append(TARGET ${target} VALUE ${dependency})
+
+            if (NOT "${ARG_OUTPUT}" STREQUAL "")
+                set(${ARG_OUTPUT} TRUE PARENT_SCOPE)
+            endif()
+            return()
+        endif()
     endif()
 
     # Attempt to find the dependency using pkg-config.
@@ -6479,6 +7045,8 @@ function (ntf_repository)
     cmake_parse_arguments(
         ARG "" "NAME;VERSION;PATH;URL;UFID" "" ${ARGN})
 
+    ntf_log_init()
+
     ntf_assert_defined(${ARG_NAME})
     ntf_assert_defined(${ARG_VERSION})
     ntf_assert_defined(${ARG_PATH})
@@ -6782,6 +7350,9 @@ function (ntf_repository)
     ntf_ide_vs_code_tasks_create()
     ntf_ide_vs_code_launch_create()
     ntf_ide_vs_code_c_cpp_properties_create()
+
+    set(OPENSSL_USE_STATIC_LIBS TRUE CACHE INTERNAL "")
+
 endfunction()
 
 # Dump the configuration of the repository to the log.
