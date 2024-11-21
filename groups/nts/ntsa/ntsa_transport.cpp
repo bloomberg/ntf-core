@@ -185,7 +185,6 @@ int TransportMode::fromString(TransportMode::Value*    result,
         *result = e_STREAM;
         return 0;
     }
-
     if (bdlb::String::areEqualCaseless(string, "DATAGRAM")) {
         *result = e_DATAGRAM;
         return 0;
@@ -221,6 +220,67 @@ bsl::ostream& TransportMode::print(bsl::ostream&        stream,
 bsl::ostream& operator<<(bsl::ostream& stream, TransportMode::Value rhs)
 {
     return TransportMode::print(stream, rhs);
+}
+
+int TransportRole::fromInt(TransportRole::Value* result, int number)
+{
+    switch (number) {
+    case TransportRole::e_UNDEFINED:
+    case TransportRole::e_CLIENT:
+    case TransportRole::e_SERVER:
+        *result = static_cast<TransportRole::Value>(number);
+        return 0;
+    default:
+        return -1;
+    }
+}
+
+int TransportRole::fromString(TransportRole::Value*    result,
+                              const bslstl::StringRef& string)
+{
+    if (bdlb::String::areEqualCaseless(string, "UNDEFINED")) {
+        *result = e_UNDEFINED;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "CLIENT")) {
+        *result = e_CLIENT;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "SERVER")) {
+        *result = e_SERVER;
+        return 0;
+    }
+
+    return -1;
+}
+
+const char* TransportRole::toString(TransportRole::Value value)
+{
+    switch (value) {
+    case e_UNDEFINED: {
+        return "UNDEFINED";
+    } break;
+    case e_CLIENT: {
+        return "CLIENT";
+    } break;
+    case e_SERVER: {
+        return "SERVER";
+    } break;
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+bsl::ostream& TransportRole::print(bsl::ostream&        stream,
+                                   TransportRole::Value value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, TransportRole::Value rhs)
+{
+    return TransportRole::print(stream, rhs);
 }
 
 int Transport::fromInt(Transport::Value* result, int number)

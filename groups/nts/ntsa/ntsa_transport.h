@@ -179,7 +179,57 @@ struct TransportMode {
 /// @related ntsa::TransportMode
 bsl::ostream& operator<<(bsl::ostream& stream, TransportMode::Value rhs);
 
-/// Provide an enumeration of the socket types.
+/// Provide an enumeration of the socket transport roles.
+///
+/// @par Thread Safety
+/// This struct is thread safe.
+///
+/// @ingroup module_ntsa_system
+struct TransportRole {
+  public:
+    /// Provide an enumeration of the socket transport roles.
+    enum Value {
+        /// The socket transport role is undefined.
+        e_UNDEFINED = 0,
+
+        /// The socket is used to actively initiate the establishment the 
+        /// transport.
+        e_CLIENT = 1,
+
+        /// The socket is used to passively wait for a peer to initiate the
+        /// establishment of the transport.
+        e_SERVER = 2
+    };
+
+    /// Return the string representation exactly matching the enumerator
+    /// name corresponding to the specified enumeration 'value'.
+    static const char* toString(Value value);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'string'.  Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'string' does not match any
+    /// enumerator).
+    static int fromString(Value* result, const bslstl::StringRef& string);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'number'.  Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'number' does not match any
+    /// enumerator).
+    static int fromInt(Value* result, int number);
+
+    /// Write to the specified 'stream' the string representation of the
+    /// specified enumeration 'value'.  Return a reference to the modifiable
+    /// 'stream'.
+    static bsl::ostream& print(bsl::ostream& stream, Value value);
+};
+
+/// Format the specified 'rhs' to the specified output 'stream' and return a
+/// reference to the modifiable 'stream'.
+///
+/// @related ntsa::TransportRole
+bsl::ostream& operator<<(bsl::ostream& stream, TransportRole::Value rhs);
+
+/// Provide an enumeration of the socket transport types.
 ///
 /// @details
 /// A socket type is defined by its address family, transport protocol, and
@@ -191,7 +241,7 @@ bsl::ostream& operator<<(bsl::ostream& stream, TransportMode::Value rhs);
 /// @ingroup module_ntsa_system
 struct Transport {
   public:
-    /// Provide an enumeration of the socket types.
+    /// Provide an enumeration of the socket transport types.
     enum Value {
         /// The socket transport is undefined.
         e_UNDEFINED = 0,
