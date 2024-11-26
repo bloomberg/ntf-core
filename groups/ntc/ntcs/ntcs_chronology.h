@@ -84,7 +84,15 @@ class Chronology NTSCFG_FINAL : public ntci::Chronology
 
         TimerNode* d_node_p;
 
-        NTCCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(DeadlineMapEntry);
+        /// This type's copy-constructor and copy-assignment operator is
+        /// equivalent to copying each byte of the source object's footprint to
+        /// each corresponding byte of the destination object's footprint.
+        NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(DeadlineMapEntry);
+
+        /// This type's move-constructor and move-assignment operator is
+        /// equivalent to copying each byte of the source object's footprint to
+        /// each corresponding byte of the destination object's footprint.
+        NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(DeadlineMapEntry);
     };
 
     struct DueEntry {
@@ -116,7 +124,15 @@ class Chronology NTSCFG_FINAL : public ntci::Chronology
         const bool         d_oneShot;
         const bool         d_recurring;
 
-        NTCCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(DueEntry);
+        /// This type's copy-constructor and copy-assignment operator is
+        /// equivalent to copying each byte of the source object's footprint to
+        /// each corresponding byte of the destination object's footprint.
+        NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(DueEntry);
+
+        /// This type's move-constructor and move-assignment operator is
+        /// equivalent to copying each byte of the source object's footprint to
+        /// each corresponding byte of the destination object's footprint.
+        NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(DueEntry);
     };
 
     /// Define a type alias for a signed 64-bit integer type

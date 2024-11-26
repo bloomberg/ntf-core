@@ -174,10 +174,15 @@ class ProcessStatistics
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(ProcessStatistics);
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(ProcessStatistics);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(ProcessStatistics);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return
