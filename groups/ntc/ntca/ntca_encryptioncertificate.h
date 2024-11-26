@@ -104,10 +104,9 @@ class EncryptionCertificateObject
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateObject);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateObject);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -241,10 +240,9 @@ class EncryptionCertificateVersion
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateVersion);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateVersion);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -496,11 +494,9 @@ class EncryptionCertificateNameAttributeIdentifier
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateNameAttributeIdentifier);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateNameAttributeIdentifier);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -653,11 +649,9 @@ class EncryptionCertificateNameAttribute
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateNameAttribute);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateNameAttribute);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -901,10 +895,9 @@ class EncryptionCertificateName
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateName);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateName);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1251,11 +1244,9 @@ class EncryptionCertificateNameAlternative
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateNameAlternative);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateNameAlternative);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1423,11 +1414,9 @@ class EncryptionCertificateNameAlternativeList
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateNameAlternativeList);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateNameAlternativeList);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1558,11 +1547,9 @@ class EncryptionCertificateNameConstraints
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateNameConstraints);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateNameConstraints);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1709,10 +1696,9 @@ class EncryptionCertificateValidity
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateValidity);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateValidity);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1981,11 +1967,9 @@ class EncryptionCertificateSignatureAlgorithmIdentifier
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateSignatureAlgorithmIdentifier);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateSignatureAlgorithmIdentifier);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2119,11 +2103,9 @@ class EncryptionCertificateSignatureAlgorithmParameters
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateSignatureAlgorithmParameters);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateSignatureAlgorithmParameters);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2274,11 +2256,9 @@ class EncryptionCertificateSignatureAlgorithm
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateSignatureAlgorithm);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateSignatureAlgorithm);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2415,11 +2395,9 @@ class EncryptionCertificateSignature
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateSignature);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateSignature);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2548,11 +2526,9 @@ class EncryptionCertificatePolicyConstraints
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificatePolicyConstraints);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificatePolicyConstraints);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2681,11 +2657,9 @@ class EncryptionCertificatePolicyMappings
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificatePolicyMappings);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificatePolicyMappings);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2812,10 +2786,9 @@ class EncryptionCertificatePolicy
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificatePolicy);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificatePolicy);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2944,11 +2917,9 @@ class EncryptionCertificateIssuerKeyIdentifier
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateIssuerKeyIdentifier);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateIssuerKeyIdentifier);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -3079,11 +3050,9 @@ class EncryptionCertificateIssuerInformationAccess
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateIssuerInformationAccess);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateIssuerInformationAccess);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -3226,10 +3195,9 @@ class EncryptionCertificateIssuer
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateIssuer);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateIssuer);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -3464,11 +3432,9 @@ class EncryptionCertificateSubjectKeyUsageExtended
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateSubjectKeyUsageExtended);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateSubjectKeyUsageExtended);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -3681,11 +3647,9 @@ class EncryptionCertificateSubjectKeyUsage
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateSubjectKeyUsage);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateSubjectKeyUsage);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -3814,11 +3778,9 @@ class EncryptionCertificateSubjectKeyIdentifier
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateSubjectKeyIdentifier);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateSubjectKeyIdentifier);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -3968,11 +3930,9 @@ class EncryptionCertificateSubjectConstraints
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateSubjectConstraints);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateSubjectConstraints);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -4116,10 +4076,9 @@ class EncryptionCertificateSubject
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateSubject);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateSubject);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -4357,11 +4316,9 @@ class EncryptionCertificateExtensionIdentifier
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateExtensionIdentifier);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateExtensionIdentifier);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -4925,11 +4882,9 @@ class EncryptionCertificateExtensionValue
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateExtensionValue);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateExtensionValue);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -5142,11 +5097,9 @@ class EncryptionCertificateExtension
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateExtension);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateExtension);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -5308,11 +5261,9 @@ class EncryptionCertificateExtensionList
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionCertificateExtensionList);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateExtensionList);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -5548,10 +5499,9 @@ class EncryptionCertificateEntity
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificateEntity);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificateEntity);
 };
 
 /// Define a type alias for a vector of encryption certificates.
@@ -5797,10 +5747,9 @@ class EncryptionCertificate
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionCertificate);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionCertificate);
 };
 
 /// Define a type alias for a vector of encryption certificates.

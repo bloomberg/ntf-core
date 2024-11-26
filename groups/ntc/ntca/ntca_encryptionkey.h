@@ -103,10 +103,9 @@ class EncryptionKeyRsaParameters
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyRsaParameters);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyRsaParameters);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -255,11 +254,9 @@ class EncryptionKeyRsaValuePrivateExtra
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionKeyRsaValuePrivateExtra);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyRsaValuePrivateExtra);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -519,10 +516,9 @@ class EncryptionKeyRsaValuePrivate
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyRsaValuePrivate);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyRsaValuePrivate);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -659,10 +655,9 @@ class EncryptionKeyRsaValuePublic
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyRsaValuePublic);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyRsaValuePublic);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -884,11 +879,9 @@ class EncryptionKeyEllipticCurveParametersIdentifier
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionKeyEllipticCurveParametersIdentifier);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyEllipticCurveParametersIdentifier);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1066,11 +1059,9 @@ class EncryptionKeyEllipticCurveParameters
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionKeyEllipticCurveParameters);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyEllipticCurveParameters);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1240,11 +1231,9 @@ class EncryptionKeyEllipticCurveValuePrivate
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionKeyEllipticCurveValuePrivate);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyEllipticCurveValuePrivate);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1376,11 +1365,9 @@ class EncryptionKeyEllipticCurveValuePublic
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionKeyEllipticCurveValuePublic);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyEllipticCurveValuePublic);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1597,11 +1584,9 @@ class EncryptionKeyAlgorithmIdentifier
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionKeyAlgorithmIdentifier);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyAlgorithmIdentifier);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1800,11 +1785,9 @@ class EncryptionKeyAlgorithmParameters
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(
-        EncryptionKeyAlgorithmParameters);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyAlgorithmParameters);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -1952,10 +1935,9 @@ class EncryptionKeyAlgorithm
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyAlgorithm);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyAlgorithm);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2153,10 +2135,9 @@ class EncryptionKeyValuePrivate
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyValuePrivate);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyValuePrivate);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2324,10 +2305,9 @@ class EncryptionKeyInfoPrivate
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyInfoPrivate);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyInfoPrivate);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2534,10 +2514,9 @@ class EncryptionKeyValuePublic
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyValuePublic);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyValuePublic);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2678,10 +2657,9 @@ class EncryptionKeyInfoPublic
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKeyInfoPublic);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKeyInfoPublic);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and
@@ -2903,10 +2881,9 @@ class EncryptionKey
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(EncryptionKey);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(EncryptionKey);
 };
 
 /// Format the specified 'object' to the specified output 'stream' and

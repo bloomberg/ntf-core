@@ -88,10 +88,15 @@ class SendState
     /// Return the send counter.
     ntcq::SendCounter counter() const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_BITWISE_MOVABLE_TRAITS(SendState);
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(SendState);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(SendState);
 };
 
 /// @internal @brief
@@ -308,10 +313,9 @@ class SendQueueEntry
     /// is batchable with other similar representations.
     bool isBatchable() const;
 
-    /// Defines the traits of this type. These traits can be used to select,
-    /// at compile-time, the most efficient algorithm to manipulate objects
-    /// of this type.
-    NTCCFG_DECLARE_NESTED_USES_ALLOCATOR_TRAITS(SendQueueEntry);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(SendQueueEntry);
 };
 
 /// @internal @brief
