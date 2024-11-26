@@ -1999,7 +1999,7 @@ endfunction()
 #               suite for the repository.
 function (ntf_executable)
     cmake_parse_arguments(
-        NTF_EXECUTABLE "PRIVATE;TEST;EXAMPLE" "NAME;PATH;MAIN;OUTPUT" "REQUIRES" ${ARGN})
+        NTF_EXECUTABLE "PRIVATE;TEST;EXAMPLE;UNITY" "NAME;PATH;MAIN;OUTPUT" "REQUIRES" ${ARGN})
 
     if ("${NTF_EXECUTABLE_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -2025,6 +2025,11 @@ function (ntf_executable)
     set(target_private ${NTF_EXECUTABLE_PRIVATE})
     if ("${target_private}" STREQUAL "")
         set(target_private FALSE)
+    endif()
+
+    set(target_unity ${NTF_EXECUTABLE_UNITY})
+    if ("${target_unity}" STREQUAL "")
+        set(target_unity FALSE)
     endif()
 
     ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
@@ -2094,6 +2099,9 @@ function (ntf_executable)
 
     ntf_target_thirdparty_set(
         TARGET ${target} VALUE FALSE)
+
+    ntf_target_unity_set(
+        TARGET ${target} VALUE ${target_unity})
 
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_EXECUTABLE_REQUIRES})
@@ -2383,6 +2391,9 @@ function (ntf_interface)
 
     ntf_target_thirdparty_set(
         TARGET ${target} VALUE ${target_thirdparty})
+
+    ntf_target_unity_set(
+        TARGET ${target} VALUE FALSE)
 
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_INTERFACE_REQUIRES})
@@ -2995,6 +3006,9 @@ function (ntf_adapter)
 
     ntf_target_thirdparty_set(
         TARGET ${target} VALUE ${target_thirdparty})
+
+    ntf_target_unity_set(
+        TARGET ${target} VALUE FALSE)
 
     ntf_target_pseudo_set(
         TARGET ${target} VALUE ${target_pseudo})
@@ -6075,7 +6089,7 @@ function (ntf_target_link_dependency)
 
             find_package(OpenSSL REQUIRED COMPONENTS SSL Crypto)
 
-            if (VERBOSE)
+            if (VERBOSE OR TRUE)
                 message(STATUS "OPENSSL_FOUND: ${OPENSSL_FOUND}")
                 message(STATUS "OPENSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")
                 message(STATUS "OPENSSL_LIBRARIES: ${OPENSSL_LIBRARIES}")
@@ -6083,7 +6097,7 @@ function (ntf_target_link_dependency)
             endif()
 
             if (TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
-                if (VERBOSE)
+                if (VERBOSE OR TRUE)
                     message(STATUS "OpenSSL has been found for ${target} by FindOpenSSL.cmake")
                 endif()
                 set(dependency_found_by_findopenssl TRUE)
