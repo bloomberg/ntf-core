@@ -157,8 +157,10 @@ BSLS_IDENT_RCSID(ntctls_plugin_cpp, "$Id$ $CSID$")
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
-#include <wincrypt.h>
+// clang-format off
 #include <windows.h>
+#include <wincrypt.h>
+// clang-format on
 #ifdef X509
 #undef X509
 #endif
@@ -936,7 +938,7 @@ long Internal::Impl::bio_blob_ctrl(BIO* bio, int cmd, long num, void* ptr)
     if (cmd == BIO_C_SET_NBIO) {
         return 0;
     }
-    
+
 #if defined(BIO_CTRL_GET_KTLS_SEND)
     if (cmd == BIO_CTRL_GET_KTLS_SEND) {
         return 0;
@@ -7914,19 +7916,19 @@ void Session::infoCallback(const SSL* ssl, int where, int ret)
     NTCI_LOG_CONTEXT();
 
     const bsls::LogSeverity::Enum severity = bsls::Log::severityThreshold();
-    if (static_cast<int>(severity) < 
-        static_cast<int>(bsls::LogSeverity::e_TRACE)) 
+    if (static_cast<int>(severity) <
+        static_cast<int>(bsls::LogSeverity::e_TRACE))
     {
         return;
     }
 
     if ((where & SSL_CB_HANDSHAKE_START) != 0) {
-        NTCI_LOG_TRACE("SSL_CB_HANDSHAKE_START: %s", 
+        NTCI_LOG_TRACE("SSL_CB_HANDSHAKE_START: %s",
                        SSL_state_string_long(ssl));
     }
 
     if ((where & SSL_CB_HANDSHAKE_DONE) != 0) {
-        NTCI_LOG_TRACE("SSL_CB_HANDSHAKE_DONE: %s", 
+        NTCI_LOG_TRACE("SSL_CB_HANDSHAKE_DONE: %s",
                        SSL_state_string_long(ssl));
     }
 
@@ -7947,7 +7949,7 @@ void Session::infoCallback(const SSL* ssl, int where, int ret)
     }
 
     if ((where & SSL_CB_ALERT) != 0) {
-        NTCI_LOG_TRACE("SSL_CB_ALERT: %s (%s)", 
+        NTCI_LOG_TRACE("SSL_CB_ALERT: %s (%s)",
                        SSL_state_string_long(ssl),
                        SSL_alert_desc_string_long(ret));
     }
@@ -8178,7 +8180,7 @@ ntsa::Error Session::process(LockGuard* lock)
         if (rc != 1) {
             if (rc < 0) {
                 int error = SSL_get_error(d_ssl_p, rc);
-                if (error == SSL_ERROR_WANT_READ || 
+                if (error == SSL_ERROR_WANT_READ ||
                     error == SSL_ERROR_WANT_WRITE)
                 {
                     return ntsa::Error();
@@ -8344,7 +8346,7 @@ ntsa::Error Session::process(LockGuard* lock)
             bsl::string description;
             Internal::drainErrorQueue(&description);
 
-            NTCI_LOG_DEBUG("Failed to read incoming data: %s", 
+            NTCI_LOG_DEBUG("Failed to read incoming data: %s",
                            description.c_str());
 
             return ntsa::Error(ntsa::Error::e_INVALID);
@@ -9369,7 +9371,7 @@ ntsa::Error SessionContext::configure(ntca::EncryptionRole::Value    role,
     rc = SSL_CTX_set_ciphersuites(d_context.get(),
                                   Internal::Impl::k_DEFAULT_CIPHER_SUITES);
 #endif
-                  
+
     if (rc == 0) {
         NTCTLS_SESSION_LOG_ERROR(
             "Failed to configure SSL context cipher suites");
