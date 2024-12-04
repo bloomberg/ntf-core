@@ -29,20 +29,20 @@ project(
 
 include(CTest)
 
-if (BBS_BUILD_SYSTEM)
+if (NTF_BUILD_SYSTEM)
+    message(STATUS "Processing NTF workspace")
+    include(${CMAKE_CURRENT_LIST_DIR}/repository.cmake)
+    include(${CMAKE_CURRENT_LIST_DIR}/targets.cmake)
+else()
     find_package(BdeBuildSystem)
     if (${BdeBuildSystem_FOUND})
         message(STATUS "Processing BBS workspace")
         include(${CMAKE_CURRENT_LIST_DIR}/variables.cmake)
         enable_testing()
         add_subdirectory(groups)
-        return()
+    else()
+        message(FATAL_ERROR "Build system not found")
     endif()
 endif()
-
-message(STATUS "Processing NTF workspace")
-
-include(${CMAKE_CURRENT_LIST_DIR}/repository.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/targets.cmake)
 
 include(CPack)
