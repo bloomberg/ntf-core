@@ -1598,7 +1598,7 @@ bool FormatUtil::printFloat(FormatOutput         output,
         length = rc;
     }
 #else
-    int rc = sprintf(buffer, format, args);
+    int rc = sprintf(buffer, format, value);
     length = rc;
 #endif
 
@@ -1796,7 +1796,7 @@ bool FormatUtil::printDouble(FormatOutput         output,
         length = rc;
     }
 #else
-    int rc = sprintf(buffer, format, args);
+    int rc = sprintf(buffer, format, value);
     length = rc;
 #endif
 

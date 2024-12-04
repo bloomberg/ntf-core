@@ -83,8 +83,7 @@ NTSCFG_TEST_FUNCTION(ntcs::AsyncTest::verifyStrand)
 {
     bslmt::Semaphore semaphore;
 
-    bsl::shared_ptr<ntci::Strand> strand =
-        ntcs::Async::createStrand(NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntci::Strand> strand = ntcs::Async::createStrand();
 
     strand->execute(NTCCFG_BIND(&AsyncTest::processFunction, &semaphore));
 
@@ -105,13 +104,10 @@ NTSCFG_TEST_FUNCTION(ntcs::AsyncTest::verifyTimer)
     ntci::TimerCallback timerCallback(NTCCFG_BIND(&AsyncTest::processTimer,
                                                   &semaphore,
                                                   NTCCFG_BIND_PLACEHOLDER_1,
-                                                  NTCCFG_BIND_PLACEHOLDER_2),
-                                      NTSCFG_TEST_ALLOCATOR);
+                                                  NTCCFG_BIND_PLACEHOLDER_2));
 
     bsl::shared_ptr<ntci::Timer> timer =
-        ntcs::Async::createTimer(timerOptions,
-                                 timerCallback,
-                                 NTSCFG_TEST_ALLOCATOR);
+        ntcs::Async::createTimer(timerOptions, timerCallback);
 
     timer->schedule(timer->currentTime() + bsls::TimeInterval(1));
 
