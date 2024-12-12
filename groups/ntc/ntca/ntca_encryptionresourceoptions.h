@@ -73,15 +73,21 @@ class EncryptionResourceOptions
         /// The resource should contain a private key.
         e_PRIVATE_KEY = 0,
 
-        /// The resource should contain an end-user certificate.
+        /// The resource should contain an end-entity certificate.
         e_CERTIFICATE = 1,
+
+        /// The resource should contain a certificate authority that 
+        /// participates in the chain of trust necessary to validate an 
+        /// end-user certificate, but which may not be explicitly trusted by 
+        /// the peer.
+        e_CERTIFICATE_INTERMEDIARY = 2,
 
         /// The resource should contain one or more trusted certificate
         /// authorities.
-        e_CERTIFICATE_AUTHORITY = 2,
+        e_CERTIFICATE_AUTHORITY = 3,
 
         /// The contents of the resource are unknown.
-        e_ANY = 3
+        e_ANY = 4
     };
 
     Hint                                                     d_hint;

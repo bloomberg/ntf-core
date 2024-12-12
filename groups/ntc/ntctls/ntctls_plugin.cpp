@@ -2221,6 +2221,9 @@ class Certificate : public ntci::EncryptionCertificate,
     /// return false.
     bool isAuthority() const;
 
+    /// Return true if this certificate is self-signed, otherwise return false.
+    bool isSelfSigned() const;
+
     /// Return a handle to the private implementation.
     void* handle() const BSLS_KEYWORD_OVERRIDE;
 
@@ -2324,7 +2327,8 @@ class Resource : public ntci::EncryptionResource
     ~Resource() BSLS_KEYWORD_OVERRIDE;
 
     /// Set the private key to the specified 'key'. Return the error.
-    ntsa::Error setPrivateKey(const ntca::EncryptionKey& key);
+    ntsa::Error setPrivateKey(const ntca::EncryptionKey& key)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Set the private key to the specified 'key'. Return the error.
     ntsa::Error setPrivateKey(const bsl::shared_ptr<ntci::EncryptionKey>& key)
@@ -2332,7 +2336,8 @@ class Resource : public ntci::EncryptionResource
 
     /// Set the user's certificate to the specified 'certificate'. Return the
     /// error.
-    ntsa::Error setCertificate(const ntca::EncryptionCertificate& certificate);
+    ntsa::Error setCertificate(const ntca::EncryptionCertificate& certificate)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Set the user's certificate to the specified 'certificate'. Return the
     /// error.
@@ -2343,7 +2348,8 @@ class Resource : public ntci::EncryptionResource
     /// Add the specified 'certificate' to the list of trusted certificates.
     /// Return the error.
     ntsa::Error addCertificateAuthority(
-        const ntca::EncryptionCertificate& certificate);
+        const ntca::EncryptionCertificate& certificate)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Add the specified 'certificate' to the list of trusted certificates.
     /// Return the error.
@@ -6400,6 +6406,22 @@ bool Certificate::isAuthority() const
     return result;
 }
 
+bool Certificate::isSelfSigned() const
+{    
+    if (X509_check_purpose(d_x509.get(), -1, 0) != 1) {
+        return false;
+    }
+
+    const bsl::uint32_t extension_flags = 
+        X509_get_extension_flags(d_x509.get());
+
+    if ((extension_flags & EXFLAG_SS) != 0) {
+        return true;
+    }
+
+    return false;
+}
+
 void* Certificate::handle() const
 {
     return d_x509.get();
@@ -7297,6 +7319,7 @@ class SessionContext
     ntctls::Handle<SSL_CTX>                         d_context;
     bsl::shared_ptr<ntctls::Certificate>            d_certificate_sp;
     ntctls::CertificateVector                       d_authorities;
+    ntctls::CertificateVector                       d_intermediaries;
     ntca::EncryptionRole::Value                     d_role;
     ntca::EncryptionMethod::Value                   d_minMethod;
     ntca::EncryptionMethod::Value                   d_maxMethod;
@@ -7331,6 +7354,13 @@ class SessionContext
     /// Set the directory from which to load certificate authorities to the
     /// default directory for the system. Return the error.
     ntsa::Error setCertificateAuthorityDirectoryToDefault();
+
+    /// Add the identity described in the specified 'certificate' as a
+    /// certificate authority, signed by another certificate authority,
+    /// the is used to sign an end-entity certificate but is not itself
+    /// explicitly trusted by a authenticating peer.
+    ntsa::Error addCertificateIntermediary(
+        const bsl::shared_ptr<ntctls::Certificate>& certificate);
 
     /// Trust all certificate authorities installed into the default system
     /// certificate store.
@@ -8540,7 +8570,7 @@ ntsa::Error Session::authenticate(X509_STORE_CTX* x509StoreCtx, X509* x509)
             "Failed to verify certificate: invalid certificate");
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
+    
     const bdlb::NullableValue<ntca::EncryptionValidation>& validation =
         d_upgradeOptions.validation().has_value()
             ? d_upgradeOptions.validation()
@@ -8548,18 +8578,59 @@ ntsa::Error Session::authenticate(X509_STORE_CTX* x509StoreCtx, X509* x509)
 
     if (validation.has_value()) {
         if (validation.value().callback().has_value()) {
-            bsl::shared_ptr<ntctls::Certificate> certificate;
-            certificate.createInplace(d_allocator_p,
-                                      X509_dup(x509),
-                                      d_allocator_p);
+            // MRM: Review docs.
+            // X509_STORE_CTX_get1_certs
+            // X509_STORE_CTX_get1_chain
 
-            const bool isValid =
-                validation.value().callback().value()(certificate->record());
+            bsl::vector<ntca::EncryptionCertificate> certificateVector;
+            {
+                STACK_OF(X509)* chain = 
+                    X509_STORE_CTX_get1_chain(x509StoreCtx);
+                if (chain != 0) {
+                    const int chainSize = sk_X509_num(chain);
+                    certificateVector.resize(chainSize);
+
+                    for (int i = 0; i < chainSize; ++i) {
+                        X509* x509CA = sk_X509_pop(chain);
+
+                        bsl::shared_ptr<ntctls::Certificate> ca;
+                        ca.createInplace(d_allocator_p, x509CA, d_allocator_p);
+
+                        certificateVector[chainSize - i - 1] = ca->record();
+                    }
+
+                    sk_X509_free(chain);
+                }
+            }
+
+            ntca::EncryptionCertificate certificate;
+            {
+                bsl::shared_ptr<ntctls::Certificate> nativeCertificate;
+                nativeCertificate.createInplace(d_allocator_p,
+                                                X509_dup(x509),
+                                                d_allocator_p);
+
+                
+                certificate = nativeCertificate->record();
+            }
+
+            // for (bsl::size_t i = 0; i < certificateVector.size(); ++i) {
+            //     NTCI_LOG_STREAM_DEBUG << "Certificate chain [" 
+            //                           << i 
+            //                           << "] = " 
+            //                           << certificateVector[i] 
+            //                           << NTCI_LOG_STREAM_END;
+            // }
+
+            const ntca::EncryptionCertificateValidator& validator = 
+                validation.value().callback().value();
+
+            const bool isValid = validator(certificate);
 
             if (!isValid) {
                 bsl::stringstream ss;
                 ss << "Failed to verify the authenticity of "
-                   << certificate->record();
+                   << certificate;
 
                 NTCI_LOG_DEBUG("%s", ss.str().c_str());
 
@@ -9192,6 +9263,7 @@ SessionContext::SessionContext(bslma::Allocator* basicAllocator)
 : d_context()
 , d_certificate_sp()
 , d_authorities(basicAllocator)
+, d_intermediaries(basicAllocator)
 , d_role(ntca::EncryptionRole::e_CLIENT)
 , d_minMethod(ntca::EncryptionMethod::e_DEFAULT)
 , d_maxMethod(ntca::EncryptionMethod::e_DEFAULT)
@@ -9518,6 +9590,13 @@ ntsa::Error SessionContext::addResource(
                 return error;
             }
 
+            if (!concreteCertificate->isSelfSigned()) {
+                error = this->addCertificateIntermediary(concreteCertificate);
+                if (error) {
+                    return error;
+                }
+            }
+
             error = this->addCertificateAuthority(concreteCertificate);
             if (error) {
                 return error;
@@ -9630,6 +9709,28 @@ ntsa::Error SessionContext::setCertificateAuthorityDirectory(
         NTCTLS_SESSION_LOG_ERROR("Failed add certificate authority directory");
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
+
+    return ntsa::Error();
+}
+
+ntsa::Error SessionContext::addCertificateIntermediary(
+    const bsl::shared_ptr<ntctls::Certificate>& certificate)
+{
+    NTCI_LOG_CONTEXT();
+
+    int rc;
+
+    if (!d_context) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    rc = SSL_CTX_add1_chain_cert(d_context.get(), certificate->native());
+    if (rc == 0) {
+        NTCTLS_SESSION_LOG_ERROR("Failed add certificate intermediary");
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    d_intermediaries.push_back(certificate);
 
     return ntsa::Error();
 }

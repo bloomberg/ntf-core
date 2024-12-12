@@ -422,6 +422,47 @@ class EncryptionClientOptions
         const bsl::string&                     resourcePath,
         const ntca::EncryptionResourceOptions& resourceOptions);
 
+    /// Add the specified 'certificate' as an intermediate signer in the chain
+    /// of trust used by the end-entity certificate. Note that the effect of
+    /// calling this function is identical to simply calling 'addResource' with
+    /// resource options that indicate the resource contains an intermediate
+    /// certificate.
+    void addIntermediary(const ntca::EncryptionCertificate& certificate);
+
+    /// Add the specified encoded 'resourceData' as an intermediate signer in
+    /// the chain of trust used by the end-entity certificate. Note that the
+    /// effect of calling this function is identical to simply calling
+    /// 'addResourceData' with resource options that indicate the resource
+    /// contains an intermediate certificate.
+    void addIntermediaryData(const bsl::vector<char>& resourceData);
+
+    /// Add the specified encoded 'resourceData' decoded according to the
+    /// specified 'resourceOptions' as an intermediate signer in the chain of
+    /// trust used by the end-entity certificate. Note that the effect of
+    /// calling this function is identical to simply calling 'addResourceData'
+    /// with resource options that indicate the resource contains an
+    /// intermediate certificate.
+    void addIntermediaryData(
+        const bsl::vector<char>&               resourceData,
+        const ntca::EncryptionResourceOptions& resourceOptions);
+
+    /// Set the path to the encoded intermediate signer in the chain of trust
+    /// used by the end-entity certificate data on disk to the specified
+    /// 'resourcePath'. Note that the effect of calling this function is
+    /// identical to simply calling 'addResourcePath' with resource options
+    /// that indicate the resource contains an intermediate certificate.
+    void addIntermediaryFile(const bsl::string& resourcePath);
+
+    /// Set the path to the encoded intermediate signer in the chain of trust
+    /// used by the end-entity certificate  data on disk to the specified
+    /// 'resourcePath' decoded according to the specified 'resourceOptions'.
+    /// Note that the effect of calling this function is identical to simply
+    /// calling 'addResourcePath' with resource options that indicate the
+    /// resource contains an end-user certificate.
+    void addIntermediaryFile(
+        const bsl::string&                     resourcePath,
+        const ntca::EncryptionResourceOptions& resourceOptions);
+
     /// Set the private key to the specified 'certificate'. Note that the
     /// effect of calling this function is identical to simply calling
     /// 'addResource' with resource options that indicate the resource contains

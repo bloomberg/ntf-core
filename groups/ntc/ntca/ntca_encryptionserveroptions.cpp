@@ -162,6 +162,59 @@ void EncryptionServerOptions::setIdentityFile(
     d_options.setIdentityFile(resourcePath, resourceOptions);
 }
 
+
+
+
+
+
+
+
+
+
+
+void EncryptionServerOptions::addIntermediary(
+    const ntca::EncryptionCertificate& certificate)
+{
+    d_options.addIntermediary(certificate);
+}
+
+
+void EncryptionServerOptions::addIntermediaryData(
+    const bsl::vector<char>& resourceData)
+{
+    d_options.addIntermediaryData(resourceData);
+}
+
+void EncryptionServerOptions::addIntermediaryData(
+    const bsl::vector<char>&               resourceData,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    d_options.addIntermediaryData(resourceData, resourceOptions);
+}
+
+void EncryptionServerOptions::addIntermediaryFile(
+    const bsl::string& resourcePath)
+{
+    d_options.addIntermediaryFile(resourcePath);
+}
+
+void EncryptionServerOptions::addIntermediaryFile(
+    const bsl::string&                     resourcePath,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    d_options.addIntermediaryFile(resourcePath, resourceOptions);
+}
+
+
+
+
+
+
+
+
+
+
+
 void EncryptionServerOptions::setPrivateKey(const ntca::EncryptionKey& key)
 {
     d_options.setPrivateKey(key);

@@ -314,6 +314,92 @@ void EncryptionOptions::setIdentityFile(
     this->addResource(resource);
 }
 
+void EncryptionOptions::addIntermediary(
+    const ntca::EncryptionCertificate& certificate)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE_INTERMEDIARY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeCertificate(certificate);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionOptions::addIntermediaryData(
+    const bsl::vector<char>& resourceData)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE_INTERMEDIARY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeData(resourceData);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionOptions::addIntermediaryData(
+    const bsl::vector<char>&               resourceData,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE_INTERMEDIARY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makeData(resourceData);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionOptions::addIntermediaryFile(const bsl::string& resourcePath)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE_INTERMEDIARY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makePath(resourcePath);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
+void EncryptionOptions::addIntermediaryFile(
+    const bsl::string&                     resourcePath,
+    const ntca::EncryptionResourceOptions& resourceOptions)
+{
+    ntca::EncryptionResourceOptions effectiveResourceOptions = resourceOptions;
+    effectiveResourceOptions.setHint(
+        ntca::EncryptionResourceOptions::e_CERTIFICATE_INTERMEDIARY);
+
+    ntca::EncryptionResourceDescriptor resourceDescriptor;
+    resourceDescriptor.makePath(resourcePath);
+
+    ntca::EncryptionResource resource;
+    resource.setDescriptor(resourceDescriptor);
+    resource.setOptions(effectiveResourceOptions);
+
+    this->addResource(resource);
+}
+
 void EncryptionOptions::setPrivateKey(const ntca::EncryptionKey& key)
 {
     ntca::EncryptionResourceOptions effectiveResourceOptions;
