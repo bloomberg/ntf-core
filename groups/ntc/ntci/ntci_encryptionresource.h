@@ -19,6 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_encryptioncertificate.h>
+#include <ntca_encryptionkey.h>
 #include <ntca_encryptionresourceoptions.h>
 #include <ntca_encryptionresourcetype.h>
 #include <ntccfg_platform.h>
@@ -49,12 +51,26 @@ class EncryptionResource
 
     /// Set the private key to the specified 'key'. Return the error.
     virtual ntsa::Error setPrivateKey(
+        const ntca::EncryptionKey& key);
+
+    /// Set the private key to the specified 'key'. Return the error.
+    virtual ntsa::Error setPrivateKey(
         const bsl::shared_ptr<ntci::EncryptionKey>& key);
 
     /// Set the user's certificate to the specified 'certificate'. Return the
     /// error.
     virtual ntsa::Error setCertificate(
+        const ntca::EncryptionCertificate& certificate);
+
+    /// Set the user's certificate to the specified 'certificate'. Return the
+    /// error.
+    virtual ntsa::Error setCertificate(
         const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate);
+
+    /// Add the specified 'certificate' to the list of trusted certificates.
+    /// Return the error.
+    virtual ntsa::Error addCertificateAuthority(
+        const ntca::EncryptionCertificate& certificate);
 
     /// Add the specified 'certificate' to the list of trusted certificates.
     /// Return the error.

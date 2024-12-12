@@ -39,6 +39,7 @@ BSLS_IDENT_RCSID(ntcf_system_t_cpp, "$Id$ $CSID$")
 #include <ntsa_ipv4endpoint.h>
 #include <ntsa_ipv6address.h>
 #include <ntsa_ipv6endpoint.h>
+#include <ntsa_temporary.h>
 #include <ntsf_system.h>
 #include <ntsi_datagramsocket.h>
 #include <ntsi_streamsocket.h>
@@ -461,6 +462,15 @@ class SystemTest
 
     // Verify loading a certificate and key from a single PEM file.
     static void verifyTlsLoading();
+
+    // Verify sending intermediate CA chains.
+    static void verifyTlsIntermediateCA();
+
+    // Verify sending intermediate CA chains, where the end-entity certificate,
+    // the intermediate CA certificates, and the end-entity private key are
+    // stored in a single file, with each object PEM-encoded and concatenated
+    // in that order.
+    static void verifyTlsIntermediateCAFromSingleFile();
 };
 
 /// Describes the parameters of a datagram socket test.
@@ -13053,6 +13063,711 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsLoading)
     interface->linger();
 #endif
 }
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCA)
+{
+    // Concern: Basic TLS usage. Connect a TLS client to a TLS server. Verify
+    // the certificate offered by the server is signed by a certificate
+    // authority trusted by the client.
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error      error;
+    bslmt::Semaphore semaphore;
+
+    // Create and start a pool of I/O threads.
+
+    ntca::InterfaceConfig interfaceConfig;
+    interfaceConfig.setThreadName("example");
+    interfaceConfig.setMinThreads(1);
+    interfaceConfig.setMaxThreads(1);
+
+    bsl::shared_ptr<ntci::Interface> interface =
+        ntcf::System::createInterface(interfaceConfig, NTSCFG_TEST_ALLOCATOR);
+
+    error = interface->start();
+    NTSCFG_TEST_OK(error);
+
+    const bsl::size_t k_NUM_INTERMEDIATE_CA = 3;
+
+    bsl::vector<ntca::EncryptionKey>         authorityKeyVector;
+    bsl::vector<ntca::EncryptionCertificate> authorityCertificateVector;
+
+    for (bsl::size_t i = 0; i < k_NUM_INTERMEDIATE_CA + 1; ++i) {
+        // Generate a certificate and private key for a certificate authority.
+
+        ntca::EncryptionKeyOptions authorityPrivateKeyOptions;
+        authorityPrivateKeyOptions.setType(
+            ntca::EncryptionKeyType::e_NIST_P256);
+
+        ntca::EncryptionKey authorityPrivateKey;
+        error = interface->generateKey(&authorityPrivateKey,
+                                        authorityPrivateKeyOptions,
+                                        NTSCFG_TEST_ALLOCATOR);
+        NTSCFG_TEST_OK(error);
+
+        authorityKeyVector.push_back(authorityPrivateKey);
+
+        ntsa::DistinguishedName authorityIdentity;
+
+        if (i != 0) {
+            bsl::string name = "Intermediate Authority ";
+            name.append(
+                1, static_cast<char>('A' + (k_NUM_INTERMEDIATE_CA - i)));
+            authorityIdentity["CN"] = name;
+        }
+        else {
+            authorityIdentity["CN"] = "Root Authority";
+        }
+
+        ntca::EncryptionCertificateOptions authorityCertificateOptions;
+        authorityCertificateOptions.setAuthority(true);
+
+        ntca::EncryptionCertificate authorityCertificate;
+
+        if (i != 0) {
+            error = interface->generateCertificate(
+                &authorityCertificate,
+                authorityIdentity,
+                authorityPrivateKey,
+                authorityCertificateVector[i - 1],
+                authorityKeyVector[i - 1],
+                authorityCertificateOptions,
+                NTSCFG_TEST_ALLOCATOR);
+            NTSCFG_TEST_OK(error);
+        }
+        else {
+            error = interface->generateCertificate(
+                &authorityCertificate,
+                authorityIdentity,
+                authorityPrivateKey,
+                authorityCertificateOptions,
+                NTSCFG_TEST_ALLOCATOR);
+            NTSCFG_TEST_OK(error);
+        }
+
+        authorityCertificateVector.push_back(authorityCertificate);
+    }
+
+    bsl::reverse(
+        authorityKeyVector.begin(), authorityKeyVector.end());
+    bsl::reverse(
+        authorityCertificateVector.begin(), authorityCertificateVector.end());
+
+    // Generate a certificate and private key for the server, signed by the
+    // intermediate certificate authority farthest from the root certificate
+    // authority.
+
+    ntca::EncryptionKeyOptions serverPrivateKeyOptions;
+    serverPrivateKeyOptions.setType(ntca::EncryptionKeyType::e_NIST_P256);
+
+    ntca::EncryptionKey serverPrivateKey;
+    error = interface->generateKey(&serverPrivateKey,
+                                   serverPrivateKeyOptions,
+                                   NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
+
+    ntsa::DistinguishedName serverIdentity;
+    serverIdentity["CN"] = "Server";
+
+    ntca::EncryptionCertificateOptions serverCertificateOptions;
+    serverCertificateOptions.addHost("test.example.com");
+
+    ntca::EncryptionCertificate serverCertificate;
+    error = interface->generateCertificate(&serverCertificate,
+                                           serverIdentity,
+                                           serverPrivateKey,
+                                           authorityCertificateVector.front(),
+                                           authorityKeyVector.front(),
+                                           serverCertificateOptions,
+                                           NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
+
+    // Create an encryption client, configured to require the server to
+    // provide its certificate, which will be verified by trusting the
+    // certificate authority that signed the server's certificate.
+
+    ntca::EncryptionClientOptions encryptionClientOptions;
+
+    encryptionClientOptions.addAuthority(authorityCertificateVector.back());
+
+    ntca::EncryptionValidation validation;
+    validation.setCallback(&SystemTest::TlsUtil::processValidation);
+
+    encryptionClientOptions.setValidation(validation);
+
+    bsl::shared_ptr<ntci::EncryptionClient> encryptionClient;
+    error = ntcf::System::createEncryptionClient(&encryptionClient,
+                                                 encryptionClientOptions,
+                                                 NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
+
+    // Create an encryption server, configured to not require a client
+    // provide a certificate. Additionally require extra server names
+    // "one" and "two" that may be specifically requested by the client,
+    // and configure the server to provide certificates specific to those
+    // server names, when requested.
+
+    ntca::EncryptionServerOptions encryptionServerOptions;
+
+    encryptionServerOptions.setIdentity(serverCertificate);
+    encryptionServerOptions.setPrivateKey(serverPrivateKey);
+
+    for (bsl::size_t i = 0; i < authorityCertificateVector.size() - 1; ++i) {
+        const ntca::EncryptionCertificate& intermediateAuthority = 
+            authorityCertificateVector[i];
+
+        encryptionServerOptions.addIntermediary(intermediateAuthority);
+    }
+
+    bsl::shared_ptr<ntci::EncryptionServer> encryptionServer;
+    error = ntcf::System::createEncryptionServer(&encryptionServer,
+                                                 encryptionServerOptions,
+                                                 NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
+
+    // Create a listener socket and begin listening.
+
+    ntca::ListenerSocketOptions listenerSocketOptions;
+    listenerSocketOptions.setSourceEndpoint(
+        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+        interface->createListenerSocket(listenerSocketOptions, 
+                                        NTSCFG_TEST_ALLOCATOR);
+
+    error = listenerSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    error = listenerSocket->listen();
+    NTSCFG_TEST_OK(error);
+
+    // Connect a socket to the listener.
+
+    ntca::StreamSocketOptions streamSocketOptions;
+
+    bsl::shared_ptr<ntci::StreamSocket> clientSocket =
+        interface->createStreamSocket(streamSocketOptions, 
+                                      NTSCFG_TEST_ALLOCATOR);
+
+    ntci::ConnectCallback connectCallback =
+        clientSocket->createConnectCallback(
+            NTCCFG_BIND(&SystemTest::TlsUtil::processConnect,
+                        &semaphore,
+                        clientSocket,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2));
+
+    error = clientSocket->connect(listenerSocket->sourceEndpoint(),
+                                  ntca::ConnectOptions(),
+                                  connectCallback);
+    NTSCFG_TEST_OK(error);
+
+    semaphore.wait();
+
+    // Accept a connection from the listener socket's backlog.
+
+    bsl::shared_ptr<ntci::StreamSocket> serverSocket;
+
+    ntci::AcceptCallback acceptCallback = listenerSocket->createAcceptCallback(
+        NTCCFG_BIND(&SystemTest::TlsUtil::processAccept,
+                    &semaphore,
+                    &serverSocket,
+                    listenerSocket,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+
+    error = listenerSocket->accept(ntca::AcceptOptions(), acceptCallback);
+    NTSCFG_TEST_TRUE(!error || error == ntsa::Error::e_WOULD_BLOCK);
+
+    semaphore.wait();
+
+    // Upgrade the server socket to TLS.
+
+    ntca::UpgradeOptions serverUpgradeOptions;
+
+    ntci::UpgradeCallback serverUpgradeCallback =
+        serverSocket->createUpgradeCallback(
+            NTCCFG_BIND(&SystemTest::TlsUtil::processUpgrade,
+                        &semaphore,
+                        serverSocket,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2));
+
+    error = serverSocket->upgrade(encryptionServer,
+                                  serverUpgradeOptions,
+                                  serverUpgradeCallback);
+    NTSCFG_TEST_OK(error);
+
+    // Upgrade the client socket to TLS.
+
+    ntca::UpgradeOptions clientUpgradeOptions;
+
+    ntci::UpgradeCallback clientUpgradeCallback =
+        clientSocket->createUpgradeCallback(
+            NTCCFG_BIND(&SystemTest::TlsUtil::processUpgrade,
+                        &semaphore,
+                        clientSocket,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2));
+
+    error = clientSocket->upgrade(encryptionClient,
+                                  clientUpgradeOptions,
+                                  clientUpgradeCallback);
+    NTSCFG_TEST_OK(error);
+
+    // Wait for the client socket and server socket to complete
+    // upgrading to TLS.
+
+    semaphore.wait();
+    semaphore.wait();
+
+    // Send some data from the client to the server.
+
+    bdlbb::Blob clientData(clientSocket->outgoingBlobBufferFactory().get());
+    bdlbb::BlobUtil::append(&clientData, "Hello, world!", 13);
+
+    ntci::SendCallback sendCallback = clientSocket->createSendCallback(
+        NTCCFG_BIND(&SystemTest::TlsUtil::processSend,
+                    &semaphore,
+                    clientSocket,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2));
+
+    error = clientSocket->send(clientData, ntca::SendOptions(), sendCallback);
+    NTSCFG_TEST_OK(error);
+
+    semaphore.wait();
+
+    // Receive the expected amount of data from the client.
+
+    ntca::ReceiveOptions receiveOptions;
+    receiveOptions.setSize(13);
+
+    bdlbb::Blob serverData;
+
+    ntci::ReceiveCallback receiveCallback =
+        serverSocket->createReceiveCallback(
+            NTCCFG_BIND(&SystemTest::TlsUtil::processReceive,
+                        &semaphore,
+                        &serverData,
+                        serverSocket,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2,
+                        NTCCFG_BIND_PLACEHOLDER_3));
+
+    error = serverSocket->receive(receiveOptions, receiveCallback);
+    NTSCFG_TEST_TRUE(!error || error == ntsa::Error::e_WOULD_BLOCK);
+
+    semaphore.wait();
+
+    // Ensure the data received matches the data sent.
+
+    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(clientData, serverData), 0);
+
+    // Downgrade the client.
+
+    error = clientSocket->downgrade();
+    NTSCFG_TEST_OK(error);
+
+    // Close the client socket.
+
+    clientSocket->close(clientSocket->createCloseCallback(
+        NTCCFG_BIND(&SystemTest::TlsUtil::processClose, &semaphore)));
+
+    semaphore.wait();
+
+    // Close the server socket.
+
+    serverSocket->close(serverSocket->createCloseCallback(
+        NTCCFG_BIND(&SystemTest::TlsUtil::processClose, &semaphore)));
+
+    semaphore.wait();
+
+    // Close the listener socket.
+
+    listenerSocket->close(listenerSocket->createCloseCallback(
+        NTCCFG_BIND(&SystemTest::TlsUtil::processClose, &semaphore)));
+
+    semaphore.wait();
+
+    // Join the interface.
+
+    interface->shutdown();
+    interface->linger();
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
+{
+    // Concern: Basic TLS usage. Connect a TLS client to a TLS server. Verify
+    // the certificate offered by the server is signed by a certificate
+    // authority trusted by the client.
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error      error;
+    bslmt::Semaphore semaphore;
+
+    // Create and start a pool of I/O threads.
+
+    ntca::InterfaceConfig interfaceConfig;
+    interfaceConfig.setThreadName("example");
+    interfaceConfig.setMinThreads(1);
+    interfaceConfig.setMaxThreads(1);
+
+    bsl::shared_ptr<ntci::Interface> interface =
+        ntcf::System::createInterface(interfaceConfig, NTSCFG_TEST_ALLOCATOR);
+
+    error = interface->start();
+    NTSCFG_TEST_OK(error);
+
+    const bsl::size_t k_NUM_INTERMEDIATE_CA = 3;
+
+    bsl::vector<ntca::EncryptionKey>         authorityKeyVector;
+    bsl::vector<ntca::EncryptionCertificate> authorityCertificateVector;
+
+    for (bsl::size_t i = 0; i < k_NUM_INTERMEDIATE_CA + 1; ++i) {
+        // Generate a certificate and private key for a certificate authority.
+
+        ntca::EncryptionKeyOptions authorityPrivateKeyOptions;
+        authorityPrivateKeyOptions.setType(
+            ntca::EncryptionKeyType::e_NIST_P256);
+
+        ntca::EncryptionKey authorityPrivateKey;
+        error = interface->generateKey(&authorityPrivateKey,
+                                        authorityPrivateKeyOptions,
+                                        NTSCFG_TEST_ALLOCATOR);
+        NTSCFG_TEST_OK(error);
+
+        authorityKeyVector.push_back(authorityPrivateKey);
+
+        ntsa::DistinguishedName authorityIdentity;
+
+        if (i != 0) {
+            bsl::string name = "Intermediate Authority ";
+            name.append(
+                1, static_cast<char>('A' + (k_NUM_INTERMEDIATE_CA - i)));
+            authorityIdentity["CN"] = name;
+        }
+        else {
+            authorityIdentity["CN"] = "Root Authority";
+        }
+
+        ntca::EncryptionCertificateOptions authorityCertificateOptions;
+        authorityCertificateOptions.setAuthority(true);
+
+        ntca::EncryptionCertificate authorityCertificate;
+
+        if (i != 0) {
+            error = interface->generateCertificate(
+                &authorityCertificate,
+                authorityIdentity,
+                authorityPrivateKey,
+                authorityCertificateVector[i - 1],
+                authorityKeyVector[i - 1],
+                authorityCertificateOptions,
+                NTSCFG_TEST_ALLOCATOR);
+            NTSCFG_TEST_OK(error);
+        }
+        else {
+            error = interface->generateCertificate(
+                &authorityCertificate,
+                authorityIdentity,
+                authorityPrivateKey,
+                authorityCertificateOptions,
+                NTSCFG_TEST_ALLOCATOR);
+            NTSCFG_TEST_OK(error);
+        }
+
+        authorityCertificateVector.push_back(authorityCertificate);
+    }
+
+    bsl::reverse(
+        authorityKeyVector.begin(), authorityKeyVector.end());
+    bsl::reverse(
+        authorityCertificateVector.begin(), authorityCertificateVector.end());
+
+    // Generate a certificate and private key for the server, signed by the
+    // intermediate certificate authority farthest from the root certificate
+    // authority.
+
+    ntca::EncryptionKeyOptions serverPrivateKeyOptions;
+    serverPrivateKeyOptions.setType(ntca::EncryptionKeyType::e_NIST_P256);
+
+    ntca::EncryptionKey serverPrivateKey;
+    error = interface->generateKey(&serverPrivateKey,
+                                   serverPrivateKeyOptions,
+                                   NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
+
+    ntsa::DistinguishedName serverIdentity;
+    serverIdentity["CN"] = "Server";
+
+    ntca::EncryptionCertificateOptions serverCertificateOptions;
+    serverCertificateOptions.addHost("test.example.com");
+
+    ntca::EncryptionCertificate serverCertificate;
+    error = interface->generateCertificate(&serverCertificate,
+                                           serverIdentity,
+                                           serverPrivateKey,
+                                           authorityCertificateVector.front(),
+                                           authorityKeyVector.front(),
+                                           serverCertificateOptions,
+                                           NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
+
+    // Create an encryption client, configured to require the server to
+    // provide its certificate, which will be verified by trusting the
+    // certificate authority that signed the server's certificate.
+
+    ntca::EncryptionClientOptions encryptionClientOptions;
+
+    encryptionClientOptions.addAuthority(authorityCertificateVector.back());
+
+    ntca::EncryptionValidation validation;
+    validation.setCallback(&SystemTest::TlsUtil::processValidation);
+
+    encryptionClientOptions.setValidation(validation);
+
+    bsl::shared_ptr<ntci::EncryptionClient> encryptionClient;
+    error = ntcf::System::createEncryptionClient(&encryptionClient,
+                                                 encryptionClientOptions,
+                                                 NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
+
+    // Create an encryption server, configured to not require a client
+    // provide a certificate. Additionally require extra server names
+    // "one" and "two" that may be specifically requested by the client,
+    // and configure the server to provide certificates specific to those
+    // server names, when requested.
+
+    ntsa::TemporaryFile serverFile;
+    {
+        bsl::string serverFileContent;
+
+        ntca::EncryptionResourceOptions serverFileContentOptions;
+        serverFileContentOptions.setType(
+            ntca::EncryptionResourceType::e_ASN1_PEM);
+
+        bsl::shared_ptr<ntci::EncryptionResource> serverResource;
+        error = interface->createEncryptionResource(&serverResource, 
+                                                    NTSCFG_TEST_ALLOCATOR);
+        NTSCFG_TEST_OK(error);
+
+        error = serverResource->setCertificate(serverCertificate);
+        NTSCFG_TEST_OK(error);
+
+        error = serverResource->setPrivateKey(serverPrivateKey);
+        NTSCFG_TEST_OK(error);
+
+        for (bsl::size_t i = 0; i < authorityCertificateVector.size() - 1; ++i) 
+        {
+            const ntca::EncryptionCertificate& intermediateAuthority = 
+                authorityCertificateVector[i];
+
+            error = serverResource->addCertificateAuthority(
+                intermediateAuthority);
+            NTSCFG_TEST_OK(error);
+        }
+
+        error = serverResource->encode(
+            &serverFileContent, serverFileContentOptions);
+        NTSCFG_TEST_OK(error);
+
+        error = serverFile.write(serverFileContent);
+        NTSCFG_TEST_OK(error);
+
+        // bsl::printf("Using server resource:\n%s\n",
+        //             serverFileContent.c_str());
+    }
+
+    ntca::EncryptionServerOptions encryptionServerOptions;
+    encryptionServerOptions.addResourceFile(serverFile.path());
+
+    bsl::shared_ptr<ntci::EncryptionServer> encryptionServer;
+    error = ntcf::System::createEncryptionServer(&encryptionServer,
+                                                 encryptionServerOptions,
+                                                 NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
+
+    // Create a listener socket and begin listening.
+
+    ntca::ListenerSocketOptions listenerSocketOptions;
+    listenerSocketOptions.setSourceEndpoint(
+        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+        interface->createListenerSocket(listenerSocketOptions, 
+                                        NTSCFG_TEST_ALLOCATOR);
+
+    error = listenerSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    error = listenerSocket->listen();
+    NTSCFG_TEST_OK(error);
+
+    // Connect a socket to the listener.
+
+    ntca::StreamSocketOptions streamSocketOptions;
+
+    bsl::shared_ptr<ntci::StreamSocket> clientSocket =
+        interface->createStreamSocket(streamSocketOptions, 
+                                      NTSCFG_TEST_ALLOCATOR);
+
+    ntci::ConnectCallback connectCallback =
+        clientSocket->createConnectCallback(
+            NTCCFG_BIND(&SystemTest::TlsUtil::processConnect,
+                        &semaphore,
+                        clientSocket,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2));
+
+    error = clientSocket->connect(listenerSocket->sourceEndpoint(),
+                                  ntca::ConnectOptions(),
+                                  connectCallback);
+    NTSCFG_TEST_OK(error);
+
+    semaphore.wait();
+
+    // Accept a connection from the listener socket's backlog.
+
+    bsl::shared_ptr<ntci::StreamSocket> serverSocket;
+
+    ntci::AcceptCallback acceptCallback = listenerSocket->createAcceptCallback(
+        NTCCFG_BIND(&SystemTest::TlsUtil::processAccept,
+                    &semaphore,
+                    &serverSocket,
+                    listenerSocket,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    NTCCFG_BIND_PLACEHOLDER_3));
+
+    error = listenerSocket->accept(ntca::AcceptOptions(), acceptCallback);
+    NTSCFG_TEST_TRUE(!error || error == ntsa::Error::e_WOULD_BLOCK);
+
+    semaphore.wait();
+
+    // Upgrade the server socket to TLS.
+
+    ntca::UpgradeOptions serverUpgradeOptions;
+
+    ntci::UpgradeCallback serverUpgradeCallback =
+        serverSocket->createUpgradeCallback(
+            NTCCFG_BIND(&SystemTest::TlsUtil::processUpgrade,
+                        &semaphore,
+                        serverSocket,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2));
+
+    error = serverSocket->upgrade(encryptionServer,
+                                  serverUpgradeOptions,
+                                  serverUpgradeCallback);
+    NTSCFG_TEST_OK(error);
+
+    // Upgrade the client socket to TLS.
+
+    ntca::UpgradeOptions clientUpgradeOptions;
+
+    ntci::UpgradeCallback clientUpgradeCallback =
+        clientSocket->createUpgradeCallback(
+            NTCCFG_BIND(&SystemTest::TlsUtil::processUpgrade,
+                        &semaphore,
+                        clientSocket,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2));
+
+    error = clientSocket->upgrade(encryptionClient,
+                                  clientUpgradeOptions,
+                                  clientUpgradeCallback);
+    NTSCFG_TEST_OK(error);
+
+    // Wait for the client socket and server socket to complete
+    // upgrading to TLS.
+
+    semaphore.wait();
+    semaphore.wait();
+
+    // Send some data from the client to the server.
+
+    bdlbb::Blob clientData(clientSocket->outgoingBlobBufferFactory().get());
+    bdlbb::BlobUtil::append(&clientData, "Hello, world!", 13);
+
+    ntci::SendCallback sendCallback = clientSocket->createSendCallback(
+        NTCCFG_BIND(&SystemTest::TlsUtil::processSend,
+                    &semaphore,
+                    clientSocket,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2));
+
+    error = clientSocket->send(clientData, ntca::SendOptions(), sendCallback);
+    NTSCFG_TEST_OK(error);
+
+    semaphore.wait();
+
+    // Receive the expected amount of data from the client.
+
+    ntca::ReceiveOptions receiveOptions;
+    receiveOptions.setSize(13);
+
+    bdlbb::Blob serverData;
+
+    ntci::ReceiveCallback receiveCallback =
+        serverSocket->createReceiveCallback(
+            NTCCFG_BIND(&SystemTest::TlsUtil::processReceive,
+                        &semaphore,
+                        &serverData,
+                        serverSocket,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2,
+                        NTCCFG_BIND_PLACEHOLDER_3));
+
+    error = serverSocket->receive(receiveOptions, receiveCallback);
+    NTSCFG_TEST_TRUE(!error || error == ntsa::Error::e_WOULD_BLOCK);
+
+    semaphore.wait();
+
+    // Ensure the data received matches the data sent.
+
+    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(clientData, serverData), 0);
+
+    // Downgrade the client.
+
+    error = clientSocket->downgrade();
+    NTSCFG_TEST_OK(error);
+
+    // Close the client socket.
+
+    clientSocket->close(clientSocket->createCloseCallback(
+        NTCCFG_BIND(&SystemTest::TlsUtil::processClose, &semaphore)));
+
+    semaphore.wait();
+
+    // Close the server socket.
+
+    serverSocket->close(serverSocket->createCloseCallback(
+        NTCCFG_BIND(&SystemTest::TlsUtil::processClose, &semaphore)));
+
+    semaphore.wait();
+
+    // Close the listener socket.
+
+    listenerSocket->close(listenerSocket->createCloseCallback(
+        NTCCFG_BIND(&SystemTest::TlsUtil::processClose, &semaphore)));
+
+    semaphore.wait();
+
+    // Join the interface.
+
+    interface->shutdown();
+    interface->linger();
+}
+
+
 
 }  // close namespace ntcf
 }  // close namespace BloombergLP

@@ -33,6 +33,13 @@ EncryptionResource::~EncryptionResource()
 }
 
 ntsa::Error EncryptionResource::setPrivateKey(
+    const ntca::EncryptionKey& key)
+{
+    NTCCFG_WARNING_UNUSED(key);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error EncryptionResource::setPrivateKey(
     const bsl::shared_ptr<ntci::EncryptionKey>& key)
 {
     NTCCFG_WARNING_UNUSED(key);
@@ -40,7 +47,21 @@ ntsa::Error EncryptionResource::setPrivateKey(
 }
 
 ntsa::Error EncryptionResource::setCertificate(
+    const ntca::EncryptionCertificate& certificate)
+{
+    NTCCFG_WARNING_UNUSED(certificate);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error EncryptionResource::setCertificate(
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate)
+{
+    NTCCFG_WARNING_UNUSED(certificate);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error EncryptionResource::addCertificateAuthority(
+    const ntca::EncryptionCertificate& certificate)
 {
     NTCCFG_WARNING_UNUSED(certificate);
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
