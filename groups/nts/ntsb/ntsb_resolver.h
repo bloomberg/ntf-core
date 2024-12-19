@@ -198,7 +198,7 @@ class ResolverOverrides
 
 /// Provide a blocking resolver implemented by the system.
 ///
-/// @par Thread Safey
+/// @par Thread Safety
 /// This class is thread safe.
 class Resolver : public ntsi::Resolver
 {

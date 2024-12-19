@@ -280,7 +280,7 @@ class DatagramSocketTest::DatagramSocketSession
 
   public:
     /// Create a new datagram socket application implemented using the
-    /// specified 'datagramSocket' that operates according to the specfied
+    /// specified 'datagramSocket' that operates according to the specified
     /// test 'parameters'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.

@@ -3294,7 +3294,7 @@ class EncryptionCertificateSubjectKeyUsageExtendedType
         // Code signature.
         e_CODE_SIGNING,
 
-        // Email authenticiation.
+        // Email authentication.
         e_EMAIL
     };
 
@@ -3505,18 +3505,18 @@ class EncryptionCertificateSubjectKeyUsageType
     /// Enumerate subject key usage types.
     enum Value {
         /// The subject's key can be used to verify digital signatures that
-        /// aren't explicitly signatures in certicates and certificate
+        /// aren't explicitly signatures in certificates and certificate
         /// revocation lists.
         e_DIGITAL_SIGNATURE = 0,
 
         /// The subject's key can be used to verify digital signatures that
-        /// aren't explicitly signatures in certicates and certificate
+        /// aren't explicitly signatures in certificates and certificate
         /// revocation lists to provide non-repudiation, i.e., to prevent a
-        /// signer from falsly denying their signature.
+        /// signer from falsely denying their signature.
         e_CONTENT_COMMITMENT = 1,
 
         /// The subject's key can be used to encipher private keys during the
-        /// transporation of keys.
+        /// transportation of keys.
         e_KEY_ENCIPHER = 2,
 
         /// The subject's key can be used to encipher user data without the
@@ -3527,7 +3527,7 @@ class EncryptionCertificateSubjectKeyUsageType
         e_KEY_AGREEMENT = 4,
 
         /// The subject's key can be used to verify signatures on certificates.
-        e_KEY_CERTFICATE_SIGNATURE = 5,
+        e_KEY_CERTIFICATE_SIGNATURE = 5,
 
         /// The subject's key can be used to verify signatures on certificate
         /// revocation lists.
@@ -3838,7 +3838,7 @@ void hashAppend(HASH_ALGORITHM&                                  algorithm,
     value.hash(algorithm);
 }
 
-/// Describe encryption certificate subject (i.e. basic) contraints.
+/// Describe encryption certificate subject (i.e. basic) constraints.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -4397,10 +4397,10 @@ class EncryptionCertificateExtensionValue
         // The extension value represents a subject or issuer name alternative.
         e_NAME_ALTERNATIVE = 2,
 
-        // The extension value represents a certficate subject.
+        // The extension value represents a certificate subject.
         e_SUBJECT = 3,
 
-        // The extension value represents a certficate subject key identifier.
+        // The extension value represents a certificate subject key identifier.
         e_SUBJECT_KEY_IDENTIFIER = 4,
 
         // The extension value represents subject key usage.
@@ -4412,22 +4412,22 @@ class EncryptionCertificateExtensionValue
         // The extension value represents subject constraints.
         e_SUBJECT_CONSTRAINTS = 7,
 
-        // The extension value represents a certficate issuer.
+        // The extension value represents a certificate issuer.
         e_ISSUER = 8,
 
-        // The extension value represents a certficate issuer key identifier.
+        // The extension value represents a certificate issuer key identifier.
         e_ISSUER_KEY_IDENTIFIER = 9,
 
         // The extension value represents a certificate issuer information.
         e_ISSUER_INFORMATION_ACCESS = 10,
 
-        // The extension value represents certficate policies.
+        // The extension value represents certificate policies.
         e_POLICY = 11,
 
-        // The extension value represents certficate policy mappings.
+        // The extension value represents certificate policy mappings.
         e_POLICY_MAPPINGS = 12,
 
-        // The extension value represents certficate policy constraints.
+        // The extension value represents certificate policy constraints.
         e_POLICY_CONSTRAINTS = 13,
 
         // The extension value represents an octet string.
@@ -5345,7 +5345,7 @@ void hashAppend(HASH_ALGORITHM&                           algorithm,
 /// The unique identifier of the issuer.
 ///
 /// @li @b extensionList:
-/// The list of extensions that futher define properties of the certificate.
+/// The list of extensions that further define properties of the certificate.
 ///
 /// @li @b validity:
 /// The date/time interval in which the certificate is valid.
@@ -5589,7 +5589,7 @@ void hashAppend(HASH_ALGORITHM&                    algorithm,
 /// The unique identifier of the issuer.
 ///
 /// @li @b extensionList:
-/// The list of extensions that futher define properties of the certificate.
+/// The list of extensions that further define properties of the certificate.
 ///
 /// @li @b validity:
 /// The date/time interval in which the certificate is valid.

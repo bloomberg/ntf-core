@@ -32,7 +32,7 @@ namespace ntsa {
 /// Provide an identity for run-time objects unique to the local process.
 ///
 /// @details
-/// This class represents an identifer of an object unique to the local
+/// This class represents an identifier of an object unique to the local
 /// process. The value of the identifier is automatically generated as a
 /// sequence of monotonically increasing 32-bit integers starting at 1.
 ///
@@ -51,7 +51,7 @@ namespace ntsa {
 ///         ntsa::Id d_id;
 ///       public:
 ///         Object();
-///             // Create a new object and automatally assign it an identifier
+///             // Create a new object and automatically assign it an identifier
 ///             // locally unique to the current process.
 ///
 ///         const ntsa::Id& id() const;
@@ -60,7 +60,7 @@ namespace ntsa {
 ///     };
 ///
 /// Then, we can define this class's implementation by using the automatic
-/// identifer generation capabilities provided by this component.
+/// identifier generation capabilities provided by this component.
 ///
 ///     Object::Object()
 ///     : d_id(ntsa::Id::generate())
@@ -93,7 +93,7 @@ namespace ntsa {
 /// @ingroup module_ntsa_identity
 class Id
 {
-    int d_value;  // The generated identifer value
+    int d_value;  // The generated identifier value
 
     static bsls::AtomicInt s_next;  // The next available identifier value
 

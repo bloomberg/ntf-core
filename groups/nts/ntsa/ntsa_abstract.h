@@ -139,7 +139,7 @@ struct AbstractSyntaxTagNumber {
         /// The type is reserved for BER.
         e_END_OF_CONTENTS = 0,
 
-        /// THe type is a boolean value.
+        /// The type is a boolean value.
         e_BOOLEAN = 1,
 
         /// The type is an integer value.
@@ -982,7 +982,7 @@ class AbstractSyntaxDecoderFrame
     void setTagNumber(bsl::size_t value);
 
     /// Set the absolute position of the beginning of the tag in the data
-    /// stream to the speicfied 'value'.
+    /// stream to the specified 'value'.
     void setTagPosition(bsl::uint64_t value);
 
     /// Set the number of bytes comprising the tag (and the length) to the

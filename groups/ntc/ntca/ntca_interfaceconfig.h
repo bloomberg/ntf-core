@@ -59,14 +59,14 @@ namespace ntca {
 /// equal to 16 characters.
 ///
 /// @li @b minThreads:
-/// The minimum number of threads in the thread pool. If the minumum number of
+/// The minimum number of threads in the thread pool. If the minimum number of
 /// threads is less than the maximum number of threads, new threads will be
 /// dynamically and automatically added to the thread pool as necessary, up to
 /// the maximum number of threads allowed. Set to 0 to externally manage the
 /// threads using reactors or proactors to implement asynchronous behavior.
 ///
 /// @li @b maxThreads:
-/// The maximum number of threads in the thread pool. If the minumum number of
+/// The maximum number of threads in the thread pool. If the minimum number of
 /// threads is less than the maximum number of threads, new threads will be
 /// dynamically and automatically added to the thread pool as necessary, up to
 /// the maximum number of threads allowed. Set to 0 to externally manage the
@@ -89,11 +89,12 @@ namespace ntca {
 /// The maximum number of cycles to perform to both discover if any functions
 /// have had their execution deferred to be invoked on the I/O thread and to
 /// discover any timers that are due. A higher value mitigates the cost of
-/// instantanously polling for socket events each time a batch of functions are
-/// deferred or timers scheduled to be executed, if it is likely that no socket
-/// events have occured, at the possible expense of starving the I/O thread
-/// from being able to process socket events that actually have occurred. The
-/// default value is null, indicating that only one cycle is performed.
+/// instantaneously polling for socket events each time a batch of functions
+/// are deferred or timers scheduled to be executed, if it is likely that no
+/// socket events have occurred, at the possible expense of starving the I/O
+/// thread from being able to process socket events that actually have
+/// occurred. The default value is null, indicating that only one cycle is
+/// performed.
 ///
 /// @li @b maxConnections:
 /// The maximum number of supported simultaneous connections.
@@ -117,7 +118,7 @@ namespace ntca {
 /// closed.
 ///
 /// @li @b writeQueueLowWatermark:
-/// The size the write queue must be drained down to before the implemenation
+/// The size the write queue must be drained down to before the implementation
 /// announces a low watermark event.
 ///
 /// @li @b writeQueueHighWatermark:
@@ -136,7 +137,7 @@ namespace ntca {
 ///
 /// @li @b acceptGreedily:
 /// The flag indicating that pending connections on the backlog should be
-/// repeatedly acceoted until the operating system indicates the backlog is
+/// repeatedly accepted until the operating system indicates the backlog is
 /// empty. If false, only one accept attempt is made each time the operating
 /// system indicates that the backlog is non-empty. When set to true, this
 /// option indicates the user favors a lower minimum latency and higher maximum
@@ -267,7 +268,7 @@ namespace ntca {
 ///
 /// @li @b dynamicLoadBalancing:
 /// The flag that indicates that a single reactor or proactor should be shared
-/// among all threads. If false, each thread mantains its own reactor or
+/// among all threads. If false, each thread maintains its own reactor or
 /// proactor. When set to true, this option indicates the user favors fairness
 /// and latency at the expense of efficiency, throughput and higher CPU usage.
 /// When set to false, this option indicates the user favors greater efficiency

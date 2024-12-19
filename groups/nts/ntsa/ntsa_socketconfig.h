@@ -110,7 +110,7 @@ namespace ntsa {
 ///
 /// @li @b zeroCopy:
 /// The flag that indicates each send operation can request copy avoidance when
-/// enqueing data to the socket send buffer.
+/// enqueuing data to the socket send buffer.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -225,7 +225,7 @@ class SocketConfig
     void setTimestampOutgoingData(bool value);
 
     /// Set the flag that indicates each send operation can request copy
-    /// avoidance when enqueing data to the socket send buffer to the specified
+    /// avoidance when enqueuing data to the socket send buffer to the specified
     /// 'value'.
     void setZeroCopy(bool value);
 
@@ -294,7 +294,7 @@ class SocketConfig
     const bdlb::NullableValue<bool>& timestampOutgoingData() const;
 
     /// Return the flag that indicates each send operation can request copy
-    /// avoidance when enqueing data to the socket send buffer.
+    /// avoidance when enqueuing data to the socket send buffer.
     const bdlb::NullableValue<bool>& zeroCopy() const;
 
     /// Return true if this object has the same value as the specified

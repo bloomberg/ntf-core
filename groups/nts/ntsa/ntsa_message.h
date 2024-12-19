@@ -90,7 +90,7 @@ class Message
     NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(Message);
 };
 
-/// Provide a  contiguous sequence of buffers of non-modifable, potentially
+/// Provide a  contiguous sequence of buffers of non-modifiable, potentially
 /// discontiguous data to send to an endpoint.
 class ConstMessage
 {
@@ -172,7 +172,7 @@ class ConstMessage
     NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(ConstMessage);
 };
 
-/// Provide a contiguous sequence of buffers of modifable, potentially
+/// Provide a contiguous sequence of buffers of modifiable, potentially
 /// discontiguous data to receive from an endpoint.
 class MutableMessage
 {

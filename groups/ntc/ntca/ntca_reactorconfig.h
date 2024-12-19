@@ -92,11 +92,12 @@ namespace ntca {
 /// The maximum number of cycles to perform to both discover if any functions
 /// have had their execution deferred to be invoked on the I/O thread and to
 /// discover any timers that are due. A higher value mitigates the cost of
-/// instantanously polling for socket events each time a batch of functions are
-/// deferred or timers scheduled to be executed, if it is likely that no socket
-/// events have occured, at the possible expense of starving the I/O thread
-/// from being able to process socket events that actually have occurred. The
-/// default value is null, indicating that only one cycle is performed.
+/// instantaneously polling for socket events each time a batch of functions
+/// are deferred or timers scheduled to be executed, if it is likely that no
+/// socket events have occurred, at the possible expense of starving the I/O
+/// thread from being able to process socket events that actually have
+/// occurred. The default value is null, indicating that only one cycle is
+/// performed.
 ///
 /// @li @b metricCollection:
 /// The flag that indicates the collection of metrics is enabled or disabled.
@@ -119,13 +120,13 @@ namespace ntca {
 /// @li @b autoDetach:
 /// Automatically detach the socket from the reactor when interest in all
 /// events is lost. If this flag is unset or false, sockets must be explicitly
-/// detached from the reactor. The deefault value is unset, or effectively
+/// detached from the reactor. The default value is unset, or effectively
 /// false.
 ///
 /// @li @b oneShot:
 /// Process events detected by the reactor in one-shot mode: once an event is
 /// detected, it must be explicitly re-armed before being detected again. When
-/// running the same reactor simulataneously by multiple threads, configuring
+/// running the same reactor simultaneously by multiple threads, configuring
 /// the reactor in one-shot mode is practically required. The default value is
 /// unset, or effectively false when the reactor is driven by only one thread,
 /// and effectively true when the reactor is driven by more than one thread.
@@ -240,7 +241,7 @@ class ReactorConfig
     void setMetricCollectionPerSocket(bool value);
 
     /// Set the flag that indicates a socket should be automatically
-    /// attached to the reactor when interest in any event for a sodcket is
+    /// attached to the reactor when interest in any event for a socket is
     /// gained to the specified 'value'.
     void setAutoAttach(bool value);
 
@@ -311,7 +312,7 @@ class ReactorConfig
     const bdlb::NullableValue<bool>& metricCollectionPerSocket() const;
 
     /// Return the flag that indicates a socket should be automatically
-    /// attached to the reactor when interest in any event for a sodcket is
+    /// attached to the reactor when interest in any event for a socket is
     /// gained.
     const bdlb::NullableValue<bool>& autoAttach() const;
 

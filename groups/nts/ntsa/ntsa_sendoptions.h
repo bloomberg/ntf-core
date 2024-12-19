@@ -52,11 +52,11 @@ namespace ntsa {
 ///
 /// @li @b maxBytes:
 /// The hint for the maximum number of bytes to copy to the socket send buffer.
-/// This value does not stricly imply the maximum number of bytes to copy to
+/// This value does not strictly imply the maximum number of bytes to copy to
 /// the socket send buffer; this value is only used, potentially, for internal
 /// optimizations when defining native scatter/gather buffer arrays on-the-fly.
 /// Setting this value to the maximum size of the socket send buffer may help
-/// the implemention avoid attempting to copy more bytes than the maximum
+/// the implementation avoid attempting to copy more bytes than the maximum
 /// number of bytes that can effectively be copied, improving the efficiency of
 /// the copy operation. Note that setting this value to a number less than the
 /// size of the socket send buffer may risk silently truncating a message when
@@ -67,7 +67,7 @@ namespace ntsa {
 ///
 /// @li @b maxBuffers:
 /// The hint for the maximum number of buffers to copy to the socket send
-/// buffer. This value does not stricly imply the maximum number of buffers to
+/// buffer. This value does not strictly imply the maximum number of buffers to
 /// copy to the socket send buffer; this value is only used, potentially, for
 /// internal optimizations when defining native scatter/gather buffer arrays
 /// on-the-fly. Setting this value less than the system limit may help the

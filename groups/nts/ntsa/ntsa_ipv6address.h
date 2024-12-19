@@ -132,7 +132,7 @@ class Ipv6Address
 
     /// Format the IPv6 address into the specified 'buffer' having the
     /// specified 'capacity'. If the specified 'collapse' flag is true,
-    /// collapse longesta successive runs of result matching the regular
+    /// collapse longest successive runs of result matching the regular
     /// expression '/(^0|:)[:0]{2,}/' with "::", turning the result into the
     /// canonical textual representation of the address. Return the number
     /// of bytes written.

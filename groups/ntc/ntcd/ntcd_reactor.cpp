@@ -239,7 +239,7 @@ void Reactor::initialize()
     d_monitor_sp->setTrigger(d_config.trigger().value());
     d_monitor_sp->setOneShot(d_config.oneShot().value());
 
-#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS
     d_detachFunctor_sp.createInplace(d_allocator_p, [this](const auto& entry) {
         return this->removeDetached(entry);
     });

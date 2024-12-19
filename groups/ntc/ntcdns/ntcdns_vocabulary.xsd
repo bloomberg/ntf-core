@@ -38,7 +38,7 @@
       <xs:enumeration value='MF'  bdem:id='4' bdem:name='ENUM_MF'>
         <xs:annotation>
           <xs:documentation>
-          Mail forwarder (obseolete, use MX).
+          Mail forwarder (obsolete, use MX).
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
@@ -303,7 +303,7 @@
       <xs:enumeration value='OPT'  bdem:id='41' bdem:name='ENUM_OPT'>
         <xs:annotation>
           <xs:documentation>
-          Pseudo-record type to supprt EDNS.
+          Pseudo-record type to support EDNS.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>

@@ -72,7 +72,7 @@ namespace ntsa {
 ///     };
 ///
 /// Then, we can define this class's implementation by using the automatic
-/// identifer generation capabilities provided by this component.
+/// identifier generation capabilities provided by this component.
 ///
 ///     Object::Object()
 ///     : d_id(ntsa::Guid::generate())
@@ -96,7 +96,7 @@ namespace ntsa {
 ///     bsl::cout << object2.guid() << bsl::endl;
 ///
 /// Notice that standard output has the following data written to it on the test
-/// machine (as every GUID is globably unique, these GUIDs are just an example.)
+/// machine (as every GUID is globally unique, these GUIDs are just an example.)
 ///
 ///     10.0.2.15:8593:27SEP2018_15:02:58.613000396
 ///     10.0.2.15:8593:27SEP2018_15:02:58.613000821

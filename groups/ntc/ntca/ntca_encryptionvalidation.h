@@ -214,7 +214,7 @@ class EncryptionValidation
     /// Require a valid certificate be associated with the specified electronic
     /// mail address 'value', in the form specified by RFC 822. Note that
     /// multiple email addresses may be specified, but a certificate is
-    /// considered valid if its associated email adddress matches any of the
+    /// considered valid if its associated email address matches any of the
     /// required email addresses.
     void requireMail(const bsl::string& value);
 

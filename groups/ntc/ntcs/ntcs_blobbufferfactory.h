@@ -342,7 +342,7 @@ struct BlobBufferPoolHandleUtil {
     /// Return the object pointer represented by the specified 'address'.
     static PtrType getPtr(RawType address);
 
-    /// Return the tag represented by the specfied 'address'.
+    /// Return the tag represented by the specified 'address'.
     static TagType getTag(RawType address);
 
     /// Return the maximum tag value for the alignment.

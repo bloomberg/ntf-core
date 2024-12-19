@@ -85,7 +85,7 @@ class ShutdownContext
     /// Return the origin of the shutdown sequence.
     ntsa::ShutdownOrigin::Value origin() const;
 
-    /// Return theflag that indicates the socket has been shut down for
+    /// Return the flag that indicates the socket has been shut down for
     /// sending at the time of the event.
     bool send() const;
 

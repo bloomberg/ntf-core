@@ -60,11 +60,11 @@ namespace ntsa {
 ///
 /// @li @b maxBytes:
 /// The hint for the maximum number of bytes to copy from the socket receive
-/// buffer. This value does not stricly imply the maximum number of bytes to
+/// buffer. This value does not strictly imply the maximum number of bytes to
 /// copy from the socket receive buffer; this value is only used, potentially,
 /// for internal optimizations when defining native scatter/gather buffer
 /// arrays on-the-fly. Setting this value to the maximum size of the socket
-/// receive buffer may help the implemention avoid attempting to copy more
+/// receive buffer may help the implementation avoid attempting to copy more
 /// bytes than the maximum number of bytes that can effectively be copied,
 /// improving the efficiency of the copy operation. Note that setting this
 /// value to a number less than the size of the socket receive buffer may risk
@@ -76,7 +76,7 @@ namespace ntsa {
 ///
 /// @li @b maxBuffers:
 /// The hint for the maximum number of buffers to copy from the socket receive
-/// buffer. This value does not stricly imply the maximum number of buffers to
+/// buffer. This value does not strictly imply the maximum number of buffers to
 /// copy from the socket receive buffer; this value is only used, potentially,
 /// for internal optimizations when defining native scatter/gather buffer
 /// arrays on-the-fly. Setting this value less than the system limit may help
@@ -140,12 +140,12 @@ class ReceiveOptions
     void hideEndpoint();
 
     /// Set the flag which indicates that both software and hardware
-    /// timestamsps should also be received and included in the resulting
+    /// timestamps should also be received and included in the resulting
     /// receive context.
     void showTimestamp();
 
     /// Clear the flag which indicates that both software and hardware
-    /// timestamsps should also be received and included in the resulting
+    /// timestamps should also be received and included in the resulting
     /// receive context.
     void hideTimestamp();
 

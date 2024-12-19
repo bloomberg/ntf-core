@@ -34,7 +34,7 @@ namespace ntsa {
 /// @details
 /// This component provides a value-semantic type, 'ntsa::DomainName', that
 /// represents a Domain Name as described by RFC 1035. A Domain Name is a
-/// sequence of characters that desscribe hierarchical areas of authority and
+/// sequence of characters that describe hierarchical areas of authority and
 /// control within the Internet. Domain Names are subordinate levels of the
 /// Domain Name System (DNS) root domain, read right-to-left. The first level
 /// is the "top-level" domain under the root. Subsequent sub-domains describe
@@ -207,7 +207,7 @@ class DomainName
     bool equals(const DomainName& other) const;
 
     /// Return true if this object has the same value as the specified
-    /// 'text', comparing without case sensitity, otherwise return false.
+    /// 'text', comparing without case sensitivity, otherwise return false.
     bool equals(const bslstl::StringRef& other) const;
 
     /// Return true if the value of this object is less than the value of

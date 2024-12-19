@@ -143,7 +143,7 @@ class MutableBuffer
     /// Append to the specified 'blob' a copy of the data referenced by the
     /// specified 'bufferArray' having the specified 'bufferCount' number of
     /// buffer starting at the specified logical 'offset', in bytes, in the
-    /// logical seqeuence of bytes referenced by the buffers in 'bufferArray'.
+    /// logical sequence of bytes referenced by the buffers in 'bufferArray'.
     static void copy(bdlbb::Blob*               blob,
                      const ntsa::MutableBuffer* bufferArray,
                      bsl::size_t                bufferCount,
@@ -294,7 +294,7 @@ class ConstBuffer
     /// Append to the specified 'blob' a copy of the data referenced by the
     /// specified 'bufferArray' having the specified 'bufferCount' number of
     /// buffer starting at the specified logical 'offset', in bytes, in the
-    /// logical seqeuence of bytes referenced by the buffers in 'bufferArray'.
+    /// logical sequence of bytes referenced by the buffers in 'bufferArray'.
     static void copy(bdlbb::Blob*             blob,
                      const ntsa::ConstBuffer* bufferArray,
                      bsl::size_t              bufferCount,
@@ -358,7 +358,7 @@ class ConstBufferArray
     bsl::size_t                    d_numBytes;
 
   public:
-    /// Create a new, empty array of buffers pointing to non-modifable
+    /// Create a new, empty array of buffers pointing to non-modifiable
     /// data. Optionally specify a 'basicAllocator' used to supply memory.
     /// If 'basicAllocator' is 0, the currently installed default allocator
     /// is used.
@@ -566,7 +566,7 @@ class MutableBufferArray
     bsl::size_t                      d_numBytes;
 
   public:
-    /// Create a new, empty array of buffers pointing to non-modifable
+    /// Create a new, empty array of buffers pointing to non-modifiable
     /// data. Optionally specify a 'basicAllocator' used to supply memory.
     /// If 'basicAllocator' is 0, the currently installed default allocator
     /// is used.
@@ -841,7 +841,7 @@ class ConstBufferSequence<CONST_BUFFER>::Iterator
     typedef bsl::ptrdiff_t difference_type;
 
     /// Define a type alias for the type that is a pointer to
-    /// type that is the result of dererencing this iterator.
+    /// type that is the result of dereferencing this iterator.
     typedef value_type* pointer;
 
     /// Define a type alias for the type that is a reference
@@ -976,7 +976,7 @@ class MutableBufferSequence<MUTABLE_BUFFER>::Iterator
     typedef bsl::ptrdiff_t difference_type;
 
     /// Define a type alias for the type that is a pointer to
-    /// type that is the result of dererencing this iterator.
+    /// type that is the result of dereferencing this iterator.
     typedef value_type* pointer;
 
     /// Define a type alias for the type that is a reference

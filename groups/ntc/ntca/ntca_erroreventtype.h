@@ -59,7 +59,7 @@ struct ErrorEventType {
         /// An error was detected on the socket transport or network protocol.
         e_TRANSPORT = 6,
 
-        /// An error was deteced attempting to decrypt data received from a
+        /// An error was detected attempting to decrypt data received from a
         /// peer.
         e_DECRYPT = 7,
 

@@ -70,7 +70,7 @@ namespace ntsa {
 /// @li @b autoDetach:
 /// Automatically detach the socket from the reactor when interest in all
 /// events is lost. If this flag is unset or false, sockets must be explicitly
-/// detached from the reactor. The deefault value is unset, or effectively
+/// detached from the reactor. The default value is unset, or effectively
 /// false.
 ///
 /// @par Thread Safety
@@ -116,7 +116,7 @@ class ReactorConfig
     void setDriverName(const bsl::string& value);
 
     /// Set the flag that indicates a socket should be automatically
-    /// attached to the reactor when interest in any event for a sodcket is
+    /// attached to the reactor when interest in any event for a socket is
     /// gained to the specified 'value'.
     void setAutoAttach(bool value);
 
@@ -129,7 +129,7 @@ class ReactorConfig
     const bdlb::NullableValue<bsl::string>& driverName() const;
 
     /// Return the flag that indicates a socket should be automatically
-    /// attached to the reactor when interest in any event for a sodcket is
+    /// attached to the reactor when interest in any event for a socket is
     /// gained.
     const bdlb::NullableValue<bool>& autoAttach() const;
 

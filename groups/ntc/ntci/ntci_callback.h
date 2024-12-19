@@ -55,7 +55,7 @@ template <typename SIGNATURE>
 class Callback
 {
   public:
-    /// Define a type alias for the type of invokder of the
+    /// Define a type alias for the type of invoker of the
     /// callback function.
     typedef ntci::Invoker<SIGNATURE> InvokerType;
 
@@ -132,7 +132,7 @@ class Callback
     void setFunction(const FunctionType& function);
 
     /// Assign the specified 'authorization' mechanism to guard and cancel
-    /// invocatications of the managed function.
+    /// invocations of the managed function.
     void setAuthorization(
         const bsl::shared_ptr<ntci::Authorization>& authorization);
 
