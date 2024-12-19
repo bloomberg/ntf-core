@@ -5419,8 +5419,8 @@ int EncryptionCertificateSubjectKeyUsageType::fromString(
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "KEY_CERTFICATE_SIGNATURE")) {
-        *result = e_KEY_CERTFICATE_SIGNATURE;
+    if (bdlb::String::areEqualCaseless(string, "KEY_CERTIFICATE_SIGNATURE")) {
+        *result = e_KEY_CERTIFICATE_SIGNATURE;
         return 0;
     }
 
