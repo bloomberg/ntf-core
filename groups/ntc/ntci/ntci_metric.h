@@ -52,7 +52,7 @@ class MetricValue
 {
     bsl::uint64_t d_count;    // Number of collections
     double        d_total;    // Total of the metric values
-    double        d_minimum;  // The minumum metric value
+    double        d_minimum;  // The minimum metric value
     double        d_maximum;  // The maximum metric value
     double        d_last;     // The last update
 
@@ -72,7 +72,7 @@ class MetricValue
     /// Total of the metric values.
     double total() const;
 
-    /// The minumum metric value.
+    /// The minimum metric value.
     double minimum() const;
 
     /// The average metric value.

@@ -148,7 +148,7 @@ class EncryptionOptions
     /// Note that the effect of calling this function is identical to simply
     /// repeatedly calling 'addResource' with resource options that indicate
     /// the resource contains only trusted certificate authorities, for each
-    /// certificate in the 'certficates' vector.
+    /// certificate in the 'certificates' vector.
     void addAuthorityList(
         const ntca::EncryptionCertificateVector& certificates);
 

@@ -72,7 +72,7 @@ class TimerOptions
     /// 'original' object.
     TimerOptions(const TimerOptions& original);
 
-    /// Create new timer options having the vsame value as the specified
+    /// Create new timer options having the same value as the specified
     /// 'original' object. The value of the 'original' object becomes
     /// unspecified but valid.
     TimerOptions(bslmf::MovableRef<TimerOptions> original);

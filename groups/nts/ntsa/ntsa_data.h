@@ -169,7 +169,7 @@ class Data
 
     /// Create a new object initially represented as a blob having the same
     /// value as the specified 'other' object using the specified
-    /// 'blobBufferFactory' to subsequnetly supply blob buffers as needed.
+    /// 'blobBufferFactory' to subsequently supply blob buffers as needed.
     /// Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.

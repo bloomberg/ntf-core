@@ -111,7 +111,7 @@ class BindContext
     /// the specified 'value'.
     void setNameServer(const ntsa::Endpoint& value);
 
-    /// Set the error detected for the bindion attempt at the time of
+    /// Set the error detected for the binding attempt at the time of
     /// the event specified 'value'.
     void setError(const ntsa::Error& value);
 
@@ -131,7 +131,7 @@ class BindContext
     /// name.
     const bdlb::NullableValue<ntsa::Endpoint>& nameServer() const;
 
-    /// Return the error detected for the bindion attempt at the time of
+    /// Return the error detected for the binding attempt at the time of
     /// the event.
     const ntsa::Error& error() const;
 

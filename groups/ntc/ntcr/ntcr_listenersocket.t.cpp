@@ -248,7 +248,7 @@ class ListenerSocketTest::ListenerSocketApplication
 
   public:
     /// Create a new listener socket application implemented using the
-    /// specified 'listenerSocket' that operates according to the specfied
+    /// specified 'listenerSocket' that operates according to the specified
     /// test 'parameters'. Allocate blob buffers using the specified
     /// 'blobBufferFactory'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
@@ -329,7 +329,7 @@ class ListenerSocketTest::StreamSocketSession
 
   public:
     /// Create a new stream socket application implemented using the
-    /// specified 'streamSocket' that operates according to the specfied
+    /// specified 'streamSocket' that operates according to the specified
     /// test 'parameters'. Allocate blob buffers using the specified
     /// 'blobBufferFactory'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed

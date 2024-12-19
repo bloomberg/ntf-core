@@ -50,7 +50,7 @@ namespace ntca {
 /// The time at which the certificate expires.
 ///
 /// @li @b authority:
-/// The flag that indicates the certificate is a Certficate Authority (CA).
+/// The flag that indicates the certificate is a Certificate Authority (CA).
 ///
 /// @li @b hosts:
 /// The list of domain names or IP addresses for which the certificate is valid

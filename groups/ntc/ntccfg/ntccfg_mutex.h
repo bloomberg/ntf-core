@@ -42,7 +42,7 @@ namespace ntccfg {
 
 #if NTCCFG_FUTEX_ENABLED
 
-// Some versions of GCC issue a spurious warning that the 'current' paramter
+// Some versions of GCC issue a spurious warning that the 'current' parameter
 // is set but not used when 'Futex::compareAndSwap' is called.
 #if defined(BSLS_PLATFORM_CMP_GNU)
 #pragma GCC diagnostic push

@@ -32,7 +32,7 @@ typedef bsl::uint16_t Port;
 
 /// Provide utilities for encoding and decoding port numbers.
 ///
-/// @par Thread Safey
+/// @par Thread Safety
 /// This struct is thread safe.
 ///
 /// @ingroup module_ntsa_identity

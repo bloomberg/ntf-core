@@ -277,7 +277,7 @@ class IpEndpoint
     static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name,
                                                           int nameLength);
 
-    /// Return the compiler-independant name for this class.
+    /// Return the compiler-independent name for this class.
     static const char CLASS_NAME[17];
 
     /// The attribute info array, indexed by attribute index.

@@ -77,7 +77,7 @@ class ListenerSocketSession
         const ntca::AcceptQueueEvent&                event);
 
     /// Process the condition that the accept queue has been discarded
-    /// because a non-transient accept error asynchronously occured.
+    /// because a non-transient accept error asynchronously occurred.
     virtual void processAcceptQueueDiscarded(
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
         const ntca::AcceptQueueEvent&                event);

@@ -1322,7 +1322,7 @@ class ResourceTestParametersUtil
 
     // Verify the specified 'foundResource' has the private keys and
     // certificates that are possible to decode from an encoding of the
-    // specified 'expectedResource' according to the specified 'paramters'.
+    // specified 'expectedResource' according to the specified 'parameters'.
     static void verifyEquals(
         const bsl::shared_ptr<ntci::EncryptionResource>& foundResource,
         const bsl::shared_ptr<ntci::EncryptionResource>& expectedResource,

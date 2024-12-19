@@ -101,7 +101,7 @@ namespace ntci {
 ///    concept of the operating system socket send buffer. The write queue
 ///    buffers an arbitrary amount of outgoing data up to a configurable limit
 ///    specified by the user. The write queue provides greater tolerance of
-///    a discrepency between the rate of transmission and the rate of
+///    a discrepancy between the rate of transmission and the rate of
 ///    reception, enables multiple ordered, concurrent transmissions, and
 ///    guarantees the data of each transmission is not interleaved to the data
 ///    stream sent to the peer of the socket.
@@ -110,7 +110,7 @@ namespace ntci {
 ///    concept of the operating system socket receive buffer. The read queue
 ///    buffers an arbitrary amount of incoming data up to a configurable limit
 ///    specified by the user. The read queue provides greater tolerance of a
-///    discrepency between the rate of reception and the rate of transmission,
+///    discrepancy between the rate of reception and the rate of transmission,
 ///    enables multiple ordered, concurrent receptions, and guarantees the data
 ///    of each reception is not interleaved from the data stream received from
 ///    the peer of the socket.
@@ -355,7 +355,7 @@ namespace ntci {
 /// facilitated by the read queue.
 ///
 /// @par The Read Queue
-/// Each 'ntci::StreamSocket' mantains a "read queue" which conceptually
+/// Each 'ntci::StreamSocket' maintains a "read queue" which conceptually
 /// extends the operation system socket receive buffer. The automatic operation
 /// of the 'ntci::StreamSocket' results in data being copied from the socket
 /// receive buffer and enqueued to the read queue, which is then available for
@@ -458,7 +458,7 @@ namespace ntci {
 /// peer shuts down writes from its side of the connection, the shutdown is
 /// detected by a receive operation failing with the 'ntsa::Error::e_EOF' error
 /// code or a receive callback being invoked with the same code. The connection
-/// is completely shut down. Closing a socket implictly shuts down writes from
+/// is completely shut down. Closing a socket implicitly shuts down writes from
 /// its side of the connection. Explicitly shutting down a socket is optional.
 /// Sockets may be configured to automatically shut down both reading and
 /// writing whenever the socket is shut down locally or by the remote peer.
@@ -1205,7 +1205,7 @@ class StreamSocket : public ntsi::Descriptor,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on this object's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other
@@ -1243,7 +1243,7 @@ class StreamSocket : public ntsi::Descriptor,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on the callbacks's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other
@@ -1281,7 +1281,7 @@ class StreamSocket : public ntsi::Descriptor,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on this object's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other
@@ -1323,7 +1323,7 @@ class StreamSocket : public ntsi::Descriptor,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on the callbacks's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other

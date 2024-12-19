@@ -91,14 +91,14 @@ namespace ntci {
 ///    concept of the operating system socket send buffer. The write queue
 ///    buffers an arbitrary amount of outgoing data up to a configurable limit
 ///    specified by the user. The write queue provides greater tolerance of
-///    a discrepency between the rate of transmission by the user and rate of
+///    a discrepancy between the rate of transmission by the user and rate of
 ///    transmission by the operation system through the networking hardware.
 ///
 /// 4. Each 'ntci::DatagramSocket' maintains a "read queue" that extends the
 ///    concept of the operating system socket receive buffer. The read queue
 ///    buffers an arbitrary amount of incoming data up to a configurable limit
 ///    specified by the user. The read queue provides greater tolerance of a
-///    discrepency between the rate of reception and the rate of transmission.
+///    discrepancy between the rate of reception and the rate of transmission.
 ///
 /// 5. Users may explicitly cancel and/or specified deadlines (i.e. "timeout")
 ///    when initiating connect, send, receive, and close operations.
@@ -139,7 +139,7 @@ namespace ntci {
 /// or "proactively"; this feature is enabled by the introduction of the read
 /// and write queues, mentioned above. The write queue and the read queue are
 /// explained in more detail in following sections. The differences between
-/// using a socket "reactively" vs. "proactivly" can be summarized as follows:
+/// using a socket "reactively" vs. "proactively" can be summarized as follows:
 ///
 /// - In "reactive" usage, the user declares their interest to be
 ///   asynchronously notified when the socket reaches certain conditions on its
@@ -528,7 +528,7 @@ class DatagramSocket : public ntsi::Descriptor,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on the callbacks's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other
@@ -566,7 +566,7 @@ class DatagramSocket : public ntsi::Descriptor,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on the callbacks's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other
@@ -604,7 +604,7 @@ class DatagramSocket : public ntsi::Descriptor,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on the callbacks's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other
@@ -646,7 +646,7 @@ class DatagramSocket : public ntsi::Descriptor,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on the callbacks's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other
@@ -671,7 +671,7 @@ class DatagramSocket : public ntsi::Descriptor,
     /// watermark. After satisfying any queued read operations, when the
     /// read queue is asynchronously filled up to the read queue low
     /// watermark, announce a read queue low watermark event. When
-    /// asynchronously enqueing data onto the read queue causes the read
+    /// asynchronously enqueuing data onto the read queue causes the read
     /// queue high watermark to become breached, stop asynchronously copying
     /// the socket receive buffer to the read queue and announce a read
     /// queue high watermark event. Return the error, notably
@@ -700,7 +700,7 @@ class DatagramSocket : public ntsi::Descriptor,
     /// data structure. After satisfying any queued read operations, when
     /// the read queue is asynchronously filled up to the read queue low
     /// watermark, announce a read queue low watermark event. When
-    /// asynchronously enqueing data onto the read queue causes the read
+    /// asynchronously enqueuing data onto the read queue causes the read
     /// queue high watermark to become breached, stop asynchronously copying
     /// the socket receive buffer to the read queue and announce a read
     /// queue high watermark event. Return the error, notably
@@ -731,7 +731,7 @@ class DatagramSocket : public ntsi::Descriptor,
     /// data structure. After satisfying any queued read operations, when
     /// the read queue is asynchronously filled up to the read queue low
     /// watermark, announce a read queue low watermark event. When
-    /// asynchronously enqueing data onto the read queue causes the read
+    /// asynchronously enqueuing data onto the read queue causes the read
     /// queue high watermark to become breached, stop asynchronously copying
     /// the socket receive buffer to the read queue and announce a read
     /// queue high watermark event. Return the error, notably

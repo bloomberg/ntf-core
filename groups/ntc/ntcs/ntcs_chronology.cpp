@@ -1191,7 +1191,7 @@ void Chronology::announce(bool single)
                                         timer,
                                         timerDeadlineInMicroseconds);
 
-#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS
                 timersDue.emplace_back(entry.d_node_p,
                                        timerDeadline,
                                        timer->d_period,

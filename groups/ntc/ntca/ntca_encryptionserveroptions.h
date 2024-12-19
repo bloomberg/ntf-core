@@ -71,7 +71,7 @@ namespace ntca {
 /// @li @b authentication:
 /// Flag that determines whether the peer's certificate is verified as signed
 /// by a trusted issuer. If set to 'ntca::EncryptionAuthentication::e_DEFAULT'
-/// (the default value), the server does not verify any of its clients's
+/// (the default value), the server does not verify any of its clients'
 /// identities.
 ///
 /// @li @b validation:
@@ -144,7 +144,8 @@ namespace ntca {
 ///
 /// Also note that if any file contains more than one resource type (i.e. a
 /// private key, and/or an end-user certificate, and/or a set of trusted
-/// certificate authorities) then the whole bundle can be loaded simultanously.
+/// certificate authorities) then the whole bundle can be loaded
+/// simultaneously.
 /// Let's imagine there exists "/etc/pki/application/task.pki" that contains
 /// all the public key cryptography objects required for operation: the
 /// server's private key, its end-user certificate, and all the trusted
@@ -154,7 +155,7 @@ namespace ntca {
 ///     encryptionServerOptions.addResourceFile(
 ///         "/etc/pki/application/task.pki");
 ///
-/// This function will set any private key found in the file to the servers's
+/// This function will set any private key found in the file to the server's
 /// private key, set any end-user certificate found in the file as the server's
 /// certificate, and the server will trust any certificate authorities found
 /// in the file.
@@ -167,7 +168,7 @@ namespace ntca {
 /// the certificate signed by some authority that the client must trust for the
 /// handshake to succeed.
 ///
-/// Let's imagine this servers's certificate and keys are stored in
+/// Let's imagine this server's certificate and keys are stored in
 /// "/etc/pki/my/certificate.pki" and "/etc/pki/my/key.pki". Let's register
 /// that certificate and private key to be use during the encryption session.
 ///
@@ -326,7 +327,7 @@ class EncryptionServerOptions
     /// Note that the effect of calling this function is identical to simply
     /// repeatedly calling 'addResource' with resource options that indicate
     /// the resource contains only trusted certificate authorities, for each
-    /// certificate in the 'certficates' vector.
+    /// certificate in the 'certificates' vector.
     void addAuthorityList(
         const ntca::EncryptionCertificateVector& certificates);
 

@@ -4188,7 +4188,7 @@ IoRingContext::~IoRingContext()
     }
 #endif
     // We cannot assert that pending events are empty because the this object
-    // is unset as the proactor socket context before this implemenation
+    // is unset as the proactor socket context before this implementation
     // asynchronously learns that an event is cancelled. To implement this
     // properly, ntci::ProactorSocket::cancel must be made asynchronous and
     // invoke a callback when it is complete.

@@ -47,8 +47,8 @@ namespace ntca {
 /// The source endpoint to which the socket is automatically bound, if any. If
 /// this value is undefined the socket is not automatically bound but may be
 /// explicitly bound after being opened, before connecting or sending, or may
-/// be implictly bound as a result of connecting or sending. Setting this value
-/// automatically sets the transport.
+/// be implicitly bound as a result of connecting or sending. Setting this
+/// value automatically sets the transport.
 ///
 /// @li @b readQueueLowWatermark:
 /// The starting limit on the minimum size of the read queue required to call a
@@ -59,7 +59,7 @@ namespace ntca {
 /// closed.
 ///
 /// @li @b writeQueueLowWatermark:
-/// The size the write queue must be drained down to before the implemenation
+/// The size the write queue must be drained down to before the implementation
 /// announces a low watermark event.
 ///
 /// @li @b writeQueueHighWatermark:

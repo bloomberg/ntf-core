@@ -236,7 +236,7 @@ namespace usage_tcp_ipv4_cpp11 {
 
 void execute(bslma::Allocator* allocator)
 {
-#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS
 
     NTCCFG_WARNING_UNUSED(allocator);
 
@@ -555,7 +555,7 @@ namespace usage_local_cpp11 {
 void execute(bslma::Allocator* allocator)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
-#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS
 
     NTCCFG_WARNING_UNUSED(allocator);
 

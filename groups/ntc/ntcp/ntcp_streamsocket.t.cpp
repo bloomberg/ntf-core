@@ -383,7 +383,7 @@ class StreamSocketTest::StreamSocketSession : public ntci::StreamSocketSession
 
   public:
     /// Create a new stream socket application implemented using the
-    /// specified 'streamSocket' that operates according to the specfied
+    /// specified 'streamSocket' that operates according to the specified
     /// test 'parameters'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.

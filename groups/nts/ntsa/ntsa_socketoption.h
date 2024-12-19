@@ -116,7 +116,7 @@ namespace ntsa {
 ///
 /// @li @b zeroCopy:
 /// The flag that indicates each send operation can request copy avoidance when
-/// enqueing data to the socket send buffer.
+/// enqueuing data to the socket send buffer.
 ///
 /// @li @b tcpCongestionControl:
 /// The option controls which TCP congestion control algorithm is used.

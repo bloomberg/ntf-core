@@ -1283,7 +1283,7 @@ struct Mock::InvocationResult<void> {
 #define SET_ARG_3(...) setArg<2>(__VA_ARGS__)
 #define SET_ARG_4(...) setArg<3>(__VA_ARGS__)
 
-#endif  // NTFCFG_TEST_MOCK_ENABLED
+#endif  // NTSCFG_MOCK_ENABLED
 
 }  // close namespace ntscfg
 }  // close namespace BloombergLP

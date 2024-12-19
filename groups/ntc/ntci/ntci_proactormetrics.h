@@ -54,7 +54,7 @@ class ProactorMetrics : public ntci::Monitorable
     /// herd problem.)
     virtual void logDeferredSocket() = 0;
 
-    /// Log the encounter of a wakeup soley from a controller who has
+    /// Log the encounter of a wakeup solely from a controller who has
     /// signals pending for some other thread to acknowledge than the
     /// current thread, i.e. a spurious wakeup solely from deficiencies in
     /// the controller interrupt system.

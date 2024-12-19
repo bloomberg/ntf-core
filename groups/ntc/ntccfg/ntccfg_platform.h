@@ -115,8 +115,8 @@ namespace ntccfg {
 
 /// @internal @brief
 /// Return the specified 'value' converted to the  parameterized
-/// 'TYPE' explictly, which it would promoted to implictly otherwise, but with
-/// a warning.
+/// 'TYPE' explicitly, which it would promoted to implicitly otherwise, but
+/// with a warning.
 ///
 /// This macro should be applied in the case of the following warnings:
 /// GCC: "comparison of integer expressions of different signedness"
@@ -126,19 +126,19 @@ namespace ntccfg {
 #define NTCCFG_WARNING_PROMOTE(TYPE, value) ((TYPE)((value)))
 
 /// @internal @brief
-/// Indicate the specfied 'variable' is unused.
+/// Indicate the specified 'variable' is unused.
 ///
 /// @ingroup module_ntccfg
 #define NTCCFG_WARNING_UNUSED(variable) (void)(variable)
 
 /// @internal @brief
-/// Detect support for lamdas.
+/// Detect support for lambdas.
 ///
 /// @ingroup module_ntccfg
 #if BSLS_COMPILERFEATURES_CPLUSPLUS >= 201402L
-#define NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS 1
+#define NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS 1
 #else
-#define NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS 0
+#define NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS 0
 #endif
 
 /// Provide utilities for initializing processes and threads.

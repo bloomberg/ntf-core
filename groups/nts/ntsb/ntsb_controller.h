@@ -61,7 +61,7 @@ class Controller
     ~Controller();
 
     /// Ensure the specified 'numWakeups' number of signals are
-    /// acknowledgable. Return the error. Note that the controller's handle
+    /// acknowledgeable. Return the error. Note that the controller's handle
     /// will be polled as readable as long as at least one signal is
     /// unacknowledged.
     ntsa::Error interrupt(unsigned int numWakeups);

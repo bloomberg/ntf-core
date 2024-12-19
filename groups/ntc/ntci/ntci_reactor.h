@@ -98,7 +98,7 @@ typedef ntci::Callback<void()> SocketDetachedCallback;
 ///
 /// Next, create a reactor and configure it automatically attach sockets to
 /// the underlying polling device when any interest for that socket is gained,
-/// and automaticaly detach the socket from the underlying polling device when
+/// and automatically detach the socket from the underlying polling device when
 /// all interest for that socket is lost.
 ///
 ///     ntsa::Error error;
@@ -584,7 +584,7 @@ class Reactor : public ntci::Driver, public ntci::ReactorPool
     virtual bsl::size_t maxTimers() const = 0;
 
     /// Return the flag that indicates a socket should be automatically
-    /// attached to the reactor when interest in any event for a sodcket is
+    /// attached to the reactor when interest in any event for a socket is
     /// gained.
     virtual bool autoAttach() const = 0;
 

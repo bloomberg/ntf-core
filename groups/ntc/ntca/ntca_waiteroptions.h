@@ -29,7 +29,7 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
-/// Describe the configuration of a thread driving a reactor or protactor.
+/// Describe the configuration of a thread driving a reactor or proactor.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.

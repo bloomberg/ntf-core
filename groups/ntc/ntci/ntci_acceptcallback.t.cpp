@@ -60,14 +60,14 @@ class AcceptCallbackTest
     /// Execute the specified 'callback'.
     static void invoke(const ntci::AcceptCallback& callback);
 
-    /// Process an accept of the specified 'streamSocket' from the specfied
+    /// Process an accept of the specified 'streamSocket' from the specified
     /// 'acceptor' according to the specified 'event'.
     static void process(
         const bsl::shared_ptr<ntci::Acceptor>&     acceptor,
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::AcceptEvent&                   event);
 
-    /// Process an accept of the specified 'streamSocket' from the specfied
+    /// Process an accept of the specified 'streamSocket' from the specified
     /// 'acceptor' according to the specified 'event'.
     static void processSemaphore(
         const bsl::shared_ptr<ntci::Acceptor>&     acceptor,
@@ -100,10 +100,10 @@ NTSCFG_TEST_FUNCTION(ntci::AcceptCallbackTest::verifyCase2)
 
 NTSCFG_TEST_FUNCTION(ntci::AcceptCallbackTest::verifyCase3)
 {
-    ntci::AcceptCallback acceptCallack =
+    ntci::AcceptCallback acceptCallback =
         ntci::AcceptCallback(&AcceptCallbackTest::process);
 
-    AcceptCallbackTest::invoke(acceptCallack);
+    AcceptCallbackTest::invoke(acceptCallback);
 }
 
 NTSCFG_TEST_FUNCTION(ntci::AcceptCallbackTest::verifyCase4)
@@ -123,7 +123,7 @@ NTSCFG_TEST_FUNCTION(ntci::AcceptCallbackTest::verifyCase4)
 
 NTSCFG_TEST_FUNCTION(ntci::AcceptCallbackTest::verifyCase5)
 {
-#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS
 
     ntci::AcceptFunction acceptFunction = &AcceptCallbackTest::process;
 
@@ -135,7 +135,7 @@ NTSCFG_TEST_FUNCTION(ntci::AcceptCallbackTest::verifyCase5)
 
 NTSCFG_TEST_FUNCTION(ntci::AcceptCallbackTest::verifyCase6)
 {
-#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS
 
     bslmt::Semaphore semaphore;
 
@@ -151,19 +151,19 @@ NTSCFG_TEST_FUNCTION(ntci::AcceptCallbackTest::verifyCase6)
 
 NTSCFG_TEST_FUNCTION(ntci::AcceptCallbackTest::verifyCase7)
 {
-#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS
 
-    ntci::AcceptCallback acceptCallack = ntci::AcceptCallback(
+    ntci::AcceptCallback acceptCallback = ntci::AcceptCallback(
         [&](auto acceptor, auto streamSocket, auto event) {});
 
-    AcceptCallbackTest::invoke(acceptCallack);
+    AcceptCallbackTest::invoke(acceptCallback);
 
 #endif
 }
 
 NTSCFG_TEST_FUNCTION(ntci::AcceptCallbackTest::verifyCase8)
 {
-#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS
 
     bslmt::Semaphore semaphore;
 

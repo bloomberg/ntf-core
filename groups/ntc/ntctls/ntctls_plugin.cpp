@@ -7195,25 +7195,25 @@ class Session : public ntci::Encryption
     bool hasOutgoingCipherText() const BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' the source certificate used by the
-    /// encryption session. Return true if such a certicate is defined, and
+    /// encryption session. Return true if such a certificate is defined, and
     /// false otherwise.
     bool getSourceCertificate(ntca::EncryptionCertificate* result) const
         BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' the source certificate used by the
-    /// encryption session. Return true if such a certicate is defined, and
+    /// encryption session. Return true if such a certificate is defined, and
     /// false otherwise.
     bool getSourceCertificate(bsl::shared_ptr<ntci::EncryptionCertificate>*
                                   result) const BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' the remote certificate used by the
-    /// encryption session. Return true if such a certicate is defined, and
+    /// encryption session. Return true if such a certificate is defined, and
     /// false otherwise.
     bool getRemoteCertificate(ntca::EncryptionCertificate* result) const
         BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' the remote certificate used by the
-    /// encryption session. Return true if such a certicate is defined, and
+    /// encryption session. Return true if such a certificate is defined, and
     /// false otherwise.
     bool getRemoteCertificate(bsl::shared_ptr<ntci::EncryptionCertificate>*
                                   result) const BSLS_KEYWORD_OVERRIDE;
@@ -7332,11 +7332,11 @@ class SessionContext
     SessionContext& operator=(const SessionContext&) BSLS_KEYWORD_DELETED;
 
   private:
-    /// Add the private keys, and/or certificate, and/or trusted certficate
+    /// Add the private keys, and/or certificate, and/or trusted certificate
     /// authorities contained in the specified 'resource'. Return the error.
     ntsa::Error addResource(const ntca::EncryptionResource& resource);
 
-    /// Add the private keys, and/or certificate, and/or trusted certficate
+    /// Add the private keys, and/or certificate, and/or trusted certificate
     /// authorities contained in the specified 'resource'. Return the error.
     ntsa::Error addResourceList(
         const ntca::EncryptionResourceVector& resourceList);

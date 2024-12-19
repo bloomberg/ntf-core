@@ -65,7 +65,7 @@ namespace ntca {
 /// closed.
 ///
 /// @li @b writeQueueLowWatermark:
-/// The size the write queue must be drained down to before the implemenation
+/// The size the write queue must be drained down to before the implementation
 /// announces a low watermark event.
 ///
 /// @li @b writeQueueHighWatermark:
@@ -84,7 +84,7 @@ namespace ntca {
 ///
 /// @li @b acceptGreedily:
 /// The flag indicating that pending connections on the backlog should be
-/// repeatedly acceoted until the operating system indicates the backlog is
+/// repeatedly accepted until the operating system indicates the backlog is
 /// empty. If false, only one accept attempt is made each time the operating
 /// system indicates that the backlog is non-empty. When set to true, this
 /// option indicates the user favors a lower minimum latency and higher maximum

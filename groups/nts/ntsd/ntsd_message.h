@@ -115,7 +115,7 @@ class Message
     /// Set the version of this protocol to the specified 'value'.
     void setVersion(bsl::uint32_t value);
 
-    /// Set the cyclic redudancy check on the entire message contents,
+    /// Set the cyclic redundancy check on the entire message contents,
     /// including the header, to the specified 'value'.
     void setCrc(bsl::uint32_t value);
 
@@ -189,7 +189,7 @@ class Message
     /// Return the version of this protocol.
     bsl::uint32_t version() const;
 
-    /// Return the cyclic redudancy check on the entire message contents,
+    /// Return the cyclic redundancy check on the entire message contents,
     /// including the header.
     bsl::uint32_t crc() const;
 

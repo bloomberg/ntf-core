@@ -453,7 +453,7 @@ class Header
     /// the requester to match up replies to outstanding queries.
     void setId(bsl::uint16_t value);
 
-    /// Set the "QR" field to the specified 'value'. THe "QR" field
+    /// Set the "QR" field to the specified 'value'. The "QR" field
     /// indicates whether the message is a query or a response.
     void setDirection(ntcdns::Direction::Value value);
 
@@ -527,7 +527,7 @@ class Header
     /// to outstanding queries.
     bsl::uint16_t id() const;
 
-    /// Return the "QR" field. THe "QR" field indicates whether the message
+    /// Return the "QR" field. The "QR" field indicates whether the message
     /// is a query or a response.
     ntcdns::Direction::Value direction() const;
 
@@ -981,7 +981,7 @@ class Message
     /// the requester to match up replies to outstanding queries.
     void setId(bsl::uint16_t value);
 
-    /// Set the "QR" field to the specified 'value'. THe "QR" field
+    /// Set the "QR" field to the specified 'value'. The "QR" field
     /// indicates whether the message is a query or a response.
     void setDirection(ntcdns::Direction::Value value);
 
@@ -1073,7 +1073,7 @@ class Message
     /// match up replies to outstanding queries.
     bsl::uint16_t id() const;
 
-    /// Return the "QR" field. THe "QR" field indicates whether the message
+    /// Return the "QR" field. The "QR" field indicates whether the message
     /// is a query or a response.
     ntcdns::Direction::Value direction() const;
 

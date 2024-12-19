@@ -207,12 +207,12 @@ class Map
     bool find(VALUE* result, const KEY& key);
 
     /// Remove the value associated with the specified 'key'. Return true
-    /// if a value asssociated with the 'key' previously existed, and false
+    /// if a value associated with the 'key' previously existed, and false
     /// otherwise.
     bool remove(const KEY& key);
 
     /// Remove the value associated with the specified 'key' and load it
-    /// into the specified 'result'. Return true if a value asssociated with
+    /// into the specified 'result'. Return true if a value associated with
     /// the 'key' previously existed, and false otherwise.
     bool remove(VALUE* result, const KEY& key);
 

@@ -86,7 +86,7 @@ namespace ntccfg {
 #define NTC_BUILD_WITH_EPOLL @NTF_BUILD_WITH_EPOLL@
 
 // Build with support for being able to configure the '/dev/poll' device as
-// the driver for a reactor. This driver is avalable on Solaris.
+// the driver for a reactor. This driver is available on Solaris.
 #define NTC_BUILD_WITH_DEVPOLL @NTF_BUILD_WITH_DEVPOLL@
 
 // Build with support for being able to configure the event port API as the

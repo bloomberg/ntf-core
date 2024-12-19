@@ -678,7 +678,7 @@
 <!-- ntca_upgradetoken&#45;&gt;ntca_bottom -->
 <!-- ntca_waiteroptions -->
 <g id="node54" class="node"><title>ntca_waiteroptions</title>
-<g id="a_node54"><a xlink:title="Provide a description of a thread driving a reactor or protactor. [Depends on: ntccfg_platform, ntcscm_version &#45;&#45; ReverseDependencies: ntcf_api, ntci_driver, ntci_proactor, ntci_reactor, ntcs_driver]">
+<g id="a_node54"><a xlink:title="Provide a description of a thread driving a reactor or proactor. [Depends on: ntccfg_platform, ntcscm_version &#45;&#45; ReverseDependencies: ntcf_api, ntci_driver, ntci_proactor, ntci_reactor, ntcs_driver]">
 <polygon fill="none" stroke="black" points="6306,-2823 6216,-2823 6216,-2819 6212,-2819 6212,-2815 6216,-2815 6216,-2795 6212,-2795 6212,-2791 6216,-2791 6216,-2787 6306,-2787 6306,-2823"/>
 <polyline fill="none" stroke="black" points="6216,-2819 6220,-2819 6220,-2815 6216,-2815 "/>
 <polyline fill="none" stroke="black" points="6216,-2795 6220,-2795 6220,-2791 6216,-2791 "/>

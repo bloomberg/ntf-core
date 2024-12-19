@@ -90,11 +90,12 @@ namespace ntca {
 /// The maximum number of cycles to perform to both discover if any functions
 /// have had their execution deferred to be invoked on the I/O thread and to
 /// discover any timers that are due. A higher value mitigates the cost of
-/// instantanously polling for socket events each time a batch of functions are
-/// deferred or timers scheduled to be executed, if it is likely that no socket
-/// events have occured, at the possible expense of starving the I/O thread
-/// from being able to process socket events that actually have occurred. The
-/// default value is null, indicating that only one cycle is performed.
+/// instantaneously polling for socket events each time a batch of functions
+/// are deferred or timers scheduled to be executed, if it is likely that no
+/// socket events have occurred, at the possible expense of starving the I/O
+/// thread from being able to process socket events that actually have
+/// occurred. The default value is null, indicating that only one cycle is
+/// performed.
 ///
 /// @li @b metricCollection:
 /// The flag that indicates the collection of metrics is enabled or disabled.

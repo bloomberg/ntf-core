@@ -37,7 +37,7 @@ namespace ntca {
 ///
 /// @details
 /// An encryption resource is composed of an optional private key, optional
-/// user certificate, and/or zero or more trusted certicates.
+/// user certificate, and/or zero or more trusted certificates.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.

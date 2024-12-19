@@ -453,7 +453,7 @@ class ClientNameServer : public ntci::DatagramSocketSession,
     /// Process the condition that the size of the write queue is greater
     /// than the write queue high watermark. This condition will occur the
     /// first time the write queue high watermark has been reached but
-    /// then will not subsequently ooccur until the write queue low
+    /// then will not subsequently occur until the write queue low
     /// watermark. The write queue low watermark conditions and the
     /// high watermark conditions are guaranteed to occur serially.
     void processWriteQueueHighWatermark(
@@ -510,7 +510,7 @@ class ClientNameServer : public ntci::DatagramSocketSession,
     /// Process the condition that the size of the write queue is greater
     /// than the write queue high watermark. This condition will occur the
     /// first time the write queue high watermark has been reached but
-    /// then will not subsequently ooccur until the write queue low
+    /// then will not subsequently occur until the write queue low
     /// watermark. The write queue low watermark conditions and the
     /// high watermark conditions are guaranteed to occur serially.
     void processWriteQueueHighWatermark(
@@ -591,7 +591,7 @@ class ClientNameServer : public ntci::DatagramSocketSession,
         const bsl::shared_ptr<ntcdns::ClientOperation>& operation);
 
     /// Cancel the specified 'operation' and invoke it's callback notifying
-    /// the initiatior that the operation has been cancelled.
+    /// the initiator that the operation has been cancelled.
     void cancel(const bsl::shared_ptr<ntcdns::ClientOperation>& operation);
 
     /// Cancel all operations: invoke each operation's callback notifying
@@ -639,7 +639,7 @@ class Client : public ntccfg::Shared<Client>
     typedef ntccfg::LockGuard LockGuard;
 
     enum State {
-        // This enumeraiton enumerates the states of operation.
+        // This enumeration enumerates the states of operation.
 
         e_STATE_STARTED,
         e_STATE_STOPPING,
@@ -694,7 +694,7 @@ class Client : public ntccfg::Shared<Client>
     void linger();
 
     /// Get the IP addresses assigned to the specified 'name' and invoke
-    /// the specfied 'callback' when resolution completes or an error
+    /// the specified 'callback' when resolution completes or an error
     /// occurs. Return the error.
     ntsa::Error getIpAddress(const bsl::shared_ptr<ntci::Resolver>& resolver,
                              const bsl::string&                     domainName,
@@ -702,7 +702,7 @@ class Client : public ntccfg::Shared<Client>
                              const ntci::GetIpAddressCallback&      callback);
 
     /// Get the domain name to which the specified 'ipAddress' has been
-    /// assigned and invoke the specfied 'callback' when resolution
+    /// assigned and invoke the specified 'callback' when resolution
     /// completes or an error occurs. Return the error.
     ntsa::Error getDomainName(const bsl::shared_ptr<ntci::Resolver>& resolver,
                               const ntsa::IpAddress&                 ipAddress,

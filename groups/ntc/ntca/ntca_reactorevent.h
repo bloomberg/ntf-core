@@ -119,7 +119,7 @@ class ReactorEvent
     const bdlb::NullableValue<bsl::size_t>& bytesWritable() const;
 
     /// Return the error detected for the socket, if any. Note that errors
-    /// may be detected for readble or writable events in addition to
+    /// may be detected for readable or writable events in addition to
     /// error events.
     const ntsa::Error& error() const;
 

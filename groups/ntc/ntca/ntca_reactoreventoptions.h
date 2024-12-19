@@ -47,7 +47,7 @@ namespace ntca {
 /// @li @b oneShot:
 /// Process events detected by the reactor in one-shot mode: once an event is
 /// detected, it must be explicitly re-armed before being detected again. When
-/// running the same reactor simulataneously by multiple threads, configuring
+/// running the same reactor simultaneously by multiple threads, configuring
 /// the reactor in one-shot mode is practically required. The default value is
 /// unset, indicating the one-shot mode is inherited from the default one-shot
 /// mode of the target reactor.

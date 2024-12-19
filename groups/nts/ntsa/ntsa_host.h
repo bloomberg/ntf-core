@@ -272,7 +272,7 @@ class Host
     template <typename ACCESSOR>
     int accessSelection(ACCESSOR& accessor) const;
 
-    /// Return the compiler-independant name for this class.
+    /// Return the compiler-independent name for this class.
     static const char CLASS_NAME[11];
 
     /// The selection info array, indexed by selection index.

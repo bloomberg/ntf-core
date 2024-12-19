@@ -197,7 +197,7 @@ struct Dispatch {
 
     /// Announce to the specified 'session' the condition of the specified
     /// 'socket' that the read queue has been discarded because
-    /// a non-transient read error asynchronously occured. If the specified
+    /// a non-transient read error asynchronously occurred. If the specified
     /// 'defer' flag is false and the requirements of the specified
     /// 'destination' strand permits the announcement to be executed
     /// immediately by the specified 'source' strand, unlock the specified
@@ -362,7 +362,7 @@ struct Dispatch {
 
     /// Announce to the specified 'session' the  condition of the specified
     /// 'socket' that the write queue has been discarded because
-    /// a non-transient write error asynchronously occured. If the specified
+    /// a non-transient write error asynchronously occurred. If the specified
     /// 'defer' flag is false and the requirements of the specified
     /// 'destination' strand permits the announcement to be executed
     /// immediately by the specified 'source' strand, unlock the specified
@@ -689,7 +689,7 @@ struct Dispatch {
 
     /// Announce to the specified 'session' the condition of the specified
     /// 'socket' that the accept queue has been discarded because
-    /// a non-transient read error asynchronously occured. If the specified
+    /// a non-transient read error asynchronously occurred. If the specified
     /// 'defer' flag is false and the requirements of the specified
     /// 'destination' strand permits the announcement to be executed
     /// immediately by the specified 'source' strand, unlock the specified
@@ -1038,7 +1038,7 @@ struct Dispatch {
 
     /// Announce to the specified 'session' the condition of the specified
     /// 'socket' that the read queue has been discarded because
-    /// a non-transient read error asynchronously occured. If the specified
+    /// a non-transient read error asynchronously occurred. If the specified
     /// 'defer' flag is false and the requirements of the specified
     /// 'destination' strand permits the announcement to be executed
     /// immediately by the specified 'source' strand, unlock the specified
@@ -1203,7 +1203,7 @@ struct Dispatch {
 
     /// Announce to the specified 'session' the  condition of the specified
     /// 'socket' that the write queue has been discarded because
-    /// a non-transient write error asynchronously occured. If the specified
+    /// a non-transient write error asynchronously occurred. If the specified
     /// 'defer' flag is false and the requirements of the specified
     /// 'destination' strand permits the announcement to be executed
     /// immediately by the specified 'source' strand, unlock the specified
@@ -1457,7 +1457,7 @@ struct Dispatch {
         const bsl::shared_ptr<ntci::Strand>&        destination);
 
     /// Announce to the specified 'socket' that the specified 'error' has
-    /// occured. If the specified 'destination' strand is null, execute the
+    /// occurred. If the specified 'destination' strand is null, execute the
     /// announcement immediately. Otherwise, enqueue the announcement to be
     /// executed on the 'destination' strand.
     static void announceError(
@@ -1466,7 +1466,7 @@ struct Dispatch {
         const bsl::shared_ptr<ntci::Strand>&        destination);
 
     /// Announce to the specified 'socket' that the specified 'notifications'
-    /// have occured. If the specified 'destination' strand is null, execute
+    /// have occurred. If the specified 'destination' strand is null, execute
     /// the announcement immediately. Otherwise, enqueue the announcement to
     /// be executed on the 'destination' strand.
     static void announceNotifications(
@@ -1520,7 +1520,7 @@ struct Dispatch {
         const bsl::shared_ptr<ntci::Strand>&         destination);
 
     /// Announce to the specified 'socket' that the specified 'error' has
-    /// occured. If the specified 'destination' strand is null, execute the
+    /// occurred. If the specified 'destination' strand is null, execute the
     /// announcement immediately. Otherwise, enqueue the announcement to be
     /// executed on the 'destination' strand.
     static void announceError(

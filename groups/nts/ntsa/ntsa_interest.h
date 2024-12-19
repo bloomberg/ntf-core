@@ -262,7 +262,7 @@ class InterestSet
     /// set.
     typedef Iterator iterator;
 
-    /// Define a type alias for an iterator over the immutable elemtns in the
+    /// Define a type alias for an iterator over the immutable elements in the
     /// set.
     typedef ConstIterator const_iterator;
 
@@ -461,7 +461,7 @@ class InterestSet::ConstIterator
     typedef bsl::ptrdiff_t difference_type;
 
     /// Define a type alias for the type that is a pointer to
-    /// type that is the result of dererencing this iterator.
+    /// type that is the result of dereferencing this iterator.
     typedef value_type* pointer;
 
     /// Define a type alias for the type that is a reference
@@ -533,7 +533,7 @@ class InterestSet::Iterator
     typedef bsl::ptrdiff_t difference_type;
 
     /// Define a type alias for the type that is a pointer to
-    /// type that is the result of dererencing this iterator.
+    /// type that is the result of dereferencing this iterator.
     typedef value_type* pointer;
 
     /// Define a type alias for the type that is a reference

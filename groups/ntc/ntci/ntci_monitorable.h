@@ -35,21 +35,21 @@ namespace ntci {
 /// its execution.
 ///
 /// @details
-/// The interface for the querying of statistics is independant of the
+/// The interface for the querying of statistics is independent of the
 /// implementation details of how those statistics are measured and stored.
 /// Statistics are represented in terms of a 'bdld::Datum' that must in term
 /// represent an array of values (themselves potentially datums as well.) The
 /// only requirement is that the length of the datum array that is the result
 /// of querying statistics is stable over the lifetime of the object.
-/// Monitorable objects are responsble for resolving the name of a statistic
+/// Monitorable objects are responsible for resolving the name of a statistic
 /// from the datum array index ordinal.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
 ///
 /// @par Usage Example
-/// Let's assume the existance of a class 'example::Object', that implements
-/// the 'ntci::Monitorable' interface, and an 'object' instianted of that class
+/// Let's assume the existence of a class 'example::Object', that implements
+/// the 'ntci::Monitorable' interface, and an 'object' instantiated of that class
 /// type. Let's query its statistics and print the field names and values to
 /// standard output in a table.
 ///
@@ -194,7 +194,7 @@ class Monitorable : public virtual Identifiable
     virtual const char* objectName() const = 0;
 };
 
-/// Provide an interface to publish statistcs measured by monitorable objects.
+/// Provide an interface to publish statistics measured by monitorable objects.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
