@@ -1,0 +1,65 @@
+name: Sanitize with ASAN, MSAN, TSAN, UBSAN
+
+on:
+  push:
+    branches:
+      - main
+  pull_request_review:
+    types: [submitted]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build_dependencies:
+    name: Build deps [ubuntu]
+    runs-on: ubuntu-latest
+    if: github.event.review.state == 'APPROVED'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qy build-essential \
+            gdb \
+            curl \
+            python3.10 \
+            python3-pip \
+            cmake \
+            ninja-build \
+            pkg-config \
+            bison \
+            libfl-dev \
+            libbenchmark-dev \
+            libgmock-dev \
+            libz-dev
+      - name: Fetch & Build non packaged dependencies
+        run: |
+          mkdir -p deps
+          cd deps
+          ../docker/build_deps.sh
+
+  run_asan:
+    needs: build_dependencies
+    uses: ./.github/workflows/sanitizer-check.yaml
+    with:
+      sanitizer-name: 'asan'
+
+  run_msan:
+    needs: build_dependencies
+    uses: ./.github/workflows/sanitizer-check.yaml
+    with:
+      sanitizer-name: 'msan'
+
+  run_tsan:
+    needs: build_dependencies
+    uses: ./.github/workflows/sanitizer-check.yaml
+    with:
+      sanitizer-name: 'tsan'
+
+  run_ubsan:
+    needs: build_dependencies
+    uses: ./.github/workflows/sanitizer-check.yaml
+    with:
+      sanitizer-name: 'ubsan'
