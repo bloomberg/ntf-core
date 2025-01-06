@@ -1,7 +1,7 @@
 name: Sanitize with ASAN, MSAN, TSAN, UBSAN
 
 on:
-  push:
+  pull_request:
     branches:
       - main
   pull_request_review:
@@ -15,30 +15,9 @@ jobs:
   build_dependencies:
     name: Build deps [ubuntu]
     runs-on: ubuntu-latest
-    if: github.event.review.state == 'APPROVED'
+    # if: github.event.review.state == 'APPROVED'
     steps:
       - uses: actions/checkout@v4
-      - name: Set up dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -qy build-essential \
-            gdb \
-            curl \
-            python3.10 \
-            python3-pip \
-            cmake \
-            ninja-build \
-            pkg-config \
-            bison \
-            libfl-dev \
-            libbenchmark-dev \
-            libgmock-dev \
-            libz-dev
-      - name: Fetch & Build non packaged dependencies
-        run: |
-          mkdir -p deps
-          cd deps
-          ../docker/build_deps.sh
 
   run_asan:
     needs: build_dependencies

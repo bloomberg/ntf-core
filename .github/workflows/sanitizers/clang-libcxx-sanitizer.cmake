@@ -97,7 +97,7 @@ set(SANITIZER_NAME $ENV{SANITIZER_NAME})
 if(SANITIZER_NAME STREQUAL "asan")
   set(TOOLCHAIN_DEBUG_FLAGS "-fsanitize=address ")
 elseif(SANITIZER_NAME STREQUAL "msan")
-  set(MSAN_SUPPRESSION_LIST_PATH "$ENV{DIR_SRC_BMQ}/etc/msansup.txt")
+  set(MSAN_SUPPRESSION_LIST_PATH "$ENV{DIR_SRC_NTF}/.github/workflows/sanitizers/msansup.txt")
   set(TOOLCHAIN_DEBUG_FLAGS "-fsanitize=memory -fsanitize-blacklist=${MSAN_SUPPRESSION_LIST_PATH} ")
   # Conditionally add flags helpful for debugging MemorySanitizer issues.
   if (DEBUG_MEMORY_SANITIZER)

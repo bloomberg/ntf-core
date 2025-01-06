@@ -29,7 +29,7 @@
             "TSAN_OPTIONS": {
                 "external_symbolizer_path": "/usr/bin/llvm-symbolizer",
                 "second_deadlock_stack": 1,
-                "suppressions": "%%SRC%%/etc/tsansup.txt"
+                "suppressions": "%%SRC%%/.github/workflows/sanitizers/tsansup.txt"
             }
         }
     },
@@ -39,7 +39,7 @@
         "environment": {
             "UBSAN_OPTIONS": {
                 "external_symbolizer_path": "/usr/bin/llvm-symbolizer",
-                "suppressions": "%%SRC%%/etc/ubsansup.txt",
+                "suppressions": "%%SRC%%/.github/workflows/sanitizers/ubsansup.txt",
                 "print_stacktrace": "1"
             }
         }

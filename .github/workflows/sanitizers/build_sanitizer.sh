@@ -13,7 +13,7 @@
 # 2) Download llvm-project required for libc++ instrumentation.
 # 3) Download external dependencies required for instrumentation.
 # 4) Build libc++ with the instrumentation specified by <LLVM Sanitizer Name>.
-# 5) Build sanitizer-instrumented dependencies including NTF.
+# 5) Build sanitizer-instrumented dependencies for NTF.
 # 6) Build sanitizer-instrumented NTF unit tests.
 # 7) Generate scripts to run unit tests:
 #      ./cmake.bld/Linux/run-unittests.sh
@@ -81,7 +81,7 @@ DIR_SRCS_EXT="${DIR_EXTERNAL}/srcs"
 DIR_BUILD_EXT="${DIR_EXTERNAL}/cmake.bld"
 
 DIR_SRC_NTF="${DIR_ROOT}"
-DIR_BUILD_NTF="${DIR_SRC_BMQ}/cmake.bld/Linux"
+DIR_BUILD_NTF="${DIR_SRC_NTF}/cmake.bld/Linux"
 
 # Parse sanitizers config
 cfgquery() {
@@ -173,75 +173,19 @@ bbs_build build -j${PARALLELISM}
 bbs_build --install=/opt/bb --prefix=/ install
 popd
 
-pushd "${DIR_SRCS_EXT}/ntf-core"
 # TODO The deprecated flag "-fcoroutines-ts" has been removed in clang
 # 17.0.1, but NTF is still using it.  We manually change this flag until
 # the fix in issue 175307231 is resolved.
 sed -i 's/fcoroutines-ts/fcoroutines/g' 'repository.cmake'
 
 ./configure --keep \
-            --prefix /opt/bb             \
-            --output "${DIR_BUILD_EXT}/ntf" \
+            --output "${DIR_BUILD_NTF}" \
             --without-warnings-as-errors \
             --without-usage-examples \
-            --without-applications \
             --ufid 'dbg_64_safe_cpp20' \
-            --toolchain "${TOOLCHAIN_PATH}"
-make -j${PARALLELISM} all.t
-make install
-popd
-
-# Note: Hack to circumvent faulty behavior in "nts-targets.cmake"
-ln -sf "/opt/bb/include" "/opt/include"
-ln -sf "/opt/bb/lib64" "/opt/lib64"
-
-# # Setup CMake options for all remaining builds
-# CMAKE_OPTIONS=( \
-#     -D BUILD_BITNESS=64 \
-#     -D CMAKE_BUILD_TYPE=Debug \
-#     -D CMAKE_INSTALL_INCLUDEDIR=include \
-#     -D CMAKE_INSTALL_LIBDIR=lib64 \
-#     -D CMAKE_TOOLCHAIN_FILE="${TOOLCHAIN_PATH}")
-
-# # Build GoogleTest
-# cmake -B "${DIR_SRCS_EXT}/googletest/cmake.bld" \
-#       -S "${DIR_SRCS_EXT}/googletest" "${CMAKE_OPTIONS[@]}" \
-#       -DCMAKE_INSTALL_PREFIX=/opt/bb
-# cmake --build "${DIR_SRCS_EXT}/googletest/cmake.bld" -j${PARALLELISM}
-# cmake --install "${DIR_SRCS_EXT}/googletest/cmake.bld" --prefix "/opt/bb"
-
-# # Build Google Benchmark
-# cmake -B "${DIR_SRCS_EXT}/google-benchmark/cmake.bld" \
-#         -S "${DIR_SRCS_EXT}/google-benchmark" "${CMAKE_OPTIONS[@]}" \
-#         -DCMAKE_INSTALL_PREFIX=/opt/bb \
-#         -DBENCHMARK_DOWNLOAD_DEPENDENCIES="ON" \
-#         -DBENCHMARK_ENABLE_GTEST_TESTS="false" \
-#         -DHAVE_STD_REGEX="ON" \
-#         -DBENCHMARK_ENABLE_TESTING="OFF"
-# cmake --build "${DIR_SRCS_EXT}/google-benchmark/cmake.bld" -j${PARALLELISM}
-# cmake --install "${DIR_SRCS_EXT}/google-benchmark/cmake.bld" --prefix "/opt/bb"
-
-# # Build zlib
-# # Note: zlib has completely broken CMake install rules, so we must
-# # specify the install prefix *exactly* as it will be at configure
-# # time
-# # https://discourse.cmake.org/t/cmake-install-prefix-not-work/5040
-# cmake -B "${DIR_SRCS_EXT}/zlib/cmake.bld" -S "${DIR_SRCS_EXT}/zlib" \
-#         -D CMAKE_INSTALL_PREFIX="/opt/bb" \
-#         "${CMAKE_OPTIONS[@]}"
-# # Make and install zlib.
-# cmake --build "${DIR_SRCS_EXT}/zlib/cmake.bld" -j${PARALLELISM}
-# cmake --install "${DIR_SRCS_EXT}/zlib/cmake.bld"
-
-# # Build BlazingMQ
-# PKG_CONFIG_PATH="/opt/bb/lib64/pkgconfig:/opt/bb/lib/pkgconfig:/opt/bb/share/pkgconfig:$(pkg-config --variable pc_path pkg-config)" \
-# cmake -B "${DIR_BUILD_BMQ}" -S "${DIR_SRC_BMQ}" -G Ninja \
-#     -DBDE_BUILD_TARGET_64=ON \
-#     -DBDE_BUILD_TARGET_CPP17=ON \
-#     -DCMAKE_PREFIX_PATH="${DIR_SRCS_EXT}/bde-tools/BdeBuildSystem" \
-#     -DBDE_BUILD_TARGET_SAFE=1 "${CMAKE_OPTIONS[@]}"
-# cmake --build "${DIR_BUILD_BMQ}" -j${PARALLELISM} \
-#       --target all.t -v --clean-first
+            --toolchain "${TOOLCHAIN_PATH}" \
+            --from-continuous-integration
+make -j${PARALLELISM} build_test
 
 # Create testing script
 envcfgquery() {
@@ -274,9 +218,9 @@ mkscript() {
 SANITIZER_ENV="$(envcfgquery "${SANITIZER_NAME}")"
 
 # 'run-env.sh' runs a command with environment required of the sanitizer.
-mkscript "${SANITIZER_ENV} \${@}" "${DIR_BUILD_NTF}/run-env.sh"
+mkscript "${SANITIZER_ENV} \${@}" "${DIR_ROOT}/run-env.sh"
 
 # 'run-unittests.sh' runs all instrumented unit-tests.
-CMD="cd $(realpath "${DIR_BUILD_NTF}") && "
-CMD+="./run-env.sh ctest --output-on-failure"
-mkscript "${CMD}" "${DIR_BUILD_NTF}/run-unittests.sh"
+CMD="cd $(realpath "${DIR_ROOT}") "
+CMD+="&& ./run-env.sh make test "
+mkscript "${CMD}" "${DIR_ROOT}/run-unittests.sh"
