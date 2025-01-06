@@ -77,7 +77,7 @@ namespace ntca {
 ///
 /// @li @b positiveCacheEnabled:
 /// The flag indicating a cache of positive results should be maintained. A
-/// positive result is a succesful resolution. The default value is null,
+/// positive result is a successful resolution. The default value is null,
 /// indicating a positive cache should *not* be maintained.
 ///
 /// @li @b positiveCacheMinTimeToLive:
@@ -401,7 +401,7 @@ class ResolverConfig
 
     /// Set the DNS server source endpoint list to the specified 'value'.
     /// The DNS server binds UDP and TCP sockets to these endpoints and
-    /// responsds to requests from DNS clients to these endpoints. The
+    /// responds to requests from DNS clients to these endpoints. The
     /// default value is empty, indicating the server binds to any address
     /// on port 53.
     void setServerSourceEndpointList(const bsl::vector<ntsa::Endpoint>& value);
@@ -555,7 +555,7 @@ class ResolverConfig
     const bdlb::NullableValue<bool>& serverEnabled() const;
 
     /// Return the DNS server source endpoint list. The DNS server binds UDP
-    /// and TCP sockets to these endpoints and responsds to requests from
+    /// and TCP sockets to these endpoints and responds to requests from
     /// DNS clients to these endpoints. The default value is empty,
     /// indicating the server binds to any address on port 53.
     const bsl::vector<ntsa::Endpoint>& serverSourceEndpointList() const;

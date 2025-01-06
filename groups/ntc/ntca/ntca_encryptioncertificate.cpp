@@ -5376,8 +5376,8 @@ const char* EncryptionCertificateSubjectKeyUsageType::toString(Value value)
         return "DATA_ENCIPHER";
     case e_KEY_AGREEMENT:
         return "KEY_AGREEMENT";
-    case e_KEY_CERTFICATE_SIGNATURE:
-        return "KEY_CERTFICATE_SIGNATURE";
+    case e_KEY_CERTIFICATE_SIGNATURE:
+        return "KEY_CERTIFICATE_SIGNATURE";
     case e_CERTIFICATE_REVOCATION_LIST_SIGNATURE:
         return "CERTIFICATE_REVOCATION_LIST_SIGNATURE";
     case e_ENCIPHER_ONLY:
@@ -5419,8 +5419,8 @@ int EncryptionCertificateSubjectKeyUsageType::fromString(
         return 0;
     }
 
-    if (bdlb::String::areEqualCaseless(string, "KEY_CERTFICATE_SIGNATURE")) {
-        *result = e_KEY_CERTFICATE_SIGNATURE;
+    if (bdlb::String::areEqualCaseless(string, "KEY_CERTIFICATE_SIGNATURE")) {
+        *result = e_KEY_CERTIFICATE_SIGNATURE;
         return 0;
     }
 

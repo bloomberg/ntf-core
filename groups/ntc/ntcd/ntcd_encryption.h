@@ -127,7 +127,7 @@ class EncryptionCertificate : public ntci::EncryptionCertificate
     explicit EncryptionCertificate(bslma::Allocator* basicAllocator = 0);
 
     /// Create a new encryption certificate having the specified 'subject'
-    /// having the specified 'subjectKey' issued by itsef. Optionally
+    /// having the specified 'subjectKey' issued by itself. Optionally
     /// specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.

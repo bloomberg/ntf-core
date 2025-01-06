@@ -94,7 +94,7 @@ class ListenerSocketSession : public ntci::ListenerSocketSession
         const ntca::AcceptQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
 
     /// Process the condition that the accept queue has been discarded
-    /// because a non-transient accept error asynchronously occured.
+    /// because a non-transient accept error asynchronously occurred.
     void processAcceptQueueDiscarded(
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
         const ntca::AcceptQueueEvent& event) BSLS_KEYWORD_OVERRIDE;

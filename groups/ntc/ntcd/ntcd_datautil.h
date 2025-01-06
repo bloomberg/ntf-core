@@ -60,7 +60,7 @@ struct DataUtil {
                              bsl::size_t  dataset = 0);
 
     /// Return a string describing the specified time 'value', in seconds,
-    /// reduced and scalled to the appropriate standard unit.
+    /// reduced and scaled to the appropriate standard unit.
     static bsl::string formatMicroseconds(double value);
 };
 

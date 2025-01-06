@@ -595,7 +595,7 @@ class Poll : public ntci::Reactor,
     bsl::size_t maxTimers() const BSLS_KEYWORD_OVERRIDE;
 
     /// Return the flag that indicates a socket should be automatically
-    /// attached to the reactor when interest in any event for a sodcket is
+    /// attached to the reactor when interest in any event for a socket is
     /// gained.
     bool autoAttach() const BSLS_KEYWORD_OVERRIDE;
 
@@ -963,7 +963,7 @@ Poll::Poll(const ntca::ReactorConfig&         configuration,
 , d_generation(1)
 , d_detachMutex()
 , d_detachList(basicAllocator)
-#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS
 , d_detachFunctor([this](const auto& entry) {
     return this->removeDetached(entry);
 })

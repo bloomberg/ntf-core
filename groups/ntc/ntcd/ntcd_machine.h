@@ -404,9 +404,9 @@ class PacketQueue
     ntsa::Error setHighWatermark(bsl::size_t highWatermark);
 
     /// Enqueue the specified 'packet'. If the specified 'block' flag is
-    /// true, block until sufficient capacity is availble to store the
+    /// true, block until sufficient capacity is available to store the
     /// 'packet'. If 'packetFunctor' is set then apply it to the packet in
-    /// case of succesful enqueueing. Return the error.
+    /// case of successful enqueueing. Return the error.
     ntsa::Error enqueue(ntccfg::ConditionMutex*        mutex,
                         bsl::shared_ptr<ntcd::Packet>& packet,
                         bool                           block,
@@ -654,7 +654,7 @@ class SessionQueue
     ntsa::Error setHighWatermark(bsl::size_t highWatermark);
 
     /// Enqueue the specified 'session'. If the specified 'block' flag is
-    /// true, block until sufficient capacity is availble to store the
+    /// true, block until sufficient capacity is available to store the
     /// 'session'. Return the error.
     ntsa::Error enqueueSession(ntccfg::ConditionMutex*               mutex,
                                const bsl::shared_ptr<ntcd::Session>& session,

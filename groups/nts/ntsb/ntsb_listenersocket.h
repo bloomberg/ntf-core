@@ -38,7 +38,7 @@ namespace ntsb {
 /// Provide a blocking or non-blocking listener socket implemented by the
 /// system.
 ///
-/// @par Thread Safey
+/// @par Thread Safety
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsb

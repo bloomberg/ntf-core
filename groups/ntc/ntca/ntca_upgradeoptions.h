@@ -63,7 +63,7 @@ namespace ntca {
 ///
 /// @li @b recurse:
 /// Allow callbacks to be invoked immediately and recursively if their
-/// constraints are already satisified at the time the asynchronous operation
+/// constraints are already satisfied at the time the asynchronous operation
 /// is initiated.
 ///
 /// @par Thread Safety
@@ -146,7 +146,7 @@ class UpgradeOptions
     void setDeadline(const bsls::TimeInterval& value);
 
     /// Set the flag that allows callbacks to be invoked immediately and
-    /// recursively if their constraints are already satisified at the time
+    /// recursively if their constraints are already satisfied at the time
     /// the asynchronous operation is initiated.
     void setRecurse(bool value);
 
@@ -163,7 +163,7 @@ class UpgradeOptions
     const bdlb::NullableValue<bsls::TimeInterval>& deadline() const;
 
     /// Return true if callbacks are allowed to be invoked immediately and
-    /// recursively if their constraints are already satisified at the time
+    /// recursively if their constraints are already satisfied at the time
     /// the asynchronous operation is initiated, otherwise return false.
     bool recurse() const;
 

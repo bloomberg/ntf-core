@@ -454,7 +454,7 @@ inline TestLog::TestLog(int verbosity, bslma::Allocator* basicAllocator)
 
 inline TestLog::~TestLog()
 {
-    // Do not explicitly shut down the logger singleton becuase it must
+    // Do not explicitly shut down the logger singleton because it must
     // remain alive during the execution of static destructors.
     //
     // ball::LoggerManager::shutDownSingleton();

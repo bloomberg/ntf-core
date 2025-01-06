@@ -39,7 +39,7 @@ struct ShutdownMode {
         /// regardless of the contents of its queues.
         e_IMMEDIATE = 0,
 
-        /// Shutdown read capability immediataly, but only shutdown write
+        /// Shutdown read capability immediately, but only shutdown write
         /// capability on the stream socket after the write queue has been
         /// drained.
         e_GRACEFUL = 1

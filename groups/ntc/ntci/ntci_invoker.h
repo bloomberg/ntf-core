@@ -69,7 +69,7 @@ class Invoker
                      bslma::Allocator*   basicAllocator = 0);
 
     /// Create a new invoker of an initially undefined function with the
-    /// specified cancelllable 'authorization' mechanism. Optionally specify
+    /// specified cancellable 'authorization' mechanism. Optionally specify
     /// a 'basicAllocator' used to supply memory. If 'basicAllocator' is 0,
     /// the currently installed default allocator is used.
     explicit Invoker(const bsl::shared_ptr<ntci::Authorization>& authorization,
@@ -104,7 +104,7 @@ class Invoker
     void setFunction(const FunctionType& function);
 
     /// Assign the specified 'authorization' mechanism to guard and cancel
-    /// invocatications of the managed function.
+    /// invocations of the managed function.
     void setAuthorization(
         const bsl::shared_ptr<ntci::Authorization>& authorization);
 

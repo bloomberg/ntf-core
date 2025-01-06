@@ -562,7 +562,7 @@ class SystemTest::DatagramSocketSession : public ntci::DatagramSocketSession
 
   public:
     /// Create a new datagram socket application implemented using the
-    /// specified 'datagramSocket' that operates according to the specfied
+    /// specified 'datagramSocket' that operates according to the specified
     /// test 'parameters'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
@@ -737,7 +737,7 @@ class SystemTest::ListenerSocketSession : public ntci::ListenerSocketSession
 
   public:
     /// Create a new listener socket application implemented using the
-    /// specified 'listenerSocket' that operates according to the specfied
+    /// specified 'listenerSocket' that operates according to the specified
     /// test 'parameters'. Allocate blob buffers using the specified
     /// 'blobBufferFactory'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
@@ -817,7 +817,7 @@ class SystemTest::StreamSocketSession : public ntci::StreamSocketSession
 
   public:
     /// Create a new stream socket application implemented using the
-    /// specified 'streamSocket' that operates according to the specfied
+    /// specified 'streamSocket' that operates according to the specified
     /// test 'parameters'. Allocate blob buffers using the specified
     /// 'blobBufferFactory'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed
@@ -1033,7 +1033,7 @@ class SystemTest::TransferClientStreamSocketSession : public ntci::StreamSocketS
         const ntca::ReadQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
 
     /// Process the condition that the read queue has been discarded
-    /// because a non-transient read error asynchronously occured.
+    /// because a non-transient read error asynchronously occurred.
     void processReadQueueDiscarded(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::ReadQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
@@ -1050,7 +1050,7 @@ class SystemTest::TransferClientStreamSocketSession : public ntci::StreamSocketS
     /// Process the condition that the size of the write queue is greater
     /// than the write queue high watermark. This condition will occur the
     /// first time the write queue high watermark has been reached but
-    /// then will not subsequently ooccur until the write queue low
+    /// then will not subsequently occur until the write queue low
     /// watermark. The write queue low watermark conditions and the
     /// high watermark conditions are guaranteed to occur serially.
     void processWriteQueueHighWatermark(
@@ -1058,7 +1058,7 @@ class SystemTest::TransferClientStreamSocketSession : public ntci::StreamSocketS
         const ntca::WriteQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
 
     /// Process the condition that the write queue has been discarded
-    /// because a non-transient write error asynchronously occured.
+    /// because a non-transient write error asynchronously occurred.
     void processWriteQueueDiscarded(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::WriteQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
@@ -1283,7 +1283,7 @@ class SystemTest::TransferServerStreamSocketSession : public ntci::StreamSocketS
         const ntca::ReadQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
 
     /// Process the condition that the read queue has been discarded
-    /// because a non-transient read error asynchronously occured.
+    /// because a non-transient read error asynchronously occurred.
     void processReadQueueDiscarded(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::ReadQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
@@ -1300,7 +1300,7 @@ class SystemTest::TransferServerStreamSocketSession : public ntci::StreamSocketS
     /// Process the condition that the size of the write queue is greater
     /// than the write queue high watermark. This condition will occur the
     /// first time the write queue high watermark has been reached but
-    /// then will not subsequently ooccur until the write queue low
+    /// then will not subsequently occur until the write queue low
     /// watermark. The write queue low watermark conditions and the
     /// high watermark conditions are guaranteed to occur serially.
     void processWriteQueueHighWatermark(
@@ -1308,7 +1308,7 @@ class SystemTest::TransferServerStreamSocketSession : public ntci::StreamSocketS
         const ntca::WriteQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
 
     /// Process the condition that the write queue has been discarded
-    /// because a non-transient write error asynchronously occured.
+    /// because a non-transient write error asynchronously occurred.
     void processWriteQueueDiscarded(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::WriteQueueEvent& event) BSLS_KEYWORD_OVERRIDE;

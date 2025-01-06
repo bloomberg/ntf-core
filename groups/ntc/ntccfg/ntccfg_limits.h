@@ -159,7 +159,7 @@ namespace ntccfg {
 #define NTCCFG_DEFAULT_DATAGRAM_SOCKET_KEEP_HALF_OPEN false
 
 /// The maximum size of a datagram socket message, unless specified by the user.
-/// In the absense of other information, assume the UDP protocol. The default
+/// In the absence of other information, assume the UDP protocol. The default
 /// value is 65507, which is 64K - the size of the UDP header.
 ///
 /// @ingroup module_ntccfg

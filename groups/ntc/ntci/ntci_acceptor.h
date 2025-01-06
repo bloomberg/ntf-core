@@ -55,7 +55,7 @@ class Acceptor : public ntci::AcceptCallbackFactory
     /// high watermark. After satisfying any queued accept operations, when
     /// the accept queue is asynchronously filled up to the accept queue low
     /// watermark, announce an accept queue low watermark event. When
-    /// asynchronously enqueing connections onto the accept queue causes the
+    /// asynchronously enqueuing connections onto the accept queue causes the
     /// accept queue high watermark to become breached, stop asynchronously
     /// accepting connections from the backlog onto the accept queue and
     /// announce an accept queue high watermark event. Return the error,
@@ -82,7 +82,7 @@ class Acceptor : public ntci::AcceptCallbackFactory
     /// any, with that stream socket. After satisfying any queued accept
     /// operations, when the accept queue is asynchronously filled up to the
     /// accept queue low watermark, announce an accept queue low watermark
-    /// event. When asynchronously enqueing connections onto the accept
+    /// event. When asynchronously enqueuing connections onto the accept
     /// queue causes the accept queue high watermark to become breached,
     /// stop asynchronously accepting connections from the backlog onto the
     /// accept queue and announce an accept queue high watermark event.
@@ -109,7 +109,7 @@ class Acceptor : public ntci::AcceptCallbackFactory
     /// any, with that stream socket. After satisfying any queued accept
     /// operations, when the accept queue is asynchronously filled up to the
     /// accept queue low watermark, announce an accept queue low watermark
-    /// event. When asynchronously enqueing connections onto the accept
+    /// event. When asynchronously enqueuing connections onto the accept
     /// queue causes the accept queue high watermark to become breached,
     /// stop asynchronously accepting connections from the backlog onto the
     /// accept queue and announce an accept queue high watermark event.

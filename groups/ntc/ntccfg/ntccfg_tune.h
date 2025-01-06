@@ -61,7 +61,7 @@ namespace ntccfg {
 class Tune
 {
   public:
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(bool* result, const char* name);
@@ -71,7 +71,7 @@ class Tune
     /// 'defaultValue' otherwise.
     static void configure(bool* result, const char* name, bool defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(char* result, const char* name);
@@ -81,7 +81,7 @@ class Tune
     /// 'defaultValue' otherwise.
     static void configure(char* result, const char* name, char defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(unsigned char* result, const char* name);
@@ -93,7 +93,7 @@ class Tune
                           const char*    name,
                           unsigned char  defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(short* result, const char* name);
@@ -103,7 +103,7 @@ class Tune
     /// 'defaultValue' otherwise.
     static void configure(short* result, const char* name, short defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(unsigned short* result, const char* name);
@@ -115,7 +115,7 @@ class Tune
                           const char*     name,
                           unsigned short  defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(int* result, const char* name);
@@ -125,7 +125,7 @@ class Tune
     /// 'defaultValue' otherwise.
     static void configure(int* result, const char* name, int defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(unsigned int* result, const char* name);
@@ -137,7 +137,7 @@ class Tune
                           const char*   name,
                           unsigned int  defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(long* result, const char* name);
@@ -147,7 +147,7 @@ class Tune
     /// 'defaultValue' otherwise.
     static void configure(long* result, const char* name, long defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(unsigned long* result, const char* name);
@@ -159,7 +159,7 @@ class Tune
                           const char*    name,
                           unsigned long  defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(long long* result, const char* name);
@@ -171,7 +171,7 @@ class Tune
                           const char* name,
                           long long   defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(unsigned long long* result, const char* name);
@@ -183,7 +183,7 @@ class Tune
                           const char*         name,
                           unsigned long long  defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(float* result, const char* name);
@@ -193,7 +193,7 @@ class Tune
     /// 'defaultValue' otherwise.
     static void configure(float* result, const char* name, float defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(double* result, const char* name);
@@ -205,7 +205,7 @@ class Tune
                           const char* name,
                           double      defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(long double* result, const char* name);
@@ -217,7 +217,7 @@ class Tune
                           const char*  name,
                           long double  defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     static bool configure(bsl::string* result, const char* name);
@@ -229,7 +229,7 @@ class Tune
                           const char*              name,
                           const bslstl::StringRef& defaultValue);
 
-    /// Load into the specified 'result' the vlaue of the environment
+    /// Load into the specified 'result' the value of the environment
     /// variable having the specified 'name'. Return true if such an
     /// environment variable is defined, and false otherwise.
     template <typename TYPE>

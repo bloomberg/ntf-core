@@ -1020,7 +1020,7 @@ void Proactor::initialize()
     d_monitor_sp->setTrigger(trigger);
     d_monitor_sp->setOneShot(oneShot);
 
-#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS
     d_detachFunctor_sp.createInplace(d_allocator_p, [this](const auto& entry) {
         return this->removeDetached(entry);
     });
@@ -1507,7 +1507,7 @@ ntsa::Error Proactor::detachSocket(
 
     socket->setProactorContext(bsl::shared_ptr<void>());
 
-#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMDAS
+#if NTCCFG_PLATFORM_COMPILER_SUPPORTS_LAMBDAS
     ntci::SocketDetachedCallback detachCallback(
         [socket]() {
             socket->processSocketDetached();

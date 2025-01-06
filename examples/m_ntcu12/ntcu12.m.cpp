@@ -59,7 +59,7 @@ namespace example {
 // First, let's design an application protocol atop any of the
 // connection-oriented, streaming protocols TCP/IPv4, TCP/IPv6, or Unix domain
 // sockets. Our application protocol supports clients requesting the uppercase
-// version of a string, and allows multiple messages to be simultanously
+// version of a string, and allows multiple messages to be simultaneously
 // multiplexed over the same connection. The simplest design of such
 // an application protocol contains one field to uniquely identify the request
 // in the connection, and one field to indicate the length of this field.

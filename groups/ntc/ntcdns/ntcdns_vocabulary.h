@@ -2653,7 +2653,7 @@ struct Type {
         // Mail destination (obsolete, use MX).
         ,
         e_MF = 4
-        // Mail forwarder (obseolete, use MX).
+        // Mail forwarder (obsolete, use MX).
         ,
         e_CNAME = 5
         // Canonical name of an alias.
@@ -2770,7 +2770,7 @@ struct Type {
         // Kitchen Sink enables the storage of various data (obsolete).
         ,
         e_OPT = 41
-        // Pseudo-record type to supprt EDNS.
+        // Pseudo-record type to support EDNS.
         ,
         e_APL = 42
         // Address Prefix List lists address areas in CIDR format.

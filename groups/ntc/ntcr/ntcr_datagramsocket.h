@@ -626,7 +626,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on the callbacks's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other
@@ -664,7 +664,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on the callbacks's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other
@@ -702,7 +702,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on the callbacks's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other
@@ -744,7 +744,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// watermark event will be announced, and thereafter a write queue
     /// low watermark event must be announced before a subsequent write
     /// queue high watermark event will be announced. When the 'data' has
-    /// been completly copied to the send buffer, invoke the specified
+    /// been completely copied to the send buffer, invoke the specified
     /// 'callback' on the callbacks's strand, if any. Return the error,
     /// notably 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue
     /// has already breached the write queue high watermark. All other

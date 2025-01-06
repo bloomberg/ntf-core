@@ -38,7 +38,7 @@ BSLS_IDENT("$Id: $")
 #include <bsl_vector.h>
 
 /// @internal @brief
-/// The size of the arena on the stack into which a log message is formmated.
+/// The size of the arena on the stack into which a log message is formatted.
 ///
 /// @ingroup module_ntci_log
 #define NTCI_LOG_ARENA_SIZE ((bsl::size_t)(1024))
@@ -642,7 +642,7 @@ class LogJournal
 /// @details
 /// This logging system supports stack-based logging contexts that supplement
 /// log entries with the context information in which the log entry is written,
-/// without the need to propogate such information manually.
+/// without the need to propagate such information manually.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
@@ -921,7 +921,7 @@ class LogDescriptorGuard
 };
 
 /// @internal @brief
-/// Provide a guard to automatically set and reset the source endpoing field
+/// Provide a guard to automatically set and reset the source endpoint field
 /// of a log context.
 ///
 /// @par Thread Safety

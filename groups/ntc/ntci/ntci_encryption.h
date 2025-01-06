@@ -112,25 +112,25 @@ class Encryption
     virtual bool hasOutgoingCipherText() const;
 
     /// Load into the specified 'result' the source certificate used by the
-    /// encryption session. Return true if such a certicate is defined, and
+    /// encryption session. Return true if such a certificate is defined, and
     /// false otherwise.
     virtual bool getSourceCertificate(
         ntca::EncryptionCertificate* result) const;
 
     /// Load into the specified 'result' the source certificate used by the
-    /// encryption session. Return true if such a certicate is defined, and
+    /// encryption session. Return true if such a certificate is defined, and
     /// false otherwise.
     virtual bool getSourceCertificate(
         bsl::shared_ptr<ntci::EncryptionCertificate>* result) const;
 
     /// Load into the specified 'result' the remote certificate used by the
-    /// encryption session. Return true if such a certicate is defined, and
+    /// encryption session. Return true if such a certificate is defined, and
     /// false otherwise.
     virtual bool getRemoteCertificate(
         ntca::EncryptionCertificate* result) const;
 
     /// Load into the specified 'result' the remote certificate used by the
-    /// encryption session. Return true if such a certicate is defined, and
+    /// encryption session. Return true if such a certificate is defined, and
     /// false otherwise.
     virtual bool getRemoteCertificate(
         bsl::shared_ptr<ntci::EncryptionCertificate>* result) const;

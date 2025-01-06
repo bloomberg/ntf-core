@@ -38,7 +38,7 @@ struct TimerEventType {
         /// The clock as reached the timer deadline.
         e_DEADLINE = 0,
 
-        /// An error has occured for the timer.
+        /// An error has occurred for the timer.
         e_CANCELED = 1,
 
         /// The timer has been closed.

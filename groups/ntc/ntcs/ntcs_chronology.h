@@ -276,18 +276,18 @@ class Chronology NTSCFG_FINAL : public ntci::Chronology
         /// the timer will be announced as cancelled instead),
         /// 'ntsa::Error::e_INVALID' if the 'timer' has not been registered
         /// or already removed, and 'ntsa::Error::e_OK' if this timer's
-        /// deadline has already occured, is not recurring nor has been
+        /// deadline has already occurred, is not recurring nor has been
         /// rescheduled.
         ntsa::Error cancel() BSLS_KEYWORD_OVERRIDE;
 
-        /// Cancel this timer if its deadline has not already occured, close
+        /// Cancel this timer if its deadline has not already occurred, close
         /// the timer for subsequent scheduling, and remove its resources.
         /// Return the error, notably 'ntca::Error::e_CANCELED' if another
         /// occurrence of this timer's deadline is scheduled but has not yet
         /// occurred (in which case the timer will be announced as cancelled
         /// instead), 'ntsa::Error::e_INVALID' if the 'timer' has not been
         /// registered or already removed, and 'ntsa::Error::e_OK' if this
-        /// timer's deadline has already occured, is not recurring nor has
+        /// timer's deadline has already occurred, is not recurring nor has
         /// been rescheduled.
         ntsa::Error close() BSLS_KEYWORD_OVERRIDE;
 

@@ -365,8 +365,8 @@ namespace ntscfg {
 
 /// @internal @brief
 /// Return the specified 'value' converted to the  parameterized
-/// 'TYPE' explictly, which it would promoted to implictly otherwise, but with
-/// a warning.
+/// 'TYPE' explicitly, which it would promoted to implicitly otherwise, but
+/// with a warning.
 ///
 /// This macro should be applied in the case of the following warnings:
 /// GCC: "comparison of integer expressions of different signedness"
@@ -376,7 +376,7 @@ namespace ntscfg {
 #define NTSCFG_WARNING_PROMOTE(TYPE, value) ((TYPE)((value)))
 
 /// @internal @brief
-/// Indicate the specfied 'variable' is unused.
+/// Indicate the specified 'variable' is unused.
 ///
 /// @ingroup module_ntscfg
 #define NTSCFG_WARNING_UNUSED(variable) (void)(variable)

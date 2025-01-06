@@ -51,7 +51,7 @@ class Receiver : public ntci::ReceiveCallbackFactory
     /// watermark. After satisfying any queued read operations, when the
     /// read queue is asynchronously filled up to the read queue low
     /// watermark, announce a read queue low watermark event. When
-    /// asynchronously enqueing data onto the read queue causes the read
+    /// asynchronously enqueuing data onto the read queue causes the read
     /// queue high watermark to become breached, stop asynchronously copying
     /// the socket receive buffer to the read queue and announce a read
     /// queue high watermark event. Return the error, notably
@@ -80,7 +80,7 @@ class Receiver : public ntci::ReceiveCallbackFactory
     /// data structure. After satisfying any queued read operations, when
     /// the read queue is asynchronously filled up to the read queue low
     /// watermark, announce a read queue low watermark event. When
-    /// asynchronously enqueing data onto the read queue causes the read
+    /// asynchronously enqueuing data onto the read queue causes the read
     /// queue high watermark to become breached, stop asynchronously copying
     /// the socket receive buffer to the read queue and announce a read
     /// queue high watermark event. Return the error, notably
@@ -111,7 +111,7 @@ class Receiver : public ntci::ReceiveCallbackFactory
     /// data structure. After satisfying any queued read operations, when
     /// the read queue is asynchronously filled up to the read queue low
     /// watermark, announce a read queue low watermark event. When
-    /// asynchronously enqueing data onto the read queue causes the read
+    /// asynchronously enqueuing data onto the read queue causes the read
     /// queue high watermark to become breached, stop asynchronously copying
     /// the socket receive buffer to the read queue and announce a read
     /// queue high watermark event. Return the error, notably

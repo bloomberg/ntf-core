@@ -470,7 +470,7 @@ class EncryptionKeyRsaValuePrivate
     /// Return the private exponent.
     const ntsa::AbstractInteger& decryptionExponent() const;
 
-    /// Return the frist prime.
+    /// Return the first prime.
     const ntsa::AbstractInteger& prime1() const;
 
     /// Return the second prime.
@@ -726,17 +726,17 @@ class EncryptionKeyEllipticCurveParametersIdentifierType
   public:
     /// Enumerate the well-known elliptic curve parameters.
     enum Value {
-        /// Elliptic curve with 256-bit field size and domain paraters chosen
+        /// Elliptic curve with 256-bit field size and domain parameters chosen
         /// randomly. This enumerator corresponds to the object identifier
         /// 1.2.840.10045.3.1.7.
         e_SEC_P256_R1 = 0,
 
-        /// Elliptic curve with 256-bit field size and domain paraters chosen
+        /// Elliptic curve with 256-bit field size and domain parameters chosen
         /// randomly. This enumerator corresponds to the object identifier
         /// 1.3.132.0.34.
         e_SEC_P384_R1 = 1,
 
-        /// Elliptic curve with 256-bit field size and domain paraters chosen
+        /// Elliptic curve with 256-bit field size and domain parameters chosen
         /// randomly. This enumerator corresponds to the object identifier
         /// 1.3.132.0.35.
         e_SEC_P521_R1 = 2

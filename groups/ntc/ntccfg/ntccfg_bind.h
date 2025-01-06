@@ -47,7 +47,7 @@ BSLS_IDENT("$Id: $")
 #if NTCCFG_BIND_STD
 
 /// @internal @brief
-/// Return an invokable object that calls the specified 'function' with the
+/// Return an invocable object that calls the specified 'function' with the
 /// specified arguments when called.
 /// @ingroup module_ntccfg
 #define NTCCFG_BIND(function, ...) bsl::bind(function, __VA_ARGS__)
@@ -100,7 +100,7 @@ BSLS_IDENT("$Id: $")
 #else
 
 /// @internal @brief
-/// Return an invokable object that calls the specified 'function' with the
+/// Return an invocable object that calls the specified 'function' with the
 /// specified arguments when called.
 /// @ingroup module_ntccfg
 #define NTCCFG_BIND(function, ...)                                            \
@@ -154,7 +154,7 @@ BSLS_IDENT("$Id: $")
 #endif
 
 /// @internal @brief
-/// Return an invokable object that calls the specified 'memberFunction' of
+/// Return an invocable object that calls the specified 'memberFunction' of
 /// the object managed by the specified 'smartPtr' when called.
 /// @ingroup module_ntccfg
 #define NTCCFG_BIND_WEAK(memberFunction, smartPtr)                            \
@@ -165,7 +165,7 @@ namespace BloombergLP {
 namespace ntccfg {
 
 /// @internal @brief
-/// Provide an invokable object that contains a weak pointer to an object and a
+/// Provide an invocable object that contains a weak pointer to an object and a
 /// member function that is conditionally called only when a strong reference
 /// to the object still exists.
 ///
@@ -224,22 +224,22 @@ class WeakMemberFunction
     bsl::weak_ptr<TYPE> d_object;
 
   public:
-    /// Create an invokable object that when invoked performs a no-op.
+    /// Create an invocable object that when invoked performs a no-op.
     WeakMemberFunction();
 
-    /// Create an invokable object that when invoked calls the specified
-    /// 'memberFunction' of the deferenced 'object', if 'object' still
+    /// Create an invocable object that when invoked calls the specified
+    /// 'memberFunction' of the referenced 'object', if 'object' still
     /// has a strong reference, and is a no-op otherwise.
     WeakMemberFunction(MEMBER_FUNCTION            memberFunction,
                        const bsl::weak_ptr<TYPE>& object);
 
-    /// Create an invokable object that when invoked calls the specified
-    /// 'memberFunction' of the deferenced 'object', if 'object' still
+    /// Create an invocable object that when invoked calls the specified
+    /// 'memberFunction' of the referenced 'object', if 'object' still
     /// has a strong reference, and is a no-op otherwise.
     WeakMemberFunction(MEMBER_FUNCTION              memberFunction,
                        const bsl::shared_ptr<TYPE>& object);
 
-    /// Create an invokable object that has the same value as the specified
+    /// Create an invocable object that has the same value as the specified
     /// 'original' object.
     WeakMemberFunction(const WeakMemberFunction& original);
 
@@ -254,32 +254,32 @@ class WeakMemberFunction
     /// construction.
     void reset();
 
-    /// Invoke the member function of the deferenced object with zero
+    /// Invoke the member function of the referenced object with zero
     /// arguments if the object still has a strong reference, and perform
     /// a no-op otherwise.
     void operator()() const;
 
-    /// Invoke the member function of the deferenced object with the
+    /// Invoke the member function of the referenced object with the
     /// specified 'arg1' argument if the object still has a strong
     /// reference, and perform a no-op otherwise.
     void operator()(ARG1 arg1) const;
 
-    /// Invoke the member function of the deferenced object with the
+    /// Invoke the member function of the referenced object with the
     /// specified 'arg1' and 'arg2' arguments if the object still has
     /// a strong reference, and perform a no-op otherwise.
     void operator()(ARG1 arg1, ARG2 arg2) const;
 
-    /// Invoke the member function of the deferenced object with the
+    /// Invoke the member function of the referenced object with the
     /// specified 'arg1', 'arg2', and 'arg3' arguments if the object still
     /// has a strong reference, and perform a no-op otherwise.
     void operator()(ARG1 arg1, ARG2 arg2, ARG3 arg3) const;
 
-    /// Invoke the member function of the deferenced object with the
+    /// Invoke the member function of the referenced object with the
     /// specified 'arg1', 'arg2', 'arg3', and 'arg4' arguments if the object
     /// still has a strong reference, and perform a no-op otherwise.
     void operator()(ARG1 arg1, ARG2 arg2, ARG3 arg3, ARG4 arg4) const;
 
-    /// Invoke the member function of the deferenced object with the
+    /// Invoke the member function of the referenced object with the
     /// specified 'arg1', 'arg2', 'arg3', 'arg4', and 'arg5' arguments if
     /// the object still has a strong reference, and perform a no-op
     /// otherwise.
@@ -289,7 +289,7 @@ class WeakMemberFunction
                     ARG4 arg4,
                     ARG5 arg5) const;
 
-    /// Invoke the member function of the deferenced object with the
+    /// Invoke the member function of the referenced object with the
     /// specified 'arg1', 'arg2', 'arg3', 'arg4', 'arg5', and 'arg6'
     /// arguments if the object still has a strong reference, and perform
     /// a no-op otherwise.
@@ -310,16 +310,16 @@ class WeakMemberFunction
 ///
 /// @ingroup module_ntccfg
 struct WeakMemberFunctionUtil {
-    /// Return an invokable object that when invoked calls the specified
-    /// 'memberFunction' of the deferenced 'object', if 'object' still
+    /// Return an invocable object that when invoked calls the specified
+    /// 'memberFunction' of the referenced 'object', if 'object' still
     /// has a strong reference, and is a no-op otherwise.
     template <typename MEMBER_FUNCTION, typename TYPE>
     WeakMemberFunction<MEMBER_FUNCTION, TYPE> static bindWeak(
         MEMBER_FUNCTION            memberFunction,
         const bsl::weak_ptr<TYPE>& object);
 
-    /// Return an invokable object that when invoked calls the specified
-    /// 'memberFunction' of the deferenced 'object', if 'object' still
+    /// Return an invocable object that when invoked calls the specified
+    /// 'memberFunction' of the referenced 'object', if 'object' still
     /// has a strong reference, and is a no-op otherwise.
     template <typename MEMBER_FUNCTION, typename TYPE>
     WeakMemberFunction<MEMBER_FUNCTION, TYPE> static bindWeak(
