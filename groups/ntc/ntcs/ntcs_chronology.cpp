@@ -36,12 +36,6 @@ BSLS_IDENT_RCSID(ntcs_chronology_cpp, "$Id$ $CSID$")
 
 #include <bsl_iostream.h>
 
-#if defined(BSLS_PLATFORM_CMP_GNU) || defined(BSLS_PLATFORM_CMP_CLANG)
-#define NTCCFG_INLINE_NEVER __attribute__((noinline))
-#else
-#define NTCCFG_INLINE_NEVER
-#endif
-
 // Uncomment to enable logging from this component.
 #define NTCS_CHRONOLOGY_LOG 0
 

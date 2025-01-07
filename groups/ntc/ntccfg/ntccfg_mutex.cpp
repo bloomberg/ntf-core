@@ -18,9 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntccfg_mutex_cpp, "$Id$ $CSID$")
 
-#include <bslma_allocator.h>
-#include <bslma_default.h>
-#include <bsls_assert.h>
+#if NTCCFG_FUTEX_ENABLED
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #include <errno.h>
@@ -29,10 +27,39 @@ BSLS_IDENT_RCSID(ntccfg_mutex_cpp, "$Id$ $CSID$")
 #include <unistd.h>
 #endif
 
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+#ifdef NTDDI_VERSION
+#undef NTDDI_VERSION
+#endif
+#ifdef WINVER
+#undef WINVER
+#endif
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
+#define NTDDI_VERSION 0x06000100
+#define WINVER 0x0600
+#define _WIN32_WINNT 0x0600
+#ifndef _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+// clang-format off
+#include <windows.h>
+// clang-format on
+#pragma comment(lib, "synchronization")
+#endif
+
+#endif // NTCCFG_FUTEX_ENABLED
+
 namespace BloombergLP {
 namespace ntccfg {
 
 #if NTCCFG_FUTEX_ENABLED
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
 
 // Some versions of GCC issue a spurious warning that the 'current' parameter
 // is set but not used when 'Futex::compareAndSwap' is called.
@@ -41,17 +68,20 @@ namespace ntccfg {
 #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
 #endif
 
-__attribute__((noinline)) void Futex::wait()
+NTCCFG_INLINE_NEVER
+void Futex::wait()
 {
     syscall(SYS_futex, (int*)(&d_value), FUTEX_WAIT, 2, 0, 0, 0);
 }
 
-__attribute__((noinline)) void Futex::wake()
+NTCCFG_INLINE_NEVER
+void Futex::wake()
 {
     syscall(SYS_futex, (int*)(&d_value), FUTEX_WAKE, 1, 0, 0, 0);
 }
 
-__attribute__((noinline)) void Futex::lockContention(int c)
+NTCCFG_INLINE_NEVER
+void Futex::lockContention(int c)
 {
     do {
         if (c == 2 || compareAndSwap(&d_value, 1, 2) != 0) {
@@ -60,7 +90,8 @@ __attribute__((noinline)) void Futex::lockContention(int c)
     } while ((c = compareAndSwap(&d_value, 0, 2)) != 0);
 }
 
-__attribute__((noinline)) void Futex::unlockContention()
+NTCCFG_INLINE_NEVER
+void Futex::unlockContention()
 {
     __atomic_store_n(&d_value, 0, __ATOMIC_SEQ_CST);
     this->wake();
@@ -68,6 +99,53 @@ __attribute__((noinline)) void Futex::unlockContention()
 
 #if defined(BSLS_PLATFORM_CMP_GNU)
 #pragma GCC diagnostic pop
+#endif
+
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+
+NTCCFG_INLINE_NEVER
+void Futex::wait()
+{
+    Value compare = 2;
+    WaitOnAddress(&d_value, &compare, sizeof compare, INFINITE);
+}
+
+NTCCFG_INLINE_NEVER
+void Futex::wake()
+{
+    WakeByAddressSingle((Value*)(&d_value));
+}
+
+NTCCFG_INLINE_NEVER
+void Futex::lockContention(Value c)
+{
+    while (true) {
+        if (c == 2) {
+            this->wait();
+        }
+        else {
+            const Value previous = compareAndSwap(&d_value, 1, 2);
+            if (previous != 0) {
+                this->wait();
+            }
+        }
+
+        c = compareAndSwap(&d_value, 0, 2);
+        if (c == 0) {
+            break;
+        }
+    }
+}
+
+NTCCFG_INLINE_NEVER
+void Futex::unlockContention()
+{
+    _InterlockedExchange(&d_value, 0);
+    this->wake();
+}
+
+#else
+#error Not implemented
 #endif
 
 #endif  // NTCCFG_FUTEX_ENABLED
