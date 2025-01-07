@@ -33,14 +33,22 @@ BSLS_IDENT("$Id: $")
 #if defined(BSLS_PLATFORM_OS_LINUX) &&                                        \
     (defined(BSLS_PLATFORM_CMP_GNU) || defined(BSLS_PLATFORM_CMP_CLANG))
 #define NTCCFG_FUTEX_ENABLED 1
+#elif defined(BSLS_PLATFORM_OS_WINDOWS) && defined(BSLS_PLATFORM_CMP_MSVC)
+#define NTCCFG_FUTEX_ENABLED 1
 #else
 #define NTCCFG_FUTEX_ENABLED 0
+#endif
+
+#if NTCCFG_WUTEX_ENABLED
+#include <intrin.h>
 #endif
 
 namespace BloombergLP {
 namespace ntccfg {
 
 #if NTCCFG_FUTEX_ENABLED
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
 
 // Some versions of GCC issue a spurious warning that the 'current' parameter
 // is set but not used when 'Futex::compareAndSwap' is called.
@@ -146,6 +154,105 @@ void Futex::unlock()
 
 #if defined(BSLS_PLATFORM_CMP_GNU)
 #pragma GCC diagnostic pop
+#endif
+
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+
+/// @internal @brief
+/// Provide a synchronization primitive for mutually-exclusive access
+/// implemented by the Win32 WaitOnAddress function.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntccfg
+__declspec(align(4)) class Futex
+{
+    /// Define a type alias for the type of the synchronized value.
+    typedef long Value;
+
+    /// The synchronized value.
+    volatile Value d_value;
+
+  private:
+    Futex(const Futex&) BSLS_KEYWORD_DELETED;
+    Futex& operator=(const Futex&) BSLS_KEYWORD_DELETED;
+
+  private:
+    /// Wait until the lock may be acquired.
+    void wait();
+
+    /// Wake the next thread waiting to acquire the lock.
+    void wake();
+
+    /// Continue locking the mutex after discovering the mutex was probably
+    /// previously unlocked.
+    void lockContention(Value c);
+
+    /// Continue unlocking the mutex after discovering the mutex probably
+    /// has other threads trying to lock the mutex.
+    void unlockContention();
+
+    /// Compare the specified '*current' value to the specified 'expected'
+    /// value, and if equal, set '*current' to 'desired'. Return the
+    /// previous value of 'current'.
+    static Value compareAndSwap(volatile Value* current, 
+                                Value           expected, 
+                                Value           desired);
+
+  public:
+    /// Create a new mutex.
+    Futex();
+
+    /// Destroy this object.
+    ~Futex();
+
+    /// Lock the mutex.
+    void lock();
+
+    /// Unlock the mutex.
+    void unlock();
+};
+
+NTCCFG_INLINE
+Futex::Value Futex::compareAndSwap(volatile Value* current, 
+                                   Value           expected, 
+                                   Value           desired)
+{
+    return _InterlockedCompareExchange(current, desired, expected);
+}
+
+NTCCFG_INLINE
+Futex::Futex()
+{
+    _InterlockedExchange(&d_value, 0);
+}
+
+NTCCFG_INLINE
+Futex::~Futex()
+{
+}
+
+NTCCFG_INLINE
+void Futex::lock()
+{
+    const Value previous = compareAndSwap(&d_value, 0, 1);
+    if (previous != 0) {
+        this->lockContention(previous);
+    }
+}
+
+NTCCFG_INLINE
+void Futex::unlock()
+{
+    const Value previous = _InterlockedDecrement(&d_value) + 1;
+    if (previous != 1) {
+        this->unlockContention();
+    }
+}
+
+#else
+#error Not implemented
 #endif
 
 #endif  // NTCCFG_FUTEX_ENABLED

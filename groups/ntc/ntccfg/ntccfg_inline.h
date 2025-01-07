@@ -65,4 +65,24 @@ BSLS_IDENT("$Id: $")
 #error Not implemented
 #endif
 
+#if defined(BSLS_PLATFORM_CMP_GNU) || defined(BSLS_PLATFORM_CMP_CLANG)
+
+/// Hint that the following function should never be inlined at its call site.
+/// @ingroup module_ntccfg
+#define NTCCFG_INLINE_NEVER __attribute__((noinline))
+
+#elif defined(BSLS_PLATFORM_CMP_MSVC)
+
+/// Hint that the following function should never be inlined at its call site.
+/// @ingroup module_ntccfg
+#define NTCCFG_INLINE_NEVER __declspec(noinline)
+
+#else
+
+/// Hint that the following function should never be inlined at its call site.
+/// @ingroup module_ntccfg
+#define NTCCFG_INLINE_NEVER
+
+#endif
+
 #endif
