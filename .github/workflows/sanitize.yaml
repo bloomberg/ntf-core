@@ -1,0 +1,44 @@
+name: Sanitize with ASAN, MSAN, TSAN, UBSAN
+
+on:
+  pull_request:
+    branches:
+      - main
+  pull_request_review:
+    types: [submitted]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build_dependencies:
+    name: Build deps [ubuntu]
+    runs-on: ubuntu-latest
+    # if: github.event.review.state == 'APPROVED'
+    steps:
+      - uses: actions/checkout@v4
+
+  run_asan:
+    needs: build_dependencies
+    uses: ./.github/workflows/sanitizer-check.yaml
+    with:
+      sanitizer-name: 'asan'
+
+  run_msan:
+    needs: build_dependencies
+    uses: ./.github/workflows/sanitizer-check.yaml
+    with:
+      sanitizer-name: 'msan'
+
+  run_tsan:
+    needs: build_dependencies
+    uses: ./.github/workflows/sanitizer-check.yaml
+    with:
+      sanitizer-name: 'tsan'
+
+  run_ubsan:
+    needs: build_dependencies
+    uses: ./.github/workflows/sanitizer-check.yaml
+    with:
+      sanitizer-name: 'ubsan'
