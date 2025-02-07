@@ -33,6 +33,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_closable.h>
 #include <ntci_closecallback.h>
 #include <ntci_closecallbackfactory.h>
+#include <ntci_compression.h>
 #include <ntci_connectcallback.h>
 #include <ntci_connectcallbackfactory.h>
 #include <ntci_connector.h>
@@ -1472,6 +1473,11 @@ class StreamSocket : public ntsi::Descriptor,
     virtual ntsa::Error setWriteRateLimiter(
         const bsl::shared_ptr<ntci::RateLimiter>& rateLimiter) = 0;
 
+    /// Set the write deflater to the specified 'compression' technique. Return
+    /// the error.
+    virtual ntsa::Error setWriteDeflater(
+        const bsl::shared_ptr<ntci::Compression>& compression);
+
     /// Set the write queue low watermark to the specified 'lowWatermark'.
     /// Return the error.
     virtual ntsa::Error setWriteQueueLowWatermark(
@@ -1491,6 +1497,11 @@ class StreamSocket : public ntsi::Descriptor,
     /// the error.
     virtual ntsa::Error setReadRateLimiter(
         const bsl::shared_ptr<ntci::RateLimiter>& rateLimiter) = 0;
+
+    /// Set the read inflater to the specified 'compression' technique. Return
+    /// the error.
+    virtual ntsa::Error setReadInflater(
+        const bsl::shared_ptr<ntci::Compression>& compression);
 
     /// Set the read queue low watermark to the specified 'lowWatermark'.
     /// Return the error.

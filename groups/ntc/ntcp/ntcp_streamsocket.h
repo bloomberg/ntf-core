@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_streamsocketoptions.h>
 #include <ntccfg_platform.h>
+#include <ntci_compression.h>
 #include <ntci_datapool.h>
 #include <ntci_listenersocket.h>
 #include <ntci_proactor.h>
@@ -113,14 +114,17 @@ class StreamSocket : public ntci::StreamSocket,
     ntcs::ShutdownState                        d_shutdownState;
     ntsa::SendOptions                          d_sendOptions;
     ntcq::SendQueue                            d_sendQueue;
+    bsl::shared_ptr<ntci::Compression>         d_sendDeflater_sp;
     bsl::shared_ptr<ntci::RateLimiter>         d_sendRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>               d_sendRateTimer_sp;
     bool                                       d_sendPending;
     bool                                       d_sendGreedily;
+    ntci::SendCallback                         d_sendComplete;
     bsl::uint64_t                              d_sendCount;
     ntsa::ReceiveOptions                       d_receiveOptions;
     ntcq::ReceiveQueue                         d_receiveQueue;
     ntcq::ReceiveFeedback                      d_receiveFeedback;
+    bsl::shared_ptr<ntci::Compression>         d_receiveInflater_sp;
     bsl::shared_ptr<ntci::RateLimiter>         d_receiveRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>               d_receiveRateTimer_sp;
     bool                                       d_receivePending;
@@ -384,20 +388,6 @@ class StreamSocket : public ntci::StreamSocket,
         const bsl::shared_ptr<StreamSocket>& self);
 
     /// Send the specified raw or already encrypted 'data' according to the
-    /// specified 'options'. Return the error. The behavior is undefined
-    /// unless 'd_sendMutex' is locked.
-    ntsa::Error privateSendRaw(const bsl::shared_ptr<StreamSocket>& self,
-                               const bdlbb::Blob&                   data,
-                               const ntca::SendOptions&             options);
-
-    /// Send the specified raw or already encrypted 'data' according to the
-    /// specified 'options'. Return the error. The behavior is undefined
-    /// unless 'd_sendMutex' is locked.
-    ntsa::Error privateSendRaw(const bsl::shared_ptr<StreamSocket>& self,
-                               const ntsa::Data&                    data,
-                               const ntca::SendOptions&             options);
-
-    /// Send the specified raw or already encrypted 'data' according to the
     /// specified 'options'. When the 'data' is entirely copied to the
     /// send buffer, invoke the specified 'callback' on callback's strand.
     /// Return the error.
@@ -414,6 +404,26 @@ class StreamSocket : public ntci::StreamSocket,
                                const ntsa::Data&                    data,
                                const ntca::SendOptions&             options,
                                const ntci::SendCallback&            callback);
+
+    /// Send the encryption of the specified 'data' according to the specified
+    /// 'options'. When the 'data' is entirely copied to the send buffer,
+    /// invoke the specified 'callback' on the callback's strand, if any.
+    /// Return the error.
+    ntsa::Error privateSendEncrypted(
+                                const bsl::shared_ptr<StreamSocket>& self,
+                                const bdlbb::Blob&                   data,
+                                const ntca::SendOptions&             options,
+                                const ntci::SendCallback&            callback);
+
+    /// Send the encryption of the specified 'data' according to the specified
+    /// 'options'. When the 'data' is entirely copied to the send buffer,
+    /// invoke the specified 'callback' on the callback's strand, if any.
+    /// Return the error.
+    ntsa::Error privateSendEncrypted(
+                                const bsl::shared_ptr<StreamSocket>& self,
+                                const ntsa::Data&                    data,
+                                const ntca::SendOptions&             options,
+                                const ntci::SendCallback&            callback);
 
     /// Return true if the proactor socket has stream semantics, otherwise
     /// return false.
@@ -1079,6 +1089,12 @@ class StreamSocket : public ntci::StreamSocket,
     ntsa::Error setWriteRateLimiter(const bsl::shared_ptr<ntci::RateLimiter>&
                                         rateLimiter) BSLS_KEYWORD_OVERRIDE;
 
+    /// Set the write deflater to the specified 'compression' technique. Return
+    /// the error.
+    ntsa::Error setWriteDeflater(
+        const bsl::shared_ptr<ntci::Compression>& compression) 
+        BSLS_KEYWORD_OVERRIDE;
+
     /// Set the write queue low watermark to the specified 'lowWatermark'.
     /// Return the error.
     ntsa::Error setWriteQueueLowWatermark(bsl::size_t lowWatermark)
@@ -1099,6 +1115,12 @@ class StreamSocket : public ntci::StreamSocket,
     /// the error.
     ntsa::Error setReadRateLimiter(const bsl::shared_ptr<ntci::RateLimiter>&
                                        rateLimiter) BSLS_KEYWORD_OVERRIDE;
+
+    /// Set the read inflater to the specified 'compression' technique. Return
+    /// the error.
+    ntsa::Error setReadInflater(
+        const bsl::shared_ptr<ntci::Compression>& compression)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Set the read queue low watermark to the specified 'lowWatermark'.
     /// Return the error.

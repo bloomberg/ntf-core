@@ -49,6 +49,8 @@
 #include <ntca_datagramsocketevent.cpp>
 #include <ntca_datagramsocketeventtype.cpp>
 #include <ntca_datagramsocketoptions.cpp>
+#include <ntca_deflatecontext.cpp>
+#include <ntca_deflateoptions.cpp>
 #include <ntca_downgradecontext.cpp>
 #include <ntca_downgradeevent.cpp>
 #include <ntca_downgradeeventtype.cpp>
@@ -97,6 +99,8 @@
 #include <ntca_getservicenameeventtype.cpp>
 #include <ntca_getservicenameoptions.cpp>
 #include <ntca_interfaceconfig.cpp>
+#include <ntca_inflatecontext.cpp>
+#include <ntca_inflateoptions.cpp>
 #include <ntca_listenersocketevent.cpp>
 #include <ntca_listenersocketeventtype.cpp>
 #include <ntca_listenersocketoptions.cpp>
@@ -170,6 +174,7 @@
 #include <ntci_closecallbackfactory.cpp>
 #include <ntci_closefuture.cpp>
 #include <ntci_closeresult.cpp>
+#include <ntci_compression.cpp>
 #include <ntci_connectcallback.cpp>
 #include <ntci_connectcallbackfactory.cpp>
 #include <ntci_connectfuture.cpp>
