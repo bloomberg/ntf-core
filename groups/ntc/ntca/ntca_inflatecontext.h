@@ -32,6 +32,9 @@ namespace ntca {
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
+/// @li @b position:
+/// The position in destination blob where the inflated data begins.
+///
 /// @li @b bytesRead:
 /// The number of bytes read from the input.
 ///
@@ -47,6 +50,7 @@ namespace ntca {
 /// @ingroup module_todo
 class InflateContext
 {
+    bsl::size_t   d_position;
     bsl::size_t   d_bytesRead;
     bsl::size_t   d_bytesWritten;
     bsl::uint32_t d_checksum;
@@ -69,6 +73,10 @@ class InflateContext
     /// Reset the value of this object to its value upon default construction.
     void reset();
 
+    /// Set the position in the destination blob where the deflated data
+    /// begins to the specified 'value'.
+    void setPosition(bsl::size_t value);
+
     /// Set the number of bytes read to the specified 'value'.
     void setBytesRead(bsl::size_t value);
 
@@ -77,6 +85,10 @@ class InflateContext
 
     /// Set the checksum to the specified 'value'.
     void setChecksum(bsl::uint32_t value);
+
+    /// Return the position in the destination blob where the inflated data
+    /// begins. 
+    bsl::size_t position() const;
 
     /// Return the number of bytes read.
     bsl::size_t bytesRead() const;
@@ -158,7 +170,8 @@ void hashAppend(HASH_ALGORITHM& algorithm, const InflateContext& value);
 
 NTCCFG_INLINE
 InflateContext::InflateContext()
-: d_bytesRead(0)
+: d_position(0)
+, d_bytesRead(0)
 , d_bytesWritten(0)
 , d_checksum(0)
 {
@@ -166,7 +179,8 @@ InflateContext::InflateContext()
 
 NTCCFG_INLINE
 InflateContext::InflateContext(const InflateContext& original)
-: d_bytesRead(original.d_bytesRead)
+: d_position(original.d_position)
+, d_bytesRead(original.d_bytesRead)
 , d_bytesWritten(original.d_bytesWritten)
 , d_checksum(original.d_checksum)
 {
@@ -180,6 +194,7 @@ InflateContext::~InflateContext()
 NTCCFG_INLINE
 InflateContext& InflateContext::operator=(const InflateContext& other)
 {
+    d_position     = other.d_position;
     d_bytesRead    = other.d_bytesRead;
     d_bytesWritten = other.d_bytesWritten;
     d_checksum     = other.d_checksum;
@@ -190,9 +205,16 @@ InflateContext& InflateContext::operator=(const InflateContext& other)
 NTCCFG_INLINE
 void InflateContext::reset()
 {
+    d_position     = 0;
     d_bytesRead    = 0;
     d_bytesWritten = 0;
     d_checksum     = 0;
+}
+
+NTCCFG_INLINE
+void InflateContext::setPosition(bsl::size_t value)
+{
+    d_position = value;
 }
 
 NTCCFG_INLINE
@@ -211,6 +233,12 @@ NTCCFG_INLINE
 void InflateContext::setChecksum(bsl::uint32_t value)
 {
     d_checksum = value;
+}
+
+NTCCFG_INLINE
+bsl::size_t InflateContext::position() const
+{
+    return d_position;
 }
 
 NTCCFG_INLINE
@@ -236,6 +264,7 @@ NTCCFG_INLINE
 void InflateContext::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
+    hashAppend(algorithm, d_position);
     hashAppend(algorithm, d_bytesRead);
     hashAppend(algorithm, d_bytesWritten);
     hashAppend(algorithm, d_checksum);

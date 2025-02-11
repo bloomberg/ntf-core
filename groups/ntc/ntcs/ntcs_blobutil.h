@@ -107,6 +107,18 @@ struct BlobUtil {
                        const bsl::shared_ptr<bdlbb::Blob>& source,
                        bsl::size_t                         size);
 
+    /// Append the specified 'size' number of bytes from the start of the
+    /// specified 'source' to the specified 'destination' blob.
+    static void append(bdlbb::Blob* destination,
+                       const void*  source,
+                       bsl::size_t  size);
+
+    /// Append the specified 'size' number of bytes from the start of the
+    /// specified 'source' to the specified 'destination' blob.
+    static void append(const bsl::shared_ptr<bdlbb::Blob>& destination,
+                       const void*                         source,
+                       bsl::size_t                         size);
+
     /// Pop the specified 'size' number of bytes from the specified 'blob'.
     static void pop(bdlbb::Blob* blob, bsl::size_t size);
 
@@ -215,6 +227,28 @@ void BlobUtil::append(const bsl::shared_ptr<bdlbb::Blob>& destination,
                             *source,
                             0,
                             NTCCFG_WARNING_NARROW(int, size));
+}
+
+NTCCFG_INLINE
+void BlobUtil::append(bdlbb::Blob* destination,
+                      const void*  source,
+                      bsl::size_t  size)
+{
+    bdlbb::BlobUtil::append(
+        destination, 
+        reinterpret_cast<const char*>(source), 
+        NTCCFG_WARNING_NARROW(int, size));
+}
+
+NTCCFG_INLINE
+void BlobUtil::append(const bsl::shared_ptr<bdlbb::Blob>& destination,
+                      const void*                         source,
+                      bsl::size_t                         size)
+{
+    bdlbb::BlobUtil::append(
+        destination.get(), 
+        reinterpret_cast<const char*>(source), 
+        NTCCFG_WARNING_NARROW(int, size));
 }
 
 NTCCFG_INLINE

@@ -13,14 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCA_DEFLATEOPTIONS
-#define INCLUDED_NTCA_DEFLATEOPTIONS
+#ifndef INCLUDED_NTCA_COMPRESSIONCONFIG
+#define INCLUDED_NTCA_COMPRESSIONCONFIG
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_compressiongoal.h>
+#include <ntca_compressiontype.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <ntsa_error.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
 #include <bsl_iosfwd.h>
@@ -28,67 +31,66 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
-/// Provide a description of the options to a deflate operation.
+/// Describe the configurable parameters to deflate and inflate data
+/// according to a compression algorithm.
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
-/// @li @b partial:
-/// The data to deflate represents only a portion of the overall logical
-/// data. If true, the deflate engine is not flushed after all input is
-/// processed. If not specified, the default value is false.
+/// @li @b type:
+/// The compression algorithm. If not specified, the "zlib" algorithm is used.
 ///
-/// @li @b checksum:
-/// The initial checksum.
+/// @li @b goal:
+/// The compression goal, indicating whether the user favors size over speed,
+/// or speed over size. If not specified, the default value is a balanced goal
+/// that favors neither size nor speed.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_todo
-class DeflateOptions
+class CompressionConfig
 {
-    bdlb::NullableValue<bool>          d_partial;
-    bdlb::NullableValue<bsl::uint32_t> d_checksum;
+    bdlb::NullableValue<ntca::CompressionType::Value> d_type;
+    bdlb::NullableValue<ntca::CompressionGoal::Value> d_goal;
 
   public:
     /// Create new deflate options having the default value.
-    DeflateOptions();
+    CompressionConfig();
 
     /// Create new deflate options having the same value as the specified
     /// 'original' object.
-    DeflateOptions(const DeflateOptions& original);
+    CompressionConfig(const CompressionConfig& original);
 
     /// Destroy this object.
-    ~DeflateOptions();
+    ~CompressionConfig();
 
     /// Assign the value of the specified 'other' object to this object. Return
     /// a reference to this modifiable object.
-    DeflateOptions& operator=(const DeflateOptions& other);
+    CompressionConfig& operator=(const CompressionConfig& other);
 
     /// Reset the value of this object to its value upon default construction.
     void reset();
 
-    /// Set the flag indicating the data to deflate only indicates a portion of
-    /// the overal logical data to be deflated to the specified 'value'.
-    void setPartial(bool value);
+    /// Set the compression algorithm to the specified 'value'.
+    void setType(ntca::CompressionType::Value value);
 
-    /// Set the initial checksum to the specified 'value'.
-    void setChecksum(bsl::uint32_t value);
+    /// Set the compression goal to the specified 'value'.
+    void setGoal(ntca::CompressionGoal::Value value);
 
-    /// Return the flag indicating the data to deflate only indicates a portion
-    /// of the overal logical data to be deflated.
-    const bdlb::NullableValue<bool>& partial() const;
+    /// Return the compression algorithm.
+    const bdlb::NullableValue<ntca::CompressionType::Value>& type() const;
 
-    /// Return the initial checksum.
-    const bdlb::NullableValue<bsl::uint32_t>& checksum() const;
+    /// Return the compression goal.
+    const bdlb::NullableValue<ntca::CompressionGoal::Value>& goal() const;
 
     /// Return true if this object has the same value as the specified 'other'
     /// object, otherwise return false.
-    bool equals(const DeflateOptions& other) const;
+    bool equals(const CompressionConfig& other) const;
 
     /// Return true if the value of this object is less than the value of the
     /// specified 'other' object, otherwise return false.
-    bool less(const DeflateOptions& other) const;
+    bool less(const CompressionConfig& other) const;
 
     /// Contribute the values of the salient attributes of this object to the
     /// specified hash 'algorithm'.
@@ -112,143 +114,145 @@ class DeflateOptions
     /// This type's copy-constructor and copy-assignment operator is equivalent
     /// to copying each byte of the source object's footprint to each
     /// corresponding byte of the destination object's footprint.
-    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(DeflateOptions);
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(CompressionConfig);
 
     /// This type's move-constructor and move-assignment operator is equivalent
     /// to copying each byte of the source object's footprint to each
     /// corresponding byte of the destination object's footprint.
-    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(DeflateOptions);
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(CompressionConfig);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return
 /// a modifiable reference to the 'stream'.
 ///
-/// @related ntca::DeflateOptions
-bsl::ostream& operator<<(bsl::ostream& stream, const DeflateOptions& object);
+/// @related ntca::CompressionConfig
+bsl::ostream& operator<<(bsl::ostream& stream, const CompressionConfig& object);
 
 /// Return true if the specified 'lhs' has the same value as the specified
 /// 'rhs', otherwise return false.
 ///
-/// @related ntca::DeflateOptions
-bool operator==(const DeflateOptions& lhs, const DeflateOptions& rhs);
+/// @related ntca::CompressionConfig
+bool operator==(const CompressionConfig& lhs, const CompressionConfig& rhs);
 
 /// Return true if the specified 'lhs' does not have the same value as the
 /// specified 'rhs', otherwise return false.
 ///
-/// @related ntca::DeflateOptions
-bool operator!=(const DeflateOptions& lhs, const DeflateOptions& rhs);
+/// @related ntca::CompressionConfig
+bool operator!=(const CompressionConfig& lhs, const CompressionConfig& rhs);
 
 /// Return true if the value of the specified 'lhs' is less than the value
 /// of the specified 'rhs', otherwise return false.
 ///
-/// @related ntca::DeflateOptions
-bool operator<(const DeflateOptions& lhs, const DeflateOptions& rhs);
+/// @related ntca::CompressionConfig
+bool operator<(const CompressionConfig& lhs, const CompressionConfig& rhs);
 
 /// Contribute the values of the salient attributes of the specified 'value'
 /// to the specified hash 'algorithm'.
 ///
-/// @related ntca::DeflateOptions
+/// @related ntca::CompressionConfig
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const DeflateOptions& value);
+void hashAppend(HASH_ALGORITHM& algorithm, const CompressionConfig& value);
 
-NTCCFG_INLINE
-DeflateOptions::DeflateOptions()
-: d_partial()
-, d_checksum()
+NTSCFG_INLINE
+CompressionConfig::CompressionConfig()
+: d_type()
+, d_goal()
 {
 }
 
-NTCCFG_INLINE
-DeflateOptions::DeflateOptions(const DeflateOptions& original)
-: d_partial(original.d_partial)
-, d_checksum(original.d_checksum)
+NTSCFG_INLINE
+CompressionConfig::CompressionConfig(const CompressionConfig& original)
+: d_type(original.d_type)
+, d_goal(original.d_goal)
 {
 }
 
-NTCCFG_INLINE
-DeflateOptions::~DeflateOptions()
+NTSCFG_INLINE
+CompressionConfig::~CompressionConfig()
 {
 }
 
-NTCCFG_INLINE
-DeflateOptions& DeflateOptions::operator=(const DeflateOptions& other)
+NTSCFG_INLINE
+CompressionConfig& CompressionConfig::operator=(const CompressionConfig& other)
 {
-    d_partial = other.d_partial;
-    d_checksum = other.d_checksum;
+    d_goal = other.d_goal;
+    d_type = other.d_type;
     return *this;
 }
 
-NTCCFG_INLINE
-void DeflateOptions::reset()
+NTSCFG_INLINE
+void CompressionConfig::reset()
 {
-    d_partial.reset();
-    d_checksum.reset();
+    d_type.reset();
+    d_goal.reset();
 }
 
-NTCCFG_INLINE
-void DeflateOptions::setPartial(bool value)
+NTSCFG_INLINE
+void CompressionConfig::setType(ntca::CompressionType::Value value)
 {
-    d_partial = value;
+    d_type = value;
 }
 
-NTCCFG_INLINE
-void DeflateOptions::setChecksum(bsl::uint32_t value)
+NTSCFG_INLINE
+void CompressionConfig::setGoal(ntca::CompressionGoal::Value value)
 {
-    d_checksum = value;
+    d_goal = value;
 }
 
-NTCCFG_INLINE
-const bdlb::NullableValue<bool>& DeflateOptions::partial() const
+NTSCFG_INLINE
+const bdlb::NullableValue<ntca::CompressionType::Value>& 
+CompressionConfig::type() const
 {
-    return d_partial;
+    return d_type;
 }
 
-NTCCFG_INLINE
-const bdlb::NullableValue<bsl::uint32_t>& DeflateOptions::checksum() const
+NTSCFG_INLINE
+const bdlb::NullableValue<ntca::CompressionGoal::Value>& 
+CompressionConfig::goal() const
 {
-    return d_checksum;
+    return d_goal;
 }
 
 template <typename HASH_ALGORITHM>
-NTCCFG_INLINE
-void DeflateOptions::hash(HASH_ALGORITHM& algorithm) const
+NTSCFG_INLINE 
+void CompressionConfig::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
-    hashAppend(algorithm, d_partial);
-    hashAppend(algorithm, d_checksum);
+    hashAppend(algorithm, d_type);
+    hashAppend(algorithm, d_goal);
 }
 
-NTCCFG_INLINE
-bsl::ostream& operator<<(bsl::ostream& stream, const DeflateOptions& object)
+NTSCFG_INLINE
+bsl::ostream& operator<<(bsl::ostream& stream, const CompressionConfig& object)
 {
     return object.print(stream, 0, -1);
 }
 
-NTCCFG_INLINE
-bool operator==(const DeflateOptions& lhs, const DeflateOptions& rhs)
+NTSCFG_INLINE
+bool operator==(const CompressionConfig& lhs, const CompressionConfig& rhs)
 {
     return lhs.equals(rhs);
 }
 
-NTCCFG_INLINE
-bool operator!=(const DeflateOptions& lhs, const DeflateOptions& rhs)
+NTSCFG_INLINE
+bool operator!=(const CompressionConfig& lhs, const CompressionConfig& rhs)
 {
     return !operator==(lhs, rhs);
 }
 
-NTCCFG_INLINE
-bool operator<(const DeflateOptions& lhs, const DeflateOptions& rhs)
+NTSCFG_INLINE
+bool operator<(const CompressionConfig& lhs, const CompressionConfig& rhs)
 {
     return lhs.less(rhs);
 }
 
 template <typename HASH_ALGORITHM>
-NTCCFG_INLINE
-void hashAppend(HASH_ALGORITHM& algorithm, const DeflateOptions& value)
+NTSCFG_INLINE
+void hashAppend(HASH_ALGORITHM& algorithm, const CompressionConfig& value)
 {
     value.hash(algorithm);
 }
 
-}  // close namespace ntca
-}  // close namespace BloombergLP
+}  // close package namespace
+}  // close enterprise namespace
 #endif

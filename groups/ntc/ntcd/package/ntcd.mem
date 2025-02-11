@@ -1,4 +1,5 @@
 ntcd_blobbufferfactory
+ntcd_compression
 ntcd_datagramsocket
 ntcd_datapool
 ntcd_datautil

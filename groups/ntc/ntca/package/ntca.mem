@@ -11,6 +11,9 @@ ntca_bindoptions
 ntca_bindcontext
 ntca_bindevent
 ntca_bindeventtype
+ntca_compressionconfig
+ntca_compressiongoal
+ntca_compressiontype
 ntca_connecttoken
 ntca_connectoptions
 ntca_connectcontext
@@ -101,6 +104,8 @@ ntca_sendoptions
 ntca_sendcontext
 ntca_sendevent
 ntca_sendeventtype
+ntca_serializationconfig
+ntca_serializationtype
 ntca_shutdowncontext
 ntca_shutdownevent
 ntca_shutdowneventtype

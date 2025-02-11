@@ -19,6 +19,9 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_compressionconfig.h>
+#include <ntca_compressiongoal.h>
+#include <ntca_compressiontype.h>
 #include <ntca_deflatecontext.h>
 #include <ntca_deflateoptions.h>
 #include <ntca_inflatecontext.h>
@@ -46,38 +49,230 @@ namespace ntci {
 /// @ingroup module_ntci_encryption
 class Compression
 {
-  public:
+  private:
+    /// Deflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error deflateRep(ntca::DeflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const bdlbb::Blob&          data,
+                           const ntca::DeflateOptions& options);
 
+    /// Deflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error deflateRep(ntca::DeflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const bdlbb::BlobBuffer&    data,
+                           const ntca::DeflateOptions& options);
+
+    /// Deflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error deflateRep(ntca::DeflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const ntsa::ConstBuffer&    data,
+                           const ntca::DeflateOptions& options);
+
+    /// Deflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error deflateRep(ntca::DeflateContext*         context,
+                           bdlbb::Blob*                  result,
+                           const ntsa::ConstBufferArray& data,
+                           const ntca::DeflateOptions&   options);
+
+    /// Deflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error deflateRep(ntca::DeflateContext*            context,
+                           bdlbb::Blob*                     result,
+                           const ntsa::ConstBufferPtrArray& data,
+                           const ntca::DeflateOptions&      options);
+
+    /// Deflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error deflateRep(ntca::DeflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const ntsa::MutableBuffer&  data,
+                           const ntca::DeflateOptions& options);
+
+    /// Deflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error deflateRep(ntca::DeflateContext*           context,
+                           bdlbb::Blob*                    result,
+                           const ntsa::MutableBufferArray& data,
+                           const ntca::DeflateOptions&     options);
+
+    /// Deflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error deflateRep(ntca::DeflateContext*              context,
+                           bdlbb::Blob*                       result,
+                           const ntsa::MutableBufferPtrArray& data,
+                           const ntca::DeflateOptions&        options);
+
+    /// Deflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error deflateRep(ntca::DeflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const bsl::string&          data,
+                           const ntca::DeflateOptions& options);
+
+    /// Deflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error deflateRep(ntca::DeflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const ntsa::File&           data,
+                           const ntca::DeflateOptions& options);
+
+    /// Inflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error inflateRep(ntca::InflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const bdlbb::Blob&          data,
+                           const ntca::InflateOptions& options);
+
+    /// Inflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error inflateRep(ntca::InflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const bdlbb::BlobBuffer&    data,
+                           const ntca::InflateOptions& options);
+
+    /// Inflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error inflateRep(ntca::InflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const ntsa::ConstBuffer&    data,
+                           const ntca::InflateOptions& options);
+
+    /// Inflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error inflateRep(ntca::InflateContext*         context,
+                           bdlbb::Blob*                  result,
+                           const ntsa::ConstBufferArray& data,
+                           const ntca::InflateOptions&   options);
+
+    /// Inflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error inflateRep(ntca::InflateContext*            context,
+                           bdlbb::Blob*                     result,
+                           const ntsa::ConstBufferPtrArray& data,
+                           const ntca::InflateOptions&      options);
+
+    /// Inflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error inflateRep(ntca::InflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const ntsa::MutableBuffer&  data,
+                           const ntca::InflateOptions& options);
+
+    /// Inflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error inflateRep(ntca::InflateContext*           context,
+                           bdlbb::Blob*                    result,
+                           const ntsa::MutableBufferArray& data,
+                           const ntca::InflateOptions&     options);
+
+    /// Inflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error inflateRep(ntca::InflateContext*              context,
+                           bdlbb::Blob*                       result,
+                           const ntsa::MutableBufferPtrArray& data,
+                           const ntca::InflateOptions&        options);
+
+    /// Inflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error inflateRep(ntca::InflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const bsl::string&          data,
+                           const ntca::InflateOptions& options);
+
+    /// Inflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    ntsa::Error inflateRep(ntca::InflateContext*       context,
+                           bdlbb::Blob*                result,
+                           const ntsa::File&           data,
+                           const ntca::InflateOptions& options);
+
+  protected:
+    /// Begin a deflation stream into the specified 'result' according to the
+    /// specified 'options.
+    virtual ntsa::Error deflateBegin(ntca::DeflateContext*       context,
+                                     bdlbb::Blob*                result,
+                                     const ntca::DeflateOptions& options);
+
+    /// Deflate the specified 'data' having the specified 'size' and append the
+    /// result to the specified 'result'. Return the error.
+    virtual ntsa::Error deflateNext(ntca::DeflateContext*       context,
+                                    bdlbb::Blob*                result,
+                                    const bsl::uint8_t*         data,
+                                    bsl::size_t                 size,
+                                    const ntca::DeflateOptions& options);
+
+    /// End a deflation stream into the specified 'result' according to the
+    /// specified 'options.
+    virtual ntsa::Error deflateEnd(ntca::DeflateContext*       context,
+                                   bdlbb::Blob*                result,
+                                   const ntca::DeflateOptions& options);
+
+    /// Begin an inflation stream into the specified 'result' according to the
+    /// specified 'options.
+    virtual ntsa::Error inflateBegin(ntca::InflateContext*       context,
+                                     bdlbb::Blob*                result,
+                                     const ntca::InflateOptions& options);
+
+    /// Inflate the specified 'data' having the specified 'size' and append the
+    /// result to the specified 'result'. Return the error.
+    virtual ntsa::Error inflateNext(ntca::InflateContext*       context,
+                                    bdlbb::Blob*                result,
+                                    const bsl::uint8_t*         data,
+                                    bsl::size_t                 size,
+                                    const ntca::InflateOptions& options);
+
+    /// Inflate the specified 'data' and append the result to the specified
+    /// 'result'. Return the error.
+    virtual ntsa::Error inflateNext(ntca::InflateContext*       context,
+                                    bdlbb::Blob*                result,
+                                    const bdlbb::Blob&          data,
+                                    const ntca::InflateOptions& options);
+
+    /// End an inflation stream into the specified 'result' according to the
+    /// specified 'options.
+    virtual ntsa::Error inflateEnd(ntca::InflateContext*       context,
+                                   bdlbb::Blob*                result,
+                                   const ntca::InflateOptions& options);
+
+  public:
     /// Destroy this object.
     virtual ~Compression();
 
-    /// Deflate the specified 'data' and append the result to the specified
-    /// 'result'. Return the error.
-    virtual ntsa::Error deflate(ntca::DeflateContext*       context,
-                                bdlbb::Blob*                result,
-                                const bdlbb::Blob&          data,
-                                const ntca::DeflateOptions& options);
+    /// Deflate the specified 'data' according to the specified 'options' and
+    /// append the result to the specified 'result'. Load the context in which
+    /// the operation completes into the specified 'context'. Return the error.
+    ntsa::Error deflate(ntca::DeflateContext*       context,
+                        bdlbb::Blob*                result,
+                        const bdlbb::Blob&          data,
+                        const ntca::DeflateOptions& options);
 
-    /// Deflate the specified 'data' and append the result to the specified
-    /// 'result'. Return the error.
-    virtual ntsa::Error deflate(ntca::DeflateContext*       context,
-                                bdlbb::Blob*                result,
-                                const ntsa::Data&           data,
-                                const ntca::DeflateOptions& options);
+    /// Deflate the specified 'data' according to the specified 'options' and
+    /// append the result to the specified 'result'. Load the context in which
+    /// the operation completes into the specified 'context'. Return the error.
+    ntsa::Error deflate(ntca::DeflateContext*       context,
+                        bdlbb::Blob*                result,
+                        const ntsa::Data&           data,
+                        const ntca::DeflateOptions& options);
 
-    /// Inflate the specified 'data' and append the result to the specified
-    /// 'result'. Return the error.
-    virtual ntsa::Error inflate(ntca::InflateContext*       context,
-                                bdlbb::Blob*                result,
-                                const bdlbb::Blob&          data,
-                                const ntca::InflateOptions& options);
+    /// Inflate the specified 'data' according to the specified 'options' and
+    /// append the result to the specified 'result'. Load the context in which
+    /// the operation completes into the specified 'context'. Return the error.
+    ntsa::Error inflate(ntca::InflateContext*       context,
+                        bdlbb::Blob*                result,
+                        const bdlbb::Blob&          data,
+                        const ntca::InflateOptions& options);
 
-    /// Inflate the specified 'data' and append the result to the specified
-    /// 'result'. Return the error.
-    virtual ntsa::Error inflate(ntca::InflateContext*       context,
-                                bdlbb::Blob*                result,
-                                const ntsa::Data&           data,
-                                const ntca::InflateOptions& options);
+    /// Inflate the specified 'data' according to the specified 'options' and
+    /// append the result to the specified 'result'. Load the context in which
+    /// the operation completes into the specified 'context'. Return the error.
+    ntsa::Error inflate(ntca::InflateContext*       context,
+                        bdlbb::Blob*                result,
+                        const ntsa::Data&           data,
+                        const ntca::InflateOptions& options);
 };
 
 }  // end namespace ntci

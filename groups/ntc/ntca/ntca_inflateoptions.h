@@ -38,13 +38,17 @@ namespace ntca {
 /// data. If true, the inflate engine is not flushed after all input is
 /// processed. If not specified, the default value is false.
 ///
+/// @li @b checksum:
+/// The initial checksum.
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_todo
 class InflateOptions
 {
-    bdlb::NullableValue<bool> d_partial;
+    bdlb::NullableValue<bool>          d_partial;
+    bdlb::NullableValue<bsl::uint32_t> d_checksum;
 
   public:
     /// Create new inflate options having the default value.
@@ -68,9 +72,15 @@ class InflateOptions
     /// the overal logical data to be inflated to the specified 'value'.
     void setPartial(bool value);
 
+    /// Set the initial checksum to the specified 'value'.
+    void setChecksum(bsl::uint32_t value);
+
     /// Return the flag indicating the data to inflate only indicates a portion
     /// of the overal logical data to be inflated.
     const bdlb::NullableValue<bool>& partial() const;
+
+    /// Return the initial checksum.
+    const bdlb::NullableValue<bsl::uint32_t>& checksum() const;
 
     /// Return true if this object has the same value as the specified 'other'
     /// object, otherwise return false.
@@ -144,12 +154,14 @@ void hashAppend(HASH_ALGORITHM& algorithm, const InflateOptions& value);
 NTCCFG_INLINE
 InflateOptions::InflateOptions()
 : d_partial()
+, d_checksum()
 {
 }
 
 NTCCFG_INLINE
 InflateOptions::InflateOptions(const InflateOptions& original)
 : d_partial(original.d_partial)
+, d_checksum(original.d_checksum)
 {
 }
 
@@ -162,6 +174,7 @@ NTCCFG_INLINE
 InflateOptions& InflateOptions::operator=(const InflateOptions& other)
 {
     d_partial = other.d_partial;
+    d_checksum = other.d_checksum;
     return *this;
 }
 
@@ -169,6 +182,7 @@ NTCCFG_INLINE
 void InflateOptions::reset()
 {
     d_partial.reset();
+    d_checksum.reset();
 }
 
 NTCCFG_INLINE
@@ -178,9 +192,21 @@ void InflateOptions::setPartial(bool value)
 }
 
 NTCCFG_INLINE
+void InflateOptions::setChecksum(bsl::uint32_t value)
+{
+    d_checksum = value;
+}
+
+NTCCFG_INLINE
 const bdlb::NullableValue<bool>& InflateOptions::partial() const
 {
     return d_partial;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<bsl::uint32_t>& InflateOptions::checksum() const
+{
+    return d_checksum;
 }
 
 template <typename HASH_ALGORITHM>
@@ -189,6 +215,7 @@ void InflateOptions::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
     hashAppend(algorithm, d_partial);
+    hashAppend(algorithm, d_checksum);
 }
 
 NTCCFG_INLINE

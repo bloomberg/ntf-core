@@ -25,12 +25,20 @@ namespace ntca {
 
 bool InflateOptions::equals(const InflateOptions& other) const
 {
-    return (d_partial == other.d_partial);
+    return (d_partial == other.d_partial && d_checksum == other.d_checksum);
 }
 
 bool InflateOptions::less(const InflateOptions& other) const
 {
-    return d_partial < other.d_partial;
+    if (d_partial < other.d_partial) {
+        return true;
+    }
+
+    if (other.d_partial < d_partial) {
+        return false;
+    }
+
+    return d_checksum < other.d_checksum;
 }
 
 bsl::ostream& InflateOptions::print(bsl::ostream& stream,
@@ -41,6 +49,9 @@ bsl::ostream& InflateOptions::print(bsl::ostream& stream,
     printer.start();
     if (d_partial.has_value()) {
         printer.printAttribute("partial", d_partial);
+    }
+    if (d_partial.has_value()) {
+        printer.printAttribute("checksum", d_checksum);
     }
     printer.end();
     return stream;
