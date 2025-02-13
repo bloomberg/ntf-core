@@ -11,6 +11,8 @@ ntca_bindoptions
 ntca_bindcontext
 ntca_bindevent
 ntca_bindeventtype
+ntca_checksum
+ntca_checksumtype
 ntca_compressionconfig
 ntca_compressiongoal
 ntca_compressiontype

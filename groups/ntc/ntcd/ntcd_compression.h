@@ -124,19 +124,7 @@ class CompressionFrameHeader
     void setFlags(bsl::uint32_t value);
 
     /// Set the initial checksum to the specified 'value'.
-    void setChecksum(bsl::uint32_t value);
-
-    /// Encode the object to the specified 'destination'. Increment the
-    /// specified 'numBytesEncoded' with the number of bytes written to the
-    /// 'destination'. Return the error.
-    ntsa::Error encode(bsl::size_t* numBytesEncoded, bdlbb::Blob* destination);
-
-    /// Encode the object to the specified 'destination' at the specified
-    /// 'position'. Increment the specified 'numBytesEncoded' with the number
-    /// of bytes written to the 'destination'. Return the error.
-    ntsa::Error encode(bsl::size_t* numBytesEncoded,
-                       bdlbb::Blob* destination,
-                       std::size_t  position);
+    void setChecksum(const ntca::Checksum& value);
 
     /// Decode the object from the specified 'source' having the specified
     /// 'size'. Increment the specified 'numBytesDecoded' with the number of
@@ -144,14 +132,6 @@ class CompressionFrameHeader
     ntsa::Error decode(bsl::size_t* numBytesDecoded,
                        const void*  source,
                        bsl::size_t  size);
-
-    /// Decode the object from the contigious region of memory starting at
-    /// specified 'sourceBegin' and terminating at the specified 'sourceEnd'.
-    /// Increment the specified 'numBytesDecoded' with the number of bytes read
-    /// from the specified 'source'. Return the error.
-    ntsa::Error decode(bsl::size_t*        numBytesDecoded,
-                       const bsl::uint8_t* sourceBegin,
-                       const bsl::uint8_t* sourceEnd);
 
     /// Decode the object from the specified 'source'. Increment the specified
     /// 'numBytesDecoded' with the number of bytes read from the specified
@@ -163,6 +143,22 @@ class CompressionFrameHeader
     /// 'source'. Return the error.
     ntsa::Error decode(bsl::size_t*       numBytesDecoded,
                        const bdlbb::Blob& source);
+
+    /// Encode the object to the specified 'destination'. Increment the
+    /// specified 'numBytesEncoded' with the number of bytes written to the
+    /// 'destination'. Return the error.
+    ntsa::Error encode(bsl::size_t* numBytesEncoded,
+                       bdlbb::Blob* destination) const;
+
+    /// Encode the object to the specified 'destination' at the specified
+    /// 'position'. Increment the specified 'numBytesEncoded' with the number
+    /// of bytes written to the 'destination'. Return the error.
+    ntsa::Error encode(bsl::size_t* numBytesEncoded,
+                       bdlbb::Blob* destination,
+                       std::size_t  position) const;
+
+    /// Validate the state of this object. Return the error.
+    ntsa::Error validate() const;
 
     /// Return the 4-byte character code that identifies the frame header in a
     /// data stream.
@@ -299,12 +295,7 @@ class CompressionFrameFooter
     void setMagic(bsl::uint32_t value);
 
     /// Set the checksum of the uncompressed bytes to the specified 'value'.
-    void setChecksum(bsl::uint32_t value);
-
-    /// Encode the object to the specified 'destination'. Increment the
-    /// specified 'numBytesEncoded' with the number of bytes written to the
-    /// 'destination'. Return the error.
-    ntsa::Error encode(bsl::size_t* numBytesEncoded, bdlbb::Blob* destination);
+    void setChecksum(const ntca::Checksum& value);
 
     /// Decode the object from the specified 'source' having the specified
     /// 'size'. Increment the specified 'numBytesDecoded' with the number of
@@ -312,14 +303,6 @@ class CompressionFrameFooter
     ntsa::Error decode(bsl::size_t* numBytesDecoded,
                        const void*  source,
                        bsl::size_t  size);
-
-    /// Decode the object from the contigious region of memory starting at
-    /// specified 'sourceBegin' and terminating at the specified 'sourceEnd'.
-    /// Increment the specified 'numBytesDecoded' with the number of bytes read
-    /// from the specified 'source'. Return the error.
-    ntsa::Error decode(bsl::size_t*        numBytesDecoded,
-                       const bsl::uint8_t* sourceBegin,
-                       const bsl::uint8_t* sourceEnd);
 
     /// Decode the object from the specified 'source'. Increment the specified
     /// 'numBytesDecoded' with the number of bytes read from the specified
@@ -331,6 +314,15 @@ class CompressionFrameFooter
     /// 'source'. Return the error.
     ntsa::Error decode(bsl::size_t*       numBytesDecoded,
                        const bdlbb::Blob& source);
+
+    /// Encode the object to the specified 'destination'. Increment the
+    /// specified 'numBytesEncoded' with the number of bytes written to the
+    /// 'destination'. Return the error.
+    ntsa::Error encode(bsl::size_t* numBytesEncoded,
+                       bdlbb::Blob* destination) const;
+
+    /// Validate the state of this object. Return the error.
+    ntsa::Error validate() const;
 
     /// Return the 4-byte character code that identifies the frame footer in a
     /// data stream.
@@ -519,25 +511,12 @@ class CompressionBlock
     /// 'value'.
     void setLiteral(bsl::uint8_t value);
 
-    /// Encode the object to the specified 'destination'. Increment the
-    /// specified 'numBytesEncoded' with the number of bytes written to the
-    /// 'destination'. Return the error.
-    ntsa::Error encode(bsl::size_t* numBytesEncoded, bdlbb::Blob* destination);
-
     /// Decode the object from the specified 'source' having the specified
     /// 'size'. Increment the specified 'numBytesDecoded' with the number of
     /// bytes read from the specified 'source'. Return the error.
     ntsa::Error decode(bsl::size_t* numBytesDecoded,
                        const void*  source,
                        bsl::size_t  size);
-
-    /// Decode the object from the contigious region of memory starting at
-    /// specified 'sourceBegin' and terminating at the specified 'sourceEnd'.
-    /// Increment the specified 'numBytesDecoded' with the number of bytes read
-    /// from the specified 'source'. Return the error.
-    ntsa::Error decode(bsl::size_t*        numBytesDecoded,
-                       const bsl::uint8_t* sourceBegin,
-                       const bsl::uint8_t* sourceEnd);
 
     /// Decode the object from the specified 'source'. Increment the specified
     /// 'numBytesDecoded' with the number of bytes read from the specified
@@ -549,6 +528,15 @@ class CompressionBlock
     /// 'source'. Return the error.
     ntsa::Error decode(bsl::size_t*       numBytesDecoded,
                        const bdlbb::Blob& source);
+
+    /// Encode the object to the specified 'destination'. Increment the
+    /// specified 'numBytesEncoded' with the number of bytes written to the
+    /// 'destination'. Return the error.
+    ntsa::Error encode(bsl::size_t* numBytesEncoded,
+                       bdlbb::Blob* destination) const;
+
+    /// Validate the state of this object. Return the error.
+    ntsa::Error validate() const;
 
     /// Return the type of the block.
     ntcd::CompressionBlockType::Value type() const;
@@ -629,63 +617,6 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const CompressionBlock& value);
 
 /// @internal @brief
-/// Provide utilities to calculate a CRC-32, cyclic redundancy check.
-///
-/// @par Thread Safety
-/// This class is thread safe.
-///
-/// @ingroup module_ntcd
-class CompressionCrc32
-{
-  public:
-    /// CRC32-C value for a 0 length input.  Note that a buffer with this
-    /// CRC32-C value need not be a 0 length input.
-    static const bsl::uint32_t k_NULL_CRC32C = 0U;
-
-    /// Return the CRC32-C value calculated for the specified 'data' over the
-    /// specified 'size' number of bytes, using the optionally specified
-    /// 'crc' value as the starting point for the calculation. Note that if
-    /// 'data' is 0, then 'length' also must be 0.
-    static bsl::uint32_t calculate(const void*   data,
-                                   bsl::size_t   size,
-                                   bsl::uint32_t crc = k_NULL_CRC32C);
-
-    /// Return the CRC32-C value calculated for the specified 'data' over the
-    /// specified 'size' number of bytes, using the optionally specified
-    /// 'crc' value as the starting point for the calculation. Note that if
-    /// 'data' is 0, then 'length' also must be 0.
-    static bsl::uint32_t calculate(const bdlbb::Blob& data,
-                                   bsl::size_t        size,
-                                   bsl::uint32_t      crc = k_NULL_CRC32C);
-};
-
-// MRM
-#if 0
-
-/// Provides compression using the LZ4 algorithm.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntcd
-class LZ4
-{
-public:
-    /// Describes the frame header in an LZ4 stream.
-    class Header;
-
-    /// Describes the frame header in an LZ4 stream.
-    class Footer;
-
-    /// Provide a mechanims to deflate data.
-    class Deflater;
-
-    /// Provide a mechanism to inflate data.
-    class Inflater;
-};
-#endif  // MRM
-
-/// @internal @brief
 /// Provide an RLE encoder.
 ///
 /// @par Thread Safety
@@ -697,7 +628,7 @@ class CompressionEncoderRle
     ntcd::CompressionFrameHeader d_frameHeader;
     bsl::size_t                  d_frameHeaderPosition;
     bsl::size_t                  d_frameContentBytesTotal;
-    bsl::uint32_t                d_frameContentCrc;
+    ntca::Checksum               d_frameContentCrc;
     ntca::CompressionConfig      d_config;
     bslma::Allocator*            d_allocator_p;
 
@@ -756,6 +687,9 @@ class CompressionDecoderRle
         /// The decoder wants to read a block.
         e_WANT_BLOCK,
 
+        /// The decoder wants to read a block payload.
+        e_WANT_BLOCK_PAYLOAD,
+
         /// The decoder wants to read the frame footer.
         e_WANT_FRAME_FOOTER,
 
@@ -768,7 +702,8 @@ class CompressionDecoderRle
     bsl::vector<bsl::uint8_t>    d_expansion;
     ntcd::CompressionFrameHeader d_frameHeader;
     bsl::size_t                  d_frameContentBytesNeeded;
-    bsl::uint32_t                d_frameContentCrc;
+    ntca::Checksum               d_frameContentCrc;
+    ntcd::CompressionBlock       d_block;
     ntca::CompressionConfig      d_config;
     ntsa::Error                  d_error;
     bslma::Allocator*            d_allocator_p;
@@ -1110,9 +1045,9 @@ void CompressionFrameHeader::setFlags(bsl::uint32_t value)
 }
 
 NTSCFG_INLINE
-void CompressionFrameHeader::setChecksum(bsl::uint32_t value)
+void CompressionFrameHeader::setChecksum(const ntca::Checksum& value)
 {
-    d_checksum = value;
+    value.load(&d_checksum, sizeof d_checksum);
 }
 
 NTSCFG_INLINE
@@ -1231,9 +1166,9 @@ void CompressionFrameFooter::setMagic(bsl::uint32_t value)
 }
 
 NTSCFG_INLINE
-void CompressionFrameFooter::setChecksum(bsl::uint32_t value)
+void CompressionFrameFooter::setChecksum(const ntca::Checksum& value)
 {
-    d_checksum = value;
+    value.load(&d_checksum, sizeof d_checksum);
 }
 
 NTSCFG_INLINE

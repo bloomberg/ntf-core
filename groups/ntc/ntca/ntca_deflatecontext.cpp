@@ -25,22 +25,13 @@ namespace ntca {
 
 bool DeflateContext::equals(const DeflateContext& other) const
 {
-    return d_position == other.d_position &&
-           d_bytesRead == other.d_bytesRead &&
+    return d_bytesRead == other.d_bytesRead &&
            d_bytesWritten == other.d_bytesWritten &&
            d_checksum == other.d_checksum;
 }
 
 bool DeflateContext::less(const DeflateContext& other) const
 {
-    if (d_position < other.d_position) {
-        return true;
-    }
-
-    if (other.d_position < d_position) {
-        return false;
-    }
-
     if (d_bytesRead < other.d_bytesRead) {
         return true;
     }
@@ -66,7 +57,6 @@ bsl::ostream& DeflateContext::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("position", d_position);
     printer.printAttribute("bytesRead", d_bytesRead);
     printer.printAttribute("bytesWritten", d_bytesWritten);
     printer.printAttribute("checksum", d_checksum);

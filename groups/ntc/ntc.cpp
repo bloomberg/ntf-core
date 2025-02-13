@@ -41,6 +41,11 @@
 #include <ntca_bindeventtype.cpp>
 #include <ntca_bindoptions.cpp>
 #include <ntca_bindtoken.cpp>
+#include <ntca_checksum.cpp>
+#include <ntca_checksumtype.cpp>
+#include <ntca_compressionconfig.cpp>
+#include <ntca_compressiongoal.cpp>
+#include <ntca_compressiontype.cpp>
 #include <ntca_connectcontext.cpp>
 #include <ntca_connectevent.cpp>
 #include <ntca_connecteventtype.cpp>
@@ -131,6 +136,8 @@
 #include <ntca_sendeventtype.cpp>
 #include <ntca_sendoptions.cpp>
 #include <ntca_sendtoken.cpp>
+#include <ntca_serializationconfig.cpp>
+#include <ntca_serializationtype.cpp>
 #include <ntca_shutdowncontext.cpp>
 #include <ntca_shutdownevent.cpp>
 #include <ntca_shutdowneventtype.cpp>
@@ -331,6 +338,7 @@
 // ntcd
 
 #include <ntcd_blobbufferfactory.cpp>
+#include <ntcd_compression.cpp>
 #include <ntcd_datagramsocket.cpp>
 #include <ntcd_datapool.cpp>
 #include <ntcd_datautil.cpp>

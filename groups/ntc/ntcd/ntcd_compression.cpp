@@ -56,6 +56,94 @@ BSLS_IDENT_RCSID(ntcd_compression_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcd {
 
+// MRM
+#if 0
+/// @internal @brief
+/// Provide utilities for binary encoders.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntcd
+class BinaryEncoderUtil
+{
+public:
+    /// Encode the specified signed 8-bit integer 'value' to the specified 
+    /// 'destination' having the specified 'capacity'. Load into the specified
+    /// 'numBytesRead' the number of bytes read, and load into the specified 
+    /// 'numBytesWritten' the number of bytes written.
+    static ntsa::Error encodeByte(
+        bsl::size_t*  numBytesRead,
+        bsl::size_t*  numBytesWritten,
+        void*         destination,
+        bsl::size_t   capacity, 
+        bsl::int8_t   value);
+
+    static ntsa::Error encodeByte(
+        bsl::size_t*  numBytesRead,
+        bsl::size_t*  numBytesWritten,
+        void* destination,
+        bsl::size_t   capacity,
+        bsl::uint8_t  value);
+
+    static ntsa::Error encodeNative(
+        bsl::size_t*  numBytesRead,
+        bsl::size_t*  numBytesWritten,
+        void* destination,
+        bsl::size_t   capacity,
+        bsl::int16_t value);
+
+    static ntsa::Error encodeNative(
+        bsl::size_t*  numBytesRead,
+        bsl::size_t*  numBytesWritten,
+        void* destination,
+        bsl::size_t   capacity,
+        bsl::uint16_t value);
+
+    static ntsa::Error encodeNative(
+        bsl::size_t*  numBytesRead,
+        bsl::size_t*  numBytesWritten,
+        void* destination,
+        bsl::size_t   capacity,
+        bsl::int32_t value);
+
+    static ntsa::Error encodeNative(
+        bsl::size_t*  numBytesRead,
+        bsl::size_t*  numBytesWritten,
+        void*         destination,
+        bsl::size_t   capacity,
+        bsl::uint32_t value);
+
+    static ntsa::Error encodeNative(
+        bsl::size_t*  numBytesRead,
+        bsl::size_t*  numBytesWritten,
+        void*         destination,
+        bsl::size_t   capacity,
+        bsl::int64_t  value);
+
+    static ntsa::Error encodeNative(
+        bsl::size_t*  numBytesRead,
+        bsl::size_t*  numBytesWritten,
+        void*         destination,
+        bsl::size_t   capacity,
+        bsl::uint64_t value);
+};
+
+/// @internal @brief
+/// Provide utilities for binary decoders.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntcd
+class BinaryDecoderUtil
+{
+public:
+};
+#endif
+
+
+
 ByteSequence::ByteSequence(bdlbb::Blob* blob, bsl::size_t base)
 : d_blob_p(blob)
 , d_base(base)
@@ -151,81 +239,7 @@ bsl::uint8_t ByteSequence::operator[](bsl::size_t index) const
 
 namespace {
 
-// MRM
-#if 0
-void encodeRle8(ntcd::ByteSequence& outbuff,
-                int*                outlen,
-                const bsl::uint8_t* inbuff,
-                int                 inlen)
-{
-    int i, k, l, o;
 
-    if (!inbuff || inlen < 1) {
-        return;
-    }
-
-    k = o        = 0;
-    outbuff[o++] = 0;
-    for (i = 0; i < inlen; i++) {
-        for (l = 1; l < 128 && i + l < inlen && inbuff[i] == inbuff[i + l];
-             l++)
-            ;
-        if (l > 1) {
-            l--;
-            if (outbuff[k]) {
-                outbuff[k]--;
-                outbuff[o++] = 0x80 | l;
-            }
-            else
-                outbuff[k] = 0x80 | l;
-            outbuff[o++]  = inbuff[i];
-            k             = o;
-            outbuff[o++]  = 0;
-            i            += l;
-            continue;
-        }
-        outbuff[k]++;
-        outbuff[o++] = inbuff[i];
-        if (outbuff[k] > 127) {
-            outbuff[k]--;
-            k            = o;
-            outbuff[o++] = 0;
-        }
-    }
-    if (!(outbuff[k] & 0x80)) {
-        if (outbuff[k])
-            outbuff[k]--;
-        else
-            o--;
-    }
-    *outlen = o;
-}
-
-void decodeRle8(ntcd::ByteSequence& outbuff,
-                int*                outlen,
-                const bsl::uint8_t* inbuff,
-                int                 inlen)
-{
-    int                 l, o = 0;
-    const bsl::uint8_t* end = inbuff + inlen;
-
-    if (!inbuff || inlen < 2)
-        return;
-
-    while (inbuff < end) {
-        l = ((*inbuff++) & 0x7F) + 1;
-        if (inbuff[-1] & 0x80) {
-            while (l--)
-                outbuff[o++] = *inbuff;
-            inbuff++;
-        }
-        else
-            while (l--)
-                outbuff[o++] = *inbuff++;
-    }
-    *outlen = o;
-}
-#endif
 
 #ifndef LZ4X_REALLOC
 #define LZ4X_REALLOC realloc
@@ -267,208 +281,10 @@ void decodeRle8(ntcd::ByteSequence& outbuff,
         }                                                                     \
     } while (0)
 
-int lz4x_compress_optimal(const uint8_t* in,
-                          size_t         inlen,
-                          uint8_t*       out,
-                          size_t         outlen)
-{
-    (void)(outlen);
-
-    static int head[LZ4X_HASH_SIZE];
-    static int nodes[LZ4X_WINDOW_SIZE][2];
-    struct lz4x_path {
-        int cum;
-        int len;
-        int dist;
-    }* path;  //path[LZ4X_BLOCK_SIZE+1];
-    path = (struct lz4x_path*)LZ4X_REALLOC(0, sizeof(path[0]) * (inlen + 1));
-
-    int n = (int)inlen;
-
-    // Pass 1: Find all matches
-
-    for (int i = 0; i < LZ4X_HASH_SIZE; ++i)
-        head[i] = LZ4X_NIL;
-
-    for (int p = 0; p < n; ++p) {
-        int best_len = 0;
-        int dist     = 0;
-
-        const int max_match = (n - LZ4X_PADDING_LITERALS) - p;
-        if (max_match >= LZ4X_MAX(12 - LZ4X_PADDING_LITERALS, LZ4X_MIN_MATCH))
-        {
-            const int limit = LZ4X_MAX(p - LZ4X_WINDOW_SIZE, LZ4X_NIL);
-
-            int* left  = &nodes[p & LZ4X_WINDOW_MASK][1];
-            int* right = &nodes[p & LZ4X_WINDOW_MASK][0];
-
-            int left_len  = 0;
-            int right_len = 0;
-
-            const uint32_t h = LZ4X_HASH_32(&in[p]);
-            int            s = head[h];
-            head[h]          = p;
-
-            while (s > limit) {
-                int len = LZ4X_MIN(left_len, right_len);
-
-                if (in[s + len] == in[p + len]) {
-                    while (++len < max_match && in[s + len] == in[p + len])
-                        ;
-
-                    if (len > best_len) {
-                        best_len = len;
-                        dist     = p - s;
-
-                        if (len == max_match || len >= (1 << 16))
-                            break;
-                    }
-                }
-
-                if (in[s + len] < in[p + len])  // in/out out/in ?
-                {
-                    *right    = s;
-                    right     = &nodes[s & LZ4X_WINDOW_MASK][1];
-                    s         = *right;
-                    right_len = len;
-                }
-                else {
-                    *left    = s;
-                    left     = &nodes[s & LZ4X_WINDOW_MASK][0];
-                    s        = *left;
-                    left_len = len;
-                }
-            }
-
-            *left  = LZ4X_NIL;
-            *right = LZ4X_NIL;
-        }
-
-        path[p].len  = best_len;
-        path[p].dist = dist;
-    }
-
-    // Pass 2: Build the shortest path
-
-    path[n].cum = 0;
-
-    int count = 15;
-
-    for (int p = n - 1; p > 0; --p) {
-        int c0 = path[p + 1].cum + 1;
-
-        if (--count == 0) {
-            count = 255;
-            ++c0;
-        }
-
-        int len = path[p].len;
-        if (len >= LZ4X_MIN_MATCH) {
-            int c1 = 1 << 30;
-
-            const int j = LZ4X_MAX(len - 255, LZ4X_MIN_MATCH);
-            for (int i = len; i >= j; --i) {
-                int tmp = path[p + i].cum + 3;
-
-                if (i >= (15 + LZ4X_MIN_MATCH))
-                    tmp += 1 + ((i - (15 + LZ4X_MIN_MATCH)) / 255);
-
-                if (tmp < c1) {
-                    c1  = tmp;
-                    len = i;
-                }
-            }
-
-            if (c1 <= c0) {
-                path[p].cum = c1;
-                path[p].len = len;
-
-                count = 15;
-            }
-            else {
-                path[p].cum = c0;
-                path[p].len = 0;
-            }
-        }
-        else
-            path[p].cum = c0;
-    }
-
-    // Pass 3: Output the codes
-
-    int op = 0;
-    int pp = 0;
-
-    int p = 0;
-    while (p < n) {
-        if (path[p].len >= LZ4X_MIN_MATCH) {
-            int       len = path[p].len - LZ4X_MIN_MATCH;
-            const int nib = LZ4X_MIN(len, 15);
-
-            if (pp != p) {
-                const int run = p - pp;
-                if (run >= 15) {
-                    out[op++] = (15 << 4) + nib;
-
-                    int j = run - 15;
-                    for (; j >= 255; j -= 255)
-                        out[op++] = 255;
-                    out[op++] = j;
-                }
-                else
-                    out[op++] = (run << 4) + nib;
-
-                lz4x_wild_copy(&out[op], &in[pp], run);
-                op += run;
-            }
-            else
-                out[op++] = nib;
-
-            LZ4X_STORE_16(&out[op], path[p].dist);
-            op += 2;
-
-            if (len >= 15) {
-                len -= 15;
-                for (; len >= 255; len -= 255)
-                    out[op++] = 255;
-                out[op++] = len;
-            }
-
-            p += path[p].len;
-
-            pp = p;
-        }
-        else
-            ++p;
-    }
-
-    if (pp != p) {
-        const int run = p - pp;
-        if (run >= 15) {
-            out[op++] = 15 << 4;
-
-            int j = run - 15;
-            for (; j >= 255; j -= 255)
-                out[op++] = 255;
-            out[op++] = j;
-        }
-        else
-            out[op++] = run << 4;
-
-        lz4x_wild_copy(&out[op], &in[pp], run);
-        op += run;
-    }
-
-    (void)LZ4X_REALLOC(path, 0);
-
-    const int comp_len = op;
-    return comp_len;
-}
-
-int lz4x_compress(const uint8_t* in,
-                  size_t         inlen,
-                  uint8_t*       out,
+int lz4x_compress(uint8_t*       out,
                   size_t         outlen,
+                  const uint8_t* in,
+                  size_t         inlen,
                   unsigned       max_chain)
 {
     (void)(outlen);
@@ -589,10 +405,10 @@ int lz4x_compress(const uint8_t* in,
     return comp_len;
 }
 
-int lz4x_decompress(const uint8_t* in,
-                    size_t         inlen,
-                    uint8_t*       out,
-                    size_t         outlen)
+int lz4x_decompress(uint8_t*       out,
+                    size_t         outlen,
+                    const uint8_t* in,
+                    size_t         inlen)
 {
     int n = (int)inlen;
 
@@ -659,23 +475,19 @@ unsigned lz4x_encode(void*       out,
                      unsigned    flags /*[1..15*/)
 {
     unsigned level = (unsigned)(flags > 15 ? 15 : flags < 1 ? 1 : flags);
-    if (level >= 15)
-        return lz4x_compress_optimal((const uint8_t*)in,
-                                     inlen,
-                                     (uint8_t*)out,
-                                     outlen);
     return (unsigned)
-        lz4x_compress((const uint8_t*)in, inlen, (uint8_t*)out, outlen, level);
+        lz4x_compress((uint8_t*)out, outlen, (const uint8_t*)in, inlen, level);
 }
 unsigned lz4x_decode(void*       out,
                      unsigned    outlen,
                      const void* in,
                      unsigned    inlen)
 {
-    return (unsigned)lz4x_decompress((const uint8_t*)in,
-                                     (size_t)inlen,
-                                     (uint8_t*)out,
-                                     (size_t)outlen);
+    return (unsigned)lz4x_decompress(
+        (uint8_t*)out,
+        (size_t)outlen,
+        (const uint8_t*)in,
+        (size_t)inlen);
 }
 unsigned lz4x_bounds(unsigned inlen, unsigned flags)
 {
@@ -685,110 +497,21 @@ unsigned lz4x_bounds(unsigned inlen, unsigned flags)
 
 }  // close unnamed namespace
 
-bsl::uint32_t CompressionCrc32::calculate(const void*   data,
-                                          bsl::size_t   size,
-                                          bsl::uint32_t crc)
-{
-    return bdlde::Crc32c::calculate(data, size, crc);
-}
-
-bsl::uint32_t CompressionCrc32::calculate(const bdlbb::Blob& data,
-                                          bsl::size_t        size,
-                                          bsl::uint32_t      crc)
-{
-    bsl::size_t numBytesRemaining = size;
-
-    bsl::uint32_t crcInProgress = crc;
-
-    if (size == 0) {
-        return crcInProgress;
-    }
-
-    const int numDataBuffers = data.numDataBuffers();
-
-    for (int i = 0; i < numDataBuffers; ++i) {
-        const bdlbb::BlobBuffer& buffer = data.buffer(i);
-
-        const bsl::uint8_t* bufferData =
-            reinterpret_cast<bsl::uint8_t*>(buffer.data());
-
-        bsl::size_t bufferSize;
-        if (i != numDataBuffers - 1) {
-            bufferSize = static_cast<bsl::size_t>(buffer.size());
-        }
-        else {
-            bufferSize = static_cast<bsl::size_t>(data.lastDataBufferLength());
-        }
-
-        if (bufferSize < numBytesRemaining) {
-            crcInProgress = bdlde::Crc32c::calculate(bufferData,
-                                                     bufferSize,
-                                                     crcInProgress);
-
-            numBytesRemaining -= bufferSize;
-        }
-        else {
-            crcInProgress = bdlde::Crc32c::calculate(bufferData,
-                                                     numBytesRemaining,
-                                                     crcInProgress);
-
-            numBytesRemaining = 0;
-            break;
-        }
-    }
-
-    return crcInProgress;
-}
-
 #if defined(BSLS_PLATFORM_IS_BIG_ENDIAN)
 const bsl::uint32_t CompressionFrameHeader::k_MAGIC = 1380730184;
 #else
 const bsl::uint32_t CompressionFrameHeader::k_MAGIC = 1212501074;
 #endif
 
-ntsa::Error CompressionFrameHeader::encode(bsl::size_t* numBytesEncoded,
-                                           bdlbb::Blob* destination)
-{
-    BSLMF_ASSERT(sizeof(*this) == 16);
-
-    ntcs::BlobUtil::append(destination, this, sizeof(*this));
-    *numBytesEncoded += sizeof(*this);
-
-    return ntsa::Error();
-}
-
-ntsa::Error CompressionFrameHeader::encode(bsl::size_t* numBytesEncoded,
-                                           bdlbb::Blob* destination,
-                                           std::size_t  position)
-{
-    BSLMF_ASSERT(sizeof(*this) == 16);
-
-    ntsa::Error error;
-
-    bdlbb::OutBlobStreamBuf osb(destination);
-    std::streampos p = osb.pubseekpos(static_cast<bsl::streampos>(position),
-                                      bsl::ios_base::out);
-    if (static_cast<bsl::size_t>(p) != position) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    bsl::streamsize n = osb.sputn(reinterpret_cast<const char*>(this),
-                                  static_cast<bsl::streamsize>(sizeof(*this)));
-
-    if (static_cast<bsl::size_t>(n) != sizeof(*this)) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    *numBytesEncoded += sizeof(*this);
-
-    return ntsa::Error();
-}
-
 ntsa::Error CompressionFrameHeader::decode(bsl::size_t* numBytesDecoded,
                                            const void*  source,
                                            bsl::size_t  size)
 {
     BSLMF_ASSERT(sizeof(*this) == 16);
+
+    ntsa::Error error;
+
+    this->reset();
 
     if (size < sizeof(*this)) {
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
@@ -797,41 +520,36 @@ ntsa::Error CompressionFrameHeader::decode(bsl::size_t* numBytesDecoded,
     bsl::memcpy(this, source, sizeof(*this));
     *numBytesDecoded += sizeof(*this);
 
-    if (d_magic != CompressionFrameHeader::k_MAGIC) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
+    error = this->validate();
+    if (error) {
+        return error;
     }
 
     return ntsa::Error();
 }
 
-ntsa::Error CompressionFrameHeader::decode(bsl::size_t*        numBytesDecoded,
-                                           const bsl::uint8_t* sourceBegin,
-                                           const bsl::uint8_t* sourceEnd)
-{
-    return this->decode(numBytesDecoded, sourceBegin, sourceEnd - sourceBegin);
-}
-
 ntsa::Error CompressionFrameHeader::decode(bsl::size_t*    numBytesDecoded,
                                            bsl::streambuf* source)
 {
-    bsl::uint8_t buffer[sizeof(*this)];
+    ntsa::Error error;
 
-    bsl::streamsize numAvailable = source->in_avail();
-    if (numAvailable < 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-    else if (numAvailable < static_cast<bsl::streamsize>(sizeof(*this))) {
+    this->reset();
+
+    bsl::streamsize n =
+        source->sgetn(reinterpret_cast<char*>(this), sizeof(*this));
+
+    if (static_cast<bsl::size_t>(n) != sizeof(*this)) {
+        source->pubseekoff(-n, bsl::ios_base::cur, bsl::ios_base::in);
+        this->reset();
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
 
-    bsl::streamsize n =
-        source->sgetn(reinterpret_cast<char*>(buffer), sizeof(*this));
+    *numBytesDecoded += sizeof(*this);
 
-    if (static_cast<bsl::size_t>(n) != sizeof(*this)) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
+    error = this->validate();
+    if (error) {
+        return error;
     }
-
-    *numBytesDecoded = sizeof(*this);
 
     return ntsa::Error();
 }
@@ -839,9 +557,11 @@ ntsa::Error CompressionFrameHeader::decode(bsl::size_t*    numBytesDecoded,
 ntsa::Error CompressionFrameHeader::decode(bsl::size_t*       numBytesDecoded,
                                            const bdlbb::Blob& source)
 {
+    this->reset();
+
     bsl::size_t numBytesAvailable = ntcs::BlobUtil::size(source);
 
-    if (numBytesAvailable > sizeof(*this)) {
+    if (numBytesAvailable >= sizeof(*this)) {
         const bdlbb::BlobBuffer& buffer = source.buffer(0);
 
         const bsl::uint8_t* bufferData =
@@ -867,6 +587,53 @@ ntsa::Error CompressionFrameHeader::decode(bsl::size_t*       numBytesDecoded,
     else {
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
+}
+
+ntsa::Error CompressionFrameHeader::encode(bsl::size_t* numBytesEncoded,
+                                           bdlbb::Blob* destination) const
+{
+    BSLMF_ASSERT(sizeof(*this) == 16);
+
+    ntcs::BlobUtil::append(destination, this, sizeof(*this));
+    *numBytesEncoded += sizeof(*this);
+
+    return ntsa::Error();
+}
+
+ntsa::Error CompressionFrameHeader::encode(bsl::size_t* numBytesEncoded,
+                                           bdlbb::Blob* destination,
+                                           std::size_t  position) const
+{
+    BSLMF_ASSERT(sizeof(*this) == 16);
+
+    ntsa::Error error;
+
+    bdlbb::OutBlobStreamBuf osb(destination);
+    std::streampos p = osb.pubseekpos(static_cast<bsl::streampos>(position),
+                                      bsl::ios_base::out);
+    if (static_cast<bsl::size_t>(p) != position) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::streamsize n = osb.sputn(reinterpret_cast<const char*>(this),
+                                  static_cast<bsl::streamsize>(sizeof(*this)));
+
+    if (static_cast<bsl::size_t>(n) != sizeof(*this)) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    *numBytesEncoded += sizeof(*this);
+
+    return ntsa::Error();
+}
+
+ntsa::Error CompressionFrameHeader::validate() const
+{
+    if (d_magic != CompressionFrameHeader::k_MAGIC) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
 }
 
 bool CompressionFrameHeader::equals(const CompressionFrameHeader& other) const
@@ -924,22 +691,15 @@ const bsl::uint32_t CompressionFrameFooter::k_MAGIC = 1380730182;
 const bsl::uint32_t CompressionFrameFooter::k_MAGIC = 1178946642;
 #endif
 
-ntsa::Error CompressionFrameFooter::encode(bsl::size_t* numBytesEncoded,
-                                           bdlbb::Blob* destination)
-{
-    BSLMF_ASSERT(sizeof(*this) == 8);
-
-    ntcs::BlobUtil::append(destination, this, sizeof(*this));
-    *numBytesEncoded += sizeof(*this);
-
-    return ntsa::Error();
-}
-
 ntsa::Error CompressionFrameFooter::decode(bsl::size_t* numBytesDecoded,
                                            const void*  source,
                                            bsl::size_t  size)
 {
     BSLMF_ASSERT(sizeof(*this) == 8);
+
+    ntsa::Error error;
+
+    this->reset();
 
     if (size < sizeof(*this)) {
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
@@ -948,41 +708,36 @@ ntsa::Error CompressionFrameFooter::decode(bsl::size_t* numBytesDecoded,
     bsl::memcpy(this, source, sizeof(*this));
     *numBytesDecoded += sizeof(*this);
 
-    if (d_magic != CompressionFrameFooter::k_MAGIC) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
+    error = this->validate();
+    if (error) {
+        return error;
     }
 
     return ntsa::Error();
 }
 
-ntsa::Error CompressionFrameFooter::decode(bsl::size_t*        numBytesDecoded,
-                                           const bsl::uint8_t* sourceBegin,
-                                           const bsl::uint8_t* sourceEnd)
-{
-    return this->decode(numBytesDecoded, sourceBegin, sourceEnd - sourceBegin);
-}
-
 ntsa::Error CompressionFrameFooter::decode(bsl::size_t*    numBytesDecoded,
                                            bsl::streambuf* source)
 {
-    bsl::uint8_t buffer[sizeof(*this)];
+    ntsa::Error error;
 
-    bsl::streamsize numAvailable = source->in_avail();
-    if (numAvailable < 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-    else if (numAvailable < static_cast<bsl::streamsize>(sizeof(*this))) {
+    this->reset();
+
+    bsl::streamsize n =
+        source->sgetn(reinterpret_cast<char*>(this), sizeof(*this));
+
+    if (static_cast<bsl::size_t>(n) != sizeof(*this)) {
+        source->pubseekoff(-n, bsl::ios_base::cur, bsl::ios_base::in);
+        this->reset();
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
 
-    bsl::streamsize n =
-        source->sgetn(reinterpret_cast<char*>(buffer), sizeof(*this));
-
-    if (static_cast<bsl::size_t>(n) != sizeof(*this)) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
     *numBytesDecoded = sizeof(*this);
+
+    error = this->validate();
+    if (error) {
+        return error;
+    }
 
     return ntsa::Error();
 }
@@ -990,9 +745,11 @@ ntsa::Error CompressionFrameFooter::decode(bsl::size_t*    numBytesDecoded,
 ntsa::Error CompressionFrameFooter::decode(bsl::size_t*       numBytesDecoded,
                                            const bdlbb::Blob& source)
 {
+    this->reset();
+
     bsl::size_t numBytesAvailable = ntcs::BlobUtil::size(source);
 
-    if (numBytesAvailable > sizeof(*this)) {
+    if (numBytesAvailable >= sizeof(*this)) {
         const bdlbb::BlobBuffer& buffer = source.buffer(0);
 
         const bsl::uint8_t* bufferData =
@@ -1018,6 +775,26 @@ ntsa::Error CompressionFrameFooter::decode(bsl::size_t*       numBytesDecoded,
     else {
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
+}
+
+ntsa::Error CompressionFrameFooter::encode(bsl::size_t* numBytesEncoded,
+                                           bdlbb::Blob* destination) const
+{
+    BSLMF_ASSERT(sizeof(*this) == 8);
+
+    ntcs::BlobUtil::append(destination, this, sizeof(*this));
+    *numBytesEncoded += sizeof(*this);
+
+    return ntsa::Error();
+}
+
+ntsa::Error CompressionFrameFooter::validate() const
+{
+    if (d_magic != CompressionFrameFooter::k_MAGIC) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
 }
 
 bool CompressionFrameFooter::equals(const CompressionFrameFooter& other) const
@@ -1112,22 +889,15 @@ bsl::ostream& operator<<(bsl::ostream& stream, CompressionBlockType::Value rhs)
     return CompressionBlockType::print(stream, rhs);
 }
 
-ntsa::Error CompressionBlock::encode(bsl::size_t* numBytesEncoded,
-                                     bdlbb::Blob* destination)
-{
-    BSLMF_ASSERT(sizeof(*this) == 4);
-
-    ntcs::BlobUtil::append(destination, this, sizeof(*this));
-    *numBytesEncoded += sizeof(*this);
-
-    return ntsa::Error();
-}
-
 ntsa::Error CompressionBlock::decode(bsl::size_t* numBytesDecoded,
                                      const void*  source,
                                      bsl::size_t  size)
 {
     BSLMF_ASSERT(sizeof(*this) == 4);
+
+    ntsa::Error error;
+
+    this->reset();
 
     if (size < sizeof(*this)) {
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
@@ -1136,41 +906,36 @@ ntsa::Error CompressionBlock::decode(bsl::size_t* numBytesDecoded,
     bsl::memcpy(this, source, sizeof(*this));
     *numBytesDecoded += sizeof(*this);
 
-    if (d_flags != 1 && d_flags != 2) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
+    error = this->validate();
+    if (error) {
+        this->reset();
+        return error;
     }
 
     return ntsa::Error();
 }
 
-ntsa::Error CompressionBlock::decode(bsl::size_t*        numBytesDecoded,
-                                     const bsl::uint8_t* sourceBegin,
-                                     const bsl::uint8_t* sourceEnd)
-{
-    return this->decode(numBytesDecoded, sourceBegin, sourceEnd - sourceBegin);
-}
-
 ntsa::Error CompressionBlock::decode(bsl::size_t*    numBytesDecoded,
                                      bsl::streambuf* source)
 {
-    bsl::uint8_t buffer[sizeof(*this)];
+    ntsa::Error error;
 
-    bsl::streamsize numAvailable = source->in_avail();
-    if (numAvailable < 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-    else if (numAvailable < static_cast<bsl::streamsize>(sizeof(*this))) {
+    bsl::streamsize n =
+        source->sgetn(reinterpret_cast<char*>(this), sizeof(*this));
+
+    if (static_cast<bsl::size_t>(n) != sizeof(*this)) {
+        source->pubseekoff(-n, bsl::ios_base::cur, bsl::ios_base::in);
+        this->reset();
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
 
-    bsl::streamsize n =
-        source->sgetn(reinterpret_cast<char*>(buffer), sizeof(*this));
+    *numBytesDecoded += sizeof(*this);
 
-    if (static_cast<bsl::size_t>(n) != sizeof(*this)) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
+    error = this->validate();
+    if (error) {
+        this->reset();
+        return error;
     }
-
-    *numBytesDecoded = sizeof(*this);
 
     return ntsa::Error();
 }
@@ -1178,9 +943,11 @@ ntsa::Error CompressionBlock::decode(bsl::size_t*    numBytesDecoded,
 ntsa::Error CompressionBlock::decode(bsl::size_t*       numBytesDecoded,
                                      const bdlbb::Blob& source)
 {
+    this->reset();
+
     bsl::size_t numBytesAvailable = ntcs::BlobUtil::size(source);
 
-    if (numBytesAvailable > sizeof(*this)) {
+    if (numBytesAvailable >= sizeof(*this)) {
         const bdlbb::BlobBuffer& buffer = source.buffer(0);
 
         const bsl::uint8_t* bufferData =
@@ -1206,6 +973,29 @@ ntsa::Error CompressionBlock::decode(bsl::size_t*       numBytesDecoded,
     else {
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
+}
+
+ntsa::Error CompressionBlock::encode(bsl::size_t* numBytesEncoded,
+                                     bdlbb::Blob* destination) const
+{
+    BSLMF_ASSERT(sizeof(*this) == 4);
+
+    ntcs::BlobUtil::append(destination, this, sizeof(*this));
+    *numBytesEncoded += sizeof(*this);
+
+    return ntsa::Error();
+}
+
+ntsa::Error CompressionBlock::validate() const
+{
+    int blockTypeValue = static_cast<int>(d_flags);
+
+    CompressionBlockType::Value blockType;
+    if (CompressionBlockType::fromInt(&blockType, blockTypeValue) != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
 }
 
 bool CompressionBlock::equals(const CompressionBlock& other) const
@@ -1259,13 +1049,45 @@ bsl::ostream& CompressionBlock::print(bsl::ostream& stream,
     return stream;
 }
 
+#define NTCD_COMPRESSION_ENCODER_RLE_LOG_FRAME_HEADER(frameHeader)            \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG << "Encoded frame header " << (frameHeader)     \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
+#define NTCD_COMPRESSION_ENCODER_RLE_LOG_FRAME_FOOTER(frameFooter)            \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG << "Encoded frame footer " << (frameFooter)     \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
+#define NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RLE(block)                     \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG << "Encoded block " << (block)                  \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
+#define NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RAW(block, span)               \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG << "Encoded block " << (block)                  \
+                              << ": "  \
+                              << (span) \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
+#define NTCD_COMPRESSION_ENCODER_RLE_LOG_ERROR(message, error)                \
+    do {                                                                      \
+        NTCI_LOG_STREAM_ERROR << "Failed to decode: " << (message)            \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
 CompressionEncoderRle::CompressionEncoderRle(
     const ntca::CompressionConfig& configuration,
     bslma::Allocator*              basicAllocator)
 : d_frameHeader()
 , d_frameHeaderPosition(0)
 , d_frameContentBytesTotal(0)
-, d_frameContentCrc(ntcd::CompressionCrc32::k_NULL_CRC32C)
+, d_frameContentCrc()
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -1293,7 +1115,7 @@ ntsa::Error CompressionEncoderRle::deflateBegin(
 
     d_frameHeader.reset();
     d_frameContentBytesTotal = 0;
-    d_frameContentCrc        = ntcd::CompressionCrc32::k_NULL_CRC32C;
+    d_frameContentCrc.reset();
 
     bsl::size_t frameHeaderBytesEncoded = 0;
     error = d_frameHeader.encode(&frameHeaderBytesEncoded, result);
@@ -1301,8 +1123,8 @@ ntsa::Error CompressionEncoderRle::deflateBegin(
         return error;
     }
 
-    context->setBytesWritten(
-        context->bytesWritten() + frameHeaderBytesEncoded);
+    context->setBytesWritten(context->bytesWritten() +
+                             frameHeaderBytesEncoded);
 
     return ntsa::Error();
 }
@@ -1356,8 +1178,7 @@ ntsa::Error CompressionEncoderRle::deflateNext(
                     block.setLength(current - mark);
                     block.setLiteral(*previous);
 
-                    NTCI_LOG_STREAM_DEBUG << "Deflated " << block
-                                          << NTCI_LOG_STREAM_END;
+                    NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RLE(block);
 
                     bsl::size_t blockBytesEncoded = 0;
                     error = block.encode(&blockBytesEncoded, result);
@@ -1367,8 +1188,8 @@ ntsa::Error CompressionEncoderRle::deflateNext(
 
                     d_frameContentBytesTotal += blockBytesEncoded;
 
-                    context->setBytesWritten(
-                        context->bytesWritten() + blockBytesEncoded);
+                    context->setBytesWritten(context->bytesWritten() +
+                                             blockBytesEncoded);
 
                     mode = k_MODE_DEFAULT;
                     mark = current;
@@ -1380,11 +1201,9 @@ ntsa::Error CompressionEncoderRle::deflateNext(
                     block.setType(ntcd::CompressionBlockType::e_RAW);
                     block.setLength(previous - mark);
 
-                    NTCI_LOG_STREAM_DEBUG
-                        << "Deflated " << block << " "
-                        << bsl::string_view((const char*)(mark),
-                                            block.length())
-                        << NTCI_LOG_STREAM_END;
+                    NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RAW(
+                        block,
+                        bsl::string_view((const char*)(mark), block.length()));
 
                     bsl::size_t blockBytesEncoded = 0;
                     error = block.encode(&blockBytesEncoded, result);
@@ -1393,16 +1212,16 @@ ntsa::Error CompressionEncoderRle::deflateNext(
                     }
 
                     d_frameContentBytesTotal += blockBytesEncoded;
-                    
-                    context->setBytesWritten(
-                        context->bytesWritten() + blockBytesEncoded);
+
+                    context->setBytesWritten(context->bytesWritten() +
+                                             blockBytesEncoded);
 
                     ntcs::BlobUtil::append(result, mark, block.length());
 
                     d_frameContentBytesTotal += block.length();
-                    
-                    context->setBytesWritten(
-                        context->bytesWritten() + block.length());
+
+                    context->setBytesWritten(context->bytesWritten() +
+                                             block.length());
 
                     mode = k_MODE_SAME;
                     mark = previous;
@@ -1421,7 +1240,7 @@ ntsa::Error CompressionEncoderRle::deflateNext(
         block.setLength(current - mark);
         block.setLiteral(*previous);
 
-        NTCI_LOG_STREAM_DEBUG << "Deflated " << block << NTCI_LOG_STREAM_END;
+        NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RLE(block);
 
         bsl::size_t blockBytesEncoded = 0;
         error = block.encode(&blockBytesEncoded, result);
@@ -1437,7 +1256,9 @@ ntsa::Error CompressionEncoderRle::deflateNext(
         block.setType(ntcd::CompressionBlockType::e_RAW);
         block.setLength(current - mark);
 
-        NTCI_LOG_STREAM_DEBUG << "Deflated " << block << NTCI_LOG_STREAM_END;
+        NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RAW(
+            block,
+            bsl::string_view((const char*)(mark), block.length()));
 
         bsl::size_t blockBytesEncoded = 0;
         block.encode(&blockBytesEncoded, result);
@@ -1447,14 +1268,13 @@ ntsa::Error CompressionEncoderRle::deflateNext(
 
         ntcs::BlobUtil::append(result, mark, block.length());
 
-        d_frameContentBytesTotal += block.length();            
+        d_frameContentBytesTotal += block.length();
         context->setBytesWritten(context->bytesWritten() + block.length());
     }
 
     context->setBytesRead(context->bytesRead() + size);
 
-    d_frameContentCrc = 
-        bdlde::Crc32c::calculate(data, size, d_frameContentCrc);
+    d_frameContentCrc.update(data, size);
 
     return ntsa::Error();
 }
@@ -1478,8 +1298,8 @@ ntsa::Error CompressionEncoderRle::deflateEnd(
     d_frameHeader.setLength(d_frameContentBytesTotal);
     d_frameHeader.setChecksum(d_frameContentCrc);
 
-    error = d_frameHeader.encode(&frameHeaderBytesEncoded, 
-                                 result, 
+    error = d_frameHeader.encode(&frameHeaderBytesEncoded,
+                                 result,
                                  d_frameHeaderPosition);
     if (error) {
         return error;
@@ -1493,21 +1313,54 @@ ntsa::Error CompressionEncoderRle::deflateEnd(
         return error;
     }
 
-    context->setBytesWritten(
-        context->bytesWritten() + frameFooterBytesEncoded);
+    context->setBytesWritten(context->bytesWritten() +
+                             frameFooterBytesEncoded);
 
     NTCI_LOG_STREAM_DEBUG << "Deflate end: context = " << *context
-                          << " header = " << d_frameHeader << " footer = " 
-                          << frameFooter
+                          << " header = " << d_frameHeader
+                          << " footer = " << frameFooter
                           << NTCI_LOG_STREAM_END;
 
     d_frameHeader.reset();
     d_frameHeaderPosition    = 0;
     d_frameContentBytesTotal = 0;
-    d_frameContentCrc        = ntcd::CompressionCrc32::k_NULL_CRC32C;
+    d_frameContentCrc.reset();
 
     return ntsa::Error();
 }
+
+#define NTCD_COMPRESSION_DECODER_RLE_LOG_FRAME_HEADER(frameHeader)            \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG << "Decoded frame header " << (frameHeader)     \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
+#define NTCD_COMPRESSION_DECODER_RLE_LOG_FRAME_FOOTER(frameFooter)            \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG << "Decoded frame footer " << (frameFooter)     \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
+#define NTCD_COMPRESSION_DECODER_RLE_LOG_BLOCK(block)                         \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG << "Decoded block " << (block)                  \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
+#define NTCD_COMPRESSION_DECODER_RLE_LOG_CRC_MISMATCH(expected, found)        \
+    do { \
+        NTCI_LOG_STREAM_ERROR << "Failed to decode: the calculated checksum " \
+                              << (found) \
+                              << " does not match the expected checksum " \
+                              << (expected) \
+                              << NTCI_LOG_STREAM_END; \
+    } while (false)
+
+#define NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(message, error)                \
+    do {                                                                      \
+        NTCI_LOG_STREAM_ERROR << "Failed to decode: " << (message)            \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
 
 ntsa::Error CompressionDecoderRle::process(ntca::InflateContext*       context,
                                            bdlbb::Blob*                result,
@@ -1521,6 +1374,10 @@ ntsa::Error CompressionDecoderRle::process(ntca::InflateContext*       context,
 
     bsl::size_t numBytesWritten = 0;
 
+    NTCI_LOG_STREAM_TRACE << "Inflating input:\n"
+                          << bdlbb::BlobUtilHexDumper(&d_input)
+                          << NTCI_LOG_STREAM_END;
+
     while (true) {
         if (d_state == e_WANT_FRAME_HEADER) {
             bsl::size_t numBytesDecoded = 0;
@@ -1530,9 +1387,14 @@ ntsa::Error CompressionDecoderRle::process(ntca::InflateContext*       context,
                     break;
                 }
                 else {
+                    NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
+                        "Failed to decode frame header",
+                        error);
                     return this->fail(error);
                 }
             }
+
+            NTCD_COMPRESSION_DECODER_RLE_LOG_FRAME_HEADER(d_frameHeader);
 
             d_frameContentBytesNeeded = d_frameHeader.length();
 
@@ -1548,60 +1410,56 @@ ntsa::Error CompressionDecoderRle::process(ntca::InflateContext*       context,
             continue;
         }
         else if (d_state == e_WANT_BLOCK) {
-            ntcd::CompressionBlock block;
-
             bsl::size_t numBytesDecoded = 0;
-            error = block.decode(&numBytesDecoded, d_input);
+            error = d_block.decode(&numBytesDecoded, d_input);
             if (error) {
                 if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK)) {
                     break;
                 }
                 else {
+                    NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
+                        "Failed to decode block",
+                        error);
                     return this->fail(error);
                 }
             }
 
+            NTCD_COMPRESSION_DECODER_RLE_LOG_BLOCK(d_block);
+
             ntcs::BlobUtil::pop(&d_input, numBytesDecoded);
             d_frameContentBytesNeeded -= numBytesDecoded;
 
-            if (block.type() == ntcd::CompressionBlockType::e_RAW) {
-                if (block.length() > 0) {
-                    bdlbb::BlobUtil::append(result,
-                                            d_input,
-                                            0,
-                                            static_cast<int>(block.length()));
-
-                    d_frameContentCrc =
-                        ntcd::CompressionCrc32::calculate(d_input,
-                                                          block.length());
-
-                    ntcs::BlobUtil::pop(&d_input, block.length());
-                    d_frameContentBytesNeeded -= block.length();
-
-                    numBytesWritten += block.length();
+            if (d_block.type() == ntcd::CompressionBlockType::e_RAW) {
+                if (d_block.length() > 0) {
+                    d_state = e_WANT_BLOCK_PAYLOAD;
+                    continue;
                 }
             }
-            else if (block.type() == ntcd::CompressionBlockType::e_RLE) {
-                if (block.length() > 0) {
+            else if (d_block.type() == ntcd::CompressionBlockType::e_RLE) {
+                if (d_block.length() > 0) {
                     d_expansion.clear();
-                    d_expansion.resize(block.length(), block.literal());
+                    d_expansion.resize(d_block.length(), d_block.literal());
 
                     ntcs::BlobUtil::append(result,
                                            &d_expansion[0],
                                            d_expansion.size());
 
-                    d_frameContentCrc =
-                        ntcd::CompressionCrc32::calculate(&d_expansion[0],
-                                                          d_expansion.size());
+                    d_frameContentCrc.update(&d_expansion[0], 
+                                             d_expansion.size());
 
                     d_expansion.clear();
 
-                    numBytesWritten += block.length();
+                    numBytesWritten += d_block.length();
                 }
             }
             else {
+                NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
+                    "Invalid block type",
+                    ntsa::Error(ntsa::Error::e_INVALID));
                 return this->fail(ntsa::Error(ntsa::Error::e_INVALID));
             }
+
+            d_block.reset();
 
             if (d_frameContentBytesNeeded > 0) {
                 d_state = e_WANT_BLOCK;
@@ -1612,28 +1470,63 @@ ntsa::Error CompressionDecoderRle::process(ntca::InflateContext*       context,
 
             continue;
         }
+        else if (d_state == e_WANT_BLOCK_PAYLOAD) {
+            if (d_input.length() >= d_block.length()) {
+                bdlbb::BlobUtil::append(result,
+                                        d_input,
+                                        0,
+                                        static_cast<int>(d_block.length()));
+
+                d_frameContentCrc.update(d_input, d_block.length());
+
+                ntcs::BlobUtil::pop(&d_input, d_block.length());
+                d_frameContentBytesNeeded -= d_block.length();
+
+                numBytesWritten += d_block.length();
+
+                if (d_frameContentBytesNeeded > 0) {
+                    d_state = e_WANT_BLOCK;
+                }
+                else {
+                    d_state = e_WANT_FRAME_FOOTER;
+                }
+
+                continue;
+            }
+            else {
+                break;
+            }
+        }
         else if (d_state == e_WANT_FRAME_FOOTER) {
-            ntcd::CompressionFrameFooter footer;
+            ntcd::CompressionFrameFooter frameFooter;
 
             bsl::size_t numBytesDecoded = 0;
-            error = footer.decode(&numBytesDecoded, d_input);
+            error = frameFooter.decode(&numBytesDecoded, d_input);
             if (error) {
                 if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK)) {
                     break;
                 }
                 else {
+                    NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
+                        "Failed to decode frame footer",
+                        error);
                     return this->fail(error);
                 }
             }
 
+            NTCD_COMPRESSION_DECODER_RLE_LOG_FRAME_FOOTER(frameFooter);
+
             ntcs::BlobUtil::pop(&d_input, numBytesDecoded);
 
-            if (d_frameContentCrc != d_frameHeader.checksum()) {
-                NTCI_LOG_ERROR("Failed to inflate message: "
-                               "the calculated checksum %u "
-                               "does not match the expected checksum %u",
-                               d_frameContentCrc,
-                               d_frameHeader.checksum());
+            bsl::uint32_t expectedChecksum = d_frameHeader.checksum();
+            bsl::uint32_t measuredChecksum = 0;
+
+            d_frameContentCrc.load(&measuredChecksum, sizeof measuredChecksum);
+
+            if (measuredChecksum != expectedChecksum) {
+                NTCD_COMPRESSION_DECODER_RLE_LOG_CRC_MISMATCH(
+                    expectedChecksum,
+                    measuredChecksum);
 
                 return this->fail(ntsa::Error(ntsa::Error::e_INVALID));
             }
@@ -1642,7 +1535,9 @@ ntsa::Error CompressionDecoderRle::process(ntca::InflateContext*       context,
 
             d_frameHeader.reset();
             d_frameContentBytesNeeded = 0;
-            d_frameContentCrc         = ntcd::CompressionCrc32::k_NULL_CRC32C;
+            d_frameContentCrc.reset();
+            d_block.reset();
+
             continue;
         }
         else if (d_state == e_ERROR) {
@@ -1650,10 +1545,16 @@ ntsa::Error CompressionDecoderRle::process(ntca::InflateContext*       context,
                 return d_error;
             }
             else {
+                NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
+                    "The decoder is inoperable after a previous failure",
+                    ntsa::Error(ntsa::Error::e_INVALID));
                 return this->fail(ntsa::Error(ntsa::Error::e_INVALID));
             }
         }
         else {
+            NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
+                "The decoder is is an invalid state",
+                ntsa::Error(ntsa::Error::e_INVALID));
             return this->fail(ntsa::Error(ntsa::Error::e_INVALID));
         }
     }
@@ -1671,7 +1572,8 @@ ntsa::Error CompressionDecoderRle::fail(ntsa::Error error)
     d_expansion.clear();
     d_frameHeader.reset();
     d_frameContentBytesNeeded = 0;
-    d_frameContentCrc         = ntcd::CompressionCrc32::k_NULL_CRC32C;
+    d_frameContentCrc.reset();
+    d_block.reset();
 
     return error;
 }
@@ -1684,7 +1586,8 @@ CompressionDecoderRle::CompressionDecoderRle(
 , d_expansion(basicAllocator)
 , d_frameHeader()
 , d_frameContentBytesNeeded(0)
-, d_frameContentCrc(ntcd::CompressionCrc32::k_NULL_CRC32C)
+, d_frameContentCrc()
+, d_block()
 , d_config(configuration)
 , d_error()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -1705,17 +1608,6 @@ ntsa::Error CompressionDecoderRle::inflateBegin(
     NTCCFG_WARNING_UNUSED(options);
 
     ntsa::Error error;
-
-    context->setPosition(static_cast<bsl::size_t>(result->length()));
-
-    if (d_state != e_WANT_FRAME_HEADER) {
-        if (d_error) {
-            return d_error;
-        }
-        else {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-    }
 
     return ntsa::Error();
 }
@@ -1797,8 +1689,6 @@ ntsa::Error CompressionEncoderLz4::deflateBegin(
 
     NTCI_LOG_STREAM_DEBUG << "Deflate begin" << NTCI_LOG_STREAM_END;
 
-    context->setPosition(static_cast<bsl::size_t>(result->length()));
-
     return ntsa::Error();
 }
 
@@ -1839,13 +1729,10 @@ ntsa::Error CompressionEncoderLz4::deflateNext(
     context->setBytesRead(context->bytesRead() + size);
     context->setBytesWritten(context->bytesWritten() + numBytesWritten);
 
-// MRM
-#if 0
-    bsl::uint32_t checksum =
-        Compression::checksum(context->checksum(), data, size);
+    ntca::Checksum checksum;
+    checksum.update(data, size);
 
     context->setChecksum(checksum);
-#endif
 
     return ntsa::Error();
 }
@@ -1888,8 +1775,6 @@ ntsa::Error CompressionDecoderLz4::inflateBegin(
     NTCCFG_WARNING_UNUSED(result);
     NTCCFG_WARNING_UNUSED(options);
 
-    context->setPosition(static_cast<bsl::size_t>(result->length()));
-
     return ntsa::Error();
 }
 
@@ -1921,6 +1806,11 @@ ntsa::Error CompressionDecoderLz4::inflateNext(
     context->setBytesRead(context->bytesRead() + size);
     context->setBytesWritten(context->bytesWritten() + numBytesWritten);
 
+    ntca::Checksum checksum;
+    checksum.update(*result);
+
+    context->setChecksum(checksum);
+
     return ntsa::Error();
 }
 
@@ -1935,7 +1825,16 @@ ntsa::Error CompressionDecoderLz4::inflateNext(
     NTCCFG_WARNING_UNUSED(data);
     NTCCFG_WARNING_UNUSED(options);
 
-    return ntsa::Error();
+    if (data.numDataBuffers() != 1) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return CompressionDecoderLz4::inflateNext(
+        context,
+        result,
+        reinterpret_cast<bsl::uint8_t*>(data.buffer(0).data()),
+        static_cast<bsl::size_t>(data.lastDataBufferLength()),
+        options);
 }
 
 ntsa::Error CompressionDecoderLz4::inflateEnd(

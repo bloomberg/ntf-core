@@ -19,6 +19,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_checksum.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <bdlb_nullablevalue.h>
@@ -47,8 +48,8 @@ namespace ntca {
 /// @ingroup module_todo
 class DeflateOptions
 {
-    bdlb::NullableValue<bool>          d_partial;
-    bdlb::NullableValue<bsl::uint32_t> d_checksum;
+    bdlb::NullableValue<bool>           d_partial;
+    bdlb::NullableValue<ntca::Checksum> d_checksum;
 
   public:
     /// Create new deflate options having the default value.
@@ -73,14 +74,14 @@ class DeflateOptions
     void setPartial(bool value);
 
     /// Set the initial checksum to the specified 'value'.
-    void setChecksum(bsl::uint32_t value);
+    void setChecksum(const ntca::Checksum& value);
 
     /// Return the flag indicating the data to deflate only indicates a portion
     /// of the overal logical data to be deflated.
     const bdlb::NullableValue<bool>& partial() const;
 
     /// Return the initial checksum.
-    const bdlb::NullableValue<bsl::uint32_t>& checksum() const;
+    const bdlb::NullableValue<ntca::Checksum>& checksum() const;
 
     /// Return true if this object has the same value as the specified 'other'
     /// object, otherwise return false.
@@ -192,7 +193,7 @@ void DeflateOptions::setPartial(bool value)
 }
 
 NTCCFG_INLINE
-void DeflateOptions::setChecksum(bsl::uint32_t value)
+void DeflateOptions::setChecksum(const ntca::Checksum& value)
 {
     d_checksum = value;
 }
@@ -204,7 +205,7 @@ const bdlb::NullableValue<bool>& DeflateOptions::partial() const
 }
 
 NTCCFG_INLINE
-const bdlb::NullableValue<bsl::uint32_t>& DeflateOptions::checksum() const
+const bdlb::NullableValue<ntca::Checksum>& DeflateOptions::checksum() const
 {
     return d_checksum;
 }
