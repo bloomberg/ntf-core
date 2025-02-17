@@ -31,7 +31,7 @@ namespace ntca {
 /// This struct is thread safe.
 ///
 /// @ingroup module_ntsa_identity
-class CompressionGoal 
+class CompressionGoal
 {
   public:
     /// Provide an enumeration of the compression goals.
@@ -46,7 +46,7 @@ class CompressionGoal
         /// of speed.
         e_BETTER_SIZE = 2,
 
-        /// The compression goal favors neither size nor speed, but tries to 
+        /// The compression goal favors neither size nor speed, but tries to
         /// achieve a good tradeoff for both.
         e_BALANCED = 3,
 

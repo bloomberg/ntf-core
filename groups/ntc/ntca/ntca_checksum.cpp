@@ -26,23 +26,23 @@ namespace ntca {
 Checksum::Checksum()
 : d_type(ntca::ChecksumType::e_CRC32)
 {
-    new(d_crc32.buffer()) Crc32();
+    new (d_crc32.buffer()) Crc32();
 }
 
 Checksum::Checksum(ntca::ChecksumType::Value type)
 : d_type(type)
 {
     if (d_type == ntca::ChecksumType::e_CRC32) {
-        new(d_crc32.buffer()) Crc32();
+        new (d_crc32.buffer()) Crc32();
     }
     else if (d_type == ntca::ChecksumType::e_CRC32C) {
-        new(d_crc32c.buffer()) Crc32c(bdlde::Crc32c::k_NULL_CRC32C);
+        new (d_crc32c.buffer()) Crc32c(bdlde::Crc32c::k_NULL_CRC32C);
     }
     else if (d_type == ntca::ChecksumType::e_XXHASH32) {
-        new(d_xxHash32.buffer()) XxHash32(0);
+        new (d_xxHash32.buffer()) XxHash32(0);
     }
     else if (d_type == ntca::ChecksumType::e_XXHASH64) {
-        new(d_xxHash64.buffer()) XxHash64(0);
+        new (d_xxHash64.buffer()) XxHash64(0);
     }
 }
 
@@ -50,16 +50,16 @@ Checksum::Checksum(const Checksum& original)
 : d_type(original.d_type)
 {
     if (original.d_type == ntca::ChecksumType::e_CRC32) {
-        new(d_crc32.buffer()) Crc32(original.d_crc32.object());
+        new (d_crc32.buffer()) Crc32(original.d_crc32.object());
     }
     else if (original.d_type == ntca::ChecksumType::e_CRC32C) {
-        new(d_crc32c.buffer()) Crc32c(original.d_crc32c.object());
+        new (d_crc32c.buffer()) Crc32c(original.d_crc32c.object());
     }
     else if (original.d_type == ntca::ChecksumType::e_XXHASH32) {
-        new(d_xxHash32.buffer()) XxHash32(original.d_xxHash32.object());
+        new (d_xxHash32.buffer()) XxHash32(original.d_xxHash32.object());
     }
     else if (original.d_type == ntca::ChecksumType::e_XXHASH64) {
-        new(d_xxHash64.buffer()) XxHash64(original.d_xxHash64.object());
+        new (d_xxHash64.buffer()) XxHash64(original.d_xxHash64.object());
     }
 }
 
@@ -71,16 +71,16 @@ Checksum& Checksum::operator=(const Checksum& other)
 {
     if (this != &other) {
         if (other.d_type == ntca::ChecksumType::e_CRC32) {
-            new(d_crc32.buffer()) Crc32(other.d_crc32.object());
+            new (d_crc32.buffer()) Crc32(other.d_crc32.object());
         }
         else if (other.d_type == ntca::ChecksumType::e_CRC32C) {
-            new(d_crc32c.buffer()) Crc32c(other.d_crc32c.object());
+            new (d_crc32c.buffer()) Crc32c(other.d_crc32c.object());
         }
         else if (other.d_type == ntca::ChecksumType::e_XXHASH32) {
-            new(d_xxHash32.buffer()) XxHash32(other.d_xxHash32.object());
+            new (d_xxHash32.buffer()) XxHash32(other.d_xxHash32.object());
         }
         else if (other.d_type == ntca::ChecksumType::e_XXHASH64) {
-            new(d_xxHash64.buffer()) XxHash64(other.d_xxHash64.object());
+            new (d_xxHash64.buffer()) XxHash64(other.d_xxHash64.object());
         }
         d_type = other.d_type;
     }
@@ -107,8 +107,8 @@ void Checksum::reset()
     }
 }
 
-ntsa::Error Checksum::store(ntca::ChecksumType::Value type, 
-                            const void*               value, 
+ntsa::Error Checksum::store(ntca::ChecksumType::Value type,
+                            const void*               value,
                             bsl::size_t               size)
 {
     if (type == ntca::ChecksumType::e_CRC32) {
@@ -118,7 +118,7 @@ ntsa::Error Checksum::store(ntca::ChecksumType::Value type,
 
         BSLMF_ASSERT(sizeof(Crc32) == 4);
 
-        new(d_crc32.buffer()) Crc32();
+        new (d_crc32.buffer()) Crc32();
         bsl::memcpy(d_crc32.buffer(), value, 4);
     }
     else if (type == ntca::ChecksumType::e_CRC32C) {
@@ -128,7 +128,7 @@ ntsa::Error Checksum::store(ntca::ChecksumType::Value type,
 
         BSLMF_ASSERT(sizeof(Crc32c) == 4);
 
-        new(d_crc32c.buffer()) Crc32c();
+        new (d_crc32c.buffer()) Crc32c();
         bsl::memcpy(d_crc32c.buffer(), value, 4);
     }
     else if (type == ntca::ChecksumType::e_XXHASH32) {
@@ -138,7 +138,7 @@ ntsa::Error Checksum::store(ntca::ChecksumType::Value type,
 
         BSLMF_ASSERT(sizeof(XxHash32) == 4);
 
-        new(d_xxHash32.buffer()) XxHash32();
+        new (d_xxHash32.buffer()) XxHash32();
         bsl::memcpy(d_xxHash32.buffer(), value, 4);
     }
     else if (type == ntca::ChecksumType::e_XXHASH64) {
@@ -148,7 +148,7 @@ ntsa::Error Checksum::store(ntca::ChecksumType::Value type,
 
         BSLMF_ASSERT(sizeof(XxHash64) == 8);
 
-        new(d_xxHash64.buffer()) XxHash64();
+        new (d_xxHash64.buffer()) XxHash64();
         bsl::memcpy(d_xxHash64.buffer(), value, 8);
     }
     else {
@@ -164,7 +164,7 @@ ntsa::Error Checksum::update(const void* data, bsl::size_t size)
         d_crc32.object().update(data, size);
     }
     else if (d_type == ntca::ChecksumType::e_CRC32C) {
-        d_crc32c.object() = 
+        d_crc32c.object() =
             bdlde::Crc32c::calculate(data, size, d_crc32c.object());
     }
     else if (d_type == ntca::ChecksumType::e_XXHASH32) {
@@ -231,7 +231,7 @@ ntsa::Error Checksum::update(const bdlbb::Blob& data, bsl::size_t size)
 
     return ntsa::Error();
 }
- 
+
 ntca::ChecksumType::Value Checksum::type() const
 {
     return d_type;
@@ -297,9 +297,9 @@ bsl::size_t Checksum::load(void* result, bsl::size_t capacity) const
 bool Checksum::equals(const Checksum& other) const
 {
     if (d_type != other.d_type) {
-        return false;    
+        return false;
     }
-    
+
     if (d_type == ntca::ChecksumType::e_CRC32) {
         return d_crc32.object() == other.d_crc32.object();
     }
@@ -347,8 +347,8 @@ bool Checksum::less(const Checksum& other) const
 }
 
 bsl::ostream& Checksum::print(bsl::ostream& stream,
-                                    int           level,
-                                    int           spacesPerLevel) const
+                              int           level,
+                              int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -377,4 +377,3 @@ bsl::ostream& Checksum::print(bsl::ostream& stream,
 
 }  // close namespace ntca
 }  // close namespace BloombergLP
-

@@ -48,7 +48,7 @@ namespace ntca {
 /// @ingroup module_todo
 class InflateOptions
 {
-    bdlb::NullableValue<bool>          d_partial;
+    bdlb::NullableValue<bool>           d_partial;
     bdlb::NullableValue<ntca::Checksum> d_checksum;
 
   public:
@@ -174,7 +174,7 @@ InflateOptions::~InflateOptions()
 NTCCFG_INLINE
 InflateOptions& InflateOptions::operator=(const InflateOptions& other)
 {
-    d_partial = other.d_partial;
+    d_partial  = other.d_partial;
     d_checksum = other.d_checksum;
     return *this;
 }
@@ -211,8 +211,7 @@ const bdlb::NullableValue<ntca::Checksum>& InflateOptions::checksum() const
 }
 
 template <typename HASH_ALGORITHM>
-NTCCFG_INLINE
-void InflateOptions::hash(HASH_ALGORITHM& algorithm) const
+NTCCFG_INLINE void InflateOptions::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
     hashAppend(algorithm, d_partial);

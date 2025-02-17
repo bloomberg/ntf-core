@@ -174,7 +174,7 @@ DeflateOptions::~DeflateOptions()
 NTCCFG_INLINE
 DeflateOptions& DeflateOptions::operator=(const DeflateOptions& other)
 {
-    d_partial = other.d_partial;
+    d_partial  = other.d_partial;
     d_checksum = other.d_checksum;
     return *this;
 }
@@ -211,8 +211,7 @@ const bdlb::NullableValue<ntca::Checksum>& DeflateOptions::checksum() const
 }
 
 template <typename HASH_ALGORITHM>
-NTCCFG_INLINE
-void DeflateOptions::hash(HASH_ALGORITHM& algorithm) const
+NTCCFG_INLINE void DeflateOptions::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
     hashAppend(algorithm, d_partial);
@@ -244,8 +243,8 @@ bool operator<(const DeflateOptions& lhs, const DeflateOptions& rhs)
 }
 
 template <typename HASH_ALGORITHM>
-NTCCFG_INLINE
-void hashAppend(HASH_ALGORITHM& algorithm, const DeflateOptions& value)
+NTCCFG_INLINE void hashAppend(HASH_ALGORITHM&       algorithm,
+                              const DeflateOptions& value)
 {
     value.hash(algorithm);
 }

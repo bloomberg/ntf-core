@@ -23,10 +23,10 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_error.h>
-#include <bdlde_crc32.h>
-#include <bdlde_crc32c.h>
 #include <bdlb_nullablevalue.h>
 #include <bdlbb_blob.h>
+#include <bdlde_crc32.h>
+#include <bdlde_crc32c.h>
 #include <bslh_hash.h>
 #include <bsls_objectbuffer.h>
 #include <bsl_iosfwd.h>
@@ -100,9 +100,9 @@ class Checksum
     void reset();
 
     /// Store the specified 'value' having the specified 'size' as the checksum
-    /// of the specified 'type'. 
-    ntsa::Error store(ntca::ChecksumType::Value type, 
-                      const void*               value, 
+    /// of the specified 'type'.
+    ntsa::Error store(ntca::ChecksumType::Value type,
+                      const void*               value,
                       bsl::size_t               size);
 
     /// Update the checksum for the specified 'data' over the specified 'size'
@@ -116,13 +116,13 @@ class Checksum
     /// number of bytes. Return the error.
     ntsa::Error update(const bdlbb::Blob& data, bsl::size_t size);
 
-    /// Return the checksum type. 
+    /// Return the checksum type.
     ntca::ChecksumType::Value type() const;
 
-    /// Return the number of bytes in the representation of the checksum. 
+    /// Return the number of bytes in the representation of the checksum.
     bsl::size_t size() const;
 
-    /// Load into the specified 'result' having the specified 'capacity' the 
+    /// Load into the specified 'result' having the specified 'capacity' the
     /// value of the checksum. Return the number of bytes written to 'result'.
     bsl::size_t load(void* result, bsl::size_t capacity) const;
 
@@ -196,8 +196,7 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const Checksum& value);
 
 template <typename HASH_ALGORITHM>
-NTCCFG_INLINE
-void Checksum::hash(HASH_ALGORITHM& algorithm) const
+NTCCFG_INLINE void Checksum::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
     hashAppend(algorithm, d_type);

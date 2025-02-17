@@ -40,8 +40,8 @@ int SerializationType::fromInt(SerializationType::Value* result, int number)
     }
 }
 
-int SerializationType::fromString(SerializationType::Value*  result,
-                                const bslstl::StringRef& string)
+int SerializationType::fromString(SerializationType::Value* result,
+                                  const bslstl::StringRef&  string)
 {
     if (bdlb::String::areEqualCaseless(string, "UNDEFINED")) {
         *result = e_UNDEFINED;
@@ -91,8 +91,8 @@ const char* SerializationType::toString(SerializationType::Value value)
     return 0;
 }
 
-bsl::ostream& SerializationType::print(bsl::ostream&          stream,
-                                     SerializationType::Value value)
+bsl::ostream& SerializationType::print(bsl::ostream&            stream,
+                                       SerializationType::Value value)
 {
     return stream << toString(value);
 }

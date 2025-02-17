@@ -233,8 +233,7 @@ const ntca::Checksum& InflateContext::checksum() const
 }
 
 template <typename HASH_ALGORITHM>
-NTCCFG_INLINE
-void InflateContext::hash(HASH_ALGORITHM& algorithm) const
+NTCCFG_INLINE void InflateContext::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
     hashAppend(algorithm, d_bytesRead);

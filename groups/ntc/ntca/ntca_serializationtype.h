@@ -31,7 +31,7 @@ namespace ntca {
 /// This struct is thread safe.
 ///
 /// @ingroup module_todo
-class SerializationType 
+class SerializationType
 {
   public:
     /// Provide an enumeration of the serialization types.

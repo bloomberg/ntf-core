@@ -22,6 +22,7 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 #include <ntccfg_tune.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
+#include <ntcd_compression.h>
 #include <ntcs_monitorable.h>
 #include <ntcs_authorization.h>
 #include <ntcs_compat.h>
@@ -1370,6 +1371,42 @@ bsl::shared_ptr<ntci::Authorization> System::createAuthorization(
     authorization.createInplace(allocator);
 
     return authorization;
+}
+
+
+bsl::shared_ptr<ntci::Compression> System::createCompression(
+        const ntca::CompressionConfig&         configuration,
+        const bsl::shared_ptr<ntci::DataPool>& dataPool,
+        bslma::Allocator*                      basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    bsl::shared_ptr<ntcd::Compression> compression;
+    compression.createInplace(allocator, configuration, dataPool, allocator);
+
+    return compression;
+}
+
+bsl::shared_ptr<ntci::Serialization> System::createSerialization(
+        const ntca::SerializationConfig& configuration,
+        bslma::Allocator*                basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    bsl::shared_ptr<ntci::Serialization> serialization;
+    serialization.createInplace(allocator, configuration, allocator);
+
+    return serialization;
 }
 
 ntsa::Error System::createEncryptionClient(

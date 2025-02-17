@@ -24,9 +24,13 @@ BSLS_IDENT_RCSID(ntcd_compression_t_cpp, "$Id$ $CSID$")
 #include <ntci_log.h>
 #include <ntcs_blobutil.h>
 #include <ntcs_datapool.h>
-#include <bdlde_crc32.h>
-#include <bdlde_crc32c.h>
 #include <bslim_printer.h>
+
+// Uncomment to define the single buffer size tested.
+// #define NTCD_COMPRESSION_TEST_BUFFER_SIZE 32
+
+// Uncomment to define the single I/O transfer size tested.
+// #define NTCD_COMPRESSION_TEST_IO_SIZE 32
 
 using namespace BloombergLP;
 
@@ -40,21 +44,12 @@ class CompressionTest
     // Describes the parameters of the test.
     class Parameters;
 
-    // Verify a readable byte sequence over a blob.
-    static void verifyReadableByteSequence();
-
-    // Verify a writable byte sequence over a blob.
-    static void verifyWritableByteSequence();
-
     // Verify a compression using a single buffer.
     static void verifyBasic();
 
     // Verify a compression using multiple buffers, feed into the inflater
     // in chunks, simulating the arrival of deflated data over a stream.
     static void verifyStreaming();
-
-    // Verify framing.
-    static void verifyFrame();
 
   private:
     // Verify compression using the specified testing 'parameters'.
@@ -556,157 +551,6 @@ void CompressionTest::dump(const char* label, const bdlbb::Blob& blob)
     NTCI_LOG_TRACE("%s", ss.str().c_str());
 }
 
-NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyReadableByteSequence)
-{
-    // clang-format off
-
-    NTCI_LOG_CONTEXT();
-
-    bsl::vector<bsl::size_t> bufferSizeVector;
-    bufferSizeVector.push_back(1);
-    bufferSizeVector.push_back(2);
-    bufferSizeVector.push_back(3);
-    bufferSizeVector.push_back(4);
-
-    bsl::vector<bsl::size_t> dataSizeVector;
-    dataSizeVector.push_back(1);
-    dataSizeVector.push_back(2);
-    dataSizeVector.push_back(3);
-    dataSizeVector.push_back(4);
-    dataSizeVector.push_back(5);
-    dataSizeVector.push_back(6);
-    dataSizeVector.push_back(7);
-    dataSizeVector.push_back(8);
-
-    for (bsl::size_t bufferSizeIndex = 0; 
-                     bufferSizeIndex < bufferSizeVector.size(); 
-                   ++bufferSizeIndex)
-    {
-        const bsl::size_t bufferSize = bufferSizeVector[bufferSizeIndex];
-
-        bdlbb::SimpleBlobBufferFactory blobBufferFactory(
-            static_cast<int>(bufferSize), NTSCFG_TEST_ALLOCATOR);
-
-        for (bsl::size_t dataSizeIndex = 0;
-                         dataSizeIndex < dataSizeVector.size();
-                       ++dataSizeIndex)
-        {
-            const bsl::size_t dataSize = dataSizeVector[dataSizeIndex];
-
-            bdlbb::Blob blob(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
-
-            bsl::string data(NTSCFG_TEST_ALLOCATOR);
-            ntscfg::TestDataUtil::generateData(
-                &data, 
-                dataSize, 
-                0, 
-                ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
-
-            ntcs::BlobUtil::append(&blob, data.c_str(), data.size());
-
-            ntcd::ByteSequence sequence(&blob);
-
-            for (bsl::size_t i = 0; i < data.size(); ++i) {
-                NTCI_LOG_STREAM_DEBUG << "R: BS = " 
-                                      << bufferSize 
-                                      << " DS = " 
-                                      << dataSize 
-                                      << " I = " 
-                                      << i 
-                                      << NTCI_LOG_STREAM_END;
-
-                const char e = data[i];
-                const char f = sequence[i];
-
-                NTSCFG_TEST_EQ(f, e);
-            }
-        }
-    }
-
-    // clang-format on
-}
-
-NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyWritableByteSequence)
-{
-    // clang-format off
-
-    NTCI_LOG_CONTEXT();
-
-    bsl::vector<bsl::size_t> bufferSizeVector;
-    bufferSizeVector.push_back(1);
-    bufferSizeVector.push_back(2);
-    bufferSizeVector.push_back(3);
-    bufferSizeVector.push_back(4);
-
-    bsl::vector<bsl::size_t> dataSizeVector;
-    dataSizeVector.push_back(1);
-    dataSizeVector.push_back(2);
-    dataSizeVector.push_back(3);
-    dataSizeVector.push_back(4);
-    dataSizeVector.push_back(5);
-    dataSizeVector.push_back(6);
-    dataSizeVector.push_back(7);
-    dataSizeVector.push_back(8);
-
-    for (bsl::size_t bufferSizeIndex = 0; 
-                     bufferSizeIndex < bufferSizeVector.size(); 
-                   ++bufferSizeIndex)
-    {
-        const bsl::size_t bufferSize = bufferSizeVector[bufferSizeIndex];
-
-        bdlbb::SimpleBlobBufferFactory blobBufferFactory(
-            static_cast<int>(bufferSize), NTSCFG_TEST_ALLOCATOR);
-
-        for (bsl::size_t dataSizeIndex = 0;
-                         dataSizeIndex < dataSizeVector.size();
-                       ++dataSizeIndex)
-        {
-            const bsl::size_t dataSize = dataSizeVector[dataSizeIndex];
-
-            bdlbb::Blob blob(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
-
-            bsl::string data(NTSCFG_TEST_ALLOCATOR);
-            ntscfg::TestDataUtil::generateData(
-                &data, 
-                dataSize,
-                0, 
-                ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
-
-            ntcd::ByteSequence sequence(&blob);
-
-            for (bsl::size_t i = 0; i < data.size(); ++i) {
-                NTCI_LOG_STREAM_DEBUG << "W: BS = " 
-                                      << bufferSize 
-                                      << " DS = " 
-                                      << dataSize 
-                                      << " I = " 
-                                      << i 
-                                      << NTCI_LOG_STREAM_END;
-
-                const char e = data[i];
-                sequence[i] = e;
-            }
-
-            for (bsl::size_t i = 0; i < data.size(); ++i) {
-                NTCI_LOG_STREAM_DEBUG << "R: BS = " 
-                                      << bufferSize 
-                                      << " DS = " 
-                                      << dataSize 
-                                      << " I = " 
-                                      << i 
-                                      << NTCI_LOG_STREAM_END;
-
-                const char e = data[i];
-                const char f = sequence[i];
-
-                NTSCFG_TEST_EQ(f, e);
-            }
-        }
-    }
-
-    // clang-format on
-}
-
 NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyBasic)
 {
     NTCI_LOG_CONTEXT();
@@ -724,13 +568,8 @@ NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyBasic)
 
     bsl::vector<ntca::CompressionType::Value> algorithmVector;
     algorithmVector.push_back(ntca::CompressionType::e_RLE);
-    // MRM: algorithmVector.push_back(ntca::CompressionType::e_LZ4);
 
-    for (bsl::size_t i = 0; i < algorithmVector.size(); ++i)
-    {
-        NTCI_LOG_STREAM_INFO << "Testing algorithm: " << algorithmVector[i]
-                             << NTCI_LOG_STREAM_END;
-
+    for (bsl::size_t i = 0; i < algorithmVector.size(); ++i) {
         ntca::CompressionConfig compressionConfig;
         compressionConfig.setType(algorithmVector[i]);
         compressionConfig.setGoal(ntca::CompressionGoal::e_BALANCED);
@@ -739,7 +578,7 @@ NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyBasic)
                                       dataPool,
                                       NTSCFG_TEST_ALLOCATOR);
 
-        bsl::shared_ptr<bdlbb::Blob> originalData = 
+        bsl::shared_ptr<bdlbb::Blob> originalData =
             dataPool->createOutgoingBlob();
 
         ntscfg::TestDataUtil::generateData(
@@ -750,7 +589,7 @@ NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyBasic)
 
         ntcd::CompressionTest::dump("O", *originalData);
 
-        bsl::shared_ptr<bdlbb::Blob> deflatedData = 
+        bsl::shared_ptr<bdlbb::Blob> deflatedData =
             dataPool->createOutgoingBlob();
 
         ntca::DeflateOptions deflateOptions;
@@ -773,7 +612,7 @@ NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyBasic)
         NTSCFG_TEST_EQ(deflateContext.bytesWritten(),
                        ntcs::BlobUtil::size(deflatedData));
 
-        bsl::shared_ptr<bdlbb::Blob> inflatedData = 
+        bsl::shared_ptr<bdlbb::Blob> inflatedData =
             dataPool->createIncomingBlob();
 
         ntca::InflateOptions inflateOptions;
@@ -797,12 +636,6 @@ NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyBasic)
                        ntcs::BlobUtil::size(inflatedData));
     }
 }
-
-// Uncomment to define the single buffer size tested.
-// #define NTCD_COMPRESSION_TEST_BUFFER_SIZE 32
-
-// Uncomment to define the single I/O transfer size tested.
-// #define NTCD_COMPRESSION_TEST_IO_SIZE 32
 
 NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyStreaming)
 {
@@ -870,82 +703,6 @@ NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyStreaming)
     for (bsl::size_t i = 0; i < parametersVector.size(); ++i) {
         CompressionTest::verifyParameters(parametersVector[i]);
     }
-}
-
-NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyFrame)
-{
-#if 0
-    CompressionTest::Parameters parameters;
-    parameters.setVariationIndex(0);
-    parameters.setVariationCount(1);
-    parameters.setType(ntca::CompressionType::e_RLE);
-    parameters.setGoal(ntca::CompressionGoal::e_BALANCED);
-    parameters.setBlobBufferSize(16);
-    parameters.setWriteSize(32);
-    parameters.setReadSize(8);
-
-    CompressionTest::verifyParameters(parameters);
-#endif
-
-#if 0
-    char cc[4];
-    cc[0] = 'R';
-    cc[1] = 'L';
-    cc[2] = 'E';
-    cc[3] = 'F';
-
-    bsl::uint32_t bigEndianCC;
-    bsl::memcpy(&bigEndianCC, cc, 4);
-
-    bsl::uint32_t littleEndianCC = 
-        bsls::ByteOrderUtil::swapBytes32(bigEndianCC);
-
-    bsl::cout << "BE: " << bigEndianCC << bsl::endl;
-    bsl::cout << "LE: " << littleEndianCC << bsl::endl;
-    return;
-#endif
-
-    NTCI_LOG_CONTEXT();
-
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntcs::DataPool> dataPool;
-    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR, 8, 8, NTSCFG_TEST_ALLOCATOR);
-
-    ntca::CompressionConfig config;
-    config.setType(ntca::CompressionType::e_RLE);
-    config.setGoal(ntca::CompressionGoal::e_BALANCED);
-
-    ntcd::CompressionEncoderRle encoder(config, NTSCFG_TEST_ALLOCATOR);
-
-    const char k_DATA[] = "abb12345ccc12345dddd12345zz";
-
-    bsl::shared_ptr<bdlbb::Blob> deflatedBlob = dataPool->createOutgoingBlob();
-
-    ntca::DeflateOptions deflateOptions;
-    ntca::DeflateContext deflateContext;
-
-    error = encoder.deflateBegin(&deflateContext,
-                                 deflatedBlob.get(),
-                                 deflateOptions);
-    NTSCFG_TEST_OK(error);
-
-    error = encoder.deflateNext(&deflateContext,
-                                deflatedBlob.get(),
-                                reinterpret_cast<const bsl::uint8_t*>(k_DATA),
-                                sizeof k_DATA - 1,
-                                deflateOptions);
-    NTSCFG_TEST_OK(error);
-
-    error = encoder.deflateEnd(&deflateContext,
-                               deflatedBlob.get(),
-                               deflateOptions);
-    NTSCFG_TEST_OK(error);
-
-    NTCI_LOG_STREAM_DEBUG << "Deflate context  = " << deflateContext
-                          << NTCI_LOG_STREAM_END;
-
-    ntcd::CompressionTest::dump("D", *deflatedBlob);
 }
 
 }  // close namespace ntcd

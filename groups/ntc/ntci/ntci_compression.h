@@ -37,14 +37,14 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntci {
 
-/// Provide an interface to a deflation/inflation session.
+/// Provide an interface to a deflation/inflation data transformation stage.
 ///
 /// @details
 /// This class provides a mechanism to reduce the size of a data stream
 /// according to a compression technique.
 ///
 /// @par Thread Safety
-/// This class is thread safe.
+/// This class is not thread safe.
 ///
 /// @ingroup module_ntci_encryption
 class Compression
@@ -273,6 +273,9 @@ class Compression
                         bdlbb::Blob*                result,
                         const ntsa::Data&           data,
                         const ntca::InflateOptions& options);
+
+    /// Return the compression type implemented by this mechanism.
+    virtual ntca::CompressionType::Value type() const;
 };
 
 }  // end namespace ntci

@@ -66,4 +66,3 @@ bsl::ostream& InflateContext::print(bsl::ostream& stream,
 
 }  // close namespace ntca
 }  // close namespace BloombergLP
-

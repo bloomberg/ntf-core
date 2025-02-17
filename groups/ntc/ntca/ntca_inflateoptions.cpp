@@ -42,8 +42,8 @@ bool InflateOptions::less(const InflateOptions& other) const
 }
 
 bsl::ostream& InflateOptions::print(bsl::ostream& stream,
-                                 int           level,
-                                 int           spacesPerLevel) const
+                                    int           level,
+                                    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -59,4 +59,3 @@ bsl::ostream& InflateOptions::print(bsl::ostream& stream,
 
 }  // close namespace ntca
 }  // close namespace BloombergLP
-

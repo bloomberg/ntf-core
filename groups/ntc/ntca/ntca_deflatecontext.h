@@ -234,8 +234,7 @@ const ntca::Checksum& DeflateContext::checksum() const
 }
 
 template <typename HASH_ALGORITHM>
-NTCCFG_INLINE
-void DeflateContext::hash(HASH_ALGORITHM& algorithm) const
+NTCCFG_INLINE void DeflateContext::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
     hashAppend(algorithm, d_bytesRead);

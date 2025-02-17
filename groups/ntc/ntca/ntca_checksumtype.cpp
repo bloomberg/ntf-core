@@ -39,8 +39,8 @@ int ChecksumType::fromInt(ChecksumType::Value* result, int number)
     }
 }
 
-int ChecksumType::fromString(ChecksumType::Value*    result,
-                              const bslstl::StringRef& string)
+int ChecksumType::fromString(ChecksumType::Value*     result,
+                             const bslstl::StringRef& string)
 {
     if (bdlb::String::areEqualCaseless(string, "CRC32")) {
         *result = e_CRC32;
@@ -83,8 +83,8 @@ const char* ChecksumType::toString(ChecksumType::Value value)
     return 0;
 }
 
-bsl::ostream& ChecksumType::print(bsl::ostream&        stream,
-                                   ChecksumType::Value value)
+bsl::ostream& ChecksumType::print(bsl::ostream&       stream,
+                                  ChecksumType::Value value)
 {
     return stream << toString(value);
 }

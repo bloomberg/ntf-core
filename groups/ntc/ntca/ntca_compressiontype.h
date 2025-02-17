@@ -31,7 +31,7 @@ namespace ntca {
 /// This struct is thread safe.
 ///
 /// @ingroup module_todo
-class CompressionType 
+class CompressionType
 {
   public:
     /// Provide an enumeration of the compression types.

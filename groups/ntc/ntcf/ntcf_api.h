@@ -35,6 +35,11 @@ BSLS_IDENT("$Id: $")
 #include <ntca_bindeventtype.h>
 #include <ntca_bindoptions.h>
 #include <ntca_bindtoken.h>
+#include <ntca_checksum.h>
+#include <ntca_checksumtype.h>
+#include <ntca_compressionconfig.h>
+#include <ntca_compressiongoal.h>
+#include <ntca_compressiontype.h>
 #include <ntca_connectcontext.h>
 #include <ntca_connectevent.h>
 #include <ntca_connecteventtype.h>
@@ -43,6 +48,8 @@ BSLS_IDENT("$Id: $")
 #include <ntca_datagramsocketevent.h>
 #include <ntca_datagramsocketeventtype.h>
 #include <ntca_datagramsocketoptions.h>
+#include <ntca_deflatecontext.h>
+#include <ntca_deflateoptions.h>
 #include <ntca_downgradecontext.h>
 #include <ntca_downgradeevent.h>
 #include <ntca_downgradeeventtype.h>
@@ -90,6 +97,8 @@ BSLS_IDENT("$Id: $")
 #include <ntca_getservicenameevent.h>
 #include <ntca_getservicenameeventtype.h>
 #include <ntca_getservicenameoptions.h>
+#include <ntca_inflatecontext.h>
+#include <ntca_inflateoptions.h>
 #include <ntca_interfaceconfig.h>
 #include <ntca_listenersocketevent.h>
 #include <ntca_listenersocketeventtype.h>
@@ -121,6 +130,8 @@ BSLS_IDENT("$Id: $")
 #include <ntca_sendeventtype.h>
 #include <ntca_sendoptions.h>
 #include <ntca_sendtoken.h>
+#include <ntca_serializationconfig.h>
+#include <ntca_serializationtype.h>
 #include <ntca_shutdowncontext.h>
 #include <ntca_shutdownevent.h>
 #include <ntca_shutdowneventtype.h>
@@ -161,6 +172,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_closecallbackfactory.h>
 #include <ntci_closefuture.h>
 #include <ntci_closeresult.h>
+#include <ntci_compression.h>
 #include <ntci_connectcallback.h>
 #include <ntci_connectcallbackfactory.h>
 #include <ntci_connectfuture.h>
@@ -231,6 +243,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_sender.h>
 #include <ntci_sendfuture.h>
 #include <ntci_sendresult.h>
+#include <ntci_serialization.h>
 #include <ntci_strand.h>
 #include <ntci_strandfactory.h>
 #include <ntci_streamsocket.h>

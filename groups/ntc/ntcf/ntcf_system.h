@@ -571,6 +571,25 @@ struct System {
     static bsl::shared_ptr<ntci::Authorization> createAuthorization(
         bslma::Allocator* basicAllocator = 0);
 
+    /// Create a new mechanism to deflate and inflate data according to a
+    /// compression algorithm according to the specified 'configuration'.
+    /// Allocate buffers using the specified 'dataPool'. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used. Return the error.
+    static bsl::shared_ptr<ntci::Compression> createCompression(
+        const ntca::CompressionConfig&         configuration,
+        const bsl::shared_ptr<ntci::DataPool>& dataPool,
+        bslma::Allocator*                      basicAllocator = 0);
+
+    /// Create a new mechanism to serialize and deserialize logical structures
+    /// into bytes suitable for transmission according to the specified
+    /// 'configuration'. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used. Return the error.
+    static bsl::shared_ptr<ntci::Serialization> createSerialization(
+        const ntca::SerializationConfig& configuration,
+        bslma::Allocator*                basicAllocator = 0);
+
     /// Load into the specified 'result' a new encryption client with the
     /// specified 'options'. Optionally specify a 'basicAllocator' used to
     /// supply memory. If 'basicAllocator' is 0, the currently installed

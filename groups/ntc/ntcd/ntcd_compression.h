@@ -36,33 +36,6 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntcd {
 
-/// Provide a random access sequence over a blob.
-class ByteSequence
-{
-    bdlbb::Blob* d_blob_p;
-    int          d_base;
-    bsl::uint8_t d_sentinel;
-
-  private:
-    ByteSequence(const ByteSequence&) BSLS_KEYWORD_DELETED;
-    ByteSequence& operator=(const ByteSequence&) BSLS_KEYWORD_DELETED;
-
-  public:
-    /// Create a new writable random access sequence over the specified 'blob'.
-    /// Offset all indexed access and manipulation by the specified 'base'
-    /// (for example, to append to the blob set 'base' to 'blob->length()'.
-    explicit ByteSequence(bdlbb::Blob* blob, bsl::size_t base = 0);
-
-    /// Destroy this object.
-    ~ByteSequence();
-
-    // Return the modifiable byte at the specified 'index'.
-    bsl::uint8_t& operator[](bsl::size_t index);
-
-    // Return the non-modifiable byte at the specified 'index'.
-    bsl::uint8_t operator[](bsl::size_t index) const;
-};
-
 /// Provide a description of a compression frame header.
 ///
 /// @par Attributes
@@ -623,7 +596,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const CompressionBlock& value);
 /// This class is thread safe.
 ///
 /// @ingroup module_ntcd
-class CompressionEncoderRle
+class CompressionEncoder
 {
     ntcd::CompressionFrameHeader d_frameHeader;
     bsl::size_t                  d_frameHeaderPosition;
@@ -633,8 +606,8 @@ class CompressionEncoderRle
     bslma::Allocator*            d_allocator_p;
 
   private:
-    CompressionEncoderRle(const CompressionEncoderRle&) BSLS_KEYWORD_DELETED;
-    CompressionEncoderRle& operator=(const CompressionEncoderRle&)
+    CompressionEncoder(const CompressionEncoder&) BSLS_KEYWORD_DELETED;
+    CompressionEncoder& operator=(const CompressionEncoder&)
         BSLS_KEYWORD_DELETED;
 
   public:
@@ -642,12 +615,11 @@ class CompressionEncoderRle
     /// Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
-    explicit CompressionEncoderRle(
-        const ntca::CompressionConfig& configuration,
-        bslma::Allocator*              basicAllocator = 0);
+    explicit CompressionEncoder(const ntca::CompressionConfig& configuration,
+                                bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
-    ~CompressionEncoderRle();
+    ~CompressionEncoder();
 
     /// Begin a deflation stream into the specified 'result' according to the
     /// specified 'options'.
@@ -677,7 +649,7 @@ class CompressionEncoderRle
 /// This class is thread safe.
 ///
 /// @ingroup module_ntcd
-class CompressionDecoderRle
+class CompressionDecoder
 {
     /// Enumerates the states of decoding.
     enum State {
@@ -709,8 +681,8 @@ class CompressionDecoderRle
     bslma::Allocator*            d_allocator_p;
 
   private:
-    CompressionDecoderRle(const CompressionDecoderRle&) BSLS_KEYWORD_DELETED;
-    CompressionDecoderRle& operator=(const CompressionDecoderRle&)
+    CompressionDecoder(const CompressionDecoder&) BSLS_KEYWORD_DELETED;
+    CompressionDecoder& operator=(const CompressionDecoder&)
         BSLS_KEYWORD_DELETED;
 
   private:
@@ -728,139 +700,11 @@ class CompressionDecoderRle
     /// Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
-    explicit CompressionDecoderRle(
-        const ntca::CompressionConfig& configuration,
-        bslma::Allocator*              basicAllocator = 0);
+    explicit CompressionDecoder(const ntca::CompressionConfig& configuration,
+                                bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
-    ~CompressionDecoderRle();
-
-    /// Begin an inflation stream into the specified 'result' according to the
-    /// specified 'options'.
-    ntsa::Error inflateBegin(ntca::InflateContext*       context,
-                             bdlbb::Blob*                result,
-                             const ntca::InflateOptions& options);
-
-    /// Inflate the specified 'data' having the specified 'size' and append the
-    /// result to the specified 'result'. Return the error.
-    ntsa::Error inflateNext(ntca::InflateContext*       context,
-                            bdlbb::Blob*                result,
-                            const bsl::uint8_t*         data,
-                            bsl::size_t                 size,
-                            const ntca::InflateOptions& options);
-
-    /// Inflate the specified 'data' and append the result to the specified
-    /// 'result'. Return the error.
-    ntsa::Error inflateNext(ntca::InflateContext*       context,
-                            bdlbb::Blob*                result,
-                            const bdlbb::Blob&          data,
-                            const ntca::InflateOptions& options);
-
-    /// End an inflation stream into the specified 'result' according to the
-    /// specified 'options'.
-    ntsa::Error inflateEnd(ntca::InflateContext*       context,
-                           bdlbb::Blob*                result,
-                           const ntca::InflateOptions& options);
-};
-
-/// @internal @brief
-/// Provide an LZ4 encoder.
-///
-/// @par Thread Safety
-/// This class is thread safe.
-///
-/// @ingroup module_ntcd
-class CompressionEncoderLz4
-{
-    ntca::CompressionConfig d_config;
-    bslma::Allocator*       d_allocator_p;
-
-  private:
-    CompressionEncoderLz4(const CompressionEncoderLz4&) BSLS_KEYWORD_DELETED;
-    CompressionEncoderLz4& operator=(const CompressionEncoderLz4&)
-        BSLS_KEYWORD_DELETED;
-
-  public:
-    /// Create a new LZ4 encoder with to the specified 'configuration'.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
-    explicit CompressionEncoderLz4(
-        const ntca::CompressionConfig& configuration,
-        bslma::Allocator*              basicAllocator = 0);
-
-    /// Destroy this object.
-    ~CompressionEncoderLz4();
-
-    /// Begin a deflation stream into the specified 'result' according to the
-    /// specified 'options'.
-    ntsa::Error deflateBegin(ntca::DeflateContext*       context,
-                             bdlbb::Blob*                result,
-                             const ntca::DeflateOptions& options);
-
-    /// Deflate the specified 'data' having the specified 'size' and append the
-    /// result to the specified 'result'. Return the error.
-    ntsa::Error deflateNext(ntca::DeflateContext*       context,
-                            bdlbb::Blob*                result,
-                            const bsl::uint8_t*         data,
-                            bsl::size_t                 size,
-                            const ntca::DeflateOptions& options);
-
-    /// End a deflation stream into the specified 'result' according to the
-    /// specified 'options'.
-    ntsa::Error deflateEnd(ntca::DeflateContext*       context,
-                           bdlbb::Blob*                result,
-                           const ntca::DeflateOptions& options);
-};
-
-/// @internal @brief
-/// Provide an LZ4 decoder.
-///
-/// @par Thread Safety
-/// This class is thread safe.
-///
-/// @ingroup module_ntcd
-class CompressionDecoderLz4
-{
-    /// Enumerates the states of decoding.
-    enum State {
-        /// The decoder wants to read the frame header.
-        e_WANT_FRAME_HEADER,
-
-        /// The decoder wants to read a block.
-        e_WANT_BLOCK,
-
-        /// The decoder wants to read the frame footer.
-        e_WANT_FRAME_FOOTER,
-
-        /// The decoder encountered an error.
-        e_ERROR
-    };
-
-    State                        d_state;
-    ntcd::CompressionFrameHeader d_frameHeader;
-    ntcd::CompressionBlock       d_block;
-    ntcd::CompressionFrameFooter d_frameFooter;
-    ntca::CompressionConfig      d_config;
-    ntsa::Error                  d_error;
-    bslma::Allocator*            d_allocator_p;
-
-  private:
-    CompressionDecoderLz4(const CompressionDecoderLz4&) BSLS_KEYWORD_DELETED;
-    CompressionDecoderLz4& operator=(const CompressionDecoderLz4&)
-        BSLS_KEYWORD_DELETED;
-
-  public:
-    /// Create a new LZ4 decoder with to the specified 'configuration'.
-    /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is
-    /// used.
-    explicit CompressionDecoderLz4(
-        const ntca::CompressionConfig& configuration,
-        bslma::Allocator*              basicAllocator = 0);
-
-    /// Destroy this object.
-    ~CompressionDecoderLz4();
+    ~CompressionDecoder();
 
     /// Begin an inflation stream into the specified 'result' according to the
     /// specified 'options'.
@@ -899,10 +743,8 @@ class CompressionDecoderLz4
 /// @ingroup module_ntcd
 class Compression : public ntci::Compression
 {
-    ntcd::CompressionEncoderRle     d_rleEncoder;
-    ntcd::CompressionDecoderRle     d_rleDecoder;
-    ntcd::CompressionEncoderLz4     d_lz4Encoder;
-    ntcd::CompressionDecoderLz4     d_lz4Decoder;
+    ntcd::CompressionEncoder        d_rleEncoder;
+    ntcd::CompressionDecoder        d_rleDecoder;
     bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
     ntca::CompressionConfig         d_config;
     bslma::Allocator*               d_allocator_p;
@@ -977,6 +819,9 @@ class Compression : public ntci::Compression
 
     /// Destroy this object.
     ~Compression() BSLS_KEYWORD_OVERRIDE;
+
+    /// Return the compression type implemented by this mechanism.
+    ntca::CompressionType::Value type() const BSLS_KEYWORD_OVERRIDE;
 };
 
 NTSCFG_INLINE

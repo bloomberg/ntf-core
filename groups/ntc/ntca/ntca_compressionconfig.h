@@ -126,7 +126,8 @@ class CompressionConfig
 /// a modifiable reference to the 'stream'.
 ///
 /// @related ntca::CompressionConfig
-bsl::ostream& operator<<(bsl::ostream& stream, const CompressionConfig& object);
+bsl::ostream& operator<<(bsl::ostream&            stream,
+                         const CompressionConfig& object);
 
 /// Return true if the specified 'lhs' has the same value as the specified
 /// 'rhs', otherwise return false.
@@ -200,22 +201,21 @@ void CompressionConfig::setGoal(ntca::CompressionGoal::Value value)
 }
 
 NTSCFG_INLINE
-const bdlb::NullableValue<ntca::CompressionType::Value>& 
-CompressionConfig::type() const
+const bdlb::NullableValue<ntca::CompressionType::Value>& CompressionConfig::
+    type() const
 {
     return d_type;
 }
 
 NTSCFG_INLINE
-const bdlb::NullableValue<ntca::CompressionGoal::Value>& 
-CompressionConfig::goal() const
+const bdlb::NullableValue<ntca::CompressionGoal::Value>& CompressionConfig::
+    goal() const
 {
     return d_goal;
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE 
-void CompressionConfig::hash(HASH_ALGORITHM& algorithm) const
+NTSCFG_INLINE void CompressionConfig::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
     hashAppend(algorithm, d_type);
@@ -247,8 +247,8 @@ bool operator<(const CompressionConfig& lhs, const CompressionConfig& rhs)
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE
-void hashAppend(HASH_ALGORITHM& algorithm, const CompressionConfig& value)
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&          algorithm,
+                              const CompressionConfig& value)
 {
     value.hash(algorithm);
 }

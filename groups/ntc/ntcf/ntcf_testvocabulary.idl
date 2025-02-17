@@ -1,0 +1,488 @@
+package ntcf
+{
+    // Identifies the role of a participant.
+    enumeration TestRole
+    {
+        // The participant is a client.
+        option CLIENT;
+
+        // The participant is a server.
+        option SERVER;
+    }
+
+    // Identifies who caused the fault to happen within the the nodes that
+    // processed the operation.
+    enumeration TestFaultCode
+    {
+        // The operation completed successfully.
+        option OK;
+
+        // The fault was an error processing the request.
+        option ERROR;
+
+        // The fault was a timeout before the request could be processed.
+        option TIMEOUT;
+
+        // The fault was induced by the cancellation of the request by its
+        // sender.
+        option CANCELLED;
+
+        // The parameters to the operation are invalid.
+        option INVALID;
+
+        // The message or data queue is full.
+        option LIMIT;
+
+        // The operation is not implemented.
+        option NOT_IMPLEMENTED;
+
+        // The interface, service, or operation is not authorized.
+        option NOT_AUTHORIZED;
+
+        // No provider of the requested service is registered or otherwise
+        // available.
+        option NOT_FOUND;
+
+        // The message is not transportable.
+        option NOT_TRANSPORTABLE;
+
+        // Failed to decode the payload of the message received.
+        option NOT_DECODABLE;
+    }
+
+    // Provides a vehicle for propogating error status and a descriptive
+    // information.
+    sequence TestFault
+    {
+        // Information about who caused the fault to happen within the nodes
+        // that processed the operation.
+        required role: ntcf.TestRole;
+
+        // Numeric identifier of the error; provides an algorithmic mechanism
+        // for identifying the fault by the message originator.
+        required code: ntcf.TestFaultCode;
+
+        // URI identifying the source of the fault.
+        required uri: string;
+
+        // A human readable explanation of the fault, not intended for
+        // algorithmic processing.
+        required description: string;
+    }
+
+    // Describes an acknowledgment.
+    sequence TestAcknowledgment
+    {
+    }
+
+    // Describes a person.
+    sequence TestPerson
+    {
+        // The unique identifier of the person.
+        required id: uint64;
+
+        // The name of the person.
+        required name: string;
+
+        // The mailing address of the person.
+        multiple address: string;
+
+        // The country in which the person resides.
+        required country: string;
+    }
+
+    // Describes a security traded on an exchange.
+    sequence TestSecurity
+    {
+        // The identifier of the security.
+        required id: uint32;
+
+        // The name of the security.
+        required name: string;
+    }
+
+    // Describes a bid to buy a security.
+    sequence TestBid
+    {
+        // The unique identifier of the bid.
+        required id: uint64;
+
+        // The person making the bid.
+        required buyer: ntcf.TestPerson;
+
+        // The security to be traded.
+        required security: ntcf.TestSecurity;
+
+        // The number of shares to buy.
+        required shares: uint64;
+
+        // The maximum value of the asking price.
+        required price: double;
+
+        // The deadline after which the bid expires.
+        required deadline: dateTime;
+    }
+
+    // Describes an ask to sell a security.
+    sequence TestAsk
+    {
+        // The unique identifier of the ask.
+        required id: uint64;
+
+        // The person making the ask.
+        required seller: ntcf.TestPerson;
+
+        // The security to be traded.
+        required security: ntcf.TestSecurity;
+
+        // The number of shares to sell.
+        required shares: uint64;
+
+        // The minimum value of the bidded price.
+        required price: double;
+
+        // The deadline after which the ask expires.
+        required deadline: dateTime;
+    }
+
+    // Describes a completed trade.
+    sequence TestTrade
+    {
+        // The unique identifier of the trade.
+        required id: uint64;
+
+        // The person making the bid.
+        required buyer: ntcf.TestPerson;
+
+        // The person making the ask.
+        required seller: ntcf.TestPerson;
+
+        // The security that was traded.
+        required security: ntcf.TestSecurity;
+
+        // The number of shares to traded.
+        required shares: uint64;
+
+        // The price of the shares at the time of the trade.
+        required price: double;
+
+        // The date and time at which the transaction occured.
+        required timestamp: dateTime;
+    }
+
+    // Describes a trade subscription.
+    sequence TestSubscription
+    {
+    }
+
+    // Describes a trade publication.
+    sequence TestPublication
+    {
+        // The trades observed.
+        multiple trade: ntcf.TestTrade;
+    }
+
+    // Describes the content of a message.
+    choice TestContent
+    {
+        // The bid to buy a security.
+        selection bid: ntcf.TestBid;
+
+        // The ask to sell a security.
+        selection ask: ntcf.TestAsk;
+
+        // The completed trade.
+        selection trade: ntcf.TestTrade;
+
+        // The trade subscription.
+        selection subscription: ntcf.TestSubscription;
+
+        // The trade publication.
+        selection publication: ntcf.TestPublication;
+
+        // The acknowledgment.
+        selection acknowledgment: ntcf.TestAcknowledgment;
+
+        // The fault that occurred.
+        selection fault: ntcf.TestFault;
+    }
+
+    // Describes testing parameters.
+    sequence TestEchoParams
+    {
+        // The value.
+        required id: unsignedLong;
+
+        // The value.
+        required value: string;
+    }
+
+    // Describes testing results.
+    sequence TestEchoResult
+    {
+        // The value.
+        required id: unsignedLong;
+
+        // The value.
+        required value: string;
+    }
+
+    // Describes a control message to enable or disable encryption.
+    sequence TestControlEncryption
+    {
+        // The flag indicating whether encryption is enabled or disabled.
+        required enabled: boolean;
+
+        // The flag indicating whether the control must be acknowledged.
+        required acknowledge: boolean;
+    }
+
+    // Describes a control message to enable or disable compression.
+    sequence TestControlCompression
+    {
+        // The flag indicating whether compression is enabled or disabled.
+        required enabled: boolean;
+
+        // The flag indicating whether the control must be acknowledged.
+        required acknowledge: boolean;
+    }
+
+    // Describes a control message inform a peer that the sender is able to
+    // transmit.
+    sequence TestControlHeartbeat
+    {
+        // The flag indicating whether the control must be acknowledged.
+        required acknowledge: boolean;
+    }
+
+    // Describes the control messages.
+    choice TestControl
+    {
+        // Describes a control message to enable or disable encryption.
+        selection encryption: ntcf.TestControlEncryption;
+
+        // Describes a control message to enable or disable compression.
+        selection compression: ntcf.TestControlCompression;
+
+        // Describes a control message inform a peer that the sender is able to
+        // transmit.
+        selection heartbeat: ntcf.TestControlHeartbeat;
+
+        // The acknowledgment.
+        selection acknowledgment: ntcf.TestAcknowledgment;
+
+        // The fault that occurred.
+        selection fault: ntcf.TestFault;
+    }
+
+    // Describes a message header.
+    sequence TestMessageHeader
+    {
+        // The size of the entire message, in bytes.
+        required messageSize: uint32;
+
+        // The size of the header section, in bytes.
+        required headerSize: uint32;
+
+        // The size of the pragma section, in bytes.
+        required pragmaSize: uint32;
+
+        // The size of the entity section, in bytes.
+        required entitySize: uint32;
+
+        // The strategy used to serialize the entity.
+        required serialization: uint32;
+
+        // The strategy used to compress the entity.
+        required compression: uint32;
+
+        // The flags that influence behavior.
+        required flags: uint32;
+
+        // The checksum of the serialized content of the message.
+        required checksum: uint32;
+
+        // The unique identifier of the message, to correlate a response to
+        // a request.
+        required transaction: uint64;
+
+        // The timestamp of message at the client in nanoseconds since the Unix
+        // epoch.
+        required clientTimestamp: uint64;
+
+        // The timestamp of message at the server in nanoseconds since the Unix
+        // epoch.
+        required serverTimestamp: uint64;
+
+        // The deadline of message, in nanoseconds since the Unix epoch.
+        required deadline: uint64;
+    }
+
+    // Describes the context in which a message was sent.
+    sequence TestMessageContext
+    {
+        // The URI of the sender.
+        optional uri: string;
+    }
+
+    // Describes meta-data about the messaging infrastructure.
+    sequence TestMessagePragma
+    {
+        // The context in which a message was sent.
+        optional context: ntcf.TestMessageContext;
+
+        // The fault that occurred during the processing of the message.
+        optional fault: ntcf.TestFault;
+    }
+
+    // Describes the message entity.
+    choice TestMessageEntity
+    {
+        // The control.
+        selection control: ntcf.TestControl;
+
+        // The content.
+        selection content: ntcf.TestContent;
+    }
+
+    // Describes a message.
+    sequence TestMessageFrame
+    {
+        // The header.
+        required header: ntcf.TestMessageHeader;
+
+        // The meta-data about the messaging infrastructure.
+        optional pragma: ntcf.TestMessagePragma;
+
+        // The entity transferred.
+        optional entity: ntcf.TestMessageEntity;
+    }
+
+    // Describes the configurable parameters of a client.
+    sequence TestClientConfig
+    {
+        // The name of the client.
+        optional name: string;
+
+        // The name of the networking driver.
+        optional driver: string;
+
+        // The flag that indicates all stream communication should be 
+        // encrypted.
+        optional encryption: boolean;
+
+        // The flag that indicates all communication should be compressed.
+        optional compression: boolean;
+
+        // The number of networking threads.
+        optional numNetworkingThreads: uint32;
+
+        // The number of processing threads.
+        optional numProcessingThreads: uint32;
+
+        // The flag that indicates socket I/O should be balanced and processed
+        // by any networking thread.
+        optional dynamicLoadBalancing: boolean;
+
+        // The flag that indicates socket-level keep-alives should be enabled.
+        optional keepAlive: boolean;
+
+        // The flag that indicates the socket should remain open for writing
+        // when the peer shuts down the socket.
+        optional keepHalfOpen: boolean;
+
+        // The backlog depth.
+        optional backlog: uint32;
+
+        // The send buffer size.
+        optional sendBufferSize: uint32;
+
+        // The receive buffer size.
+        optional receiveBufferSize: uint32;
+
+        // The flag that indicates the backlog should be processed greedily.
+        optional acceptGreedily: boolean;
+
+        // The accept queue low watermark.
+        optional acceptQueueLowWatermark: uint32;
+
+        // The accept queue high watermark.
+        optional acceptQueueHighWatermark: uint32;
+
+        // The read queue low watermark.
+        optional readQueueLowWatermark: uint32;
+
+        // The read queue high watermark.
+        optional readQueueHighWatermark: uint32;
+
+        // The write queue low watermark.
+        optional writeQueueLowWatermark: uint32;
+
+        // The write queue high watermark.
+        optional writeQueueHighWatermark: uint32;
+    }
+
+    // Describes the configurable parameters of a server.
+    sequence TestServerConfig
+    {
+        // The name of the server.
+        optional name: string;
+
+        // The name of the networking driver.
+        optional driver: string;
+
+        // The flag that indicates all stream communication should be 
+        // encrypted.
+        optional encryption: boolean;
+
+        // The flag that indicates all communication should be compressed.
+        optional compression: boolean;
+
+        // The number of networking threads.
+        optional numNetworkingThreads: uint32;
+
+        // The number of processing threads.
+        optional numProcessingThreads: uint32;
+
+        // The flag that indicates socket I/O should be balanced and processed
+        // by any networking thread.
+        optional dynamicLoadBalancing: boolean;
+
+        // The flag that indicates socket-level keep-alives should be enabled.
+        optional keepAlive: boolean;
+
+        // The flag that indicates the socket should remain open for writing
+        // when the peer shuts down the socket.
+        optional keepHalfOpen: boolean;
+
+        // The backlog depth.
+        optional backlog: uint32;
+
+        // The send buffer size.
+        optional sendBufferSize: uint32;
+
+        // The receive buffer size.
+        optional receiveBufferSize: uint32;
+
+        // The flag that indicates the backlog should be processed greedily.
+        optional acceptGreedily: boolean;
+
+        // The accept queue low watermark.
+        optional acceptQueueLowWatermark: uint32;
+
+        // The accept queue high watermark.
+        optional acceptQueueHighWatermark: uint32;
+
+        // The read queue low watermark.
+        optional readQueueLowWatermark: uint32;
+
+        // The read queue high watermark.
+        optional readQueueHighWatermark: uint32;
+
+        // The write queue low watermark.
+        optional writeQueueLowWatermark: uint32;
+
+        // The write queue high watermark.
+        optional writeQueueHighWatermark: uint32;
+    }
+}

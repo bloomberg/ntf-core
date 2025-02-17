@@ -766,5 +766,10 @@ ntsa::Error Compression::inflate(ntca::InflateContext*       context,
     return ntsa::Error();
 }
 
+ntca::CompressionType::Value Compression::type() const
+{
+    return ntca::CompressionType::e_UNDEFINED;
+}
+
 }  // close package namespace
 }  // close enterprise namespace
