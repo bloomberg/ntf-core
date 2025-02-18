@@ -530,6 +530,148 @@ bool TestMessageParser::hasAnyAvailable() const
     return !d_messageQueue.empty();
 }
 
+TestTradeCallbackFactory::~TestTradeCallbackFactory()
+{
+}
+
+void TestTradeFuture::arrive(const ntcf::TestTradeResult& result)
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+    d_resultQueue.push_back(result);
+    d_condition.signal();
+}
+
+TestTradeFuture::TestTradeFuture(bslma::Allocator* basicAllocator)
+: ntcf::TestTradeCallback(basicAllocator)
+, d_mutex()
+, d_condition()
+, d_resultQueue(basicAllocator)
+{
+    this->setFunction(bdlf::MemFnUtil::memFn(&TestTradeFuture::arrive, this));
+}
+
+TestTradeFuture::~TestTradeFuture()
+{
+}
+
+ntsa::Error TestTradeFuture::wait(ntcf::TestTradeResult* result)
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    while (d_resultQueue.empty()) {
+        d_condition.wait(&d_mutex);
+    }
+
+    *result = d_resultQueue.front();
+    d_resultQueue.pop_front();
+
+    return ntsa::Error();
+}
+
+ntsa::Error TestTradeFuture::wait(ntcf::TestTradeResult*    result,
+                                  const bsls::TimeInterval& timeout)
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    while (d_resultQueue.empty()) {
+        int rc = d_condition.timedWait(&d_mutex, timeout);
+        if (rc == 0) {
+            break;
+        }
+        else if (rc == bslmt::Condition::e_TIMED_OUT) {
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    *result = d_resultQueue.front();
+    d_resultQueue.pop_front();
+
+    return ntsa::Error();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TestAcknowledgmentCallbackFactory::~TestAcknowledgmentCallbackFactory()
+{
+}
+
+void TestAcknowledgmentFuture::arrive(const ntcf::TestAcknowledgmentResult& result)
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+    d_resultQueue.push_back(result);
+    d_condition.signal();
+}
+
+TestAcknowledgmentFuture::TestAcknowledgmentFuture(bslma::Allocator* basicAllocator)
+: ntcf::TestAcknowledgmentCallback(basicAllocator)
+, d_mutex()
+, d_condition()
+, d_resultQueue(basicAllocator)
+{
+    this->setFunction(bdlf::MemFnUtil::memFn(&TestAcknowledgmentFuture::arrive, this));
+}
+
+TestAcknowledgmentFuture::~TestAcknowledgmentFuture()
+{
+}
+
+ntsa::Error TestAcknowledgmentFuture::wait(ntcf::TestAcknowledgmentResult* result)
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    while (d_resultQueue.empty()) {
+        d_condition.wait(&d_mutex);
+    }
+
+    *result = d_resultQueue.front();
+    d_resultQueue.pop_front();
+
+    return ntsa::Error();
+}
+
+ntsa::Error TestAcknowledgmentFuture::wait(ntcf::TestAcknowledgmentResult*    result,
+                                  const bsls::TimeInterval& timeout)
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    while (d_resultQueue.empty()) {
+        int rc = d_condition.timedWait(&d_mutex, timeout);
+        if (rc == 0) {
+            break;
+        }
+        else if (rc == bslmt::Condition::e_TIMED_OUT) {
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    *result = d_resultQueue.front();
+    d_resultQueue.pop_front();
+
+    return ntsa::Error();
+}
+
+
+
 }  // close package namespace
 }  // close enterprise namespace
 #endif

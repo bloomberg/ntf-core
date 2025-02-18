@@ -33,6 +33,14 @@ namespace ntcf {
                       << BALL_LOG_END;                                        \
     } while (false)
 
+#define NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_CONNECTED(datagramSocket)    \
+    do {                                                                      \
+        BALL_LOG_INFO << "Client datagram socket at "                                    \
+                      << (datagramSocket)->sourceEndpoint() << " to "         \
+                      << (datagramSocket)->remoteEndpoint() << " connected" \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
 #define NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_CLOSED(datagramSocket)  \
     do {                                                                      \
         BALL_LOG_INFO << "Client datagram socket at "                                    \
@@ -150,7 +158,21 @@ namespace ntcf {
 
 
 
+#define NTCF_TESTCLIENT_LOG_STREAM_SOCKET_CONNECTED(streamSocket)    \
+    do {                                                                      \
+        BALL_LOG_INFO << "Client stream socket at "                                    \
+                      << (streamSocket)->sourceEndpoint() << " to "         \
+                      << (streamSocket)->remoteEndpoint() << " connected" \
+                      << BALL_LOG_END;                                        \
+    } while (false)
 
+#define NTCF_TESTCLIENT_LOG_STREAM_SOCKET_CLOSED(streamSocket)  \
+    do {                                                                      \
+        BALL_LOG_INFO << "Client stream socket at "                                    \
+                      << (streamSocket)->sourceEndpoint() << " to "         \
+                      << (streamSocket)->remoteEndpoint() << " closed"      \
+                      << BALL_LOG_END;                                        \
+    } while (false)
 
 
 #define NTCF_TESTCLIENT_LOG_STREAM_SOCKET_EVENT(streamSocket, type, event)            \
@@ -260,71 +282,10 @@ namespace ntcf {
 
 
 
-#define NTCF_TESTCLIENT_LOG_LISTENER_SOCKET_ESTABLISHED(              \
-    listenerSocket)                                                           \
-    do {                                                                      \
-        BALL_LOG_DEBUG << "Client listener socket at "                                 \
-                       << (listenerSocket)->sourceEndpoint()                  \
-                       << " established" << BALL_LOG_END;                     \
-    } while (false)
 
-#define NTCF_TESTCLIENT_LOG_LISTENER_SOCKET_CLOSED(listenerSocket)    \
-    do {                                                                      \
-        BALL_LOG_DEBUG << "Client listener socket at "                                 \
-                       << (listenerSocket)->sourceEndpoint() << " closed"     \
-                       << BALL_LOG_END;                                       \
-    } while (false)
 
-#define NTCF_TESTCLIENT_LOG_LISTENER_SOCKET_EVENT(listenerSocket,     \
-                                                          type,               \
-                                                          event)              \
-    do {                                                                      \
-        BALL_LOG_TRACE << "Client listener socket at "                                 \
-                       << (listenerSocket)->sourceEndpoint()                  \
-                       << " processing " << (type) << " event " << (event)    \
-                       << BALL_LOG_END;                                       \
-    } while (false)
 
-#define NTCF_TESTCLIENT_LOG_LISTENER_SOCKET_ACCEPT_WOULD_BLOCK(       \
-    listenerSocket)                                                           \
-    do {                                                                      \
-        BALL_LOG_TRACE << "Client listener socket at "                                 \
-                       << (listenerSocket)->sourceEndpoint()                  \
-                       << " accept WOULD_BLOCK" << BALL_LOG_END;              \
-    } while (false)
 
-#define NTCF_TESTCLIENT_LOG_LISTENER_SOCKET_ACCEPT_EOF(               \
-    listenerSocket)                                                           \
-    do {                                                                      \
-        BALL_LOG_TRACE << "Client listener socket at "                                 \
-                       << (listenerSocket)->sourceEndpoint() << " accept EOF" \
-                       << BALL_LOG_END;                                       \
-    } while (false)
-
-#define NTCF_TESTCLIENT_LOG_LISTENER_SOCKET_ACCEPT_FAILED(            \
-    listenerSocket,                                                           \
-    error)                                                                    \
-    do {                                                                      \
-        BALL_LOG_TRACE << "Client listener socket at "                                 \
-                       << (listenerSocket)->sourceEndpoint()                  \
-                       << " accept failed: " << (error) << BALL_LOG_END;      \
-    } while (false)
-
-#define NTCF_TESTCLIENT_LOG_STREAM_SOCKET_ACCEPTED(streamSocket)      \
-    do {                                                                      \
-        BALL_LOG_INFO << "Client stream socket at "                                    \
-                      << (streamSocket)->sourceEndpoint() << " to "           \
-                      << (streamSocket)->remoteEndpoint() << " accepted"      \
-                      << BALL_LOG_END;                                        \
-    } while (false)
-
-#define NTCF_TESTCLIENT_LOG_STREAM_SOCKET_CLOSED(streamSocket)        \
-    do {                                                                      \
-        BALL_LOG_INFO << "Client stream socket at "                                    \
-                      << (streamSocket)->sourceEndpoint() << " to "           \
-                      << (streamSocket)->remoteEndpoint() << " closed"        \
-                      << BALL_LOG_END;                                        \
-    } while (false)
 
 
 void TestClient::processDatagramSocketEstablished(
@@ -964,10 +925,26 @@ void TestClient::processError(
 
 
 
+void TestClient::processDatagramSocketConnectEvent(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ConnectEvent&                    event)
+{
+    NTCCFG_WARNING_UNUSED(datagramSocket);
+    NTCCFG_WARNING_UNUSED(event);
+
+    NTCCFG_NOT_IMPLEMENTED();
+}
 
 
+void TestClient::processStreamSocketConnectEvent(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ConnectEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+    NTCCFG_WARNING_UNUSED(event);
 
-
+    NTCCFG_NOT_IMPLEMENTED();
+}
 
 
 void TestClient::processStreamSocketUpgradeEvent(
@@ -1052,8 +1029,6 @@ void TestClient::privateDatagramSocketUp(
 {
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(datagramSocket);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestClient::privateDatagramSocketDown(
@@ -1062,8 +1037,6 @@ void TestClient::privateDatagramSocketDown(
 {
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(datagramSocket);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestClient::privateDatagramSocketError(
@@ -1074,7 +1047,7 @@ void TestClient::privateDatagramSocketError(
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(error);
 
-    NTCCFG_NOT_IMPLEMENTED();
+    datagramSocket->close();
 }
 
 
@@ -1086,8 +1059,6 @@ void TestClient::privateStreamSocketUp(
 {
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(streamSocket);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestClient::privateStreamSocketDown(
@@ -1109,7 +1080,14 @@ void TestClient::privateStreamSocketError(
     streamSocket->close();
 }
 
+const bsl::shared_ptr<ntci::Strand>& TestClient::strand() const
+{
+    return d_strand_sp;
+}
+
 TestClient::TestClient(const ntcf::TestClientConfig& configuration,
+                       const ntsa::Endpoint&         tcpEndpoint,
+                       const ntsa::Endpoint&         udpEndpoint,
                        bslma::Allocator*             basicAllocator)
 : d_mutex()
 , d_dataPool_sp()
@@ -1121,11 +1099,15 @@ TestClient::TestClient(const ntcf::TestClientConfig& configuration,
 , d_datagramParser_sp()
 , d_streamSocket_sp()
 , d_streamParser_sp()
+, d_tcpEndpoint(tcpEndpoint)
+, d_udpEndpoint(udpEndpoint)
 , d_closed(false)
 , d_config(configuration, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     BALL_LOG_INFO << "Client constructing starting" << BALL_LOG_END;
+
+    bsl::shared_ptr<Self> self(this->getSelf(this));
 
     ntsa::Error error;
 
@@ -1245,8 +1227,52 @@ TestClient::TestClient(const ntcf::TestClientConfig& configuration,
         d_scheduler_sp->createDatagramSocket(datagramSocketOptions,
                                              d_allocator_p);
 
+    error = d_datagramSocket_sp->registerSession(self);
+    BSLS_ASSERT_OPT(!error);
+    
+    error = d_datagramSocket_sp->registerManager(self);
+    BSLS_ASSERT_OPT(!error);
+
     error = d_datagramSocket_sp->open();
     BSLS_ASSERT_OPT(!error);
+
+    // MRM
+#if 0
+    {
+        ntca::ConnectOptions connectOptions;
+
+        ntci::ConnectCallback connectCallback = 
+            d_streamSocket_sp->createConnectCallback(
+                NTCCFG_BIND(&TestClient::processDatagramSocketConnectEvent,
+                            this,
+                            d_datagramSocket_sp,
+                            NTCCFG_BIND_PLACEHOLDER_2),
+                d_allocator_p);
+
+        error = d_datagramSocket_sp->connect(udpEndpoint, 
+                                             connectOptions, 
+                                             connectCallback);
+        BSLS_ASSERT_OPT(!error);
+    }
+#endif
+
+    {
+        ntci::ConnectFuture connectFuture;
+        error = d_datagramSocket_sp->connect(d_udpEndpoint,
+                                            ntca::ConnectOptions(),
+                                            connectFuture);
+        BSLS_ASSERT_OPT(!error);
+
+        ntci::ConnectResult connectResult;
+        error = connectFuture.wait(&connectResult);
+        BSLS_ASSERT_OPT(!error); 
+        BSLS_ASSERT_OPT(!connectResult.event().context().error());
+
+        NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_EVENT(
+            d_datagramSocket_sp, "connect", connectResult.event());
+
+        NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_CONNECTED(d_datagramSocket_sp);
+    }
 
     BALL_LOG_INFO << "Client datagram socket construction complete"
                   << BALL_LOG_END;
@@ -1261,13 +1287,65 @@ TestClient::TestClient(const ntcf::TestClientConfig& configuration,
         d_scheduler_sp->createStreamSocket(streamSocketOptions,
                                            d_allocator_p);
 
+    error = d_streamSocket_sp->registerSession(self);
+    BSLS_ASSERT_OPT(!error);
+    
+    error = d_streamSocket_sp->registerManager(self);
+    BSLS_ASSERT_OPT(!error);
+
     error = d_streamSocket_sp->open();
     BSLS_ASSERT_OPT(!error);
+
+    // MRM
+#if 0
+    {
+        ntca::ConnectOptions connectOptions;
+
+        ntci::ConnectCallback connectCallback = 
+            d_streamSocket_sp->createConnectCallback(
+                NTCCFG_BIND(&TestClient::processStreamSocketConnectEvent,
+                            this,
+                            d_streamSocket_sp,
+                            NTCCFG_BIND_PLACEHOLDER_2),
+                d_allocator_p);
+
+        error = d_streamSocket_sp->connect(tcpEndpoint, 
+                                           connectOptions, 
+                                           connectCallback);
+        BSLS_ASSERT_OPT(!error);
+    }
+#endif
+
+    {
+        ntci::ConnectFuture connectFuture;
+        error = d_streamSocket_sp->connect(d_tcpEndpoint,
+                                        ntca::ConnectOptions(),
+                                        connectFuture);
+        BSLS_ASSERT_OPT(!error); 
+
+        ntci::ConnectResult connectResult;
+        error = connectFuture.wait(&connectResult);
+        BSLS_ASSERT_OPT(!error); 
+        BSLS_ASSERT_OPT(!connectResult.event().context().error());
+
+        NTCF_TESTCLIENT_LOG_STREAM_SOCKET_EVENT(
+            d_streamSocket_sp, "connect", connectResult.event());
+
+        NTCF_TESTCLIENT_LOG_STREAM_SOCKET_CONNECTED(d_streamSocket_sp);
+    }
 
     BALL_LOG_INFO << "Client stream socket construction complete"
                   << BALL_LOG_END;
 
     BALL_LOG_INFO << "Client construction complete" << BALL_LOG_END;
+
+    error = d_datagramSocket_sp->relaxFlowControl(
+        ntca::FlowControlType::e_RECEIVE);
+    BSLS_ASSERT_OPT(!error);
+
+    error = d_streamSocket_sp->relaxFlowControl(
+        ntca::FlowControlType::e_RECEIVE);
+    BSLS_ASSERT_OPT(!error);
 }
 
 TestClient::~TestClient()
@@ -1323,6 +1401,18 @@ ntsa::Error TestClient::bid(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error TestClient::bid(
+    const ntcf::TestBid&           bid,
+    const ntcf::TestTradeCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(bid);
+    NTCCFG_WARNING_UNUSED(callback);
+
+    NTCCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error TestClient::ask(
     ntcf::TestFault*     fault,
     ntcf::TestTrade*     trade, 
@@ -1331,6 +1421,18 @@ ntsa::Error TestClient::ask(
     NTCCFG_WARNING_UNUSED(fault);
     NTCCFG_WARNING_UNUSED(trade);
     NTCCFG_WARNING_UNUSED(ask);
+
+    NTCCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error TestClient::ask(
+    const ntcf::TestAsk&           ask,
+    const ntcf::TestTradeCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(ask);
+    NTCCFG_WARNING_UNUSED(callback);
 
     NTCCFG_NOT_IMPLEMENTED();
 
@@ -1351,14 +1453,38 @@ ntsa::Error TestClient::encrypt(
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error TestClient::encrypt(
+    const ntcf::TestControlEncryption&      encryption,
+    const ntcf::TestAcknowledgmentCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(encryption);
+    NTCCFG_WARNING_UNUSED(callback);
+
+    NTCCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error TestClient::compress(
-    ntcf::TestFault*     fault,
+    ntcf::TestFault*              fault,
     ntcf::TestAcknowledgment*     acknowledgement, 
     const TestControlCompression& compression)
 {
     NTCCFG_WARNING_UNUSED(fault);
     NTCCFG_WARNING_UNUSED(acknowledgement);
     NTCCFG_WARNING_UNUSED(compression);
+
+    NTCCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error TestClient::compress(
+    const ntcf::TestControlCompression&     compression,
+    const ntcf::TestAcknowledgmentCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(compression);
+    NTCCFG_WARNING_UNUSED(callback);
 
     NTCCFG_NOT_IMPLEMENTED();
 
@@ -1373,6 +1499,18 @@ ntsa::Error TestClient::heartbeat(
     NTCCFG_WARNING_UNUSED(fault);
     NTCCFG_WARNING_UNUSED(acknowledgement);
     NTCCFG_WARNING_UNUSED(heartbeat);
+
+    NTCCFG_NOT_IMPLEMENTED();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error TestClient::heartbeat(
+    const ntcf::TestControlHeartbeat&       heartbeat,
+    const ntcf::TestAcknowledgmentCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(heartbeat);
+    NTCCFG_WARNING_UNUSED(callback);
 
     NTCCFG_NOT_IMPLEMENTED();
 

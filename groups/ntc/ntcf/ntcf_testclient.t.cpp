@@ -36,6 +36,38 @@ class TestClientTest
 
 NTSCFG_TEST_FUNCTION(ntcf::TestClientTest::verify)
 {
+    ntcf::TestServerConfig exchangeConfig;
+    exchangeConfig.numNetworkingThreads = 1;
+    exchangeConfig.keepHalfOpen = false;
+
+    ntcf::TestServer exchange(exchangeConfig, NTSCFG_TEST_ALLOCATOR);
+
+    ntcf::TestClientConfig sellerConfig;
+    sellerConfig.numNetworkingThreads = 1;
+    sellerConfig.keepHalfOpen = false;
+
+    ntcf::TestClient seller(sellerConfig, 
+                            exchange.tcpEndpoint(), 
+                            exchange.udpEndpoint(), 
+                            NTSCFG_TEST_ALLOCATOR);
+
+    ntcf::TestClientConfig buyerConfig;
+    buyerConfig.numNetworkingThreads = 1;
+    buyerConfig.keepHalfOpen = false;
+
+    ntcf::TestClient buyer(buyerConfig, 
+                           exchange.tcpEndpoint(), 
+                           exchange.udpEndpoint(), 
+                           NTSCFG_TEST_ALLOCATOR);
+
+
+
+    
+
+
+
+    
+
     
 }
 

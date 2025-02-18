@@ -42,11 +42,10 @@ class TestClient : public ntci::DatagramSocketSession,
                    public ntci::DatagramSocketManager,
                    public ntci::StreamSocketSession,
                    public ntci::StreamSocketManager, 
+                   public ntcf::TestTradeCallbackFactory,
+                   public ntcf::TestAcknowledgmentCallbackFactory,
                    public ntccfg::Shared<TestClient>
 {
-public:
-
-private:
     /// This type defines a type alias for this type.
     typedef TestClient Self;
 
@@ -62,10 +61,13 @@ private:
     bsl::shared_ptr<ntci::Serialization>     d_serialization_sp;
     bsl::shared_ptr<ntci::Compression>       d_compression_sp;
     bsl::shared_ptr<ntci::Scheduler>         d_scheduler_sp;
+    bsl::shared_ptr<ntci::Strand>            d_strand_sp;
     bsl::shared_ptr<ntci::DatagramSocket>    d_datagramSocket_sp;
     bsl::shared_ptr<ntcf::TestMessageParser> d_datagramParser_sp;
     bsl::shared_ptr<ntci::StreamSocket>      d_streamSocket_sp;
     bsl::shared_ptr<ntcf::TestMessageParser> d_streamParser_sp;
+    ntsa::Endpoint                           d_tcpEndpoint;
+    ntsa::Endpoint                           d_udpEndpoint;
     bsls::AtomicBool                         d_closed;
     ntcf::TestClientConfig                   d_config;
     bslma::Allocator*                        d_allocator_p;
@@ -309,8 +311,19 @@ private:
                       const ntca::ErrorEvent& event) BSLS_KEYWORD_OVERRIDE;
 
 
-    
 
+
+    /// Process the connection of the specified 'datagramSocket' according to
+    /// the specified 'event'.
+    void processDatagramSocketConnectEvent(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ConnectEvent&                    event);
+    
+    /// Process the connection of the specified 'streamSocket' according to the
+    /// specified 'event'.
+    void processStreamSocketConnectEvent(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ConnectEvent&                  event);
 
 
     /// Process the upgrade of the specified 'streamSocket' that is the
@@ -389,11 +402,16 @@ private:
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntsa::Error&                         error);
 
+    /// Return the strand on which this object's functions should be called.
+    const bsl::shared_ptr<ntci::Strand>& strand() const BSLS_KEYWORD_OVERRIDE;
+
 public:
     /// Create a new client with the specified 'configuration'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
     explicit TestClient(const ntcf::TestClientConfig& configuration,
+                        const ntsa::Endpoint&         tcpEndpoint,
+                        const ntsa::Endpoint&         udpEndpoint,
                         bslma::Allocator*             basicAllocator = 0);
 
     /// Destroy this object.
@@ -404,9 +422,15 @@ public:
     /// the specified 'trade', otherwise load the error information into the
     /// specified 'fault'. Return the error.
     ntsa::Error bid(
-        ntcf::TestFault* fault,
-        ntcf::TestTrade* trade, 
+        ntcf::TestFault*     fault,
+        ntcf::TestTrade*     trade, 
         const ntcf::TestBid& bid);
+
+    /// Send the specified 'bid' to the server. Invoke the specified 'callback'
+    /// when a response is received or an error occurs. Return the error.
+    ntsa::Error bid(
+        const ntcf::TestBid&           bid,
+        const ntcf::TestTradeCallback& callback);
 
     /// Send the specified 'ask' to the server and block until a response is
     /// received or an error occurs. On success, load the completed trade into
@@ -417,32 +441,59 @@ public:
         ntcf::TestTrade*     trade, 
         const ntcf::TestAsk& ask);
 
+    /// Send the specified 'ask' to the server. Invoke the specified 'callback'
+    /// when a response is received or an error occurs. Return the error.
+    ntsa::Error ask(
+        const ntcf::TestAsk&           ask,
+        const ntcf::TestTradeCallback& callback);
+
     /// Send the specified 'encryption' control message to the server and 
     /// block until the operation completes. On success, load the response
     /// into the specified 'acknowledgement', otherwise, load the error 
     /// information into the specified 'fault'. Return the error. 
     ntsa::Error encrypt(
-        ntcf::TestFault*     fault,
-        ntcf::TestAcknowledgment*    acknowledgement, 
-        const TestControlEncryption& encryption);
+        ntcf::TestFault*                   fault,
+        ntcf::TestAcknowledgment*          acknowledgement, 
+        const ntcf::TestControlEncryption& encryption);
+
+    /// Send the specified 'encryption' control message to the server. Invoke
+    /// the specified 'callback' when a response is received or an error
+    /// occurs. Return the error.
+    ntsa::Error encrypt(
+        const ntcf::TestControlEncryption&      encryption,
+        const ntcf::TestAcknowledgmentCallback& callback);
 
     /// Send the specified 'compression' control message to the server and 
     /// block until the operation completes. On success, load the response
     /// into the specified 'acknowledgement', otherwise, load the error 
     /// information into the specified 'fault'. Return the error. 
     ntsa::Error compress(
-        ntcf::TestFault*     fault,
-        ntcf::TestAcknowledgment*     acknowledgement, 
-        const TestControlCompression& compression);
+        ntcf::TestFault*                    fault,
+        ntcf::TestAcknowledgment*           acknowledgement, 
+        const ntcf::TestControlCompression& compression);
+
+    /// Send the specified 'compression' control message to the server. Invoke
+    /// the specified 'callback' when a response is received or an error
+    /// occurs. Return the error.
+    ntsa::Error compress(
+        const ntcf::TestControlCompression&     compression,
+        const ntcf::TestAcknowledgmentCallback& callback);
 
     /// Send the specified 'heartbeat' control message to the server and 
     /// block until the operation completes. On success, load the response
     /// into the specified 'acknowledgement', otherwise, load the error 
     /// information into the specified 'fault'. Return the error. 
     ntsa::Error heartbeat(
-            ntcf::TestFault*     fault,
-            ntcf::TestAcknowledgment*   acknowledgement, 
-            const TestControlHeartbeat& heartbeat);
+        ntcf::TestFault*                  fault,
+        ntcf::TestAcknowledgment*         acknowledgement, 
+        const ntcf::TestControlHeartbeat& heartbeat);
+
+    /// Send the specified 'heartbeat' control message to the server. Invoke
+    /// the specified 'callback' when a response is received or an error
+    /// occurs. Return the error.
+    ntsa::Error heartbeat(
+        const ntcf::TestControlHeartbeat&       heartbeat,
+        const ntcf::TestAcknowledgmentCallback& callback);
 };
 
 }  // end namespace ntcf

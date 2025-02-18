@@ -482,6 +482,264 @@ class TestMessageParser
 };
 
 
+/// Define a type alias for callback invoked on a optional strand with an
+/// optional cancelable authorization mechanism when a bid or ask completes or
+/// fails.
+typedef ntci::Callback<void(
+    const ntcf::TestTradeResult& result)>
+    TestTradeCallback;
+
+/// Define a type alias for function invoked when a bid or ask completes or
+/// fails.
+typedef TestTradeCallback::FunctionType TestTradeFunction;
+
+/// Provide an interface to create trade callbacks.
+///
+/// @details
+/// Unless otherwise specified, the callbacks created by this class will be
+/// invoked on the object's strand.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+class TestTradeCallbackFactory
+{
+  public:
+    /// Destroy this object.
+    virtual ~TestTradeCallbackFactory();
+
+    /// Create a new trade callback to invoke the specified 'function' with
+    /// no cancellable authorization mechanism on this object's strand.
+    /// Optionally specify a  'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    ntcf::TestTradeCallback createTradeCallback(
+        const ntcf::TestTradeFunction& function,
+        bslma::Allocator*           basicAllocator = 0);
+
+    /// Create a new trade callback to invoke the specified 'function' with
+    /// the specified cancellable 'authorization' mechanism on this object's
+    /// strand. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    ntcf::TestTradeCallback createTradeCallback(
+        const ntcf::TestTradeFunction&              function,
+        const bsl::shared_ptr<ntci::Authorization>& authorization,
+        bslma::Allocator*                           basicAllocator = 0);
+
+    /// Create a new trade callback to invoke the specified 'function' with
+    /// no cancellable authorization mechanism on the specified 'strand'.
+    /// Optionally specify a  'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    ntcf::TestTradeCallback createTradeCallback(
+        const ntcf::TestTradeFunction&       function,
+        const bsl::shared_ptr<ntci::Strand>& strand,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Create a new trade callback to invoke the specified 'function' with
+    /// the specified cancellable 'authorization' mechanism on the specified
+    /// 'strand'. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    ntcf::TestTradeCallback createTradeCallback(
+        const ntcf::TestTradeFunction&              function,
+        const bsl::shared_ptr<ntci::Authorization>& authorization,
+        const bsl::shared_ptr<ntci::Strand>&        strand,
+        bslma::Allocator*                           basicAllocator = 0);
+
+    /// Return the strand on which this object's functions should be called.
+    virtual const bsl::shared_ptr<ntci::Strand>& strand() const = 0;
+};
+
+/// Provide a future asynchronous result of a trade operation.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+class TestTradeFuture : public ntcf::TestTradeCallback
+{
+    /// Define a type alias for a queue of results.
+    typedef bsl::list<ntcf::TestTradeResult> ResultQueue;
+
+    ntccfg::ConditionMutex d_mutex;
+    ntccfg::Condition      d_condition;
+    ResultQueue            d_resultQueue;
+
+  private:
+    TestTradeFuture(const TestTradeFuture&) BSLS_KEYWORD_DELETED;
+    TestTradeFuture& operator=(const TestTradeFuture&) BSLS_KEYWORD_DELETED;
+
+  private:
+    /// Arrive at the specified 'result'.
+    void arrive(const ntcf::TestTradeResult& result);
+
+  public:
+    /// Create a new trade future. Optionally specify a 'basicAllocator'
+    /// used to supply memory. If 'basicAllocator' is null, the currently
+    /// installed default allocator is used.
+    explicit TestTradeFuture(bslma::Allocator* basicAllocator = 0);
+
+    /// Destroy this object.
+    ~TestTradeFuture();
+
+    /// Wait for the trade operation to complete and load the result into
+    /// the specified 'result'. Return the error.
+    ntsa::Error wait(ntcf::TestTradeResult* result);
+
+    /// Wait for the trade operation to complete or until the specified
+    /// 'timeout', in absolute time since the Unix epoch, elapses. Return
+    /// the error.
+    ntsa::Error wait(ntcf::TestTradeResult*    result,
+                     const bsls::TimeInterval& timeout);
+};
+
+
+
+
+
+
+
+
+
+/// Define a type alias for callback invoked on a optional strand with an
+/// optional cancelable authorization mechanism when a bid or ask completes or
+/// fails.
+typedef ntci::Callback<void(
+    const ntcf::TestAcknowledgmentResult& result)>
+    TestAcknowledgmentCallback;
+
+/// Define a type alias for function invoked when a bid or ask completes or
+/// fails.
+typedef TestAcknowledgmentCallback::FunctionType TestAcknowledgmentFunction;
+
+/// Provide an interface to create trade callbacks.
+///
+/// @details
+/// Unless otherwise specified, the callbacks created by this class will be
+/// invoked on the object's strand.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+class TestAcknowledgmentCallbackFactory
+{
+  public:
+    /// Destroy this object.
+    virtual ~TestAcknowledgmentCallbackFactory();
+
+    /// Create a new trade callback to invoke the specified 'function' with
+    /// no cancellable authorization mechanism on this object's strand.
+    /// Optionally specify a  'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    ntcf::TestAcknowledgmentCallback createAcknowledgmentCallback(
+        const ntcf::TestAcknowledgmentFunction& function,
+        bslma::Allocator*           basicAllocator = 0);
+
+    /// Create a new trade callback to invoke the specified 'function' with
+    /// the specified cancellable 'authorization' mechanism on this object's
+    /// strand. Optionally specify a 'basicAllocator' used to supply memory.
+    /// If 'basicAllocator' is 0, the currently installed default allocator
+    /// is used.
+    ntcf::TestAcknowledgmentCallback createAcknowledgmentCallback(
+        const ntcf::TestAcknowledgmentFunction&              function,
+        const bsl::shared_ptr<ntci::Authorization>& authorization,
+        bslma::Allocator*                           basicAllocator = 0);
+
+    /// Create a new trade callback to invoke the specified 'function' with
+    /// no cancellable authorization mechanism on the specified 'strand'.
+    /// Optionally specify a  'basicAllocator' used to supply memory. If
+    /// 'basicAllocator' is 0, the currently installed default allocator is
+    /// used.
+    ntcf::TestAcknowledgmentCallback createAcknowledgmentCallback(
+        const ntcf::TestAcknowledgmentFunction&       function,
+        const bsl::shared_ptr<ntci::Strand>& strand,
+        bslma::Allocator*                    basicAllocator = 0);
+
+    /// Create a new trade callback to invoke the specified 'function' with
+    /// the specified cancellable 'authorization' mechanism on the specified
+    /// 'strand'. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    ntcf::TestAcknowledgmentCallback createAcknowledgmentCallback(
+        const ntcf::TestAcknowledgmentFunction&              function,
+        const bsl::shared_ptr<ntci::Authorization>& authorization,
+        const bsl::shared_ptr<ntci::Strand>&        strand,
+        bslma::Allocator*                           basicAllocator = 0);
+
+    /// Return the strand on which this object's functions should be called.
+    virtual const bsl::shared_ptr<ntci::Strand>& strand() const = 0;
+};
+
+/// Provide a future asynchronous result of a trade operation.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+class TestAcknowledgmentFuture : public ntcf::TestAcknowledgmentCallback
+{
+    /// Define a type alias for a queue of results.
+    typedef bsl::list<ntcf::TestAcknowledgmentResult> ResultQueue;
+
+    ntccfg::ConditionMutex d_mutex;
+    ntccfg::Condition      d_condition;
+    ResultQueue            d_resultQueue;
+
+  private:
+    TestAcknowledgmentFuture(const TestAcknowledgmentFuture&) BSLS_KEYWORD_DELETED;
+    TestAcknowledgmentFuture& operator=(const TestAcknowledgmentFuture&) BSLS_KEYWORD_DELETED;
+
+  private:
+    /// Arrive at the specified 'result'.
+    void arrive(const ntcf::TestAcknowledgmentResult& result);
+
+  public:
+    /// Create a new trade future. Optionally specify a 'basicAllocator'
+    /// used to supply memory. If 'basicAllocator' is null, the currently
+    /// installed default allocator is used.
+    explicit TestAcknowledgmentFuture(bslma::Allocator* basicAllocator = 0);
+
+    /// Destroy this object.
+    ~TestAcknowledgmentFuture();
+
+    /// Wait for the trade operation to complete and load the result into
+    /// the specified 'result'. Return the error.
+    ntsa::Error wait(ntcf::TestAcknowledgmentResult* result);
+
+    /// Wait for the trade operation to complete or until the specified
+    /// 'timeout', in absolute time since the Unix epoch, elapses. Return
+    /// the error.
+    ntsa::Error wait(ntcf::TestAcknowledgmentResult*    result,
+                     const bsls::TimeInterval& timeout);
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -743,6 +1001,107 @@ bsl::shared_ptr<ntcf::TestMessage> TestMessagePool::create()
 {
     return d_pool.getObject();
 }
+
+
+NTCCFG_INLINE
+ntcf::TestTradeCallback TestTradeCallbackFactory::createTradeCallback(
+    const ntcf::TestTradeFunction& function,
+    bslma::Allocator*              basicAllocator)
+{
+    return ntcf::TestTradeCallback(function, this->strand(), basicAllocator);
+}
+
+NTCCFG_INLINE
+ntcf::TestTradeCallback TestTradeCallbackFactory::createTradeCallback(
+    const ntcf::TestTradeFunction&              function,
+    const bsl::shared_ptr<ntci::Authorization>& authorization,
+    bslma::Allocator*                           basicAllocator)
+{
+    return ntcf::TestTradeCallback(function,
+                                   authorization,
+                                   this->strand(),
+                                   basicAllocator);
+}
+
+NTCCFG_INLINE
+ntcf::TestTradeCallback TestTradeCallbackFactory::createTradeCallback(
+    const ntcf::TestTradeFunction&       function,
+    const bsl::shared_ptr<ntci::Strand>& strand,
+    bslma::Allocator*                    basicAllocator)
+{
+    return ntcf::TestTradeCallback(function, strand, basicAllocator);
+}
+
+NTCCFG_INLINE
+ntcf::TestTradeCallback TestTradeCallbackFactory::createTradeCallback(
+    const ntcf::TestTradeFunction&              function,
+    const bsl::shared_ptr<ntci::Authorization>& authorization,
+    const bsl::shared_ptr<ntci::Strand>&        strand,
+    bslma::Allocator*                           basicAllocator)
+{
+    return ntcf::TestTradeCallback(function,
+                                   authorization,
+                                   strand,
+                                   basicAllocator);
+}
+
+
+
+
+
+
+
+
+
+
+
+NTCCFG_INLINE
+ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::createAcknowledgmentCallback(
+    const ntcf::TestAcknowledgmentFunction& function,
+    bslma::Allocator*              basicAllocator)
+{
+    return ntcf::TestAcknowledgmentCallback(function, this->strand(), basicAllocator);
+}
+
+NTCCFG_INLINE
+ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::createAcknowledgmentCallback(
+    const ntcf::TestAcknowledgmentFunction&              function,
+    const bsl::shared_ptr<ntci::Authorization>& authorization,
+    bslma::Allocator*                           basicAllocator)
+{
+    return ntcf::TestAcknowledgmentCallback(function,
+                                   authorization,
+                                   this->strand(),
+                                   basicAllocator);
+}
+
+NTCCFG_INLINE
+ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::createAcknowledgmentCallback(
+    const ntcf::TestAcknowledgmentFunction&       function,
+    const bsl::shared_ptr<ntci::Strand>& strand,
+    bslma::Allocator*                    basicAllocator)
+{
+    return ntcf::TestAcknowledgmentCallback(function, strand, basicAllocator);
+}
+
+NTCCFG_INLINE
+ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::createAcknowledgmentCallback(
+    const ntcf::TestAcknowledgmentFunction&              function,
+    const bsl::shared_ptr<ntci::Authorization>& authorization,
+    const bsl::shared_ptr<ntci::Strand>&        strand,
+    bslma::Allocator*                           basicAllocator)
+{
+    return ntcf::TestAcknowledgmentCallback(function,
+                                   authorization,
+                                   strand,
+                                   basicAllocator);
+}
+
+
+
+
+
+
 
 }  // end namespace ntcf
 }  // end namespace BloombergLP

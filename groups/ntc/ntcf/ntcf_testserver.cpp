@@ -27,24 +27,21 @@ namespace ntcf {
 #define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_ESTABLISHED(datagramSocket)    \
     do {                                                                      \
         BALL_LOG_INFO << "Server datagram socket at "                                    \
-                      << (datagramSocket)->sourceEndpoint() << " to "         \
-                      << (datagramSocket)->remoteEndpoint() << " established" \
+                      << (datagramSocket)->sourceEndpoint() << " established" \
                       << BALL_LOG_END;                                        \
     } while (false)
 
 #define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_CLOSED(datagramSocket)  \
     do {                                                                      \
         BALL_LOG_INFO << "Server datagram socket at "                                    \
-                      << (datagramSocket)->sourceEndpoint() << " to "         \
-                      << (datagramSocket)->remoteEndpoint() << " closed"      \
+                      << (datagramSocket)->sourceEndpoint() << " closed"      \
                       << BALL_LOG_END;                                        \
     } while (false)
 
 #define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, type, event)        \
     do {                                                                      \
         BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() << " to "        \
-                       << (datagramSocket)->remoteEndpoint()                  \
+                       << (datagramSocket)->sourceEndpoint()                 \
                        << " processing " << (type) << " event " << (event)    \
                        << BALL_LOG_END;                                       \
     } while (false)
@@ -52,24 +49,21 @@ namespace ntcf {
 #define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_WOULD_BLOCK(datagramSocket)       \
     do {                                                                      \
         BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() << " to "        \
-                       << (datagramSocket)->remoteEndpoint()                  \
+                       << (datagramSocket)->sourceEndpoint()                \
                        << " receive WOULD_BLOCK" << BALL_LOG_END;             \
     } while (false)
 
 #define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_EOF(datagramSocket)               \
     do {                                                                      \
         BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() << " to "        \
-                       << (datagramSocket)->remoteEndpoint()                  \
+                       << (datagramSocket)->sourceEndpoint() \
                        << " receive EOF" << BALL_LOG_END;                     \
     } while (false)
 
 #define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_FAILED(datagramSocket, error)     \
     do {                                                                      \
         BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() << " to "        \
-                       << (datagramSocket)->remoteEndpoint()                  \
+                       << (datagramSocket)->sourceEndpoint()                   \
                        << " receive failed: " << (error) << BALL_LOG_END;     \
     } while (false)
 
@@ -78,8 +72,7 @@ namespace ntcf {
                                                     receiveContext)           \
     do {                                                                      \
         BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() << " to "        \
-                       << (datagramSocket)->remoteEndpoint() << " received "  \
+                       << (datagramSocket)->sourceEndpoint() << " received "  \
                        << (blob).length() << " bytes from context "           \
                        << (receiveContext) << BALL_LOG_END;                   \
     } while (false)
@@ -87,8 +80,7 @@ namespace ntcf {
 #define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_PARSE_FAILED(datagramSocket, error)       \
     do {                                                                      \
         BALL_LOG_ERROR << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() << " to "        \
-                       << (datagramSocket)->remoteEndpoint()                  \
+                       << (datagramSocket)->sourceEndpoint()                   \
                        << " parsing failed: " << (error) << BALL_LOG_END;     \
     } while (false)
 
@@ -96,8 +88,7 @@ namespace ntcf {
                                                      response)                \
     do {                                                                      \
         BALL_LOG_WARN << "Server datagram socket at "                                    \
-                      << (datagramSocket)->sourceEndpoint() << " to "         \
-                      << (datagramSocket)->remoteEndpoint()                   \
+                      << (datagramSocket)->sourceEndpoint()                    \
                       << " ignoring response " << (*response)                 \
                       << BALL_LOG_END;                                        \
     } while (false)
@@ -106,8 +97,7 @@ namespace ntcf {
                                                         response)             \
     do {                                                                      \
         BALL_LOG_WARN << "Server datagram socket at "                                    \
-                      << (datagramSocket)->sourceEndpoint() << " to "         \
-                      << (datagramSocket)->remoteEndpoint()                   \
+                      << (datagramSocket)->sourceEndpoint()                   \
                       << " received stale or unsolicited response "           \
                       << (*response) << BALL_LOG_END;                         \
     } while (false)
@@ -115,32 +105,28 @@ namespace ntcf {
 #define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_INCOMING_MESSAGE(datagramSocket, message) \
     do {                                                                      \
         BALL_LOG_DEBUG << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() << " to "        \
-                       << (datagramSocket)->remoteEndpoint()                  \
+                       << (datagramSocket)->sourceEndpoint()                   \
                        << " received message " << (*message) << BALL_LOG_END; \
     } while (false)
 
 #define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_OUTGOING_MESSAGE(datagramSocket, message) \
     do {                                                                      \
         BALL_LOG_DEBUG << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() << " to "        \
-                       << (datagramSocket)->remoteEndpoint()                  \
+                       << (datagramSocket)->sourceEndpoint()                   \
                        << " sending message " << (*message) << BALL_LOG_END;  \
     } while (false)
 
 #define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_OUTGOING_BLOB(datagramSocket, blob)       \
     do {                                                                      \
         BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() << " to "        \
-                       << (datagramSocket)->remoteEndpoint() << " sending:\n" \
+                       << (datagramSocket)->sourceEndpoint() << " sending:\n" \
                        << bdlbb::BlobUtilHexDumper(&(blob)) << BALL_LOG_END;  \
     } while (false)
 
 #define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_INCOMING_BLOB(datagramSocket, blob)       \
     do {                                                                      \
         BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() << " to "        \
-                       << (datagramSocket)->remoteEndpoint()                  \
+                       << (datagramSocket)->sourceEndpoint()                   \
                        << " received:\n"                                      \
                        << bdlbb::BlobUtilHexDumper(&(blob)) << BALL_LOG_END;  \
     } while (false)
@@ -149,7 +135,21 @@ namespace ntcf {
 
 
 
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_ACCEPTED(streamSocket)      \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server stream socket at "                                    \
+                      << (streamSocket)->sourceEndpoint() << " to "           \
+                      << (streamSocket)->remoteEndpoint() << " accepted"      \
+                      << BALL_LOG_END;                                        \
+    } while (false)
 
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_CLOSED(streamSocket)        \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server stream socket at "                                    \
+                      << (streamSocket)->sourceEndpoint() << " to "           \
+                      << (streamSocket)->remoteEndpoint() << " closed"        \
+                      << BALL_LOG_END;                                        \
+    } while (false)
 
 
 #define NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket, type, event)            \
@@ -308,23 +308,6 @@ namespace ntcf {
                        << (listenerSocket)->sourceEndpoint()                  \
                        << " accept failed: " << (error) << BALL_LOG_END;      \
     } while (false)
-
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_ACCEPTED(streamSocket)      \
-    do {                                                                      \
-        BALL_LOG_INFO << "Server stream socket at "                                    \
-                      << (streamSocket)->sourceEndpoint() << " to "           \
-                      << (streamSocket)->remoteEndpoint() << " accepted"      \
-                      << BALL_LOG_END;                                        \
-    } while (false)
-
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_CLOSED(streamSocket)        \
-    do {                                                                      \
-        BALL_LOG_INFO << "Server stream socket at "                                    \
-                      << (streamSocket)->sourceEndpoint() << " to "           \
-                      << (streamSocket)->remoteEndpoint() << " closed"        \
-                      << BALL_LOG_END;                                        \
-    } while (false)
-
 
 void TestServer::processDatagramSocketEstablished(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket)
@@ -1249,8 +1232,6 @@ void TestServer::privateDatagramSocketUp(
 {
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(datagramSocket);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestServer::privateDatagramSocketDown(
@@ -1259,8 +1240,6 @@ void TestServer::privateDatagramSocketDown(
 {
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(datagramSocket);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestServer::privateDatagramSocketError(
@@ -1281,10 +1260,29 @@ void TestServer::privateStreamSocketUp(
     const bsl::shared_ptr<Self>&               self,
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
 {
-    NTCCFG_WARNING_UNUSED(self);
-    NTCCFG_WARNING_UNUSED(streamSocket);
+    ntsa::Error error;
 
-    NTCCFG_NOT_IMPLEMENTED();
+    bsl::shared_ptr<ntcf::TestMessageParser> streamParser;
+    streamParser.createInplace(d_allocator_p, 
+                               d_dataPool_sp, 
+                               d_messagePool_sp, 
+                               d_serialization_sp, 
+                               d_compression_sp, 
+                               d_allocator_p);
+
+    bsl::pair<StreamSocketMap::iterator, bool> insertResult = 
+        d_streamSocketMap.insert(bsl::make_pair(streamSocket, streamParser));
+    BSLS_ASSERT(insertResult.second);
+
+    error = streamSocket->registerSession(self);
+    BSLS_ASSERT_OPT(!error);
+
+    error = streamSocket->registerManager(self);
+    BSLS_ASSERT_OPT(!error);
+
+    error = streamSocket->relaxFlowControl(
+        ntca::FlowControlType::e_RECEIVE);
+    BSLS_ASSERT_OPT(!error);
 }
 
 void TestServer::privateStreamSocketDown(
@@ -1292,7 +1290,6 @@ void TestServer::privateStreamSocketDown(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
 {
     NTCCFG_WARNING_UNUSED(self);
-    NTCCFG_WARNING_UNUSED(streamSocket);
 
     d_streamSocketMap.erase(streamSocket);
 }
@@ -1314,8 +1311,6 @@ void TestServer::privateListenerSocketUp(
 {
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(listenerSocket);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestServer::privateListenerSocketDown(
@@ -1324,8 +1319,6 @@ void TestServer::privateListenerSocketDown(
 {
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(listenerSocket);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestServer::privateListenerSocketError(
@@ -1358,6 +1351,8 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     BALL_LOG_INFO << "Server constructing starting" << BALL_LOG_END;
+
+    bsl::shared_ptr<Self> self(this->getSelf(this));
 
     ntsa::Error error;
 
@@ -1482,6 +1477,12 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
         d_scheduler_sp->createDatagramSocket(
             datagramSocketOptions, d_allocator_p);
 
+    error = d_datagramSocket_sp->registerSession(self);
+    BSLS_ASSERT_OPT(!error);
+    
+    error = d_datagramSocket_sp->registerManager(self);
+    BSLS_ASSERT_OPT(!error);
+
     error = d_datagramSocket_sp->open();
     BSLS_ASSERT_OPT(!error);
 
@@ -1502,6 +1503,12 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
         d_scheduler_sp->createListenerSocket(
             listenerSocketOptions, d_allocator_p);
 
+    error = d_listenerSocket_sp->registerSession(self);
+    BSLS_ASSERT_OPT(!error);
+
+    error = d_listenerSocket_sp->registerManager(self);
+    BSLS_ASSERT_OPT(!error);
+
     error = d_listenerSocket_sp->open();
     BSLS_ASSERT_OPT(!error);
 
@@ -1514,6 +1521,21 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
                   << BALL_LOG_END;
 
     BALL_LOG_INFO << "Server construction complete" << BALL_LOG_END;
+
+    d_datagramParser_sp.createInplace(d_allocator_p, 
+                                      d_dataPool_sp, 
+                                      d_messagePool_sp, 
+                                      d_serialization_sp, 
+                                      d_compression_sp, 
+                                      d_allocator_p);
+
+    error = d_datagramSocket_sp->relaxFlowControl(
+        ntca::FlowControlType::e_RECEIVE);
+    BSLS_ASSERT_OPT(!error);
+
+    error = d_listenerSocket_sp->relaxFlowControl(
+        ntca::FlowControlType::e_RECEIVE);
+    BSLS_ASSERT_OPT(!error);
 }
 
 TestServer::~TestServer()
@@ -1593,12 +1615,12 @@ TestServer::~TestServer()
     BALL_LOG_INFO << "Server destruction complete" << BALL_LOG_END;
 }
 
-const ntsa::Endpoint& TestServer::listenerEndpoint() const
+const ntsa::Endpoint& TestServer::tcpEndpoint() const
 {
     return d_listenerEndpoint;
 }
 
-const ntsa::Endpoint& TestServer::datagramEndpoint() const
+const ntsa::Endpoint& TestServer::udpEndpoint() const
 {
     return d_datagramEndpoint;
 }

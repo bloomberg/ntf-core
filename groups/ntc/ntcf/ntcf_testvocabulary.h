@@ -85,6 +85,10 @@
 #include <bsls_review.h>
 #endif
 
+#ifndef INCLUDED_BSLS_TIMEINTERVAL
+#include <bsls_timeinterval.h>
+#endif
+
 #ifndef INCLUDED_BSLS_TYPES
 #include <bsls_types.h>
 #endif
@@ -92,6 +96,9 @@
 namespace BloombergLP {
 
 namespace ntcf { class TestAcknowledgment; }
+namespace ntcf { class TestAcknowledgmentResult; }
+namespace ntcf { class TestAcknowledgmentResultContext; }
+namespace ntcf { class TestAcknowledgmentResultValue; }
 namespace ntcf { class TestAsk; }
 namespace ntcf { class TestBid; }
 namespace ntcf { class TestClientConfig; }
@@ -114,6 +121,900 @@ namespace ntcf { class TestSecurity; }
 namespace ntcf { class TestServerConfig; }
 namespace ntcf { class TestSubscription; }
 namespace ntcf { class TestTrade; }
+namespace ntcf { class TestTradeResult; }
+namespace ntcf { class TestTradeResultContext; }
+namespace ntcf { class TestTradeResultValue; }
+namespace ntcf { 
+
+// Describes the context of a trade result.
+class TestTradeResultContext
+{
+public:
+    enum AttributeIndex {
+        ATTRIBUTE_INDEX_LATENCY = 0
+    };
+
+    enum AttributeId {
+        ATTRIBUTE_ID_LATENCY = 0
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 1
+    };
+
+    // Create a new object having the default value. 
+    TestTradeResultContext();
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. 
+    TestTradeResultContext(const TestTradeResultContext& original);
+
+    // Destroy this object. 
+    ~TestTradeResultContext();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestTradeResultContext& operator=(const TestTradeResultContext& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestTradeResultContext& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestTradeResultContext& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestTradeResultContext& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+
+    // The latency of the operation.
+    bsls::TimeInterval latency;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestTradeResultContext& lhs, const TestTradeResultContext& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestTradeResultContext& lhs, const TestTradeResultContext& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestTradeResultContext& lhs, const TestTradeResultContext& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestTradeResultContext& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestTradeResultContext& value);
+
+template <typename TYPE>
+void TestTradeResultContext::load(const TYPE& other)
+{
+    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
+        this->latency = other.latency;
+    }
+}
+
+template <typename TYPE>
+void TestTradeResultContext::store(TYPE* other) const
+{
+    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
+        other->latency = this->latency;
+    }
+
+}
+
+template <typename HASH_ALGORITHM>
+void TestTradeResultContext::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, this->latency);
+}
+
+template <typename MANIPULATOR>
+int TestTradeResultContext::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = manipulator(
+        &this->latency,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestTradeResultContext::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_LATENCY:
+        return manipulator(
+            &this->latency,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY]);
+    default:
+        return -1;
+    };
+}
+
+template <typename MANIPULATOR>
+int TestTradeResultContext::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    const bdlat_AttributeInfo* attributeInfo =
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return manipulateAttribute(manipulator, attributeInfo->d_id);
+}
+
+template <typename ACCESSOR>
+int TestTradeResultContext::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = accessor(
+        this->latency,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestTradeResultContext::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    switch (id) {
+    case ATTRIBUTE_ID_LATENCY:
+        return accessor(
+            this->latency,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY]);
+    default:
+        return -1;
+    };
+}
+
+template <typename ACCESSOR>
+int TestTradeResultContext::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    const bdlat_AttributeInfo* attributeInfo = 
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return accessAttribute(accessor, attributeInfo->d_id);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestTradeResultContext& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestTradeResultContext)
+
+namespace ntcf { 
+
+// Describes a trade subscription.
+class TestSubscription
+{
+public:
+    enum AttributeIndex {
+    };
+
+    enum AttributeId {
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 0
+    };
+
+    // Create a new object having the default value. 
+    TestSubscription();
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. 
+    TestSubscription(const TestSubscription& original);
+
+    // Destroy this object. 
+    ~TestSubscription();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestSubscription& operator=(const TestSubscription& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestSubscription& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestSubscription& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestSubscription& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestSubscription& lhs, const TestSubscription& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestSubscription& lhs, const TestSubscription& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestSubscription& lhs, const TestSubscription& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestSubscription& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestSubscription& value);
+
+template <typename TYPE>
+void TestSubscription::load(const TYPE& other)
+{
+    (void)(other);
+}
+
+template <typename TYPE>
+void TestSubscription::store(TYPE* other) const
+{
+    (void)(other);
+}
+
+template <typename HASH_ALGORITHM>
+void TestSubscription::hash(HASH_ALGORITHM& algorithm)
+{
+    (void)(algorithm);
+}
+
+template <typename MANIPULATOR>
+int TestSubscription::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    (void)(manipulator);
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestSubscription::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    (void)(manipulator);
+    (void)(id);
+    return -1;
+}
+
+template <typename MANIPULATOR>
+int TestSubscription::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    (void)(manipulator);
+    (void)(name);
+    (void)(nameLength);
+    return -1;
+}
+
+template <typename ACCESSOR>
+int TestSubscription::accessAttributes(ACCESSOR& accessor) const
+{
+    (void)(accessor);
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestSubscription::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    (void)(accessor);
+    (void)(id);
+    return -1;
+}
+
+template <typename ACCESSOR>
+int TestSubscription::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    (void)(accessor);
+    (void)(name);
+    (void)(nameLength);
+    return -1;
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestSubscription& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestSubscription)
+
+namespace ntcf { 
+
+// Describes a person.
+class TestPerson
+{
+public:
+    enum AttributeIndex {
+        ATTRIBUTE_INDEX_ID = 0,
+        ATTRIBUTE_INDEX_NAME = 1,
+        ATTRIBUTE_INDEX_ADDRESS = 2,
+        ATTRIBUTE_INDEX_COUNTRY = 3
+    };
+
+    enum AttributeId {
+        ATTRIBUTE_ID_ID = 0,
+        ATTRIBUTE_ID_NAME = 1,
+        ATTRIBUTE_ID_ADDRESS = 2,
+        ATTRIBUTE_ID_COUNTRY = 3
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 4
+    };
+
+    // Create a new object having the default value. Optionally specify a 
+    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    // currently installed default allocator is used. 
+    explicit TestPerson(bslma::Allocator* allocator = 0);
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. Optionally specify a 'basicAllocator' used to supply memory. 
+    // If 'basicAllocator' is 0, the currently installed default allocator is 
+    // used. 
+    TestPerson(const TestPerson& original, bslma::Allocator* allocator = 0);
+
+    // Destroy this object. 
+    ~TestPerson();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestPerson& operator=(const TestPerson& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestPerson& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestPerson& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestPerson& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+
+    // The unique identifier of the person.
+    bsls::Types::Uint64 id;
+
+    // The name of the person.
+    bsl::string name;
+
+    // The mailing address of the person.
+    bsl::vector<bsl::string> address;
+
+    // The country in which the person resides.
+    bsl::string country;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestPerson& lhs, const TestPerson& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestPerson& lhs, const TestPerson& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestPerson& lhs, const TestPerson& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestPerson& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestPerson& value);
+
+template <typename TYPE>
+void TestPerson::load(const TYPE& other)
+{
+    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
+        this->id = other.id;
+        this->name = other.name;
+        this->address = other.address;
+        this->country = other.country;
+    }
+}
+
+template <typename TYPE>
+void TestPerson::store(TYPE* other) const
+{
+    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
+        other->id = this->id;
+        other->name = this->name;
+        other->address = this->address;
+        other->country = this->country;
+    }
+
+}
+
+template <typename HASH_ALGORITHM>
+void TestPerson::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, this->id);
+    hashAppend(algorithm, this->name);
+    hashAppend(algorithm, this->address);
+    hashAppend(algorithm, this->country);
+}
+
+template <typename MANIPULATOR>
+int TestPerson::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = manipulator(
+        &this->id,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->name,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->address,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ADDRESS]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->country,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COUNTRY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestPerson::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return manipulator(
+            &this->id,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    case ATTRIBUTE_ID_NAME:
+        return manipulator(
+            &this->name,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    case ATTRIBUTE_ID_ADDRESS:
+        return manipulator(
+            &this->address,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ADDRESS]);
+    case ATTRIBUTE_ID_COUNTRY:
+        return manipulator(
+            &this->country,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COUNTRY]);
+    default:
+        return -1;
+    };
+}
+
+template <typename MANIPULATOR>
+int TestPerson::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    const bdlat_AttributeInfo* attributeInfo =
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return manipulateAttribute(manipulator, attributeInfo->d_id);
+}
+
+template <typename ACCESSOR>
+int TestPerson::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = accessor(
+        this->id,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->name,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->address,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ADDRESS]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->country,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COUNTRY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestPerson::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return accessor(
+            this->id,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    case ATTRIBUTE_ID_NAME:
+        return accessor(
+            this->name,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    case ATTRIBUTE_ID_ADDRESS:
+        return accessor(
+            this->address,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ADDRESS]);
+    case ATTRIBUTE_ID_COUNTRY:
+        return accessor(
+            this->country,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COUNTRY]);
+    default:
+        return -1;
+    };
+}
+
+template <typename ACCESSOR>
+int TestPerson::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    const bdlat_AttributeInfo* attributeInfo = 
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return accessAttribute(accessor, attributeInfo->d_id);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestPerson& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestPerson)
+
 namespace ntcf { 
 
 // Describes a message header.
@@ -730,6 +1631,1456 @@ BDLAT_DECL_SEQUENCE_WITH_BITWISEMOVEABLE_TRAITS(
 
 namespace ntcf { 
 
+// Describes a security traded on an exchange.
+class TestSecurity
+{
+public:
+    enum AttributeIndex {
+        ATTRIBUTE_INDEX_ID = 0,
+        ATTRIBUTE_INDEX_NAME = 1
+    };
+
+    enum AttributeId {
+        ATTRIBUTE_ID_ID = 0,
+        ATTRIBUTE_ID_NAME = 1
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 2
+    };
+
+    // Create a new object having the default value. Optionally specify a 
+    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    // currently installed default allocator is used. 
+    explicit TestSecurity(bslma::Allocator* allocator = 0);
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. Optionally specify a 'basicAllocator' used to supply memory. 
+    // If 'basicAllocator' is 0, the currently installed default allocator is 
+    // used. 
+    TestSecurity(const TestSecurity& original, bslma::Allocator* allocator = 0);
+
+    // Destroy this object. 
+    ~TestSecurity();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestSecurity& operator=(const TestSecurity& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestSecurity& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestSecurity& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestSecurity& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+
+    // The identifier of the security.
+    bsl::uint32_t id;
+
+    // The name of the security.
+    bsl::string name;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestSecurity& lhs, const TestSecurity& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestSecurity& lhs, const TestSecurity& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestSecurity& lhs, const TestSecurity& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestSecurity& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestSecurity& value);
+
+template <typename TYPE>
+void TestSecurity::load(const TYPE& other)
+{
+    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
+        this->id = other.id;
+        this->name = other.name;
+    }
+}
+
+template <typename TYPE>
+void TestSecurity::store(TYPE* other) const
+{
+    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
+        other->id = this->id;
+        other->name = this->name;
+    }
+
+}
+
+template <typename HASH_ALGORITHM>
+void TestSecurity::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, this->id);
+    hashAppend(algorithm, this->name);
+}
+
+template <typename MANIPULATOR>
+int TestSecurity::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = manipulator(
+        &this->id,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->name,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestSecurity::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return manipulator(
+            &this->id,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    case ATTRIBUTE_ID_NAME:
+        return manipulator(
+            &this->name,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    default:
+        return -1;
+    };
+}
+
+template <typename MANIPULATOR>
+int TestSecurity::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    const bdlat_AttributeInfo* attributeInfo =
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return manipulateAttribute(manipulator, attributeInfo->d_id);
+}
+
+template <typename ACCESSOR>
+int TestSecurity::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = accessor(
+        this->id,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->name,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestSecurity::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return accessor(
+            this->id,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    case ATTRIBUTE_ID_NAME:
+        return accessor(
+            this->name,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    default:
+        return -1;
+    };
+}
+
+template <typename ACCESSOR>
+int TestSecurity::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    const bdlat_AttributeInfo* attributeInfo = 
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return accessAttribute(accessor, attributeInfo->d_id);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestSecurity& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestSecurity)
+
+namespace ntcf { 
+
+// Describes an ask to sell a security.
+class TestAsk
+{
+public:
+    enum AttributeIndex {
+        ATTRIBUTE_INDEX_ID = 0,
+        ATTRIBUTE_INDEX_SELLER = 1,
+        ATTRIBUTE_INDEX_SECURITY = 2,
+        ATTRIBUTE_INDEX_SHARES = 3,
+        ATTRIBUTE_INDEX_PRICE = 4,
+        ATTRIBUTE_INDEX_DEADLINE = 5
+    };
+
+    enum AttributeId {
+        ATTRIBUTE_ID_ID = 0,
+        ATTRIBUTE_ID_SELLER = 1,
+        ATTRIBUTE_ID_SECURITY = 2,
+        ATTRIBUTE_ID_SHARES = 3,
+        ATTRIBUTE_ID_PRICE = 4,
+        ATTRIBUTE_ID_DEADLINE = 5
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 6
+    };
+
+    // Create a new object having the default value. Optionally specify a 
+    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    // currently installed default allocator is used. 
+    explicit TestAsk(bslma::Allocator* allocator = 0);
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. Optionally specify a 'basicAllocator' used to supply memory. 
+    // If 'basicAllocator' is 0, the currently installed default allocator is 
+    // used. 
+    TestAsk(const TestAsk& original, bslma::Allocator* allocator = 0);
+
+    // Destroy this object. 
+    ~TestAsk();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestAsk& operator=(const TestAsk& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestAsk& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestAsk& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestAsk& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+
+    // The unique identifier of the ask.
+    bsls::Types::Uint64 id;
+
+    // The person making the ask.
+    ntcf::TestPerson seller;
+
+    // The security to be traded.
+    ntcf::TestSecurity security;
+
+    // The number of shares to sell.
+    bsls::Types::Uint64 shares;
+
+    // The minimum value of the bidded price.
+    double price;
+
+    // The deadline after which the ask expires.
+    bdlt::DatetimeTz deadline;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestAsk& lhs, const TestAsk& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestAsk& lhs, const TestAsk& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestAsk& lhs, const TestAsk& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestAsk& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestAsk& value);
+
+template <typename TYPE>
+void TestAsk::load(const TYPE& other)
+{
+    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
+        this->id = other.id;
+        this->seller = other.seller;
+        this->security = other.security;
+        this->shares = other.shares;
+        this->price = other.price;
+        this->deadline = other.deadline;
+    }
+}
+
+template <typename TYPE>
+void TestAsk::store(TYPE* other) const
+{
+    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
+        other->id = this->id;
+        other->seller = this->seller;
+        other->security = this->security;
+        other->shares = this->shares;
+        other->price = this->price;
+        other->deadline = this->deadline;
+    }
+
+}
+
+template <typename HASH_ALGORITHM>
+void TestAsk::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, this->id);
+    hashAppend(algorithm, this->seller);
+    hashAppend(algorithm, this->security);
+    hashAppend(algorithm, this->shares);
+    hashAppend(algorithm, this->price);
+    hashAppend(algorithm, this->deadline);
+}
+
+template <typename MANIPULATOR>
+int TestAsk::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = manipulator(
+        &this->id,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->seller,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->security,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->shares,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->price,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->deadline,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestAsk::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return manipulator(
+            &this->id,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    case ATTRIBUTE_ID_SELLER:
+        return manipulator(
+            &this->seller,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
+    case ATTRIBUTE_ID_SECURITY:
+        return manipulator(
+            &this->security,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
+    case ATTRIBUTE_ID_SHARES:
+        return manipulator(
+            &this->shares,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
+    case ATTRIBUTE_ID_PRICE:
+        return manipulator(
+            &this->price,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
+    case ATTRIBUTE_ID_DEADLINE:
+        return manipulator(
+            &this->deadline,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE]);
+    default:
+        return -1;
+    };
+}
+
+template <typename MANIPULATOR>
+int TestAsk::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    const bdlat_AttributeInfo* attributeInfo =
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return manipulateAttribute(manipulator, attributeInfo->d_id);
+}
+
+template <typename ACCESSOR>
+int TestAsk::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = accessor(
+        this->id,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->seller,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->security,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->shares,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->price,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->deadline,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestAsk::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return accessor(
+            this->id,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    case ATTRIBUTE_ID_SELLER:
+        return accessor(
+            this->seller,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
+    case ATTRIBUTE_ID_SECURITY:
+        return accessor(
+            this->security,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
+    case ATTRIBUTE_ID_SHARES:
+        return accessor(
+            this->shares,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
+    case ATTRIBUTE_ID_PRICE:
+        return accessor(
+            this->price,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
+    case ATTRIBUTE_ID_DEADLINE:
+        return accessor(
+            this->deadline,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE]);
+    default:
+        return -1;
+    };
+}
+
+template <typename ACCESSOR>
+int TestAsk::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    const bdlat_AttributeInfo* attributeInfo = 
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return accessAttribute(accessor, attributeInfo->d_id);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestAsk& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestAsk)
+
+namespace ntcf { 
+
+// Describes a completed trade.
+class TestTrade
+{
+public:
+    enum AttributeIndex {
+        ATTRIBUTE_INDEX_ID = 0,
+        ATTRIBUTE_INDEX_BUYER = 1,
+        ATTRIBUTE_INDEX_SELLER = 2,
+        ATTRIBUTE_INDEX_SECURITY = 3,
+        ATTRIBUTE_INDEX_SHARES = 4,
+        ATTRIBUTE_INDEX_PRICE = 5,
+        ATTRIBUTE_INDEX_TIMESTAMP = 6
+    };
+
+    enum AttributeId {
+        ATTRIBUTE_ID_ID = 0,
+        ATTRIBUTE_ID_BUYER = 1,
+        ATTRIBUTE_ID_SELLER = 2,
+        ATTRIBUTE_ID_SECURITY = 3,
+        ATTRIBUTE_ID_SHARES = 4,
+        ATTRIBUTE_ID_PRICE = 5,
+        ATTRIBUTE_ID_TIMESTAMP = 6
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 7
+    };
+
+    // Create a new object having the default value. Optionally specify a 
+    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    // currently installed default allocator is used. 
+    explicit TestTrade(bslma::Allocator* allocator = 0);
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. Optionally specify a 'basicAllocator' used to supply memory. 
+    // If 'basicAllocator' is 0, the currently installed default allocator is 
+    // used. 
+    TestTrade(const TestTrade& original, bslma::Allocator* allocator = 0);
+
+    // Destroy this object. 
+    ~TestTrade();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestTrade& operator=(const TestTrade& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestTrade& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestTrade& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestTrade& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+
+    // The unique identifier of the trade.
+    bsls::Types::Uint64 id;
+
+    // The person making the bid.
+    ntcf::TestPerson buyer;
+
+    // The person making the ask.
+    ntcf::TestPerson seller;
+
+    // The security that was traded.
+    ntcf::TestSecurity security;
+
+    // The number of shares to traded.
+    bsls::Types::Uint64 shares;
+
+    // The price of the shares at the time of the trade.
+    double price;
+
+    // The date and time at which the transaction occured.
+    bdlt::DatetimeTz timestamp;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestTrade& lhs, const TestTrade& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestTrade& lhs, const TestTrade& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestTrade& lhs, const TestTrade& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestTrade& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestTrade& value);
+
+template <typename TYPE>
+void TestTrade::load(const TYPE& other)
+{
+    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
+        this->id = other.id;
+        this->buyer = other.buyer;
+        this->seller = other.seller;
+        this->security = other.security;
+        this->shares = other.shares;
+        this->price = other.price;
+        this->timestamp = other.timestamp;
+    }
+}
+
+template <typename TYPE>
+void TestTrade::store(TYPE* other) const
+{
+    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
+        other->id = this->id;
+        other->buyer = this->buyer;
+        other->seller = this->seller;
+        other->security = this->security;
+        other->shares = this->shares;
+        other->price = this->price;
+        other->timestamp = this->timestamp;
+    }
+
+}
+
+template <typename HASH_ALGORITHM>
+void TestTrade::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, this->id);
+    hashAppend(algorithm, this->buyer);
+    hashAppend(algorithm, this->seller);
+    hashAppend(algorithm, this->security);
+    hashAppend(algorithm, this->shares);
+    hashAppend(algorithm, this->price);
+    hashAppend(algorithm, this->timestamp);
+}
+
+template <typename MANIPULATOR>
+int TestTrade::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = manipulator(
+        &this->id,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->buyer,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BUYER]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->seller,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->security,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->shares,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->price,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->timestamp,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TIMESTAMP]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestTrade::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return manipulator(
+            &this->id,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    case ATTRIBUTE_ID_BUYER:
+        return manipulator(
+            &this->buyer,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BUYER]);
+    case ATTRIBUTE_ID_SELLER:
+        return manipulator(
+            &this->seller,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
+    case ATTRIBUTE_ID_SECURITY:
+        return manipulator(
+            &this->security,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
+    case ATTRIBUTE_ID_SHARES:
+        return manipulator(
+            &this->shares,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
+    case ATTRIBUTE_ID_PRICE:
+        return manipulator(
+            &this->price,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
+    case ATTRIBUTE_ID_TIMESTAMP:
+        return manipulator(
+            &this->timestamp,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TIMESTAMP]);
+    default:
+        return -1;
+    };
+}
+
+template <typename MANIPULATOR>
+int TestTrade::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    const bdlat_AttributeInfo* attributeInfo =
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return manipulateAttribute(manipulator, attributeInfo->d_id);
+}
+
+template <typename ACCESSOR>
+int TestTrade::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = accessor(
+        this->id,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->buyer,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BUYER]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->seller,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->security,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->shares,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->price,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->timestamp,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TIMESTAMP]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestTrade::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return accessor(
+            this->id,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    case ATTRIBUTE_ID_BUYER:
+        return accessor(
+            this->buyer,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BUYER]);
+    case ATTRIBUTE_ID_SELLER:
+        return accessor(
+            this->seller,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
+    case ATTRIBUTE_ID_SECURITY:
+        return accessor(
+            this->security,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
+    case ATTRIBUTE_ID_SHARES:
+        return accessor(
+            this->shares,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
+    case ATTRIBUTE_ID_PRICE:
+        return accessor(
+            this->price,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
+    case ATTRIBUTE_ID_TIMESTAMP:
+        return accessor(
+            this->timestamp,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TIMESTAMP]);
+    default:
+        return -1;
+    };
+}
+
+template <typename ACCESSOR>
+int TestTrade::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    const bdlat_AttributeInfo* attributeInfo = 
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return accessAttribute(accessor, attributeInfo->d_id);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestTrade& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestTrade)
+
+namespace ntcf { 
+
+// Describes an acknowledgment.
+class TestAcknowledgment
+{
+public:
+    enum AttributeIndex {
+    };
+
+    enum AttributeId {
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 0
+    };
+
+    // Create a new object having the default value. 
+    TestAcknowledgment();
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. 
+    TestAcknowledgment(const TestAcknowledgment& original);
+
+    // Destroy this object. 
+    ~TestAcknowledgment();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestAcknowledgment& operator=(const TestAcknowledgment& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestAcknowledgment& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestAcknowledgment& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestAcknowledgment& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgment& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestAcknowledgment& value);
+
+template <typename TYPE>
+void TestAcknowledgment::load(const TYPE& other)
+{
+    (void)(other);
+}
+
+template <typename TYPE>
+void TestAcknowledgment::store(TYPE* other) const
+{
+    (void)(other);
+}
+
+template <typename HASH_ALGORITHM>
+void TestAcknowledgment::hash(HASH_ALGORITHM& algorithm)
+{
+    (void)(algorithm);
+}
+
+template <typename MANIPULATOR>
+int TestAcknowledgment::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    (void)(manipulator);
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestAcknowledgment::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    (void)(manipulator);
+    (void)(id);
+    return -1;
+}
+
+template <typename MANIPULATOR>
+int TestAcknowledgment::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    (void)(manipulator);
+    (void)(name);
+    (void)(nameLength);
+    return -1;
+}
+
+template <typename ACCESSOR>
+int TestAcknowledgment::accessAttributes(ACCESSOR& accessor) const
+{
+    (void)(accessor);
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestAcknowledgment::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    (void)(accessor);
+    (void)(id);
+    return -1;
+}
+
+template <typename ACCESSOR>
+int TestAcknowledgment::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    (void)(accessor);
+    (void)(name);
+    (void)(nameLength);
+    return -1;
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestAcknowledgment& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestAcknowledgment)
+
+namespace ntcf { 
+
 // Identifies who caused the fault to happen within the the nodes that
 // processed the operation.
 class TestFaultCode
@@ -1251,1366 +3602,6 @@ BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
 
 namespace ntcf { 
 
-// Describes an acknowledgment.
-class TestAcknowledgment
-{
-public:
-    enum AttributeIndex {
-    };
-
-    enum AttributeId {
-    };
-
-    enum Constant {
-        NUM_ATTRIBUTES = 0
-    };
-
-    // Create a new object having the default value. 
-    TestAcknowledgment();
-
-    // Create a new object having the same value as the specified 'original' 
-    // object. 
-    TestAcknowledgment(const TestAcknowledgment& original);
-
-    // Destroy this object. 
-    ~TestAcknowledgment();
-
-    // Assign the value of the specified 'other' object to this object. 
-    // Return a reference to this modifiable object. 
-    TestAcknowledgment& operator=(const TestAcknowledgment& other);
-
-    // Reset the value of this object its value upon default construction. 
-    void reset();
-
-    // Swap the value of this object with the value of the specified 'other' 
-    // object. 
-    void swap(TestAcknowledgment& other);
-
-    // Load the value from the fields in the specified specified 'other' 
-    // value that match the fields of this value into this value. 
-    template <typename TYPE>
-    void load(const TYPE& other);
-
-    // Store the value into the fields in the specified specified 'other' 
-    // value that match the fields of this value. 
-    template <typename TYPE>
-    void store(TYPE* other) const;
-
-    // Return true if this object has the same value as the specified 'other' 
-    // object, otherwise return false. 
-    bool equals(const TestAcknowledgment& other) const;
-
-    // Return true if the value of this object is less than the value of the 
-    // specified 'other' object, otherwise return false. 
-    bool less(const TestAcknowledgment& other) const;
-
-    // Contribute the values of the salient attributes of this object to the 
-    // specified hash 'algorithm'. 
-    template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm);
-
-    // Format this object to the specified output 'stream' at the optionally 
-    // specified indentation 'level' and return a reference to the modifiable 
-    // 'stream'. If 'level' is specified, optionally specify 
-    // 'spacesPerLevel', the number of spaces per indentation level for this 
-    // and all of its nested objects. Each line is indented by the absolute 
-    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
-    // indentation of the first line. If 'spacesPerLevel' is negative, 
-    // suppress line breaks and format the entire output on one line. If 
-    // 'stream' is initially invalid, this operation has no effect. Note that 
-    // a trailing newline is provided in multiline mode only. 
-    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
-
-    // Return the compiler-independant name for this class. 
-    static const char CLASS_NAME[];
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'id' if the attribute exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'name' of the specified 'nameLength' if the attribute 
-    // exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
-
-    // Invoke the specified 'manipulator' sequentially on the address of each 
-    // (modifiable) attribute of this object, supplying 'manipulator' with 
-    // the corresponding attribute information structure until such 
-    // invocation returns a non-zero value. Return the value from the last 
-    // invocation of 'manipulator' (i.e., the invocation that terminated the 
-    // sequence). 
-    template <typename MANIPULATOR>
-    int manipulateAttributes(MANIPULATOR& manipulator);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'id', supplying 'manipulator' 
-    // with the corresponding attribute information structure. Return the 
-    // value returned from the invocation of 'manipulator' if 'id' identifies 
-    // an attribute of this class, and -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, int id);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'manipulator' if 'name' identifies an attribute of this class, and 
-    // -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
-
-    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
-    // attribute of this object, supplying 'accessor' with the corresponding 
-    // attribute information structure until such invocation returns a 
-    // non-zero value. Return the value from the last invocation of 
-    // 'accessor' (i.e., the invocation that terminated the sequence). 
-    template <typename ACCESSOR>
-    int accessAttributes(ACCESSOR& accessor) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'id', supplying 'accessor' with 
-    // the corresponding attribute information structure. Return the value 
-    // returned from the invocation of 'accessor' if 'id' identifies an 
-    // attribute of this class, and -1 otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, int id) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'accessor' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
-    // otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
-};
-
-// Return true if the specified 'lhs' has the same value as the specified 
-// 'rhs', otherwise return false. 
-bool operator==(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs);
-
-// Return true if the specified 'lhs' does not have the same value as the 
-// specified 'rhs', otherwise return false. 
-bool operator!=(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs);
-
-// Return true if the value of the specified 'lhs' is less than the value of 
-// the specified 'rhs', otherwise return false. 
-bool operator<(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs);
-
-// Insert a formatted, human-readable description of the specified 'object' 
-// into the specified 'stream'. Return a reference to the modifiable 
-// 'stream'. 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgment& object);
-
-// Contribute the values of the salient attributes of the specified 'value' 
-// to the specified hash 'algorithm'. 
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestAcknowledgment& value);
-
-template <typename TYPE>
-void TestAcknowledgment::load(const TYPE& other)
-{
-    (void)(other);
-}
-
-template <typename TYPE>
-void TestAcknowledgment::store(TYPE* other) const
-{
-    (void)(other);
-}
-
-template <typename HASH_ALGORITHM>
-void TestAcknowledgment::hash(HASH_ALGORITHM& algorithm)
-{
-    (void)(algorithm);
-}
-
-template <typename MANIPULATOR>
-int TestAcknowledgment::manipulateAttributes(MANIPULATOR& manipulator)
-{
-    (void)(manipulator);
-    return 0;
-}
-
-template <typename MANIPULATOR>
-int TestAcknowledgment::manipulateAttribute(MANIPULATOR& manipulator, int id)
-{
-    (void)(manipulator);
-    (void)(id);
-    return -1;
-}
-
-template <typename MANIPULATOR>
-int TestAcknowledgment::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
-{
-    (void)(manipulator);
-    (void)(name);
-    (void)(nameLength);
-    return -1;
-}
-
-template <typename ACCESSOR>
-int TestAcknowledgment::accessAttributes(ACCESSOR& accessor) const
-{
-    (void)(accessor);
-    return 0;
-}
-
-template <typename ACCESSOR>
-int TestAcknowledgment::accessAttribute(ACCESSOR& accessor, int id) const
-{
-    (void)(accessor);
-    (void)(id);
-    return -1;
-}
-
-template <typename ACCESSOR>
-int TestAcknowledgment::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
-{
-    (void)(accessor);
-    (void)(name);
-    (void)(nameLength);
-    return -1;
-}
-
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestAcknowledgment& value)
-{
-    value.hash(algorithm);
-}
-
-} // close namespace ntcf
-
-BDLAT_DECL_SEQUENCE_WITH_BITWISEMOVEABLE_TRAITS(
-    ntcf::TestAcknowledgment)
-
-namespace ntcf { 
-
-// Describes a security traded on an exchange.
-class TestSecurity
-{
-public:
-    enum AttributeIndex {
-        ATTRIBUTE_INDEX_ID = 0,
-        ATTRIBUTE_INDEX_NAME = 1
-    };
-
-    enum AttributeId {
-        ATTRIBUTE_ID_ID = 0,
-        ATTRIBUTE_ID_NAME = 1
-    };
-
-    enum Constant {
-        NUM_ATTRIBUTES = 2
-    };
-
-    // Create a new object having the default value. Optionally specify a 
-    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
-    // currently installed default allocator is used. 
-    explicit TestSecurity(bslma::Allocator* allocator = 0);
-
-    // Create a new object having the same value as the specified 'original' 
-    // object. Optionally specify a 'basicAllocator' used to supply memory. 
-    // If 'basicAllocator' is 0, the currently installed default allocator is 
-    // used. 
-    TestSecurity(const TestSecurity& original, bslma::Allocator* allocator = 0);
-
-    // Destroy this object. 
-    ~TestSecurity();
-
-    // Assign the value of the specified 'other' object to this object. 
-    // Return a reference to this modifiable object. 
-    TestSecurity& operator=(const TestSecurity& other);
-
-    // Reset the value of this object its value upon default construction. 
-    void reset();
-
-    // Swap the value of this object with the value of the specified 'other' 
-    // object. 
-    void swap(TestSecurity& other);
-
-    // Load the value from the fields in the specified specified 'other' 
-    // value that match the fields of this value into this value. 
-    template <typename TYPE>
-    void load(const TYPE& other);
-
-    // Store the value into the fields in the specified specified 'other' 
-    // value that match the fields of this value. 
-    template <typename TYPE>
-    void store(TYPE* other) const;
-
-    // Return true if this object has the same value as the specified 'other' 
-    // object, otherwise return false. 
-    bool equals(const TestSecurity& other) const;
-
-    // Return true if the value of this object is less than the value of the 
-    // specified 'other' object, otherwise return false. 
-    bool less(const TestSecurity& other) const;
-
-    // Contribute the values of the salient attributes of this object to the 
-    // specified hash 'algorithm'. 
-    template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm);
-
-    // Format this object to the specified output 'stream' at the optionally 
-    // specified indentation 'level' and return a reference to the modifiable 
-    // 'stream'. If 'level' is specified, optionally specify 
-    // 'spacesPerLevel', the number of spaces per indentation level for this 
-    // and all of its nested objects. Each line is indented by the absolute 
-    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
-    // indentation of the first line. If 'spacesPerLevel' is negative, 
-    // suppress line breaks and format the entire output on one line. If 
-    // 'stream' is initially invalid, this operation has no effect. Note that 
-    // a trailing newline is provided in multiline mode only. 
-    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
-
-    // Return the compiler-independant name for this class. 
-    static const char CLASS_NAME[];
-
-    // The attribute info array, indexed by attribute index. 
-    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'id' if the attribute exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'name' of the specified 'nameLength' if the attribute 
-    // exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
-
-    // Invoke the specified 'manipulator' sequentially on the address of each 
-    // (modifiable) attribute of this object, supplying 'manipulator' with 
-    // the corresponding attribute information structure until such 
-    // invocation returns a non-zero value. Return the value from the last 
-    // invocation of 'manipulator' (i.e., the invocation that terminated the 
-    // sequence). 
-    template <typename MANIPULATOR>
-    int manipulateAttributes(MANIPULATOR& manipulator);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'id', supplying 'manipulator' 
-    // with the corresponding attribute information structure. Return the 
-    // value returned from the invocation of 'manipulator' if 'id' identifies 
-    // an attribute of this class, and -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, int id);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'manipulator' if 'name' identifies an attribute of this class, and 
-    // -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
-
-    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
-    // attribute of this object, supplying 'accessor' with the corresponding 
-    // attribute information structure until such invocation returns a 
-    // non-zero value. Return the value from the last invocation of 
-    // 'accessor' (i.e., the invocation that terminated the sequence). 
-    template <typename ACCESSOR>
-    int accessAttributes(ACCESSOR& accessor) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'id', supplying 'accessor' with 
-    // the corresponding attribute information structure. Return the value 
-    // returned from the invocation of 'accessor' if 'id' identifies an 
-    // attribute of this class, and -1 otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, int id) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'accessor' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
-    // otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
-
-    // The identifier of the security.
-    bsl::uint32_t id;
-
-    // The name of the security.
-    bsl::string name;
-};
-
-// Return true if the specified 'lhs' has the same value as the specified 
-// 'rhs', otherwise return false. 
-bool operator==(const TestSecurity& lhs, const TestSecurity& rhs);
-
-// Return true if the specified 'lhs' does not have the same value as the 
-// specified 'rhs', otherwise return false. 
-bool operator!=(const TestSecurity& lhs, const TestSecurity& rhs);
-
-// Return true if the value of the specified 'lhs' is less than the value of 
-// the specified 'rhs', otherwise return false. 
-bool operator<(const TestSecurity& lhs, const TestSecurity& rhs);
-
-// Insert a formatted, human-readable description of the specified 'object' 
-// into the specified 'stream'. Return a reference to the modifiable 
-// 'stream'. 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestSecurity& object);
-
-// Contribute the values of the salient attributes of the specified 'value' 
-// to the specified hash 'algorithm'. 
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestSecurity& value);
-
-template <typename TYPE>
-void TestSecurity::load(const TYPE& other)
-{
-    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
-        this->id = other.id;
-        this->name = other.name;
-    }
-}
-
-template <typename TYPE>
-void TestSecurity::store(TYPE* other) const
-{
-    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
-        other->id = this->id;
-        other->name = this->name;
-    }
-
-}
-
-template <typename HASH_ALGORITHM>
-void TestSecurity::hash(HASH_ALGORITHM& algorithm)
-{
-    using bslh::hashAppend;
-    hashAppend(algorithm, this->id);
-    hashAppend(algorithm, this->name);
-}
-
-template <typename MANIPULATOR>
-int TestSecurity::manipulateAttributes(MANIPULATOR& manipulator)
-{
-    int rc;
-
-    rc = manipulator(
-        &this->id,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->name,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename MANIPULATOR>
-int TestSecurity::manipulateAttribute(MANIPULATOR& manipulator, int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return manipulator(
-            &this->id,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    case ATTRIBUTE_ID_NAME:
-        return manipulator(
-            &this->name,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
-    default:
-        return -1;
-    };
-}
-
-template <typename MANIPULATOR>
-int TestSecurity::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
-{
-    const bdlat_AttributeInfo* attributeInfo =
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return manipulateAttribute(manipulator, attributeInfo->d_id);
-}
-
-template <typename ACCESSOR>
-int TestSecurity::accessAttributes(ACCESSOR& accessor) const
-{
-    int rc;
-
-    rc = accessor(
-        this->id,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->name,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename ACCESSOR>
-int TestSecurity::accessAttribute(ACCESSOR& accessor, int id) const
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return accessor(
-            this->id,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    case ATTRIBUTE_ID_NAME:
-        return accessor(
-            this->name,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
-    default:
-        return -1;
-    };
-}
-
-template <typename ACCESSOR>
-int TestSecurity::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
-{
-    const bdlat_AttributeInfo* attributeInfo = 
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return accessAttribute(accessor, attributeInfo->d_id);
-}
-
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestSecurity& value)
-{
-    value.hash(algorithm);
-}
-
-} // close namespace ntcf
-
-BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
-    ntcf::TestSecurity)
-
-namespace ntcf { 
-
-// Describes a person.
-class TestPerson
-{
-public:
-    enum AttributeIndex {
-        ATTRIBUTE_INDEX_ID = 0,
-        ATTRIBUTE_INDEX_NAME = 1,
-        ATTRIBUTE_INDEX_ADDRESS = 2,
-        ATTRIBUTE_INDEX_COUNTRY = 3
-    };
-
-    enum AttributeId {
-        ATTRIBUTE_ID_ID = 0,
-        ATTRIBUTE_ID_NAME = 1,
-        ATTRIBUTE_ID_ADDRESS = 2,
-        ATTRIBUTE_ID_COUNTRY = 3
-    };
-
-    enum Constant {
-        NUM_ATTRIBUTES = 4
-    };
-
-    // Create a new object having the default value. Optionally specify a 
-    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
-    // currently installed default allocator is used. 
-    explicit TestPerson(bslma::Allocator* allocator = 0);
-
-    // Create a new object having the same value as the specified 'original' 
-    // object. Optionally specify a 'basicAllocator' used to supply memory. 
-    // If 'basicAllocator' is 0, the currently installed default allocator is 
-    // used. 
-    TestPerson(const TestPerson& original, bslma::Allocator* allocator = 0);
-
-    // Destroy this object. 
-    ~TestPerson();
-
-    // Assign the value of the specified 'other' object to this object. 
-    // Return a reference to this modifiable object. 
-    TestPerson& operator=(const TestPerson& other);
-
-    // Reset the value of this object its value upon default construction. 
-    void reset();
-
-    // Swap the value of this object with the value of the specified 'other' 
-    // object. 
-    void swap(TestPerson& other);
-
-    // Load the value from the fields in the specified specified 'other' 
-    // value that match the fields of this value into this value. 
-    template <typename TYPE>
-    void load(const TYPE& other);
-
-    // Store the value into the fields in the specified specified 'other' 
-    // value that match the fields of this value. 
-    template <typename TYPE>
-    void store(TYPE* other) const;
-
-    // Return true if this object has the same value as the specified 'other' 
-    // object, otherwise return false. 
-    bool equals(const TestPerson& other) const;
-
-    // Return true if the value of this object is less than the value of the 
-    // specified 'other' object, otherwise return false. 
-    bool less(const TestPerson& other) const;
-
-    // Contribute the values of the salient attributes of this object to the 
-    // specified hash 'algorithm'. 
-    template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm);
-
-    // Format this object to the specified output 'stream' at the optionally 
-    // specified indentation 'level' and return a reference to the modifiable 
-    // 'stream'. If 'level' is specified, optionally specify 
-    // 'spacesPerLevel', the number of spaces per indentation level for this 
-    // and all of its nested objects. Each line is indented by the absolute 
-    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
-    // indentation of the first line. If 'spacesPerLevel' is negative, 
-    // suppress line breaks and format the entire output on one line. If 
-    // 'stream' is initially invalid, this operation has no effect. Note that 
-    // a trailing newline is provided in multiline mode only. 
-    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
-
-    // Return the compiler-independant name for this class. 
-    static const char CLASS_NAME[];
-
-    // The attribute info array, indexed by attribute index. 
-    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'id' if the attribute exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'name' of the specified 'nameLength' if the attribute 
-    // exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
-
-    // Invoke the specified 'manipulator' sequentially on the address of each 
-    // (modifiable) attribute of this object, supplying 'manipulator' with 
-    // the corresponding attribute information structure until such 
-    // invocation returns a non-zero value. Return the value from the last 
-    // invocation of 'manipulator' (i.e., the invocation that terminated the 
-    // sequence). 
-    template <typename MANIPULATOR>
-    int manipulateAttributes(MANIPULATOR& manipulator);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'id', supplying 'manipulator' 
-    // with the corresponding attribute information structure. Return the 
-    // value returned from the invocation of 'manipulator' if 'id' identifies 
-    // an attribute of this class, and -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, int id);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'manipulator' if 'name' identifies an attribute of this class, and 
-    // -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
-
-    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
-    // attribute of this object, supplying 'accessor' with the corresponding 
-    // attribute information structure until such invocation returns a 
-    // non-zero value. Return the value from the last invocation of 
-    // 'accessor' (i.e., the invocation that terminated the sequence). 
-    template <typename ACCESSOR>
-    int accessAttributes(ACCESSOR& accessor) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'id', supplying 'accessor' with 
-    // the corresponding attribute information structure. Return the value 
-    // returned from the invocation of 'accessor' if 'id' identifies an 
-    // attribute of this class, and -1 otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, int id) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'accessor' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
-    // otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
-
-    // The unique identifier of the person.
-    bsls::Types::Uint64 id;
-
-    // The name of the person.
-    bsl::string name;
-
-    // The mailing address of the person.
-    bsl::vector<bsl::string> address;
-
-    // The country in which the person resides.
-    bsl::string country;
-};
-
-// Return true if the specified 'lhs' has the same value as the specified 
-// 'rhs', otherwise return false. 
-bool operator==(const TestPerson& lhs, const TestPerson& rhs);
-
-// Return true if the specified 'lhs' does not have the same value as the 
-// specified 'rhs', otherwise return false. 
-bool operator!=(const TestPerson& lhs, const TestPerson& rhs);
-
-// Return true if the value of the specified 'lhs' is less than the value of 
-// the specified 'rhs', otherwise return false. 
-bool operator<(const TestPerson& lhs, const TestPerson& rhs);
-
-// Insert a formatted, human-readable description of the specified 'object' 
-// into the specified 'stream'. Return a reference to the modifiable 
-// 'stream'. 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestPerson& object);
-
-// Contribute the values of the salient attributes of the specified 'value' 
-// to the specified hash 'algorithm'. 
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestPerson& value);
-
-template <typename TYPE>
-void TestPerson::load(const TYPE& other)
-{
-    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
-        this->id = other.id;
-        this->name = other.name;
-        this->address = other.address;
-        this->country = other.country;
-    }
-}
-
-template <typename TYPE>
-void TestPerson::store(TYPE* other) const
-{
-    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
-        other->id = this->id;
-        other->name = this->name;
-        other->address = this->address;
-        other->country = this->country;
-    }
-
-}
-
-template <typename HASH_ALGORITHM>
-void TestPerson::hash(HASH_ALGORITHM& algorithm)
-{
-    using bslh::hashAppend;
-    hashAppend(algorithm, this->id);
-    hashAppend(algorithm, this->name);
-    hashAppend(algorithm, this->address);
-    hashAppend(algorithm, this->country);
-}
-
-template <typename MANIPULATOR>
-int TestPerson::manipulateAttributes(MANIPULATOR& manipulator)
-{
-    int rc;
-
-    rc = manipulator(
-        &this->id,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->name,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->address,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ADDRESS]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->country,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COUNTRY]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename MANIPULATOR>
-int TestPerson::manipulateAttribute(MANIPULATOR& manipulator, int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return manipulator(
-            &this->id,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    case ATTRIBUTE_ID_NAME:
-        return manipulator(
-            &this->name,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
-    case ATTRIBUTE_ID_ADDRESS:
-        return manipulator(
-            &this->address,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ADDRESS]);
-    case ATTRIBUTE_ID_COUNTRY:
-        return manipulator(
-            &this->country,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COUNTRY]);
-    default:
-        return -1;
-    };
-}
-
-template <typename MANIPULATOR>
-int TestPerson::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
-{
-    const bdlat_AttributeInfo* attributeInfo =
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return manipulateAttribute(manipulator, attributeInfo->d_id);
-}
-
-template <typename ACCESSOR>
-int TestPerson::accessAttributes(ACCESSOR& accessor) const
-{
-    int rc;
-
-    rc = accessor(
-        this->id,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->name,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->address,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ADDRESS]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->country,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COUNTRY]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename ACCESSOR>
-int TestPerson::accessAttribute(ACCESSOR& accessor, int id) const
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return accessor(
-            this->id,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    case ATTRIBUTE_ID_NAME:
-        return accessor(
-            this->name,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
-    case ATTRIBUTE_ID_ADDRESS:
-        return accessor(
-            this->address,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ADDRESS]);
-    case ATTRIBUTE_ID_COUNTRY:
-        return accessor(
-            this->country,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COUNTRY]);
-    default:
-        return -1;
-    };
-}
-
-template <typename ACCESSOR>
-int TestPerson::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
-{
-    const bdlat_AttributeInfo* attributeInfo = 
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return accessAttribute(accessor, attributeInfo->d_id);
-}
-
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestPerson& value)
-{
-    value.hash(algorithm);
-}
-
-} // close namespace ntcf
-
-BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
-    ntcf::TestPerson)
-
-namespace ntcf { 
-
-// Describes an ask to sell a security.
-class TestAsk
-{
-public:
-    enum AttributeIndex {
-        ATTRIBUTE_INDEX_ID = 0,
-        ATTRIBUTE_INDEX_SELLER = 1,
-        ATTRIBUTE_INDEX_SECURITY = 2,
-        ATTRIBUTE_INDEX_SHARES = 3,
-        ATTRIBUTE_INDEX_PRICE = 4,
-        ATTRIBUTE_INDEX_DEADLINE = 5
-    };
-
-    enum AttributeId {
-        ATTRIBUTE_ID_ID = 0,
-        ATTRIBUTE_ID_SELLER = 1,
-        ATTRIBUTE_ID_SECURITY = 2,
-        ATTRIBUTE_ID_SHARES = 3,
-        ATTRIBUTE_ID_PRICE = 4,
-        ATTRIBUTE_ID_DEADLINE = 5
-    };
-
-    enum Constant {
-        NUM_ATTRIBUTES = 6
-    };
-
-    // Create a new object having the default value. Optionally specify a 
-    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
-    // currently installed default allocator is used. 
-    explicit TestAsk(bslma::Allocator* allocator = 0);
-
-    // Create a new object having the same value as the specified 'original' 
-    // object. Optionally specify a 'basicAllocator' used to supply memory. 
-    // If 'basicAllocator' is 0, the currently installed default allocator is 
-    // used. 
-    TestAsk(const TestAsk& original, bslma::Allocator* allocator = 0);
-
-    // Destroy this object. 
-    ~TestAsk();
-
-    // Assign the value of the specified 'other' object to this object. 
-    // Return a reference to this modifiable object. 
-    TestAsk& operator=(const TestAsk& other);
-
-    // Reset the value of this object its value upon default construction. 
-    void reset();
-
-    // Swap the value of this object with the value of the specified 'other' 
-    // object. 
-    void swap(TestAsk& other);
-
-    // Load the value from the fields in the specified specified 'other' 
-    // value that match the fields of this value into this value. 
-    template <typename TYPE>
-    void load(const TYPE& other);
-
-    // Store the value into the fields in the specified specified 'other' 
-    // value that match the fields of this value. 
-    template <typename TYPE>
-    void store(TYPE* other) const;
-
-    // Return true if this object has the same value as the specified 'other' 
-    // object, otherwise return false. 
-    bool equals(const TestAsk& other) const;
-
-    // Return true if the value of this object is less than the value of the 
-    // specified 'other' object, otherwise return false. 
-    bool less(const TestAsk& other) const;
-
-    // Contribute the values of the salient attributes of this object to the 
-    // specified hash 'algorithm'. 
-    template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm);
-
-    // Format this object to the specified output 'stream' at the optionally 
-    // specified indentation 'level' and return a reference to the modifiable 
-    // 'stream'. If 'level' is specified, optionally specify 
-    // 'spacesPerLevel', the number of spaces per indentation level for this 
-    // and all of its nested objects. Each line is indented by the absolute 
-    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
-    // indentation of the first line. If 'spacesPerLevel' is negative, 
-    // suppress line breaks and format the entire output on one line. If 
-    // 'stream' is initially invalid, this operation has no effect. Note that 
-    // a trailing newline is provided in multiline mode only. 
-    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
-
-    // Return the compiler-independant name for this class. 
-    static const char CLASS_NAME[];
-
-    // The attribute info array, indexed by attribute index. 
-    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'id' if the attribute exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'name' of the specified 'nameLength' if the attribute 
-    // exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
-
-    // Invoke the specified 'manipulator' sequentially on the address of each 
-    // (modifiable) attribute of this object, supplying 'manipulator' with 
-    // the corresponding attribute information structure until such 
-    // invocation returns a non-zero value. Return the value from the last 
-    // invocation of 'manipulator' (i.e., the invocation that terminated the 
-    // sequence). 
-    template <typename MANIPULATOR>
-    int manipulateAttributes(MANIPULATOR& manipulator);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'id', supplying 'manipulator' 
-    // with the corresponding attribute information structure. Return the 
-    // value returned from the invocation of 'manipulator' if 'id' identifies 
-    // an attribute of this class, and -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, int id);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'manipulator' if 'name' identifies an attribute of this class, and 
-    // -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
-
-    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
-    // attribute of this object, supplying 'accessor' with the corresponding 
-    // attribute information structure until such invocation returns a 
-    // non-zero value. Return the value from the last invocation of 
-    // 'accessor' (i.e., the invocation that terminated the sequence). 
-    template <typename ACCESSOR>
-    int accessAttributes(ACCESSOR& accessor) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'id', supplying 'accessor' with 
-    // the corresponding attribute information structure. Return the value 
-    // returned from the invocation of 'accessor' if 'id' identifies an 
-    // attribute of this class, and -1 otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, int id) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'accessor' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
-    // otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
-
-    // The unique identifier of the ask.
-    bsls::Types::Uint64 id;
-
-    // The person making the ask.
-    ntcf::TestPerson seller;
-
-    // The security to be traded.
-    ntcf::TestSecurity security;
-
-    // The number of shares to sell.
-    bsls::Types::Uint64 shares;
-
-    // The minimum value of the bidded price.
-    double price;
-
-    // The deadline after which the ask expires.
-    bdlt::DatetimeTz deadline;
-};
-
-// Return true if the specified 'lhs' has the same value as the specified 
-// 'rhs', otherwise return false. 
-bool operator==(const TestAsk& lhs, const TestAsk& rhs);
-
-// Return true if the specified 'lhs' does not have the same value as the 
-// specified 'rhs', otherwise return false. 
-bool operator!=(const TestAsk& lhs, const TestAsk& rhs);
-
-// Return true if the value of the specified 'lhs' is less than the value of 
-// the specified 'rhs', otherwise return false. 
-bool operator<(const TestAsk& lhs, const TestAsk& rhs);
-
-// Insert a formatted, human-readable description of the specified 'object' 
-// into the specified 'stream'. Return a reference to the modifiable 
-// 'stream'. 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestAsk& object);
-
-// Contribute the values of the salient attributes of the specified 'value' 
-// to the specified hash 'algorithm'. 
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestAsk& value);
-
-template <typename TYPE>
-void TestAsk::load(const TYPE& other)
-{
-    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
-        this->id = other.id;
-        this->seller = other.seller;
-        this->security = other.security;
-        this->shares = other.shares;
-        this->price = other.price;
-        this->deadline = other.deadline;
-    }
-}
-
-template <typename TYPE>
-void TestAsk::store(TYPE* other) const
-{
-    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
-        other->id = this->id;
-        other->seller = this->seller;
-        other->security = this->security;
-        other->shares = this->shares;
-        other->price = this->price;
-        other->deadline = this->deadline;
-    }
-
-}
-
-template <typename HASH_ALGORITHM>
-void TestAsk::hash(HASH_ALGORITHM& algorithm)
-{
-    using bslh::hashAppend;
-    hashAppend(algorithm, this->id);
-    hashAppend(algorithm, this->seller);
-    hashAppend(algorithm, this->security);
-    hashAppend(algorithm, this->shares);
-    hashAppend(algorithm, this->price);
-    hashAppend(algorithm, this->deadline);
-}
-
-template <typename MANIPULATOR>
-int TestAsk::manipulateAttributes(MANIPULATOR& manipulator)
-{
-    int rc;
-
-    rc = manipulator(
-        &this->id,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->seller,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->security,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->shares,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->price,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->deadline,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename MANIPULATOR>
-int TestAsk::manipulateAttribute(MANIPULATOR& manipulator, int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return manipulator(
-            &this->id,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    case ATTRIBUTE_ID_SELLER:
-        return manipulator(
-            &this->seller,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
-    case ATTRIBUTE_ID_SECURITY:
-        return manipulator(
-            &this->security,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
-    case ATTRIBUTE_ID_SHARES:
-        return manipulator(
-            &this->shares,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
-    case ATTRIBUTE_ID_PRICE:
-        return manipulator(
-            &this->price,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
-    case ATTRIBUTE_ID_DEADLINE:
-        return manipulator(
-            &this->deadline,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE]);
-    default:
-        return -1;
-    };
-}
-
-template <typename MANIPULATOR>
-int TestAsk::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
-{
-    const bdlat_AttributeInfo* attributeInfo =
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return manipulateAttribute(manipulator, attributeInfo->d_id);
-}
-
-template <typename ACCESSOR>
-int TestAsk::accessAttributes(ACCESSOR& accessor) const
-{
-    int rc;
-
-    rc = accessor(
-        this->id,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->seller,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->security,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->shares,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->price,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->deadline,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename ACCESSOR>
-int TestAsk::accessAttribute(ACCESSOR& accessor, int id) const
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return accessor(
-            this->id,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    case ATTRIBUTE_ID_SELLER:
-        return accessor(
-            this->seller,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
-    case ATTRIBUTE_ID_SECURITY:
-        return accessor(
-            this->security,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
-    case ATTRIBUTE_ID_SHARES:
-        return accessor(
-            this->shares,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
-    case ATTRIBUTE_ID_PRICE:
-        return accessor(
-            this->price,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
-    case ATTRIBUTE_ID_DEADLINE:
-        return accessor(
-            this->deadline,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE]);
-    default:
-        return -1;
-    };
-}
-
-template <typename ACCESSOR>
-int TestAsk::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
-{
-    const bdlat_AttributeInfo* attributeInfo = 
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return accessAttribute(accessor, attributeInfo->d_id);
-}
-
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestAsk& value)
-{
-    value.hash(algorithm);
-}
-
-} // close namespace ntcf
-
-BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
-    ntcf::TestAsk)
-
-namespace ntcf { 
-
 // Describes a bid to buy a security.
 class TestBid
 {
@@ -3043,706 +4034,6 @@ void hashAppend(HASH_ALGORITHM& algorithm, const TestBid& value)
 
 BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
     ntcf::TestBid)
-
-namespace ntcf { 
-
-// Describes a completed trade.
-class TestTrade
-{
-public:
-    enum AttributeIndex {
-        ATTRIBUTE_INDEX_ID = 0,
-        ATTRIBUTE_INDEX_BUYER = 1,
-        ATTRIBUTE_INDEX_SELLER = 2,
-        ATTRIBUTE_INDEX_SECURITY = 3,
-        ATTRIBUTE_INDEX_SHARES = 4,
-        ATTRIBUTE_INDEX_PRICE = 5,
-        ATTRIBUTE_INDEX_TIMESTAMP = 6
-    };
-
-    enum AttributeId {
-        ATTRIBUTE_ID_ID = 0,
-        ATTRIBUTE_ID_BUYER = 1,
-        ATTRIBUTE_ID_SELLER = 2,
-        ATTRIBUTE_ID_SECURITY = 3,
-        ATTRIBUTE_ID_SHARES = 4,
-        ATTRIBUTE_ID_PRICE = 5,
-        ATTRIBUTE_ID_TIMESTAMP = 6
-    };
-
-    enum Constant {
-        NUM_ATTRIBUTES = 7
-    };
-
-    // Create a new object having the default value. Optionally specify a 
-    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
-    // currently installed default allocator is used. 
-    explicit TestTrade(bslma::Allocator* allocator = 0);
-
-    // Create a new object having the same value as the specified 'original' 
-    // object. Optionally specify a 'basicAllocator' used to supply memory. 
-    // If 'basicAllocator' is 0, the currently installed default allocator is 
-    // used. 
-    TestTrade(const TestTrade& original, bslma::Allocator* allocator = 0);
-
-    // Destroy this object. 
-    ~TestTrade();
-
-    // Assign the value of the specified 'other' object to this object. 
-    // Return a reference to this modifiable object. 
-    TestTrade& operator=(const TestTrade& other);
-
-    // Reset the value of this object its value upon default construction. 
-    void reset();
-
-    // Swap the value of this object with the value of the specified 'other' 
-    // object. 
-    void swap(TestTrade& other);
-
-    // Load the value from the fields in the specified specified 'other' 
-    // value that match the fields of this value into this value. 
-    template <typename TYPE>
-    void load(const TYPE& other);
-
-    // Store the value into the fields in the specified specified 'other' 
-    // value that match the fields of this value. 
-    template <typename TYPE>
-    void store(TYPE* other) const;
-
-    // Return true if this object has the same value as the specified 'other' 
-    // object, otherwise return false. 
-    bool equals(const TestTrade& other) const;
-
-    // Return true if the value of this object is less than the value of the 
-    // specified 'other' object, otherwise return false. 
-    bool less(const TestTrade& other) const;
-
-    // Contribute the values of the salient attributes of this object to the 
-    // specified hash 'algorithm'. 
-    template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm);
-
-    // Format this object to the specified output 'stream' at the optionally 
-    // specified indentation 'level' and return a reference to the modifiable 
-    // 'stream'. If 'level' is specified, optionally specify 
-    // 'spacesPerLevel', the number of spaces per indentation level for this 
-    // and all of its nested objects. Each line is indented by the absolute 
-    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
-    // indentation of the first line. If 'spacesPerLevel' is negative, 
-    // suppress line breaks and format the entire output on one line. If 
-    // 'stream' is initially invalid, this operation has no effect. Note that 
-    // a trailing newline is provided in multiline mode only. 
-    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
-
-    // Return the compiler-independant name for this class. 
-    static const char CLASS_NAME[];
-
-    // The attribute info array, indexed by attribute index. 
-    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'id' if the attribute exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'name' of the specified 'nameLength' if the attribute 
-    // exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
-
-    // Invoke the specified 'manipulator' sequentially on the address of each 
-    // (modifiable) attribute of this object, supplying 'manipulator' with 
-    // the corresponding attribute information structure until such 
-    // invocation returns a non-zero value. Return the value from the last 
-    // invocation of 'manipulator' (i.e., the invocation that terminated the 
-    // sequence). 
-    template <typename MANIPULATOR>
-    int manipulateAttributes(MANIPULATOR& manipulator);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'id', supplying 'manipulator' 
-    // with the corresponding attribute information structure. Return the 
-    // value returned from the invocation of 'manipulator' if 'id' identifies 
-    // an attribute of this class, and -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, int id);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'manipulator' if 'name' identifies an attribute of this class, and 
-    // -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
-
-    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
-    // attribute of this object, supplying 'accessor' with the corresponding 
-    // attribute information structure until such invocation returns a 
-    // non-zero value. Return the value from the last invocation of 
-    // 'accessor' (i.e., the invocation that terminated the sequence). 
-    template <typename ACCESSOR>
-    int accessAttributes(ACCESSOR& accessor) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'id', supplying 'accessor' with 
-    // the corresponding attribute information structure. Return the value 
-    // returned from the invocation of 'accessor' if 'id' identifies an 
-    // attribute of this class, and -1 otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, int id) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'accessor' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
-    // otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
-
-    // The unique identifier of the trade.
-    bsls::Types::Uint64 id;
-
-    // The person making the bid.
-    ntcf::TestPerson buyer;
-
-    // The person making the ask.
-    ntcf::TestPerson seller;
-
-    // The security that was traded.
-    ntcf::TestSecurity security;
-
-    // The number of shares to traded.
-    bsls::Types::Uint64 shares;
-
-    // The price of the shares at the time of the trade.
-    double price;
-
-    // The date and time at which the transaction occured.
-    bdlt::DatetimeTz timestamp;
-};
-
-// Return true if the specified 'lhs' has the same value as the specified 
-// 'rhs', otherwise return false. 
-bool operator==(const TestTrade& lhs, const TestTrade& rhs);
-
-// Return true if the specified 'lhs' does not have the same value as the 
-// specified 'rhs', otherwise return false. 
-bool operator!=(const TestTrade& lhs, const TestTrade& rhs);
-
-// Return true if the value of the specified 'lhs' is less than the value of 
-// the specified 'rhs', otherwise return false. 
-bool operator<(const TestTrade& lhs, const TestTrade& rhs);
-
-// Insert a formatted, human-readable description of the specified 'object' 
-// into the specified 'stream'. Return a reference to the modifiable 
-// 'stream'. 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestTrade& object);
-
-// Contribute the values of the salient attributes of the specified 'value' 
-// to the specified hash 'algorithm'. 
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestTrade& value);
-
-template <typename TYPE>
-void TestTrade::load(const TYPE& other)
-{
-    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
-        this->id = other.id;
-        this->buyer = other.buyer;
-        this->seller = other.seller;
-        this->security = other.security;
-        this->shares = other.shares;
-        this->price = other.price;
-        this->timestamp = other.timestamp;
-    }
-}
-
-template <typename TYPE>
-void TestTrade::store(TYPE* other) const
-{
-    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
-        other->id = this->id;
-        other->buyer = this->buyer;
-        other->seller = this->seller;
-        other->security = this->security;
-        other->shares = this->shares;
-        other->price = this->price;
-        other->timestamp = this->timestamp;
-    }
-
-}
-
-template <typename HASH_ALGORITHM>
-void TestTrade::hash(HASH_ALGORITHM& algorithm)
-{
-    using bslh::hashAppend;
-    hashAppend(algorithm, this->id);
-    hashAppend(algorithm, this->buyer);
-    hashAppend(algorithm, this->seller);
-    hashAppend(algorithm, this->security);
-    hashAppend(algorithm, this->shares);
-    hashAppend(algorithm, this->price);
-    hashAppend(algorithm, this->timestamp);
-}
-
-template <typename MANIPULATOR>
-int TestTrade::manipulateAttributes(MANIPULATOR& manipulator)
-{
-    int rc;
-
-    rc = manipulator(
-        &this->id,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->buyer,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BUYER]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->seller,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->security,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->shares,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->price,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->timestamp,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TIMESTAMP]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename MANIPULATOR>
-int TestTrade::manipulateAttribute(MANIPULATOR& manipulator, int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return manipulator(
-            &this->id,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    case ATTRIBUTE_ID_BUYER:
-        return manipulator(
-            &this->buyer,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BUYER]);
-    case ATTRIBUTE_ID_SELLER:
-        return manipulator(
-            &this->seller,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
-    case ATTRIBUTE_ID_SECURITY:
-        return manipulator(
-            &this->security,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
-    case ATTRIBUTE_ID_SHARES:
-        return manipulator(
-            &this->shares,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
-    case ATTRIBUTE_ID_PRICE:
-        return manipulator(
-            &this->price,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
-    case ATTRIBUTE_ID_TIMESTAMP:
-        return manipulator(
-            &this->timestamp,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TIMESTAMP]);
-    default:
-        return -1;
-    };
-}
-
-template <typename MANIPULATOR>
-int TestTrade::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
-{
-    const bdlat_AttributeInfo* attributeInfo =
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return manipulateAttribute(manipulator, attributeInfo->d_id);
-}
-
-template <typename ACCESSOR>
-int TestTrade::accessAttributes(ACCESSOR& accessor) const
-{
-    int rc;
-
-    rc = accessor(
-        this->id,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->buyer,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BUYER]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->seller,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->security,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->shares,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->price,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->timestamp,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TIMESTAMP]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename ACCESSOR>
-int TestTrade::accessAttribute(ACCESSOR& accessor, int id) const
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return accessor(
-            this->id,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    case ATTRIBUTE_ID_BUYER:
-        return accessor(
-            this->buyer,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BUYER]);
-    case ATTRIBUTE_ID_SELLER:
-        return accessor(
-            this->seller,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER]);
-    case ATTRIBUTE_ID_SECURITY:
-        return accessor(
-            this->security,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY]);
-    case ATTRIBUTE_ID_SHARES:
-        return accessor(
-            this->shares,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES]);
-    case ATTRIBUTE_ID_PRICE:
-        return accessor(
-            this->price,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE]);
-    case ATTRIBUTE_ID_TIMESTAMP:
-        return accessor(
-            this->timestamp,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TIMESTAMP]);
-    default:
-        return -1;
-    };
-}
-
-template <typename ACCESSOR>
-int TestTrade::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
-{
-    const bdlat_AttributeInfo* attributeInfo = 
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return accessAttribute(accessor, attributeInfo->d_id);
-}
-
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestTrade& value)
-{
-    value.hash(algorithm);
-}
-
-} // close namespace ntcf
-
-BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
-    ntcf::TestTrade)
-
-namespace ntcf { 
-
-// Describes a trade subscription.
-class TestSubscription
-{
-public:
-    enum AttributeIndex {
-    };
-
-    enum AttributeId {
-    };
-
-    enum Constant {
-        NUM_ATTRIBUTES = 0
-    };
-
-    // Create a new object having the default value. 
-    TestSubscription();
-
-    // Create a new object having the same value as the specified 'original' 
-    // object. 
-    TestSubscription(const TestSubscription& original);
-
-    // Destroy this object. 
-    ~TestSubscription();
-
-    // Assign the value of the specified 'other' object to this object. 
-    // Return a reference to this modifiable object. 
-    TestSubscription& operator=(const TestSubscription& other);
-
-    // Reset the value of this object its value upon default construction. 
-    void reset();
-
-    // Swap the value of this object with the value of the specified 'other' 
-    // object. 
-    void swap(TestSubscription& other);
-
-    // Load the value from the fields in the specified specified 'other' 
-    // value that match the fields of this value into this value. 
-    template <typename TYPE>
-    void load(const TYPE& other);
-
-    // Store the value into the fields in the specified specified 'other' 
-    // value that match the fields of this value. 
-    template <typename TYPE>
-    void store(TYPE* other) const;
-
-    // Return true if this object has the same value as the specified 'other' 
-    // object, otherwise return false. 
-    bool equals(const TestSubscription& other) const;
-
-    // Return true if the value of this object is less than the value of the 
-    // specified 'other' object, otherwise return false. 
-    bool less(const TestSubscription& other) const;
-
-    // Contribute the values of the salient attributes of this object to the 
-    // specified hash 'algorithm'. 
-    template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm);
-
-    // Format this object to the specified output 'stream' at the optionally 
-    // specified indentation 'level' and return a reference to the modifiable 
-    // 'stream'. If 'level' is specified, optionally specify 
-    // 'spacesPerLevel', the number of spaces per indentation level for this 
-    // and all of its nested objects. Each line is indented by the absolute 
-    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
-    // indentation of the first line. If 'spacesPerLevel' is negative, 
-    // suppress line breaks and format the entire output on one line. If 
-    // 'stream' is initially invalid, this operation has no effect. Note that 
-    // a trailing newline is provided in multiline mode only. 
-    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
-
-    // Return the compiler-independant name for this class. 
-    static const char CLASS_NAME[];
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'id' if the attribute exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'name' of the specified 'nameLength' if the attribute 
-    // exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
-
-    // Invoke the specified 'manipulator' sequentially on the address of each 
-    // (modifiable) attribute of this object, supplying 'manipulator' with 
-    // the corresponding attribute information structure until such 
-    // invocation returns a non-zero value. Return the value from the last 
-    // invocation of 'manipulator' (i.e., the invocation that terminated the 
-    // sequence). 
-    template <typename MANIPULATOR>
-    int manipulateAttributes(MANIPULATOR& manipulator);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'id', supplying 'manipulator' 
-    // with the corresponding attribute information structure. Return the 
-    // value returned from the invocation of 'manipulator' if 'id' identifies 
-    // an attribute of this class, and -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, int id);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'manipulator' if 'name' identifies an attribute of this class, and 
-    // -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
-
-    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
-    // attribute of this object, supplying 'accessor' with the corresponding 
-    // attribute information structure until such invocation returns a 
-    // non-zero value. Return the value from the last invocation of 
-    // 'accessor' (i.e., the invocation that terminated the sequence). 
-    template <typename ACCESSOR>
-    int accessAttributes(ACCESSOR& accessor) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'id', supplying 'accessor' with 
-    // the corresponding attribute information structure. Return the value 
-    // returned from the invocation of 'accessor' if 'id' identifies an 
-    // attribute of this class, and -1 otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, int id) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'accessor' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
-    // otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
-};
-
-// Return true if the specified 'lhs' has the same value as the specified 
-// 'rhs', otherwise return false. 
-bool operator==(const TestSubscription& lhs, const TestSubscription& rhs);
-
-// Return true if the specified 'lhs' does not have the same value as the 
-// specified 'rhs', otherwise return false. 
-bool operator!=(const TestSubscription& lhs, const TestSubscription& rhs);
-
-// Return true if the value of the specified 'lhs' is less than the value of 
-// the specified 'rhs', otherwise return false. 
-bool operator<(const TestSubscription& lhs, const TestSubscription& rhs);
-
-// Insert a formatted, human-readable description of the specified 'object' 
-// into the specified 'stream'. Return a reference to the modifiable 
-// 'stream'. 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestSubscription& object);
-
-// Contribute the values of the salient attributes of the specified 'value' 
-// to the specified hash 'algorithm'. 
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestSubscription& value);
-
-template <typename TYPE>
-void TestSubscription::load(const TYPE& other)
-{
-    (void)(other);
-}
-
-template <typename TYPE>
-void TestSubscription::store(TYPE* other) const
-{
-    (void)(other);
-}
-
-template <typename HASH_ALGORITHM>
-void TestSubscription::hash(HASH_ALGORITHM& algorithm)
-{
-    (void)(algorithm);
-}
-
-template <typename MANIPULATOR>
-int TestSubscription::manipulateAttributes(MANIPULATOR& manipulator)
-{
-    (void)(manipulator);
-    return 0;
-}
-
-template <typename MANIPULATOR>
-int TestSubscription::manipulateAttribute(MANIPULATOR& manipulator, int id)
-{
-    (void)(manipulator);
-    (void)(id);
-    return -1;
-}
-
-template <typename MANIPULATOR>
-int TestSubscription::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
-{
-    (void)(manipulator);
-    (void)(name);
-    (void)(nameLength);
-    return -1;
-}
-
-template <typename ACCESSOR>
-int TestSubscription::accessAttributes(ACCESSOR& accessor) const
-{
-    (void)(accessor);
-    return 0;
-}
-
-template <typename ACCESSOR>
-int TestSubscription::accessAttribute(ACCESSOR& accessor, int id) const
-{
-    (void)(accessor);
-    (void)(id);
-    return -1;
-}
-
-template <typename ACCESSOR>
-int TestSubscription::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
-{
-    (void)(accessor);
-    (void)(name);
-    (void)(nameLength);
-    return -1;
-}
-
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestSubscription& value)
-{
-    value.hash(algorithm);
-}
-
-} // close namespace ntcf
-
-BDLAT_DECL_SEQUENCE_WITH_BITWISEMOVEABLE_TRAITS(
-    ntcf::TestSubscription)
 
 namespace ntcf { 
 
@@ -4492,6 +4783,288 @@ BDLAT_DECL_CHOICE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
 
 namespace ntcf { 
 
+// Describes a control message inform a peer that the sender is able to
+// transmit.
+class TestControlHeartbeat
+{
+public:
+    enum AttributeIndex {
+        ATTRIBUTE_INDEX_ACKNOWLEDGE = 0
+    };
+
+    enum AttributeId {
+        ATTRIBUTE_ID_ACKNOWLEDGE = 0
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 1
+    };
+
+    // Create a new object having the default value. 
+    TestControlHeartbeat();
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. 
+    TestControlHeartbeat(const TestControlHeartbeat& original);
+
+    // Destroy this object. 
+    ~TestControlHeartbeat();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestControlHeartbeat& operator=(const TestControlHeartbeat& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestControlHeartbeat& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestControlHeartbeat& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestControlHeartbeat& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+
+    // The flag indicating whether the control must be acknowledged.
+    bool acknowledge;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestControlHeartbeat& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestControlHeartbeat& value);
+
+template <typename TYPE>
+void TestControlHeartbeat::load(const TYPE& other)
+{
+    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
+        this->acknowledge = other.acknowledge;
+    }
+}
+
+template <typename TYPE>
+void TestControlHeartbeat::store(TYPE* other) const
+{
+    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
+        other->acknowledge = this->acknowledge;
+    }
+
+}
+
+template <typename HASH_ALGORITHM>
+void TestControlHeartbeat::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, this->acknowledge);
+}
+
+template <typename MANIPULATOR>
+int TestControlHeartbeat::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = manipulator(
+        &this->acknowledge,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACKNOWLEDGE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestControlHeartbeat::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ACKNOWLEDGE:
+        return manipulator(
+            &this->acknowledge,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACKNOWLEDGE]);
+    default:
+        return -1;
+    };
+}
+
+template <typename MANIPULATOR>
+int TestControlHeartbeat::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    const bdlat_AttributeInfo* attributeInfo =
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return manipulateAttribute(manipulator, attributeInfo->d_id);
+}
+
+template <typename ACCESSOR>
+int TestControlHeartbeat::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = accessor(
+        this->acknowledge,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACKNOWLEDGE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestControlHeartbeat::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ACKNOWLEDGE:
+        return accessor(
+            this->acknowledge,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACKNOWLEDGE]);
+    default:
+        return -1;
+    };
+}
+
+template <typename ACCESSOR>
+int TestControlHeartbeat::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    const bdlat_AttributeInfo* attributeInfo = 
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return accessAttribute(accessor, attributeInfo->d_id);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestControlHeartbeat& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestControlHeartbeat)
+
+namespace ntcf { 
+
 // Describes a control message to enable or disable encryption.
 class TestControlEncryption
 {
@@ -4800,288 +5373,6 @@ void hashAppend(HASH_ALGORITHM& algorithm, const TestControlEncryption& value)
 
 BDLAT_DECL_SEQUENCE_WITH_BITWISEMOVEABLE_TRAITS(
     ntcf::TestControlEncryption)
-
-namespace ntcf { 
-
-// Describes a control message inform a peer that the sender is able to
-// transmit.
-class TestControlHeartbeat
-{
-public:
-    enum AttributeIndex {
-        ATTRIBUTE_INDEX_ACKNOWLEDGE = 0
-    };
-
-    enum AttributeId {
-        ATTRIBUTE_ID_ACKNOWLEDGE = 0
-    };
-
-    enum Constant {
-        NUM_ATTRIBUTES = 1
-    };
-
-    // Create a new object having the default value. 
-    TestControlHeartbeat();
-
-    // Create a new object having the same value as the specified 'original' 
-    // object. 
-    TestControlHeartbeat(const TestControlHeartbeat& original);
-
-    // Destroy this object. 
-    ~TestControlHeartbeat();
-
-    // Assign the value of the specified 'other' object to this object. 
-    // Return a reference to this modifiable object. 
-    TestControlHeartbeat& operator=(const TestControlHeartbeat& other);
-
-    // Reset the value of this object its value upon default construction. 
-    void reset();
-
-    // Swap the value of this object with the value of the specified 'other' 
-    // object. 
-    void swap(TestControlHeartbeat& other);
-
-    // Load the value from the fields in the specified specified 'other' 
-    // value that match the fields of this value into this value. 
-    template <typename TYPE>
-    void load(const TYPE& other);
-
-    // Store the value into the fields in the specified specified 'other' 
-    // value that match the fields of this value. 
-    template <typename TYPE>
-    void store(TYPE* other) const;
-
-    // Return true if this object has the same value as the specified 'other' 
-    // object, otherwise return false. 
-    bool equals(const TestControlHeartbeat& other) const;
-
-    // Return true if the value of this object is less than the value of the 
-    // specified 'other' object, otherwise return false. 
-    bool less(const TestControlHeartbeat& other) const;
-
-    // Contribute the values of the salient attributes of this object to the 
-    // specified hash 'algorithm'. 
-    template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm);
-
-    // Format this object to the specified output 'stream' at the optionally 
-    // specified indentation 'level' and return a reference to the modifiable 
-    // 'stream'. If 'level' is specified, optionally specify 
-    // 'spacesPerLevel', the number of spaces per indentation level for this 
-    // and all of its nested objects. Each line is indented by the absolute 
-    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
-    // indentation of the first line. If 'spacesPerLevel' is negative, 
-    // suppress line breaks and format the entire output on one line. If 
-    // 'stream' is initially invalid, this operation has no effect. Note that 
-    // a trailing newline is provided in multiline mode only. 
-    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
-
-    // Return the compiler-independant name for this class. 
-    static const char CLASS_NAME[];
-
-    // The attribute info array, indexed by attribute index. 
-    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'id' if the attribute exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'name' of the specified 'nameLength' if the attribute 
-    // exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
-
-    // Invoke the specified 'manipulator' sequentially on the address of each 
-    // (modifiable) attribute of this object, supplying 'manipulator' with 
-    // the corresponding attribute information structure until such 
-    // invocation returns a non-zero value. Return the value from the last 
-    // invocation of 'manipulator' (i.e., the invocation that terminated the 
-    // sequence). 
-    template <typename MANIPULATOR>
-    int manipulateAttributes(MANIPULATOR& manipulator);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'id', supplying 'manipulator' 
-    // with the corresponding attribute information structure. Return the 
-    // value returned from the invocation of 'manipulator' if 'id' identifies 
-    // an attribute of this class, and -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, int id);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'manipulator' if 'name' identifies an attribute of this class, and 
-    // -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
-
-    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
-    // attribute of this object, supplying 'accessor' with the corresponding 
-    // attribute information structure until such invocation returns a 
-    // non-zero value. Return the value from the last invocation of 
-    // 'accessor' (i.e., the invocation that terminated the sequence). 
-    template <typename ACCESSOR>
-    int accessAttributes(ACCESSOR& accessor) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'id', supplying 'accessor' with 
-    // the corresponding attribute information structure. Return the value 
-    // returned from the invocation of 'accessor' if 'id' identifies an 
-    // attribute of this class, and -1 otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, int id) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'accessor' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
-    // otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
-
-    // The flag indicating whether the control must be acknowledged.
-    bool acknowledge;
-};
-
-// Return true if the specified 'lhs' has the same value as the specified 
-// 'rhs', otherwise return false. 
-bool operator==(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs);
-
-// Return true if the specified 'lhs' does not have the same value as the 
-// specified 'rhs', otherwise return false. 
-bool operator!=(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs);
-
-// Return true if the value of the specified 'lhs' is less than the value of 
-// the specified 'rhs', otherwise return false. 
-bool operator<(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs);
-
-// Insert a formatted, human-readable description of the specified 'object' 
-// into the specified 'stream'. Return a reference to the modifiable 
-// 'stream'. 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestControlHeartbeat& object);
-
-// Contribute the values of the salient attributes of the specified 'value' 
-// to the specified hash 'algorithm'. 
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestControlHeartbeat& value);
-
-template <typename TYPE>
-void TestControlHeartbeat::load(const TYPE& other)
-{
-    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
-        this->acknowledge = other.acknowledge;
-    }
-}
-
-template <typename TYPE>
-void TestControlHeartbeat::store(TYPE* other) const
-{
-    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
-        other->acknowledge = this->acknowledge;
-    }
-
-}
-
-template <typename HASH_ALGORITHM>
-void TestControlHeartbeat::hash(HASH_ALGORITHM& algorithm)
-{
-    using bslh::hashAppend;
-    hashAppend(algorithm, this->acknowledge);
-}
-
-template <typename MANIPULATOR>
-int TestControlHeartbeat::manipulateAttributes(MANIPULATOR& manipulator)
-{
-    int rc;
-
-    rc = manipulator(
-        &this->acknowledge,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACKNOWLEDGE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename MANIPULATOR>
-int TestControlHeartbeat::manipulateAttribute(MANIPULATOR& manipulator, int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ACKNOWLEDGE:
-        return manipulator(
-            &this->acknowledge,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACKNOWLEDGE]);
-    default:
-        return -1;
-    };
-}
-
-template <typename MANIPULATOR>
-int TestControlHeartbeat::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
-{
-    const bdlat_AttributeInfo* attributeInfo =
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return manipulateAttribute(manipulator, attributeInfo->d_id);
-}
-
-template <typename ACCESSOR>
-int TestControlHeartbeat::accessAttributes(ACCESSOR& accessor) const
-{
-    int rc;
-
-    rc = accessor(
-        this->acknowledge,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACKNOWLEDGE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename ACCESSOR>
-int TestControlHeartbeat::accessAttribute(ACCESSOR& accessor, int id) const
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ACKNOWLEDGE:
-        return accessor(
-            this->acknowledge,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACKNOWLEDGE]);
-    default:
-        return -1;
-    };
-}
-
-template <typename ACCESSOR>
-int TestControlHeartbeat::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
-{
-    const bdlat_AttributeInfo* attributeInfo = 
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return accessAttribute(accessor, attributeInfo->d_id);
-}
-
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestControlHeartbeat& value)
-{
-    value.hash(algorithm);
-}
-
-} // close namespace ntcf
-
-BDLAT_DECL_SEQUENCE_WITH_BITWISEMOVEABLE_TRAITS(
-    ntcf::TestControlHeartbeat)
 
 namespace ntcf { 
 
@@ -6046,6 +6337,1696 @@ BDLAT_DECL_CHOICE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
 
 namespace ntcf { 
 
+// Describes the context of an acknowledgment result.
+class TestAcknowledgmentResultContext
+{
+public:
+    enum AttributeIndex {
+        ATTRIBUTE_INDEX_LATENCY = 0
+    };
+
+    enum AttributeId {
+        ATTRIBUTE_ID_LATENCY = 0
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 1
+    };
+
+    // Create a new object having the default value. 
+    TestAcknowledgmentResultContext();
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. 
+    TestAcknowledgmentResultContext(const TestAcknowledgmentResultContext& original);
+
+    // Destroy this object. 
+    ~TestAcknowledgmentResultContext();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestAcknowledgmentResultContext& operator=(const TestAcknowledgmentResultContext& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestAcknowledgmentResultContext& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestAcknowledgmentResultContext& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestAcknowledgmentResultContext& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+
+    // The latency of the operation.
+    bsls::TimeInterval latency;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestAcknowledgmentResultContext& lhs, const TestAcknowledgmentResultContext& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestAcknowledgmentResultContext& lhs, const TestAcknowledgmentResultContext& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestAcknowledgmentResultContext& lhs, const TestAcknowledgmentResultContext& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgmentResultContext& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestAcknowledgmentResultContext& value);
+
+template <typename TYPE>
+void TestAcknowledgmentResultContext::load(const TYPE& other)
+{
+    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
+        this->latency = other.latency;
+    }
+}
+
+template <typename TYPE>
+void TestAcknowledgmentResultContext::store(TYPE* other) const
+{
+    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
+        other->latency = this->latency;
+    }
+
+}
+
+template <typename HASH_ALGORITHM>
+void TestAcknowledgmentResultContext::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, this->latency);
+}
+
+template <typename MANIPULATOR>
+int TestAcknowledgmentResultContext::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = manipulator(
+        &this->latency,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestAcknowledgmentResultContext::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_LATENCY:
+        return manipulator(
+            &this->latency,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY]);
+    default:
+        return -1;
+    };
+}
+
+template <typename MANIPULATOR>
+int TestAcknowledgmentResultContext::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    const bdlat_AttributeInfo* attributeInfo =
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return manipulateAttribute(manipulator, attributeInfo->d_id);
+}
+
+template <typename ACCESSOR>
+int TestAcknowledgmentResultContext::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = accessor(
+        this->latency,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestAcknowledgmentResultContext::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    switch (id) {
+    case ATTRIBUTE_ID_LATENCY:
+        return accessor(
+            this->latency,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY]);
+    default:
+        return -1;
+    };
+}
+
+template <typename ACCESSOR>
+int TestAcknowledgmentResultContext::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    const bdlat_AttributeInfo* attributeInfo = 
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return accessAttribute(accessor, attributeInfo->d_id);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestAcknowledgmentResultContext& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestAcknowledgmentResultContext)
+
+namespace ntcf { 
+
+// Describes the value of an acknowledgment result.
+class TestAcknowledgmentResultValue
+{
+public:
+    enum SelectionIndex {
+        SELECTION_INDEX_UNDEFINED = -1,
+        SELECTION_INDEX_FAILURE = 0,
+        SELECTION_INDEX_SUCCESS = 1
+    };
+
+    enum SelectionId {
+        SELECTION_ID_UNDEFINED = -1,
+        SELECTION_ID_FAILURE = 0,
+        SELECTION_ID_SUCCESS = 1
+    };
+
+    enum Constant {
+        NUM_SELECTIONS = 2
+    };
+
+    // Create a new object having the default value. Optionally specify a 
+    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    // currently installed default allocator is used. 
+    explicit TestAcknowledgmentResultValue(bslma::Allocator* allocator = 0);
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. Optionally specify a 'basicAllocator' used to supply memory. 
+    // If 'basicAllocator' is 0, the currently installed default allocator is 
+    // used. 
+    TestAcknowledgmentResultValue(const TestAcknowledgmentResultValue& original, bslma::Allocator* allocator = 0);
+
+    // Destroy this object. 
+    ~TestAcknowledgmentResultValue();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestAcknowledgmentResultValue& operator=(const TestAcknowledgmentResultValue& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestAcknowledgmentResultValue& other);
+
+    // Set the value of this object to be the default for the selection 
+    // indicated by the specified 'id'. Return 0 on success, and non-zero 
+    // value otherwise (i.e., the selection is not found). 
+    int makeSelection(int id);
+
+    // Set the value of this object to be the default for the selection 
+    // indicated by the specified 'name' of the specified 'nameLength'. 
+    // Return 0 on success, and non-zero value otherwise (i.e., the selection 
+    // is not found). 
+    int makeSelection(const char* name, int nameLength);
+
+    // Make the "failure" field the current selection in the choice. Return a 
+    // reference to the modifiable "failure" field. 
+    ntcf::TestFault& makeFailure();
+
+    // Make the "failure" field the current selection in the choice. The new 
+    // selection initially has the specified 'value'. Return a reference to 
+    // the modifiable "failure" field. 
+    ntcf::TestFault& makeFailure(const ntcf::TestFault& value);
+
+    // Make the "success" field the current selection in the choice. Return a 
+    // reference to the modifiable "success" field. 
+    ntcf::TestTrade& makeSuccess();
+
+    // Make the "success" field the current selection in the choice. The new 
+    // selection initially has the specified 'value'. Return a reference to 
+    // the modifiable "success" field. 
+    ntcf::TestTrade& makeSuccess(const ntcf::TestTrade& value);
+
+    // Return a reference to the modifiable "failure" field value. The 
+    // behavior is undefined unless the "failure" field is the current 
+    // selection in the choice. 
+    ntcf::TestFault& failure();
+
+    // Return a reference to the modifiable "success" field value. The 
+    // behavior is undefined unless the "success" field is the current 
+    // selection in the choice. 
+    ntcf::TestTrade& success();
+
+    // Return a reference to the non-modifiable "failure" field value. The 
+    // behavior is undefined unless the "failure" field is the current 
+    // selection in the choice. 
+    const ntcf::TestFault& failure() const;
+
+    // Return a reference to the non-modifiable "success" field value. The 
+    // behavior is undefined unless the "success" field is the current 
+    // selection in the choice. 
+    const ntcf::TestTrade& success() const;
+
+    // Return true if no selection is defined in the choice, otherwise return 
+    // false. 
+    bool isUndefinedValue() const;
+
+    // Return true if the "failure" field is the current selection in the 
+    // choice, otherwise return false. 
+    bool isFailureValue() const;
+
+    // Return true if the "success" field is the current selection in the 
+    // choice, otherwise return false. 
+    bool isSuccessValue() const;
+
+    // Return the selection ID of the current selection in the choice. 
+    int selectionId() const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestAcknowledgmentResultValue& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestAcknowledgmentResultValue& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The selection info array, indexed by selection index. 
+    static const bdlat_SelectionInfo SELECTION_INFO_ARRAY[];
+
+    // Return selection information for the selection indicated by the 
+    // specified 'id' if the selection exists, and 0 otherwise. 
+    static const bdlat_SelectionInfo* lookupSelectionInfo(int id);
+
+    // Return selection information for the selection indicated by the 
+    // specified 'name' of the specified 'nameLength' if the selection 
+    // exists, and 0 otherwise. 
+    static const bdlat_SelectionInfo* lookupSelectionInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' on the address of the modifiable 
+    // selection, supplying 'manipulator' with the corresponding selection 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if this object has a defined selection, and -1 
+    // otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateSelection(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'accessor' on the non-modifiable selection, 
+    // supplying 'accessor' with the corresponding selection information 
+    // structure. Return the value returned from the invocation of 'accessor' 
+    // if this object has a defined selection, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessSelection(ACCESSOR& accessor) const;
+
+private:
+    union {
+        // The fault.
+        bsls::ObjectBuffer<ntcf::TestFault> d_failure;
+
+        // The acknowledgment.
+        bsls::ObjectBuffer<ntcf::TestTrade> d_success;
+    };
+
+    // Identifies the current selection in the choice.
+    SelectionId d_selectionId;
+
+    // Memory allocator for this object.
+    bslma::Allocator* d_allocator_p;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgmentResultValue& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestAcknowledgmentResultValue& value);
+
+template <typename HASH_ALGORITHM>
+void TestAcknowledgmentResultValue::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        hashAppend(algorithm, d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        hashAppend(algorithm, d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestAcknowledgmentResultValue& value)
+{
+    value.hash(algorithm);
+}
+
+template <typename MANIPULATOR>
+int TestAcknowledgmentResultValue::manipulateSelection(MANIPULATOR& manipulator)
+{
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        return manipulator(
+            &d_failure.object(),
+            SELECTION_INFO_ARRAY[SELECTION_INDEX_FAILURE]);
+    case SELECTION_ID_SUCCESS:
+        return manipulator(
+            &d_success.object(),
+            SELECTION_INFO_ARRAY[SELECTION_INDEX_SUCCESS]);
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        return -1;
+    }
+}
+
+template <typename ACCESSOR>
+int TestAcknowledgmentResultValue::accessSelection(ACCESSOR& accessor) const
+{
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        return accessor(
+            d_failure.object(),
+            SELECTION_INFO_ARRAY[SELECTION_INDEX_FAILURE]);
+    case SELECTION_ID_SUCCESS:
+        return accessor(
+            d_success.object(),
+            SELECTION_INFO_ARRAY[SELECTION_INDEX_SUCCESS]);
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        return -1;
+    }
+}
+} // close namespace ntcf
+
+BDLAT_DECL_CHOICE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestAcknowledgmentResultValue)
+
+namespace ntcf { 
+
+// Describe a acknowledgment result.
+class TestAcknowledgmentResult
+{
+public:
+    enum AttributeIndex {
+        ATTRIBUTE_INDEX_CONTEXT = 0,
+        ATTRIBUTE_INDEX_VALUE = 1
+    };
+
+    enum AttributeId {
+        ATTRIBUTE_ID_CONTEXT = 0,
+        ATTRIBUTE_ID_VALUE = 1
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 2
+    };
+
+    // Create a new object having the default value. Optionally specify a 
+    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    // currently installed default allocator is used. 
+    explicit TestAcknowledgmentResult(bslma::Allocator* allocator = 0);
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. Optionally specify a 'basicAllocator' used to supply memory. 
+    // If 'basicAllocator' is 0, the currently installed default allocator is 
+    // used. 
+    TestAcknowledgmentResult(const TestAcknowledgmentResult& original, bslma::Allocator* allocator = 0);
+
+    // Destroy this object. 
+    ~TestAcknowledgmentResult();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestAcknowledgmentResult& operator=(const TestAcknowledgmentResult& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestAcknowledgmentResult& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestAcknowledgmentResult& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestAcknowledgmentResult& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+
+    // The context.
+    ntcf::TestAcknowledgmentResultContext context;
+
+    // The value.
+    ntcf::TestAcknowledgmentResultValue value;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgmentResult& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestAcknowledgmentResult& value);
+
+template <typename TYPE>
+void TestAcknowledgmentResult::load(const TYPE& other)
+{
+    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
+        this->context = other.context;
+        this->value = other.value;
+    }
+}
+
+template <typename TYPE>
+void TestAcknowledgmentResult::store(TYPE* other) const
+{
+    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
+        other->context = this->context;
+        other->value = this->value;
+    }
+
+}
+
+template <typename HASH_ALGORITHM>
+void TestAcknowledgmentResult::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, this->context);
+    hashAppend(algorithm, this->value);
+}
+
+template <typename MANIPULATOR>
+int TestAcknowledgmentResult::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = manipulator(
+        &this->context,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->value,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestAcknowledgmentResult::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_CONTEXT:
+        return manipulator(
+            &this->context,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT]);
+    case ATTRIBUTE_ID_VALUE:
+        return manipulator(
+            &this->value,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    default:
+        return -1;
+    };
+}
+
+template <typename MANIPULATOR>
+int TestAcknowledgmentResult::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    const bdlat_AttributeInfo* attributeInfo =
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return manipulateAttribute(manipulator, attributeInfo->d_id);
+}
+
+template <typename ACCESSOR>
+int TestAcknowledgmentResult::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = accessor(
+        this->context,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->value,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestAcknowledgmentResult::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    switch (id) {
+    case ATTRIBUTE_ID_CONTEXT:
+        return accessor(
+            this->context,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT]);
+    case ATTRIBUTE_ID_VALUE:
+        return accessor(
+            this->value,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    default:
+        return -1;
+    };
+}
+
+template <typename ACCESSOR>
+int TestAcknowledgmentResult::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    const bdlat_AttributeInfo* attributeInfo = 
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return accessAttribute(accessor, attributeInfo->d_id);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestAcknowledgmentResult& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestAcknowledgmentResult)
+
+namespace ntcf { 
+
+// Describes the configurable parameters of a server.
+class TestServerConfig
+{
+public:
+    enum AttributeIndex {
+        ATTRIBUTE_INDEX_NAME = 0,
+        ATTRIBUTE_INDEX_DRIVER = 1,
+        ATTRIBUTE_INDEX_ENCRYPTION = 2,
+        ATTRIBUTE_INDEX_COMPRESSION = 3,
+        ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS = 4,
+        ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS = 5,
+        ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING = 6,
+        ATTRIBUTE_INDEX_KEEP_ALIVE = 7,
+        ATTRIBUTE_INDEX_KEEP_HALF_OPEN = 8,
+        ATTRIBUTE_INDEX_BACKLOG = 9,
+        ATTRIBUTE_INDEX_SEND_BUFFER_SIZE = 10,
+        ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE = 11,
+        ATTRIBUTE_INDEX_ACCEPT_GREEDILY = 12,
+        ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK = 13,
+        ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK = 14,
+        ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK = 15,
+        ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK = 16,
+        ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK = 17,
+        ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK = 18
+    };
+
+    enum AttributeId {
+        ATTRIBUTE_ID_NAME = 0,
+        ATTRIBUTE_ID_DRIVER = 1,
+        ATTRIBUTE_ID_ENCRYPTION = 2,
+        ATTRIBUTE_ID_COMPRESSION = 3,
+        ATTRIBUTE_ID_NUM_NETWORKING_THREADS = 4,
+        ATTRIBUTE_ID_NUM_PROCESSING_THREADS = 5,
+        ATTRIBUTE_ID_DYNAMIC_LOAD_BALANCING = 6,
+        ATTRIBUTE_ID_KEEP_ALIVE = 7,
+        ATTRIBUTE_ID_KEEP_HALF_OPEN = 8,
+        ATTRIBUTE_ID_BACKLOG = 9,
+        ATTRIBUTE_ID_SEND_BUFFER_SIZE = 10,
+        ATTRIBUTE_ID_RECEIVE_BUFFER_SIZE = 11,
+        ATTRIBUTE_ID_ACCEPT_GREEDILY = 12,
+        ATTRIBUTE_ID_ACCEPT_QUEUE_LOW_WATERMARK = 13,
+        ATTRIBUTE_ID_ACCEPT_QUEUE_HIGH_WATERMARK = 14,
+        ATTRIBUTE_ID_READ_QUEUE_LOW_WATERMARK = 15,
+        ATTRIBUTE_ID_READ_QUEUE_HIGH_WATERMARK = 16,
+        ATTRIBUTE_ID_WRITE_QUEUE_LOW_WATERMARK = 17,
+        ATTRIBUTE_ID_WRITE_QUEUE_HIGH_WATERMARK = 18
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 19
+    };
+
+    // Create a new object having the default value. Optionally specify a 
+    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    // currently installed default allocator is used. 
+    explicit TestServerConfig(bslma::Allocator* allocator = 0);
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. Optionally specify a 'basicAllocator' used to supply memory. 
+    // If 'basicAllocator' is 0, the currently installed default allocator is 
+    // used. 
+    TestServerConfig(const TestServerConfig& original, bslma::Allocator* allocator = 0);
+
+    // Destroy this object. 
+    ~TestServerConfig();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestServerConfig& operator=(const TestServerConfig& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestServerConfig& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestServerConfig& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestServerConfig& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+
+    // The name of the server.
+    bdlb::NullableValue<bsl::string> name;
+
+    // The name of the networking driver.
+    bdlb::NullableValue<bsl::string> driver;
+
+    // The flag that indicates all stream communication should be 
+    // encrypted.
+    bdlb::NullableValue<bool> encryption;
+
+    // The flag that indicates all communication should be compressed.
+    bdlb::NullableValue<bool> compression;
+
+    // The number of networking threads.
+    bdlb::NullableValue<bsl::uint32_t> numNetworkingThreads;
+
+    // The number of processing threads.
+    bdlb::NullableValue<bsl::uint32_t> numProcessingThreads;
+
+    // The flag that indicates socket I/O should be balanced and processed
+    // by any networking thread.
+    bdlb::NullableValue<bool> dynamicLoadBalancing;
+
+    // The flag that indicates socket-level keep-alives should be enabled.
+    bdlb::NullableValue<bool> keepAlive;
+
+    // The flag that indicates the socket should remain open for writing
+    // when the peer shuts down the socket.
+    bdlb::NullableValue<bool> keepHalfOpen;
+
+    // The backlog depth.
+    bdlb::NullableValue<bsl::uint32_t> backlog;
+
+    // The send buffer size.
+    bdlb::NullableValue<bsl::uint32_t> sendBufferSize;
+
+    // The receive buffer size.
+    bdlb::NullableValue<bsl::uint32_t> receiveBufferSize;
+
+    // The flag that indicates the backlog should be processed greedily.
+    bdlb::NullableValue<bool> acceptGreedily;
+
+    // The accept queue low watermark.
+    bdlb::NullableValue<bsl::uint32_t> acceptQueueLowWatermark;
+
+    // The accept queue high watermark.
+    bdlb::NullableValue<bsl::uint32_t> acceptQueueHighWatermark;
+
+    // The read queue low watermark.
+    bdlb::NullableValue<bsl::uint32_t> readQueueLowWatermark;
+
+    // The read queue high watermark.
+    bdlb::NullableValue<bsl::uint32_t> readQueueHighWatermark;
+
+    // The write queue low watermark.
+    bdlb::NullableValue<bsl::uint32_t> writeQueueLowWatermark;
+
+    // The write queue high watermark.
+    bdlb::NullableValue<bsl::uint32_t> writeQueueHighWatermark;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestServerConfig& lhs, const TestServerConfig& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestServerConfig& lhs, const TestServerConfig& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestServerConfig& lhs, const TestServerConfig& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestServerConfig& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestServerConfig& value);
+
+template <typename TYPE>
+void TestServerConfig::load(const TYPE& other)
+{
+    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
+        this->name = other.name;
+        this->driver = other.driver;
+        this->encryption = other.encryption;
+        this->compression = other.compression;
+        this->numNetworkingThreads = other.numNetworkingThreads;
+        this->numProcessingThreads = other.numProcessingThreads;
+        this->dynamicLoadBalancing = other.dynamicLoadBalancing;
+        this->keepAlive = other.keepAlive;
+        this->keepHalfOpen = other.keepHalfOpen;
+        this->backlog = other.backlog;
+        this->sendBufferSize = other.sendBufferSize;
+        this->receiveBufferSize = other.receiveBufferSize;
+        this->acceptGreedily = other.acceptGreedily;
+        this->acceptQueueLowWatermark = other.acceptQueueLowWatermark;
+        this->acceptQueueHighWatermark = other.acceptQueueHighWatermark;
+        this->readQueueLowWatermark = other.readQueueLowWatermark;
+        this->readQueueHighWatermark = other.readQueueHighWatermark;
+        this->writeQueueLowWatermark = other.writeQueueLowWatermark;
+        this->writeQueueHighWatermark = other.writeQueueHighWatermark;
+    }
+}
+
+template <typename TYPE>
+void TestServerConfig::store(TYPE* other) const
+{
+    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
+        other->name = this->name;
+        other->driver = this->driver;
+        other->encryption = this->encryption;
+        other->compression = this->compression;
+        other->numNetworkingThreads = this->numNetworkingThreads;
+        other->numProcessingThreads = this->numProcessingThreads;
+        other->dynamicLoadBalancing = this->dynamicLoadBalancing;
+        other->keepAlive = this->keepAlive;
+        other->keepHalfOpen = this->keepHalfOpen;
+        other->backlog = this->backlog;
+        other->sendBufferSize = this->sendBufferSize;
+        other->receiveBufferSize = this->receiveBufferSize;
+        other->acceptGreedily = this->acceptGreedily;
+        other->acceptQueueLowWatermark = this->acceptQueueLowWatermark;
+        other->acceptQueueHighWatermark = this->acceptQueueHighWatermark;
+        other->readQueueLowWatermark = this->readQueueLowWatermark;
+        other->readQueueHighWatermark = this->readQueueHighWatermark;
+        other->writeQueueLowWatermark = this->writeQueueLowWatermark;
+        other->writeQueueHighWatermark = this->writeQueueHighWatermark;
+    }
+
+}
+
+template <typename HASH_ALGORITHM>
+void TestServerConfig::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, this->name);
+    hashAppend(algorithm, this->driver);
+    hashAppend(algorithm, this->encryption);
+    hashAppend(algorithm, this->compression);
+    hashAppend(algorithm, this->numNetworkingThreads);
+    hashAppend(algorithm, this->numProcessingThreads);
+    hashAppend(algorithm, this->dynamicLoadBalancing);
+    hashAppend(algorithm, this->keepAlive);
+    hashAppend(algorithm, this->keepHalfOpen);
+    hashAppend(algorithm, this->backlog);
+    hashAppend(algorithm, this->sendBufferSize);
+    hashAppend(algorithm, this->receiveBufferSize);
+    hashAppend(algorithm, this->acceptGreedily);
+    hashAppend(algorithm, this->acceptQueueLowWatermark);
+    hashAppend(algorithm, this->acceptQueueHighWatermark);
+    hashAppend(algorithm, this->readQueueLowWatermark);
+    hashAppend(algorithm, this->readQueueHighWatermark);
+    hashAppend(algorithm, this->writeQueueLowWatermark);
+    hashAppend(algorithm, this->writeQueueHighWatermark);
+}
+
+template <typename MANIPULATOR>
+int TestServerConfig::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = manipulator(
+        &this->name,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->driver,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DRIVER]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->encryption,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENCRYPTION]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->compression,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->numNetworkingThreads,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->numProcessingThreads,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->dynamicLoadBalancing,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->keepAlive,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_ALIVE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->keepHalfOpen,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_HALF_OPEN]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->backlog,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BACKLOG]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->sendBufferSize,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SEND_BUFFER_SIZE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->receiveBufferSize,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->acceptGreedily,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->acceptQueueLowWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->acceptQueueHighWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->readQueueLowWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->readQueueHighWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->writeQueueLowWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->writeQueueHighWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestServerConfig::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_NAME:
+        return manipulator(
+            &this->name,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    case ATTRIBUTE_ID_DRIVER:
+        return manipulator(
+            &this->driver,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DRIVER]);
+    case ATTRIBUTE_ID_ENCRYPTION:
+        return manipulator(
+            &this->encryption,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENCRYPTION]);
+    case ATTRIBUTE_ID_COMPRESSION:
+        return manipulator(
+            &this->compression,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION]);
+    case ATTRIBUTE_ID_NUM_NETWORKING_THREADS:
+        return manipulator(
+            &this->numNetworkingThreads,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS]);
+    case ATTRIBUTE_ID_NUM_PROCESSING_THREADS:
+        return manipulator(
+            &this->numProcessingThreads,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS]);
+    case ATTRIBUTE_ID_DYNAMIC_LOAD_BALANCING:
+        return manipulator(
+            &this->dynamicLoadBalancing,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING]);
+    case ATTRIBUTE_ID_KEEP_ALIVE:
+        return manipulator(
+            &this->keepAlive,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_ALIVE]);
+    case ATTRIBUTE_ID_KEEP_HALF_OPEN:
+        return manipulator(
+            &this->keepHalfOpen,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_HALF_OPEN]);
+    case ATTRIBUTE_ID_BACKLOG:
+        return manipulator(
+            &this->backlog,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BACKLOG]);
+    case ATTRIBUTE_ID_SEND_BUFFER_SIZE:
+        return manipulator(
+            &this->sendBufferSize,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SEND_BUFFER_SIZE]);
+    case ATTRIBUTE_ID_RECEIVE_BUFFER_SIZE:
+        return manipulator(
+            &this->receiveBufferSize,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE]);
+    case ATTRIBUTE_ID_ACCEPT_GREEDILY:
+        return manipulator(
+            &this->acceptGreedily,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY]);
+    case ATTRIBUTE_ID_ACCEPT_QUEUE_LOW_WATERMARK:
+        return manipulator(
+            &this->acceptQueueLowWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK]);
+    case ATTRIBUTE_ID_ACCEPT_QUEUE_HIGH_WATERMARK:
+        return manipulator(
+            &this->acceptQueueHighWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK]);
+    case ATTRIBUTE_ID_READ_QUEUE_LOW_WATERMARK:
+        return manipulator(
+            &this->readQueueLowWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK]);
+    case ATTRIBUTE_ID_READ_QUEUE_HIGH_WATERMARK:
+        return manipulator(
+            &this->readQueueHighWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK]);
+    case ATTRIBUTE_ID_WRITE_QUEUE_LOW_WATERMARK:
+        return manipulator(
+            &this->writeQueueLowWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK]);
+    case ATTRIBUTE_ID_WRITE_QUEUE_HIGH_WATERMARK:
+        return manipulator(
+            &this->writeQueueHighWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK]);
+    default:
+        return -1;
+    };
+}
+
+template <typename MANIPULATOR>
+int TestServerConfig::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    const bdlat_AttributeInfo* attributeInfo =
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return manipulateAttribute(manipulator, attributeInfo->d_id);
+}
+
+template <typename ACCESSOR>
+int TestServerConfig::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = accessor(
+        this->name,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->driver,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DRIVER]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->encryption,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENCRYPTION]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->compression,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->numNetworkingThreads,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->numProcessingThreads,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->dynamicLoadBalancing,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->keepAlive,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_ALIVE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->keepHalfOpen,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_HALF_OPEN]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->backlog,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BACKLOG]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->sendBufferSize,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SEND_BUFFER_SIZE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->receiveBufferSize,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->acceptGreedily,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->acceptQueueLowWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->acceptQueueHighWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->readQueueLowWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->readQueueHighWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->writeQueueLowWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->writeQueueHighWatermark,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestServerConfig::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    switch (id) {
+    case ATTRIBUTE_ID_NAME:
+        return accessor(
+            this->name,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+    case ATTRIBUTE_ID_DRIVER:
+        return accessor(
+            this->driver,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DRIVER]);
+    case ATTRIBUTE_ID_ENCRYPTION:
+        return accessor(
+            this->encryption,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENCRYPTION]);
+    case ATTRIBUTE_ID_COMPRESSION:
+        return accessor(
+            this->compression,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION]);
+    case ATTRIBUTE_ID_NUM_NETWORKING_THREADS:
+        return accessor(
+            this->numNetworkingThreads,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS]);
+    case ATTRIBUTE_ID_NUM_PROCESSING_THREADS:
+        return accessor(
+            this->numProcessingThreads,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS]);
+    case ATTRIBUTE_ID_DYNAMIC_LOAD_BALANCING:
+        return accessor(
+            this->dynamicLoadBalancing,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING]);
+    case ATTRIBUTE_ID_KEEP_ALIVE:
+        return accessor(
+            this->keepAlive,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_ALIVE]);
+    case ATTRIBUTE_ID_KEEP_HALF_OPEN:
+        return accessor(
+            this->keepHalfOpen,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_HALF_OPEN]);
+    case ATTRIBUTE_ID_BACKLOG:
+        return accessor(
+            this->backlog,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BACKLOG]);
+    case ATTRIBUTE_ID_SEND_BUFFER_SIZE:
+        return accessor(
+            this->sendBufferSize,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SEND_BUFFER_SIZE]);
+    case ATTRIBUTE_ID_RECEIVE_BUFFER_SIZE:
+        return accessor(
+            this->receiveBufferSize,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE]);
+    case ATTRIBUTE_ID_ACCEPT_GREEDILY:
+        return accessor(
+            this->acceptGreedily,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY]);
+    case ATTRIBUTE_ID_ACCEPT_QUEUE_LOW_WATERMARK:
+        return accessor(
+            this->acceptQueueLowWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK]);
+    case ATTRIBUTE_ID_ACCEPT_QUEUE_HIGH_WATERMARK:
+        return accessor(
+            this->acceptQueueHighWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK]);
+    case ATTRIBUTE_ID_READ_QUEUE_LOW_WATERMARK:
+        return accessor(
+            this->readQueueLowWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK]);
+    case ATTRIBUTE_ID_READ_QUEUE_HIGH_WATERMARK:
+        return accessor(
+            this->readQueueHighWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK]);
+    case ATTRIBUTE_ID_WRITE_QUEUE_LOW_WATERMARK:
+        return accessor(
+            this->writeQueueLowWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK]);
+    case ATTRIBUTE_ID_WRITE_QUEUE_HIGH_WATERMARK:
+        return accessor(
+            this->writeQueueHighWatermark,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK]);
+    default:
+        return -1;
+    };
+}
+
+template <typename ACCESSOR>
+int TestServerConfig::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    const bdlat_AttributeInfo* attributeInfo = 
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return accessAttribute(accessor, attributeInfo->d_id);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestServerConfig& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestServerConfig)
+
+namespace ntcf { 
+
 // Describes the context in which a message was sent.
 class TestMessageContext
 {
@@ -6646,666 +8627,6 @@ BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
 
 namespace ntcf { 
 
-// Describes a message.
-class TestMessageFrame
-{
-public:
-    enum AttributeIndex {
-        ATTRIBUTE_INDEX_HEADER = 0,
-        ATTRIBUTE_INDEX_PRAGMA = 1,
-        ATTRIBUTE_INDEX_ENTITY = 2
-    };
-
-    enum AttributeId {
-        ATTRIBUTE_ID_HEADER = 0,
-        ATTRIBUTE_ID_PRAGMA = 1,
-        ATTRIBUTE_ID_ENTITY = 2
-    };
-
-    enum Constant {
-        NUM_ATTRIBUTES = 3
-    };
-
-    // Create a new object having the default value. Optionally specify a 
-    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
-    // currently installed default allocator is used. 
-    explicit TestMessageFrame(bslma::Allocator* allocator = 0);
-
-    // Create a new object having the same value as the specified 'original' 
-    // object. Optionally specify a 'basicAllocator' used to supply memory. 
-    // If 'basicAllocator' is 0, the currently installed default allocator is 
-    // used. 
-    TestMessageFrame(const TestMessageFrame& original, bslma::Allocator* allocator = 0);
-
-    // Destroy this object. 
-    ~TestMessageFrame();
-
-    // Assign the value of the specified 'other' object to this object. 
-    // Return a reference to this modifiable object. 
-    TestMessageFrame& operator=(const TestMessageFrame& other);
-
-    // Reset the value of this object its value upon default construction. 
-    void reset();
-
-    // Swap the value of this object with the value of the specified 'other' 
-    // object. 
-    void swap(TestMessageFrame& other);
-
-    // Load the value from the fields in the specified specified 'other' 
-    // value that match the fields of this value into this value. 
-    template <typename TYPE>
-    void load(const TYPE& other);
-
-    // Store the value into the fields in the specified specified 'other' 
-    // value that match the fields of this value. 
-    template <typename TYPE>
-    void store(TYPE* other) const;
-
-    // Return true if this object has the same value as the specified 'other' 
-    // object, otherwise return false. 
-    bool equals(const TestMessageFrame& other) const;
-
-    // Return true if the value of this object is less than the value of the 
-    // specified 'other' object, otherwise return false. 
-    bool less(const TestMessageFrame& other) const;
-
-    // Contribute the values of the salient attributes of this object to the 
-    // specified hash 'algorithm'. 
-    template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm);
-
-    // Format this object to the specified output 'stream' at the optionally 
-    // specified indentation 'level' and return a reference to the modifiable 
-    // 'stream'. If 'level' is specified, optionally specify 
-    // 'spacesPerLevel', the number of spaces per indentation level for this 
-    // and all of its nested objects. Each line is indented by the absolute 
-    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
-    // indentation of the first line. If 'spacesPerLevel' is negative, 
-    // suppress line breaks and format the entire output on one line. If 
-    // 'stream' is initially invalid, this operation has no effect. Note that 
-    // a trailing newline is provided in multiline mode only. 
-    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
-
-    // Return the compiler-independant name for this class. 
-    static const char CLASS_NAME[];
-
-    // The attribute info array, indexed by attribute index. 
-    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'id' if the attribute exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'name' of the specified 'nameLength' if the attribute 
-    // exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
-
-    // Invoke the specified 'manipulator' sequentially on the address of each 
-    // (modifiable) attribute of this object, supplying 'manipulator' with 
-    // the corresponding attribute information structure until such 
-    // invocation returns a non-zero value. Return the value from the last 
-    // invocation of 'manipulator' (i.e., the invocation that terminated the 
-    // sequence). 
-    template <typename MANIPULATOR>
-    int manipulateAttributes(MANIPULATOR& manipulator);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'id', supplying 'manipulator' 
-    // with the corresponding attribute information structure. Return the 
-    // value returned from the invocation of 'manipulator' if 'id' identifies 
-    // an attribute of this class, and -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, int id);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'manipulator' if 'name' identifies an attribute of this class, and 
-    // -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
-
-    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
-    // attribute of this object, supplying 'accessor' with the corresponding 
-    // attribute information structure until such invocation returns a 
-    // non-zero value. Return the value from the last invocation of 
-    // 'accessor' (i.e., the invocation that terminated the sequence). 
-    template <typename ACCESSOR>
-    int accessAttributes(ACCESSOR& accessor) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'id', supplying 'accessor' with 
-    // the corresponding attribute information structure. Return the value 
-    // returned from the invocation of 'accessor' if 'id' identifies an 
-    // attribute of this class, and -1 otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, int id) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'accessor' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
-    // otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
-
-    // The header.
-    ntcf::TestMessageHeader header;
-
-    // The meta-data about the messaging infrastructure.
-    bdlb::NullableValue<ntcf::TestMessagePragma> pragma;
-
-    // The entity transferred.
-    bdlb::NullableValue<ntcf::TestMessageEntity> entity;
-};
-
-// Return true if the specified 'lhs' has the same value as the specified 
-// 'rhs', otherwise return false. 
-bool operator==(const TestMessageFrame& lhs, const TestMessageFrame& rhs);
-
-// Return true if the specified 'lhs' does not have the same value as the 
-// specified 'rhs', otherwise return false. 
-bool operator!=(const TestMessageFrame& lhs, const TestMessageFrame& rhs);
-
-// Return true if the value of the specified 'lhs' is less than the value of 
-// the specified 'rhs', otherwise return false. 
-bool operator<(const TestMessageFrame& lhs, const TestMessageFrame& rhs);
-
-// Insert a formatted, human-readable description of the specified 'object' 
-// into the specified 'stream'. Return a reference to the modifiable 
-// 'stream'. 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageFrame& object);
-
-// Contribute the values of the salient attributes of the specified 'value' 
-// to the specified hash 'algorithm'. 
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestMessageFrame& value);
-
-template <typename TYPE>
-void TestMessageFrame::load(const TYPE& other)
-{
-    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
-        this->header = other.header;
-        this->pragma = other.pragma;
-        this->entity = other.entity;
-    }
-}
-
-template <typename TYPE>
-void TestMessageFrame::store(TYPE* other) const
-{
-    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
-        other->header = this->header;
-        other->pragma = this->pragma;
-        other->entity = this->entity;
-    }
-
-}
-
-template <typename HASH_ALGORITHM>
-void TestMessageFrame::hash(HASH_ALGORITHM& algorithm)
-{
-    using bslh::hashAppend;
-    hashAppend(algorithm, this->header);
-    hashAppend(algorithm, this->pragma);
-    hashAppend(algorithm, this->entity);
-}
-
-template <typename MANIPULATOR>
-int TestMessageFrame::manipulateAttributes(MANIPULATOR& manipulator)
-{
-    int rc;
-
-    rc = manipulator(
-        &this->header,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->pragma,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->entity,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename MANIPULATOR>
-int TestMessageFrame::manipulateAttribute(MANIPULATOR& manipulator, int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_HEADER:
-        return manipulator(
-            &this->header,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER]);
-    case ATTRIBUTE_ID_PRAGMA:
-        return manipulator(
-            &this->pragma,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA]);
-    case ATTRIBUTE_ID_ENTITY:
-        return manipulator(
-            &this->entity,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY]);
-    default:
-        return -1;
-    };
-}
-
-template <typename MANIPULATOR>
-int TestMessageFrame::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
-{
-    const bdlat_AttributeInfo* attributeInfo =
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return manipulateAttribute(manipulator, attributeInfo->d_id);
-}
-
-template <typename ACCESSOR>
-int TestMessageFrame::accessAttributes(ACCESSOR& accessor) const
-{
-    int rc;
-
-    rc = accessor(
-        this->header,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->pragma,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->entity,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename ACCESSOR>
-int TestMessageFrame::accessAttribute(ACCESSOR& accessor, int id) const
-{
-    switch (id) {
-    case ATTRIBUTE_ID_HEADER:
-        return accessor(
-            this->header,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER]);
-    case ATTRIBUTE_ID_PRAGMA:
-        return accessor(
-            this->pragma,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA]);
-    case ATTRIBUTE_ID_ENTITY:
-        return accessor(
-            this->entity,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY]);
-    default:
-        return -1;
-    };
-}
-
-template <typename ACCESSOR>
-int TestMessageFrame::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
-{
-    const bdlat_AttributeInfo* attributeInfo = 
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return accessAttribute(accessor, attributeInfo->d_id);
-}
-
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestMessageFrame& value)
-{
-    value.hash(algorithm);
-}
-
-} // close namespace ntcf
-
-BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
-    ntcf::TestMessageFrame)
-
-namespace ntcf { 
-
-// Describes testing results.
-class TestEchoResult
-{
-public:
-    enum AttributeIndex {
-        ATTRIBUTE_INDEX_ID = 0,
-        ATTRIBUTE_INDEX_VALUE = 1
-    };
-
-    enum AttributeId {
-        ATTRIBUTE_ID_ID = 0,
-        ATTRIBUTE_ID_VALUE = 1
-    };
-
-    enum Constant {
-        NUM_ATTRIBUTES = 2
-    };
-
-    // Create a new object having the default value. Optionally specify a 
-    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
-    // currently installed default allocator is used. 
-    explicit TestEchoResult(bslma::Allocator* allocator = 0);
-
-    // Create a new object having the same value as the specified 'original' 
-    // object. Optionally specify a 'basicAllocator' used to supply memory. 
-    // If 'basicAllocator' is 0, the currently installed default allocator is 
-    // used. 
-    TestEchoResult(const TestEchoResult& original, bslma::Allocator* allocator = 0);
-
-    // Destroy this object. 
-    ~TestEchoResult();
-
-    // Assign the value of the specified 'other' object to this object. 
-    // Return a reference to this modifiable object. 
-    TestEchoResult& operator=(const TestEchoResult& other);
-
-    // Reset the value of this object its value upon default construction. 
-    void reset();
-
-    // Swap the value of this object with the value of the specified 'other' 
-    // object. 
-    void swap(TestEchoResult& other);
-
-    // Load the value from the fields in the specified specified 'other' 
-    // value that match the fields of this value into this value. 
-    template <typename TYPE>
-    void load(const TYPE& other);
-
-    // Store the value into the fields in the specified specified 'other' 
-    // value that match the fields of this value. 
-    template <typename TYPE>
-    void store(TYPE* other) const;
-
-    // Return true if this object has the same value as the specified 'other' 
-    // object, otherwise return false. 
-    bool equals(const TestEchoResult& other) const;
-
-    // Return true if the value of this object is less than the value of the 
-    // specified 'other' object, otherwise return false. 
-    bool less(const TestEchoResult& other) const;
-
-    // Contribute the values of the salient attributes of this object to the 
-    // specified hash 'algorithm'. 
-    template <typename HASH_ALGORITHM>
-    void hash(HASH_ALGORITHM& algorithm);
-
-    // Format this object to the specified output 'stream' at the optionally 
-    // specified indentation 'level' and return a reference to the modifiable 
-    // 'stream'. If 'level' is specified, optionally specify 
-    // 'spacesPerLevel', the number of spaces per indentation level for this 
-    // and all of its nested objects. Each line is indented by the absolute 
-    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
-    // indentation of the first line. If 'spacesPerLevel' is negative, 
-    // suppress line breaks and format the entire output on one line. If 
-    // 'stream' is initially invalid, this operation has no effect. Note that 
-    // a trailing newline is provided in multiline mode only. 
-    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
-
-    // Return the compiler-independant name for this class. 
-    static const char CLASS_NAME[];
-
-    // The attribute info array, indexed by attribute index. 
-    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'id' if the attribute exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
-
-    // Return attribute information for the attribute indicated by the 
-    // specified 'name' of the specified 'nameLength' if the attribute 
-    // exists, and 0 otherwise. 
-    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
-
-    // Invoke the specified 'manipulator' sequentially on the address of each 
-    // (modifiable) attribute of this object, supplying 'manipulator' with 
-    // the corresponding attribute information structure until such 
-    // invocation returns a non-zero value. Return the value from the last 
-    // invocation of 'manipulator' (i.e., the invocation that terminated the 
-    // sequence). 
-    template <typename MANIPULATOR>
-    int manipulateAttributes(MANIPULATOR& manipulator);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'id', supplying 'manipulator' 
-    // with the corresponding attribute information structure. Return the 
-    // value returned from the invocation of 'manipulator' if 'id' identifies 
-    // an attribute of this class, and -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, int id);
-
-    // Invoke the specified 'manipulator' on the address of the (modifiable) 
-    // attribute indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'manipulator' if 'name' identifies an attribute of this class, and 
-    // -1 otherwise. 
-    template <typename MANIPULATOR>
-    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
-
-    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
-    // attribute of this object, supplying 'accessor' with the corresponding 
-    // attribute information structure until such invocation returns a 
-    // non-zero value. Return the value from the last invocation of 
-    // 'accessor' (i.e., the invocation that terminated the sequence). 
-    template <typename ACCESSOR>
-    int accessAttributes(ACCESSOR& accessor) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'id', supplying 'accessor' with 
-    // the corresponding attribute information structure. Return the value 
-    // returned from the invocation of 'accessor' if 'id' identifies an 
-    // attribute of this class, and -1 otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, int id) const;
-
-    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
-    // this object indicated by the specified 'name' of the specified 
-    // 'nameLength', supplying 'accessor' with the corresponding attribute 
-    // information structure. Return the value returned from the invocation 
-    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
-    // otherwise. 
-    template <typename ACCESSOR>
-    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
-
-    // The value.
-    bsls::Types::Uint64 id;
-
-    // The value.
-    bsl::string value;
-};
-
-// Return true if the specified 'lhs' has the same value as the specified 
-// 'rhs', otherwise return false. 
-bool operator==(const TestEchoResult& lhs, const TestEchoResult& rhs);
-
-// Return true if the specified 'lhs' does not have the same value as the 
-// specified 'rhs', otherwise return false. 
-bool operator!=(const TestEchoResult& lhs, const TestEchoResult& rhs);
-
-// Return true if the value of the specified 'lhs' is less than the value of 
-// the specified 'rhs', otherwise return false. 
-bool operator<(const TestEchoResult& lhs, const TestEchoResult& rhs);
-
-// Insert a formatted, human-readable description of the specified 'object' 
-// into the specified 'stream'. Return a reference to the modifiable 
-// 'stream'. 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestEchoResult& object);
-
-// Contribute the values of the salient attributes of the specified 'value' 
-// to the specified hash 'algorithm'. 
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestEchoResult& value);
-
-template <typename TYPE>
-void TestEchoResult::load(const TYPE& other)
-{
-    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
-        this->id = other.id;
-        this->value = other.value;
-    }
-}
-
-template <typename TYPE>
-void TestEchoResult::store(TYPE* other) const
-{
-    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
-        other->id = this->id;
-        other->value = this->value;
-    }
-
-}
-
-template <typename HASH_ALGORITHM>
-void TestEchoResult::hash(HASH_ALGORITHM& algorithm)
-{
-    using bslh::hashAppend;
-    hashAppend(algorithm, this->id);
-    hashAppend(algorithm, this->value);
-}
-
-template <typename MANIPULATOR>
-int TestEchoResult::manipulateAttributes(MANIPULATOR& manipulator)
-{
-    int rc;
-
-    rc = manipulator(
-        &this->id,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->value,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename MANIPULATOR>
-int TestEchoResult::manipulateAttribute(MANIPULATOR& manipulator, int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return manipulator(
-            &this->id,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    case ATTRIBUTE_ID_VALUE:
-        return manipulator(
-            &this->value,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
-    default:
-        return -1;
-    };
-}
-
-template <typename MANIPULATOR>
-int TestEchoResult::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
-{
-    const bdlat_AttributeInfo* attributeInfo =
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return manipulateAttribute(manipulator, attributeInfo->d_id);
-}
-
-template <typename ACCESSOR>
-int TestEchoResult::accessAttributes(ACCESSOR& accessor) const
-{
-    int rc;
-
-    rc = accessor(
-        this->id,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->value,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
-template <typename ACCESSOR>
-int TestEchoResult::accessAttribute(ACCESSOR& accessor, int id) const
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return accessor(
-            this->id,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
-    case ATTRIBUTE_ID_VALUE:
-        return accessor(
-            this->value,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
-    default:
-        return -1;
-    };
-}
-
-template <typename ACCESSOR>
-int TestEchoResult::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
-{
-    const bdlat_AttributeInfo* attributeInfo = 
-        lookupAttributeInfo(name, nameLength);
-    if (attributeInfo == 0) {
-        return -1;
-    }
-
-    return accessAttribute(accessor, attributeInfo->d_id);
-}
-
-template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestEchoResult& value)
-{
-    value.hash(algorithm);
-}
-
-} // close namespace ntcf
-
-BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
-    ntcf::TestEchoResult)
-
-namespace ntcf { 
-
 // Describes testing parameters.
 class TestEchoParams
 {
@@ -7618,6 +8939,587 @@ void hashAppend(HASH_ALGORITHM& algorithm, const TestEchoParams& value)
 
 BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
     ntcf::TestEchoParams)
+
+namespace ntcf { 
+
+// Describes the value of a trade result.
+class TestTradeResultValue
+{
+public:
+    enum SelectionIndex {
+        SELECTION_INDEX_UNDEFINED = -1,
+        SELECTION_INDEX_FAILURE = 0,
+        SELECTION_INDEX_SUCCESS = 1
+    };
+
+    enum SelectionId {
+        SELECTION_ID_UNDEFINED = -1,
+        SELECTION_ID_FAILURE = 0,
+        SELECTION_ID_SUCCESS = 1
+    };
+
+    enum Constant {
+        NUM_SELECTIONS = 2
+    };
+
+    // Create a new object having the default value. Optionally specify a 
+    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    // currently installed default allocator is used. 
+    explicit TestTradeResultValue(bslma::Allocator* allocator = 0);
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. Optionally specify a 'basicAllocator' used to supply memory. 
+    // If 'basicAllocator' is 0, the currently installed default allocator is 
+    // used. 
+    TestTradeResultValue(const TestTradeResultValue& original, bslma::Allocator* allocator = 0);
+
+    // Destroy this object. 
+    ~TestTradeResultValue();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestTradeResultValue& operator=(const TestTradeResultValue& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestTradeResultValue& other);
+
+    // Set the value of this object to be the default for the selection 
+    // indicated by the specified 'id'. Return 0 on success, and non-zero 
+    // value otherwise (i.e., the selection is not found). 
+    int makeSelection(int id);
+
+    // Set the value of this object to be the default for the selection 
+    // indicated by the specified 'name' of the specified 'nameLength'. 
+    // Return 0 on success, and non-zero value otherwise (i.e., the selection 
+    // is not found). 
+    int makeSelection(const char* name, int nameLength);
+
+    // Make the "failure" field the current selection in the choice. Return a 
+    // reference to the modifiable "failure" field. 
+    ntcf::TestFault& makeFailure();
+
+    // Make the "failure" field the current selection in the choice. The new 
+    // selection initially has the specified 'value'. Return a reference to 
+    // the modifiable "failure" field. 
+    ntcf::TestFault& makeFailure(const ntcf::TestFault& value);
+
+    // Make the "success" field the current selection in the choice. Return a 
+    // reference to the modifiable "success" field. 
+    ntcf::TestTrade& makeSuccess();
+
+    // Make the "success" field the current selection in the choice. The new 
+    // selection initially has the specified 'value'. Return a reference to 
+    // the modifiable "success" field. 
+    ntcf::TestTrade& makeSuccess(const ntcf::TestTrade& value);
+
+    // Return a reference to the modifiable "failure" field value. The 
+    // behavior is undefined unless the "failure" field is the current 
+    // selection in the choice. 
+    ntcf::TestFault& failure();
+
+    // Return a reference to the modifiable "success" field value. The 
+    // behavior is undefined unless the "success" field is the current 
+    // selection in the choice. 
+    ntcf::TestTrade& success();
+
+    // Return a reference to the non-modifiable "failure" field value. The 
+    // behavior is undefined unless the "failure" field is the current 
+    // selection in the choice. 
+    const ntcf::TestFault& failure() const;
+
+    // Return a reference to the non-modifiable "success" field value. The 
+    // behavior is undefined unless the "success" field is the current 
+    // selection in the choice. 
+    const ntcf::TestTrade& success() const;
+
+    // Return true if no selection is defined in the choice, otherwise return 
+    // false. 
+    bool isUndefinedValue() const;
+
+    // Return true if the "failure" field is the current selection in the 
+    // choice, otherwise return false. 
+    bool isFailureValue() const;
+
+    // Return true if the "success" field is the current selection in the 
+    // choice, otherwise return false. 
+    bool isSuccessValue() const;
+
+    // Return the selection ID of the current selection in the choice. 
+    int selectionId() const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestTradeResultValue& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestTradeResultValue& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The selection info array, indexed by selection index. 
+    static const bdlat_SelectionInfo SELECTION_INFO_ARRAY[];
+
+    // Return selection information for the selection indicated by the 
+    // specified 'id' if the selection exists, and 0 otherwise. 
+    static const bdlat_SelectionInfo* lookupSelectionInfo(int id);
+
+    // Return selection information for the selection indicated by the 
+    // specified 'name' of the specified 'nameLength' if the selection 
+    // exists, and 0 otherwise. 
+    static const bdlat_SelectionInfo* lookupSelectionInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' on the address of the modifiable 
+    // selection, supplying 'manipulator' with the corresponding selection 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if this object has a defined selection, and -1 
+    // otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateSelection(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'accessor' on the non-modifiable selection, 
+    // supplying 'accessor' with the corresponding selection information 
+    // structure. Return the value returned from the invocation of 'accessor' 
+    // if this object has a defined selection, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessSelection(ACCESSOR& accessor) const;
+
+private:
+    union {
+        // The fault.
+        bsls::ObjectBuffer<ntcf::TestFault> d_failure;
+
+        // The trade.
+        bsls::ObjectBuffer<ntcf::TestTrade> d_success;
+    };
+
+    // Identifies the current selection in the choice.
+    SelectionId d_selectionId;
+
+    // Memory allocator for this object.
+    bslma::Allocator* d_allocator_p;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestTradeResultValue& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestTradeResultValue& value);
+
+template <typename HASH_ALGORITHM>
+void TestTradeResultValue::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        hashAppend(algorithm, d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        hashAppend(algorithm, d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestTradeResultValue& value)
+{
+    value.hash(algorithm);
+}
+
+template <typename MANIPULATOR>
+int TestTradeResultValue::manipulateSelection(MANIPULATOR& manipulator)
+{
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        return manipulator(
+            &d_failure.object(),
+            SELECTION_INFO_ARRAY[SELECTION_INDEX_FAILURE]);
+    case SELECTION_ID_SUCCESS:
+        return manipulator(
+            &d_success.object(),
+            SELECTION_INFO_ARRAY[SELECTION_INDEX_SUCCESS]);
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        return -1;
+    }
+}
+
+template <typename ACCESSOR>
+int TestTradeResultValue::accessSelection(ACCESSOR& accessor) const
+{
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        return accessor(
+            d_failure.object(),
+            SELECTION_INFO_ARRAY[SELECTION_INDEX_FAILURE]);
+    case SELECTION_ID_SUCCESS:
+        return accessor(
+            d_success.object(),
+            SELECTION_INFO_ARRAY[SELECTION_INDEX_SUCCESS]);
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        return -1;
+    }
+}
+} // close namespace ntcf
+
+BDLAT_DECL_CHOICE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestTradeResultValue)
+
+namespace ntcf { 
+
+// Describe a trade result.
+class TestTradeResult
+{
+public:
+    enum AttributeIndex {
+        ATTRIBUTE_INDEX_CONTEXT = 0,
+        ATTRIBUTE_INDEX_VALUE = 1
+    };
+
+    enum AttributeId {
+        ATTRIBUTE_ID_CONTEXT = 0,
+        ATTRIBUTE_ID_VALUE = 1
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 2
+    };
+
+    // Create a new object having the default value. Optionally specify a 
+    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    // currently installed default allocator is used. 
+    explicit TestTradeResult(bslma::Allocator* allocator = 0);
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. Optionally specify a 'basicAllocator' used to supply memory. 
+    // If 'basicAllocator' is 0, the currently installed default allocator is 
+    // used. 
+    TestTradeResult(const TestTradeResult& original, bslma::Allocator* allocator = 0);
+
+    // Destroy this object. 
+    ~TestTradeResult();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestTradeResult& operator=(const TestTradeResult& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestTradeResult& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestTradeResult& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestTradeResult& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+
+    // The context.
+    ntcf::TestTradeResultContext context;
+
+    // The value.
+    ntcf::TestTradeResultValue value;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestTradeResult& lhs, const TestTradeResult& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestTradeResult& lhs, const TestTradeResult& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestTradeResult& lhs, const TestTradeResult& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestTradeResult& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestTradeResult& value);
+
+template <typename TYPE>
+void TestTradeResult::load(const TYPE& other)
+{
+    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
+        this->context = other.context;
+        this->value = other.value;
+    }
+}
+
+template <typename TYPE>
+void TestTradeResult::store(TYPE* other) const
+{
+    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
+        other->context = this->context;
+        other->value = this->value;
+    }
+
+}
+
+template <typename HASH_ALGORITHM>
+void TestTradeResult::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, this->context);
+    hashAppend(algorithm, this->value);
+}
+
+template <typename MANIPULATOR>
+int TestTradeResult::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = manipulator(
+        &this->context,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->value,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestTradeResult::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_CONTEXT:
+        return manipulator(
+            &this->context,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT]);
+    case ATTRIBUTE_ID_VALUE:
+        return manipulator(
+            &this->value,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    default:
+        return -1;
+    };
+}
+
+template <typename MANIPULATOR>
+int TestTradeResult::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    const bdlat_AttributeInfo* attributeInfo =
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return manipulateAttribute(manipulator, attributeInfo->d_id);
+}
+
+template <typename ACCESSOR>
+int TestTradeResult::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = accessor(
+        this->context,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->value,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestTradeResult::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    switch (id) {
+    case ATTRIBUTE_ID_CONTEXT:
+        return accessor(
+            this->context,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT]);
+    case ATTRIBUTE_ID_VALUE:
+        return accessor(
+            this->value,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    default:
+        return -1;
+    };
+}
+
+template <typename ACCESSOR>
+int TestTradeResult::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    const bdlat_AttributeInfo* attributeInfo = 
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return accessAttribute(accessor, attributeInfo->d_id);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestTradeResult& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestTradeResult)
 
 namespace ntcf { 
 
@@ -8449,82 +10351,50 @@ BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
 
 namespace ntcf { 
 
-// Describes the configurable parameters of a server.
-class TestServerConfig
+// Describes a message.
+class TestMessageFrame
 {
 public:
     enum AttributeIndex {
-        ATTRIBUTE_INDEX_NAME = 0,
-        ATTRIBUTE_INDEX_DRIVER = 1,
-        ATTRIBUTE_INDEX_ENCRYPTION = 2,
-        ATTRIBUTE_INDEX_COMPRESSION = 3,
-        ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS = 4,
-        ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS = 5,
-        ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING = 6,
-        ATTRIBUTE_INDEX_KEEP_ALIVE = 7,
-        ATTRIBUTE_INDEX_KEEP_HALF_OPEN = 8,
-        ATTRIBUTE_INDEX_BACKLOG = 9,
-        ATTRIBUTE_INDEX_SEND_BUFFER_SIZE = 10,
-        ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE = 11,
-        ATTRIBUTE_INDEX_ACCEPT_GREEDILY = 12,
-        ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK = 13,
-        ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK = 14,
-        ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK = 15,
-        ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK = 16,
-        ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK = 17,
-        ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK = 18
+        ATTRIBUTE_INDEX_HEADER = 0,
+        ATTRIBUTE_INDEX_PRAGMA = 1,
+        ATTRIBUTE_INDEX_ENTITY = 2
     };
 
     enum AttributeId {
-        ATTRIBUTE_ID_NAME = 0,
-        ATTRIBUTE_ID_DRIVER = 1,
-        ATTRIBUTE_ID_ENCRYPTION = 2,
-        ATTRIBUTE_ID_COMPRESSION = 3,
-        ATTRIBUTE_ID_NUM_NETWORKING_THREADS = 4,
-        ATTRIBUTE_ID_NUM_PROCESSING_THREADS = 5,
-        ATTRIBUTE_ID_DYNAMIC_LOAD_BALANCING = 6,
-        ATTRIBUTE_ID_KEEP_ALIVE = 7,
-        ATTRIBUTE_ID_KEEP_HALF_OPEN = 8,
-        ATTRIBUTE_ID_BACKLOG = 9,
-        ATTRIBUTE_ID_SEND_BUFFER_SIZE = 10,
-        ATTRIBUTE_ID_RECEIVE_BUFFER_SIZE = 11,
-        ATTRIBUTE_ID_ACCEPT_GREEDILY = 12,
-        ATTRIBUTE_ID_ACCEPT_QUEUE_LOW_WATERMARK = 13,
-        ATTRIBUTE_ID_ACCEPT_QUEUE_HIGH_WATERMARK = 14,
-        ATTRIBUTE_ID_READ_QUEUE_LOW_WATERMARK = 15,
-        ATTRIBUTE_ID_READ_QUEUE_HIGH_WATERMARK = 16,
-        ATTRIBUTE_ID_WRITE_QUEUE_LOW_WATERMARK = 17,
-        ATTRIBUTE_ID_WRITE_QUEUE_HIGH_WATERMARK = 18
+        ATTRIBUTE_ID_HEADER = 0,
+        ATTRIBUTE_ID_PRAGMA = 1,
+        ATTRIBUTE_ID_ENTITY = 2
     };
 
     enum Constant {
-        NUM_ATTRIBUTES = 19
+        NUM_ATTRIBUTES = 3
     };
 
     // Create a new object having the default value. Optionally specify a 
     // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
     // currently installed default allocator is used. 
-    explicit TestServerConfig(bslma::Allocator* allocator = 0);
+    explicit TestMessageFrame(bslma::Allocator* allocator = 0);
 
     // Create a new object having the same value as the specified 'original' 
     // object. Optionally specify a 'basicAllocator' used to supply memory. 
     // If 'basicAllocator' is 0, the currently installed default allocator is 
     // used. 
-    TestServerConfig(const TestServerConfig& original, bslma::Allocator* allocator = 0);
+    TestMessageFrame(const TestMessageFrame& original, bslma::Allocator* allocator = 0);
 
     // Destroy this object. 
-    ~TestServerConfig();
+    ~TestMessageFrame();
 
     // Assign the value of the specified 'other' object to this object. 
     // Return a reference to this modifiable object. 
-    TestServerConfig& operator=(const TestServerConfig& other);
+    TestMessageFrame& operator=(const TestMessageFrame& other);
 
     // Reset the value of this object its value upon default construction. 
     void reset();
 
     // Swap the value of this object with the value of the specified 'other' 
     // object. 
-    void swap(TestServerConfig& other);
+    void swap(TestMessageFrame& other);
 
     // Load the value from the fields in the specified specified 'other' 
     // value that match the fields of this value into this value. 
@@ -8538,11 +10408,11 @@ public:
 
     // Return true if this object has the same value as the specified 'other' 
     // object, otherwise return false. 
-    bool equals(const TestServerConfig& other) const;
+    bool equals(const TestMessageFrame& other) const;
 
     // Return true if the value of this object is less than the value of the 
     // specified 'other' object, otherwise return false. 
-    bool less(const TestServerConfig& other) const;
+    bool less(const TestMessageFrame& other) const;
 
     // Contribute the values of the salient attributes of this object to the 
     // specified hash 'algorithm'. 
@@ -8627,301 +10497,90 @@ public:
     template <typename ACCESSOR>
     int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
 
-    // The name of the server.
-    bdlb::NullableValue<bsl::string> name;
+    // The header.
+    ntcf::TestMessageHeader header;
 
-    // The name of the networking driver.
-    bdlb::NullableValue<bsl::string> driver;
+    // The meta-data about the messaging infrastructure.
+    bdlb::NullableValue<ntcf::TestMessagePragma> pragma;
 
-    // The flag that indicates all stream communication should be 
-    // encrypted.
-    bdlb::NullableValue<bool> encryption;
-
-    // The flag that indicates all communication should be compressed.
-    bdlb::NullableValue<bool> compression;
-
-    // The number of networking threads.
-    bdlb::NullableValue<bsl::uint32_t> numNetworkingThreads;
-
-    // The number of processing threads.
-    bdlb::NullableValue<bsl::uint32_t> numProcessingThreads;
-
-    // The flag that indicates socket I/O should be balanced and processed
-    // by any networking thread.
-    bdlb::NullableValue<bool> dynamicLoadBalancing;
-
-    // The flag that indicates socket-level keep-alives should be enabled.
-    bdlb::NullableValue<bool> keepAlive;
-
-    // The flag that indicates the socket should remain open for writing
-    // when the peer shuts down the socket.
-    bdlb::NullableValue<bool> keepHalfOpen;
-
-    // The backlog depth.
-    bdlb::NullableValue<bsl::uint32_t> backlog;
-
-    // The send buffer size.
-    bdlb::NullableValue<bsl::uint32_t> sendBufferSize;
-
-    // The receive buffer size.
-    bdlb::NullableValue<bsl::uint32_t> receiveBufferSize;
-
-    // The flag that indicates the backlog should be processed greedily.
-    bdlb::NullableValue<bool> acceptGreedily;
-
-    // The accept queue low watermark.
-    bdlb::NullableValue<bsl::uint32_t> acceptQueueLowWatermark;
-
-    // The accept queue high watermark.
-    bdlb::NullableValue<bsl::uint32_t> acceptQueueHighWatermark;
-
-    // The read queue low watermark.
-    bdlb::NullableValue<bsl::uint32_t> readQueueLowWatermark;
-
-    // The read queue high watermark.
-    bdlb::NullableValue<bsl::uint32_t> readQueueHighWatermark;
-
-    // The write queue low watermark.
-    bdlb::NullableValue<bsl::uint32_t> writeQueueLowWatermark;
-
-    // The write queue high watermark.
-    bdlb::NullableValue<bsl::uint32_t> writeQueueHighWatermark;
+    // The entity transferred.
+    bdlb::NullableValue<ntcf::TestMessageEntity> entity;
 };
 
 // Return true if the specified 'lhs' has the same value as the specified 
 // 'rhs', otherwise return false. 
-bool operator==(const TestServerConfig& lhs, const TestServerConfig& rhs);
+bool operator==(const TestMessageFrame& lhs, const TestMessageFrame& rhs);
 
 // Return true if the specified 'lhs' does not have the same value as the 
 // specified 'rhs', otherwise return false. 
-bool operator!=(const TestServerConfig& lhs, const TestServerConfig& rhs);
+bool operator!=(const TestMessageFrame& lhs, const TestMessageFrame& rhs);
 
 // Return true if the value of the specified 'lhs' is less than the value of 
 // the specified 'rhs', otherwise return false. 
-bool operator<(const TestServerConfig& lhs, const TestServerConfig& rhs);
+bool operator<(const TestMessageFrame& lhs, const TestMessageFrame& rhs);
 
 // Insert a formatted, human-readable description of the specified 'object' 
 // into the specified 'stream'. Return a reference to the modifiable 
 // 'stream'. 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestServerConfig& object);
+bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageFrame& object);
 
 // Contribute the values of the salient attributes of the specified 'value' 
 // to the specified hash 'algorithm'. 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestServerConfig& value);
+void hashAppend(HASH_ALGORITHM& algorithm, const TestMessageFrame& value);
 
 template <typename TYPE>
-void TestServerConfig::load(const TYPE& other)
+void TestMessageFrame::load(const TYPE& other)
 {
     if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
-        this->name = other.name;
-        this->driver = other.driver;
-        this->encryption = other.encryption;
-        this->compression = other.compression;
-        this->numNetworkingThreads = other.numNetworkingThreads;
-        this->numProcessingThreads = other.numProcessingThreads;
-        this->dynamicLoadBalancing = other.dynamicLoadBalancing;
-        this->keepAlive = other.keepAlive;
-        this->keepHalfOpen = other.keepHalfOpen;
-        this->backlog = other.backlog;
-        this->sendBufferSize = other.sendBufferSize;
-        this->receiveBufferSize = other.receiveBufferSize;
-        this->acceptGreedily = other.acceptGreedily;
-        this->acceptQueueLowWatermark = other.acceptQueueLowWatermark;
-        this->acceptQueueHighWatermark = other.acceptQueueHighWatermark;
-        this->readQueueLowWatermark = other.readQueueLowWatermark;
-        this->readQueueHighWatermark = other.readQueueHighWatermark;
-        this->writeQueueLowWatermark = other.writeQueueLowWatermark;
-        this->writeQueueHighWatermark = other.writeQueueHighWatermark;
+        this->header = other.header;
+        this->pragma = other.pragma;
+        this->entity = other.entity;
     }
 }
 
 template <typename TYPE>
-void TestServerConfig::store(TYPE* other) const
+void TestMessageFrame::store(TYPE* other) const
 {
     if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
-        other->name = this->name;
-        other->driver = this->driver;
-        other->encryption = this->encryption;
-        other->compression = this->compression;
-        other->numNetworkingThreads = this->numNetworkingThreads;
-        other->numProcessingThreads = this->numProcessingThreads;
-        other->dynamicLoadBalancing = this->dynamicLoadBalancing;
-        other->keepAlive = this->keepAlive;
-        other->keepHalfOpen = this->keepHalfOpen;
-        other->backlog = this->backlog;
-        other->sendBufferSize = this->sendBufferSize;
-        other->receiveBufferSize = this->receiveBufferSize;
-        other->acceptGreedily = this->acceptGreedily;
-        other->acceptQueueLowWatermark = this->acceptQueueLowWatermark;
-        other->acceptQueueHighWatermark = this->acceptQueueHighWatermark;
-        other->readQueueLowWatermark = this->readQueueLowWatermark;
-        other->readQueueHighWatermark = this->readQueueHighWatermark;
-        other->writeQueueLowWatermark = this->writeQueueLowWatermark;
-        other->writeQueueHighWatermark = this->writeQueueHighWatermark;
+        other->header = this->header;
+        other->pragma = this->pragma;
+        other->entity = this->entity;
     }
 
 }
 
 template <typename HASH_ALGORITHM>
-void TestServerConfig::hash(HASH_ALGORITHM& algorithm)
+void TestMessageFrame::hash(HASH_ALGORITHM& algorithm)
 {
     using bslh::hashAppend;
-    hashAppend(algorithm, this->name);
-    hashAppend(algorithm, this->driver);
-    hashAppend(algorithm, this->encryption);
-    hashAppend(algorithm, this->compression);
-    hashAppend(algorithm, this->numNetworkingThreads);
-    hashAppend(algorithm, this->numProcessingThreads);
-    hashAppend(algorithm, this->dynamicLoadBalancing);
-    hashAppend(algorithm, this->keepAlive);
-    hashAppend(algorithm, this->keepHalfOpen);
-    hashAppend(algorithm, this->backlog);
-    hashAppend(algorithm, this->sendBufferSize);
-    hashAppend(algorithm, this->receiveBufferSize);
-    hashAppend(algorithm, this->acceptGreedily);
-    hashAppend(algorithm, this->acceptQueueLowWatermark);
-    hashAppend(algorithm, this->acceptQueueHighWatermark);
-    hashAppend(algorithm, this->readQueueLowWatermark);
-    hashAppend(algorithm, this->readQueueHighWatermark);
-    hashAppend(algorithm, this->writeQueueLowWatermark);
-    hashAppend(algorithm, this->writeQueueHighWatermark);
+    hashAppend(algorithm, this->header);
+    hashAppend(algorithm, this->pragma);
+    hashAppend(algorithm, this->entity);
 }
 
 template <typename MANIPULATOR>
-int TestServerConfig::manipulateAttributes(MANIPULATOR& manipulator)
+int TestMessageFrame::manipulateAttributes(MANIPULATOR& manipulator)
 {
     int rc;
 
     rc = manipulator(
-        &this->name,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+        &this->header,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER]);
     if (rc != 0) {
         return rc;
     }
 
     rc = manipulator(
-        &this->driver,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DRIVER]);
+        &this->pragma,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA]);
     if (rc != 0) {
         return rc;
     }
 
     rc = manipulator(
-        &this->encryption,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENCRYPTION]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->compression,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->numNetworkingThreads,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->numProcessingThreads,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->dynamicLoadBalancing,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->keepAlive,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_ALIVE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->keepHalfOpen,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_HALF_OPEN]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->backlog,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BACKLOG]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->sendBufferSize,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SEND_BUFFER_SIZE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->receiveBufferSize,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->acceptGreedily,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->acceptQueueLowWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->acceptQueueHighWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->readQueueLowWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->readQueueHighWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->writeQueueLowWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = manipulator(
-        &this->writeQueueHighWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK]);
+        &this->entity,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY]);
     if (rc != 0) {
         return rc;
     }
@@ -8930,92 +10589,28 @@ int TestServerConfig::manipulateAttributes(MANIPULATOR& manipulator)
 }
 
 template <typename MANIPULATOR>
-int TestServerConfig::manipulateAttribute(MANIPULATOR& manipulator, int id)
+int TestMessageFrame::manipulateAttribute(MANIPULATOR& manipulator, int id)
 {
     switch (id) {
-    case ATTRIBUTE_ID_NAME:
+    case ATTRIBUTE_ID_HEADER:
         return manipulator(
-            &this->name,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
-    case ATTRIBUTE_ID_DRIVER:
+            &this->header,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER]);
+    case ATTRIBUTE_ID_PRAGMA:
         return manipulator(
-            &this->driver,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DRIVER]);
-    case ATTRIBUTE_ID_ENCRYPTION:
+            &this->pragma,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA]);
+    case ATTRIBUTE_ID_ENTITY:
         return manipulator(
-            &this->encryption,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENCRYPTION]);
-    case ATTRIBUTE_ID_COMPRESSION:
-        return manipulator(
-            &this->compression,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION]);
-    case ATTRIBUTE_ID_NUM_NETWORKING_THREADS:
-        return manipulator(
-            &this->numNetworkingThreads,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS]);
-    case ATTRIBUTE_ID_NUM_PROCESSING_THREADS:
-        return manipulator(
-            &this->numProcessingThreads,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS]);
-    case ATTRIBUTE_ID_DYNAMIC_LOAD_BALANCING:
-        return manipulator(
-            &this->dynamicLoadBalancing,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING]);
-    case ATTRIBUTE_ID_KEEP_ALIVE:
-        return manipulator(
-            &this->keepAlive,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_ALIVE]);
-    case ATTRIBUTE_ID_KEEP_HALF_OPEN:
-        return manipulator(
-            &this->keepHalfOpen,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_HALF_OPEN]);
-    case ATTRIBUTE_ID_BACKLOG:
-        return manipulator(
-            &this->backlog,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BACKLOG]);
-    case ATTRIBUTE_ID_SEND_BUFFER_SIZE:
-        return manipulator(
-            &this->sendBufferSize,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SEND_BUFFER_SIZE]);
-    case ATTRIBUTE_ID_RECEIVE_BUFFER_SIZE:
-        return manipulator(
-            &this->receiveBufferSize,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE]);
-    case ATTRIBUTE_ID_ACCEPT_GREEDILY:
-        return manipulator(
-            &this->acceptGreedily,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY]);
-    case ATTRIBUTE_ID_ACCEPT_QUEUE_LOW_WATERMARK:
-        return manipulator(
-            &this->acceptQueueLowWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK]);
-    case ATTRIBUTE_ID_ACCEPT_QUEUE_HIGH_WATERMARK:
-        return manipulator(
-            &this->acceptQueueHighWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK]);
-    case ATTRIBUTE_ID_READ_QUEUE_LOW_WATERMARK:
-        return manipulator(
-            &this->readQueueLowWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK]);
-    case ATTRIBUTE_ID_READ_QUEUE_HIGH_WATERMARK:
-        return manipulator(
-            &this->readQueueHighWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK]);
-    case ATTRIBUTE_ID_WRITE_QUEUE_LOW_WATERMARK:
-        return manipulator(
-            &this->writeQueueLowWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK]);
-    case ATTRIBUTE_ID_WRITE_QUEUE_HIGH_WATERMARK:
-        return manipulator(
-            &this->writeQueueHighWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK]);
+            &this->entity,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY]);
     default:
         return -1;
     };
 }
 
 template <typename MANIPULATOR>
-int TestServerConfig::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+int TestMessageFrame::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
 {
     const bdlat_AttributeInfo* attributeInfo =
         lookupAttributeInfo(name, nameLength);
@@ -9027,139 +10622,27 @@ int TestServerConfig::manipulateAttribute(MANIPULATOR& manipulator, const char* 
 }
 
 template <typename ACCESSOR>
-int TestServerConfig::accessAttributes(ACCESSOR& accessor) const
+int TestMessageFrame::accessAttributes(ACCESSOR& accessor) const
 {
     int rc;
 
     rc = accessor(
-        this->name,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
+        this->header,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER]);
     if (rc != 0) {
         return rc;
     }
 
     rc = accessor(
-        this->driver,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DRIVER]);
+        this->pragma,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA]);
     if (rc != 0) {
         return rc;
     }
 
     rc = accessor(
-        this->encryption,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENCRYPTION]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->compression,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->numNetworkingThreads,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->numProcessingThreads,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->dynamicLoadBalancing,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->keepAlive,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_ALIVE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->keepHalfOpen,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_HALF_OPEN]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->backlog,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BACKLOG]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->sendBufferSize,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SEND_BUFFER_SIZE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->receiveBufferSize,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->acceptGreedily,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->acceptQueueLowWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->acceptQueueHighWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->readQueueLowWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->readQueueHighWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->writeQueueLowWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK]);
-    if (rc != 0) {
-        return rc;
-    }
-
-    rc = accessor(
-        this->writeQueueHighWatermark,
-        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK]);
+        this->entity,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY]);
     if (rc != 0) {
         return rc;
     }
@@ -9168,92 +10651,28 @@ int TestServerConfig::accessAttributes(ACCESSOR& accessor) const
 }
 
 template <typename ACCESSOR>
-int TestServerConfig::accessAttribute(ACCESSOR& accessor, int id) const
+int TestMessageFrame::accessAttribute(ACCESSOR& accessor, int id) const
 {
     switch (id) {
-    case ATTRIBUTE_ID_NAME:
+    case ATTRIBUTE_ID_HEADER:
         return accessor(
-            this->name,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME]);
-    case ATTRIBUTE_ID_DRIVER:
+            this->header,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER]);
+    case ATTRIBUTE_ID_PRAGMA:
         return accessor(
-            this->driver,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DRIVER]);
-    case ATTRIBUTE_ID_ENCRYPTION:
+            this->pragma,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA]);
+    case ATTRIBUTE_ID_ENTITY:
         return accessor(
-            this->encryption,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENCRYPTION]);
-    case ATTRIBUTE_ID_COMPRESSION:
-        return accessor(
-            this->compression,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION]);
-    case ATTRIBUTE_ID_NUM_NETWORKING_THREADS:
-        return accessor(
-            this->numNetworkingThreads,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS]);
-    case ATTRIBUTE_ID_NUM_PROCESSING_THREADS:
-        return accessor(
-            this->numProcessingThreads,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS]);
-    case ATTRIBUTE_ID_DYNAMIC_LOAD_BALANCING:
-        return accessor(
-            this->dynamicLoadBalancing,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING]);
-    case ATTRIBUTE_ID_KEEP_ALIVE:
-        return accessor(
-            this->keepAlive,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_ALIVE]);
-    case ATTRIBUTE_ID_KEEP_HALF_OPEN:
-        return accessor(
-            this->keepHalfOpen,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_HALF_OPEN]);
-    case ATTRIBUTE_ID_BACKLOG:
-        return accessor(
-            this->backlog,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BACKLOG]);
-    case ATTRIBUTE_ID_SEND_BUFFER_SIZE:
-        return accessor(
-            this->sendBufferSize,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SEND_BUFFER_SIZE]);
-    case ATTRIBUTE_ID_RECEIVE_BUFFER_SIZE:
-        return accessor(
-            this->receiveBufferSize,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE]);
-    case ATTRIBUTE_ID_ACCEPT_GREEDILY:
-        return accessor(
-            this->acceptGreedily,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY]);
-    case ATTRIBUTE_ID_ACCEPT_QUEUE_LOW_WATERMARK:
-        return accessor(
-            this->acceptQueueLowWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK]);
-    case ATTRIBUTE_ID_ACCEPT_QUEUE_HIGH_WATERMARK:
-        return accessor(
-            this->acceptQueueHighWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK]);
-    case ATTRIBUTE_ID_READ_QUEUE_LOW_WATERMARK:
-        return accessor(
-            this->readQueueLowWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK]);
-    case ATTRIBUTE_ID_READ_QUEUE_HIGH_WATERMARK:
-        return accessor(
-            this->readQueueHighWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK]);
-    case ATTRIBUTE_ID_WRITE_QUEUE_LOW_WATERMARK:
-        return accessor(
-            this->writeQueueLowWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK]);
-    case ATTRIBUTE_ID_WRITE_QUEUE_HIGH_WATERMARK:
-        return accessor(
-            this->writeQueueHighWatermark,
-            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK]);
+            this->entity,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY]);
     default:
         return -1;
     };
 }
 
 template <typename ACCESSOR>
-int TestServerConfig::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+int TestMessageFrame::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
 {
     const bdlat_AttributeInfo* attributeInfo = 
         lookupAttributeInfo(name, nameLength);
@@ -9265,7 +10684,7 @@ int TestServerConfig::accessAttribute(ACCESSOR& accessor, const char* name, int 
 }
 
 template <typename HASH_ALGORITHM>
-void hashAppend(HASH_ALGORITHM& algorithm, const TestServerConfig& value)
+void hashAppend(HASH_ALGORITHM& algorithm, const TestMessageFrame& value)
 {
     value.hash(algorithm);
 }
@@ -9273,7 +10692,322 @@ void hashAppend(HASH_ALGORITHM& algorithm, const TestServerConfig& value)
 } // close namespace ntcf
 
 BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
-    ntcf::TestServerConfig)
+    ntcf::TestMessageFrame)
+
+namespace ntcf { 
+
+// Describes testing results.
+class TestEchoResult
+{
+public:
+    enum AttributeIndex {
+        ATTRIBUTE_INDEX_ID = 0,
+        ATTRIBUTE_INDEX_VALUE = 1
+    };
+
+    enum AttributeId {
+        ATTRIBUTE_ID_ID = 0,
+        ATTRIBUTE_ID_VALUE = 1
+    };
+
+    enum Constant {
+        NUM_ATTRIBUTES = 2
+    };
+
+    // Create a new object having the default value. Optionally specify a 
+    // 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    // currently installed default allocator is used. 
+    explicit TestEchoResult(bslma::Allocator* allocator = 0);
+
+    // Create a new object having the same value as the specified 'original' 
+    // object. Optionally specify a 'basicAllocator' used to supply memory. 
+    // If 'basicAllocator' is 0, the currently installed default allocator is 
+    // used. 
+    TestEchoResult(const TestEchoResult& original, bslma::Allocator* allocator = 0);
+
+    // Destroy this object. 
+    ~TestEchoResult();
+
+    // Assign the value of the specified 'other' object to this object. 
+    // Return a reference to this modifiable object. 
+    TestEchoResult& operator=(const TestEchoResult& other);
+
+    // Reset the value of this object its value upon default construction. 
+    void reset();
+
+    // Swap the value of this object with the value of the specified 'other' 
+    // object. 
+    void swap(TestEchoResult& other);
+
+    // Load the value from the fields in the specified specified 'other' 
+    // value that match the fields of this value into this value. 
+    template <typename TYPE>
+    void load(const TYPE& other);
+
+    // Store the value into the fields in the specified specified 'other' 
+    // value that match the fields of this value. 
+    template <typename TYPE>
+    void store(TYPE* other) const;
+
+    // Return true if this object has the same value as the specified 'other' 
+    // object, otherwise return false. 
+    bool equals(const TestEchoResult& other) const;
+
+    // Return true if the value of this object is less than the value of the 
+    // specified 'other' object, otherwise return false. 
+    bool less(const TestEchoResult& other) const;
+
+    // Contribute the values of the salient attributes of this object to the 
+    // specified hash 'algorithm'. 
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm);
+
+    // Format this object to the specified output 'stream' at the optionally 
+    // specified indentation 'level' and return a reference to the modifiable 
+    // 'stream'. If 'level' is specified, optionally specify 
+    // 'spacesPerLevel', the number of spaces per indentation level for this 
+    // and all of its nested objects. Each line is indented by the absolute 
+    // value of 'level * spacesPerLevel'. If 'level' is negative, suppress 
+    // indentation of the first line. If 'spacesPerLevel' is negative, 
+    // suppress line breaks and format the entire output on one line. If 
+    // 'stream' is initially invalid, this operation has no effect. Note that 
+    // a trailing newline is provided in multiline mode only. 
+    bsl::ostream& print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+
+    // Return the compiler-independant name for this class. 
+    static const char CLASS_NAME[];
+
+    // The attribute info array, indexed by attribute index. 
+    static const bdlat_AttributeInfo ATTRIBUTE_INFO_ARRAY[];
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'id' if the attribute exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(int id);
+
+    // Return attribute information for the attribute indicated by the 
+    // specified 'name' of the specified 'nameLength' if the attribute 
+    // exists, and 0 otherwise. 
+    static const bdlat_AttributeInfo* lookupAttributeInfo(const char* name, int nameLength);
+
+    // Invoke the specified 'manipulator' sequentially on the address of each 
+    // (modifiable) attribute of this object, supplying 'manipulator' with 
+    // the corresponding attribute information structure until such 
+    // invocation returns a non-zero value. Return the value from the last 
+    // invocation of 'manipulator' (i.e., the invocation that terminated the 
+    // sequence). 
+    template <typename MANIPULATOR>
+    int manipulateAttributes(MANIPULATOR& manipulator);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'id', supplying 'manipulator' 
+    // with the corresponding attribute information structure. Return the 
+    // value returned from the invocation of 'manipulator' if 'id' identifies 
+    // an attribute of this class, and -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, int id);
+
+    // Invoke the specified 'manipulator' on the address of the (modifiable) 
+    // attribute indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'manipulator' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'manipulator' if 'name' identifies an attribute of this class, and 
+    // -1 otherwise. 
+    template <typename MANIPULATOR>
+    int manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength);
+
+    // Invoke the specified 'accessor' sequentially on each (non-modifiable) 
+    // attribute of this object, supplying 'accessor' with the corresponding 
+    // attribute information structure until such invocation returns a 
+    // non-zero value. Return the value from the last invocation of 
+    // 'accessor' (i.e., the invocation that terminated the sequence). 
+    template <typename ACCESSOR>
+    int accessAttributes(ACCESSOR& accessor) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'id', supplying 'accessor' with 
+    // the corresponding attribute information structure. Return the value 
+    // returned from the invocation of 'accessor' if 'id' identifies an 
+    // attribute of this class, and -1 otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, int id) const;
+
+    // Invoke the specified 'accessor' on the (non-modifiable) attribute of 
+    // this object indicated by the specified 'name' of the specified 
+    // 'nameLength', supplying 'accessor' with the corresponding attribute 
+    // information structure. Return the value returned from the invocation 
+    // of 'accessor' if 'name' identifies an attribute of this class, and -1 
+    // otherwise. 
+    template <typename ACCESSOR>
+    int accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const;
+
+    // The value.
+    bsls::Types::Uint64 id;
+
+    // The value.
+    bsl::string value;
+};
+
+// Return true if the specified 'lhs' has the same value as the specified 
+// 'rhs', otherwise return false. 
+bool operator==(const TestEchoResult& lhs, const TestEchoResult& rhs);
+
+// Return true if the specified 'lhs' does not have the same value as the 
+// specified 'rhs', otherwise return false. 
+bool operator!=(const TestEchoResult& lhs, const TestEchoResult& rhs);
+
+// Return true if the value of the specified 'lhs' is less than the value of 
+// the specified 'rhs', otherwise return false. 
+bool operator<(const TestEchoResult& lhs, const TestEchoResult& rhs);
+
+// Insert a formatted, human-readable description of the specified 'object' 
+// into the specified 'stream'. Return a reference to the modifiable 
+// 'stream'. 
+bsl::ostream& operator<<(bsl::ostream& stream, const TestEchoResult& object);
+
+// Contribute the values of the salient attributes of the specified 'value' 
+// to the specified hash 'algorithm'. 
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestEchoResult& value);
+
+template <typename TYPE>
+void TestEchoResult::load(const TYPE& other)
+{
+    if (reinterpret_cast<void*>(this) != reinterpret_cast<const void*>(&other)) {
+        this->id = other.id;
+        this->value = other.value;
+    }
+}
+
+template <typename TYPE>
+void TestEchoResult::store(TYPE* other) const
+{
+    if (reinterpret_cast<const void*>(this) != reinterpret_cast<void*>(&other)) {
+        other->id = this->id;
+        other->value = this->value;
+    }
+
+}
+
+template <typename HASH_ALGORITHM>
+void TestEchoResult::hash(HASH_ALGORITHM& algorithm)
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, this->id);
+    hashAppend(algorithm, this->value);
+}
+
+template <typename MANIPULATOR>
+int TestEchoResult::manipulateAttributes(MANIPULATOR& manipulator)
+{
+    int rc;
+
+    rc = manipulator(
+        &this->id,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = manipulator(
+        &this->value,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename MANIPULATOR>
+int TestEchoResult::manipulateAttribute(MANIPULATOR& manipulator, int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return manipulator(
+            &this->id,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    case ATTRIBUTE_ID_VALUE:
+        return manipulator(
+            &this->value,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    default:
+        return -1;
+    };
+}
+
+template <typename MANIPULATOR>
+int TestEchoResult::manipulateAttribute(MANIPULATOR& manipulator, const char* name, int nameLength)
+{
+    const bdlat_AttributeInfo* attributeInfo =
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return manipulateAttribute(manipulator, attributeInfo->d_id);
+}
+
+template <typename ACCESSOR>
+int TestEchoResult::accessAttributes(ACCESSOR& accessor) const
+{
+    int rc;
+
+    rc = accessor(
+        this->id,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = accessor(
+        this->value,
+        ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    if (rc != 0) {
+        return rc;
+    }
+
+    return 0;
+}
+
+template <typename ACCESSOR>
+int TestEchoResult::accessAttribute(ACCESSOR& accessor, int id) const
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return accessor(
+            this->id,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID]);
+    case ATTRIBUTE_ID_VALUE:
+        return accessor(
+            this->value,
+            ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE]);
+    default:
+        return -1;
+    };
+}
+
+template <typename ACCESSOR>
+int TestEchoResult::accessAttribute(ACCESSOR& accessor, const char* name, int nameLength) const
+{
+    const bdlat_AttributeInfo* attributeInfo = 
+        lookupAttributeInfo(name, nameLength);
+    if (attributeInfo == 0) {
+        return -1;
+    }
+
+    return accessAttribute(accessor, attributeInfo->d_id);
+}
+
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TestEchoResult& value)
+{
+    value.hash(algorithm);
+}
+
+} // close namespace ntcf
+
+BDLAT_DECL_SEQUENCE_WITH_ALLOCATOR_BITWISEMOVEABLE_TRAITS(
+    ntcf::TestEchoResult)
 
 } // close namespace BloombergLP
 #endif

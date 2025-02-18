@@ -495,11 +495,11 @@ public:
     /// Destroy this object.
     ~TestServer() BSLS_KEYWORD_OVERRIDE;
 
-    /// Return the listener endpoint.
-    const ntsa::Endpoint& listenerEndpoint() const;
+    /// Return the TCP endpoint.
+    const ntsa::Endpoint& tcpEndpoint() const;
 
-    /// Return the datagram endpoint.
-    const ntsa::Endpoint& datagramEndpoint() const;
+    /// Return the UDP endpoint.
+    const ntsa::Endpoint& udpEndpoint() const;
 };
     
 }  // end namespace ntcf

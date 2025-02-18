@@ -75,6 +75,33 @@ package ntcf
     {
     }
 
+    // Describes the context of an acknowledgment result.
+    sequence TestAcknowledgmentResultContext
+    {
+        // The latency of the operation.
+        required latency: duration;
+    }
+
+    // Describes the value of an acknowledgment result.
+    choice TestAcknowledgmentResultValue
+    {
+        // The fault.
+        selection failure: ntcf.TestFault;
+
+        // The acknowledgment.
+        selection success: ntcf.TestTrade;
+    }
+
+    // Describe a acknowledgment result.
+    sequence TestAcknowledgmentResult
+    {
+        // The context.
+        required context: ntcf.TestAcknowledgmentResultContext;
+
+        // The value.
+        required value: ntcf.TestAcknowledgmentResultValue;
+    }
+
     // Describes a person.
     sequence TestPerson
     {
@@ -168,6 +195,33 @@ package ntcf
 
         // The date and time at which the transaction occured.
         required timestamp: dateTime;
+    }
+
+    // Describes the context of a trade result.
+    sequence TestTradeResultContext
+    {
+        // The latency of the operation.
+        required latency: duration;
+    }
+
+    // Describes the value of a trade result.
+    choice TestTradeResultValue
+    {
+        // The fault.
+        selection failure: ntcf.TestFault;
+
+        // The trade.
+        selection success: ntcf.TestTrade;
+    }
+
+    // Describe a trade result.
+    sequence TestTradeResult
+    {
+        // The context.
+        required context: ntcf.TestTradeResultContext;
+
+        // The value.
+        required value: ntcf.TestTradeResultValue;
     }
 
     // Describes a trade subscription.
