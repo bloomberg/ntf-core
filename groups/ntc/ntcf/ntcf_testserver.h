@@ -500,6 +500,10 @@ public:
 
     /// Return the UDP endpoint.
     const ntsa::Endpoint& udpEndpoint() const;
+
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(TestServer);
 };
     
 }  // end namespace ntcf

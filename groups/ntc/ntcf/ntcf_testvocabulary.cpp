@@ -8,84 +8,107 @@
 namespace BloombergLP {
 namespace ntcf { 
 
-TestTradeResultContext::TestTradeResultContext()
-: latency()
+TestSecurity::TestSecurity(bslma::Allocator* allocator)
+: id()
+, name(allocator)
 {
 }
 
-TestTradeResultContext::TestTradeResultContext(const TestTradeResultContext& other)
-: latency(other.latency)
+TestSecurity::TestSecurity(const TestSecurity& original, bslma::Allocator* allocator)
+: id(original.id)
+, name(original.name, allocator)
 {
 }
 
-TestTradeResultContext::~TestTradeResultContext()
+TestSecurity::~TestSecurity()
 {
 }
 
-TestTradeResultContext& TestTradeResultContext::operator=(const TestTradeResultContext& other)
+TestSecurity& TestSecurity::operator=(const TestSecurity& other)
 {
     if (this != &other) {
-        this->latency = other.latency;
+        this->id = other.id;
+        this->name = other.name;
     }
 
     return *this;
 }
 
-void TestTradeResultContext::reset()
+void TestSecurity::reset()
 {
-    bdlat_ValueTypeFunctions::reset(&this->latency);
+    bdlat_ValueTypeFunctions::reset(&this->id);
+    bdlat_ValueTypeFunctions::reset(&this->name);
 }
 
-void TestTradeResultContext::swap(TestTradeResultContext& other)
+void TestSecurity::swap(TestSecurity& other)
 {
     if (this != &other) {
-        bslalg::SwapUtil::swap(&this->latency, &other.latency);
+        bslalg::SwapUtil::swap(&this->id, &other.id);
+        bslalg::SwapUtil::swap(&this->name, &other.name);
     }
 }
 
-bool TestTradeResultContext::equals(const TestTradeResultContext& other) const
+bool TestSecurity::equals(const TestSecurity& other) const
 {
-    if (this->latency != other.latency) {
+    if (this->id != other.id) {
+        return false;
+    }
+
+    if (this->name != other.name) {
         return false;
     }
 
     return true;
 }
 
-bool TestTradeResultContext::less(const TestTradeResultContext& other) const
+bool TestSecurity::less(const TestSecurity& other) const
 {
-    return this->latency < other.latency;
+    if (this->id < other.id) {
+        return true;
+    }
+
+    if (other.id < this->id) {
+        return false;
+    }
+
+    return this->name < other.name;
 }
 
-bsl::ostream& TestTradeResultContext::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestSecurity::print(bsl::ostream& stream, int level, int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     printer.printAttribute(
-        "latency",
-        this->latency);
+        "id",
+        this->id);
+    printer.printAttribute(
+        "name",
+        this->name);
     printer.end();
     return stream;
 }
 
-const char TestTradeResultContext::CLASS_NAME[] = "ntcf::TestTradeResultContext";
+const char TestSecurity::CLASS_NAME[] = "ntcf::TestSecurity";
 
-const bdlat_AttributeInfo TestTradeResultContext::ATTRIBUTE_INFO_ARRAY[] =
+const bdlat_AttributeInfo TestSecurity::ATTRIBUTE_INFO_ARRAY[] =
 {
-    { 0, "latency", 7, "", bdlat_FormattingMode::e_DEFAULT }
+    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "name", 4, "", bdlat_FormattingMode::e_DEFAULT }
 };
 
-const bdlat_AttributeInfo* TestTradeResultContext::lookupAttributeInfo(int id)
+const bdlat_AttributeInfo* TestSecurity::lookupAttributeInfo(int id)
 {
     switch (id) {
-    case ATTRIBUTE_ID_LATENCY:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY];
+    case ATTRIBUTE_ID_ID:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID];
+    case ATTRIBUTE_ID_NAME:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME];
     default:
         return 0;
     }
 }
 
-const bdlat_AttributeInfo* TestTradeResultContext::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestSecurity::lookupAttributeInfo(const char* name, int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
@@ -101,108 +124,22 @@ const bdlat_AttributeInfo* TestTradeResultContext::lookupAttributeInfo(const cha
     return 0;
 }
 
-bool operator==(const TestTradeResultContext& lhs, const TestTradeResultContext& rhs)
+bool operator==(const TestSecurity& lhs, const TestSecurity& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestTradeResultContext& lhs, const TestTradeResultContext& rhs)
+bool operator!=(const TestSecurity& lhs, const TestSecurity& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestTradeResultContext& lhs, const TestTradeResultContext& rhs)
+bool operator<(const TestSecurity& lhs, const TestSecurity& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestTradeResultContext& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-} // close namespace ntcf
-
-namespace ntcf { 
-
-TestSubscription::TestSubscription()
-{
-}
-
-TestSubscription::TestSubscription(const TestSubscription& other)
-{
-    (void)(other);
-}
-
-TestSubscription::~TestSubscription()
-{
-}
-
-TestSubscription& TestSubscription::operator=(const TestSubscription& other)
-{
-    (void)(other);
-    return *this;
-
-}
-
-void TestSubscription::reset()
-{
-}
-
-void TestSubscription::swap(TestSubscription& other)
-{
-    (void)(other);
-}
-
-bool TestSubscription::equals(const TestSubscription& other) const
-{    (void)(other);
-    return true;
-}
-
-bool TestSubscription::less(const TestSubscription& other) const
-{    (void)(other);
-    return false;
-}
-
-bsl::ostream& TestSubscription::print(bsl::ostream& stream, int level, int spacesPerLevel) const
-{
-    (void)(stream);
-    (void)(level);
-    (void)(spacesPerLevel);
-    return stream << "[ ]";
-}
-
-const char TestSubscription::CLASS_NAME[] = "ntcf::TestSubscription";
-
-const bdlat_AttributeInfo* TestSubscription::lookupAttributeInfo(int id)
-{
-    (void)(id);
-    return 0;
-}
-
-const bdlat_AttributeInfo* TestSubscription::lookupAttributeInfo(const char* name, int nameLength)
-{
-    (void)(name);
-    (void)(nameLength);
-    return 0;
-}
-
-bool operator==(const TestSubscription& lhs, const TestSubscription& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const TestSubscription& lhs, const TestSubscription& rhs)
-{
-    return (!operator==(lhs, rhs));
-}
-
-bool operator<(const TestSubscription& lhs, const TestSubscription& rhs)
-{
-    return lhs.less(rhs);
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const TestSubscription& object)
+bsl::ostream& operator<<(bsl::ostream& stream, const TestSecurity& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -391,748 +328,6 @@ bool operator<(const TestPerson& lhs, const TestPerson& rhs)
 }
 
 bsl::ostream& operator<<(bsl::ostream& stream, const TestPerson& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-} // close namespace ntcf
-
-namespace ntcf { 
-
-TestMessageHeader::TestMessageHeader()
-: messageSize()
-, headerSize()
-, pragmaSize()
-, entitySize()
-, serialization()
-, compression()
-, flags()
-, checksum()
-, transaction()
-, clientTimestamp()
-, serverTimestamp()
-, deadline()
-{
-}
-
-TestMessageHeader::TestMessageHeader(const TestMessageHeader& other)
-: messageSize(other.messageSize)
-, headerSize(other.headerSize)
-, pragmaSize(other.pragmaSize)
-, entitySize(other.entitySize)
-, serialization(other.serialization)
-, compression(other.compression)
-, flags(other.flags)
-, checksum(other.checksum)
-, transaction(other.transaction)
-, clientTimestamp(other.clientTimestamp)
-, serverTimestamp(other.serverTimestamp)
-, deadline(other.deadline)
-{
-}
-
-TestMessageHeader::~TestMessageHeader()
-{
-}
-
-TestMessageHeader& TestMessageHeader::operator=(const TestMessageHeader& other)
-{
-    if (this != &other) {
-        this->messageSize = other.messageSize;
-        this->headerSize = other.headerSize;
-        this->pragmaSize = other.pragmaSize;
-        this->entitySize = other.entitySize;
-        this->serialization = other.serialization;
-        this->compression = other.compression;
-        this->flags = other.flags;
-        this->checksum = other.checksum;
-        this->transaction = other.transaction;
-        this->clientTimestamp = other.clientTimestamp;
-        this->serverTimestamp = other.serverTimestamp;
-        this->deadline = other.deadline;
-    }
-
-    return *this;
-}
-
-void TestMessageHeader::reset()
-{
-    bdlat_ValueTypeFunctions::reset(&this->messageSize);
-    bdlat_ValueTypeFunctions::reset(&this->headerSize);
-    bdlat_ValueTypeFunctions::reset(&this->pragmaSize);
-    bdlat_ValueTypeFunctions::reset(&this->entitySize);
-    bdlat_ValueTypeFunctions::reset(&this->serialization);
-    bdlat_ValueTypeFunctions::reset(&this->compression);
-    bdlat_ValueTypeFunctions::reset(&this->flags);
-    bdlat_ValueTypeFunctions::reset(&this->checksum);
-    bdlat_ValueTypeFunctions::reset(&this->transaction);
-    bdlat_ValueTypeFunctions::reset(&this->clientTimestamp);
-    bdlat_ValueTypeFunctions::reset(&this->serverTimestamp);
-    bdlat_ValueTypeFunctions::reset(&this->deadline);
-}
-
-void TestMessageHeader::swap(TestMessageHeader& other)
-{
-    if (this != &other) {
-        bslalg::SwapUtil::swap(&this->messageSize, &other.messageSize);
-        bslalg::SwapUtil::swap(&this->headerSize, &other.headerSize);
-        bslalg::SwapUtil::swap(&this->pragmaSize, &other.pragmaSize);
-        bslalg::SwapUtil::swap(&this->entitySize, &other.entitySize);
-        bslalg::SwapUtil::swap(&this->serialization, &other.serialization);
-        bslalg::SwapUtil::swap(&this->compression, &other.compression);
-        bslalg::SwapUtil::swap(&this->flags, &other.flags);
-        bslalg::SwapUtil::swap(&this->checksum, &other.checksum);
-        bslalg::SwapUtil::swap(&this->transaction, &other.transaction);
-        bslalg::SwapUtil::swap(&this->clientTimestamp, &other.clientTimestamp);
-        bslalg::SwapUtil::swap(&this->serverTimestamp, &other.serverTimestamp);
-        bslalg::SwapUtil::swap(&this->deadline, &other.deadline);
-    }
-}
-
-bool TestMessageHeader::equals(const TestMessageHeader& other) const
-{
-    if (this->messageSize != other.messageSize) {
-        return false;
-    }
-
-    if (this->headerSize != other.headerSize) {
-        return false;
-    }
-
-    if (this->pragmaSize != other.pragmaSize) {
-        return false;
-    }
-
-    if (this->entitySize != other.entitySize) {
-        return false;
-    }
-
-    if (this->serialization != other.serialization) {
-        return false;
-    }
-
-    if (this->compression != other.compression) {
-        return false;
-    }
-
-    if (this->flags != other.flags) {
-        return false;
-    }
-
-    if (this->checksum != other.checksum) {
-        return false;
-    }
-
-    if (this->transaction != other.transaction) {
-        return false;
-    }
-
-    if (this->clientTimestamp != other.clientTimestamp) {
-        return false;
-    }
-
-    if (this->serverTimestamp != other.serverTimestamp) {
-        return false;
-    }
-
-    if (this->deadline != other.deadline) {
-        return false;
-    }
-
-    return true;
-}
-
-bool TestMessageHeader::less(const TestMessageHeader& other) const
-{
-    if (this->messageSize < other.messageSize) {
-        return true;
-    }
-
-    if (other.messageSize < this->messageSize) {
-        return false;
-    }
-
-    if (this->headerSize < other.headerSize) {
-        return true;
-    }
-
-    if (other.headerSize < this->headerSize) {
-        return false;
-    }
-
-    if (this->pragmaSize < other.pragmaSize) {
-        return true;
-    }
-
-    if (other.pragmaSize < this->pragmaSize) {
-        return false;
-    }
-
-    if (this->entitySize < other.entitySize) {
-        return true;
-    }
-
-    if (other.entitySize < this->entitySize) {
-        return false;
-    }
-
-    if (this->serialization < other.serialization) {
-        return true;
-    }
-
-    if (other.serialization < this->serialization) {
-        return false;
-    }
-
-    if (this->compression < other.compression) {
-        return true;
-    }
-
-    if (other.compression < this->compression) {
-        return false;
-    }
-
-    if (this->flags < other.flags) {
-        return true;
-    }
-
-    if (other.flags < this->flags) {
-        return false;
-    }
-
-    if (this->checksum < other.checksum) {
-        return true;
-    }
-
-    if (other.checksum < this->checksum) {
-        return false;
-    }
-
-    if (this->transaction < other.transaction) {
-        return true;
-    }
-
-    if (other.transaction < this->transaction) {
-        return false;
-    }
-
-    if (this->clientTimestamp < other.clientTimestamp) {
-        return true;
-    }
-
-    if (other.clientTimestamp < this->clientTimestamp) {
-        return false;
-    }
-
-    if (this->serverTimestamp < other.serverTimestamp) {
-        return true;
-    }
-
-    if (other.serverTimestamp < this->serverTimestamp) {
-        return false;
-    }
-
-    return this->deadline < other.deadline;
-}
-
-bsl::ostream& TestMessageHeader::print(bsl::ostream& stream, int level, int spacesPerLevel) const
-{
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute(
-        "messageSize",
-        this->messageSize);
-    printer.printAttribute(
-        "headerSize",
-        this->headerSize);
-    printer.printAttribute(
-        "pragmaSize",
-        this->pragmaSize);
-    printer.printAttribute(
-        "entitySize",
-        this->entitySize);
-    printer.printAttribute(
-        "serialization",
-        this->serialization);
-    printer.printAttribute(
-        "compression",
-        this->compression);
-    printer.printAttribute(
-        "flags",
-        this->flags);
-    printer.printAttribute(
-        "checksum",
-        this->checksum);
-    printer.printAttribute(
-        "transaction",
-        this->transaction);
-    printer.printAttribute(
-        "clientTimestamp",
-        this->clientTimestamp);
-    printer.printAttribute(
-        "serverTimestamp",
-        this->serverTimestamp);
-    printer.printAttribute(
-        "deadline",
-        this->deadline);
-    printer.end();
-    return stream;
-}
-
-const char TestMessageHeader::CLASS_NAME[] = "ntcf::TestMessageHeader";
-
-const bdlat_AttributeInfo TestMessageHeader::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "messageSize", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "headerSize", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "pragmaSize", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "entitySize", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "serialization", 13, "", bdlat_FormattingMode::e_DEFAULT },
-    { 5, "compression", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 6, "flags", 5, "", bdlat_FormattingMode::e_DEFAULT },
-    { 7, "checksum", 8, "", bdlat_FormattingMode::e_DEFAULT },
-    { 8, "transaction", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 9, "clientTimestamp", 15, "", bdlat_FormattingMode::e_DEFAULT },
-    { 10, "serverTimestamp", 15, "", bdlat_FormattingMode::e_DEFAULT },
-    { 11, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT }
-};
-
-const bdlat_AttributeInfo* TestMessageHeader::lookupAttributeInfo(int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_MESSAGE_SIZE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_MESSAGE_SIZE];
-    case ATTRIBUTE_ID_HEADER_SIZE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER_SIZE];
-    case ATTRIBUTE_ID_PRAGMA_SIZE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA_SIZE];
-    case ATTRIBUTE_ID_ENTITY_SIZE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY_SIZE];
-    case ATTRIBUTE_ID_SERIALIZATION:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SERIALIZATION];
-    case ATTRIBUTE_ID_COMPRESSION:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION];
-    case ATTRIBUTE_ID_FLAGS:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_FLAGS];
-    case ATTRIBUTE_ID_CHECKSUM:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CHECKSUM];
-    case ATTRIBUTE_ID_TRANSACTION:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TRANSACTION];
-    case ATTRIBUTE_ID_CLIENT_TIMESTAMP:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CLIENT_TIMESTAMP];
-    case ATTRIBUTE_ID_SERVER_TIMESTAMP:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SERVER_TIMESTAMP];
-    case ATTRIBUTE_ID_DEADLINE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE];
-    default:
-        return 0;
-    }
-}
-
-const bdlat_AttributeInfo* TestMessageHeader::lookupAttributeInfo(const char* name, int nameLength)
-{
-    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
-        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
-        if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
-                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
-            if (compare == 0) {
-                return &attributeInfo;
-            }
-        }
-    }
-
-    return 0;
-}
-
-bool operator==(const TestMessageHeader& lhs, const TestMessageHeader& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const TestMessageHeader& lhs, const TestMessageHeader& rhs)
-{
-    return (!operator==(lhs, rhs));
-}
-
-bool operator<(const TestMessageHeader& lhs, const TestMessageHeader& rhs)
-{
-    return lhs.less(rhs);
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageHeader& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-} // close namespace ntcf
-
-namespace ntcf { 
-
-TestSecurity::TestSecurity(bslma::Allocator* allocator)
-: id()
-, name(allocator)
-{
-}
-
-TestSecurity::TestSecurity(const TestSecurity& original, bslma::Allocator* allocator)
-: id(original.id)
-, name(original.name, allocator)
-{
-}
-
-TestSecurity::~TestSecurity()
-{
-}
-
-TestSecurity& TestSecurity::operator=(const TestSecurity& other)
-{
-    if (this != &other) {
-        this->id = other.id;
-        this->name = other.name;
-    }
-
-    return *this;
-}
-
-void TestSecurity::reset()
-{
-    bdlat_ValueTypeFunctions::reset(&this->id);
-    bdlat_ValueTypeFunctions::reset(&this->name);
-}
-
-void TestSecurity::swap(TestSecurity& other)
-{
-    if (this != &other) {
-        bslalg::SwapUtil::swap(&this->id, &other.id);
-        bslalg::SwapUtil::swap(&this->name, &other.name);
-    }
-}
-
-bool TestSecurity::equals(const TestSecurity& other) const
-{
-    if (this->id != other.id) {
-        return false;
-    }
-
-    if (this->name != other.name) {
-        return false;
-    }
-
-    return true;
-}
-
-bool TestSecurity::less(const TestSecurity& other) const
-{
-    if (this->id < other.id) {
-        return true;
-    }
-
-    if (other.id < this->id) {
-        return false;
-    }
-
-    return this->name < other.name;
-}
-
-bsl::ostream& TestSecurity::print(bsl::ostream& stream, int level, int spacesPerLevel) const
-{
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute(
-        "id",
-        this->id);
-    printer.printAttribute(
-        "name",
-        this->name);
-    printer.end();
-    return stream;
-}
-
-const char TestSecurity::CLASS_NAME[] = "ntcf::TestSecurity";
-
-const bdlat_AttributeInfo TestSecurity::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "name", 4, "", bdlat_FormattingMode::e_DEFAULT }
-};
-
-const bdlat_AttributeInfo* TestSecurity::lookupAttributeInfo(int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID];
-    case ATTRIBUTE_ID_NAME:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME];
-    default:
-        return 0;
-    }
-}
-
-const bdlat_AttributeInfo* TestSecurity::lookupAttributeInfo(const char* name, int nameLength)
-{
-    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
-        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
-        if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
-                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
-            if (compare == 0) {
-                return &attributeInfo;
-            }
-        }
-    }
-
-    return 0;
-}
-
-bool operator==(const TestSecurity& lhs, const TestSecurity& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const TestSecurity& lhs, const TestSecurity& rhs)
-{
-    return (!operator==(lhs, rhs));
-}
-
-bool operator<(const TestSecurity& lhs, const TestSecurity& rhs)
-{
-    return lhs.less(rhs);
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const TestSecurity& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-} // close namespace ntcf
-
-namespace ntcf { 
-
-TestAsk::TestAsk(bslma::Allocator* allocator)
-: id()
-, seller(allocator)
-, security(allocator)
-, shares()
-, price()
-, deadline()
-{
-}
-
-TestAsk::TestAsk(const TestAsk& original, bslma::Allocator* allocator)
-: id(original.id)
-, seller(original.seller, allocator)
-, security(original.security, allocator)
-, shares(original.shares)
-, price(original.price)
-, deadline(original.deadline)
-{
-}
-
-TestAsk::~TestAsk()
-{
-}
-
-TestAsk& TestAsk::operator=(const TestAsk& other)
-{
-    if (this != &other) {
-        this->id = other.id;
-        this->seller = other.seller;
-        this->security = other.security;
-        this->shares = other.shares;
-        this->price = other.price;
-        this->deadline = other.deadline;
-    }
-
-    return *this;
-}
-
-void TestAsk::reset()
-{
-    bdlat_ValueTypeFunctions::reset(&this->id);
-    bdlat_ValueTypeFunctions::reset(&this->seller);
-    bdlat_ValueTypeFunctions::reset(&this->security);
-    bdlat_ValueTypeFunctions::reset(&this->shares);
-    bdlat_ValueTypeFunctions::reset(&this->price);
-    bdlat_ValueTypeFunctions::reset(&this->deadline);
-}
-
-void TestAsk::swap(TestAsk& other)
-{
-    if (this != &other) {
-        bslalg::SwapUtil::swap(&this->id, &other.id);
-        bslalg::SwapUtil::swap(&this->seller, &other.seller);
-        bslalg::SwapUtil::swap(&this->security, &other.security);
-        bslalg::SwapUtil::swap(&this->shares, &other.shares);
-        bslalg::SwapUtil::swap(&this->price, &other.price);
-        bslalg::SwapUtil::swap(&this->deadline, &other.deadline);
-    }
-}
-
-bool TestAsk::equals(const TestAsk& other) const
-{
-    if (this->id != other.id) {
-        return false;
-    }
-
-    if (this->seller != other.seller) {
-        return false;
-    }
-
-    if (this->security != other.security) {
-        return false;
-    }
-
-    if (this->shares != other.shares) {
-        return false;
-    }
-
-    if (this->price != other.price) {
-        return false;
-    }
-
-    if (this->deadline != other.deadline) {
-        return false;
-    }
-
-    return true;
-}
-
-bool TestAsk::less(const TestAsk& other) const
-{
-    if (this->id < other.id) {
-        return true;
-    }
-
-    if (other.id < this->id) {
-        return false;
-    }
-
-    if (this->seller < other.seller) {
-        return true;
-    }
-
-    if (other.seller < this->seller) {
-        return false;
-    }
-
-    if (this->security < other.security) {
-        return true;
-    }
-
-    if (other.security < this->security) {
-        return false;
-    }
-
-    if (this->shares < other.shares) {
-        return true;
-    }
-
-    if (other.shares < this->shares) {
-        return false;
-    }
-
-    if (this->price < other.price) {
-        return true;
-    }
-
-    if (other.price < this->price) {
-        return false;
-    }
-
-    return this->deadline.gmtDatetime() < other.deadline.gmtDatetime();
-}
-
-bsl::ostream& TestAsk::print(bsl::ostream& stream, int level, int spacesPerLevel) const
-{
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute(
-        "id",
-        this->id);
-    printer.printAttribute(
-        "seller",
-        this->seller);
-    printer.printAttribute(
-        "security",
-        this->security);
-    printer.printAttribute(
-        "shares",
-        this->shares);
-    printer.printAttribute(
-        "price",
-        this->price);
-    printer.printAttribute(
-        "deadline",
-        this->deadline);
-    printer.end();
-    return stream;
-}
-
-const char TestAsk::CLASS_NAME[] = "ntcf::TestAsk";
-
-const bdlat_AttributeInfo TestAsk::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "seller", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "security", 8, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "shares", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "price", 5, "", bdlat_FormattingMode::e_DEFAULT },
-    { 5, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT }
-};
-
-const bdlat_AttributeInfo* TestAsk::lookupAttributeInfo(int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID];
-    case ATTRIBUTE_ID_SELLER:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER];
-    case ATTRIBUTE_ID_SECURITY:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY];
-    case ATTRIBUTE_ID_SHARES:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES];
-    case ATTRIBUTE_ID_PRICE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE];
-    case ATTRIBUTE_ID_DEADLINE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE];
-    default:
-        return 0;
-    }
-}
-
-const bdlat_AttributeInfo* TestAsk::lookupAttributeInfo(const char* name, int nameLength)
-{
-    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
-        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
-        if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
-                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
-            if (compare == 0) {
-                return &attributeInfo;
-            }
-        }
-    }
-
-    return 0;
-}
-
-bool operator==(const TestAsk& lhs, const TestAsk& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const TestAsk& lhs, const TestAsk& rhs)
-{
-    return (!operator==(lhs, rhs));
-}
-
-bool operator<(const TestAsk& lhs, const TestAsk& rhs)
-{
-    return lhs.less(rhs);
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const TestAsk& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -1388,92 +583,6 @@ bool operator<(const TestTrade& lhs, const TestTrade& rhs)
 }
 
 bsl::ostream& operator<<(bsl::ostream& stream, const TestTrade& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-} // close namespace ntcf
-
-namespace ntcf { 
-
-TestAcknowledgment::TestAcknowledgment()
-{
-}
-
-TestAcknowledgment::TestAcknowledgment(const TestAcknowledgment& other)
-{
-    (void)(other);
-}
-
-TestAcknowledgment::~TestAcknowledgment()
-{
-}
-
-TestAcknowledgment& TestAcknowledgment::operator=(const TestAcknowledgment& other)
-{
-    (void)(other);
-    return *this;
-
-}
-
-void TestAcknowledgment::reset()
-{
-}
-
-void TestAcknowledgment::swap(TestAcknowledgment& other)
-{
-    (void)(other);
-}
-
-bool TestAcknowledgment::equals(const TestAcknowledgment& other) const
-{    (void)(other);
-    return true;
-}
-
-bool TestAcknowledgment::less(const TestAcknowledgment& other) const
-{    (void)(other);
-    return false;
-}
-
-bsl::ostream& TestAcknowledgment::print(bsl::ostream& stream, int level, int spacesPerLevel) const
-{
-    (void)(stream);
-    (void)(level);
-    (void)(spacesPerLevel);
-    return stream << "[ ]";
-}
-
-const char TestAcknowledgment::CLASS_NAME[] = "ntcf::TestAcknowledgment";
-
-const bdlat_AttributeInfo* TestAcknowledgment::lookupAttributeInfo(int id)
-{
-    (void)(id);
-    return 0;
-}
-
-const bdlat_AttributeInfo* TestAcknowledgment::lookupAttributeInfo(const char* name, int nameLength)
-{
-    (void)(name);
-    (void)(nameLength);
-    return 0;
-}
-
-bool operator==(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs)
-{
-    return (!operator==(lhs, rhs));
-}
-
-bool operator<(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs)
-{
-    return lhs.less(rhs);
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgment& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -1836,6 +945,2257 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestFault& object)
 
 namespace ntcf { 
 
+TestTradeResultValue::TestTradeResultValue(bslma::Allocator* allocator)
+: d_selectionId(SELECTION_ID_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(allocator))
+{
+}
+
+TestTradeResultValue::TestTradeResultValue(const TestTradeResultValue& original, bslma::Allocator* allocator)
+: d_selectionId(SELECTION_ID_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(allocator))
+{
+    switch (original.d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        makeFailure(original.d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        makeSuccess(original.d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(original.d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+}
+
+TestTradeResultValue::~TestTradeResultValue()
+{
+    reset();
+}
+
+TestTradeResultValue& TestTradeResultValue::operator=(const TestTradeResultValue& other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    switch (other.d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        makeFailure(other.d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        makeSuccess(other.d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(other.d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+
+    d_selectionId = other.d_selectionId;
+
+    return *this;
+}
+
+void TestTradeResultValue::reset()
+{
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE: {
+        typedef ntcf::TestFault Type;
+        d_failure.object().~Type();
+        } break;
+    case SELECTION_ID_SUCCESS: {
+        typedef ntcf::TestTrade Type;
+        d_success.object().~Type();
+        } break;
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+
+    d_selectionId = SELECTION_ID_UNDEFINED;
+}
+
+void TestTradeResultValue::swap(TestTradeResultValue& other)
+{
+    if (d_selectionId != other.d_selectionId) {
+        TestTradeResultValue temp = other;
+        other = *this;
+        *this = other;
+        return;
+    }
+
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        bslalg::SwapUtil::swap(&d_failure.object(), &other.d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        bslalg::SwapUtil::swap(&d_success.object(), &other.d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+}
+
+int TestTradeResultValue::makeSelection(int id)
+{
+    switch (id) {
+    case SELECTION_ID_UNDEFINED:
+        reset();
+        break;
+    case SELECTION_ID_FAILURE:
+        makeFailure();
+        break;
+    case SELECTION_ID_SUCCESS:
+        makeSuccess();
+        break;
+    default:
+        return -1;
+    }
+
+    return 0;
+}
+
+int TestTradeResultValue::makeSelection(const char* name, int nameLength)
+{
+    const bdlat_SelectionInfo *selectionInfo =
+        lookupSelectionInfo(name, nameLength);
+    if (selectionInfo == 0) {
+        return -1;
+    }
+
+    return makeSelection(selectionInfo->d_id);
+}
+
+ntcf::TestFault& TestTradeResultValue::makeFailure()
+{
+    if (d_selectionId == SELECTION_ID_FAILURE) {
+        bdlat_ValueTypeFunctions::reset(&d_failure.object());
+    }
+    else {
+        reset();
+        new(d_failure.buffer()) ntcf::TestFault(d_allocator_p);
+        d_selectionId = SELECTION_ID_FAILURE;
+    }
+
+    return d_failure.object();
+}
+
+ntcf::TestFault& TestTradeResultValue::makeFailure(const ntcf::TestFault& value)
+{
+    if (d_selectionId == SELECTION_ID_FAILURE) {
+        d_failure.object() = value;
+    }
+    else {
+        reset();
+        new (d_failure.buffer()) ntcf::TestFault(value, d_allocator_p);
+        d_selectionId = SELECTION_ID_FAILURE;
+    }
+
+    return d_failure.object();
+}
+
+ntcf::TestTrade& TestTradeResultValue::makeSuccess()
+{
+    if (d_selectionId == SELECTION_ID_SUCCESS) {
+        bdlat_ValueTypeFunctions::reset(&d_success.object());
+    }
+    else {
+        reset();
+        new(d_success.buffer()) ntcf::TestTrade(d_allocator_p);
+        d_selectionId = SELECTION_ID_SUCCESS;
+    }
+
+    return d_success.object();
+}
+
+ntcf::TestTrade& TestTradeResultValue::makeSuccess(const ntcf::TestTrade& value)
+{
+    if (d_selectionId == SELECTION_ID_SUCCESS) {
+        d_success.object() = value;
+    }
+    else {
+        reset();
+        new (d_success.buffer()) ntcf::TestTrade(value, d_allocator_p);
+        d_selectionId = SELECTION_ID_SUCCESS;
+    }
+
+    return d_success.object();
+}
+
+ntcf::TestFault& TestTradeResultValue::failure()
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_FAILURE);
+    return d_failure.object();
+}
+
+ntcf::TestTrade& TestTradeResultValue::success()
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_SUCCESS);
+    return d_success.object();
+}
+
+const ntcf::TestFault& TestTradeResultValue::failure() const
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_FAILURE);
+    return d_failure.object();
+}
+
+const ntcf::TestTrade& TestTradeResultValue::success() const
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_SUCCESS);
+    return d_success.object();
+}
+
+bool TestTradeResultValue::isUndefinedValue() const
+{
+    return (d_selectionId == SELECTION_ID_UNDEFINED);
+}
+
+bool TestTradeResultValue::isFailureValue() const
+{
+    return (d_selectionId == SELECTION_ID_FAILURE);
+}
+
+bool TestTradeResultValue::isSuccessValue() const
+{
+    return (d_selectionId == SELECTION_ID_SUCCESS);
+}
+
+int TestTradeResultValue::selectionId() const
+{
+    return d_selectionId;
+}
+
+bool TestTradeResultValue::equals(const TestTradeResultValue& other) const
+{
+    if (d_selectionId != other.d_selectionId) {
+        return false;
+    }
+
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        return d_failure.object() == other.d_failure.object();
+    case SELECTION_ID_SUCCESS:
+        return d_success.object() == other.d_success.object();
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        return false;
+    }
+}
+
+bool TestTradeResultValue::less(const TestTradeResultValue& other) const
+{
+    if (d_selectionId != other.d_selectionId) {
+        return false;
+    }
+
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        return d_failure.object() < other.d_failure.object();
+    case SELECTION_ID_SUCCESS:
+        return d_success.object() < other.d_success.object();
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        return false;
+    }
+}
+
+bsl::ostream& TestTradeResultValue::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        printer.printAttribute("failure", d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        printer.printAttribute("success", d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        stream << "UNDEFINED";
+    }
+    printer.end();
+    return stream;
+}
+
+const char TestTradeResultValue::CLASS_NAME[] = "ntcf::TestTradeResultValue";
+
+const bdlat_SelectionInfo TestTradeResultValue::SELECTION_INFO_ARRAY[] =
+{
+    { 0, "failure", 7, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "success", 7, "", bdlat_FormattingMode::e_DEFAULT }
+};
+
+const bdlat_SelectionInfo* TestTradeResultValue::lookupSelectionInfo(int id)
+{
+    switch (id) {
+    case SELECTION_ID_FAILURE:
+        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_FAILURE];
+    case SELECTION_ID_SUCCESS:
+        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_SUCCESS];
+    default:
+        return 0;
+    }
+}
+
+const bdlat_SelectionInfo* TestTradeResultValue::lookupSelectionInfo(const char* name, int nameLength)
+{
+    for (bsl::size_t i = 0; i < NUM_SELECTIONS; ++i) {
+        const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
+        if (selectionInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &selectionInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+bool operator==(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestTradeResultValue& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
+TestContext::TestContext()
+: error()
+, latencyFromClient()
+, latencyFromServer()
+, latencyOverall()
+{
+}
+
+TestContext::TestContext(const TestContext& other)
+: error(other.error)
+, latencyFromClient(other.latencyFromClient)
+, latencyFromServer(other.latencyFromServer)
+, latencyOverall(other.latencyOverall)
+{
+}
+
+TestContext::~TestContext()
+{
+}
+
+TestContext& TestContext::operator=(const TestContext& other)
+{
+    if (this != &other) {
+        this->error = other.error;
+        this->latencyFromClient = other.latencyFromClient;
+        this->latencyFromServer = other.latencyFromServer;
+        this->latencyOverall = other.latencyOverall;
+    }
+
+    return *this;
+}
+
+void TestContext::reset()
+{
+    bdlat_ValueTypeFunctions::reset(&this->error);
+    bdlat_ValueTypeFunctions::reset(&this->latencyFromClient);
+    bdlat_ValueTypeFunctions::reset(&this->latencyFromServer);
+    bdlat_ValueTypeFunctions::reset(&this->latencyOverall);
+}
+
+void TestContext::swap(TestContext& other)
+{
+    if (this != &other) {
+        bslalg::SwapUtil::swap(&this->error, &other.error);
+        bslalg::SwapUtil::swap(&this->latencyFromClient, &other.latencyFromClient);
+        bslalg::SwapUtil::swap(&this->latencyFromServer, &other.latencyFromServer);
+        bslalg::SwapUtil::swap(&this->latencyOverall, &other.latencyOverall);
+    }
+}
+
+bool TestContext::equals(const TestContext& other) const
+{
+    if (this->error != other.error) {
+        return false;
+    }
+
+    if (this->latencyFromClient != other.latencyFromClient) {
+        return false;
+    }
+
+    if (this->latencyFromServer != other.latencyFromServer) {
+        return false;
+    }
+
+    if (this->latencyOverall != other.latencyOverall) {
+        return false;
+    }
+
+    return true;
+}
+
+bool TestContext::less(const TestContext& other) const
+{
+    if (this->error < other.error) {
+        return true;
+    }
+
+    if (other.error < this->error) {
+        return false;
+    }
+
+    if (this->latencyFromClient < other.latencyFromClient) {
+        return true;
+    }
+
+    if (other.latencyFromClient < this->latencyFromClient) {
+        return false;
+    }
+
+    if (this->latencyFromServer < other.latencyFromServer) {
+        return true;
+    }
+
+    if (other.latencyFromServer < this->latencyFromServer) {
+        return false;
+    }
+
+    return this->latencyOverall < other.latencyOverall;
+}
+
+bsl::ostream& TestContext::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute(
+        "error",
+        this->error);
+    printer.printAttribute(
+        "latencyFromClient",
+        this->latencyFromClient);
+    printer.printAttribute(
+        "latencyFromServer",
+        this->latencyFromServer);
+    printer.printAttribute(
+        "latencyOverall",
+        this->latencyOverall);
+    printer.end();
+    return stream;
+}
+
+const char TestContext::CLASS_NAME[] = "ntcf::TestContext";
+
+const bdlat_AttributeInfo TestContext::ATTRIBUTE_INFO_ARRAY[] =
+{
+    { 0, "error", 5, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "latencyFromClient", 17, "", bdlat_FormattingMode::e_DEFAULT },
+    { 2, "latencyFromServer", 17, "", bdlat_FormattingMode::e_DEFAULT },
+    { 3, "latencyOverall", 14, "", bdlat_FormattingMode::e_DEFAULT }
+};
+
+const bdlat_AttributeInfo* TestContext::lookupAttributeInfo(int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ERROR:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ERROR];
+    case ATTRIBUTE_ID_LATENCY_FROM_CLIENT:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY_FROM_CLIENT];
+    case ATTRIBUTE_ID_LATENCY_FROM_SERVER:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY_FROM_SERVER];
+    case ATTRIBUTE_ID_LATENCY_OVERALL:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY_OVERALL];
+    default:
+        return 0;
+    }
+}
+
+const bdlat_AttributeInfo* TestContext::lookupAttributeInfo(const char* name, int nameLength)
+{
+    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+bool operator==(const TestContext& lhs, const TestContext& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestContext& lhs, const TestContext& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestContext& lhs, const TestContext& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestContext& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
+TestTradeResult::TestTradeResult(bslma::Allocator* allocator)
+: context()
+, value(allocator)
+{
+}
+
+TestTradeResult::TestTradeResult(const TestTradeResult& original, bslma::Allocator* allocator)
+: context(original.context)
+, value(original.value, allocator)
+{
+}
+
+TestTradeResult::~TestTradeResult()
+{
+}
+
+TestTradeResult& TestTradeResult::operator=(const TestTradeResult& other)
+{
+    if (this != &other) {
+        this->context = other.context;
+        this->value = other.value;
+    }
+
+    return *this;
+}
+
+void TestTradeResult::reset()
+{
+    bdlat_ValueTypeFunctions::reset(&this->context);
+    bdlat_ValueTypeFunctions::reset(&this->value);
+}
+
+void TestTradeResult::swap(TestTradeResult& other)
+{
+    if (this != &other) {
+        bslalg::SwapUtil::swap(&this->context, &other.context);
+        bslalg::SwapUtil::swap(&this->value, &other.value);
+    }
+}
+
+bool TestTradeResult::equals(const TestTradeResult& other) const
+{
+    if (this->context != other.context) {
+        return false;
+    }
+
+    if (this->value != other.value) {
+        return false;
+    }
+
+    return true;
+}
+
+bool TestTradeResult::less(const TestTradeResult& other) const
+{
+    if (this->context < other.context) {
+        return true;
+    }
+
+    if (other.context < this->context) {
+        return false;
+    }
+
+    return this->value < other.value;
+}
+
+bsl::ostream& TestTradeResult::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute(
+        "context",
+        this->context);
+    printer.printAttribute(
+        "value",
+        this->value);
+    printer.end();
+    return stream;
+}
+
+const char TestTradeResult::CLASS_NAME[] = "ntcf::TestTradeResult";
+
+const bdlat_AttributeInfo TestTradeResult::ATTRIBUTE_INFO_ARRAY[] =
+{
+    { 0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT }
+};
+
+const bdlat_AttributeInfo* TestTradeResult::lookupAttributeInfo(int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_CONTEXT:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT];
+    case ATTRIBUTE_ID_VALUE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE];
+    default:
+        return 0;
+    }
+}
+
+const bdlat_AttributeInfo* TestTradeResult::lookupAttributeInfo(const char* name, int nameLength)
+{
+    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+bool operator==(const TestTradeResult& lhs, const TestTradeResult& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestTradeResult& lhs, const TestTradeResult& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestTradeResult& lhs, const TestTradeResult& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestTradeResult& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
+TestServerConfig::TestServerConfig(bslma::Allocator* allocator)
+: name(allocator)
+, driver(allocator)
+, encryption()
+, compression()
+, numNetworkingThreads()
+, numProcessingThreads()
+, dynamicLoadBalancing()
+, keepAlive()
+, keepHalfOpen()
+, backlog()
+, sendBufferSize()
+, receiveBufferSize()
+, acceptGreedily()
+, acceptQueueLowWatermark()
+, acceptQueueHighWatermark()
+, readQueueLowWatermark()
+, readQueueHighWatermark()
+, writeQueueLowWatermark()
+, writeQueueHighWatermark()
+{
+}
+
+TestServerConfig::TestServerConfig(const TestServerConfig& original, bslma::Allocator* allocator)
+: name(original.name, allocator)
+, driver(original.driver, allocator)
+, encryption(original.encryption)
+, compression(original.compression)
+, numNetworkingThreads(original.numNetworkingThreads)
+, numProcessingThreads(original.numProcessingThreads)
+, dynamicLoadBalancing(original.dynamicLoadBalancing)
+, keepAlive(original.keepAlive)
+, keepHalfOpen(original.keepHalfOpen)
+, backlog(original.backlog)
+, sendBufferSize(original.sendBufferSize)
+, receiveBufferSize(original.receiveBufferSize)
+, acceptGreedily(original.acceptGreedily)
+, acceptQueueLowWatermark(original.acceptQueueLowWatermark)
+, acceptQueueHighWatermark(original.acceptQueueHighWatermark)
+, readQueueLowWatermark(original.readQueueLowWatermark)
+, readQueueHighWatermark(original.readQueueHighWatermark)
+, writeQueueLowWatermark(original.writeQueueLowWatermark)
+, writeQueueHighWatermark(original.writeQueueHighWatermark)
+{
+}
+
+TestServerConfig::~TestServerConfig()
+{
+}
+
+TestServerConfig& TestServerConfig::operator=(const TestServerConfig& other)
+{
+    if (this != &other) {
+        this->name = other.name;
+        this->driver = other.driver;
+        this->encryption = other.encryption;
+        this->compression = other.compression;
+        this->numNetworkingThreads = other.numNetworkingThreads;
+        this->numProcessingThreads = other.numProcessingThreads;
+        this->dynamicLoadBalancing = other.dynamicLoadBalancing;
+        this->keepAlive = other.keepAlive;
+        this->keepHalfOpen = other.keepHalfOpen;
+        this->backlog = other.backlog;
+        this->sendBufferSize = other.sendBufferSize;
+        this->receiveBufferSize = other.receiveBufferSize;
+        this->acceptGreedily = other.acceptGreedily;
+        this->acceptQueueLowWatermark = other.acceptQueueLowWatermark;
+        this->acceptQueueHighWatermark = other.acceptQueueHighWatermark;
+        this->readQueueLowWatermark = other.readQueueLowWatermark;
+        this->readQueueHighWatermark = other.readQueueHighWatermark;
+        this->writeQueueLowWatermark = other.writeQueueLowWatermark;
+        this->writeQueueHighWatermark = other.writeQueueHighWatermark;
+    }
+
+    return *this;
+}
+
+void TestServerConfig::reset()
+{
+    bdlat_ValueTypeFunctions::reset(&this->name);
+    bdlat_ValueTypeFunctions::reset(&this->driver);
+    bdlat_ValueTypeFunctions::reset(&this->encryption);
+    bdlat_ValueTypeFunctions::reset(&this->compression);
+    bdlat_ValueTypeFunctions::reset(&this->numNetworkingThreads);
+    bdlat_ValueTypeFunctions::reset(&this->numProcessingThreads);
+    bdlat_ValueTypeFunctions::reset(&this->dynamicLoadBalancing);
+    bdlat_ValueTypeFunctions::reset(&this->keepAlive);
+    bdlat_ValueTypeFunctions::reset(&this->keepHalfOpen);
+    bdlat_ValueTypeFunctions::reset(&this->backlog);
+    bdlat_ValueTypeFunctions::reset(&this->sendBufferSize);
+    bdlat_ValueTypeFunctions::reset(&this->receiveBufferSize);
+    bdlat_ValueTypeFunctions::reset(&this->acceptGreedily);
+    bdlat_ValueTypeFunctions::reset(&this->acceptQueueLowWatermark);
+    bdlat_ValueTypeFunctions::reset(&this->acceptQueueHighWatermark);
+    bdlat_ValueTypeFunctions::reset(&this->readQueueLowWatermark);
+    bdlat_ValueTypeFunctions::reset(&this->readQueueHighWatermark);
+    bdlat_ValueTypeFunctions::reset(&this->writeQueueLowWatermark);
+    bdlat_ValueTypeFunctions::reset(&this->writeQueueHighWatermark);
+}
+
+void TestServerConfig::swap(TestServerConfig& other)
+{
+    if (this != &other) {
+        bslalg::SwapUtil::swap(&this->name, &other.name);
+        bslalg::SwapUtil::swap(&this->driver, &other.driver);
+        bslalg::SwapUtil::swap(&this->encryption, &other.encryption);
+        bslalg::SwapUtil::swap(&this->compression, &other.compression);
+        bslalg::SwapUtil::swap(&this->numNetworkingThreads, &other.numNetworkingThreads);
+        bslalg::SwapUtil::swap(&this->numProcessingThreads, &other.numProcessingThreads);
+        bslalg::SwapUtil::swap(&this->dynamicLoadBalancing, &other.dynamicLoadBalancing);
+        bslalg::SwapUtil::swap(&this->keepAlive, &other.keepAlive);
+        bslalg::SwapUtil::swap(&this->keepHalfOpen, &other.keepHalfOpen);
+        bslalg::SwapUtil::swap(&this->backlog, &other.backlog);
+        bslalg::SwapUtil::swap(&this->sendBufferSize, &other.sendBufferSize);
+        bslalg::SwapUtil::swap(&this->receiveBufferSize, &other.receiveBufferSize);
+        bslalg::SwapUtil::swap(&this->acceptGreedily, &other.acceptGreedily);
+        bslalg::SwapUtil::swap(&this->acceptQueueLowWatermark, &other.acceptQueueLowWatermark);
+        bslalg::SwapUtil::swap(&this->acceptQueueHighWatermark, &other.acceptQueueHighWatermark);
+        bslalg::SwapUtil::swap(&this->readQueueLowWatermark, &other.readQueueLowWatermark);
+        bslalg::SwapUtil::swap(&this->readQueueHighWatermark, &other.readQueueHighWatermark);
+        bslalg::SwapUtil::swap(&this->writeQueueLowWatermark, &other.writeQueueLowWatermark);
+        bslalg::SwapUtil::swap(&this->writeQueueHighWatermark, &other.writeQueueHighWatermark);
+    }
+}
+
+bool TestServerConfig::equals(const TestServerConfig& other) const
+{
+    if (this->name != other.name) {
+        return false;
+    }
+
+    if (this->driver != other.driver) {
+        return false;
+    }
+
+    if (this->encryption != other.encryption) {
+        return false;
+    }
+
+    if (this->compression != other.compression) {
+        return false;
+    }
+
+    if (this->numNetworkingThreads != other.numNetworkingThreads) {
+        return false;
+    }
+
+    if (this->numProcessingThreads != other.numProcessingThreads) {
+        return false;
+    }
+
+    if (this->dynamicLoadBalancing != other.dynamicLoadBalancing) {
+        return false;
+    }
+
+    if (this->keepAlive != other.keepAlive) {
+        return false;
+    }
+
+    if (this->keepHalfOpen != other.keepHalfOpen) {
+        return false;
+    }
+
+    if (this->backlog != other.backlog) {
+        return false;
+    }
+
+    if (this->sendBufferSize != other.sendBufferSize) {
+        return false;
+    }
+
+    if (this->receiveBufferSize != other.receiveBufferSize) {
+        return false;
+    }
+
+    if (this->acceptGreedily != other.acceptGreedily) {
+        return false;
+    }
+
+    if (this->acceptQueueLowWatermark != other.acceptQueueLowWatermark) {
+        return false;
+    }
+
+    if (this->acceptQueueHighWatermark != other.acceptQueueHighWatermark) {
+        return false;
+    }
+
+    if (this->readQueueLowWatermark != other.readQueueLowWatermark) {
+        return false;
+    }
+
+    if (this->readQueueHighWatermark != other.readQueueHighWatermark) {
+        return false;
+    }
+
+    if (this->writeQueueLowWatermark != other.writeQueueLowWatermark) {
+        return false;
+    }
+
+    if (this->writeQueueHighWatermark != other.writeQueueHighWatermark) {
+        return false;
+    }
+
+    return true;
+}
+
+bool TestServerConfig::less(const TestServerConfig& other) const
+{
+    if (this->name < other.name) {
+        return true;
+    }
+
+    if (other.name < this->name) {
+        return false;
+    }
+
+    if (this->driver < other.driver) {
+        return true;
+    }
+
+    if (other.driver < this->driver) {
+        return false;
+    }
+
+    if (this->encryption < other.encryption) {
+        return true;
+    }
+
+    if (other.encryption < this->encryption) {
+        return false;
+    }
+
+    if (this->compression < other.compression) {
+        return true;
+    }
+
+    if (other.compression < this->compression) {
+        return false;
+    }
+
+    if (this->numNetworkingThreads < other.numNetworkingThreads) {
+        return true;
+    }
+
+    if (other.numNetworkingThreads < this->numNetworkingThreads) {
+        return false;
+    }
+
+    if (this->numProcessingThreads < other.numProcessingThreads) {
+        return true;
+    }
+
+    if (other.numProcessingThreads < this->numProcessingThreads) {
+        return false;
+    }
+
+    if (this->dynamicLoadBalancing < other.dynamicLoadBalancing) {
+        return true;
+    }
+
+    if (other.dynamicLoadBalancing < this->dynamicLoadBalancing) {
+        return false;
+    }
+
+    if (this->keepAlive < other.keepAlive) {
+        return true;
+    }
+
+    if (other.keepAlive < this->keepAlive) {
+        return false;
+    }
+
+    if (this->keepHalfOpen < other.keepHalfOpen) {
+        return true;
+    }
+
+    if (other.keepHalfOpen < this->keepHalfOpen) {
+        return false;
+    }
+
+    if (this->backlog < other.backlog) {
+        return true;
+    }
+
+    if (other.backlog < this->backlog) {
+        return false;
+    }
+
+    if (this->sendBufferSize < other.sendBufferSize) {
+        return true;
+    }
+
+    if (other.sendBufferSize < this->sendBufferSize) {
+        return false;
+    }
+
+    if (this->receiveBufferSize < other.receiveBufferSize) {
+        return true;
+    }
+
+    if (other.receiveBufferSize < this->receiveBufferSize) {
+        return false;
+    }
+
+    if (this->acceptGreedily < other.acceptGreedily) {
+        return true;
+    }
+
+    if (other.acceptGreedily < this->acceptGreedily) {
+        return false;
+    }
+
+    if (this->acceptQueueLowWatermark < other.acceptQueueLowWatermark) {
+        return true;
+    }
+
+    if (other.acceptQueueLowWatermark < this->acceptQueueLowWatermark) {
+        return false;
+    }
+
+    if (this->acceptQueueHighWatermark < other.acceptQueueHighWatermark) {
+        return true;
+    }
+
+    if (other.acceptQueueHighWatermark < this->acceptQueueHighWatermark) {
+        return false;
+    }
+
+    if (this->readQueueLowWatermark < other.readQueueLowWatermark) {
+        return true;
+    }
+
+    if (other.readQueueLowWatermark < this->readQueueLowWatermark) {
+        return false;
+    }
+
+    if (this->readQueueHighWatermark < other.readQueueHighWatermark) {
+        return true;
+    }
+
+    if (other.readQueueHighWatermark < this->readQueueHighWatermark) {
+        return false;
+    }
+
+    if (this->writeQueueLowWatermark < other.writeQueueLowWatermark) {
+        return true;
+    }
+
+    if (other.writeQueueLowWatermark < this->writeQueueLowWatermark) {
+        return false;
+    }
+
+    return this->writeQueueHighWatermark < other.writeQueueHighWatermark;
+}
+
+bsl::ostream& TestServerConfig::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    if (this->name.has_value()) {
+        printer.printAttribute(
+            "name",
+            this->name.value());
+    }
+    if (this->driver.has_value()) {
+        printer.printAttribute(
+            "driver",
+            this->driver.value());
+    }
+    if (this->encryption.has_value()) {
+        printer.printAttribute(
+            "encryption",
+            this->encryption.value());
+    }
+    if (this->compression.has_value()) {
+        printer.printAttribute(
+            "compression",
+            this->compression.value());
+    }
+    if (this->numNetworkingThreads.has_value()) {
+        printer.printAttribute(
+            "numNetworkingThreads",
+            this->numNetworkingThreads.value());
+    }
+    if (this->numProcessingThreads.has_value()) {
+        printer.printAttribute(
+            "numProcessingThreads",
+            this->numProcessingThreads.value());
+    }
+    if (this->dynamicLoadBalancing.has_value()) {
+        printer.printAttribute(
+            "dynamicLoadBalancing",
+            this->dynamicLoadBalancing.value());
+    }
+    if (this->keepAlive.has_value()) {
+        printer.printAttribute(
+            "keepAlive",
+            this->keepAlive.value());
+    }
+    if (this->keepHalfOpen.has_value()) {
+        printer.printAttribute(
+            "keepHalfOpen",
+            this->keepHalfOpen.value());
+    }
+    if (this->backlog.has_value()) {
+        printer.printAttribute(
+            "backlog",
+            this->backlog.value());
+    }
+    if (this->sendBufferSize.has_value()) {
+        printer.printAttribute(
+            "sendBufferSize",
+            this->sendBufferSize.value());
+    }
+    if (this->receiveBufferSize.has_value()) {
+        printer.printAttribute(
+            "receiveBufferSize",
+            this->receiveBufferSize.value());
+    }
+    if (this->acceptGreedily.has_value()) {
+        printer.printAttribute(
+            "acceptGreedily",
+            this->acceptGreedily.value());
+    }
+    if (this->acceptQueueLowWatermark.has_value()) {
+        printer.printAttribute(
+            "acceptQueueLowWatermark",
+            this->acceptQueueLowWatermark.value());
+    }
+    if (this->acceptQueueHighWatermark.has_value()) {
+        printer.printAttribute(
+            "acceptQueueHighWatermark",
+            this->acceptQueueHighWatermark.value());
+    }
+    if (this->readQueueLowWatermark.has_value()) {
+        printer.printAttribute(
+            "readQueueLowWatermark",
+            this->readQueueLowWatermark.value());
+    }
+    if (this->readQueueHighWatermark.has_value()) {
+        printer.printAttribute(
+            "readQueueHighWatermark",
+            this->readQueueHighWatermark.value());
+    }
+    if (this->writeQueueLowWatermark.has_value()) {
+        printer.printAttribute(
+            "writeQueueLowWatermark",
+            this->writeQueueLowWatermark.value());
+    }
+    if (this->writeQueueHighWatermark.has_value()) {
+        printer.printAttribute(
+            "writeQueueHighWatermark",
+            this->writeQueueHighWatermark.value());
+    }
+    printer.end();
+    return stream;
+}
+
+const char TestServerConfig::CLASS_NAME[] = "ntcf::TestServerConfig";
+
+const bdlat_AttributeInfo TestServerConfig::ATTRIBUTE_INFO_ARRAY[] =
+{
+    { 0, "name", 4, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "driver", 6, "", bdlat_FormattingMode::e_DEFAULT },
+    { 2, "encryption", 10, "", bdlat_FormattingMode::e_DEFAULT },
+    { 3, "compression", 11, "", bdlat_FormattingMode::e_DEFAULT },
+    { 4, "numNetworkingThreads", 20, "", bdlat_FormattingMode::e_DEFAULT },
+    { 5, "numProcessingThreads", 20, "", bdlat_FormattingMode::e_DEFAULT },
+    { 6, "dynamicLoadBalancing", 20, "", bdlat_FormattingMode::e_DEFAULT },
+    { 7, "keepAlive", 9, "", bdlat_FormattingMode::e_DEFAULT },
+    { 8, "keepHalfOpen", 12, "", bdlat_FormattingMode::e_DEFAULT },
+    { 9, "backlog", 7, "", bdlat_FormattingMode::e_DEFAULT },
+    { 10, "sendBufferSize", 14, "", bdlat_FormattingMode::e_DEFAULT },
+    { 11, "receiveBufferSize", 17, "", bdlat_FormattingMode::e_DEFAULT },
+    { 12, "acceptGreedily", 14, "", bdlat_FormattingMode::e_DEFAULT },
+    { 13, "acceptQueueLowWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT },
+    { 14, "acceptQueueHighWatermark", 24, "", bdlat_FormattingMode::e_DEFAULT },
+    { 15, "readQueueLowWatermark", 21, "", bdlat_FormattingMode::e_DEFAULT },
+    { 16, "readQueueHighWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT },
+    { 17, "writeQueueLowWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT },
+    { 18, "writeQueueHighWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT }
+};
+
+const bdlat_AttributeInfo* TestServerConfig::lookupAttributeInfo(int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_NAME:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME];
+    case ATTRIBUTE_ID_DRIVER:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DRIVER];
+    case ATTRIBUTE_ID_ENCRYPTION:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENCRYPTION];
+    case ATTRIBUTE_ID_COMPRESSION:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION];
+    case ATTRIBUTE_ID_NUM_NETWORKING_THREADS:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS];
+    case ATTRIBUTE_ID_NUM_PROCESSING_THREADS:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS];
+    case ATTRIBUTE_ID_DYNAMIC_LOAD_BALANCING:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING];
+    case ATTRIBUTE_ID_KEEP_ALIVE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_ALIVE];
+    case ATTRIBUTE_ID_KEEP_HALF_OPEN:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_HALF_OPEN];
+    case ATTRIBUTE_ID_BACKLOG:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BACKLOG];
+    case ATTRIBUTE_ID_SEND_BUFFER_SIZE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SEND_BUFFER_SIZE];
+    case ATTRIBUTE_ID_RECEIVE_BUFFER_SIZE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE];
+    case ATTRIBUTE_ID_ACCEPT_GREEDILY:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY];
+    case ATTRIBUTE_ID_ACCEPT_QUEUE_LOW_WATERMARK:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK];
+    case ATTRIBUTE_ID_ACCEPT_QUEUE_HIGH_WATERMARK:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK];
+    case ATTRIBUTE_ID_READ_QUEUE_LOW_WATERMARK:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK];
+    case ATTRIBUTE_ID_READ_QUEUE_HIGH_WATERMARK:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK];
+    case ATTRIBUTE_ID_WRITE_QUEUE_LOW_WATERMARK:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK];
+    case ATTRIBUTE_ID_WRITE_QUEUE_HIGH_WATERMARK:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK];
+    default:
+        return 0;
+    }
+}
+
+const bdlat_AttributeInfo* TestServerConfig::lookupAttributeInfo(const char* name, int nameLength)
+{
+    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+bool operator==(const TestServerConfig& lhs, const TestServerConfig& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestServerConfig& lhs, const TestServerConfig& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestServerConfig& lhs, const TestServerConfig& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestServerConfig& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
+TestPublication::TestPublication(bslma::Allocator* allocator)
+: trade(allocator)
+{
+}
+
+TestPublication::TestPublication(const TestPublication& original, bslma::Allocator* allocator)
+: trade(original.trade, allocator)
+{
+}
+
+TestPublication::~TestPublication()
+{
+}
+
+TestPublication& TestPublication::operator=(const TestPublication& other)
+{
+    if (this != &other) {
+        this->trade = other.trade;
+    }
+
+    return *this;
+}
+
+void TestPublication::reset()
+{
+    bdlat_ValueTypeFunctions::reset(&this->trade);
+}
+
+void TestPublication::swap(TestPublication& other)
+{
+    if (this != &other) {
+        bslalg::SwapUtil::swap(&this->trade, &other.trade);
+    }
+}
+
+bool TestPublication::equals(const TestPublication& other) const
+{
+    if (this->trade != other.trade) {
+        return false;
+    }
+
+    return true;
+}
+
+bool TestPublication::less(const TestPublication& other) const
+{
+    return this->trade < other.trade;
+}
+
+bsl::ostream& TestPublication::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    if (!this->trade.empty()) {
+        printer.printAttribute(
+            "trade",
+            this->trade);
+    }
+    printer.end();
+    return stream;
+}
+
+const char TestPublication::CLASS_NAME[] = "ntcf::TestPublication";
+
+const bdlat_AttributeInfo TestPublication::ATTRIBUTE_INFO_ARRAY[] =
+{
+    { 0, "trade", 5, "", bdlat_FormattingMode::e_DEFAULT }
+};
+
+const bdlat_AttributeInfo* TestPublication::lookupAttributeInfo(int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_TRADE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TRADE];
+    default:
+        return 0;
+    }
+}
+
+const bdlat_AttributeInfo* TestPublication::lookupAttributeInfo(const char* name, int nameLength)
+{
+    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+bool operator==(const TestPublication& lhs, const TestPublication& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestPublication& lhs, const TestPublication& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestPublication& lhs, const TestPublication& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestPublication& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
+TestControlHeartbeat::TestControlHeartbeat()
+: acknowledge()
+{
+}
+
+TestControlHeartbeat::TestControlHeartbeat(const TestControlHeartbeat& other)
+: acknowledge(other.acknowledge)
+{
+}
+
+TestControlHeartbeat::~TestControlHeartbeat()
+{
+}
+
+TestControlHeartbeat& TestControlHeartbeat::operator=(const TestControlHeartbeat& other)
+{
+    if (this != &other) {
+        this->acknowledge = other.acknowledge;
+    }
+
+    return *this;
+}
+
+void TestControlHeartbeat::reset()
+{
+    bdlat_ValueTypeFunctions::reset(&this->acknowledge);
+}
+
+void TestControlHeartbeat::swap(TestControlHeartbeat& other)
+{
+    if (this != &other) {
+        bslalg::SwapUtil::swap(&this->acknowledge, &other.acknowledge);
+    }
+}
+
+bool TestControlHeartbeat::equals(const TestControlHeartbeat& other) const
+{
+    if (this->acknowledge != other.acknowledge) {
+        return false;
+    }
+
+    return true;
+}
+
+bool TestControlHeartbeat::less(const TestControlHeartbeat& other) const
+{
+    return this->acknowledge < other.acknowledge;
+}
+
+bsl::ostream& TestControlHeartbeat::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute(
+        "acknowledge",
+        this->acknowledge);
+    printer.end();
+    return stream;
+}
+
+const char TestControlHeartbeat::CLASS_NAME[] = "ntcf::TestControlHeartbeat";
+
+const bdlat_AttributeInfo TestControlHeartbeat::ATTRIBUTE_INFO_ARRAY[] =
+{
+    { 0, "acknowledge", 11, "", bdlat_FormattingMode::e_DEFAULT }
+};
+
+const bdlat_AttributeInfo* TestControlHeartbeat::lookupAttributeInfo(int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ACKNOWLEDGE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACKNOWLEDGE];
+    default:
+        return 0;
+    }
+}
+
+const bdlat_AttributeInfo* TestControlHeartbeat::lookupAttributeInfo(const char* name, int nameLength)
+{
+    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+bool operator==(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestControlHeartbeat& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
+TestAsk::TestAsk(bslma::Allocator* allocator)
+: id()
+, seller(allocator)
+, security(allocator)
+, shares()
+, price()
+, deadline()
+{
+}
+
+TestAsk::TestAsk(const TestAsk& original, bslma::Allocator* allocator)
+: id(original.id)
+, seller(original.seller, allocator)
+, security(original.security, allocator)
+, shares(original.shares)
+, price(original.price)
+, deadline(original.deadline)
+{
+}
+
+TestAsk::~TestAsk()
+{
+}
+
+TestAsk& TestAsk::operator=(const TestAsk& other)
+{
+    if (this != &other) {
+        this->id = other.id;
+        this->seller = other.seller;
+        this->security = other.security;
+        this->shares = other.shares;
+        this->price = other.price;
+        this->deadline = other.deadline;
+    }
+
+    return *this;
+}
+
+void TestAsk::reset()
+{
+    bdlat_ValueTypeFunctions::reset(&this->id);
+    bdlat_ValueTypeFunctions::reset(&this->seller);
+    bdlat_ValueTypeFunctions::reset(&this->security);
+    bdlat_ValueTypeFunctions::reset(&this->shares);
+    bdlat_ValueTypeFunctions::reset(&this->price);
+    bdlat_ValueTypeFunctions::reset(&this->deadline);
+}
+
+void TestAsk::swap(TestAsk& other)
+{
+    if (this != &other) {
+        bslalg::SwapUtil::swap(&this->id, &other.id);
+        bslalg::SwapUtil::swap(&this->seller, &other.seller);
+        bslalg::SwapUtil::swap(&this->security, &other.security);
+        bslalg::SwapUtil::swap(&this->shares, &other.shares);
+        bslalg::SwapUtil::swap(&this->price, &other.price);
+        bslalg::SwapUtil::swap(&this->deadline, &other.deadline);
+    }
+}
+
+bool TestAsk::equals(const TestAsk& other) const
+{
+    if (this->id != other.id) {
+        return false;
+    }
+
+    if (this->seller != other.seller) {
+        return false;
+    }
+
+    if (this->security != other.security) {
+        return false;
+    }
+
+    if (this->shares != other.shares) {
+        return false;
+    }
+
+    if (this->price != other.price) {
+        return false;
+    }
+
+    if (this->deadline != other.deadline) {
+        return false;
+    }
+
+    return true;
+}
+
+bool TestAsk::less(const TestAsk& other) const
+{
+    if (this->id < other.id) {
+        return true;
+    }
+
+    if (other.id < this->id) {
+        return false;
+    }
+
+    if (this->seller < other.seller) {
+        return true;
+    }
+
+    if (other.seller < this->seller) {
+        return false;
+    }
+
+    if (this->security < other.security) {
+        return true;
+    }
+
+    if (other.security < this->security) {
+        return false;
+    }
+
+    if (this->shares < other.shares) {
+        return true;
+    }
+
+    if (other.shares < this->shares) {
+        return false;
+    }
+
+    if (this->price < other.price) {
+        return true;
+    }
+
+    if (other.price < this->price) {
+        return false;
+    }
+
+    return this->deadline.gmtDatetime() < other.deadline.gmtDatetime();
+}
+
+bsl::ostream& TestAsk::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute(
+        "id",
+        this->id);
+    printer.printAttribute(
+        "seller",
+        this->seller);
+    printer.printAttribute(
+        "security",
+        this->security);
+    printer.printAttribute(
+        "shares",
+        this->shares);
+    printer.printAttribute(
+        "price",
+        this->price);
+    printer.printAttribute(
+        "deadline",
+        this->deadline);
+    printer.end();
+    return stream;
+}
+
+const char TestAsk::CLASS_NAME[] = "ntcf::TestAsk";
+
+const bdlat_AttributeInfo TestAsk::ATTRIBUTE_INFO_ARRAY[] =
+{
+    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "seller", 6, "", bdlat_FormattingMode::e_DEFAULT },
+    { 2, "security", 8, "", bdlat_FormattingMode::e_DEFAULT },
+    { 3, "shares", 6, "", bdlat_FormattingMode::e_DEFAULT },
+    { 4, "price", 5, "", bdlat_FormattingMode::e_DEFAULT },
+    { 5, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT }
+};
+
+const bdlat_AttributeInfo* TestAsk::lookupAttributeInfo(int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID];
+    case ATTRIBUTE_ID_SELLER:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SELLER];
+    case ATTRIBUTE_ID_SECURITY:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SECURITY];
+    case ATTRIBUTE_ID_SHARES:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SHARES];
+    case ATTRIBUTE_ID_PRICE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRICE];
+    case ATTRIBUTE_ID_DEADLINE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE];
+    default:
+        return 0;
+    }
+}
+
+const bdlat_AttributeInfo* TestAsk::lookupAttributeInfo(const char* name, int nameLength)
+{
+    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+bool operator==(const TestAsk& lhs, const TestAsk& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestAsk& lhs, const TestAsk& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestAsk& lhs, const TestAsk& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestAsk& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
+TestAcknowledgment::TestAcknowledgment()
+{
+}
+
+TestAcknowledgment::TestAcknowledgment(const TestAcknowledgment& other)
+{
+    (void)(other);
+}
+
+TestAcknowledgment::~TestAcknowledgment()
+{
+}
+
+TestAcknowledgment& TestAcknowledgment::operator=(const TestAcknowledgment& other)
+{
+    (void)(other);
+    return *this;
+
+}
+
+void TestAcknowledgment::reset()
+{
+}
+
+void TestAcknowledgment::swap(TestAcknowledgment& other)
+{
+    (void)(other);
+}
+
+bool TestAcknowledgment::equals(const TestAcknowledgment& other) const
+{    (void)(other);
+    return true;
+}
+
+bool TestAcknowledgment::less(const TestAcknowledgment& other) const
+{    (void)(other);
+    return false;
+}
+
+bsl::ostream& TestAcknowledgment::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    (void)(stream);
+    (void)(level);
+    (void)(spacesPerLevel);
+    return stream << "[ ]";
+}
+
+const char TestAcknowledgment::CLASS_NAME[] = "ntcf::TestAcknowledgment";
+
+const bdlat_AttributeInfo* TestAcknowledgment::lookupAttributeInfo(int id)
+{
+    (void)(id);
+    return 0;
+}
+
+const bdlat_AttributeInfo* TestAcknowledgment::lookupAttributeInfo(const char* name, int nameLength)
+{
+    (void)(name);
+    (void)(nameLength);
+    return 0;
+}
+
+bool operator==(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgment& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
+TestAcknowledgmentResultValue::TestAcknowledgmentResultValue(bslma::Allocator* allocator)
+: d_selectionId(SELECTION_ID_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(allocator))
+{
+}
+
+TestAcknowledgmentResultValue::TestAcknowledgmentResultValue(const TestAcknowledgmentResultValue& original, bslma::Allocator* allocator)
+: d_selectionId(SELECTION_ID_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(allocator))
+{
+    switch (original.d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        makeFailure(original.d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        makeSuccess(original.d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(original.d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+}
+
+TestAcknowledgmentResultValue::~TestAcknowledgmentResultValue()
+{
+    reset();
+}
+
+TestAcknowledgmentResultValue& TestAcknowledgmentResultValue::operator=(const TestAcknowledgmentResultValue& other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    switch (other.d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        makeFailure(other.d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        makeSuccess(other.d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(other.d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+
+    d_selectionId = other.d_selectionId;
+
+    return *this;
+}
+
+void TestAcknowledgmentResultValue::reset()
+{
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE: {
+        typedef ntcf::TestFault Type;
+        d_failure.object().~Type();
+        } break;
+    case SELECTION_ID_SUCCESS: {
+        typedef ntcf::TestAcknowledgment Type;
+        d_success.object().~Type();
+        } break;
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+
+    d_selectionId = SELECTION_ID_UNDEFINED;
+}
+
+void TestAcknowledgmentResultValue::swap(TestAcknowledgmentResultValue& other)
+{
+    if (d_selectionId != other.d_selectionId) {
+        TestAcknowledgmentResultValue temp = other;
+        other = *this;
+        *this = other;
+        return;
+    }
+
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        bslalg::SwapUtil::swap(&d_failure.object(), &other.d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        bslalg::SwapUtil::swap(&d_success.object(), &other.d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+}
+
+int TestAcknowledgmentResultValue::makeSelection(int id)
+{
+    switch (id) {
+    case SELECTION_ID_UNDEFINED:
+        reset();
+        break;
+    case SELECTION_ID_FAILURE:
+        makeFailure();
+        break;
+    case SELECTION_ID_SUCCESS:
+        makeSuccess();
+        break;
+    default:
+        return -1;
+    }
+
+    return 0;
+}
+
+int TestAcknowledgmentResultValue::makeSelection(const char* name, int nameLength)
+{
+    const bdlat_SelectionInfo *selectionInfo =
+        lookupSelectionInfo(name, nameLength);
+    if (selectionInfo == 0) {
+        return -1;
+    }
+
+    return makeSelection(selectionInfo->d_id);
+}
+
+ntcf::TestFault& TestAcknowledgmentResultValue::makeFailure()
+{
+    if (d_selectionId == SELECTION_ID_FAILURE) {
+        bdlat_ValueTypeFunctions::reset(&d_failure.object());
+    }
+    else {
+        reset();
+        new(d_failure.buffer()) ntcf::TestFault(d_allocator_p);
+        d_selectionId = SELECTION_ID_FAILURE;
+    }
+
+    return d_failure.object();
+}
+
+ntcf::TestFault& TestAcknowledgmentResultValue::makeFailure(const ntcf::TestFault& value)
+{
+    if (d_selectionId == SELECTION_ID_FAILURE) {
+        d_failure.object() = value;
+    }
+    else {
+        reset();
+        new (d_failure.buffer()) ntcf::TestFault(value, d_allocator_p);
+        d_selectionId = SELECTION_ID_FAILURE;
+    }
+
+    return d_failure.object();
+}
+
+ntcf::TestAcknowledgment& TestAcknowledgmentResultValue::makeSuccess()
+{
+    if (d_selectionId == SELECTION_ID_SUCCESS) {
+        bdlat_ValueTypeFunctions::reset(&d_success.object());
+    }
+    else {
+        reset();
+        new(d_success.buffer()) ntcf::TestAcknowledgment();
+        d_selectionId = SELECTION_ID_SUCCESS;
+    }
+
+    return d_success.object();
+}
+
+ntcf::TestAcknowledgment& TestAcknowledgmentResultValue::makeSuccess(const ntcf::TestAcknowledgment& value)
+{
+    if (d_selectionId == SELECTION_ID_SUCCESS) {
+        d_success.object() = value;
+    }
+    else {
+        reset();
+        new (d_success.buffer()) ntcf::TestAcknowledgment(value);
+        d_selectionId = SELECTION_ID_SUCCESS;
+    }
+
+    return d_success.object();
+}
+
+ntcf::TestFault& TestAcknowledgmentResultValue::failure()
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_FAILURE);
+    return d_failure.object();
+}
+
+ntcf::TestAcknowledgment& TestAcknowledgmentResultValue::success()
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_SUCCESS);
+    return d_success.object();
+}
+
+const ntcf::TestFault& TestAcknowledgmentResultValue::failure() const
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_FAILURE);
+    return d_failure.object();
+}
+
+const ntcf::TestAcknowledgment& TestAcknowledgmentResultValue::success() const
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_SUCCESS);
+    return d_success.object();
+}
+
+bool TestAcknowledgmentResultValue::isUndefinedValue() const
+{
+    return (d_selectionId == SELECTION_ID_UNDEFINED);
+}
+
+bool TestAcknowledgmentResultValue::isFailureValue() const
+{
+    return (d_selectionId == SELECTION_ID_FAILURE);
+}
+
+bool TestAcknowledgmentResultValue::isSuccessValue() const
+{
+    return (d_selectionId == SELECTION_ID_SUCCESS);
+}
+
+int TestAcknowledgmentResultValue::selectionId() const
+{
+    return d_selectionId;
+}
+
+bool TestAcknowledgmentResultValue::equals(const TestAcknowledgmentResultValue& other) const
+{
+    if (d_selectionId != other.d_selectionId) {
+        return false;
+    }
+
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        return d_failure.object() == other.d_failure.object();
+    case SELECTION_ID_SUCCESS:
+        return d_success.object() == other.d_success.object();
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        return false;
+    }
+}
+
+bool TestAcknowledgmentResultValue::less(const TestAcknowledgmentResultValue& other) const
+{
+    if (d_selectionId != other.d_selectionId) {
+        return false;
+    }
+
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        return d_failure.object() < other.d_failure.object();
+    case SELECTION_ID_SUCCESS:
+        return d_success.object() < other.d_success.object();
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        return false;
+    }
+}
+
+bsl::ostream& TestAcknowledgmentResultValue::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        printer.printAttribute("failure", d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        printer.printAttribute("success", d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        stream << "UNDEFINED";
+    }
+    printer.end();
+    return stream;
+}
+
+const char TestAcknowledgmentResultValue::CLASS_NAME[] = "ntcf::TestAcknowledgmentResultValue";
+
+const bdlat_SelectionInfo TestAcknowledgmentResultValue::SELECTION_INFO_ARRAY[] =
+{
+    { 0, "failure", 7, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "success", 7, "", bdlat_FormattingMode::e_DEFAULT }
+};
+
+const bdlat_SelectionInfo* TestAcknowledgmentResultValue::lookupSelectionInfo(int id)
+{
+    switch (id) {
+    case SELECTION_ID_FAILURE:
+        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_FAILURE];
+    case SELECTION_ID_SUCCESS:
+        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_SUCCESS];
+    default:
+        return 0;
+    }
+}
+
+const bdlat_SelectionInfo* TestAcknowledgmentResultValue::lookupSelectionInfo(const char* name, int nameLength)
+{
+    for (bsl::size_t i = 0; i < NUM_SELECTIONS; ++i) {
+        const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
+        if (selectionInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &selectionInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+bool operator==(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgmentResultValue& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
+TestAcknowledgmentResult::TestAcknowledgmentResult(bslma::Allocator* allocator)
+: context()
+, value(allocator)
+{
+}
+
+TestAcknowledgmentResult::TestAcknowledgmentResult(const TestAcknowledgmentResult& original, bslma::Allocator* allocator)
+: context(original.context)
+, value(original.value, allocator)
+{
+}
+
+TestAcknowledgmentResult::~TestAcknowledgmentResult()
+{
+}
+
+TestAcknowledgmentResult& TestAcknowledgmentResult::operator=(const TestAcknowledgmentResult& other)
+{
+    if (this != &other) {
+        this->context = other.context;
+        this->value = other.value;
+    }
+
+    return *this;
+}
+
+void TestAcknowledgmentResult::reset()
+{
+    bdlat_ValueTypeFunctions::reset(&this->context);
+    bdlat_ValueTypeFunctions::reset(&this->value);
+}
+
+void TestAcknowledgmentResult::swap(TestAcknowledgmentResult& other)
+{
+    if (this != &other) {
+        bslalg::SwapUtil::swap(&this->context, &other.context);
+        bslalg::SwapUtil::swap(&this->value, &other.value);
+    }
+}
+
+bool TestAcknowledgmentResult::equals(const TestAcknowledgmentResult& other) const
+{
+    if (this->context != other.context) {
+        return false;
+    }
+
+    if (this->value != other.value) {
+        return false;
+    }
+
+    return true;
+}
+
+bool TestAcknowledgmentResult::less(const TestAcknowledgmentResult& other) const
+{
+    if (this->context < other.context) {
+        return true;
+    }
+
+    if (other.context < this->context) {
+        return false;
+    }
+
+    return this->value < other.value;
+}
+
+bsl::ostream& TestAcknowledgmentResult::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute(
+        "context",
+        this->context);
+    printer.printAttribute(
+        "value",
+        this->value);
+    printer.end();
+    return stream;
+}
+
+const char TestAcknowledgmentResult::CLASS_NAME[] = "ntcf::TestAcknowledgmentResult";
+
+const bdlat_AttributeInfo TestAcknowledgmentResult::ATTRIBUTE_INFO_ARRAY[] =
+{
+    { 0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT }
+};
+
+const bdlat_AttributeInfo* TestAcknowledgmentResult::lookupAttributeInfo(int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_CONTEXT:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT];
+    case ATTRIBUTE_ID_VALUE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE];
+    default:
+        return 0;
+    }
+}
+
+const bdlat_AttributeInfo* TestAcknowledgmentResult::lookupAttributeInfo(const char* name, int nameLength)
+{
+    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+bool operator==(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgmentResult& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
 TestBid::TestBid(bslma::Allocator* allocator)
 : id()
 , buyer(allocator)
@@ -2068,117 +3428,84 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestBid& object)
 
 namespace ntcf { 
 
-TestPublication::TestPublication(bslma::Allocator* allocator)
-: trade(allocator)
+TestSubscription::TestSubscription()
 {
 }
 
-TestPublication::TestPublication(const TestPublication& original, bslma::Allocator* allocator)
-: trade(original.trade, allocator)
+TestSubscription::TestSubscription(const TestSubscription& other)
+{
+    (void)(other);
+}
+
+TestSubscription::~TestSubscription()
 {
 }
 
-TestPublication::~TestPublication()
+TestSubscription& TestSubscription::operator=(const TestSubscription& other)
 {
-}
-
-TestPublication& TestPublication::operator=(const TestPublication& other)
-{
-    if (this != &other) {
-        this->trade = other.trade;
-    }
-
+    (void)(other);
     return *this;
+
 }
 
-void TestPublication::reset()
+void TestSubscription::reset()
 {
-    bdlat_ValueTypeFunctions::reset(&this->trade);
 }
 
-void TestPublication::swap(TestPublication& other)
+void TestSubscription::swap(TestSubscription& other)
 {
-    if (this != &other) {
-        bslalg::SwapUtil::swap(&this->trade, &other.trade);
-    }
+    (void)(other);
 }
 
-bool TestPublication::equals(const TestPublication& other) const
-{
-    if (this->trade != other.trade) {
-        return false;
-    }
-
+bool TestSubscription::equals(const TestSubscription& other) const
+{    (void)(other);
     return true;
 }
 
-bool TestPublication::less(const TestPublication& other) const
-{
-    return this->trade < other.trade;
+bool TestSubscription::less(const TestSubscription& other) const
+{    (void)(other);
+    return false;
 }
 
-bsl::ostream& TestPublication::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestSubscription::print(bsl::ostream& stream, int level, int spacesPerLevel) const
 {
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    if (!this->trade.empty()) {
-        printer.printAttribute(
-            "trade",
-            this->trade);
-    }
-    printer.end();
-    return stream;
+    (void)(stream);
+    (void)(level);
+    (void)(spacesPerLevel);
+    return stream << "[ ]";
 }
 
-const char TestPublication::CLASS_NAME[] = "ntcf::TestPublication";
+const char TestSubscription::CLASS_NAME[] = "ntcf::TestSubscription";
 
-const bdlat_AttributeInfo TestPublication::ATTRIBUTE_INFO_ARRAY[] =
+const bdlat_AttributeInfo* TestSubscription::lookupAttributeInfo(int id)
 {
-    { 0, "trade", 5, "", bdlat_FormattingMode::e_DEFAULT }
-};
-
-const bdlat_AttributeInfo* TestPublication::lookupAttributeInfo(int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_TRADE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TRADE];
-    default:
-        return 0;
-    }
-}
-
-const bdlat_AttributeInfo* TestPublication::lookupAttributeInfo(const char* name, int nameLength)
-{
-    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
-        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
-        if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
-                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
-            if (compare == 0) {
-                return &attributeInfo;
-            }
-        }
-    }
-
+    (void)(id);
     return 0;
 }
 
-bool operator==(const TestPublication& lhs, const TestPublication& rhs)
+const bdlat_AttributeInfo* TestSubscription::lookupAttributeInfo(const char* name, int nameLength)
+{
+    (void)(name);
+    (void)(nameLength);
+    return 0;
+}
+
+bool operator==(const TestSubscription& lhs, const TestSubscription& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestPublication& lhs, const TestPublication& rhs)
+bool operator!=(const TestSubscription& lhs, const TestSubscription& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestPublication& lhs, const TestPublication& rhs)
+bool operator<(const TestSubscription& lhs, const TestSubscription& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestPublication& object)
+bsl::ostream& operator<<(bsl::ostream& stream, const TestSubscription& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -2873,84 +4200,107 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestContent& object)
 
 namespace ntcf { 
 
-TestControlHeartbeat::TestControlHeartbeat()
-: acknowledge()
+TestEcho::TestEcho(bslma::Allocator* allocator)
+: id()
+, value(allocator)
 {
 }
 
-TestControlHeartbeat::TestControlHeartbeat(const TestControlHeartbeat& other)
-: acknowledge(other.acknowledge)
+TestEcho::TestEcho(const TestEcho& original, bslma::Allocator* allocator)
+: id(original.id)
+, value(original.value, allocator)
 {
 }
 
-TestControlHeartbeat::~TestControlHeartbeat()
+TestEcho::~TestEcho()
 {
 }
 
-TestControlHeartbeat& TestControlHeartbeat::operator=(const TestControlHeartbeat& other)
+TestEcho& TestEcho::operator=(const TestEcho& other)
 {
     if (this != &other) {
-        this->acknowledge = other.acknowledge;
+        this->id = other.id;
+        this->value = other.value;
     }
 
     return *this;
 }
 
-void TestControlHeartbeat::reset()
+void TestEcho::reset()
 {
-    bdlat_ValueTypeFunctions::reset(&this->acknowledge);
+    bdlat_ValueTypeFunctions::reset(&this->id);
+    bdlat_ValueTypeFunctions::reset(&this->value);
 }
 
-void TestControlHeartbeat::swap(TestControlHeartbeat& other)
+void TestEcho::swap(TestEcho& other)
 {
     if (this != &other) {
-        bslalg::SwapUtil::swap(&this->acknowledge, &other.acknowledge);
+        bslalg::SwapUtil::swap(&this->id, &other.id);
+        bslalg::SwapUtil::swap(&this->value, &other.value);
     }
 }
 
-bool TestControlHeartbeat::equals(const TestControlHeartbeat& other) const
+bool TestEcho::equals(const TestEcho& other) const
 {
-    if (this->acknowledge != other.acknowledge) {
+    if (this->id != other.id) {
+        return false;
+    }
+
+    if (this->value != other.value) {
         return false;
     }
 
     return true;
 }
 
-bool TestControlHeartbeat::less(const TestControlHeartbeat& other) const
+bool TestEcho::less(const TestEcho& other) const
 {
-    return this->acknowledge < other.acknowledge;
+    if (this->id < other.id) {
+        return true;
+    }
+
+    if (other.id < this->id) {
+        return false;
+    }
+
+    return this->value < other.value;
 }
 
-bsl::ostream& TestControlHeartbeat::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestEcho::print(bsl::ostream& stream, int level, int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     printer.printAttribute(
-        "acknowledge",
-        this->acknowledge);
+        "id",
+        this->id);
+    printer.printAttribute(
+        "value",
+        this->value);
     printer.end();
     return stream;
 }
 
-const char TestControlHeartbeat::CLASS_NAME[] = "ntcf::TestControlHeartbeat";
+const char TestEcho::CLASS_NAME[] = "ntcf::TestEcho";
 
-const bdlat_AttributeInfo TestControlHeartbeat::ATTRIBUTE_INFO_ARRAY[] =
+const bdlat_AttributeInfo TestEcho::ATTRIBUTE_INFO_ARRAY[] =
 {
-    { 0, "acknowledge", 11, "", bdlat_FormattingMode::e_DEFAULT }
+    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT }
 };
 
-const bdlat_AttributeInfo* TestControlHeartbeat::lookupAttributeInfo(int id)
+const bdlat_AttributeInfo* TestEcho::lookupAttributeInfo(int id)
 {
     switch (id) {
-    case ATTRIBUTE_ID_ACKNOWLEDGE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACKNOWLEDGE];
+    case ATTRIBUTE_ID_ID:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID];
+    case ATTRIBUTE_ID_VALUE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE];
     default:
         return 0;
     }
 }
 
-const bdlat_AttributeInfo* TestControlHeartbeat::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestEcho::lookupAttributeInfo(const char* name, int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
@@ -2966,22 +4316,208 @@ const bdlat_AttributeInfo* TestControlHeartbeat::lookupAttributeInfo(const char*
     return 0;
 }
 
-bool operator==(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs)
+bool operator==(const TestEcho& lhs, const TestEcho& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs)
+bool operator!=(const TestEcho& lhs, const TestEcho& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs)
+bool operator<(const TestEcho& lhs, const TestEcho& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestControlHeartbeat& object)
+bsl::ostream& operator<<(bsl::ostream& stream, const TestEcho& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
+TestSignal::TestSignal(bslma::Allocator* allocator)
+: id()
+, value(allocator)
+, reflect()
+, delay()
+{
+}
+
+TestSignal::TestSignal(const TestSignal& original, bslma::Allocator* allocator)
+: id(original.id)
+, value(original.value, allocator)
+, reflect(original.reflect)
+, delay(original.delay)
+{
+}
+
+TestSignal::~TestSignal()
+{
+}
+
+TestSignal& TestSignal::operator=(const TestSignal& other)
+{
+    if (this != &other) {
+        this->id = other.id;
+        this->value = other.value;
+        this->reflect = other.reflect;
+        this->delay = other.delay;
+    }
+
+    return *this;
+}
+
+void TestSignal::reset()
+{
+    bdlat_ValueTypeFunctions::reset(&this->id);
+    bdlat_ValueTypeFunctions::reset(&this->value);
+    bdlat_ValueTypeFunctions::reset(&this->reflect);
+    bdlat_ValueTypeFunctions::reset(&this->delay);
+}
+
+void TestSignal::swap(TestSignal& other)
+{
+    if (this != &other) {
+        bslalg::SwapUtil::swap(&this->id, &other.id);
+        bslalg::SwapUtil::swap(&this->value, &other.value);
+        bslalg::SwapUtil::swap(&this->reflect, &other.reflect);
+        bslalg::SwapUtil::swap(&this->delay, &other.delay);
+    }
+}
+
+bool TestSignal::equals(const TestSignal& other) const
+{
+    if (this->id != other.id) {
+        return false;
+    }
+
+    if (this->value != other.value) {
+        return false;
+    }
+
+    if (this->reflect != other.reflect) {
+        return false;
+    }
+
+    if (this->delay != other.delay) {
+        return false;
+    }
+
+    return true;
+}
+
+bool TestSignal::less(const TestSignal& other) const
+{
+    if (this->id < other.id) {
+        return true;
+    }
+
+    if (other.id < this->id) {
+        return false;
+    }
+
+    if (this->value < other.value) {
+        return true;
+    }
+
+    if (other.value < this->value) {
+        return false;
+    }
+
+    if (this->reflect < other.reflect) {
+        return true;
+    }
+
+    if (other.reflect < this->reflect) {
+        return false;
+    }
+
+    return this->delay < other.delay;
+}
+
+bsl::ostream& TestSignal::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute(
+        "id",
+        this->id);
+    printer.printAttribute(
+        "value",
+        this->value);
+    printer.printAttribute(
+        "reflect",
+        this->reflect);
+    printer.printAttribute(
+        "delay",
+        this->delay);
+    printer.end();
+    return stream;
+}
+
+const char TestSignal::CLASS_NAME[] = "ntcf::TestSignal";
+
+const bdlat_AttributeInfo TestSignal::ATTRIBUTE_INFO_ARRAY[] =
+{
+    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT },
+    { 2, "reflect", 7, "", bdlat_FormattingMode::e_DEFAULT },
+    { 3, "delay", 5, "", bdlat_FormattingMode::e_DEFAULT }
+};
+
+const bdlat_AttributeInfo* TestSignal::lookupAttributeInfo(int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_ID:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID];
+    case ATTRIBUTE_ID_VALUE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE];
+    case ATTRIBUTE_ID_REFLECT:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_REFLECT];
+    case ATTRIBUTE_ID_DELAY:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DELAY];
+    default:
+        return 0;
+    }
+}
+
+const bdlat_AttributeInfo* TestSignal::lookupAttributeInfo(const char* name, int nameLength)
+{
+    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+bool operator==(const TestSignal& lhs, const TestSignal& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestSignal& lhs, const TestSignal& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestSignal& lhs, const TestSignal& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestSignal& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -3281,6 +4817,12 @@ TestControl::TestControl(const TestControl& original, bslma::Allocator* allocato
 , d_allocator_p(bslma::Default::allocator(allocator))
 {
     switch (original.d_selectionId) {
+    case SELECTION_ID_SIGNAL:
+        makeSignal(original.d_signal.object());
+        break;
+    case SELECTION_ID_ECHO:
+        makeEcho(original.d_echo.object());
+        break;
     case SELECTION_ID_ENCRYPTION:
         makeEncryption(original.d_encryption.object());
         break;
@@ -3313,6 +4855,12 @@ TestControl& TestControl::operator=(const TestControl& other)
     }
 
     switch (other.d_selectionId) {
+    case SELECTION_ID_SIGNAL:
+        makeSignal(other.d_signal.object());
+        break;
+    case SELECTION_ID_ECHO:
+        makeEcho(other.d_echo.object());
+        break;
     case SELECTION_ID_ENCRYPTION:
         makeEncryption(other.d_encryption.object());
         break;
@@ -3340,6 +4888,14 @@ TestControl& TestControl::operator=(const TestControl& other)
 void TestControl::reset()
 {
     switch (d_selectionId) {
+    case SELECTION_ID_SIGNAL: {
+        typedef ntcf::TestSignal Type;
+        d_signal.object().~Type();
+        } break;
+    case SELECTION_ID_ECHO: {
+        typedef ntcf::TestEcho Type;
+        d_echo.object().~Type();
+        } break;
     case SELECTION_ID_ENCRYPTION: {
         typedef ntcf::TestControlEncryption Type;
         d_encryption.object().~Type();
@@ -3377,6 +4933,12 @@ void TestControl::swap(TestControl& other)
     }
 
     switch (d_selectionId) {
+    case SELECTION_ID_SIGNAL:
+        bslalg::SwapUtil::swap(&d_signal.object(), &other.d_signal.object());
+        break;
+    case SELECTION_ID_ECHO:
+        bslalg::SwapUtil::swap(&d_echo.object(), &other.d_echo.object());
+        break;
     case SELECTION_ID_ENCRYPTION:
         bslalg::SwapUtil::swap(&d_encryption.object(), &other.d_encryption.object());
         break;
@@ -3402,6 +4964,12 @@ int TestControl::makeSelection(int id)
     switch (id) {
     case SELECTION_ID_UNDEFINED:
         reset();
+        break;
+    case SELECTION_ID_SIGNAL:
+        makeSignal();
+        break;
+    case SELECTION_ID_ECHO:
+        makeEcho();
         break;
     case SELECTION_ID_ENCRYPTION:
         makeEncryption();
@@ -3434,6 +5002,62 @@ int TestControl::makeSelection(const char* name, int nameLength)
     }
 
     return makeSelection(selectionInfo->d_id);
+}
+
+ntcf::TestSignal& TestControl::makeSignal()
+{
+    if (d_selectionId == SELECTION_ID_SIGNAL) {
+        bdlat_ValueTypeFunctions::reset(&d_signal.object());
+    }
+    else {
+        reset();
+        new(d_signal.buffer()) ntcf::TestSignal(d_allocator_p);
+        d_selectionId = SELECTION_ID_SIGNAL;
+    }
+
+    return d_signal.object();
+}
+
+ntcf::TestSignal& TestControl::makeSignal(const ntcf::TestSignal& value)
+{
+    if (d_selectionId == SELECTION_ID_SIGNAL) {
+        d_signal.object() = value;
+    }
+    else {
+        reset();
+        new (d_signal.buffer()) ntcf::TestSignal(value, d_allocator_p);
+        d_selectionId = SELECTION_ID_SIGNAL;
+    }
+
+    return d_signal.object();
+}
+
+ntcf::TestEcho& TestControl::makeEcho()
+{
+    if (d_selectionId == SELECTION_ID_ECHO) {
+        bdlat_ValueTypeFunctions::reset(&d_echo.object());
+    }
+    else {
+        reset();
+        new(d_echo.buffer()) ntcf::TestEcho(d_allocator_p);
+        d_selectionId = SELECTION_ID_ECHO;
+    }
+
+    return d_echo.object();
+}
+
+ntcf::TestEcho& TestControl::makeEcho(const ntcf::TestEcho& value)
+{
+    if (d_selectionId == SELECTION_ID_ECHO) {
+        d_echo.object() = value;
+    }
+    else {
+        reset();
+        new (d_echo.buffer()) ntcf::TestEcho(value, d_allocator_p);
+        d_selectionId = SELECTION_ID_ECHO;
+    }
+
+    return d_echo.object();
 }
 
 ntcf::TestControlEncryption& TestControl::makeEncryption()
@@ -3576,6 +5200,18 @@ ntcf::TestFault& TestControl::makeFault(const ntcf::TestFault& value)
     return d_fault.object();
 }
 
+ntcf::TestSignal& TestControl::signal()
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_SIGNAL);
+    return d_signal.object();
+}
+
+ntcf::TestEcho& TestControl::echo()
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_ECHO);
+    return d_echo.object();
+}
+
 ntcf::TestControlEncryption& TestControl::encryption()
 {
     BSLS_ASSERT(d_selectionId == SELECTION_ID_ENCRYPTION);
@@ -3604,6 +5240,18 @@ ntcf::TestFault& TestControl::fault()
 {
     BSLS_ASSERT(d_selectionId == SELECTION_ID_FAULT);
     return d_fault.object();
+}
+
+const ntcf::TestSignal& TestControl::signal() const
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_SIGNAL);
+    return d_signal.object();
+}
+
+const ntcf::TestEcho& TestControl::echo() const
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_ECHO);
+    return d_echo.object();
 }
 
 const ntcf::TestControlEncryption& TestControl::encryption() const
@@ -3639,6 +5287,16 @@ const ntcf::TestFault& TestControl::fault() const
 bool TestControl::isUndefinedValue() const
 {
     return (d_selectionId == SELECTION_ID_UNDEFINED);
+}
+
+bool TestControl::isSignalValue() const
+{
+    return (d_selectionId == SELECTION_ID_SIGNAL);
+}
+
+bool TestControl::isEchoValue() const
+{
+    return (d_selectionId == SELECTION_ID_ECHO);
 }
 
 bool TestControl::isEncryptionValue() const
@@ -3678,6 +5336,10 @@ bool TestControl::equals(const TestControl& other) const
     }
 
     switch (d_selectionId) {
+    case SELECTION_ID_SIGNAL:
+        return d_signal.object() == other.d_signal.object();
+    case SELECTION_ID_ECHO:
+        return d_echo.object() == other.d_echo.object();
     case SELECTION_ID_ENCRYPTION:
         return d_encryption.object() == other.d_encryption.object();
     case SELECTION_ID_COMPRESSION:
@@ -3701,6 +5363,10 @@ bool TestControl::less(const TestControl& other) const
     }
 
     switch (d_selectionId) {
+    case SELECTION_ID_SIGNAL:
+        return d_signal.object() < other.d_signal.object();
+    case SELECTION_ID_ECHO:
+        return d_echo.object() < other.d_echo.object();
     case SELECTION_ID_ENCRYPTION:
         return d_encryption.object() < other.d_encryption.object();
     case SELECTION_ID_COMPRESSION:
@@ -3722,6 +5388,12 @@ bsl::ostream& TestControl::print(bsl::ostream& stream, int level, int spacesPerL
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     switch (d_selectionId) {
+    case SELECTION_ID_SIGNAL:
+        printer.printAttribute("signal", d_signal.object());
+        break;
+    case SELECTION_ID_ECHO:
+        printer.printAttribute("echo", d_echo.object());
+        break;
     case SELECTION_ID_ENCRYPTION:
         printer.printAttribute("encryption", d_encryption.object());
         break;
@@ -3749,16 +5421,22 @@ const char TestControl::CLASS_NAME[] = "ntcf::TestControl";
 
 const bdlat_SelectionInfo TestControl::SELECTION_INFO_ARRAY[] =
 {
-    { 0, "encryption", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "compression", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "heartbeat", 9, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "acknowledgment", 14, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "fault", 5, "", bdlat_FormattingMode::e_DEFAULT }
+    { 0, "signal", 6, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "echo", 4, "", bdlat_FormattingMode::e_DEFAULT },
+    { 2, "encryption", 10, "", bdlat_FormattingMode::e_DEFAULT },
+    { 3, "compression", 11, "", bdlat_FormattingMode::e_DEFAULT },
+    { 4, "heartbeat", 9, "", bdlat_FormattingMode::e_DEFAULT },
+    { 5, "acknowledgment", 14, "", bdlat_FormattingMode::e_DEFAULT },
+    { 6, "fault", 5, "", bdlat_FormattingMode::e_DEFAULT }
 };
 
 const bdlat_SelectionInfo* TestControl::lookupSelectionInfo(int id)
 {
     switch (id) {
+    case SELECTION_ID_SIGNAL:
+        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_SIGNAL];
+    case SELECTION_ID_ECHO:
+        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_ECHO];
     case SELECTION_ID_ENCRYPTION:
         return &SELECTION_INFO_ARRAY[SELECTION_INDEX_ENCRYPTION];
     case SELECTION_ID_COMPRESSION:
@@ -4145,1290 +5823,14 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageEntity& object)
 
 namespace ntcf { 
 
-TestAcknowledgmentResultContext::TestAcknowledgmentResultContext()
-: latency()
-{
-}
-
-TestAcknowledgmentResultContext::TestAcknowledgmentResultContext(const TestAcknowledgmentResultContext& other)
-: latency(other.latency)
-{
-}
-
-TestAcknowledgmentResultContext::~TestAcknowledgmentResultContext()
-{
-}
-
-TestAcknowledgmentResultContext& TestAcknowledgmentResultContext::operator=(const TestAcknowledgmentResultContext& other)
-{
-    if (this != &other) {
-        this->latency = other.latency;
-    }
-
-    return *this;
-}
-
-void TestAcknowledgmentResultContext::reset()
-{
-    bdlat_ValueTypeFunctions::reset(&this->latency);
-}
-
-void TestAcknowledgmentResultContext::swap(TestAcknowledgmentResultContext& other)
-{
-    if (this != &other) {
-        bslalg::SwapUtil::swap(&this->latency, &other.latency);
-    }
-}
-
-bool TestAcknowledgmentResultContext::equals(const TestAcknowledgmentResultContext& other) const
-{
-    if (this->latency != other.latency) {
-        return false;
-    }
-
-    return true;
-}
-
-bool TestAcknowledgmentResultContext::less(const TestAcknowledgmentResultContext& other) const
-{
-    return this->latency < other.latency;
-}
-
-bsl::ostream& TestAcknowledgmentResultContext::print(bsl::ostream& stream, int level, int spacesPerLevel) const
-{
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute(
-        "latency",
-        this->latency);
-    printer.end();
-    return stream;
-}
-
-const char TestAcknowledgmentResultContext::CLASS_NAME[] = "ntcf::TestAcknowledgmentResultContext";
-
-const bdlat_AttributeInfo TestAcknowledgmentResultContext::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "latency", 7, "", bdlat_FormattingMode::e_DEFAULT }
-};
-
-const bdlat_AttributeInfo* TestAcknowledgmentResultContext::lookupAttributeInfo(int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_LATENCY:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_LATENCY];
-    default:
-        return 0;
-    }
-}
-
-const bdlat_AttributeInfo* TestAcknowledgmentResultContext::lookupAttributeInfo(const char* name, int nameLength)
-{
-    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
-        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
-        if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
-                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
-            if (compare == 0) {
-                return &attributeInfo;
-            }
-        }
-    }
-
-    return 0;
-}
-
-bool operator==(const TestAcknowledgmentResultContext& lhs, const TestAcknowledgmentResultContext& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const TestAcknowledgmentResultContext& lhs, const TestAcknowledgmentResultContext& rhs)
-{
-    return (!operator==(lhs, rhs));
-}
-
-bool operator<(const TestAcknowledgmentResultContext& lhs, const TestAcknowledgmentResultContext& rhs)
-{
-    return lhs.less(rhs);
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgmentResultContext& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-} // close namespace ntcf
-
-namespace ntcf { 
-
-TestAcknowledgmentResultValue::TestAcknowledgmentResultValue(bslma::Allocator* allocator)
-: d_selectionId(SELECTION_ID_UNDEFINED)
-, d_allocator_p(bslma::Default::allocator(allocator))
-{
-}
-
-TestAcknowledgmentResultValue::TestAcknowledgmentResultValue(const TestAcknowledgmentResultValue& original, bslma::Allocator* allocator)
-: d_selectionId(SELECTION_ID_UNDEFINED)
-, d_allocator_p(bslma::Default::allocator(allocator))
-{
-    switch (original.d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        makeFailure(original.d_failure.object());
-        break;
-    case SELECTION_ID_SUCCESS:
-        makeSuccess(original.d_success.object());
-        break;
-    default:
-        BSLS_ASSERT(original.d_selectionId == SELECTION_ID_UNDEFINED);
-    }
-}
-
-TestAcknowledgmentResultValue::~TestAcknowledgmentResultValue()
-{
-    reset();
-}
-
-TestAcknowledgmentResultValue& TestAcknowledgmentResultValue::operator=(const TestAcknowledgmentResultValue& other)
-{
-    if (this == &other) {
-        return *this;
-    }
-
-    switch (other.d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        makeFailure(other.d_failure.object());
-        break;
-    case SELECTION_ID_SUCCESS:
-        makeSuccess(other.d_success.object());
-        break;
-    default:
-        BSLS_ASSERT(other.d_selectionId == SELECTION_ID_UNDEFINED);
-    }
-
-    d_selectionId = other.d_selectionId;
-
-    return *this;
-}
-
-void TestAcknowledgmentResultValue::reset()
-{
-    switch (d_selectionId) {
-    case SELECTION_ID_FAILURE: {
-        typedef ntcf::TestFault Type;
-        d_failure.object().~Type();
-        } break;
-    case SELECTION_ID_SUCCESS: {
-        typedef ntcf::TestTrade Type;
-        d_success.object().~Type();
-        } break;
-    default:
-        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
-    }
-
-    d_selectionId = SELECTION_ID_UNDEFINED;
-}
-
-void TestAcknowledgmentResultValue::swap(TestAcknowledgmentResultValue& other)
-{
-    if (d_selectionId != other.d_selectionId) {
-        TestAcknowledgmentResultValue temp = other;
-        other = *this;
-        *this = other;
-        return;
-    }
-
-    switch (d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        bslalg::SwapUtil::swap(&d_failure.object(), &other.d_failure.object());
-        break;
-    case SELECTION_ID_SUCCESS:
-        bslalg::SwapUtil::swap(&d_success.object(), &other.d_success.object());
-        break;
-    default:
-        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
-    }
-}
-
-int TestAcknowledgmentResultValue::makeSelection(int id)
-{
-    switch (id) {
-    case SELECTION_ID_UNDEFINED:
-        reset();
-        break;
-    case SELECTION_ID_FAILURE:
-        makeFailure();
-        break;
-    case SELECTION_ID_SUCCESS:
-        makeSuccess();
-        break;
-    default:
-        return -1;
-    }
-
-    return 0;
-}
-
-int TestAcknowledgmentResultValue::makeSelection(const char* name, int nameLength)
-{
-    const bdlat_SelectionInfo *selectionInfo =
-        lookupSelectionInfo(name, nameLength);
-    if (selectionInfo == 0) {
-        return -1;
-    }
-
-    return makeSelection(selectionInfo->d_id);
-}
-
-ntcf::TestFault& TestAcknowledgmentResultValue::makeFailure()
-{
-    if (d_selectionId == SELECTION_ID_FAILURE) {
-        bdlat_ValueTypeFunctions::reset(&d_failure.object());
-    }
-    else {
-        reset();
-        new(d_failure.buffer()) ntcf::TestFault(d_allocator_p);
-        d_selectionId = SELECTION_ID_FAILURE;
-    }
-
-    return d_failure.object();
-}
-
-ntcf::TestFault& TestAcknowledgmentResultValue::makeFailure(const ntcf::TestFault& value)
-{
-    if (d_selectionId == SELECTION_ID_FAILURE) {
-        d_failure.object() = value;
-    }
-    else {
-        reset();
-        new (d_failure.buffer()) ntcf::TestFault(value, d_allocator_p);
-        d_selectionId = SELECTION_ID_FAILURE;
-    }
-
-    return d_failure.object();
-}
-
-ntcf::TestTrade& TestAcknowledgmentResultValue::makeSuccess()
-{
-    if (d_selectionId == SELECTION_ID_SUCCESS) {
-        bdlat_ValueTypeFunctions::reset(&d_success.object());
-    }
-    else {
-        reset();
-        new(d_success.buffer()) ntcf::TestTrade(d_allocator_p);
-        d_selectionId = SELECTION_ID_SUCCESS;
-    }
-
-    return d_success.object();
-}
-
-ntcf::TestTrade& TestAcknowledgmentResultValue::makeSuccess(const ntcf::TestTrade& value)
-{
-    if (d_selectionId == SELECTION_ID_SUCCESS) {
-        d_success.object() = value;
-    }
-    else {
-        reset();
-        new (d_success.buffer()) ntcf::TestTrade(value, d_allocator_p);
-        d_selectionId = SELECTION_ID_SUCCESS;
-    }
-
-    return d_success.object();
-}
-
-ntcf::TestFault& TestAcknowledgmentResultValue::failure()
-{
-    BSLS_ASSERT(d_selectionId == SELECTION_ID_FAILURE);
-    return d_failure.object();
-}
-
-ntcf::TestTrade& TestAcknowledgmentResultValue::success()
-{
-    BSLS_ASSERT(d_selectionId == SELECTION_ID_SUCCESS);
-    return d_success.object();
-}
-
-const ntcf::TestFault& TestAcknowledgmentResultValue::failure() const
-{
-    BSLS_ASSERT(d_selectionId == SELECTION_ID_FAILURE);
-    return d_failure.object();
-}
-
-const ntcf::TestTrade& TestAcknowledgmentResultValue::success() const
-{
-    BSLS_ASSERT(d_selectionId == SELECTION_ID_SUCCESS);
-    return d_success.object();
-}
-
-bool TestAcknowledgmentResultValue::isUndefinedValue() const
-{
-    return (d_selectionId == SELECTION_ID_UNDEFINED);
-}
-
-bool TestAcknowledgmentResultValue::isFailureValue() const
-{
-    return (d_selectionId == SELECTION_ID_FAILURE);
-}
-
-bool TestAcknowledgmentResultValue::isSuccessValue() const
-{
-    return (d_selectionId == SELECTION_ID_SUCCESS);
-}
-
-int TestAcknowledgmentResultValue::selectionId() const
-{
-    return d_selectionId;
-}
-
-bool TestAcknowledgmentResultValue::equals(const TestAcknowledgmentResultValue& other) const
-{
-    if (d_selectionId != other.d_selectionId) {
-        return false;
-    }
-
-    switch (d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        return d_failure.object() == other.d_failure.object();
-    case SELECTION_ID_SUCCESS:
-        return d_success.object() == other.d_success.object();
-    default:
-        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
-        return false;
-    }
-}
-
-bool TestAcknowledgmentResultValue::less(const TestAcknowledgmentResultValue& other) const
-{
-    if (d_selectionId != other.d_selectionId) {
-        return false;
-    }
-
-    switch (d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        return d_failure.object() < other.d_failure.object();
-    case SELECTION_ID_SUCCESS:
-        return d_success.object() < other.d_success.object();
-    default:
-        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
-        return false;
-    }
-}
-
-bsl::ostream& TestAcknowledgmentResultValue::print(bsl::ostream& stream, int level, int spacesPerLevel) const
-{
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    switch (d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        printer.printAttribute("failure", d_failure.object());
-        break;
-    case SELECTION_ID_SUCCESS:
-        printer.printAttribute("success", d_success.object());
-        break;
-    default:
-        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
-        stream << "UNDEFINED";
-    }
-    printer.end();
-    return stream;
-}
-
-const char TestAcknowledgmentResultValue::CLASS_NAME[] = "ntcf::TestAcknowledgmentResultValue";
-
-const bdlat_SelectionInfo TestAcknowledgmentResultValue::SELECTION_INFO_ARRAY[] =
-{
-    { 0, "failure", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "success", 7, "", bdlat_FormattingMode::e_DEFAULT }
-};
-
-const bdlat_SelectionInfo* TestAcknowledgmentResultValue::lookupSelectionInfo(int id)
-{
-    switch (id) {
-    case SELECTION_ID_FAILURE:
-        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_FAILURE];
-    case SELECTION_ID_SUCCESS:
-        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_SUCCESS];
-    default:
-        return 0;
-    }
-}
-
-const bdlat_SelectionInfo* TestAcknowledgmentResultValue::lookupSelectionInfo(const char* name, int nameLength)
-{
-    for (bsl::size_t i = 0; i < NUM_SELECTIONS; ++i) {
-        const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
-        if (selectionInfo.d_nameLength == nameLength) {
-            const int compare = 
-                bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
-            if (compare == 0) {
-                return &selectionInfo;
-            }
-        }
-    }
-
-    return 0;
-}
-
-bool operator==(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs)
-{
-    return (!operator==(lhs, rhs));
-}
-
-bool operator<(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs)
-{
-    return lhs.less(rhs);
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgmentResultValue& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-} // close namespace ntcf
-
-namespace ntcf { 
-
-TestAcknowledgmentResult::TestAcknowledgmentResult(bslma::Allocator* allocator)
-: context()
-, value(allocator)
-{
-}
-
-TestAcknowledgmentResult::TestAcknowledgmentResult(const TestAcknowledgmentResult& original, bslma::Allocator* allocator)
-: context(original.context)
-, value(original.value, allocator)
-{
-}
-
-TestAcknowledgmentResult::~TestAcknowledgmentResult()
-{
-}
-
-TestAcknowledgmentResult& TestAcknowledgmentResult::operator=(const TestAcknowledgmentResult& other)
-{
-    if (this != &other) {
-        this->context = other.context;
-        this->value = other.value;
-    }
-
-    return *this;
-}
-
-void TestAcknowledgmentResult::reset()
-{
-    bdlat_ValueTypeFunctions::reset(&this->context);
-    bdlat_ValueTypeFunctions::reset(&this->value);
-}
-
-void TestAcknowledgmentResult::swap(TestAcknowledgmentResult& other)
-{
-    if (this != &other) {
-        bslalg::SwapUtil::swap(&this->context, &other.context);
-        bslalg::SwapUtil::swap(&this->value, &other.value);
-    }
-}
-
-bool TestAcknowledgmentResult::equals(const TestAcknowledgmentResult& other) const
-{
-    if (this->context != other.context) {
-        return false;
-    }
-
-    if (this->value != other.value) {
-        return false;
-    }
-
-    return true;
-}
-
-bool TestAcknowledgmentResult::less(const TestAcknowledgmentResult& other) const
-{
-    if (this->context < other.context) {
-        return true;
-    }
-
-    if (other.context < this->context) {
-        return false;
-    }
-
-    return this->value < other.value;
-}
-
-bsl::ostream& TestAcknowledgmentResult::print(bsl::ostream& stream, int level, int spacesPerLevel) const
-{
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    printer.printAttribute(
-        "context",
-        this->context);
-    printer.printAttribute(
-        "value",
-        this->value);
-    printer.end();
-    return stream;
-}
-
-const char TestAcknowledgmentResult::CLASS_NAME[] = "ntcf::TestAcknowledgmentResult";
-
-const bdlat_AttributeInfo TestAcknowledgmentResult::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT }
-};
-
-const bdlat_AttributeInfo* TestAcknowledgmentResult::lookupAttributeInfo(int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_CONTEXT:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT];
-    case ATTRIBUTE_ID_VALUE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE];
-    default:
-        return 0;
-    }
-}
-
-const bdlat_AttributeInfo* TestAcknowledgmentResult::lookupAttributeInfo(const char* name, int nameLength)
-{
-    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
-        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
-        if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
-                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
-            if (compare == 0) {
-                return &attributeInfo;
-            }
-        }
-    }
-
-    return 0;
-}
-
-bool operator==(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs)
-{
-    return (!operator==(lhs, rhs));
-}
-
-bool operator<(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs)
-{
-    return lhs.less(rhs);
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgmentResult& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-} // close namespace ntcf
-
-namespace ntcf { 
-
-TestServerConfig::TestServerConfig(bslma::Allocator* allocator)
-: name(allocator)
-, driver(allocator)
-, encryption()
-, compression()
-, numNetworkingThreads()
-, numProcessingThreads()
-, dynamicLoadBalancing()
-, keepAlive()
-, keepHalfOpen()
-, backlog()
-, sendBufferSize()
-, receiveBufferSize()
-, acceptGreedily()
-, acceptQueueLowWatermark()
-, acceptQueueHighWatermark()
-, readQueueLowWatermark()
-, readQueueHighWatermark()
-, writeQueueLowWatermark()
-, writeQueueHighWatermark()
-{
-}
-
-TestServerConfig::TestServerConfig(const TestServerConfig& original, bslma::Allocator* allocator)
-: name(original.name, allocator)
-, driver(original.driver, allocator)
-, encryption(original.encryption)
-, compression(original.compression)
-, numNetworkingThreads(original.numNetworkingThreads)
-, numProcessingThreads(original.numProcessingThreads)
-, dynamicLoadBalancing(original.dynamicLoadBalancing)
-, keepAlive(original.keepAlive)
-, keepHalfOpen(original.keepHalfOpen)
-, backlog(original.backlog)
-, sendBufferSize(original.sendBufferSize)
-, receiveBufferSize(original.receiveBufferSize)
-, acceptGreedily(original.acceptGreedily)
-, acceptQueueLowWatermark(original.acceptQueueLowWatermark)
-, acceptQueueHighWatermark(original.acceptQueueHighWatermark)
-, readQueueLowWatermark(original.readQueueLowWatermark)
-, readQueueHighWatermark(original.readQueueHighWatermark)
-, writeQueueLowWatermark(original.writeQueueLowWatermark)
-, writeQueueHighWatermark(original.writeQueueHighWatermark)
-{
-}
-
-TestServerConfig::~TestServerConfig()
-{
-}
-
-TestServerConfig& TestServerConfig::operator=(const TestServerConfig& other)
-{
-    if (this != &other) {
-        this->name = other.name;
-        this->driver = other.driver;
-        this->encryption = other.encryption;
-        this->compression = other.compression;
-        this->numNetworkingThreads = other.numNetworkingThreads;
-        this->numProcessingThreads = other.numProcessingThreads;
-        this->dynamicLoadBalancing = other.dynamicLoadBalancing;
-        this->keepAlive = other.keepAlive;
-        this->keepHalfOpen = other.keepHalfOpen;
-        this->backlog = other.backlog;
-        this->sendBufferSize = other.sendBufferSize;
-        this->receiveBufferSize = other.receiveBufferSize;
-        this->acceptGreedily = other.acceptGreedily;
-        this->acceptQueueLowWatermark = other.acceptQueueLowWatermark;
-        this->acceptQueueHighWatermark = other.acceptQueueHighWatermark;
-        this->readQueueLowWatermark = other.readQueueLowWatermark;
-        this->readQueueHighWatermark = other.readQueueHighWatermark;
-        this->writeQueueLowWatermark = other.writeQueueLowWatermark;
-        this->writeQueueHighWatermark = other.writeQueueHighWatermark;
-    }
-
-    return *this;
-}
-
-void TestServerConfig::reset()
-{
-    bdlat_ValueTypeFunctions::reset(&this->name);
-    bdlat_ValueTypeFunctions::reset(&this->driver);
-    bdlat_ValueTypeFunctions::reset(&this->encryption);
-    bdlat_ValueTypeFunctions::reset(&this->compression);
-    bdlat_ValueTypeFunctions::reset(&this->numNetworkingThreads);
-    bdlat_ValueTypeFunctions::reset(&this->numProcessingThreads);
-    bdlat_ValueTypeFunctions::reset(&this->dynamicLoadBalancing);
-    bdlat_ValueTypeFunctions::reset(&this->keepAlive);
-    bdlat_ValueTypeFunctions::reset(&this->keepHalfOpen);
-    bdlat_ValueTypeFunctions::reset(&this->backlog);
-    bdlat_ValueTypeFunctions::reset(&this->sendBufferSize);
-    bdlat_ValueTypeFunctions::reset(&this->receiveBufferSize);
-    bdlat_ValueTypeFunctions::reset(&this->acceptGreedily);
-    bdlat_ValueTypeFunctions::reset(&this->acceptQueueLowWatermark);
-    bdlat_ValueTypeFunctions::reset(&this->acceptQueueHighWatermark);
-    bdlat_ValueTypeFunctions::reset(&this->readQueueLowWatermark);
-    bdlat_ValueTypeFunctions::reset(&this->readQueueHighWatermark);
-    bdlat_ValueTypeFunctions::reset(&this->writeQueueLowWatermark);
-    bdlat_ValueTypeFunctions::reset(&this->writeQueueHighWatermark);
-}
-
-void TestServerConfig::swap(TestServerConfig& other)
-{
-    if (this != &other) {
-        bslalg::SwapUtil::swap(&this->name, &other.name);
-        bslalg::SwapUtil::swap(&this->driver, &other.driver);
-        bslalg::SwapUtil::swap(&this->encryption, &other.encryption);
-        bslalg::SwapUtil::swap(&this->compression, &other.compression);
-        bslalg::SwapUtil::swap(&this->numNetworkingThreads, &other.numNetworkingThreads);
-        bslalg::SwapUtil::swap(&this->numProcessingThreads, &other.numProcessingThreads);
-        bslalg::SwapUtil::swap(&this->dynamicLoadBalancing, &other.dynamicLoadBalancing);
-        bslalg::SwapUtil::swap(&this->keepAlive, &other.keepAlive);
-        bslalg::SwapUtil::swap(&this->keepHalfOpen, &other.keepHalfOpen);
-        bslalg::SwapUtil::swap(&this->backlog, &other.backlog);
-        bslalg::SwapUtil::swap(&this->sendBufferSize, &other.sendBufferSize);
-        bslalg::SwapUtil::swap(&this->receiveBufferSize, &other.receiveBufferSize);
-        bslalg::SwapUtil::swap(&this->acceptGreedily, &other.acceptGreedily);
-        bslalg::SwapUtil::swap(&this->acceptQueueLowWatermark, &other.acceptQueueLowWatermark);
-        bslalg::SwapUtil::swap(&this->acceptQueueHighWatermark, &other.acceptQueueHighWatermark);
-        bslalg::SwapUtil::swap(&this->readQueueLowWatermark, &other.readQueueLowWatermark);
-        bslalg::SwapUtil::swap(&this->readQueueHighWatermark, &other.readQueueHighWatermark);
-        bslalg::SwapUtil::swap(&this->writeQueueLowWatermark, &other.writeQueueLowWatermark);
-        bslalg::SwapUtil::swap(&this->writeQueueHighWatermark, &other.writeQueueHighWatermark);
-    }
-}
-
-bool TestServerConfig::equals(const TestServerConfig& other) const
-{
-    if (this->name != other.name) {
-        return false;
-    }
-
-    if (this->driver != other.driver) {
-        return false;
-    }
-
-    if (this->encryption != other.encryption) {
-        return false;
-    }
-
-    if (this->compression != other.compression) {
-        return false;
-    }
-
-    if (this->numNetworkingThreads != other.numNetworkingThreads) {
-        return false;
-    }
-
-    if (this->numProcessingThreads != other.numProcessingThreads) {
-        return false;
-    }
-
-    if (this->dynamicLoadBalancing != other.dynamicLoadBalancing) {
-        return false;
-    }
-
-    if (this->keepAlive != other.keepAlive) {
-        return false;
-    }
-
-    if (this->keepHalfOpen != other.keepHalfOpen) {
-        return false;
-    }
-
-    if (this->backlog != other.backlog) {
-        return false;
-    }
-
-    if (this->sendBufferSize != other.sendBufferSize) {
-        return false;
-    }
-
-    if (this->receiveBufferSize != other.receiveBufferSize) {
-        return false;
-    }
-
-    if (this->acceptGreedily != other.acceptGreedily) {
-        return false;
-    }
-
-    if (this->acceptQueueLowWatermark != other.acceptQueueLowWatermark) {
-        return false;
-    }
-
-    if (this->acceptQueueHighWatermark != other.acceptQueueHighWatermark) {
-        return false;
-    }
-
-    if (this->readQueueLowWatermark != other.readQueueLowWatermark) {
-        return false;
-    }
-
-    if (this->readQueueHighWatermark != other.readQueueHighWatermark) {
-        return false;
-    }
-
-    if (this->writeQueueLowWatermark != other.writeQueueLowWatermark) {
-        return false;
-    }
-
-    if (this->writeQueueHighWatermark != other.writeQueueHighWatermark) {
-        return false;
-    }
-
-    return true;
-}
-
-bool TestServerConfig::less(const TestServerConfig& other) const
-{
-    if (this->name < other.name) {
-        return true;
-    }
-
-    if (other.name < this->name) {
-        return false;
-    }
-
-    if (this->driver < other.driver) {
-        return true;
-    }
-
-    if (other.driver < this->driver) {
-        return false;
-    }
-
-    if (this->encryption < other.encryption) {
-        return true;
-    }
-
-    if (other.encryption < this->encryption) {
-        return false;
-    }
-
-    if (this->compression < other.compression) {
-        return true;
-    }
-
-    if (other.compression < this->compression) {
-        return false;
-    }
-
-    if (this->numNetworkingThreads < other.numNetworkingThreads) {
-        return true;
-    }
-
-    if (other.numNetworkingThreads < this->numNetworkingThreads) {
-        return false;
-    }
-
-    if (this->numProcessingThreads < other.numProcessingThreads) {
-        return true;
-    }
-
-    if (other.numProcessingThreads < this->numProcessingThreads) {
-        return false;
-    }
-
-    if (this->dynamicLoadBalancing < other.dynamicLoadBalancing) {
-        return true;
-    }
-
-    if (other.dynamicLoadBalancing < this->dynamicLoadBalancing) {
-        return false;
-    }
-
-    if (this->keepAlive < other.keepAlive) {
-        return true;
-    }
-
-    if (other.keepAlive < this->keepAlive) {
-        return false;
-    }
-
-    if (this->keepHalfOpen < other.keepHalfOpen) {
-        return true;
-    }
-
-    if (other.keepHalfOpen < this->keepHalfOpen) {
-        return false;
-    }
-
-    if (this->backlog < other.backlog) {
-        return true;
-    }
-
-    if (other.backlog < this->backlog) {
-        return false;
-    }
-
-    if (this->sendBufferSize < other.sendBufferSize) {
-        return true;
-    }
-
-    if (other.sendBufferSize < this->sendBufferSize) {
-        return false;
-    }
-
-    if (this->receiveBufferSize < other.receiveBufferSize) {
-        return true;
-    }
-
-    if (other.receiveBufferSize < this->receiveBufferSize) {
-        return false;
-    }
-
-    if (this->acceptGreedily < other.acceptGreedily) {
-        return true;
-    }
-
-    if (other.acceptGreedily < this->acceptGreedily) {
-        return false;
-    }
-
-    if (this->acceptQueueLowWatermark < other.acceptQueueLowWatermark) {
-        return true;
-    }
-
-    if (other.acceptQueueLowWatermark < this->acceptQueueLowWatermark) {
-        return false;
-    }
-
-    if (this->acceptQueueHighWatermark < other.acceptQueueHighWatermark) {
-        return true;
-    }
-
-    if (other.acceptQueueHighWatermark < this->acceptQueueHighWatermark) {
-        return false;
-    }
-
-    if (this->readQueueLowWatermark < other.readQueueLowWatermark) {
-        return true;
-    }
-
-    if (other.readQueueLowWatermark < this->readQueueLowWatermark) {
-        return false;
-    }
-
-    if (this->readQueueHighWatermark < other.readQueueHighWatermark) {
-        return true;
-    }
-
-    if (other.readQueueHighWatermark < this->readQueueHighWatermark) {
-        return false;
-    }
-
-    if (this->writeQueueLowWatermark < other.writeQueueLowWatermark) {
-        return true;
-    }
-
-    if (other.writeQueueLowWatermark < this->writeQueueLowWatermark) {
-        return false;
-    }
-
-    return this->writeQueueHighWatermark < other.writeQueueHighWatermark;
-}
-
-bsl::ostream& TestServerConfig::print(bsl::ostream& stream, int level, int spacesPerLevel) const
-{
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    if (this->name.has_value()) {
-        printer.printAttribute(
-            "name",
-            this->name.value());
-    }
-    if (this->driver.has_value()) {
-        printer.printAttribute(
-            "driver",
-            this->driver.value());
-    }
-    if (this->encryption.has_value()) {
-        printer.printAttribute(
-            "encryption",
-            this->encryption.value());
-    }
-    if (this->compression.has_value()) {
-        printer.printAttribute(
-            "compression",
-            this->compression.value());
-    }
-    if (this->numNetworkingThreads.has_value()) {
-        printer.printAttribute(
-            "numNetworkingThreads",
-            this->numNetworkingThreads.value());
-    }
-    if (this->numProcessingThreads.has_value()) {
-        printer.printAttribute(
-            "numProcessingThreads",
-            this->numProcessingThreads.value());
-    }
-    if (this->dynamicLoadBalancing.has_value()) {
-        printer.printAttribute(
-            "dynamicLoadBalancing",
-            this->dynamicLoadBalancing.value());
-    }
-    if (this->keepAlive.has_value()) {
-        printer.printAttribute(
-            "keepAlive",
-            this->keepAlive.value());
-    }
-    if (this->keepHalfOpen.has_value()) {
-        printer.printAttribute(
-            "keepHalfOpen",
-            this->keepHalfOpen.value());
-    }
-    if (this->backlog.has_value()) {
-        printer.printAttribute(
-            "backlog",
-            this->backlog.value());
-    }
-    if (this->sendBufferSize.has_value()) {
-        printer.printAttribute(
-            "sendBufferSize",
-            this->sendBufferSize.value());
-    }
-    if (this->receiveBufferSize.has_value()) {
-        printer.printAttribute(
-            "receiveBufferSize",
-            this->receiveBufferSize.value());
-    }
-    if (this->acceptGreedily.has_value()) {
-        printer.printAttribute(
-            "acceptGreedily",
-            this->acceptGreedily.value());
-    }
-    if (this->acceptQueueLowWatermark.has_value()) {
-        printer.printAttribute(
-            "acceptQueueLowWatermark",
-            this->acceptQueueLowWatermark.value());
-    }
-    if (this->acceptQueueHighWatermark.has_value()) {
-        printer.printAttribute(
-            "acceptQueueHighWatermark",
-            this->acceptQueueHighWatermark.value());
-    }
-    if (this->readQueueLowWatermark.has_value()) {
-        printer.printAttribute(
-            "readQueueLowWatermark",
-            this->readQueueLowWatermark.value());
-    }
-    if (this->readQueueHighWatermark.has_value()) {
-        printer.printAttribute(
-            "readQueueHighWatermark",
-            this->readQueueHighWatermark.value());
-    }
-    if (this->writeQueueLowWatermark.has_value()) {
-        printer.printAttribute(
-            "writeQueueLowWatermark",
-            this->writeQueueLowWatermark.value());
-    }
-    if (this->writeQueueHighWatermark.has_value()) {
-        printer.printAttribute(
-            "writeQueueHighWatermark",
-            this->writeQueueHighWatermark.value());
-    }
-    printer.end();
-    return stream;
-}
-
-const char TestServerConfig::CLASS_NAME[] = "ntcf::TestServerConfig";
-
-const bdlat_AttributeInfo TestServerConfig::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "name", 4, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "driver", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "encryption", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "compression", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "numNetworkingThreads", 20, "", bdlat_FormattingMode::e_DEFAULT },
-    { 5, "numProcessingThreads", 20, "", bdlat_FormattingMode::e_DEFAULT },
-    { 6, "dynamicLoadBalancing", 20, "", bdlat_FormattingMode::e_DEFAULT },
-    { 7, "keepAlive", 9, "", bdlat_FormattingMode::e_DEFAULT },
-    { 8, "keepHalfOpen", 12, "", bdlat_FormattingMode::e_DEFAULT },
-    { 9, "backlog", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 10, "sendBufferSize", 14, "", bdlat_FormattingMode::e_DEFAULT },
-    { 11, "receiveBufferSize", 17, "", bdlat_FormattingMode::e_DEFAULT },
-    { 12, "acceptGreedily", 14, "", bdlat_FormattingMode::e_DEFAULT },
-    { 13, "acceptQueueLowWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT },
-    { 14, "acceptQueueHighWatermark", 24, "", bdlat_FormattingMode::e_DEFAULT },
-    { 15, "readQueueLowWatermark", 21, "", bdlat_FormattingMode::e_DEFAULT },
-    { 16, "readQueueHighWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT },
-    { 17, "writeQueueLowWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT },
-    { 18, "writeQueueHighWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT }
-};
-
-const bdlat_AttributeInfo* TestServerConfig::lookupAttributeInfo(int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_NAME:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NAME];
-    case ATTRIBUTE_ID_DRIVER:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DRIVER];
-    case ATTRIBUTE_ID_ENCRYPTION:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENCRYPTION];
-    case ATTRIBUTE_ID_COMPRESSION:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION];
-    case ATTRIBUTE_ID_NUM_NETWORKING_THREADS:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_NETWORKING_THREADS];
-    case ATTRIBUTE_ID_NUM_PROCESSING_THREADS:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_NUM_PROCESSING_THREADS];
-    case ATTRIBUTE_ID_DYNAMIC_LOAD_BALANCING:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DYNAMIC_LOAD_BALANCING];
-    case ATTRIBUTE_ID_KEEP_ALIVE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_ALIVE];
-    case ATTRIBUTE_ID_KEEP_HALF_OPEN:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_KEEP_HALF_OPEN];
-    case ATTRIBUTE_ID_BACKLOG:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_BACKLOG];
-    case ATTRIBUTE_ID_SEND_BUFFER_SIZE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SEND_BUFFER_SIZE];
-    case ATTRIBUTE_ID_RECEIVE_BUFFER_SIZE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_RECEIVE_BUFFER_SIZE];
-    case ATTRIBUTE_ID_ACCEPT_GREEDILY:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY];
-    case ATTRIBUTE_ID_ACCEPT_QUEUE_LOW_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK];
-    case ATTRIBUTE_ID_ACCEPT_QUEUE_HIGH_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK];
-    case ATTRIBUTE_ID_READ_QUEUE_LOW_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK];
-    case ATTRIBUTE_ID_READ_QUEUE_HIGH_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK];
-    case ATTRIBUTE_ID_WRITE_QUEUE_LOW_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK];
-    case ATTRIBUTE_ID_WRITE_QUEUE_HIGH_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK];
-    default:
-        return 0;
-    }
-}
-
-const bdlat_AttributeInfo* TestServerConfig::lookupAttributeInfo(const char* name, int nameLength)
-{
-    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
-        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
-        if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
-                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
-            if (compare == 0) {
-                return &attributeInfo;
-            }
-        }
-    }
-
-    return 0;
-}
-
-bool operator==(const TestServerConfig& lhs, const TestServerConfig& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const TestServerConfig& lhs, const TestServerConfig& rhs)
-{
-    return (!operator==(lhs, rhs));
-}
-
-bool operator<(const TestServerConfig& lhs, const TestServerConfig& rhs)
-{
-    return lhs.less(rhs);
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const TestServerConfig& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-} // close namespace ntcf
-
-namespace ntcf { 
-
-TestMessageContext::TestMessageContext(bslma::Allocator* allocator)
-: uri(allocator)
-{
-}
-
-TestMessageContext::TestMessageContext(const TestMessageContext& original, bslma::Allocator* allocator)
-: uri(original.uri, allocator)
-{
-}
-
-TestMessageContext::~TestMessageContext()
-{
-}
-
-TestMessageContext& TestMessageContext::operator=(const TestMessageContext& other)
-{
-    if (this != &other) {
-        this->uri = other.uri;
-    }
-
-    return *this;
-}
-
-void TestMessageContext::reset()
-{
-    bdlat_ValueTypeFunctions::reset(&this->uri);
-}
-
-void TestMessageContext::swap(TestMessageContext& other)
-{
-    if (this != &other) {
-        bslalg::SwapUtil::swap(&this->uri, &other.uri);
-    }
-}
-
-bool TestMessageContext::equals(const TestMessageContext& other) const
-{
-    if (this->uri != other.uri) {
-        return false;
-    }
-
-    return true;
-}
-
-bool TestMessageContext::less(const TestMessageContext& other) const
-{
-    return this->uri < other.uri;
-}
-
-bsl::ostream& TestMessageContext::print(bsl::ostream& stream, int level, int spacesPerLevel) const
-{
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    if (this->uri.has_value()) {
-        printer.printAttribute(
-            "uri",
-            this->uri.value());
-    }
-    printer.end();
-    return stream;
-}
-
-const char TestMessageContext::CLASS_NAME[] = "ntcf::TestMessageContext";
-
-const bdlat_AttributeInfo TestMessageContext::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "uri", 3, "", bdlat_FormattingMode::e_DEFAULT }
-};
-
-const bdlat_AttributeInfo* TestMessageContext::lookupAttributeInfo(int id)
-{
-    switch (id) {
-    case ATTRIBUTE_ID_URI:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_URI];
-    default:
-        return 0;
-    }
-}
-
-const bdlat_AttributeInfo* TestMessageContext::lookupAttributeInfo(const char* name, int nameLength)
-{
-    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
-        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
-        if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
-                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
-            if (compare == 0) {
-                return &attributeInfo;
-            }
-        }
-    }
-
-    return 0;
-}
-
-bool operator==(const TestMessageContext& lhs, const TestMessageContext& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const TestMessageContext& lhs, const TestMessageContext& rhs)
-{
-    return (!operator==(lhs, rhs));
-}
-
-bool operator<(const TestMessageContext& lhs, const TestMessageContext& rhs)
-{
-    return lhs.less(rhs);
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageContext& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-} // close namespace ntcf
-
-namespace ntcf { 
-
 TestMessagePragma::TestMessagePragma(bslma::Allocator* allocator)
-: context(allocator)
+: uri(allocator)
 , fault(allocator)
 {
 }
 
 TestMessagePragma::TestMessagePragma(const TestMessagePragma& original, bslma::Allocator* allocator)
-: context(original.context, allocator)
+: uri(original.uri, allocator)
 , fault(original.fault, allocator)
 {
 }
@@ -5440,7 +5842,7 @@ TestMessagePragma::~TestMessagePragma()
 TestMessagePragma& TestMessagePragma::operator=(const TestMessagePragma& other)
 {
     if (this != &other) {
-        this->context = other.context;
+        this->uri = other.uri;
         this->fault = other.fault;
     }
 
@@ -5449,21 +5851,21 @@ TestMessagePragma& TestMessagePragma::operator=(const TestMessagePragma& other)
 
 void TestMessagePragma::reset()
 {
-    bdlat_ValueTypeFunctions::reset(&this->context);
+    bdlat_ValueTypeFunctions::reset(&this->uri);
     bdlat_ValueTypeFunctions::reset(&this->fault);
 }
 
 void TestMessagePragma::swap(TestMessagePragma& other)
 {
     if (this != &other) {
-        bslalg::SwapUtil::swap(&this->context, &other.context);
+        bslalg::SwapUtil::swap(&this->uri, &other.uri);
         bslalg::SwapUtil::swap(&this->fault, &other.fault);
     }
 }
 
 bool TestMessagePragma::equals(const TestMessagePragma& other) const
 {
-    if (this->context != other.context) {
+    if (this->uri != other.uri) {
         return false;
     }
 
@@ -5476,11 +5878,11 @@ bool TestMessagePragma::equals(const TestMessagePragma& other) const
 
 bool TestMessagePragma::less(const TestMessagePragma& other) const
 {
-    if (this->context < other.context) {
+    if (this->uri < other.uri) {
         return true;
     }
 
-    if (other.context < this->context) {
+    if (other.uri < this->uri) {
         return false;
     }
 
@@ -5491,10 +5893,10 @@ bsl::ostream& TestMessagePragma::print(bsl::ostream& stream, int level, int spac
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    if (this->context.has_value()) {
+    if (this->uri.has_value()) {
         printer.printAttribute(
-            "context",
-            this->context.value());
+            "uri",
+            this->uri.value());
     }
     if (this->fault.has_value()) {
         printer.printAttribute(
@@ -5509,15 +5911,15 @@ const char TestMessagePragma::CLASS_NAME[] = "ntcf::TestMessagePragma";
 
 const bdlat_AttributeInfo TestMessagePragma::ATTRIBUTE_INFO_ARRAY[] =
 {
-    { 0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT },
+    { 0, "uri", 3, "", bdlat_FormattingMode::e_DEFAULT },
     { 1, "fault", 5, "", bdlat_FormattingMode::e_DEFAULT }
 };
 
 const bdlat_AttributeInfo* TestMessagePragma::lookupAttributeInfo(int id)
 {
     switch (id) {
-    case ATTRIBUTE_ID_CONTEXT:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT];
+    case ATTRIBUTE_ID_URI:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_URI];
     case ATTRIBUTE_ID_FAULT:
         return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_FAULT];
     default:
@@ -5565,107 +5967,337 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestMessagePragma& object)
 
 namespace ntcf { 
 
-TestEchoParams::TestEchoParams(bslma::Allocator* allocator)
-: id()
-, value(allocator)
+TestMessageHeader::TestMessageHeader()
+: messageSize()
+, headerSize()
+, pragmaSize()
+, entitySize()
+, serialization()
+, compression()
+, flags()
+, checksum()
+, transaction()
+, clientTimestamp()
+, serverTimestamp()
+, deadline()
 {
 }
 
-TestEchoParams::TestEchoParams(const TestEchoParams& original, bslma::Allocator* allocator)
-: id(original.id)
-, value(original.value, allocator)
+TestMessageHeader::TestMessageHeader(const TestMessageHeader& other)
+: messageSize(other.messageSize)
+, headerSize(other.headerSize)
+, pragmaSize(other.pragmaSize)
+, entitySize(other.entitySize)
+, serialization(other.serialization)
+, compression(other.compression)
+, flags(other.flags)
+, checksum(other.checksum)
+, transaction(other.transaction)
+, clientTimestamp(other.clientTimestamp)
+, serverTimestamp(other.serverTimestamp)
+, deadline(other.deadline)
 {
 }
 
-TestEchoParams::~TestEchoParams()
+TestMessageHeader::~TestMessageHeader()
 {
 }
 
-TestEchoParams& TestEchoParams::operator=(const TestEchoParams& other)
+TestMessageHeader& TestMessageHeader::operator=(const TestMessageHeader& other)
 {
     if (this != &other) {
-        this->id = other.id;
-        this->value = other.value;
+        this->messageSize = other.messageSize;
+        this->headerSize = other.headerSize;
+        this->pragmaSize = other.pragmaSize;
+        this->entitySize = other.entitySize;
+        this->serialization = other.serialization;
+        this->compression = other.compression;
+        this->flags = other.flags;
+        this->checksum = other.checksum;
+        this->transaction = other.transaction;
+        this->clientTimestamp = other.clientTimestamp;
+        this->serverTimestamp = other.serverTimestamp;
+        this->deadline = other.deadline;
     }
 
     return *this;
 }
 
-void TestEchoParams::reset()
+void TestMessageHeader::reset()
 {
-    bdlat_ValueTypeFunctions::reset(&this->id);
-    bdlat_ValueTypeFunctions::reset(&this->value);
+    bdlat_ValueTypeFunctions::reset(&this->messageSize);
+    bdlat_ValueTypeFunctions::reset(&this->headerSize);
+    bdlat_ValueTypeFunctions::reset(&this->pragmaSize);
+    bdlat_ValueTypeFunctions::reset(&this->entitySize);
+    bdlat_ValueTypeFunctions::reset(&this->serialization);
+    bdlat_ValueTypeFunctions::reset(&this->compression);
+    bdlat_ValueTypeFunctions::reset(&this->flags);
+    bdlat_ValueTypeFunctions::reset(&this->checksum);
+    bdlat_ValueTypeFunctions::reset(&this->transaction);
+    bdlat_ValueTypeFunctions::reset(&this->clientTimestamp);
+    bdlat_ValueTypeFunctions::reset(&this->serverTimestamp);
+    bdlat_ValueTypeFunctions::reset(&this->deadline);
 }
 
-void TestEchoParams::swap(TestEchoParams& other)
+void TestMessageHeader::swap(TestMessageHeader& other)
 {
     if (this != &other) {
-        bslalg::SwapUtil::swap(&this->id, &other.id);
-        bslalg::SwapUtil::swap(&this->value, &other.value);
+        bslalg::SwapUtil::swap(&this->messageSize, &other.messageSize);
+        bslalg::SwapUtil::swap(&this->headerSize, &other.headerSize);
+        bslalg::SwapUtil::swap(&this->pragmaSize, &other.pragmaSize);
+        bslalg::SwapUtil::swap(&this->entitySize, &other.entitySize);
+        bslalg::SwapUtil::swap(&this->serialization, &other.serialization);
+        bslalg::SwapUtil::swap(&this->compression, &other.compression);
+        bslalg::SwapUtil::swap(&this->flags, &other.flags);
+        bslalg::SwapUtil::swap(&this->checksum, &other.checksum);
+        bslalg::SwapUtil::swap(&this->transaction, &other.transaction);
+        bslalg::SwapUtil::swap(&this->clientTimestamp, &other.clientTimestamp);
+        bslalg::SwapUtil::swap(&this->serverTimestamp, &other.serverTimestamp);
+        bslalg::SwapUtil::swap(&this->deadline, &other.deadline);
     }
 }
 
-bool TestEchoParams::equals(const TestEchoParams& other) const
+bool TestMessageHeader::equals(const TestMessageHeader& other) const
 {
-    if (this->id != other.id) {
+    if (this->messageSize != other.messageSize) {
         return false;
     }
 
-    if (this->value != other.value) {
+    if (this->headerSize != other.headerSize) {
+        return false;
+    }
+
+    if (this->pragmaSize != other.pragmaSize) {
+        return false;
+    }
+
+    if (this->entitySize != other.entitySize) {
+        return false;
+    }
+
+    if (this->serialization != other.serialization) {
+        return false;
+    }
+
+    if (this->compression != other.compression) {
+        return false;
+    }
+
+    if (this->flags != other.flags) {
+        return false;
+    }
+
+    if (this->checksum != other.checksum) {
+        return false;
+    }
+
+    if (this->transaction != other.transaction) {
+        return false;
+    }
+
+    if (this->clientTimestamp != other.clientTimestamp) {
+        return false;
+    }
+
+    if (this->serverTimestamp != other.serverTimestamp) {
+        return false;
+    }
+
+    if (this->deadline != other.deadline) {
         return false;
     }
 
     return true;
 }
 
-bool TestEchoParams::less(const TestEchoParams& other) const
+bool TestMessageHeader::less(const TestMessageHeader& other) const
 {
-    if (this->id < other.id) {
+    if (this->messageSize < other.messageSize) {
         return true;
     }
 
-    if (other.id < this->id) {
+    if (other.messageSize < this->messageSize) {
         return false;
     }
 
-    return this->value < other.value;
+    if (this->headerSize < other.headerSize) {
+        return true;
+    }
+
+    if (other.headerSize < this->headerSize) {
+        return false;
+    }
+
+    if (this->pragmaSize < other.pragmaSize) {
+        return true;
+    }
+
+    if (other.pragmaSize < this->pragmaSize) {
+        return false;
+    }
+
+    if (this->entitySize < other.entitySize) {
+        return true;
+    }
+
+    if (other.entitySize < this->entitySize) {
+        return false;
+    }
+
+    if (this->serialization < other.serialization) {
+        return true;
+    }
+
+    if (other.serialization < this->serialization) {
+        return false;
+    }
+
+    if (this->compression < other.compression) {
+        return true;
+    }
+
+    if (other.compression < this->compression) {
+        return false;
+    }
+
+    if (this->flags < other.flags) {
+        return true;
+    }
+
+    if (other.flags < this->flags) {
+        return false;
+    }
+
+    if (this->checksum < other.checksum) {
+        return true;
+    }
+
+    if (other.checksum < this->checksum) {
+        return false;
+    }
+
+    if (this->transaction < other.transaction) {
+        return true;
+    }
+
+    if (other.transaction < this->transaction) {
+        return false;
+    }
+
+    if (this->clientTimestamp < other.clientTimestamp) {
+        return true;
+    }
+
+    if (other.clientTimestamp < this->clientTimestamp) {
+        return false;
+    }
+
+    if (this->serverTimestamp < other.serverTimestamp) {
+        return true;
+    }
+
+    if (other.serverTimestamp < this->serverTimestamp) {
+        return false;
+    }
+
+    return this->deadline < other.deadline;
 }
 
-bsl::ostream& TestEchoParams::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestMessageHeader::print(bsl::ostream& stream, int level, int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     printer.printAttribute(
-        "id",
-        this->id);
+        "messageSize",
+        this->messageSize);
     printer.printAttribute(
-        "value",
-        this->value);
+        "headerSize",
+        this->headerSize);
+    printer.printAttribute(
+        "pragmaSize",
+        this->pragmaSize);
+    printer.printAttribute(
+        "entitySize",
+        this->entitySize);
+    printer.printAttribute(
+        "serialization",
+        this->serialization);
+    printer.printAttribute(
+        "compression",
+        this->compression);
+    printer.printAttribute(
+        "flags",
+        this->flags);
+    printer.printAttribute(
+        "checksum",
+        this->checksum);
+    printer.printAttribute(
+        "transaction",
+        this->transaction);
+    printer.printAttribute(
+        "clientTimestamp",
+        this->clientTimestamp);
+    printer.printAttribute(
+        "serverTimestamp",
+        this->serverTimestamp);
+    printer.printAttribute(
+        "deadline",
+        this->deadline);
     printer.end();
     return stream;
 }
 
-const char TestEchoParams::CLASS_NAME[] = "ntcf::TestEchoParams";
+const char TestMessageHeader::CLASS_NAME[] = "ntcf::TestMessageHeader";
 
-const bdlat_AttributeInfo TestEchoParams::ATTRIBUTE_INFO_ARRAY[] =
+const bdlat_AttributeInfo TestMessageHeader::ATTRIBUTE_INFO_ARRAY[] =
 {
-    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT }
+    { 0, "messageSize", 11, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "headerSize", 10, "", bdlat_FormattingMode::e_DEFAULT },
+    { 2, "pragmaSize", 10, "", bdlat_FormattingMode::e_DEFAULT },
+    { 3, "entitySize", 10, "", bdlat_FormattingMode::e_DEFAULT },
+    { 4, "serialization", 13, "", bdlat_FormattingMode::e_DEFAULT },
+    { 5, "compression", 11, "", bdlat_FormattingMode::e_DEFAULT },
+    { 6, "flags", 5, "", bdlat_FormattingMode::e_DEFAULT },
+    { 7, "checksum", 8, "", bdlat_FormattingMode::e_DEFAULT },
+    { 8, "transaction", 11, "", bdlat_FormattingMode::e_DEFAULT },
+    { 9, "clientTimestamp", 15, "", bdlat_FormattingMode::e_DEFAULT },
+    { 10, "serverTimestamp", 15, "", bdlat_FormattingMode::e_DEFAULT },
+    { 11, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT }
 };
 
-const bdlat_AttributeInfo* TestEchoParams::lookupAttributeInfo(int id)
+const bdlat_AttributeInfo* TestMessageHeader::lookupAttributeInfo(int id)
 {
     switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID];
-    case ATTRIBUTE_ID_VALUE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE];
+    case ATTRIBUTE_ID_MESSAGE_SIZE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_MESSAGE_SIZE];
+    case ATTRIBUTE_ID_HEADER_SIZE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER_SIZE];
+    case ATTRIBUTE_ID_PRAGMA_SIZE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA_SIZE];
+    case ATTRIBUTE_ID_ENTITY_SIZE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY_SIZE];
+    case ATTRIBUTE_ID_SERIALIZATION:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SERIALIZATION];
+    case ATTRIBUTE_ID_COMPRESSION:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_COMPRESSION];
+    case ATTRIBUTE_ID_FLAGS:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_FLAGS];
+    case ATTRIBUTE_ID_CHECKSUM:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CHECKSUM];
+    case ATTRIBUTE_ID_TRANSACTION:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_TRANSACTION];
+    case ATTRIBUTE_ID_CLIENT_TIMESTAMP:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CLIENT_TIMESTAMP];
+    case ATTRIBUTE_ID_SERVER_TIMESTAMP:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_SERVER_TIMESTAMP];
+    case ATTRIBUTE_ID_DEADLINE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE];
     default:
         return 0;
     }
 }
 
-const bdlat_AttributeInfo* TestEchoParams::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestMessageHeader::lookupAttributeInfo(const char* name, int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
@@ -5681,22 +6313,22 @@ const bdlat_AttributeInfo* TestEchoParams::lookupAttributeInfo(const char* name,
     return 0;
 }
 
-bool operator==(const TestEchoParams& lhs, const TestEchoParams& rhs)
+bool operator==(const TestMessageHeader& lhs, const TestMessageHeader& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestEchoParams& lhs, const TestEchoParams& rhs)
+bool operator!=(const TestMessageHeader& lhs, const TestMessageHeader& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestEchoParams& lhs, const TestEchoParams& rhs)
+bool operator<(const TestMessageHeader& lhs, const TestMessageHeader& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestEchoParams& object)
+bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageHeader& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -5705,438 +6337,134 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestEchoParams& object)
 
 namespace ntcf { 
 
-TestTradeResultValue::TestTradeResultValue(bslma::Allocator* allocator)
-: d_selectionId(SELECTION_ID_UNDEFINED)
-, d_allocator_p(bslma::Default::allocator(allocator))
+TestMessageFrame::TestMessageFrame(bslma::Allocator* allocator)
+: header()
+, pragma(allocator)
+, entity(allocator)
 {
 }
 
-TestTradeResultValue::TestTradeResultValue(const TestTradeResultValue& original, bslma::Allocator* allocator)
-: d_selectionId(SELECTION_ID_UNDEFINED)
-, d_allocator_p(bslma::Default::allocator(allocator))
-{
-    switch (original.d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        makeFailure(original.d_failure.object());
-        break;
-    case SELECTION_ID_SUCCESS:
-        makeSuccess(original.d_success.object());
-        break;
-    default:
-        BSLS_ASSERT(original.d_selectionId == SELECTION_ID_UNDEFINED);
-    }
-}
-
-TestTradeResultValue::~TestTradeResultValue()
-{
-    reset();
-}
-
-TestTradeResultValue& TestTradeResultValue::operator=(const TestTradeResultValue& other)
-{
-    if (this == &other) {
-        return *this;
-    }
-
-    switch (other.d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        makeFailure(other.d_failure.object());
-        break;
-    case SELECTION_ID_SUCCESS:
-        makeSuccess(other.d_success.object());
-        break;
-    default:
-        BSLS_ASSERT(other.d_selectionId == SELECTION_ID_UNDEFINED);
-    }
-
-    d_selectionId = other.d_selectionId;
-
-    return *this;
-}
-
-void TestTradeResultValue::reset()
-{
-    switch (d_selectionId) {
-    case SELECTION_ID_FAILURE: {
-        typedef ntcf::TestFault Type;
-        d_failure.object().~Type();
-        } break;
-    case SELECTION_ID_SUCCESS: {
-        typedef ntcf::TestTrade Type;
-        d_success.object().~Type();
-        } break;
-    default:
-        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
-    }
-
-    d_selectionId = SELECTION_ID_UNDEFINED;
-}
-
-void TestTradeResultValue::swap(TestTradeResultValue& other)
-{
-    if (d_selectionId != other.d_selectionId) {
-        TestTradeResultValue temp = other;
-        other = *this;
-        *this = other;
-        return;
-    }
-
-    switch (d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        bslalg::SwapUtil::swap(&d_failure.object(), &other.d_failure.object());
-        break;
-    case SELECTION_ID_SUCCESS:
-        bslalg::SwapUtil::swap(&d_success.object(), &other.d_success.object());
-        break;
-    default:
-        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
-    }
-}
-
-int TestTradeResultValue::makeSelection(int id)
-{
-    switch (id) {
-    case SELECTION_ID_UNDEFINED:
-        reset();
-        break;
-    case SELECTION_ID_FAILURE:
-        makeFailure();
-        break;
-    case SELECTION_ID_SUCCESS:
-        makeSuccess();
-        break;
-    default:
-        return -1;
-    }
-
-    return 0;
-}
-
-int TestTradeResultValue::makeSelection(const char* name, int nameLength)
-{
-    const bdlat_SelectionInfo *selectionInfo =
-        lookupSelectionInfo(name, nameLength);
-    if (selectionInfo == 0) {
-        return -1;
-    }
-
-    return makeSelection(selectionInfo->d_id);
-}
-
-ntcf::TestFault& TestTradeResultValue::makeFailure()
-{
-    if (d_selectionId == SELECTION_ID_FAILURE) {
-        bdlat_ValueTypeFunctions::reset(&d_failure.object());
-    }
-    else {
-        reset();
-        new(d_failure.buffer()) ntcf::TestFault(d_allocator_p);
-        d_selectionId = SELECTION_ID_FAILURE;
-    }
-
-    return d_failure.object();
-}
-
-ntcf::TestFault& TestTradeResultValue::makeFailure(const ntcf::TestFault& value)
-{
-    if (d_selectionId == SELECTION_ID_FAILURE) {
-        d_failure.object() = value;
-    }
-    else {
-        reset();
-        new (d_failure.buffer()) ntcf::TestFault(value, d_allocator_p);
-        d_selectionId = SELECTION_ID_FAILURE;
-    }
-
-    return d_failure.object();
-}
-
-ntcf::TestTrade& TestTradeResultValue::makeSuccess()
-{
-    if (d_selectionId == SELECTION_ID_SUCCESS) {
-        bdlat_ValueTypeFunctions::reset(&d_success.object());
-    }
-    else {
-        reset();
-        new(d_success.buffer()) ntcf::TestTrade(d_allocator_p);
-        d_selectionId = SELECTION_ID_SUCCESS;
-    }
-
-    return d_success.object();
-}
-
-ntcf::TestTrade& TestTradeResultValue::makeSuccess(const ntcf::TestTrade& value)
-{
-    if (d_selectionId == SELECTION_ID_SUCCESS) {
-        d_success.object() = value;
-    }
-    else {
-        reset();
-        new (d_success.buffer()) ntcf::TestTrade(value, d_allocator_p);
-        d_selectionId = SELECTION_ID_SUCCESS;
-    }
-
-    return d_success.object();
-}
-
-ntcf::TestFault& TestTradeResultValue::failure()
-{
-    BSLS_ASSERT(d_selectionId == SELECTION_ID_FAILURE);
-    return d_failure.object();
-}
-
-ntcf::TestTrade& TestTradeResultValue::success()
-{
-    BSLS_ASSERT(d_selectionId == SELECTION_ID_SUCCESS);
-    return d_success.object();
-}
-
-const ntcf::TestFault& TestTradeResultValue::failure() const
-{
-    BSLS_ASSERT(d_selectionId == SELECTION_ID_FAILURE);
-    return d_failure.object();
-}
-
-const ntcf::TestTrade& TestTradeResultValue::success() const
-{
-    BSLS_ASSERT(d_selectionId == SELECTION_ID_SUCCESS);
-    return d_success.object();
-}
-
-bool TestTradeResultValue::isUndefinedValue() const
-{
-    return (d_selectionId == SELECTION_ID_UNDEFINED);
-}
-
-bool TestTradeResultValue::isFailureValue() const
-{
-    return (d_selectionId == SELECTION_ID_FAILURE);
-}
-
-bool TestTradeResultValue::isSuccessValue() const
-{
-    return (d_selectionId == SELECTION_ID_SUCCESS);
-}
-
-int TestTradeResultValue::selectionId() const
-{
-    return d_selectionId;
-}
-
-bool TestTradeResultValue::equals(const TestTradeResultValue& other) const
-{
-    if (d_selectionId != other.d_selectionId) {
-        return false;
-    }
-
-    switch (d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        return d_failure.object() == other.d_failure.object();
-    case SELECTION_ID_SUCCESS:
-        return d_success.object() == other.d_success.object();
-    default:
-        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
-        return false;
-    }
-}
-
-bool TestTradeResultValue::less(const TestTradeResultValue& other) const
-{
-    if (d_selectionId != other.d_selectionId) {
-        return false;
-    }
-
-    switch (d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        return d_failure.object() < other.d_failure.object();
-    case SELECTION_ID_SUCCESS:
-        return d_success.object() < other.d_success.object();
-    default:
-        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
-        return false;
-    }
-}
-
-bsl::ostream& TestTradeResultValue::print(bsl::ostream& stream, int level, int spacesPerLevel) const
-{
-    bslim::Printer printer(&stream, level, spacesPerLevel);
-    printer.start();
-    switch (d_selectionId) {
-    case SELECTION_ID_FAILURE:
-        printer.printAttribute("failure", d_failure.object());
-        break;
-    case SELECTION_ID_SUCCESS:
-        printer.printAttribute("success", d_success.object());
-        break;
-    default:
-        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
-        stream << "UNDEFINED";
-    }
-    printer.end();
-    return stream;
-}
-
-const char TestTradeResultValue::CLASS_NAME[] = "ntcf::TestTradeResultValue";
-
-const bdlat_SelectionInfo TestTradeResultValue::SELECTION_INFO_ARRAY[] =
-{
-    { 0, "failure", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "success", 7, "", bdlat_FormattingMode::e_DEFAULT }
-};
-
-const bdlat_SelectionInfo* TestTradeResultValue::lookupSelectionInfo(int id)
-{
-    switch (id) {
-    case SELECTION_ID_FAILURE:
-        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_FAILURE];
-    case SELECTION_ID_SUCCESS:
-        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_SUCCESS];
-    default:
-        return 0;
-    }
-}
-
-const bdlat_SelectionInfo* TestTradeResultValue::lookupSelectionInfo(const char* name, int nameLength)
-{
-    for (bsl::size_t i = 0; i < NUM_SELECTIONS; ++i) {
-        const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
-        if (selectionInfo.d_nameLength == nameLength) {
-            const int compare = 
-                bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
-            if (compare == 0) {
-                return &selectionInfo;
-            }
-        }
-    }
-
-    return 0;
-}
-
-bool operator==(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs)
-{
-    return lhs.equals(rhs);
-}
-
-bool operator!=(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs)
-{
-    return (!operator==(lhs, rhs));
-}
-
-bool operator<(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs)
-{
-    return lhs.less(rhs);
-}
-
-bsl::ostream& operator<<(bsl::ostream& stream, const TestTradeResultValue& object)
-{
-    return object.print(stream, 0, -1);
-}
-
-} // close namespace ntcf
-
-namespace ntcf { 
-
-TestTradeResult::TestTradeResult(bslma::Allocator* allocator)
-: context()
-, value(allocator)
+TestMessageFrame::TestMessageFrame(const TestMessageFrame& original, bslma::Allocator* allocator)
+: header(original.header)
+, pragma(original.pragma, allocator)
+, entity(original.entity, allocator)
 {
 }
 
-TestTradeResult::TestTradeResult(const TestTradeResult& original, bslma::Allocator* allocator)
-: context(original.context)
-, value(original.value, allocator)
+TestMessageFrame::~TestMessageFrame()
 {
 }
 
-TestTradeResult::~TestTradeResult()
-{
-}
-
-TestTradeResult& TestTradeResult::operator=(const TestTradeResult& other)
+TestMessageFrame& TestMessageFrame::operator=(const TestMessageFrame& other)
 {
     if (this != &other) {
-        this->context = other.context;
-        this->value = other.value;
+        this->header = other.header;
+        this->pragma = other.pragma;
+        this->entity = other.entity;
     }
 
     return *this;
 }
 
-void TestTradeResult::reset()
+void TestMessageFrame::reset()
 {
-    bdlat_ValueTypeFunctions::reset(&this->context);
-    bdlat_ValueTypeFunctions::reset(&this->value);
+    bdlat_ValueTypeFunctions::reset(&this->header);
+    bdlat_ValueTypeFunctions::reset(&this->pragma);
+    bdlat_ValueTypeFunctions::reset(&this->entity);
 }
 
-void TestTradeResult::swap(TestTradeResult& other)
+void TestMessageFrame::swap(TestMessageFrame& other)
 {
     if (this != &other) {
-        bslalg::SwapUtil::swap(&this->context, &other.context);
-        bslalg::SwapUtil::swap(&this->value, &other.value);
+        bslalg::SwapUtil::swap(&this->header, &other.header);
+        bslalg::SwapUtil::swap(&this->pragma, &other.pragma);
+        bslalg::SwapUtil::swap(&this->entity, &other.entity);
     }
 }
 
-bool TestTradeResult::equals(const TestTradeResult& other) const
+bool TestMessageFrame::equals(const TestMessageFrame& other) const
 {
-    if (this->context != other.context) {
+    if (this->header != other.header) {
         return false;
     }
 
-    if (this->value != other.value) {
+    if (this->pragma != other.pragma) {
+        return false;
+    }
+
+    if (this->entity != other.entity) {
         return false;
     }
 
     return true;
 }
 
-bool TestTradeResult::less(const TestTradeResult& other) const
+bool TestMessageFrame::less(const TestMessageFrame& other) const
 {
-    if (this->context < other.context) {
+    if (this->header < other.header) {
         return true;
     }
 
-    if (other.context < this->context) {
+    if (other.header < this->header) {
         return false;
     }
 
-    return this->value < other.value;
+    if (this->pragma < other.pragma) {
+        return true;
+    }
+
+    if (other.pragma < this->pragma) {
+        return false;
+    }
+
+    return this->entity < other.entity;
 }
 
-bsl::ostream& TestTradeResult::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestMessageFrame::print(bsl::ostream& stream, int level, int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     printer.printAttribute(
-        "context",
-        this->context);
-    printer.printAttribute(
-        "value",
-        this->value);
+        "header",
+        this->header);
+    if (this->pragma.has_value()) {
+        printer.printAttribute(
+            "pragma",
+            this->pragma.value());
+    }
+    if (this->entity.has_value()) {
+        printer.printAttribute(
+            "entity",
+            this->entity.value());
+    }
     printer.end();
     return stream;
 }
 
-const char TestTradeResult::CLASS_NAME[] = "ntcf::TestTradeResult";
+const char TestMessageFrame::CLASS_NAME[] = "ntcf::TestMessageFrame";
 
-const bdlat_AttributeInfo TestTradeResult::ATTRIBUTE_INFO_ARRAY[] =
+const bdlat_AttributeInfo TestMessageFrame::ATTRIBUTE_INFO_ARRAY[] =
 {
-    { 0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT }
+    { 0, "header", 6, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "pragma", 6, "", bdlat_FormattingMode::e_DEFAULT },
+    { 2, "entity", 6, "", bdlat_FormattingMode::e_DEFAULT }
 };
 
-const bdlat_AttributeInfo* TestTradeResult::lookupAttributeInfo(int id)
+const bdlat_AttributeInfo* TestMessageFrame::lookupAttributeInfo(int id)
 {
     switch (id) {
-    case ATTRIBUTE_ID_CONTEXT:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT];
-    case ATTRIBUTE_ID_VALUE:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE];
+    case ATTRIBUTE_ID_HEADER:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER];
+    case ATTRIBUTE_ID_PRAGMA:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA];
+    case ATTRIBUTE_ID_ENTITY:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY];
     default:
         return 0;
     }
 }
 
-const bdlat_AttributeInfo* TestTradeResult::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestMessageFrame::lookupAttributeInfo(const char* name, int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
@@ -6152,22 +6480,22 @@ const bdlat_AttributeInfo* TestTradeResult::lookupAttributeInfo(const char* name
     return 0;
 }
 
-bool operator==(const TestTradeResult& lhs, const TestTradeResult& rhs)
+bool operator==(const TestMessageFrame& lhs, const TestMessageFrame& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestTradeResult& lhs, const TestTradeResult& rhs)
+bool operator!=(const TestMessageFrame& lhs, const TestMessageFrame& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestTradeResult& lhs, const TestTradeResult& rhs)
+bool operator<(const TestMessageFrame& lhs, const TestMessageFrame& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestTradeResult& object)
+bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageFrame& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -6745,142 +7073,306 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestClientConfig& object)
 
 namespace ntcf { 
 
-TestMessageFrame::TestMessageFrame(bslma::Allocator* allocator)
-: header()
-, pragma(allocator)
-, entity(allocator)
+TestEchoResultValue::TestEchoResultValue(bslma::Allocator* allocator)
+: d_selectionId(SELECTION_ID_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(allocator))
 {
 }
 
-TestMessageFrame::TestMessageFrame(const TestMessageFrame& original, bslma::Allocator* allocator)
-: header(original.header)
-, pragma(original.pragma, allocator)
-, entity(original.entity, allocator)
+TestEchoResultValue::TestEchoResultValue(const TestEchoResultValue& original, bslma::Allocator* allocator)
+: d_selectionId(SELECTION_ID_UNDEFINED)
+, d_allocator_p(bslma::Default::allocator(allocator))
 {
-}
-
-TestMessageFrame::~TestMessageFrame()
-{
-}
-
-TestMessageFrame& TestMessageFrame::operator=(const TestMessageFrame& other)
-{
-    if (this != &other) {
-        this->header = other.header;
-        this->pragma = other.pragma;
-        this->entity = other.entity;
+    switch (original.d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        makeFailure(original.d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        makeSuccess(original.d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(original.d_selectionId == SELECTION_ID_UNDEFINED);
     }
+}
+
+TestEchoResultValue::~TestEchoResultValue()
+{
+    reset();
+}
+
+TestEchoResultValue& TestEchoResultValue::operator=(const TestEchoResultValue& other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    switch (other.d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        makeFailure(other.d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        makeSuccess(other.d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(other.d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+
+    d_selectionId = other.d_selectionId;
 
     return *this;
 }
 
-void TestMessageFrame::reset()
+void TestEchoResultValue::reset()
 {
-    bdlat_ValueTypeFunctions::reset(&this->header);
-    bdlat_ValueTypeFunctions::reset(&this->pragma);
-    bdlat_ValueTypeFunctions::reset(&this->entity);
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE: {
+        typedef ntcf::TestFault Type;
+        d_failure.object().~Type();
+        } break;
+    case SELECTION_ID_SUCCESS: {
+        typedef ntcf::TestEcho Type;
+        d_success.object().~Type();
+        } break;
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+    }
+
+    d_selectionId = SELECTION_ID_UNDEFINED;
 }
 
-void TestMessageFrame::swap(TestMessageFrame& other)
+void TestEchoResultValue::swap(TestEchoResultValue& other)
 {
-    if (this != &other) {
-        bslalg::SwapUtil::swap(&this->header, &other.header);
-        bslalg::SwapUtil::swap(&this->pragma, &other.pragma);
-        bslalg::SwapUtil::swap(&this->entity, &other.entity);
+    if (d_selectionId != other.d_selectionId) {
+        TestEchoResultValue temp = other;
+        other = *this;
+        *this = other;
+        return;
+    }
+
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        bslalg::SwapUtil::swap(&d_failure.object(), &other.d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        bslalg::SwapUtil::swap(&d_success.object(), &other.d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
     }
 }
 
-bool TestMessageFrame::equals(const TestMessageFrame& other) const
+int TestEchoResultValue::makeSelection(int id)
 {
-    if (this->header != other.header) {
-        return false;
+    switch (id) {
+    case SELECTION_ID_UNDEFINED:
+        reset();
+        break;
+    case SELECTION_ID_FAILURE:
+        makeFailure();
+        break;
+    case SELECTION_ID_SUCCESS:
+        makeSuccess();
+        break;
+    default:
+        return -1;
     }
 
-    if (this->pragma != other.pragma) {
-        return false;
-    }
-
-    if (this->entity != other.entity) {
-        return false;
-    }
-
-    return true;
+    return 0;
 }
 
-bool TestMessageFrame::less(const TestMessageFrame& other) const
+int TestEchoResultValue::makeSelection(const char* name, int nameLength)
 {
-    if (this->header < other.header) {
-        return true;
+    const bdlat_SelectionInfo *selectionInfo =
+        lookupSelectionInfo(name, nameLength);
+    if (selectionInfo == 0) {
+        return -1;
     }
 
-    if (other.header < this->header) {
-        return false;
-    }
-
-    if (this->pragma < other.pragma) {
-        return true;
-    }
-
-    if (other.pragma < this->pragma) {
-        return false;
-    }
-
-    return this->entity < other.entity;
+    return makeSelection(selectionInfo->d_id);
 }
 
-bsl::ostream& TestMessageFrame::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+ntcf::TestFault& TestEchoResultValue::makeFailure()
+{
+    if (d_selectionId == SELECTION_ID_FAILURE) {
+        bdlat_ValueTypeFunctions::reset(&d_failure.object());
+    }
+    else {
+        reset();
+        new(d_failure.buffer()) ntcf::TestFault(d_allocator_p);
+        d_selectionId = SELECTION_ID_FAILURE;
+    }
+
+    return d_failure.object();
+}
+
+ntcf::TestFault& TestEchoResultValue::makeFailure(const ntcf::TestFault& value)
+{
+    if (d_selectionId == SELECTION_ID_FAILURE) {
+        d_failure.object() = value;
+    }
+    else {
+        reset();
+        new (d_failure.buffer()) ntcf::TestFault(value, d_allocator_p);
+        d_selectionId = SELECTION_ID_FAILURE;
+    }
+
+    return d_failure.object();
+}
+
+ntcf::TestEcho& TestEchoResultValue::makeSuccess()
+{
+    if (d_selectionId == SELECTION_ID_SUCCESS) {
+        bdlat_ValueTypeFunctions::reset(&d_success.object());
+    }
+    else {
+        reset();
+        new(d_success.buffer()) ntcf::TestEcho(d_allocator_p);
+        d_selectionId = SELECTION_ID_SUCCESS;
+    }
+
+    return d_success.object();
+}
+
+ntcf::TestEcho& TestEchoResultValue::makeSuccess(const ntcf::TestEcho& value)
+{
+    if (d_selectionId == SELECTION_ID_SUCCESS) {
+        d_success.object() = value;
+    }
+    else {
+        reset();
+        new (d_success.buffer()) ntcf::TestEcho(value, d_allocator_p);
+        d_selectionId = SELECTION_ID_SUCCESS;
+    }
+
+    return d_success.object();
+}
+
+ntcf::TestFault& TestEchoResultValue::failure()
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_FAILURE);
+    return d_failure.object();
+}
+
+ntcf::TestEcho& TestEchoResultValue::success()
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_SUCCESS);
+    return d_success.object();
+}
+
+const ntcf::TestFault& TestEchoResultValue::failure() const
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_FAILURE);
+    return d_failure.object();
+}
+
+const ntcf::TestEcho& TestEchoResultValue::success() const
+{
+    BSLS_ASSERT(d_selectionId == SELECTION_ID_SUCCESS);
+    return d_success.object();
+}
+
+bool TestEchoResultValue::isUndefinedValue() const
+{
+    return (d_selectionId == SELECTION_ID_UNDEFINED);
+}
+
+bool TestEchoResultValue::isFailureValue() const
+{
+    return (d_selectionId == SELECTION_ID_FAILURE);
+}
+
+bool TestEchoResultValue::isSuccessValue() const
+{
+    return (d_selectionId == SELECTION_ID_SUCCESS);
+}
+
+int TestEchoResultValue::selectionId() const
+{
+    return d_selectionId;
+}
+
+bool TestEchoResultValue::equals(const TestEchoResultValue& other) const
+{
+    if (d_selectionId != other.d_selectionId) {
+        return false;
+    }
+
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        return d_failure.object() == other.d_failure.object();
+    case SELECTION_ID_SUCCESS:
+        return d_success.object() == other.d_success.object();
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        return false;
+    }
+}
+
+bool TestEchoResultValue::less(const TestEchoResultValue& other) const
+{
+    if (d_selectionId != other.d_selectionId) {
+        return false;
+    }
+
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        return d_failure.object() < other.d_failure.object();
+    case SELECTION_ID_SUCCESS:
+        return d_success.object() < other.d_success.object();
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        return false;
+    }
+}
+
+bsl::ostream& TestEchoResultValue::print(bsl::ostream& stream, int level, int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "header",
-        this->header);
-    if (this->pragma.has_value()) {
-        printer.printAttribute(
-            "pragma",
-            this->pragma.value());
-    }
-    if (this->entity.has_value()) {
-        printer.printAttribute(
-            "entity",
-            this->entity.value());
+    switch (d_selectionId) {
+    case SELECTION_ID_FAILURE:
+        printer.printAttribute("failure", d_failure.object());
+        break;
+    case SELECTION_ID_SUCCESS:
+        printer.printAttribute("success", d_success.object());
+        break;
+    default:
+        BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
+        stream << "UNDEFINED";
     }
     printer.end();
     return stream;
 }
 
-const char TestMessageFrame::CLASS_NAME[] = "ntcf::TestMessageFrame";
+const char TestEchoResultValue::CLASS_NAME[] = "ntcf::TestEchoResultValue";
 
-const bdlat_AttributeInfo TestMessageFrame::ATTRIBUTE_INFO_ARRAY[] =
+const bdlat_SelectionInfo TestEchoResultValue::SELECTION_INFO_ARRAY[] =
 {
-    { 0, "header", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "pragma", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "entity", 6, "", bdlat_FormattingMode::e_DEFAULT }
+    { 0, "failure", 7, "", bdlat_FormattingMode::e_DEFAULT },
+    { 1, "success", 7, "", bdlat_FormattingMode::e_DEFAULT }
 };
 
-const bdlat_AttributeInfo* TestMessageFrame::lookupAttributeInfo(int id)
+const bdlat_SelectionInfo* TestEchoResultValue::lookupSelectionInfo(int id)
 {
     switch (id) {
-    case ATTRIBUTE_ID_HEADER:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_HEADER];
-    case ATTRIBUTE_ID_PRAGMA:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_PRAGMA];
-    case ATTRIBUTE_ID_ENTITY:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ENTITY];
+    case SELECTION_ID_FAILURE:
+        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_FAILURE];
+    case SELECTION_ID_SUCCESS:
+        return &SELECTION_INFO_ARRAY[SELECTION_INDEX_SUCCESS];
     default:
         return 0;
     }
 }
 
-const bdlat_AttributeInfo* TestMessageFrame::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_SelectionInfo* TestEchoResultValue::lookupSelectionInfo(const char* name, int nameLength)
 {
-    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
-        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
-        if (attributeInfo.d_nameLength == nameLength) {
+    for (bsl::size_t i = 0; i < NUM_SELECTIONS; ++i) {
+        const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
+        if (selectionInfo.d_nameLength == nameLength) {
             const int compare = 
-                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+                bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
             if (compare == 0) {
-                return &attributeInfo;
+                return &selectionInfo;
             }
         }
     }
@@ -6888,22 +7380,22 @@ const bdlat_AttributeInfo* TestMessageFrame::lookupAttributeInfo(const char* nam
     return 0;
 }
 
-bool operator==(const TestMessageFrame& lhs, const TestMessageFrame& rhs)
+bool operator==(const TestEchoResultValue& lhs, const TestEchoResultValue& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestMessageFrame& lhs, const TestMessageFrame& rhs)
+bool operator!=(const TestEchoResultValue& lhs, const TestEchoResultValue& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestMessageFrame& lhs, const TestMessageFrame& rhs)
+bool operator<(const TestEchoResultValue& lhs, const TestEchoResultValue& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageFrame& object)
+bsl::ostream& operator<<(bsl::ostream& stream, const TestEchoResultValue& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -6913,13 +7405,13 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageFrame& object)
 namespace ntcf { 
 
 TestEchoResult::TestEchoResult(bslma::Allocator* allocator)
-: id()
+: context()
 , value(allocator)
 {
 }
 
 TestEchoResult::TestEchoResult(const TestEchoResult& original, bslma::Allocator* allocator)
-: id(original.id)
+: context(original.context)
 , value(original.value, allocator)
 {
 }
@@ -6931,7 +7423,7 @@ TestEchoResult::~TestEchoResult()
 TestEchoResult& TestEchoResult::operator=(const TestEchoResult& other)
 {
     if (this != &other) {
-        this->id = other.id;
+        this->context = other.context;
         this->value = other.value;
     }
 
@@ -6940,21 +7432,21 @@ TestEchoResult& TestEchoResult::operator=(const TestEchoResult& other)
 
 void TestEchoResult::reset()
 {
-    bdlat_ValueTypeFunctions::reset(&this->id);
+    bdlat_ValueTypeFunctions::reset(&this->context);
     bdlat_ValueTypeFunctions::reset(&this->value);
 }
 
 void TestEchoResult::swap(TestEchoResult& other)
 {
     if (this != &other) {
-        bslalg::SwapUtil::swap(&this->id, &other.id);
+        bslalg::SwapUtil::swap(&this->context, &other.context);
         bslalg::SwapUtil::swap(&this->value, &other.value);
     }
 }
 
 bool TestEchoResult::equals(const TestEchoResult& other) const
 {
-    if (this->id != other.id) {
+    if (this->context != other.context) {
         return false;
     }
 
@@ -6967,11 +7459,11 @@ bool TestEchoResult::equals(const TestEchoResult& other) const
 
 bool TestEchoResult::less(const TestEchoResult& other) const
 {
-    if (this->id < other.id) {
+    if (this->context < other.context) {
         return true;
     }
 
-    if (other.id < this->id) {
+    if (other.context < this->context) {
         return false;
     }
 
@@ -6983,8 +7475,8 @@ bsl::ostream& TestEchoResult::print(bsl::ostream& stream, int level, int spacesP
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     printer.printAttribute(
-        "id",
-        this->id);
+        "context",
+        this->context);
     printer.printAttribute(
         "value",
         this->value);
@@ -6996,15 +7488,15 @@ const char TestEchoResult::CLASS_NAME[] = "ntcf::TestEchoResult";
 
 const bdlat_AttributeInfo TestEchoResult::ATTRIBUTE_INFO_ARRAY[] =
 {
-    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
+    { 0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT },
     { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT }
 };
 
 const bdlat_AttributeInfo* TestEchoResult::lookupAttributeInfo(int id)
 {
     switch (id) {
-    case ATTRIBUTE_ID_ID:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ID];
+    case ATTRIBUTE_ID_CONTEXT:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_CONTEXT];
     case ATTRIBUTE_ID_VALUE:
         return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_VALUE];
     default:
@@ -7044,6 +7536,125 @@ bool operator<(const TestEchoResult& lhs, const TestEchoResult& rhs)
 }
 
 bsl::ostream& operator<<(bsl::ostream& stream, const TestEchoResult& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+} // close namespace ntcf
+
+namespace ntcf { 
+
+TestOptions::TestOptions()
+: deadline()
+{
+}
+
+TestOptions::TestOptions(const TestOptions& other)
+: deadline(other.deadline)
+{
+}
+
+TestOptions::~TestOptions()
+{
+}
+
+TestOptions& TestOptions::operator=(const TestOptions& other)
+{
+    if (this != &other) {
+        this->deadline = other.deadline;
+    }
+
+    return *this;
+}
+
+void TestOptions::reset()
+{
+    bdlat_ValueTypeFunctions::reset(&this->deadline);
+}
+
+void TestOptions::swap(TestOptions& other)
+{
+    if (this != &other) {
+        bslalg::SwapUtil::swap(&this->deadline, &other.deadline);
+    }
+}
+
+bool TestOptions::equals(const TestOptions& other) const
+{
+    if (this->deadline != other.deadline) {
+        return false;
+    }
+
+    return true;
+}
+
+bool TestOptions::less(const TestOptions& other) const
+{
+    return this->deadline < other.deadline;
+}
+
+bsl::ostream& TestOptions::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    if (this->deadline.has_value()) {
+        printer.printAttribute(
+            "deadline",
+            this->deadline.value());
+    }
+    printer.end();
+    return stream;
+}
+
+const char TestOptions::CLASS_NAME[] = "ntcf::TestOptions";
+
+const bdlat_AttributeInfo TestOptions::ATTRIBUTE_INFO_ARRAY[] =
+{
+    { 0, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT }
+};
+
+const bdlat_AttributeInfo* TestOptions::lookupAttributeInfo(int id)
+{
+    switch (id) {
+    case ATTRIBUTE_ID_DEADLINE:
+        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_DEADLINE];
+    default:
+        return 0;
+    }
+}
+
+const bdlat_AttributeInfo* TestOptions::lookupAttributeInfo(const char* name, int nameLength)
+{
+    for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
+        const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
+        if (attributeInfo.d_nameLength == nameLength) {
+            const int compare = 
+                bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
+            if (compare == 0) {
+                return &attributeInfo;
+            }
+        }
+    }
+
+    return 0;
+}
+
+bool operator==(const TestOptions& lhs, const TestOptions& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TestOptions& lhs, const TestOptions& rhs)
+{
+    return (!operator==(lhs, rhs));
+}
+
+bool operator<(const TestOptions& lhs, const TestOptions& rhs)
+{
+    return lhs.less(rhs);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TestOptions& object)
 {
     return object.print(stream, 0, -1);
 }

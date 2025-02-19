@@ -26,11 +26,11 @@ BSLS_IDENT_RCSID(ntcf_testframework_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcf {
 
-ntsa::Error TestMessage::decode(bdlbb::Blob* source)
+ntsa::Error TestMessage::decode(bdlbb::Blob*         source,
+                                ntci::Serialization* serialization,
+                                ntci::Compression*   compression)
 {
     ntsa::Error error;
-
-    ntci::Serialization serialization;
 
     const bsl::size_t sourceSize = static_cast<bsl::size_t>(source->length());
 
@@ -100,18 +100,18 @@ ntsa::Error TestMessage::decode(bdlbb::Blob* source)
     }
 
     if (pragmaSize > 0) {
-        error = serialization.decode(&d_frame.pragma.makeValue(), 
-                                     *source, 
-                                     ntca::SerializationType::e_BER);
+        error = serialization->decode(&d_frame.pragma.makeValue(), 
+                                      *source, 
+                                      ntca::SerializationType::e_BER);
         if (error) {
             return error;
         }
     }
 
     if (entitySize > 0) {
-        error = serialization.decode(&d_frame.entity.makeValue(), 
-                                     *source, 
-                                     serializationType);
+        error = serialization->decode(&d_frame.entity.makeValue(), 
+                                      *source, 
+                                      serializationType);
         if (error) {
             return error;
         }
@@ -133,14 +133,12 @@ ntsa::Error TestMessage::decode(bdlbb::Blob* source)
     return ntsa::Error();
 }
 
-ntsa::Error TestMessage::encode(bdlbb::Blob* destination) const
+ntsa::Error TestMessage::encode(bdlbb::Blob*         destination,
+                                ntci::Serialization* serialization,
+                                ntci::Compression*   compression)
 {
     ntsa::Error error;
     int         rc;
-
-    ntci::Serialization serialization;
-
-    ntcf::TestMessageHeader header = d_frame.header;
 
     const ntca::SerializationType::Value serializationType = 
         static_cast<ntca::SerializationType::Value>(
@@ -168,7 +166,7 @@ ntsa::Error TestMessage::encode(bdlbb::Blob* destination) const
 
     {
         bsl::streamsize numHeaderBytesWritten = 
-            osb.sputn(reinterpret_cast<const char*>(&header),                   
+            osb.sputn(reinterpret_cast<const char*>(&d_frame.header),                   
             static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)));
         if (numHeaderBytesWritten != 
             static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader))) 
@@ -191,9 +189,9 @@ ntsa::Error TestMessage::encode(bdlbb::Blob* destination) const
     bsl::streampos offsetToEntity = 0;
 
     if (d_frame.pragma.has_value()) {
-        error = serialization.encode(&osb, 
-                                     d_frame.pragma.value(), 
-                                     ntca::SerializationType::e_BER);
+        error = serialization->encode(&osb, 
+                                      d_frame.pragma.value(), 
+                                      ntca::SerializationType::e_BER);
         if (error) {
             return error;
         }
@@ -216,9 +214,9 @@ ntsa::Error TestMessage::encode(bdlbb::Blob* destination) const
     bsl::streampos offsetToEnd = 0;
 
     if (d_frame.entity.has_value()) {
-        error = serialization.encode(&osb, 
-                                     d_frame.entity.value(), 
-                                     serializationType);
+        error = serialization->encode(&osb, 
+                                      d_frame.entity.value(), 
+                                      serializationType);
         if (error) {
             return error;
         }
@@ -240,7 +238,7 @@ ntsa::Error TestMessage::encode(bdlbb::Blob* destination) const
 
     {
         bsl::streamsize numHeaderBytesWritten = 
-            osb.sputn(reinterpret_cast<const char*>(&header),                   
+            osb.sputn(reinterpret_cast<const char*>(&d_frame.header),                   
             static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)));
         if (numHeaderBytesWritten != 
             static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader))) 
@@ -263,11 +261,11 @@ ntsa::Error TestMessage::encode(bdlbb::Blob* destination) const
     const bsl::size_t entitySize =
         static_cast<bsl::size_t>(offsetToEnd - offsetToEntity);
 
-    header.headerSize = static_cast<bsl::uint32_t>(headerSize);
-    header.pragmaSize = static_cast<bsl::uint32_t>(pragmaSize);
-    header.entitySize = static_cast<bsl::uint32_t>(entitySize);
+    d_frame.header.headerSize = static_cast<bsl::uint32_t>(headerSize);
+    d_frame.header.pragmaSize = static_cast<bsl::uint32_t>(pragmaSize);
+    d_frame.header.entitySize = static_cast<bsl::uint32_t>(entitySize);
 
-    header.messageSize = 
+    d_frame.header.messageSize = 
         static_cast<bsl::uint32_t>(headerSize + pragmaSize + entitySize);
 
     bsl::streampos offsetToFixup = osb.pubseekpos(offsetToHeader,
@@ -279,7 +277,7 @@ ntsa::Error TestMessage::encode(bdlbb::Blob* destination) const
 
     {
         bsl::streamsize numHeaderBytesWritten = 
-            osb.sputn(reinterpret_cast<const char*>(&header),                   
+            osb.sputn(reinterpret_cast<const char*>(&d_frame.header),                   
             static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)));
         if (numHeaderBytesWritten != 
             static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader))) 
@@ -395,7 +393,9 @@ ntsa::Error TestMessageParser::process()
                 bsl::shared_ptr<ntcf::TestMessage> message = 
                     d_messagePool_sp->create();
 
-                error = message->decode(d_data_sp.get());
+                error = message->decode(d_data_sp.get(), 
+                                        d_serialization_sp.get(), 
+                                        d_compression_sp.get());
                 if (error) {
                     return error;
                 }
@@ -522,13 +522,128 @@ ntsa::Error TestMessageParser::dequeue(
 
 bsl::size_t TestMessageParser::numNeeded() const
 {
-    return d_numNeeded;
+    bsl::size_t dataLength = static_cast<bsl::size_t>(d_data_sp->length());
+
+    if (d_numNeeded > dataLength) {
+        return static_cast<bsl::size_t>(d_numNeeded - dataLength);
+    }
+    else {
+        return 0;
+    }
 }
 
 bool TestMessageParser::hasAnyAvailable() const
 {
     return !d_messageQueue.empty();
 }
+
+
+
+
+
+
+
+
+
+TestMessageCallbackFactory::~TestMessageCallbackFactory()
+{
+}
+
+void TestMessageFuture::arrive(
+    const ntcf::TestContext&                  context,
+    const ntcf::TestFault&                    fault,
+    const bsl::shared_ptr<ntcf::TestMessage>& result)
+{
+    Entry entry;
+    entry.first.first  = context;
+    entry.first.second = fault;
+    entry.second       = result;
+
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+    d_resultQueue.push_back(entry);
+    d_condition.signal();
+}
+
+TestMessageFuture::TestMessageFuture(bslma::Allocator* basicAllocator)
+: ntcf::TestMessageCallback(basicAllocator)
+, d_mutex()
+, d_condition()
+, d_resultQueue(basicAllocator)
+{
+    this->setFunction(bdlf::MemFnUtil::memFn(&TestMessageFuture::arrive, this));
+}
+
+TestMessageFuture::~TestMessageFuture()
+{
+}
+
+ntsa::Error TestMessageFuture::wait(
+    ntcf::TestContext*                  context,
+    ntcf::TestFault*                    fault,
+    bsl::shared_ptr<ntcf::TestMessage>* result)
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    while (d_resultQueue.empty()) {
+        d_condition.wait(&d_mutex);
+    }
+
+    {
+        Entry& entry = d_resultQueue.front();
+
+        *context = entry.first.first;
+        *fault   = entry.first.second;
+        *result  = entry.second;
+    }
+
+    d_resultQueue.pop_front();
+
+    return ntsa::Error();
+}
+
+ntsa::Error TestMessageFuture::wait(
+    ntcf::TestContext*                  context,
+    ntcf::TestFault*                    fault,
+    bsl::shared_ptr<ntcf::TestMessage>* result,
+    const bsls::TimeInterval&           timeout)
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    while (d_resultQueue.empty()) {
+        int rc = d_condition.timedWait(&d_mutex, timeout);
+        if (rc == 0) {
+            break;
+        }
+        else if (rc == bslmt::Condition::e_TIMED_OUT) {
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+    
+    {
+        Entry& entry = d_resultQueue.front();
+
+        *context = entry.first.first;
+        *fault   = entry.first.second;
+        *result  = entry.second;
+    }
+
+    d_resultQueue.pop_front();
+
+    return ntsa::Error();
+}
+
+
+
+
+
+
+
+
+
+
 
 TestTradeCallbackFactory::~TestTradeCallbackFactory()
 {
@@ -595,6 +710,75 @@ ntsa::Error TestTradeFuture::wait(ntcf::TestTradeResult*    result,
 
 
 
+
+
+
+
+
+
+
+
+TestEchoCallbackFactory::~TestEchoCallbackFactory()
+{
+}
+
+void TestEchoFuture::arrive(const ntcf::TestEchoResult& result)
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+    d_resultQueue.push_back(result);
+    d_condition.signal();
+}
+
+TestEchoFuture::TestEchoFuture(bslma::Allocator* basicAllocator)
+: ntcf::TestEchoCallback(basicAllocator)
+, d_mutex()
+, d_condition()
+, d_resultQueue(basicAllocator)
+{
+    this->setFunction(bdlf::MemFnUtil::memFn(&TestEchoFuture::arrive, this));
+}
+
+TestEchoFuture::~TestEchoFuture()
+{
+}
+
+ntsa::Error TestEchoFuture::wait(ntcf::TestEchoResult* result)
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    while (d_resultQueue.empty()) {
+        d_condition.wait(&d_mutex);
+    }
+
+    *result = d_resultQueue.front();
+    d_resultQueue.pop_front();
+
+    return ntsa::Error();
+}
+
+ntsa::Error TestEchoFuture::wait(ntcf::TestEchoResult*    result,
+                                  const bsls::TimeInterval& timeout)
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    while (d_resultQueue.empty()) {
+        int rc = d_condition.timedWait(&d_mutex, timeout);
+        if (rc == 0) {
+            break;
+        }
+        else if (rc == bslmt::Condition::e_TIMED_OUT) {
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    *result = d_resultQueue.front();
+    d_resultQueue.pop_front();
+
+    return ntsa::Error();
+}
 
 
 

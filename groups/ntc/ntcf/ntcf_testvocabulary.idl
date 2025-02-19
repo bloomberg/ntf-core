@@ -75,11 +75,29 @@ package ntcf
     {
     }
 
-    // Describes the context of an acknowledgment result.
-    sequence TestAcknowledgmentResultContext
+    // Describes the context in which an operation completes.
+    sequence TestContext
     {
-        // The latency of the operation.
-        required latency: duration;
+        // The system error number.
+        required error: int;
+
+        // The latency from when the client initiated the request to when
+        // the server received the request.
+        required latencyFromClient: duration;
+
+        // The latency from when the server initiated the response to when
+        // the client received the response.
+        required latencyFromServer: duration;
+
+        // The overall round-trip latency.
+        required latencyOverall: duration;
+    }
+
+    // Describes the context in which an operation completes.
+    sequence TestOptions
+    {
+        // The deadline of the operation.
+        optional deadline: duration;
     }
 
     // Describes the value of an acknowledgment result.
@@ -89,14 +107,14 @@ package ntcf
         selection failure: ntcf.TestFault;
 
         // The acknowledgment.
-        selection success: ntcf.TestTrade;
+        selection success: ntcf.TestAcknowledgment;
     }
 
     // Describe a acknowledgment result.
     sequence TestAcknowledgmentResult
     {
         // The context.
-        required context: ntcf.TestAcknowledgmentResultContext;
+        required context: ntcf.TestContext;
 
         // The value.
         required value: ntcf.TestAcknowledgmentResultValue;
@@ -197,13 +215,6 @@ package ntcf
         required timestamp: dateTime;
     }
 
-    // Describes the context of a trade result.
-    sequence TestTradeResultContext
-    {
-        // The latency of the operation.
-        required latency: duration;
-    }
-
     // Describes the value of a trade result.
     choice TestTradeResultValue
     {
@@ -218,7 +229,7 @@ package ntcf
     sequence TestTradeResult
     {
         // The context.
-        required context: ntcf.TestTradeResultContext;
+        required context: ntcf.TestContext;
 
         // The value.
         required value: ntcf.TestTradeResultValue;
@@ -261,24 +272,51 @@ package ntcf
         selection fault: ntcf.TestFault;
     }
 
-    // Describes testing parameters.
-    sequence TestEchoParams
+    // Describes a signal sent to a peer.
+    sequence TestSignal
     {
+        // The unique identifier of the signal.
+        required id: unsignedLong;
+
         // The value.
+        required value: string;
+
+        // The number of bytes to reflect back.
+        required reflect: unsignedInt;
+
+        // The amount of time to delay the reflection of the signal, in 
+        // milliseconds.
+        required delay: unsignedInt;
+    }
+
+    // Describes the reflection of a signal back from a peer.
+    sequence TestEcho
+    {
+        // The unique identifier of the signal.
         required id: unsignedLong;
 
         // The value.
         required value: string;
     }
 
-    // Describes testing results.
+    // Describes the value of a echo result.
+    choice TestEchoResultValue
+    {
+        // The fault.
+        selection failure: ntcf.TestFault;
+
+        // The trade.
+        selection success: ntcf.TestEcho;
+    }
+
+    // Describe a echo result.
     sequence TestEchoResult
     {
-        // The value.
-        required id: unsignedLong;
+        // The context.
+        required context: ntcf.TestContext;
 
         // The value.
-        required value: string;
+        required value: ntcf.TestEchoResultValue;
     }
 
     // Describes a control message to enable or disable encryption.
@@ -312,6 +350,12 @@ package ntcf
     // Describes the control messages.
     choice TestControl
     {
+        // Describes a signal sent to a peer.
+        selection signal: ntcf.TestSignal;
+
+        // Describes the reflection of a signal back from a peer.
+        selection echo: ntcf.TestEcho;
+
         // Describes a control message to enable or disable encryption.
         selection encryption: ntcf.TestControlEncryption;
 
@@ -372,18 +416,11 @@ package ntcf
         required deadline: uint64;
     }
 
-    // Describes the context in which a message was sent.
-    sequence TestMessageContext
-    {
-        // The URI of the sender.
-        optional uri: string;
-    }
-
     // Describes meta-data about the messaging infrastructure.
     sequence TestMessagePragma
     {
-        // The context in which a message was sent.
-        optional context: ntcf.TestMessageContext;
+        // The URI of the sender.
+        optional uri: string;
 
         // The fault that occurred during the processing of the message.
         optional fault: ntcf.TestFault;
