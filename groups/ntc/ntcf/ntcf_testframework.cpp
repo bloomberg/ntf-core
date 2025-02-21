@@ -38,95 +38,104 @@ ntsa::Error TestMessage::decode(bdlbb::Blob*         source,
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
 
-    bdlbb::InBlobStreamBuf isb(source);
+    bsl::size_t numBytesRead = 0;
+    {
+        bdlbb::InBlobStreamBuf isb(source);
 
-    bsl::streampos offsetToHeader =
+        bsl::streampos offsetToHeader =
             isb.pubseekoff(0, bsl::ios_base::cur, bsl::ios_base::in);
-    if (offsetToHeader == bsl::streampos(-1)) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    const bsl::streamsize numHeaderBytesRead = 
-        isb.sgetn(reinterpret_cast<char*>(&d_frame.header), 
-        static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)));
-
-    if (numHeaderBytesRead != 
-        static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader))) 
-    {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    const bsl::size_t headerSize = 
-        static_cast<bsl::size_t>(d_frame.header.headerSize);
-    if (headerSize != sizeof(ntcf::TestMessageHeader)) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    const bsl::size_t pragmaSize = 
-        static_cast<bsl::size_t>(d_frame.header.pragmaSize);
-    if (pragmaSize != static_cast<bsl::size_t>(k_MAX_PRAGMA_SIZE)) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    const bsl::size_t entitySize = 
-        static_cast<bsl::size_t>(d_frame.header.entitySize);
-    if (entitySize != static_cast<bsl::size_t>(k_MAX_ENTITY_SIZE)) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    const bsl::size_t messageSize = 
-        static_cast<bsl::size_t>(d_frame.header.messageSize);
-
-    if (messageSize != headerSize + pragmaSize + entitySize) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    ntca::SerializationType::Value serializationType;
-    if (ntca::SerializationType::fromInt(
-        &serializationType, 
-        static_cast<int>(d_frame.header.serialization)) != 0)
-    {
-        NTCCFG_WARNING_UNUSED(serializationType);
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    ntca::CompressionType::Value compressionType;
-    if (ntca::CompressionType::fromInt(
-        &compressionType, 
-        static_cast<int>(d_frame.header.compression)) != 0)
-    {
-        NTCCFG_WARNING_UNUSED(compressionType);
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    if (pragmaSize > 0) {
-        error = serialization->decode(&d_frame.pragma.makeValue(), 
-                                      *source, 
-                                      ntca::SerializationType::e_BER);
-        if (error) {
-            return error;
+        if (offsetToHeader == bsl::streampos(-1)) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
         }
-    }
 
-    if (entitySize > 0) {
-        error = serialization->decode(&d_frame.entity.makeValue(), 
-                                      *source, 
-                                      serializationType);
-        if (error) {
-            return error;
+        const bsl::streamsize numHeaderBytesRead = 
+            isb.sgetn(reinterpret_cast<char*>(&d_frame.header), 
+            static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)));
+
+        if (numHeaderBytesRead != 
+            static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader))) 
+        {
+            return ntsa::Error(ntsa::Error::e_INVALID);
         }
+
+        ntcf::TestMessageType::Value messageType;
+        if (ntcf::TestMessageType::fromInt(
+            &messageType, 
+            static_cast<int>(d_frame.header.messageType)) != 0)
+        {
+            NTCCFG_WARNING_UNUSED(messageType);
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        const bsl::size_t headerSize = 
+            static_cast<bsl::size_t>(d_frame.header.headerSize);
+        if (headerSize != sizeof(ntcf::TestMessageHeader)) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        const bsl::size_t pragmaSize = 
+            static_cast<bsl::size_t>(d_frame.header.pragmaSize);
+        if (pragmaSize > static_cast<bsl::size_t>(k_MAX_PRAGMA_SIZE)) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        const bsl::size_t entitySize = 
+            static_cast<bsl::size_t>(d_frame.header.entitySize);
+        if (entitySize > static_cast<bsl::size_t>(k_MAX_ENTITY_SIZE)) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        const bsl::size_t messageSize = 
+            static_cast<bsl::size_t>(d_frame.header.messageSize);
+
+        if (messageSize != headerSize + pragmaSize + entitySize) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        ntca::SerializationType::Value serializationType;
+        if (ntca::SerializationType::fromInt(
+            &serializationType, 
+            static_cast<int>(d_frame.header.serialization)) != 0)
+        {
+            NTCCFG_WARNING_UNUSED(serializationType);
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        ntca::CompressionType::Value compressionType;
+        if (ntca::CompressionType::fromInt(
+            &compressionType, 
+            static_cast<int>(d_frame.header.compression)) != 0)
+        {
+            NTCCFG_WARNING_UNUSED(compressionType);
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (pragmaSize > 0) {
+            error = serialization->decode(&d_frame.pragma.makeValue(), 
+                                          &isb, 
+                                          ntca::SerializationType::e_XML);
+            if (error) {
+                return error;
+            }
+        }
+
+        if (entitySize > 0) {
+            error = serialization->decode(&d_frame.entity.makeValue(), 
+                                          &isb, 
+                                          serializationType);
+            if (error) {
+                return error;
+            }
+        }
+
+        bsl::streampos offsetToEnd =
+                isb.pubseekoff(0, bsl::ios_base::cur, bsl::ios_base::in);
+        if (offsetToEnd == bsl::streampos(-1)) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        numBytesRead = static_cast<bsl::size_t>(offsetToEnd - offsetToHeader);
     }
-
-    bsl::streampos offsetToEnd =
-            isb.pubseekoff(0, bsl::ios_base::cur, bsl::ios_base::in);
-    if (offsetToEnd == bsl::streampos(-1)) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
-
-    bsl::size_t numBytesRead = 
-        static_cast<bsl::size_t>(offsetToEnd - offsetToHeader);
-
-    isb.reset();
 
     bdlbb::BlobUtil::erase(source, 0, static_cast<int>(numBytesRead));
 
@@ -191,7 +200,7 @@ ntsa::Error TestMessage::encode(bdlbb::Blob*         destination,
     if (d_frame.pragma.has_value()) {
         error = serialization->encode(&osb, 
                                       d_frame.pragma.value(), 
-                                      ntca::SerializationType::e_BER);
+                                      ntca::SerializationType::e_XML);
         if (error) {
             return error;
         }
@@ -235,22 +244,6 @@ ntsa::Error TestMessage::encode(bdlbb::Blob*         destination,
     else {
         offsetToEnd = offsetToEntity;
     }
-
-    {
-        bsl::streamsize numHeaderBytesWritten = 
-            osb.sputn(reinterpret_cast<const char*>(&d_frame.header),                   
-            static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)));
-        if (numHeaderBytesWritten != 
-            static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader))) 
-        {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-    }
-    
-    rc = osb.pubsync();
-    if (rc != 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
     
     const bsl::size_t headerSize =
         static_cast<bsl::size_t>(offsetToPragma - offsetToHeader);
@@ -291,8 +284,6 @@ ntsa::Error TestMessage::encode(bdlbb::Blob*         destination,
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    osb.reset();
-
     const int blobLengthFinal = destination->length();
     NTSCFG_WARNING_UNUSED(blobLengthFinal);
 
@@ -318,9 +309,30 @@ bsl::ostream& TestMessage::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("header", d_frame.header);
-    printer.printAttribute("pragma", d_frame.pragma);
-    printer.printAttribute("entity", d_frame.entity);
+    
+    // printer.printAttribute("header", d_frame.header);
+
+    stream << " header = [";
+
+    printer.printAttribute("type", this->type());
+    printer.printAttribute("transaction", this->transaction());
+    printer.printAttribute("messageSize", this->messageSize());
+    printer.printAttribute("pragmaSize", this->pragmaSize());
+    printer.printAttribute("entitySize", this->entitySize());
+
+    printer.printAttribute("serialization", this->serializationType());
+    printer.printAttribute("compression", this->compressionType());
+
+    stream << " ]";
+
+    if (d_frame.pragma.has_value()) {
+        printer.printAttribute("pragma", d_frame.pragma.value());
+    }
+
+    if (d_frame.entity.has_value()) {
+        printer.printAttribute("entity", d_frame.entity.value());
+    }
+
     printer.end();
     return stream;
 }
@@ -522,10 +534,16 @@ ntsa::Error TestMessageParser::dequeue(
 
 bsl::size_t TestMessageParser::numNeeded() const
 {
-    bsl::size_t dataLength = static_cast<bsl::size_t>(d_data_sp->length());
+    if (d_data_sp) {
+        const bsl::size_t dataLength = 
+            static_cast<bsl::size_t>(d_data_sp->length());
 
-    if (d_numNeeded > dataLength) {
-        return static_cast<bsl::size_t>(d_numNeeded - dataLength);
+        if (d_numNeeded > dataLength) {
+            return static_cast<bsl::size_t>(d_numNeeded - dataLength);
+        }
+        else {
+            return 0;
+        }
     }
     else {
         return 0;

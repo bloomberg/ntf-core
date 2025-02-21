@@ -198,6 +198,9 @@ public:
     /// a reference to this modifiable object.
     TestMessage& operator=(const TestMessage& other);
 
+    /// Set the message type to the specified 'value'.
+    void setType(ntcf::TestMessageType::Value value);
+
     /// Set the header to the specified 'value'.
     void setHeader(const ntcf::TestMessageHeader& value);
 
@@ -228,6 +231,19 @@ public:
     /// the Unix epoch.
     void setDeadline(const bsls::TimeInterval& value);
 
+    /// Set the flag corresponding to the specified 'value'. 
+    void setFlag(ntcf::TestMessageFlag::Value value);
+
+    /// Set the flag corresponding to the specified 'value1', and 'value2'.
+    void setFlag(ntcf::TestMessageFlag::Value value1, 
+                 ntcf::TestMessageFlag::Value value2);
+
+    /// Set the flag corresponding to the specified 'value1', 'value2', and 
+    /// 'value3'.
+    void setFlag(ntcf::TestMessageFlag::Value value1, 
+                 ntcf::TestMessageFlag::Value value2,
+                 ntcf::TestMessageFlag::Value value3);
+
     /// Define a pragma collection for the message. Return a reference to the
     /// modifiable pragmas. 
     ntcf::TestMessagePragma& makePragma();
@@ -246,6 +262,9 @@ public:
     ntsa::Error encode(bdlbb::Blob*         destination, 
                        ntci::Serialization* serialization,
                        ntci::Compression*   compression);
+
+    /// Return the message type.
+    ntcf::TestMessageType::Value type() const;
 
     /// Return the size of the message, in bytes.
     bsl::size_t messageSize() const;
@@ -288,6 +307,21 @@ public:
     /// Return the entity.
     const bdlb::NullableValue<ntcf::TestMessageEntity>& entity() const;
 
+    /// Return true if the message has the flag set corresponding to the 
+    /// specified 'value'.
+    bool hasFlag(ntcf::TestMessageFlag::Value value) const;
+
+    /// Return true if the message has the flag set corresponding to the 
+    /// specified 'value1' and 'value2'.
+    bool hasFlag(ntcf::TestMessageFlag::Value value1,
+                 ntcf::TestMessageFlag::Value value2) const;
+
+    /// Return true if the message has the flag set corresponding to the 
+    /// specified 'value1', 'value2', and 'value3'.
+    bool hasFlag(ntcf::TestMessageFlag::Value value1,
+                 ntcf::TestMessageFlag::Value value2,
+                 ntcf::TestMessageFlag::Value value3) const;
+
     /// Return true if the message defines a pragma collection, otherwise 
     /// return false.
     bool hasPragma() const;
@@ -295,9 +329,15 @@ public:
     /// Return true if the message defines an entity, otherwise return false.
     bool hasEntity() const;
 
+    /// Return true if the message is a subscription, otherwise return false.
+    bool isSubscription() const;
+
     /// Return true if the message is a one-way publication, uncorrelated to
     /// any specific request, otherwise return false.
     bool isPublication() const;
+
+    /// Return true if the message is a request, otherwise return false.
+    bool isRequest() const;
 
     /// Return true if the message reprsents a response, otherwise return 
     /// false.
@@ -1096,6 +1136,13 @@ void TestMessage::reset()
 }
 
 NTCCFG_INLINE
+void TestMessage::setType(ntcf::TestMessageType::Value value)
+{
+    d_frame.header.messageType = 
+        static_cast<bsl::uint16_t>(static_cast<int>(value));
+}
+
+NTCCFG_INLINE
 void TestMessage::setHeader(const ntcf::TestMessageHeader& value)
 {
     d_frame.header = value;
@@ -1153,6 +1200,45 @@ void TestMessage::setDeadline(const bsls::TimeInterval& value)
 }
 
 NTCCFG_INLINE
+void TestMessage::setFlag(ntcf::TestMessageFlag::Value value)
+{
+    bsl::uint16_t flags = 
+        static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
+
+    flags |= (1 << value);
+
+    d_frame.header.messageFlags = flags;
+}
+
+NTCCFG_INLINE
+void TestMessage::setFlag(ntcf::TestMessageFlag::Value value1, 
+                          ntcf::TestMessageFlag::Value value2)
+{
+    bsl::uint16_t flags = 
+        static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
+
+    flags |= (1 << value1);
+    flags |= (1 << value2);
+
+    d_frame.header.messageFlags = flags;
+}
+
+NTCCFG_INLINE
+void TestMessage::setFlag(ntcf::TestMessageFlag::Value value1, 
+                          ntcf::TestMessageFlag::Value value2,
+                          ntcf::TestMessageFlag::Value value3)
+{
+    bsl::uint16_t flags = 
+        static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
+
+    flags |= (1 << value1);
+    flags |= (1 << value2);
+    flags |= (1 << value3);
+
+    d_frame.header.messageFlags = flags;
+}
+
+NTCCFG_INLINE
 ntcf::TestMessagePragma& TestMessage::makePragma()
 {
     return d_frame.pragma.makeValue();
@@ -1162,6 +1248,13 @@ NTCCFG_INLINE
 ntcf::TestMessageEntity& TestMessage::makeEntity()
 {
     return d_frame.entity.makeValue();
+}
+
+NTCCFG_INLINE
+ntcf::TestMessageType::Value TestMessage::type() const
+{
+    return static_cast<ntcf::TestMessageType::Value>(
+        static_cast<int>(d_frame.header.messageType));
 }
 
 NTCCFG_INLINE
@@ -1262,6 +1355,72 @@ const bdlb::NullableValue<ntcf::TestMessageEntity>& TestMessage::entity() const
 }
 
 NTCCFG_INLINE
+bool TestMessage::hasFlag(ntcf::TestMessageFlag::Value value) const
+{
+    const bsl::uint16_t flags = 
+        static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
+
+    const bsl::uint16_t mask = (1 << value);
+
+    return ((flags & mask) != 0);
+}
+
+NTCCFG_INLINE
+bool TestMessage::hasFlag(ntcf::TestMessageFlag::Value value1,
+                          ntcf::TestMessageFlag::Value value2) const
+{
+    const bsl::uint16_t flags = 
+        static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
+
+    const bsl::uint16_t mask = (1 << value1) | (1 << value2);
+
+    return ((flags & mask) != 0);
+}
+
+NTCCFG_INLINE
+bool TestMessage::hasFlag(ntcf::TestMessageFlag::Value value1,
+                          ntcf::TestMessageFlag::Value value2,
+                          ntcf::TestMessageFlag::Value value3) const
+{
+    const bsl::uint16_t flags = 
+        static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
+
+    const bsl::uint16_t mask = (1 << value1) | (1 << value2) | (1 << value3);
+
+    return ((flags & mask) != 0);
+}
+
+NTCCFG_INLINE
+bool TestMessage::isSubscription() const
+{
+    return this->hasFlag(ntcf::TestMessageFlag::e_SUBSCRIPTION);
+}
+
+NTCCFG_INLINE
+bool TestMessage::isPublication() const
+{
+    return this->hasFlag(ntcf::TestMessageFlag::e_PUBLICATION);
+}
+
+NTCCFG_INLINE
+bool TestMessage::isRequest() const
+{
+    return this->hasFlag(ntcf::TestMessageFlag::e_REQUEST);
+}
+
+NTCCFG_INLINE
+bool TestMessage::isResponse() const
+{
+    return this->hasFlag(ntcf::TestMessageFlag::e_RESPONSE);
+}
+
+NTCCFG_INLINE
+bool TestMessage::isResponseExpected() const
+{
+    return !this->hasFlag(ntcf::TestMessageFlag::e_UNACKNOWLEDGED);
+}
+
+NTCCFG_INLINE
 bool TestMessage::hasPragma() const
 {
     return d_frame.pragma.has_value();
@@ -1271,109 +1430,6 @@ NTCCFG_INLINE
 bool TestMessage::hasEntity() const
 {
     return d_frame.entity.has_value();
-}
-
-NTCCFG_INLINE
-bool TestMessage::isPublication() const
-{
-    if (d_frame.entity.has_value()) {
-        const ntcf::TestMessageEntity& entity = d_frame.entity.value();
-        if (entity.isContentValue()) {
-            const ntcf::TestContent& content = entity.content();
-            if (content.isPublicationValue())
-            {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-        else {
-            return false;
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-NTCCFG_INLINE
-bool TestMessage::isResponse() const
-{
-    if (d_frame.entity.has_value()) {
-        const ntcf::TestMessageEntity& entity = d_frame.entity.value();
-        if (entity.isContentValue()) {
-            const ntcf::TestContent& content = entity.content();
-            if (content.isTradeValue() ||
-                content.isAcknowledgmentValue() ||
-                content.isFaultValue())
-            {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-        else if (entity.isControlValue()) {
-            const ntcf::TestControl& control = entity.control();
-            if (control.isEchoValue() ||
-                control.isAcknowledgmentValue() ||
-                control.isFaultValue())
-            {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-        else {
-            return false;
-        }
-    }
-    else {
-        return false;
-    }
-}
-
-NTCCFG_INLINE
-bool TestMessage::isResponseExpected() const
-{
-    if (d_frame.entity.has_value()) {
-        const ntcf::TestMessageEntity& entity = d_frame.entity.value();
-        if (entity.isContentValue()) {
-            const ntcf::TestContent& content = entity.content();
-            if (content.isBidValue() ||
-                content.isAskValue() ||
-                content.isSubscriptionValue())
-            {
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-        else if (entity.isControlValue()) {
-            const ntcf::TestControl& control = entity.control();
-            if (control.isEncryptionValue()) {
-                return control.encryption().acknowledge;
-            }
-            else if (control.isCompressionValue()) {
-                return control.compression().acknowledge;
-            }
-            else if (control.isHeartbeatValue()) {
-                return control.heartbeat().acknowledge;
-            }
-            else {
-                return false;
-            }
-        }
-        else {
-            return false;
-        }
-    }
-    else {
-        return false;
-    }
 }
 
 template <typename HASH_ALGORITHM>

@@ -31,7 +31,75 @@ namespace ntcf {
 /// This class is thread safe.
 class TestServerTransaction
 {
+    /// Defines a type alias for a mutex.
+    typedef ntci::Mutex Mutex;
 
+    /// Defines a type alias for a mutex lock guard.
+    typedef ntci::LockGuard LockGuard;
+
+    Mutex                                  d_mutex;
+    bsl::shared_ptr<ntcf::TestMessage>     d_request_sp;
+    bsl::shared_ptr<ntcf::TestMessagePool> d_responsePool_sp;
+    bsl::shared_ptr<ntci::DataPool>        d_dataPool_sp;
+    bsl::shared_ptr<ntci::DatagramSocket>  d_datagramSocket_sp;
+    bsl::shared_ptr<ntci::StreamSocket>    d_streamSocket_sp;
+    bsl::shared_ptr<ntci::Serialization>   d_serialization_sp;
+    bsl::shared_ptr<ntci::Compression>     d_compression_sp;
+    bdlb::NullableValue<ntsa::Endpoint>    d_endpoint;
+    bsls::TimeInterval                     d_timestamp;
+    bslma::Allocator*                      d_allocator_p;
+
+    /// Return a new response.
+    bsl::shared_ptr<ntcf::TestMessage> createResponse();
+
+    /// Deliver the specified 'response' to the sender.
+    void deliverResponse(const bsl::shared_ptr<ntcf::TestMessage>& response);
+
+    BALL_LOG_SET_CLASS_CATEGORY("NTCF.TEST.SERVER");
+
+public:
+    /// Create a new server transaction. Create responses from the specified
+    /// 'responsePool'. Create buffers from the specified 'dataPool'. Serialize
+    /// structures using the specified 'serialization'. Compress payloads using
+    /// the specified 'compression'. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
+    TestServerTransaction(
+        const bsl::shared_ptr<ntcf::TestMessagePool>& responsePool,
+        const bsl::shared_ptr<ntci::DataPool>&        dataPool,
+        const bsl::shared_ptr<ntci::Serialization>&   serialization,
+        const bsl::shared_ptr<ntci::Compression>&     compression,
+        bslma::Allocator*                             basicAllocator = 0);
+
+    /// Reset the transaction.
+    void reset();
+
+    /// Start the transaction to process the specified 'request' received at
+    /// the specified 'timestamp'. Send any responses through the specified
+    /// 'sender'.
+    void start(const bsl::shared_ptr<ntcf::TestMessage>&  request,
+               const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+               const bsls::TimeInterval&                  timestamp);
+
+    /// Start the transaction to process the specified 'request' received at
+    /// the specified 'timestamp'. Send any responses to the specified 
+    /// 'endpoint' through the specified 'sender'.
+    void start(const bsl::shared_ptr<ntcf::TestMessage>&    request,
+               const bsl::shared_ptr<ntci::DatagramSocket>& sender,
+               const bsls::TimeInterval&                    timestamp,
+               const ntsa::Endpoint&                        endpoint);
+
+    /// Complete the transaction with the specified 'trade'. 
+    void complete(const ntcf::TestTrade& trade);
+
+    /// Complete the transaction with the specified 'echo'. 
+    void complete(const ntcf::TestEcho& echo);
+
+    /// Complete the transaction with the specified 'acknowledgement'. 
+    void complete(const ntcf::TestAcknowledgment& acknowledgment);
+
+    /// Complete the transaction with the specified 'fault'. 
+    void complete(const ntcf::TestFault& fault);
 };
 
 /// Provide a test server.
@@ -484,6 +552,50 @@ private:
         const bsl::shared_ptr<Self>&                 self,
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
         const ntsa::Error&                           error);
+
+    /// Dispatch the specified 'transaction' to an appropriate processor. 
+    void dispatchMessage(
+        const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+        const bsl::shared_ptr<ntcf::TestMessage>&           request);
+
+    /// Process the specified 'bid' in the specified 'transaction'. 
+    void processBid(
+            const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+            const ntcf::TestBid&                                bid);
+
+    /// Process the specified 'ask' in the specified 'transaction'. 
+    void processAsk(
+        const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+        const ntcf::TestAsk&                                ask);
+
+    /// Process the specified 'subscription' in the specified 'transaction'. 
+    void processSubscription(
+        const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+        const ntcf::TestSubscription&                       subscription);
+
+    /// Process the specified 'signal' control request in the specified
+    /// 'transaction'. 
+    void processSignal(
+        const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+        const ntcf::TestSignal&                             signal);
+
+    /// Process the specified 'encryption' control request in the specified
+    /// 'transaction'. 
+    void processEncryption(
+        const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+        const ntcf::TestControlEncryption&                  encryption);
+
+    /// Process the specified 'compression' control request in the specified
+    /// 'transaction'. 
+    void processCompression(
+        const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+        const ntcf::TestControlCompression&                 compression);
+
+    /// Process the specified 'heartbeat' control request in the specified
+    /// 'transaction'. 
+    void processHeartbeat(
+        const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+        const ntcf::TestControlHeartbeat&                   heartbeat);
 
 public:
     /// Create a new server with the specified 'configuration'. Optionally

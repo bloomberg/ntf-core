@@ -115,7 +115,7 @@ namespace ntcf {
                       << BALL_LOG_END;                                        \
     } while (false)
 
-#define NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_RESPONSE_UNSOLICTED(              \
+#define NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_RESPONSE_UNSOLICITED(             \
     datagramSocket,                                                           \
     response)                                                                 \
     do {                                                                      \
@@ -124,6 +124,17 @@ namespace ntcf {
                       << (datagramSocket)->remoteEndpoint()                   \
                       << " received stale or unsolicited response "           \
                       << (*response) << BALL_LOG_END;                         \
+    } while (false)
+
+#define NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_UNEXPECTED_MESSAGE(               \
+    datagramSocket,                                                           \
+    message)                                                                  \
+    do {                                                                      \
+        BALL_LOG_WARN << "Client stream socket at "                           \
+                      << (datagramSocket)->sourceEndpoint() << " to "         \
+                      << (datagramSocket)->remoteEndpoint()                   \
+                      << " ignoring unexpected message " << (*message)        \
+                      << BALL_LOG_END;                                        \
     } while (false)
 
 #define NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_INCOMING_MESSAGE(datagramSocket,  \
@@ -240,8 +251,8 @@ namespace ntcf {
                       << BALL_LOG_END;                                        \
     } while (false)
 
-#define NTCF_TESTCLIENT_LOG_STREAM_SOCKET_RESPONSE_UNSOLICTED(streamSocket,   \
-                                                              response)       \
+#define NTCF_TESTCLIENT_LOG_STREAM_SOCKET_RESPONSE_UNSOLICITED(streamSocket,  \
+                                                               response)      \
     do {                                                                      \
         BALL_LOG_WARN << "Client stream socket at "                           \
                       << (streamSocket)->sourceEndpoint() << " to "           \
@@ -604,7 +615,6 @@ void TestClient::processReadQueueLowWatermark(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const ntca::ReadQueueEvent&                  event)
 {
-    NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
@@ -650,96 +660,66 @@ void TestClient::processReadQueueLowWatermark(
     NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_INCOMING_BLOB(d_datagramSocket_sp,
                                                       blob);
 
-// MRM
-#if 0
-    error = d_messageParser.add(blob);
+    error = d_datagramParser_sp->add(blob);
     if (error) {
-        NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_PARSE_FAILED(d_datagramSocket_sp, error);
+        NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_PARSE_FAILED(d_datagramSocket_sp,
+                                                         error);
         d_datagramSocket_sp->close();
         return;
     }
 
-    while (d_messageParser.hasAnyAvailable()) {
-        bsl::shared_ptr<ntva::AsmpMessage> message;
-        error = d_messageParser.dequeue(&message);
+    while (d_datagramParser_sp->hasAnyAvailable()) {
+        bsl::shared_ptr<ntcf::TestMessage> message;
+        error = d_datagramParser_sp->dequeue(&message);
         if (error) {
-            NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_PARSE_FAILED(d_datagramSocket_sp,
-                                                     error);
+            NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_PARSE_FAILED(
+                d_datagramSocket_sp,
+                error);
             d_datagramSocket_sp->close();
             return;
         }
 
-        NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_INCOMING_MESSAGE(d_datagramSocket_sp,
-                                                     message);
-
-        // d_manager_sp->processSocketIncomingMessage(self, message);
+        NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_INCOMING_MESSAGE(
+            d_datagramSocket_sp,
+            message);
 
         if (message->isResponse()) {
-            bsl::shared_ptr<ntvc::AsmpTransmission> transmission;
-            if (d_transmissionCatalog.remove(&transmission,
-                                             message->transaction()))
-            {
-                if (!transmission->invoke(self,
-                                          message,
-                                          ntsa::Error(),
-                                          ntci::Strand::unknown()))
+            bsl::shared_ptr<ntcf::TestClientTransaction> transaction;
+            if (d_transactionCatalog.remove(&transaction, message)) {
+                ntcf::TestContext                  context;
+                ntcf::TestFault                    fault;
+                bsl::shared_ptr<ntcf::TestMessage> response;
+
+                this->analyzeIncomingMessage(&context,
+                                             &fault,
+                                             &response,
+                                             message);
+
+                if (!transaction->invoke(context,
+                                         fault,
+                                         response,
+                                         ntci::Strand::unknown()))
                 {
                     NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_RESPONSE_IGNORED(
                         d_datagramSocket_sp,
                         message);
                 }
-                continue;
             }
             else {
-                NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_RESPONSE_UNSOLICTED(
+                NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_RESPONSE_UNSOLICITED(
                     d_datagramSocket_sp,
                     message);
-                continue;
             }
         }
-
-        ntvi::AsmpMessageCallback callback;
-        if (d_callbackQueue.pop(&callback)) {
-            callback.execute(self,
-                             message,
-                             ntsa::Error(),
-                             ntci::Strand::unknown());
-            continue;
-        }
-
-        bsl::shared_ptr<ntvi::AsmpTransaction> transaction;
-        bsl::shared_ptr<ntvi::AsmpProvider>    provider;
-
-        if (receiveContext.endpoint().has_value()) {
-            error = d_manager_sp->resolve(&transaction,
-                                          &provider,
-                                          self,
-                                          message,
-                                          receiveContext.endpoint().value());
+        else if (message->isPublication()) {
+            // MRM: TODO
         }
         else {
-            error =
-                d_manager_sp->resolve(&transaction, &provider, self, message);
+            NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_UNEXPECTED_MESSAGE(
+                d_datagramSocket_sp,
+                message);
         }
-
-        if (error) {
-            BALL_LOG_ERROR << "No provider registered for message " << *message
-                           << BALL_LOG_END;
-
-            bsl::shared_ptr<ntva::AsmpMessage> response =
-                d_manager_sp->createMessage();
-            response->reflect(*message);
-
-            response->setAction(ntva::AsmpAction::e_REFUSED);
-            response->setEntityEncoding(ntva::Encoding::e_NONE);
-
-            this->send(response, ntva::AsmpMessageOptions());
-            continue;
-        }
-
-        provider->processMessage(transaction);
     }
-#endif
 }
 
 void TestClient::processReadQueueHighWatermark(
@@ -908,7 +888,6 @@ void TestClient::processReadQueueLowWatermark(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::ReadQueueEvent&                event)
 {
-    NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTCLIENT_LOG_STREAM_SOCKET_EVENT(streamSocket, "read queue", event);
@@ -921,7 +900,7 @@ void TestClient::processReadQueueLowWatermark(
     ntca::ReceiveOptions receiveOptions;
     bdlbb::Blob          blob;
 
-    receiveOptions.setMinSize(d_streamParser_sp->numNeeded());
+    receiveOptions.setMinSize(1);
     receiveOptions.setMaxSize(bsl::numeric_limits<bsl::size_t>::max());
 
     error = d_streamSocket_sp->receive(&receiveContext, &blob, receiveOptions);
@@ -972,61 +951,14 @@ void TestClient::processReadQueueLowWatermark(
         if (message->isResponse()) {
             bsl::shared_ptr<ntcf::TestClientTransaction> transaction;
             if (d_transactionCatalog.remove(&transaction, message)) {
-                ntcf::TestContext context;
-                ntcf::TestFault   fault;
+                ntcf::TestContext                  context;
+                ntcf::TestFault                    fault;
+                bsl::shared_ptr<ntcf::TestMessage> response;
 
-                bsl::shared_ptr<ntcf::TestMessage> response = message;
-
-                const bsls::TimeInterval now =
-                    d_streamSocket_sp->currentTime();
-
-                const bsls::TimeInterval clientTimestamp =
-                    message->clientTimestamp();
-
-                const bsls::TimeInterval serverTimestamp =
-                    message->serverTimestamp();
-
-                if (serverTimestamp > clientTimestamp) {
-                    context.latencyFromClient =
-                        serverTimestamp - clientTimestamp;
-                }
-
-                if (now > serverTimestamp) {
-                    context.latencyFromServer = now - serverTimestamp;
-                }
-
-                if (now > clientTimestamp) {
-                    context.latencyOverall = now - clientTimestamp;
-                }
-
-                if (message->pragma().has_value()) {
-                    const ntcf::TestMessagePragma& pragma =
-                        message->pragma().value();
-
-                    if (pragma.fault.has_value()) {
-                        fault = pragma.fault.value();
-                        response.reset();
-                    }
-                }
-                else if (message->entity().has_value()) {
-                    const ntcf::TestMessageEntity& entity =
-                        message->entity().value();
-
-                    if (entity.isContentValue()) {
-                        const ntcf::TestContent& content = entity.content();
-                        if (content.isFaultValue()) {
-                            fault = content.fault();
-                            response.reset();
-                        }
-                    }
-                    else if (entity.isContentValue()) {
-                        const ntcf::TestControl& control = entity.control();
-                        if (control.isFaultValue()) {
-                            fault = control.fault();
-                            response.reset();
-                        }
-                    }
-                }
+                this->analyzeIncomingMessage(&context,
+                                             &fault,
+                                             &response,
+                                             message);
 
                 if (!transaction->invoke(context,
                                          fault,
@@ -1039,7 +971,7 @@ void TestClient::processReadQueueLowWatermark(
                 }
             }
             else {
-                NTCF_TESTCLIENT_LOG_STREAM_SOCKET_RESPONSE_UNSOLICTED(
+                NTCF_TESTCLIENT_LOG_STREAM_SOCKET_RESPONSE_UNSOLICITED(
                     d_streamSocket_sp,
                     message);
             }
@@ -1053,6 +985,9 @@ void TestClient::processReadQueueLowWatermark(
                 message);
         }
     }
+
+    d_streamSocket_sp->setReadQueueLowWatermark(
+        d_streamParser_sp->numNeeded());
 }
 
 void TestClient::processReadQueueHighWatermark(
@@ -1338,6 +1273,60 @@ void TestClient::privateStreamSocketError(
     streamSocket->close();
 }
 
+void TestClient::analyzeIncomingMessage(
+    ntcf::TestContext*                        context,
+    ntcf::TestFault*                          fault,
+    bsl::shared_ptr<ntcf::TestMessage>*       response,
+    const bsl::shared_ptr<ntcf::TestMessage>& message)
+{
+    *response = message;
+
+    const bsls::TimeInterval now = d_streamSocket_sp->currentTime();
+
+    const bsls::TimeInterval clientTimestamp = message->clientTimestamp();
+
+    const bsls::TimeInterval serverTimestamp = message->serverTimestamp();
+
+    if (serverTimestamp > clientTimestamp) {
+        context->latencyFromClient = serverTimestamp - clientTimestamp;
+    }
+
+    if (now > serverTimestamp) {
+        context->latencyFromServer = now - serverTimestamp;
+    }
+
+    if (now > clientTimestamp) {
+        context->latencyOverall = now - clientTimestamp;
+    }
+
+    if (message->pragma().has_value()) {
+        const ntcf::TestMessagePragma& pragma = message->pragma().value();
+
+        if (pragma.fault.has_value()) {
+            *fault = pragma.fault.value();
+            (*response)->reset();
+        }
+    }
+    else if (message->entity().has_value()) {
+        const ntcf::TestMessageEntity& entity = message->entity().value();
+
+        if (entity.isContentValue()) {
+            const ntcf::TestContent& content = entity.content();
+            if (content.isFaultValue()) {
+                *fault = content.fault();
+                (*response)->reset();
+            }
+        }
+        else if (entity.isContentValue()) {
+            const ntcf::TestControl& control = entity.control();
+            if (control.isFaultValue()) {
+                *fault = control.fault();
+                (*response)->reset();
+            }
+        }
+    }
+}
+
 void TestClient::describeInititationFailure(ntcf::TestFault* fault)
 {
     fault->reset();
@@ -1538,6 +1527,20 @@ TestClient::TestClient(const ntcf::TestClientConfig& configuration,
     d_compression_sp = ntcf::System::createCompression(compressionConfig,
                                                        d_dataPool_sp,
                                                        d_allocator_p);
+
+    d_datagramParser_sp.createInplace(d_allocator_p,
+                                      d_dataPool_sp,
+                                      d_messagePool_sp,
+                                      d_serialization_sp,
+                                      d_compression_sp,
+                                      d_allocator_p);
+
+    d_streamParser_sp.createInplace(d_allocator_p,
+                                    d_dataPool_sp,
+                                    d_messagePool_sp,
+                                    d_serialization_sp,
+                                    d_compression_sp,
+                                    d_allocator_p);
 
     BALL_LOG_INFO << "Client scheduler construction starting" << BALL_LOG_END;
 
@@ -1751,6 +1754,10 @@ TestClient::TestClient(const ntcf::TestClientConfig& configuration,
         ntca::FlowControlType::e_RECEIVE);
     BSLS_ASSERT_OPT(!error);
 
+    error = d_streamSocket_sp->setReadQueueLowWatermark(
+        d_streamParser_sp->numNeeded());
+    BSLS_ASSERT_OPT(!error);
+
     error =
         d_streamSocket_sp->relaxFlowControl(ntca::FlowControlType::e_RECEIVE);
     BSLS_ASSERT_OPT(!error);
@@ -1805,7 +1812,7 @@ bsl::shared_ptr<ntcf::TestMessage> TestClient::createMessage(
 {
     bsl::shared_ptr<ntcf::TestMessage> message = this->createMessage();
 
-    message->setSerializationType(ntca::SerializationType::e_BER);
+    message->setSerializationType(ntca::SerializationType::e_XML);
     message->setCompressionType(ntca::CompressionType::e_NONE);
 
     return message;
@@ -1869,6 +1876,9 @@ ntsa::Error TestClient::message(
 
     NTCF_TESTCLIENT_LOG_STREAM_SOCKET_OUTGOING_MESSAGE(d_streamSocket_sp,
                                                        request);
+
+    NTCF_TESTCLIENT_LOG_STREAM_SOCKET_OUTGOING_BLOB(d_streamSocket_sp,
+                                                        *blob);
 
     ntsa::Data data(blob);
 
@@ -1971,6 +1981,9 @@ ntsa::Error TestClient::bid(const ntcf::TestBid&           bid,
     ntsa::Error error;
 
     bsl::shared_ptr<ntcf::TestMessage> message = this->createMessage(options);
+
+    message->setType(ntcf::TestMessageType::e_BID);
+    message->setFlag(ntcf::TestMessageFlag::e_REQUEST);
 
     message->makeEntity().makeContent().makeBid(bid);
 
@@ -2082,6 +2095,9 @@ ntsa::Error TestClient::ask(const ntcf::TestAsk&           ask,
 
     bsl::shared_ptr<ntcf::TestMessage> message = this->createMessage(options);
 
+    message->setType(ntcf::TestMessageType::e_ASK);
+    message->setFlag(ntcf::TestMessageFlag::e_REQUEST);
+
     message->makeEntity().makeContent().makeAsk(ask);
 
     ntcf::TestMessageCallback messageCallback =
@@ -2147,6 +2163,44 @@ ntsa::Error TestClient::signal(ntcf::TestContext*       context,
     return ntsa::Error(ntsa::Error::e_INVALID);
 }
 
+ntsa::Error TestClient::signal(
+    ntcf::TestEchoResult*    result,
+    const ntcf::TestSignal&  signal,
+    const ntcf::TestOptions& options)
+{
+    ntsa::Error error;
+
+    result->reset();
+
+    ntcf::TestEchoFuture future;
+    error = this->signal(signal, options, future);
+    if (error) {
+        this->describeInititationFailure(&result->value.makeFailure());
+        return error;
+    }
+
+    error = future.wait(result);
+    if (error) {
+        this->describeWaitFailure(&result->value.makeFailure());
+        return error;
+    }
+
+    if (result->value.isUndefinedValue()) {
+        this->describeResultTypeFailure(&result->value.makeFailure());
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+    else if (result->value.isFailureValue()) {
+        if (result->context.error != 0) {
+            return ntsa::Error(result->context.error);
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    return ntsa::Error();
+}
+
 ntsa::Error TestClient::signal(const ntcf::TestSignal&       signal,
                                const ntcf::TestOptions&      options,
                                const ntcf::TestEchoCallback& callback)
@@ -2154,6 +2208,9 @@ ntsa::Error TestClient::signal(const ntcf::TestSignal&       signal,
     ntsa::Error error;
 
     bsl::shared_ptr<ntcf::TestMessage> message = this->createMessage(options);
+
+    message->setType(ntcf::TestMessageType::e_SIGNAL);
+    message->setFlag(ntcf::TestMessageFlag::e_REQUEST);
 
     message->makeEntity().makeControl().makeSignal(signal);
 
@@ -2229,6 +2286,12 @@ ntsa::Error TestClient::encrypt(
 
     bsl::shared_ptr<ntcf::TestMessage> message = this->createMessage(options);
 
+    message->setType(ntcf::TestMessageType::e_ENCRYPT);
+    message->setFlag(ntcf::TestMessageFlag::e_REQUEST);
+    if (!encryption.acknowledge) {
+        message->setFlag(ntcf::TestMessageFlag::e_UNACKNOWLEDGED);
+    }
+
     message->makeEntity().makeControl().makeEncryption(encryption);
 
     ntcf::TestMessageCallback messageCallback;
@@ -2249,6 +2312,35 @@ ntsa::Error TestClient::encrypt(
         }
     }
     else if (callback) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = this->message(message, options, messageCallback);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error TestClient::encrypt(const ntcf::TestControlEncryption& encryption,
+                                const ntcf::TestOptions&           options)
+{
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntcf::TestMessage> message = this->createMessage(options);
+
+    message->setType(ntcf::TestMessageType::e_ENCRYPT);
+    message->setFlag(ntcf::TestMessageFlag::e_REQUEST);
+    if (!encryption.acknowledge) {
+        message->setFlag(ntcf::TestMessageFlag::e_UNACKNOWLEDGED);
+    }
+
+    message->makeEntity().makeControl().makeEncryption(encryption);
+
+    ntcf::TestMessageCallback messageCallback;
+
+    if (encryption.acknowledge) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -2315,6 +2407,12 @@ ntsa::Error TestClient::compress(
 
     bsl::shared_ptr<ntcf::TestMessage> message = this->createMessage(options);
 
+    message->setType(ntcf::TestMessageType::e_COMPRESS);
+    message->setFlag(ntcf::TestMessageFlag::e_REQUEST);
+    if (!compression.acknowledge) {
+        message->setFlag(ntcf::TestMessageFlag::e_UNACKNOWLEDGED);
+    }
+
     message->makeEntity().makeControl().makeCompression(compression);
 
     ntcf::TestMessageCallback messageCallback;
@@ -2335,6 +2433,36 @@ ntsa::Error TestClient::compress(
         }
     }
     else if (callback) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = this->message(message, options, messageCallback);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error TestClient::compress(
+    const ntcf::TestControlCompression& compression,
+    const ntcf::TestOptions&            options)
+{
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntcf::TestMessage> message = this->createMessage(options);
+
+    message->setType(ntcf::TestMessageType::e_COMPRESS);
+    message->setFlag(ntcf::TestMessageFlag::e_REQUEST);
+    if (!compression.acknowledge) {
+        message->setFlag(ntcf::TestMessageFlag::e_UNACKNOWLEDGED);
+    }
+
+    message->makeEntity().makeControl().makeCompression(compression);
+
+    ntcf::TestMessageCallback messageCallback;
+
+    if (compression.acknowledge) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -2401,6 +2529,12 @@ ntsa::Error TestClient::heartbeat(
 
     bsl::shared_ptr<ntcf::TestMessage> message = this->createMessage(options);
 
+    message->setType(ntcf::TestMessageType::e_HEARTBEAT);
+    message->setFlag(ntcf::TestMessageFlag::e_REQUEST);
+    if (!heartbeat.acknowledge) {
+        message->setFlag(ntcf::TestMessageFlag::e_UNACKNOWLEDGED);
+    }
+
     message->makeEntity().makeControl().makeHeartbeat(heartbeat);
 
     ntcf::TestMessageCallback messageCallback;
@@ -2421,6 +2555,35 @@ ntsa::Error TestClient::heartbeat(
         }
     }
     else if (callback) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = this->message(message, options, messageCallback);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error TestClient::heartbeat(const ntcf::TestControlHeartbeat& heartbeat,
+                                  const ntcf::TestOptions&          options)
+{
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntcf::TestMessage> message = this->createMessage(options);
+
+    message->setType(ntcf::TestMessageType::e_HEARTBEAT);
+    message->setFlag(ntcf::TestMessageFlag::e_REQUEST);
+    if (!heartbeat.acknowledge) {
+        message->setFlag(ntcf::TestMessageFlag::e_UNACKNOWLEDGED);
+    }
+
+    message->makeEntity().makeControl().makeHeartbeat(heartbeat);
+
+    ntcf::TestMessageCallback messageCallback;
+
+    if (heartbeat.acknowledge) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 

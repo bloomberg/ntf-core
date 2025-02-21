@@ -580,6 +580,15 @@ class TestClient : public ntci::DatagramSocketSession,
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntsa::Error&                         error);
 
+    /// Analyze the specified incoming 'message'. Load the context into the
+    /// specified 'context', the fault, if any, into the specified 'fault',
+    /// and the response, if any, into the specified 'response'.
+    void analyzeIncomingMessage(
+        ntcf::TestContext*                        context,
+        ntcf::TestFault*                          fault,
+        bsl::shared_ptr<ntcf::TestMessage>*       response,
+        const bsl::shared_ptr<ntcf::TestMessage>& message);
+
     /// Load into the specified 'fault' the error information describing a
     /// failure to initiate an operation.
     void describeInititationFailure(ntcf::TestFault* fault);
@@ -594,19 +603,17 @@ class TestClient : public ntci::DatagramSocketSession,
 
     /// Invoke the specified 'callback' with the arguments deduced from the
     /// specified 'context', 'fault', and 'message'.
-    void dispatchTrade(
-        const ntcf::TestContext&                  context,
-        const ntcf::TestFault&                    fault,
-        const bsl::shared_ptr<ntcf::TestMessage>& message,
-        const ntcf::TestTradeCallback&            callback);
+    void dispatchTrade(const ntcf::TestContext&                  context,
+                       const ntcf::TestFault&                    fault,
+                       const bsl::shared_ptr<ntcf::TestMessage>& message,
+                       const ntcf::TestTradeCallback&            callback);
 
     /// Invoke the specified 'callback' with the arguments deduced from the
     /// specified 'context', 'fault', and 'message'.
-    void dispatchEcho(
-        const ntcf::TestContext&                  context,
-        const ntcf::TestFault&                    fault,
-        const bsl::shared_ptr<ntcf::TestMessage>& message,
-        const ntcf::TestEchoCallback&             callback);
+    void dispatchEcho(const ntcf::TestContext&                  context,
+                      const ntcf::TestFault&                    fault,
+                      const bsl::shared_ptr<ntcf::TestMessage>& message,
+                      const ntcf::TestEchoCallback&             callback);
 
     /// Invoke the specified 'callback' with the arguments deduced from the
     /// specified 'context', 'fault', and 'message'.
@@ -618,8 +625,6 @@ class TestClient : public ntci::DatagramSocketSession,
 
     /// Return the strand on which this object's functions should be called.
     const bsl::shared_ptr<ntci::Strand>& strand() const BSLS_KEYWORD_OVERRIDE;
-
-    
 
   public:
     /// Create a new client with the specified 'configuration'. Optionally
@@ -713,6 +718,13 @@ class TestClient : public ntci::DatagramSocketSession,
                        const ntcf::TestSignal&  signal,
                        const ntcf::TestOptions& options);
 
+    /// Send the specified 'signal' control message to the server and block
+    /// until a response is received or an error occurs. On success, load the
+    /// result into the specified 'result'. Return the error.
+    ntsa::Error signal(ntcf::TestEchoResult*    result,
+                       const ntcf::TestSignal&  signal,
+                       const ntcf::TestOptions& options);
+
     /// Send the specified 'signal' control message to the server. Invoke the
     /// specified 'callback' when a response is received or an error occurs.
     /// Return the error.
@@ -728,6 +740,11 @@ class TestClient : public ntci::DatagramSocketSession,
                         ntcf::TestFault*                   fault,
                         ntcf::TestAcknowledgment*          acknowledgment,
                         const ntcf::TestControlEncryption& encryption,
+                        const ntcf::TestOptions&           options);
+
+    /// Send the specified 'encryption' control message to the server. Return
+    /// the error.
+    ntsa::Error encrypt(const ntcf::TestControlEncryption& encryption,
                         const ntcf::TestOptions&           options);
 
     /// Send the specified 'encryption' control message to the server. Invoke
@@ -754,6 +771,11 @@ class TestClient : public ntci::DatagramSocketSession,
                          const ntcf::TestOptions&                options,
                          const ntcf::TestAcknowledgmentCallback& callback);
 
+    /// Send the specified 'compression' control message to the server. Return
+    /// the error.
+    ntsa::Error compress(const ntcf::TestControlCompression& compression,
+                         const ntcf::TestOptions&            options);
+
     /// Send the specified 'heartbeat' control message to the server and
     /// block until the operation completes. On success, load the response
     /// into the specified 'acknowledgment', otherwise, load the error
@@ -770,6 +792,11 @@ class TestClient : public ntci::DatagramSocketSession,
     ntsa::Error heartbeat(const ntcf::TestControlHeartbeat&       heartbeat,
                           const ntcf::TestOptions&                options,
                           const ntcf::TestAcknowledgmentCallback& callback);
+
+    /// Send the specified 'heartbeat' control message to the server. Return
+    /// the error.
+    ntsa::Error heartbeat(const ntcf::TestControlHeartbeat& heartbeat,
+                          const ntcf::TestOptions&          options);
 
     /// This type accepts an allocator argument to its constructors and may
     /// dynamically allocate memory during its operation.

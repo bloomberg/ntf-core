@@ -24,290 +24,521 @@ BSLS_IDENT_RCSID(ntcf_testserver_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcf {
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_ESTABLISHED(datagramSocket)    \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_ESTABLISHED(datagramSocket)       \
     do {                                                                      \
-        BALL_LOG_INFO << "Server datagram socket at "                                    \
+        BALL_LOG_INFO << "Server datagram socket at "                         \
                       << (datagramSocket)->sourceEndpoint() << " established" \
                       << BALL_LOG_END;                                        \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_CLOSED(datagramSocket)  \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_CLOSED(datagramSocket)            \
     do {                                                                      \
-        BALL_LOG_INFO << "Server datagram socket at "                                    \
+        BALL_LOG_INFO << "Server datagram socket at "                         \
                       << (datagramSocket)->sourceEndpoint() << " closed"      \
                       << BALL_LOG_END;                                        \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, type, event)        \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,             \
+                                                  type,                       \
+                                                  event)                      \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint()                 \
+        BALL_LOG_TRACE << "Server datagram socket at "                        \
+                       << (datagramSocket)->sourceEndpoint()                  \
                        << " processing " << (type) << " event " << (event)    \
                        << BALL_LOG_END;                                       \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_WOULD_BLOCK(datagramSocket)       \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_WOULD_BLOCK(              \
+    datagramSocket)                                                           \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint()                \
+        BALL_LOG_TRACE << "Server datagram socket at "                        \
+                       << (datagramSocket)->sourceEndpoint()                  \
                        << " receive WOULD_BLOCK" << BALL_LOG_END;             \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_EOF(datagramSocket)               \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_EOF(datagramSocket)       \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() \
+        BALL_LOG_TRACE << "Server datagram socket at "                        \
+                       << (datagramSocket)->sourceEndpoint()                  \
                        << " receive EOF" << BALL_LOG_END;                     \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_FAILED(datagramSocket, error)     \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_FAILED(datagramSocket,    \
+                                                           error)             \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint()                   \
+        BALL_LOG_TRACE << "Server datagram socket at "                        \
+                       << (datagramSocket)->sourceEndpoint()                  \
                        << " receive failed: " << (error) << BALL_LOG_END;     \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_CONTEXT(datagramSocket,           \
-                                                    blob,                     \
-                                                    receiveContext)           \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_CONTEXT(datagramSocket,   \
+                                                            blob,             \
+                                                            receiveContext)   \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server datagram socket at "                                   \
+        BALL_LOG_TRACE << "Server datagram socket at "                        \
                        << (datagramSocket)->sourceEndpoint() << " received "  \
                        << (blob).length() << " bytes from context "           \
                        << (receiveContext) << BALL_LOG_END;                   \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_PARSE_FAILED(datagramSocket, error)       \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_PARSE_FAILED(datagramSocket,      \
+                                                         error)               \
     do {                                                                      \
-        BALL_LOG_ERROR << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint()                   \
+        BALL_LOG_ERROR << "Server datagram socket at "                        \
+                       << (datagramSocket)->sourceEndpoint()                  \
                        << " parsing failed: " << (error) << BALL_LOG_END;     \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RESPONSE_IGNORED(datagramSocket,          \
-                                                     response)                \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RESPONSE_IGNORED(datagramSocket,  \
+                                                             response)        \
     do {                                                                      \
-        BALL_LOG_WARN << "Server datagram socket at "                                    \
-                      << (datagramSocket)->sourceEndpoint()                    \
+        BALL_LOG_WARN << "Server datagram socket at "                         \
+                      << (datagramSocket)->sourceEndpoint()                   \
                       << " ignoring response " << (*response)                 \
                       << BALL_LOG_END;                                        \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RESPONSE_UNSOLICTED(datagramSocket,       \
-                                                        response)             \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RESPONSE_UNSOLICITED(             \
+    datagramSocket,                                                           \
+    response)                                                                 \
     do {                                                                      \
-        BALL_LOG_WARN << "Server datagram socket at "                                    \
+        BALL_LOG_WARN << "Server datagram socket at "                         \
                       << (datagramSocket)->sourceEndpoint()                   \
                       << " received stale or unsolicited response "           \
                       << (*response) << BALL_LOG_END;                         \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_INCOMING_MESSAGE(datagramSocket, message) \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_UNEXPECTED_MESSAGE(streamSocket,  \
+                                                               message)       \
     do {                                                                      \
-        BALL_LOG_DEBUG << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint()                   \
-                       << " received message " << (*message) << BALL_LOG_END; \
+        BALL_LOG_WARN << "Server datagram socket at "                         \
+                      << (streamSocket)->sourceEndpoint() << " to "           \
+                      << (streamSocket)->remoteEndpoint()                     \
+                      << " ignoring unexpected message " << (*message)        \
+                      << BALL_LOG_END;                                        \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_OUTGOING_MESSAGE(datagramSocket, message) \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_UNEXPECTED_MESSAGE(streamSocket,    \
+                                                             message)         \
     do {                                                                      \
-        BALL_LOG_DEBUG << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint()                   \
-                       << " sending message " << (*message) << BALL_LOG_END;  \
+        BALL_LOG_WARN << "Client stream socket at "                           \
+                      << (streamSocket)->sourceEndpoint() << " to "           \
+                      << (streamSocket)->remoteEndpoint()                     \
+                      << " ignoring unexpected message " << (*message)        \
+                      << BALL_LOG_END;                                        \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_OUTGOING_BLOB(datagramSocket, blob)       \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_INCOMING_MESSAGE(datagramSocket,  \
+                                                             message,         \
+                                                             endpoint)        \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint() << " sending:\n" \
+        BALL_LOG_DEBUG << "Server datagram socket at "                        \
+                       << (datagramSocket)->sourceEndpoint() << " to "        \
+                       << (endpoint) << " received message " << (*message)    \
+                       << BALL_LOG_END;                                       \
+    } while (false)
+
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_OUTGOING_MESSAGE(datagramSocket,  \
+                                                             message,         \
+                                                             endpoint)        \
+    do {                                                                      \
+        BALL_LOG_DEBUG << "Server datagram socket at "                        \
+                       << (datagramSocket)->sourceEndpoint() << " to "        \
+                       << (endpoint) << " sending message " << (*message)     \
+                       << BALL_LOG_END;                                       \
+    } while (false)
+
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_OUTGOING_BLOB(datagramSocket,     \
+                                                          blob,               \
+                                                          endpoint)           \
+    do {                                                                      \
+        BALL_LOG_TRACE << "Server datagram socket at "                        \
+                       << (datagramSocket)->sourceEndpoint() << " to "        \
+                       << (endpoint) << " sending:\n"                         \
                        << bdlbb::BlobUtilHexDumper(&(blob)) << BALL_LOG_END;  \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_INCOMING_BLOB(datagramSocket, blob)       \
+#define NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_INCOMING_BLOB(datagramSocket,     \
+                                                          blob,               \
+                                                          endpoint)           \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server datagram socket at "                                   \
-                       << (datagramSocket)->sourceEndpoint()                   \
-                       << " received:\n"                                      \
+        BALL_LOG_TRACE << "Server datagram socket at "                        \
+                       << (datagramSocket)->sourceEndpoint() << " to "        \
+                       << (endpoint) << " received:\n"                        \
                        << bdlbb::BlobUtilHexDumper(&(blob)) << BALL_LOG_END;  \
     } while (false)
 
-
-
-
-
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_ACCEPTED(streamSocket)      \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_ACCEPTED(streamSocket)              \
     do {                                                                      \
-        BALL_LOG_INFO << "Server stream socket at "                                    \
+        BALL_LOG_INFO << "Server stream socket at "                           \
                       << (streamSocket)->sourceEndpoint() << " to "           \
                       << (streamSocket)->remoteEndpoint() << " accepted"      \
                       << BALL_LOG_END;                                        \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_CLOSED(streamSocket)        \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_CLOSED(streamSocket)                \
     do {                                                                      \
-        BALL_LOG_INFO << "Server stream socket at "                                    \
+        BALL_LOG_INFO << "Server stream socket at "                           \
                       << (streamSocket)->sourceEndpoint() << " to "           \
                       << (streamSocket)->remoteEndpoint() << " closed"        \
                       << BALL_LOG_END;                                        \
     } while (false)
 
-
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket, type, event)            \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket, type, event)    \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server stream socket at "                                   \
+        BALL_LOG_TRACE << "Server stream socket at "                          \
                        << (streamSocket)->sourceEndpoint() << " to "          \
                        << (streamSocket)->remoteEndpoint() << " processing "  \
                        << (type) << " event " << (event) << BALL_LOG_END;     \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_WOULD_BLOCK(streamSocket)           \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_WOULD_BLOCK(streamSocket)   \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server stream socket at "                                   \
+        BALL_LOG_TRACE << "Server stream socket at "                          \
                        << (streamSocket)->sourceEndpoint() << " to "          \
                        << (streamSocket)->remoteEndpoint()                    \
                        << " receive WOULD_BLOCK" << BALL_LOG_END;             \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_EOF(streamSocket)                   \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_EOF(streamSocket)           \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server stream socket at "                                   \
+        BALL_LOG_TRACE << "Server stream socket at "                          \
                        << (streamSocket)->sourceEndpoint() << " to "          \
                        << (streamSocket)->remoteEndpoint() << " receive EOF"  \
                        << BALL_LOG_END;                                       \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_FAILED(streamSocket, error)         \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_FAILED(streamSocket, error) \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server stream socket at "                                   \
+        BALL_LOG_TRACE << "Server stream socket at "                          \
                        << (streamSocket)->sourceEndpoint() << " to "          \
                        << (streamSocket)->remoteEndpoint()                    \
                        << " receive failed: " << (error) << BALL_LOG_END;     \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_CONTEXT(streamSocket,               \
-                                                  blob,                       \
-                                                  receiveContext)             \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_CONTEXT(streamSocket,       \
+                                                          blob,               \
+                                                          receiveContext)     \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server stream socket at "                                   \
+        BALL_LOG_TRACE << "Server stream socket at "                          \
                        << (streamSocket)->sourceEndpoint() << " to "          \
                        << (streamSocket)->remoteEndpoint() << " received "    \
                        << (blob).length() << " bytes from context "           \
                        << (receiveContext) << BALL_LOG_END;                   \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_PARSE_FAILED(streamSocket, error)           \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_PARSE_FAILED(streamSocket, error)   \
     do {                                                                      \
-        BALL_LOG_ERROR << "Server stream socket at "                                   \
+        BALL_LOG_ERROR << "Server stream socket at "                          \
                        << (streamSocket)->sourceEndpoint() << " to "          \
                        << (streamSocket)->remoteEndpoint()                    \
                        << " parsing failed: " << (error) << BALL_LOG_END;     \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RESPONSE_IGNORED(streamSocket, response)    \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RESPONSE_IGNORED(streamSocket,      \
+                                                           response)          \
     do {                                                                      \
-        BALL_LOG_WARN << "Server stream socket at "                                    \
+        BALL_LOG_WARN << "Server stream socket at "                           \
                       << (streamSocket)->sourceEndpoint() << " to "           \
                       << (streamSocket)->remoteEndpoint()                     \
                       << " ignoring response " << (*response)                 \
                       << BALL_LOG_END;                                        \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RESPONSE_UNSOLICTED(streamSocket, response) \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_RESPONSE_UNSOLICITED(streamSocket,  \
+                                                               response)      \
     do {                                                                      \
-        BALL_LOG_WARN << "Server stream socket at "                                    \
+        BALL_LOG_WARN << "Server stream socket at "                           \
                       << (streamSocket)->sourceEndpoint() << " to "           \
                       << (streamSocket)->remoteEndpoint()                     \
                       << " received stale or unsolicited response "           \
                       << (*response) << BALL_LOG_END;                         \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_INCOMING_MESSAGE(streamSocket, message)     \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_INCOMING_MESSAGE(streamSocket,      \
+                                                           message)           \
     do {                                                                      \
-        BALL_LOG_DEBUG << "Server stream socket at "                                   \
+        BALL_LOG_DEBUG << "Server stream socket at "                          \
                        << (streamSocket)->sourceEndpoint() << " to "          \
                        << (streamSocket)->remoteEndpoint()                    \
                        << " received message " << (*message) << BALL_LOG_END; \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_OUTGOING_MESSAGE(streamSocket, message)     \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_OUTGOING_MESSAGE(streamSocket,      \
+                                                           message)           \
     do {                                                                      \
-        BALL_LOG_DEBUG << "Server stream socket at "                                   \
+        BALL_LOG_DEBUG << "Server stream socket at "                          \
                        << (streamSocket)->sourceEndpoint() << " to "          \
                        << (streamSocket)->remoteEndpoint()                    \
                        << " sending message " << (*message) << BALL_LOG_END;  \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_OUTGOING_BLOB(streamSocket, blob)           \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_OUTGOING_BLOB(streamSocket, blob)   \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server stream socket at "                                   \
+        BALL_LOG_TRACE << "Server stream socket at "                          \
                        << (streamSocket)->sourceEndpoint() << " to "          \
                        << (streamSocket)->remoteEndpoint() << " sending:\n"   \
                        << bdlbb::BlobUtilHexDumper(&(blob)) << BALL_LOG_END;  \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_INCOMING_BLOB(streamSocket, blob)           \
+#define NTCF_TESTSERVER_LOG_STREAM_SOCKET_INCOMING_BLOB(streamSocket, blob)   \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server stream socket at "                                   \
+        BALL_LOG_TRACE << "Server stream socket at "                          \
                        << (streamSocket)->sourceEndpoint() << " to "          \
                        << (streamSocket)->remoteEndpoint() << " received:\n"  \
                        << bdlbb::BlobUtilHexDumper(&(blob)) << BALL_LOG_END;  \
     } while (false)
 
-
-
-
-
-
-
-#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_ESTABLISHED(              \
-    listenerSocket)                                                           \
+#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_ESTABLISHED(listenerSocket)       \
     do {                                                                      \
-        BALL_LOG_DEBUG << "Server listener socket at "                                 \
+        BALL_LOG_DEBUG << "Server listener socket at "                        \
                        << (listenerSocket)->sourceEndpoint()                  \
                        << " established" << BALL_LOG_END;                     \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_CLOSED(listenerSocket)    \
+#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_CLOSED(listenerSocket)            \
     do {                                                                      \
-        BALL_LOG_DEBUG << "Server listener socket at "                                 \
+        BALL_LOG_DEBUG << "Server listener socket at "                        \
                        << (listenerSocket)->sourceEndpoint() << " closed"     \
                        << BALL_LOG_END;                                       \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,     \
-                                                          type,               \
-                                                          event)              \
+#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,             \
+                                                  type,                       \
+                                                  event)                      \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server listener socket at "                                 \
+        BALL_LOG_TRACE << "Server listener socket at "                        \
                        << (listenerSocket)->sourceEndpoint()                  \
                        << " processing " << (type) << " event " << (event)    \
                        << BALL_LOG_END;                                       \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_ACCEPT_WOULD_BLOCK(       \
+#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_ACCEPT_WOULD_BLOCK(               \
     listenerSocket)                                                           \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server listener socket at "                                 \
+        BALL_LOG_TRACE << "Server listener socket at "                        \
                        << (listenerSocket)->sourceEndpoint()                  \
                        << " accept WOULD_BLOCK" << BALL_LOG_END;              \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_ACCEPT_EOF(               \
-    listenerSocket)                                                           \
+#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_ACCEPT_EOF(listenerSocket)        \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server listener socket at "                                 \
+        BALL_LOG_TRACE << "Server listener socket at "                        \
                        << (listenerSocket)->sourceEndpoint() << " accept EOF" \
                        << BALL_LOG_END;                                       \
     } while (false)
 
-#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_ACCEPT_FAILED(            \
-    listenerSocket,                                                           \
-    error)                                                                    \
+#define NTCF_TESTSERVER_LOG_LISTENER_SOCKET_ACCEPT_FAILED(listenerSocket,     \
+                                                          error)              \
     do {                                                                      \
-        BALL_LOG_TRACE << "Server listener socket at "                                 \
+        BALL_LOG_TRACE << "Server listener socket at "                        \
                        << (listenerSocket)->sourceEndpoint()                  \
                        << " accept failed: " << (error) << BALL_LOG_END;      \
     } while (false)
+
+#define NTCF_TESTSERVER_LOG_PROCESSOR_NOT_FOUND(message, sender, endpoint)    \
+    do {                                                                      \
+        BALL_LOG_TRACE << "Server ignoring unrecognized message "             \
+                       << (*message) << " from " << (endpoint)                \
+                       << BALL_LOG_END;                                       \
+    } while (false)
+
+bsl::shared_ptr<ntcf::TestMessage> TestServerTransaction::createResponse()
+{
+    bsl::shared_ptr<ntcf::TestMessage> response = d_responsePool_sp->create();
+
+    response->setTransaction(d_request_sp->transaction());
+
+    response->setSerializationType(d_request_sp->serializationType());
+    response->setCompressionType(d_request_sp->compressionType());
+
+    response->setClientTimestamp(d_request_sp->clientTimestamp());
+    response->setServerTimestamp(d_timestamp);
+
+    response->setDeadline(d_request_sp->deadline());
+
+    return response;
+}
+
+void TestServerTransaction::deliverResponse(
+    const bsl::shared_ptr<ntcf::TestMessage>& response)
+{
+    ntsa::Error error;
+
+    ntca::SendToken sendToken;
+    sendToken.setValue(d_request_sp->transaction());
+
+    ntca::SendOptions sendOptions;
+    sendOptions.setToken(sendToken);
+    sendOptions.setDeadline(d_request_sp->deadline());
+
+    if (response->type() == ntcf::TestMessageType::e_FAULT) {
+        sendOptions.setHighWatermark(bsl::numeric_limits<bsl::size_t>::max());
+    }
+
+    if (d_endpoint.has_value()) {
+        sendOptions.setEndpoint(d_endpoint.value());
+    }
+
+    bsl::shared_ptr<bdlbb::Blob> blob = d_dataPool_sp->createOutgoingBlob();
+
+    error = response->encode(blob.get(),
+                             d_serialization_sp.get(),
+                             d_compression_sp.get());
+    if (error) {
+        BALL_LOG_WARN << "Failed to encode response " << *response << ": "
+                      << error << BALL_LOG_END;
+        return;
+    }
+
+    if (d_streamSocket_sp) {
+        NTCF_TESTSERVER_LOG_STREAM_SOCKET_OUTGOING_MESSAGE(d_streamSocket_sp,
+                                                           response);
+
+        NTCF_TESTSERVER_LOG_STREAM_SOCKET_OUTGOING_BLOB(d_streamSocket_sp,
+                                                        *blob);
+
+        ntsa::Data data(blob);
+
+        error = d_streamSocket_sp->send(data, sendOptions);
+        if (error) {
+            BALL_LOG_WARN << "Failed to deliver response " << *response << ": "
+                          << error << BALL_LOG_END;
+            return;
+        }
+    }
+    else if (d_datagramSocket_sp) {
+        NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_OUTGOING_MESSAGE(
+            d_datagramSocket_sp,
+            response,
+            d_endpoint.value());
+
+        NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_OUTGOING_BLOB(d_datagramSocket_sp,
+                                                          *blob,
+                                                          d_endpoint.value());
+
+        ntsa::Data data(blob);
+
+        error = d_datagramSocket_sp->send(data, sendOptions);
+        if (error) {
+            BALL_LOG_WARN << "Failed to deliver response " << *response << ": "
+                          << error << BALL_LOG_END;
+            return;
+        }
+    }
+}
+
+TestServerTransaction::TestServerTransaction(
+    const bsl::shared_ptr<ntcf::TestMessagePool>& responsePool,
+    const bsl::shared_ptr<ntci::DataPool>&        dataPool,
+    const bsl::shared_ptr<ntci::Serialization>&   serialization,
+    const bsl::shared_ptr<ntci::Compression>&     compression,
+    bslma::Allocator*                             basicAllocator)
+: d_mutex()
+, d_request_sp()
+, d_responsePool_sp(responsePool)
+, d_dataPool_sp(dataPool)
+, d_datagramSocket_sp()
+, d_streamSocket_sp()
+, d_serialization_sp(serialization)
+, d_compression_sp(compression)
+, d_endpoint()
+, d_timestamp()
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+void TestServerTransaction::reset()
+{
+    d_request_sp.reset();
+    d_datagramSocket_sp.reset();
+    d_streamSocket_sp.reset();
+    d_endpoint.reset();
+    d_timestamp = bsls::TimeInterval();
+}
+
+void TestServerTransaction::start(
+    const bsl::shared_ptr<ntcf::TestMessage>&  request,
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const bsls::TimeInterval&                  timestamp)
+{
+    d_request_sp      = request;
+    d_streamSocket_sp = streamSocket;
+    d_timestamp       = timestamp;
+}
+
+void TestServerTransaction::start(
+    const bsl::shared_ptr<ntcf::TestMessage>&    request,
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const bsls::TimeInterval&                    timestamp,
+    const ntsa::Endpoint&                        endpoint)
+{
+    d_request_sp        = request;
+    d_datagramSocket_sp = datagramSocket;
+    d_endpoint          = endpoint;
+    d_timestamp         = timestamp;
+}
+
+void TestServerTransaction::complete(const ntcf::TestTrade& trade)
+{
+    bsl::shared_ptr<ntcf::TestMessage> response = this->createResponse();
+
+    response->setType(ntcf::TestMessageType::e_TRADE);
+    response->setFlag(ntcf::TestMessageFlag::e_RESPONSE);
+
+    response->makeEntity().makeContent().makeTrade(trade);
+
+    this->deliverResponse(response);
+}
+
+void TestServerTransaction::complete(const ntcf::TestEcho& echo)
+{
+    bsl::shared_ptr<ntcf::TestMessage> response = this->createResponse();
+
+    response->setType(ntcf::TestMessageType::e_ECHO);
+    response->setFlag(ntcf::TestMessageFlag::e_RESPONSE);
+
+    response->makeEntity().makeControl().makeEcho(echo);
+
+    this->deliverResponse(response);
+}
+
+void TestServerTransaction::complete(
+    const ntcf::TestAcknowledgment& acknowledgment)
+{
+    bsl::shared_ptr<ntcf::TestMessage> response = this->createResponse();
+
+    response->setType(ntcf::TestMessageType::e_ACKNOWLEDGMENT);
+    response->setFlag(ntcf::TestMessageFlag::e_RESPONSE);
+
+    if (d_request_sp->entity().value().isContentValue()) {
+        response->makeEntity().makeContent().makeAcknowledgment(
+            acknowledgment);
+    }
+    else if (d_request_sp->entity().value().isControlValue()) {
+        response->makeEntity().makeControl().makeAcknowledgment(
+            acknowledgment);
+    }
+
+    this->deliverResponse(response);
+}
+
+void TestServerTransaction::complete(const ntcf::TestFault& fault)
+{
+    bsl::shared_ptr<ntcf::TestMessage> response = this->createResponse();
+
+    response->setType(ntcf::TestMessageType::e_FAULT);
+    response->setFlag(ntcf::TestMessageFlag::e_RESPONSE);
+
+    if (d_request_sp->entity().value().isContentValue()) {
+        response->makeEntity().makeContent().makeFault(fault);
+    }
+    else if (d_request_sp->entity().value().isControlValue()) {
+        response->makeEntity().makeControl().makeFault(fault);
+    }
+
+    this->deliverResponse(response);
+}
 
 void TestServer::processDatagramSocketEstablished(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket)
@@ -330,7 +561,6 @@ void TestServer::processDatagramSocketClosed(
 
     this->privateDatagramSocketDown(self, datagramSocket);
 }
-
 
 void TestServer::processStreamSocketEstablished(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
@@ -361,9 +591,7 @@ void TestServer::processListenerSocketEstablished(
     bsl::shared_ptr<Self> self(this->getSelf(this));
     LockGuard             lock(&d_mutex);
 
-    this->privateListenerSocketUp(
-        self, 
-        listenerSocket);
+    this->privateListenerSocketUp(self, listenerSocket);
 }
 
 void TestServer::processListenerSocketClosed(
@@ -376,19 +604,8 @@ void TestServer::processListenerSocketClosed(
     bsl::shared_ptr<Self> self(this->getSelf(this));
     LockGuard             lock(&d_mutex);
 
-    this->privateListenerSocketDown(
-        self, 
-        listenerSocket);
+    this->privateListenerSocketDown(self, listenerSocket);
 }
-
-
-
-
-
-
-
-
-
 
 void TestServer::processReadQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
@@ -397,7 +614,9 @@ void TestServer::processReadQueueFlowControlRelaxed(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "read queue", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "read queue",
+                                              event);
 }
 
 void TestServer::processReadQueueFlowControlApplied(
@@ -407,144 +626,123 @@ void TestServer::processReadQueueFlowControlApplied(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "read queue", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "read queue",
+                                              event);
 }
 
 void TestServer::processReadQueueLowWatermark(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const ntca::ReadQueueEvent&                  event)
 {
-    NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "read queue", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "read queue",
+                                              event);
 
     bsl::shared_ptr<Self> self(this->getSelf(this));
 
     ntsa::Error error;
 
-    ntca::ReceiveContext receiveContext;
-    ntca::ReceiveOptions receiveOptions;
-    bdlbb::Blob          blob;
+    while (true) {
+        ntca::ReceiveContext receiveContext;
+        ntca::ReceiveOptions receiveOptions;
+        bdlbb::Blob          blob;
 
-    receiveOptions.setMinSize(1);
-    receiveOptions.setMaxSize(65507);
+        receiveOptions.setMinSize(1);
+        receiveOptions.setMaxSize(65507);
 
-    error =
-        d_datagramSocket_sp->receive(&receiveContext, &blob, receiveOptions);
-    if (error) {
-        if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK)) {
-            NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_WOULD_BLOCK(
-                d_datagramSocket_sp);
-        }
-        else if (error == ntsa::Error(ntsa::Error::e_EOF)) {
-            NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_EOF(d_datagramSocket_sp);
-        }
-        else {
-            NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_FAILED(d_datagramSocket_sp,
-                                                       error);
-        }
-
-        d_datagramSocket_sp->close();
-        return;
-    }
-
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_CONTEXT(d_datagramSocket_sp,
-                                                blob,
-                                                receiveContext);
-
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_INCOMING_BLOB(d_datagramSocket_sp, blob);
-
-    // MRM
-    #if 0
-    error = d_messageParser.add(blob);
-    if (error) {
-        NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_PARSE_FAILED(d_datagramSocket_sp, error);
-        d_datagramSocket_sp->close();
-        return;
-    }
-
-    while (d_messageParser.hasAnyAvailable()) {
-        bsl::shared_ptr<ntva::AsmpMessage> message;
-        error = d_messageParser.dequeue(&message);
+        error = d_datagramSocket_sp->receive(&receiveContext,
+                                             &blob,
+                                             receiveOptions);
         if (error) {
-            NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_PARSE_FAILED(d_datagramSocket_sp,
-                                                     error);
+            if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK)) {
+                NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_WOULD_BLOCK(
+                    d_datagramSocket_sp);
+            }
+            else if (error == ntsa::Error(ntsa::Error::e_EOF)) {
+                NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_EOF(
+                    d_datagramSocket_sp);
+            }
+            else {
+                NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_FAILED(
+                    d_datagramSocket_sp,
+                    error);
+            }
+
             d_datagramSocket_sp->close();
             return;
         }
 
-        NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_INCOMING_MESSAGE(d_datagramSocket_sp,
-                                                     message);
+        NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RECEIVE_CONTEXT(
+            d_datagramSocket_sp,
+            blob,
+            receiveContext);
 
-        // d_manager_sp->processSocketIncomingMessage(self, message);
+        NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_INCOMING_BLOB(
+            d_datagramSocket_sp,
+            blob,
+            receiveContext.endpoint());
 
-        if (message->isResponse()) {
-            bsl::shared_ptr<ntvc::AsmpTransmission> transmission;
-            if (d_transmissionCatalog.remove(&transmission,
-                                             message->transaction()))
-            {
-                if (!transmission->invoke(self,
-                                          message,
-                                          ntsa::Error(),
-                                          ntci::Strand::unknown()))
-                {
-                    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RESPONSE_IGNORED(
-                        d_datagramSocket_sp,
-                        message);
-                }
-                continue;
-            }
-            else {
-                NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_RESPONSE_UNSOLICTED(
-                    d_datagramSocket_sp,
-                    message);
-                continue;
-            }
+        error = d_datagramParser_sp->add(blob);
+        if (error) {
+            NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_PARSE_FAILED(
+                d_datagramSocket_sp,
+                error);
+            return;
         }
 
-        ntvi::AsmpMessageCallback callback;
-        if (d_callbackQueue.pop(&callback)) {
-            callback.execute(self,
-                             message,
-                             ntsa::Error(),
-                             ntci::Strand::unknown());
-            continue;
+        if (!receiveContext.endpoint().has_value()) {
+            NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_PARSE_FAILED(
+                d_datagramSocket_sp,
+                error);
+            return;
         }
 
-        bsl::shared_ptr<ntvi::AsmpTransaction> transaction;
-        bsl::shared_ptr<ntvi::AsmpProvider>    provider;
+        if (!d_datagramParser_sp->hasAnyAvailable()) {
+            NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_PARSE_FAILED(
+                d_datagramSocket_sp,
+                error);
+            return;
+        }
 
-        if (receiveContext.endpoint().has_value()) {
-            error = d_manager_sp->resolve(&transaction,
-                                          &provider,
-                                          self,
-                                          message,
-                                          receiveContext.endpoint().value());
+        bsl::shared_ptr<ntcf::TestMessage> message;
+        error = d_datagramParser_sp->dequeue(&message);
+        if (error) {
+            NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_PARSE_FAILED(
+                d_datagramSocket_sp,
+                error);
+            return;
+        }
+
+        NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_INCOMING_MESSAGE(
+            d_datagramSocket_sp,
+            message,
+            receiveContext.endpoint());
+
+        if (message->isRequest() || message->isSubscription()) {
+            bsl::shared_ptr<ntcf::TestServerTransaction> transaction;
+            transaction.createInplace(d_allocator_p,
+                                      d_messagePool_sp,
+                                      d_dataPool_sp,
+                                      d_serialization_sp,
+                                      d_compression_sp,
+                                      d_allocator_p);
+
+            transaction->start(message,
+                               d_datagramSocket_sp,
+                               d_datagramSocket_sp->currentTime(),
+                               receiveContext.endpoint().value());
+
+            this->dispatchMessage(transaction, message);
         }
         else {
-            error =
-                d_manager_sp->resolve(&transaction, &provider, self, message);
+            NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_UNEXPECTED_MESSAGE(
+                d_datagramSocket_sp,
+                message);
         }
-
-        if (error) {
-            BALL_LOG_ERROR << "No provider registered for message " << *message
-                           << BALL_LOG_END;
-
-            bsl::shared_ptr<ntva::AsmpMessage> response =
-                d_manager_sp->createMessage();
-            response->reflect(*message);
-
-            response->setAction(ntva::AsmpAction::e_REFUSED);
-            response->setEntityEncoding(ntva::Encoding::e_NONE);
-
-            this->send(response, ntva::AsmpMessageOptions());
-            continue;
-        }
-
-        provider->processMessage(transaction);
     }
-    #endif
 }
 
 void TestServer::processReadQueueHighWatermark(
@@ -554,7 +752,9 @@ void TestServer::processReadQueueHighWatermark(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "read queue", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "read queue",
+                                              event);
 }
 
 void TestServer::processReadQueueDiscarded(
@@ -564,7 +764,9 @@ void TestServer::processReadQueueDiscarded(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "read queue", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "read queue",
+                                              event);
 }
 
 void TestServer::processWriteQueueFlowControlRelaxed(
@@ -574,7 +776,9 @@ void TestServer::processWriteQueueFlowControlRelaxed(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "write queue", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "write queue",
+                                              event);
 }
 
 void TestServer::processWriteQueueFlowControlApplied(
@@ -584,7 +788,9 @@ void TestServer::processWriteQueueFlowControlApplied(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "write queue", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "write queue",
+                                              event);
 }
 
 void TestServer::processWriteQueueLowWatermark(
@@ -594,7 +800,9 @@ void TestServer::processWriteQueueLowWatermark(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "write queue", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "write queue",
+                                              event);
 }
 
 void TestServer::processWriteQueueHighWatermark(
@@ -604,7 +812,9 @@ void TestServer::processWriteQueueHighWatermark(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "write queue", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "write queue",
+                                              event);
 }
 
 void TestServer::processWriteQueueDiscarded(
@@ -614,7 +824,9 @@ void TestServer::processWriteQueueDiscarded(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "write queue", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "write queue",
+                                              event);
 }
 
 void TestServer::processShutdownInitiated(
@@ -624,7 +836,9 @@ void TestServer::processShutdownInitiated(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "shutdown", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "shutdown",
+                                              event);
 }
 
 void TestServer::processShutdownReceive(
@@ -634,7 +848,9 @@ void TestServer::processShutdownReceive(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "shutdown", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "shutdown",
+                                              event);
 }
 
 void TestServer::processShutdownSend(
@@ -644,7 +860,9 @@ void TestServer::processShutdownSend(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "shutdown", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "shutdown",
+                                              event);
 }
 
 void TestServer::processShutdownComplete(
@@ -654,7 +872,9 @@ void TestServer::processShutdownComplete(
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "shutdown", event);
+    NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket,
+                                              "shutdown",
+                                              event);
 }
 
 void TestServer::processError(
@@ -667,19 +887,6 @@ void TestServer::processError(
     NTCF_TESTSERVER_LOG_DATAGRAM_SOCKET_EVENT(datagramSocket, "error", event);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 void TestServer::processReadQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::ReadQueueEvent&                event)
@@ -704,13 +911,10 @@ void TestServer::processReadQueueLowWatermark(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::ReadQueueEvent&                event)
 {
-    NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket, "read queue", event);
 
-    // MRM
-#if 0
     bsl::shared_ptr<Self> self(this->getSelf(this));
 
     ntsa::Error error;
@@ -719,104 +923,84 @@ void TestServer::processReadQueueLowWatermark(
     ntca::ReceiveOptions receiveOptions;
     bdlbb::Blob          blob;
 
-    receiveOptions.setMinSize(d_messageParser.numNeeded());
-    receiveOptions.setMaxSize(bsl::numeric_limits<bsl::size_t>::max());
-
-    error = d_streamSocket_sp->receive(&receiveContext, &blob, receiveOptions);
-    if (error) {
-        if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK)) {
-            NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_WOULD_BLOCK(d_streamSocket_sp);
-        }
-        else if (error == ntsa::Error(ntsa::Error::e_EOF)) {
-            NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_EOF(d_streamSocket_sp);
-        }
-        else {
-            NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_FAILED(d_streamSocket_sp, error);
-        }
-
-        d_streamSocket_sp->close();
-        return;
-    }
-
-    NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_CONTEXT(d_streamSocket_sp,
-                                              blob,
-                                              receiveContext);
-
-    NTCF_TESTSERVER_LOG_STREAM_SOCKET_INCOMING_BLOB(d_streamSocket_sp, blob);
-
-    error = d_messageParser.add(blob);
-    if (error) {
-        NTCF_TESTSERVER_LOG_STREAM_SOCKET_PARSE_FAILED(d_streamSocket_sp, error);
-        d_streamSocket_sp->close();
-        return;
-    }
-
-    while (d_messageParser.hasAnyAvailable()) {
-        bsl::shared_ptr<ntva::AsmpMessage> message;
-        error = d_messageParser.dequeue(&message);
-        if (error) {
-            NTCF_TESTSERVER_LOG_STREAM_SOCKET_PARSE_FAILED(d_streamSocket_sp, error);
-            d_streamSocket_sp->close();
+    bsl::shared_ptr<ntcf::TestMessageParser> streamParser;
+    {
+        LockGuard                 lock(&d_mutex);
+        StreamSocketMap::iterator it = d_streamSocketMap.find(streamSocket);
+        if (it == d_streamSocketMap.end()) {
             return;
         }
 
-        NTCF_TESTSERVER_LOG_STREAM_SOCKET_INCOMING_MESSAGE(d_streamSocket_sp, message);
-
-        if (message->isResponse()) {
-            bsl::shared_ptr<ntvc::AsmpTransmission> transmission;
-            if (d_transmissionCatalog.remove(&transmission,
-                                             message->transaction()))
-            {
-                if (!transmission->invoke(self,
-                                          message,
-                                          ntsa::Error(),
-                                          ntci::Strand::unknown()))
-                {
-                    NTCF_TESTSERVER_LOG_STREAM_SOCKET_RESPONSE_IGNORED(
-                        d_streamSocket_sp,
-                        message);
-                }
-                continue;
-            }
-            else {
-                NTCF_TESTSERVER_LOG_STREAM_SOCKET_RESPONSE_UNSOLICTED(
-                    d_streamSocket_sp,
-                    message);
-                continue;
-            }
-        }
-
-        ntvi::AsmpMessageCallback callback;
-        if (d_callbackQueue.pop(&callback)) {
-            callback.execute(self,
-                             message,
-                             ntsa::Error(),
-                             ntci::Strand::unknown());
-            continue;
-        }
-
-        bsl::shared_ptr<ntvi::AsmpTransaction> transaction;
-        bsl::shared_ptr<ntvi::AsmpProvider>    provider;
-
-        error = d_manager_sp->resolve(&transaction, &provider, self, message);
-        if (error) {
-            BALL_LOG_ERROR << "No provider registered for message " << *message
-                           << BALL_LOG_END;
-
-            bsl::shared_ptr<ntva::AsmpMessage> response =
-                d_manager_sp->createMessage();
-            response->reflect(*message);
-
-            response->setAction(ntva::AsmpAction::e_REFUSED);
-            response->setEntityEncoding(ntva::Encoding::e_NONE);
-
-            this->send(response, ntva::AsmpMessageOptions());
-            continue;
-        }
-
-        provider->processMessage(transaction);
+        streamParser = it->second;
     }
-#endif
+
+    receiveOptions.setMinSize(1);
+    receiveOptions.setMaxSize(bsl::numeric_limits<bsl::size_t>::max());
+
+    error = streamSocket->receive(&receiveContext, &blob, receiveOptions);
+    if (error) {
+        if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK)) {
+            NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_WOULD_BLOCK(
+                streamSocket);
+        }
+        else if (error == ntsa::Error(ntsa::Error::e_EOF)) {
+            NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_EOF(streamSocket);
+        }
+        else {
+            NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_FAILED(streamSocket,
+                                                             error);
+        }
+
+        streamSocket->close();
+        return;
+    }
+
+    NTCF_TESTSERVER_LOG_STREAM_SOCKET_RECEIVE_CONTEXT(streamSocket,
+                                                      blob,
+                                                      receiveContext);
+
+    NTCF_TESTSERVER_LOG_STREAM_SOCKET_INCOMING_BLOB(streamSocket, blob);
+
+    error = streamParser->add(blob);
+    if (error) {
+        NTCF_TESTSERVER_LOG_STREAM_SOCKET_PARSE_FAILED(streamSocket, error);
+        streamSocket->close();
+        return;
+    }
+
+    while (streamParser->hasAnyAvailable()) {
+        bsl::shared_ptr<ntcf::TestMessage> message;
+        error = streamParser->dequeue(&message);
+        if (error) {
+            NTCF_TESTSERVER_LOG_STREAM_SOCKET_PARSE_FAILED(streamSocket,
+                                                           error);
+            streamParser->close();
+            return;
+        }
+
+        NTCF_TESTSERVER_LOG_STREAM_SOCKET_INCOMING_MESSAGE(streamSocket,
+                                                           message);
+
+        if (message->isRequest() || message->isSubscription()) {
+            bsl::shared_ptr<ntcf::TestServerTransaction> transaction;
+            transaction.createInplace(d_allocator_p,
+                                      d_messagePool_sp,
+                                      d_dataPool_sp,
+                                      d_serialization_sp,
+                                      d_compression_sp,
+                                      d_allocator_p);
+
+            transaction->start(message,
+                               streamSocket,
+                               streamSocket->currentTime());
+
+            this->dispatchMessage(transaction, message);
+        }
+        else {
+            NTCF_TESTSERVER_LOG_STREAM_SOCKET_UNEXPECTED_MESSAGE(streamSocket,
+                                                                 message);
+        }
+    }
 }
 
 void TestServer::processReadQueueHighWatermark(
@@ -846,7 +1030,9 @@ void TestServer::processWriteQueueFlowControlRelaxed(
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket, "write queue", event);
+    NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket,
+                                            "write queue",
+                                            event);
 }
 
 void TestServer::processWriteQueueFlowControlApplied(
@@ -856,7 +1042,9 @@ void TestServer::processWriteQueueFlowControlApplied(
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket, "write queue", event);
+    NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket,
+                                            "write queue",
+                                            event);
 }
 
 void TestServer::processWriteQueueLowWatermark(
@@ -866,7 +1054,9 @@ void TestServer::processWriteQueueLowWatermark(
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket, "write queue", event);
+    NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket,
+                                            "write queue",
+                                            event);
 }
 
 void TestServer::processWriteQueueHighWatermark(
@@ -876,7 +1066,9 @@ void TestServer::processWriteQueueHighWatermark(
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket, "write queue", event);
+    NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket,
+                                            "write queue",
+                                            event);
 }
 
 void TestServer::processWriteQueueDiscarded(
@@ -886,7 +1078,9 @@ void TestServer::processWriteQueueDiscarded(
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket, "write queue", event);
+    NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket,
+                                            "write queue",
+                                            event);
 }
 
 void TestServer::processDowngradeInitiated(
@@ -912,7 +1106,6 @@ void TestServer::processDowngradeComplete(
     LockGuard             lock(&d_mutex);
 
     this->privateStreamSocketCompleteDowngrade(self, streamSocket, event);
-
 }
 
 void TestServer::processShutdownInitiated(
@@ -965,13 +1158,6 @@ void TestServer::processError(
     NTCF_TESTSERVER_LOG_STREAM_SOCKET_EVENT(streamSocket, "error", event);
 }
 
-
-
-
-
-
-
-
 void TestServer::processAcceptQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
     const ntca::AcceptQueueEvent&                event)
@@ -980,8 +1166,8 @@ void TestServer::processAcceptQueueFlowControlRelaxed(
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,
-                                                      "accept queue",
-                                                      event);
+                                              "accept queue",
+                                              event);
 }
 
 void TestServer::processAcceptQueueFlowControlApplied(
@@ -992,8 +1178,8 @@ void TestServer::processAcceptQueueFlowControlApplied(
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,
-                                                      "accept queue",
-                                                      event);
+                                              "accept queue",
+                                              event);
 }
 
 void TestServer::processAcceptQueueLowWatermark(
@@ -1003,8 +1189,8 @@ void TestServer::processAcceptQueueLowWatermark(
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,
-                                                      "accept queue",
-                                                      event);
+                                              "accept queue",
+                                              event);
 
     bsl::shared_ptr<Self> self(this->getSelf(this));
     LockGuard             lock(&d_mutex);
@@ -1032,8 +1218,7 @@ void TestServer::processAcceptQueueLowWatermark(
                 return;
             }
             else if (error == ntsa::Error(ntsa::Error::e_EOF)) {
-                NTCF_TESTSERVER_LOG_LISTENER_SOCKET_ACCEPT_EOF(
-                    listenerSocket);
+                NTCF_TESTSERVER_LOG_LISTENER_SOCKET_ACCEPT_EOF(listenerSocket);
             }
             else {
                 NTCF_TESTSERVER_LOG_LISTENER_SOCKET_ACCEPT_FAILED(
@@ -1064,8 +1249,8 @@ void TestServer::processAcceptQueueHighWatermark(
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,
-                                                      "accept queue",
-                                                      event);
+                                              "accept queue",
+                                              event);
 }
 
 void TestServer::processAcceptQueueDiscarded(
@@ -1076,8 +1261,8 @@ void TestServer::processAcceptQueueDiscarded(
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,
-                                                      "accept queue",
-                                                      event);
+                                              "accept queue",
+                                              event);
 }
 
 void TestServer::processShutdownInitiated(
@@ -1088,8 +1273,8 @@ void TestServer::processShutdownInitiated(
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,
-                                                      "shutdown",
-                                                      event);
+                                              "shutdown",
+                                              event);
 }
 
 void TestServer::processShutdownReceive(
@@ -1100,8 +1285,8 @@ void TestServer::processShutdownReceive(
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,
-                                                      "shutdown",
-                                                      event);
+                                              "shutdown",
+                                              event);
 }
 
 void TestServer::processShutdownSend(
@@ -1112,8 +1297,8 @@ void TestServer::processShutdownSend(
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,
-                                                      "shutdown",
-                                                      event);
+                                              "shutdown",
+                                              event);
 }
 
 void TestServer::processShutdownComplete(
@@ -1124,8 +1309,8 @@ void TestServer::processShutdownComplete(
     NTCCFG_WARNING_UNUSED(event);
 
     NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,
-                                                      "shutdown",
-                                                      event);
+                                              "shutdown",
+                                              event);
 }
 
 void TestServer::processError(
@@ -1135,35 +1320,25 @@ void TestServer::processError(
     NTCCFG_WARNING_UNUSED(listenerSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket,
-                                                      "error",
-                                                      event);
+    NTCF_TESTSERVER_LOG_LISTENER_SOCKET_EVENT(listenerSocket, "error", event);
 
     bsl::shared_ptr<Self> self(this->getSelf(this));
     LockGuard             lock(&d_mutex);
 
-    this->privateListenerSocketError(
-        self, 
-        listenerSocket, 
-        event.context().error());
+    this->privateListenerSocketError(self,
+                                     listenerSocket,
+                                     event.context().error());
 }
-
-
 
 void TestServer::processStreamSocketUpgradeEvent(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const ntca::UpgradeEvent&                      event)
+    const ntca::UpgradeEvent&                  event)
 {
     bsl::shared_ptr<Self> self(this->getSelf(this));
     LockGuard             lock(&d_mutex);
 
     this->privateStreamSocketCompleteUpgrade(self, streamSocket, event);
 }
-
-
-
-
-
 
 void TestServer::privateStreamSocketInitiateUpgrade(
     const bsl::shared_ptr<Self>&               self,
@@ -1187,8 +1362,6 @@ void TestServer::privateStreamSocketCompleteUpgrade(
     NTCCFG_NOT_IMPLEMENTED();
 }
 
-
-
 void TestServer::privateStreamSocketInitiateDowngrade(
     const bsl::shared_ptr<Self>&               self,
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
@@ -1210,21 +1383,6 @@ void TestServer::privateStreamSocketCompleteDowngrade(
 
     NTCCFG_NOT_IMPLEMENTED();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void TestServer::privateDatagramSocketUp(
     const bsl::shared_ptr<Self>&                 self,
@@ -1253,9 +1411,6 @@ void TestServer::privateDatagramSocketError(
     NTCCFG_NOT_IMPLEMENTED();
 }
 
-
-
-
 void TestServer::privateStreamSocketUp(
     const bsl::shared_ptr<Self>&               self,
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
@@ -1263,14 +1418,14 @@ void TestServer::privateStreamSocketUp(
     ntsa::Error error;
 
     bsl::shared_ptr<ntcf::TestMessageParser> streamParser;
-    streamParser.createInplace(d_allocator_p, 
-                               d_dataPool_sp, 
-                               d_messagePool_sp, 
-                               d_serialization_sp, 
-                               d_compression_sp, 
+    streamParser.createInplace(d_allocator_p,
+                               d_dataPool_sp,
+                               d_messagePool_sp,
+                               d_serialization_sp,
+                               d_compression_sp,
                                d_allocator_p);
 
-    bsl::pair<StreamSocketMap::iterator, bool> insertResult = 
+    bsl::pair<StreamSocketMap::iterator, bool> insertResult =
         d_streamSocketMap.insert(bsl::make_pair(streamSocket, streamParser));
     BSLS_ASSERT(insertResult.second);
 
@@ -1280,8 +1435,10 @@ void TestServer::privateStreamSocketUp(
     error = streamSocket->registerManager(self);
     BSLS_ASSERT_OPT(!error);
 
-    error = streamSocket->relaxFlowControl(
-        ntca::FlowControlType::e_RECEIVE);
+    error = streamSocket->setReadQueueLowWatermark(streamParser->numNeeded());
+    BSLS_ASSERT_OPT(!error);
+
+    error = streamSocket->relaxFlowControl(ntca::FlowControlType::e_RECEIVE);
     BSLS_ASSERT_OPT(!error);
 }
 
@@ -1332,6 +1489,126 @@ void TestServer::privateListenerSocketError(
     listenerSocket->close();
 }
 
+void TestServer::dispatchMessage(
+    const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+    const bsl::shared_ptr<ntcf::TestMessage>&           request)
+{
+    if (request->entity().has_value()) {
+        const ntcf::TestMessageEntity& entity = request->entity().value();
+        if (entity.isContentValue()) {
+            const ntcf::TestContent& content = entity.content();
+            if (content.isBidValue()) {
+                this->processBid(transaction, content.bid());
+                return;
+            }
+            else if (content.isAskValue()) {
+                this->processAsk(transaction, content.ask());
+                return;
+            }
+            else if (content.isSubscriptionValue()) {
+                this->processSubscription(transaction, content.subscription());
+                return;
+            }
+        }
+        else if (entity.isControlValue()) {
+            const ntcf::TestControl& control = entity.control();
+            if (control.isSignalValue()) {
+                this->processSignal(transaction, control.signal());
+                return;
+            }
+            else if (control.isEncryptionValue()) {
+                this->processEncryption(transaction, control.encryption());
+                return;
+            }
+            else if (control.isCompressionValue()) {
+                this->processCompression(transaction, control.compression());
+                return;
+            }
+            else if (control.isHeartbeatValue()) {
+                this->processHeartbeat(transaction, control.heartbeat());
+                return;
+            }
+        }
+    }
+
+    // NTCF_TESTSERVER_LOG_PROCESSOR_NOT_FOUND(message, sender, endpoint);
+}
+
+void TestServer::processBid(
+    const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+    const ntcf::TestBid&                                bid)
+{
+    // MRM: TODO
+}
+
+void TestServer::processAsk(
+    const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+    const ntcf::TestAsk&                                ask)
+{
+    // MRM: TODO
+}
+
+void TestServer::processSubscription(
+    const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+    const ntcf::TestSubscription&                       subscription)
+{
+    // MRM: TODO
+}
+
+void TestServer::processSignal(
+    const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+    const ntcf::TestSignal&                             signal)
+{
+    ntcf::TestEcho echo;
+    echo.id = signal.id;
+
+    if (signal.reflect > 0) {
+        ntscfg::TestDataUtil::generateData(
+            &echo.value, 
+            signal.reflect, 
+            0, 
+            ntscfg::TestDataUtil::k_DATASET_SERVER_COMPRESSABLE);
+    }
+
+    transaction->complete(echo);
+}
+
+void TestServer::processEncryption(
+    const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+    const ntcf::TestControlEncryption&                  encryption)
+{
+    // MRM: TODO
+
+    if (encryption.acknowledge) {
+        ntcf::TestAcknowledgment acknowledgment;
+        transaction->complete(acknowledgment);
+    }
+}
+
+void TestServer::processCompression(
+    const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+    const ntcf::TestControlCompression&                 compression)
+{
+    // MRM: TODO
+
+    if (compression.acknowledge) {
+        ntcf::TestAcknowledgment acknowledgment;
+        transaction->complete(acknowledgment);
+    }
+}
+
+void TestServer::processHeartbeat(
+    const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+    const ntcf::TestControlHeartbeat&                   heartbeat)
+{
+    // MRM: TODO
+
+    if (heartbeat.acknowledge) {
+        ntcf::TestAcknowledgment acknowledgment;
+        transaction->complete(acknowledgment);
+    }
+}
+
 TestServer::TestServer(const ntcf::TestServerConfig& configuration,
                        bslma::Allocator*             basicAllocator)
 : d_mutex()
@@ -1366,18 +1643,25 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
 
     ntca::SerializationConfig serializationConfig;
 
-    d_serialization_sp = ntcf::System::createSerialization(
-        serializationConfig, d_allocator_p);
+    d_serialization_sp =
+        ntcf::System::createSerialization(serializationConfig, d_allocator_p);
 
     ntca::CompressionConfig compressionConfig;
     compressionConfig.setType(ntca::CompressionType::e_RLE);
     compressionConfig.setGoal(ntca::CompressionGoal::e_BALANCED);
 
-    d_compression_sp = ntcf::System::createCompression(
-            compressionConfig, d_dataPool_sp, d_allocator_p);
+    d_compression_sp = ntcf::System::createCompression(compressionConfig,
+                                                       d_dataPool_sp,
+                                                       d_allocator_p);
 
-    BALL_LOG_INFO << "Server scheduler construction starting" 
-                  << BALL_LOG_END;
+    d_datagramParser_sp.createInplace(d_allocator_p,
+                                      d_dataPool_sp,
+                                      d_messagePool_sp,
+                                      d_serialization_sp,
+                                      d_compression_sp,
+                                      d_allocator_p);
+
+    BALL_LOG_INFO << "Server scheduler construction starting" << BALL_LOG_END;
 
     ntca::SchedulerConfig schedulerConfig;
 
@@ -1398,13 +1682,11 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
     }
 
     if (d_config.keepAlive.has_value()) {
-        schedulerConfig.setKeepAlive(
-            d_config.keepAlive.value());
+        schedulerConfig.setKeepAlive(d_config.keepAlive.value());
     }
 
     if (d_config.keepHalfOpen.has_value()) {
-        schedulerConfig.setKeepHalfOpen(
-            d_config.keepHalfOpen.value());
+        schedulerConfig.setKeepHalfOpen(d_config.keepHalfOpen.value());
     }
 
     if (d_config.backlog.has_value()) {
@@ -1412,18 +1694,15 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
     }
 
     if (d_config.sendBufferSize.has_value()) {
-        schedulerConfig.setSendBufferSize(
-            d_config.sendBufferSize.value());
+        schedulerConfig.setSendBufferSize(d_config.sendBufferSize.value());
     }
 
     if (d_config.receiveBufferSize.has_value()) {
-        schedulerConfig.setBacklog(
-            d_config.receiveBufferSize.value());
+        schedulerConfig.setBacklog(d_config.receiveBufferSize.value());
     }
 
     if (d_config.acceptGreedily.has_value()) {
-        schedulerConfig.setAcceptGreedily(
-            d_config.acceptGreedily.value());
+        schedulerConfig.setAcceptGreedily(d_config.acceptGreedily.value());
     }
 
     if (d_config.acceptQueueLowWatermark.has_value()) {
@@ -1456,16 +1735,16 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
             d_config.writeQueueHighWatermark.value());
     }
 
-    d_scheduler_sp = ntcf::System::createScheduler(
-        schedulerConfig, d_dataPool_sp, d_allocator_p);
+    d_scheduler_sp = ntcf::System::createScheduler(schedulerConfig,
+                                                   d_dataPool_sp,
+                                                   d_allocator_p);
 
     error = d_scheduler_sp->start();
     BSLS_ASSERT_OPT(!error);
 
-    BALL_LOG_INFO << "Server scheduler construction complete" 
-                  << BALL_LOG_END;
+    BALL_LOG_INFO << "Server scheduler construction complete" << BALL_LOG_END;
 
-    BALL_LOG_INFO << "Server datagram socket construction starting" 
+    BALL_LOG_INFO << "Server datagram socket construction starting"
                   << BALL_LOG_END;
 
     ntca::DatagramSocketOptions datagramSocketOptions;
@@ -1473,13 +1752,13 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
     datagramSocketOptions.setSourceEndpoint(
         ntsa::Endpoint(ntsa::Ipv4Endpoint(ntsa::Ipv4Address::loopback(), 0)));
 
-    d_datagramSocket_sp = 
-        d_scheduler_sp->createDatagramSocket(
-            datagramSocketOptions, d_allocator_p);
+    d_datagramSocket_sp =
+        d_scheduler_sp->createDatagramSocket(datagramSocketOptions,
+                                             d_allocator_p);
 
     error = d_datagramSocket_sp->registerSession(self);
     BSLS_ASSERT_OPT(!error);
-    
+
     error = d_datagramSocket_sp->registerManager(self);
     BSLS_ASSERT_OPT(!error);
 
@@ -1488,10 +1767,10 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
 
     d_datagramEndpoint = d_datagramSocket_sp->sourceEndpoint();
 
-    BALL_LOG_INFO << "Server datagram socket construction complete" 
+    BALL_LOG_INFO << "Server datagram socket construction complete"
                   << BALL_LOG_END;
 
-    BALL_LOG_INFO << "Server listening socket construction starting" 
+    BALL_LOG_INFO << "Server listening socket construction starting"
                   << BALL_LOG_END;
 
     ntca::ListenerSocketOptions listenerSocketOptions;
@@ -1499,9 +1778,9 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
     listenerSocketOptions.setSourceEndpoint(
         ntsa::Endpoint(ntsa::Ipv4Endpoint(ntsa::Ipv4Address::loopback(), 0)));
 
-    d_listenerSocket_sp = 
-        d_scheduler_sp->createListenerSocket(
-            listenerSocketOptions, d_allocator_p);
+    d_listenerSocket_sp =
+        d_scheduler_sp->createListenerSocket(listenerSocketOptions,
+                                             d_allocator_p);
 
     error = d_listenerSocket_sp->registerSession(self);
     BSLS_ASSERT_OPT(!error);
@@ -1517,16 +1796,16 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
 
     d_listenerEndpoint = d_listenerSocket_sp->sourceEndpoint();
 
-    BALL_LOG_INFO << "Server listening socket construction complete" 
+    BALL_LOG_INFO << "Server listening socket construction complete"
                   << BALL_LOG_END;
 
     BALL_LOG_INFO << "Server construction complete" << BALL_LOG_END;
 
-    d_datagramParser_sp.createInplace(d_allocator_p, 
-                                      d_dataPool_sp, 
-                                      d_messagePool_sp, 
-                                      d_serialization_sp, 
-                                      d_compression_sp, 
+    d_datagramParser_sp.createInplace(d_allocator_p,
+                                      d_dataPool_sp,
+                                      d_messagePool_sp,
+                                      d_serialization_sp,
+                                      d_compression_sp,
                                       d_allocator_p);
 
     error = d_datagramSocket_sp->relaxFlowControl(
@@ -1545,14 +1824,15 @@ TestServer::~TestServer()
     StreamSocketMap streamSocketMap(d_allocator_p);
     streamSocketMap.swap(d_streamSocketMap);
 
-    typedef bsl::vector< bsl::shared_ptr<ntci::StreamSocket> > 
-    StreamSocketVector;
+    typedef bsl::vector<bsl::shared_ptr<ntci::StreamSocket> >
+        StreamSocketVector;
 
     StreamSocketVector streamSocketVector(d_allocator_p);
     streamSocketVector.reserve(streamSocketMap.size());
 
-    for (StreamSocketMap::iterator it = streamSocketMap.begin(); 
-            it != streamSocketMap.end(); ++it)
+    for (StreamSocketMap::iterator it = streamSocketMap.begin();
+         it != streamSocketMap.end();
+         ++it)
     {
         streamSocketVector.push_back(it->first);
     }
@@ -1560,11 +1840,11 @@ TestServer::~TestServer()
     streamSocketMap.clear();
 
     while (!streamSocketVector.empty()) {
-        bsl::shared_ptr<ntci::StreamSocket> streamSocket = 
+        bsl::shared_ptr<ntci::StreamSocket> streamSocket =
             streamSocketVector.back();
         streamSocketVector.pop_back();
 
-        BALL_LOG_INFO << "Server stream socket destruction starting" 
+        BALL_LOG_INFO << "Server stream socket destruction starting"
                       << BALL_LOG_END;
 
         {
@@ -1573,23 +1853,23 @@ TestServer::~TestServer()
 
         streamSocket.reset();
 
-        BALL_LOG_INFO << "Server stream socket destruction complete" 
+        BALL_LOG_INFO << "Server stream socket destruction complete"
                       << BALL_LOG_END;
     }
 
-    BALL_LOG_INFO << "Server listening socket destruction starting" 
+    BALL_LOG_INFO << "Server listening socket destruction starting"
                   << BALL_LOG_END;
 
     {
         ntci::ListenerSocketCloseGuard closeGuard(d_listenerSocket_sp);
     }
-    
+
     d_listenerSocket_sp.reset();
 
-    BALL_LOG_INFO << "Server listening socket destruction complete" 
+    BALL_LOG_INFO << "Server listening socket destruction complete"
                   << BALL_LOG_END;
 
-    BALL_LOG_INFO << "Server datagram socket destruction starting" 
+    BALL_LOG_INFO << "Server datagram socket destruction starting"
                   << BALL_LOG_END;
 
     {
@@ -1598,19 +1878,16 @@ TestServer::~TestServer()
 
     d_datagramSocket_sp.reset();
 
-    BALL_LOG_INFO << "Server datagram socket destruction complete" 
+    BALL_LOG_INFO << "Server datagram socket destruction complete"
                   << BALL_LOG_END;
 
-
-    BALL_LOG_INFO << "Server scheduler destruction starting" 
-                  << BALL_LOG_END;
+    BALL_LOG_INFO << "Server scheduler destruction starting" << BALL_LOG_END;
 
     d_scheduler_sp->shutdown();
     d_scheduler_sp->linger();
     d_scheduler_sp.reset();
 
-    BALL_LOG_INFO << "Server scheduler destruction complete" 
-                  << BALL_LOG_END;
+    BALL_LOG_INFO << "Server scheduler destruction complete" << BALL_LOG_END;
 
     BALL_LOG_INFO << "Server destruction complete" << BALL_LOG_END;
 }

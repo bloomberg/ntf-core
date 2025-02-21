@@ -1,6 +1,72 @@
 package ntcf
 {
     // Identifies the role of a participant.
+    enumeration TestMessageType
+    {
+        // The message type is undefined.
+        option UNDEFINED;
+
+        // The fault that occurred.
+        option FAULT;
+
+        // The acknowledgment.
+        option ACKNOWLEDGMENT;
+
+        // The bid to buy a security.
+        option BID;
+
+        // The ask to sell a security.
+        option ASK;
+
+        // The completed trade.
+        option TRADE;
+
+        // The trade subscription.
+        option SUBSCRIPTION;
+
+        // The trade publication.
+        option PUBLICATION;
+
+        // Describes a signal sent to a peer.
+        option SIGNAL;
+
+        // Describes the reflection of a signal back from a peer.
+        option ECHO;
+
+        // Describes a control message to enable or disable encryption.
+        option ENCRYPT;
+
+        // Describes a control message to enable or disable compression.
+        option COMPRESS;
+
+        // Describes a control message inform a peer that the sender is able to
+        // transmit.
+        option HEARTBEAT;
+    }
+
+    /// Enumerates the test message flags.
+    enumeration TestMessageFlag
+    {
+        // No flag.
+        option NONE;
+
+        // The message is a subscription.
+        option SUBSCRIPTION;
+
+        // The message is a publication.
+        option PUBLICATION;
+
+        // The message is a request.
+        option REQUEST;
+
+        // The message is a response.
+        option RESPONSE;
+
+        // The message is a request with no response.
+        option UNACKNOWLEDGED;
+    }
+
+    // Identifies the role of a participant.
     enumeration TestRole
     {
         // The participant is a client.
@@ -376,6 +442,12 @@ package ntcf
     // Describes a message header.
     sequence TestMessageHeader
     {
+        // The message type.
+        required messageType: uint16;
+
+        // The flags that influence behavior.
+        required messageFlags: uint16;
+
         // The size of the entire message, in bytes.
         required messageSize: uint32;
 
@@ -393,9 +465,6 @@ package ntcf
 
         // The strategy used to compress the entity.
         required compression: uint32;
-
-        // The flags that influence behavior.
-        required flags: uint32;
 
         // The checksum of the serialized content of the message.
         required checksum: uint32;

@@ -36,13 +36,17 @@ class TestClientTest
 
 NTSCFG_TEST_FUNCTION(ntcf::TestClientTest::verify)
 {
+    ntsa::Error error;
+
     ntcf::TestServerConfig exchangeConfig;
+    exchangeConfig.name = "exchange";
     exchangeConfig.numNetworkingThreads = 1;
     exchangeConfig.keepHalfOpen = false;
 
     ntcf::TestServer exchange(exchangeConfig, NTSCFG_TEST_ALLOCATOR);
 
     ntcf::TestClientConfig sellerConfig;
+    sellerConfig.name = "seller";
     sellerConfig.numNetworkingThreads = 1;
     sellerConfig.keepHalfOpen = false;
 
@@ -52,6 +56,7 @@ NTSCFG_TEST_FUNCTION(ntcf::TestClientTest::verify)
                             NTSCFG_TEST_ALLOCATOR);
 
     ntcf::TestClientConfig buyerConfig;
+    buyerConfig.name = "buyer";
     buyerConfig.numNetworkingThreads = 1;
     buyerConfig.keepHalfOpen = false;
 
@@ -60,7 +65,23 @@ NTSCFG_TEST_FUNCTION(ntcf::TestClientTest::verify)
                            exchange.udpEndpoint(), 
                            NTSCFG_TEST_ALLOCATOR);
 
+    {
+        ntcf::TestEchoResult result;
+        ntcf::TestSignal     signal;
+        ntcf::TestOptions    options;
 
+        signal.id = 1;
+        signal.reflect = 64;
+        ntscfg::TestDataUtil::generateData(
+            &signal.value, 
+            32, 
+            0, 
+            ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
+
+        error = buyer.signal(&result, signal, options);
+        NTSCFG_TEST_OK(error);
+    }
+    
 
     
 
