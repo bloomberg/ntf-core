@@ -794,6 +794,25 @@ if (${NTF_BUILD_WITH_NTC})
 
     ntf_package(
         NAME
+            ntctlc
+        REQUIRES
+            ntcscm
+            ntccfg
+            ntca
+            ntci
+            ntcs
+            ntcq
+            ntcd
+            ntcdns
+        PRIVATE
+    )
+
+    ntf_component(NAME ntctlc_plugin)
+
+    ntf_package_end(NAME ntctlc)
+
+    ntf_package(
+        NAME
             ntctls
         REQUIRES
             ntcscm
@@ -804,6 +823,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
         PRIVATE
     )
 
@@ -823,6 +843,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
             ntctls
         PRIVATE
     )
@@ -852,6 +873,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
             ntctls
             ntcu
         PRIVATE
@@ -877,6 +899,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
             ntctls
             ntcu
         PRIVATE
@@ -902,6 +925,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
             ntctls
             ntcu
             ntcr
@@ -934,6 +958,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
             ntctls
             ntcu
             ntcr

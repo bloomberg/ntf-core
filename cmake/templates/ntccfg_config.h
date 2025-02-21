@@ -109,6 +109,15 @@ namespace ntccfg {
 // driver for a proactor. This driver is available on Linux.
 #define NTC_BUILD_WITH_IORING @NTF_BUILD_WITH_IORING@
 
+// Build with support for lz4 in the default compression driver.
+#define NTC_BUILD_WITH_LZ4 @NTF_BUILD_WITH_LZ4@
+
+// Build with support for zstd in the default compression driver.
+#define NTC_BUILD_WITH_ZSTD @NTF_BUILD_WITH_ZSTD@
+
+// Build with support for zlib in the default compression driver.
+#define NTC_BUILD_WITH_ZLIB @NTF_BUILD_WITH_ZLIB@
+
 // Build with support for OpenSSL as the driver for TLS.
 #define NTC_BUILD_WITH_OPENSSL @NTF_BUILD_WITH_OPENSSL@
 

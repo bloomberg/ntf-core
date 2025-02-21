@@ -28,7 +28,7 @@ add_library(ntc STATIC)
 bbs_setup_target_uor(
     ntc
     NO_EMIT_PKG_CONFIG_FILE
-    PRIVATE_PACKAGES ntcm ntcs ntcq ntcd ntcdns ntctls ntcu ntcr ntcp ntco)
+    PRIVATE_PACKAGES ntcm ntcs ntcq ntcd ntcdns ntctlc ntctls ntcu ntcr ntcp ntco)
 
 target_include_directories(
     ntc

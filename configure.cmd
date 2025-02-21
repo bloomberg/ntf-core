@@ -109,6 +109,18 @@ IF NOT DEFINED NTF_CONFIGURE_WITH_IOCP (
     set NTF_CONFIGURE_WITH_IOCP=1
 )
 
+IF NOT DEFINED NTF_CONFIGURE_WITH_LZ4 (
+    set NTF_CONFIGURE_WITH_LZ4=0
+)
+
+IF NOT DEFINED NTF_CONFIGURE_WITH_ZSTD (
+    set NTF_CONFIGURE_WITH_ZSTD=0
+)
+
+IF NOT DEFINED NTF_CONFIGURE_WITH_ZLIB (
+    set NTF_CONFIGURE_WITH_ZLIB=0
+)
+
 IF NOT DEFINED NTF_CONFIGURE_WITH_OPENSSL (
     set NTF_CONFIGURE_WITH_OPENSSL=1
 )
@@ -333,6 +345,16 @@ if not "%1"=="" (
         set NTF_CONFIGURE_WITH_IOCP=1
     )
 
+    if "%1"=="--with-lz4" (
+        set NTF_CONFIGURE_WITH_LZ4=1
+    )
+    if "%1"=="--with-zstd" (
+        set NTF_CONFIGURE_WITH_ZSTD=1
+    )
+    if "%1"=="--with-zlib" (
+        set NTF_CONFIGURE_WITH_ZLIB=1
+    )
+
     if "%1"=="--with-openssl" (
         set NTF_CONFIGURE_WITH_OPENSSL=1
     )
@@ -463,6 +485,16 @@ if not "%1"=="" (
     )
     if "%1"=="--without-iocp" (
         set NTF_CONFIGURE_WITH_IOCP=0
+    )
+
+    if "%1"=="--without-lz4" (
+        set NTF_CONFIGURE_WITH_LZ4=0
+    )
+    if "%1"=="--without-zstd" (
+        set NTF_CONFIGURE_WITH_ZSTD=0
+    )
+    if "%1"=="--without-zlib" (
+        set NTF_CONFIGURE_WITH_ZLIB=0
     )
 
     if "%1"=="--without-openssl" (
@@ -859,6 +891,10 @@ echo     --with-ntc                       Enable and build features that depend 
 echo     --with-select                    Enable the reactor driver implemented with 'select'
 echo     --with-poll                      Enable the reactor driver implemented with 'poll'
 echo     --with-iocp                      Enable the proactor driver that depends on I/O completion ports
+
+echo     --with-lz4                       Enable the compression driver implemented with lz4
+echo     --with-zstd                      Enable the compression driver implemented with zstd
+echo     --with-zlib                      Enable the compression driver implemented with zlib
 
 echo     --with-openssl                   Enable the encryption driver implemented with OpenSSL
 
