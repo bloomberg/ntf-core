@@ -24,6 +24,7 @@ ntci_closecallbackfactory
 ntci_closefuture
 ntci_closeresult
 ntci_compression
+ntci_compressiondriver
 ntci_datapool
 ntci_datagramsocket
 ntci_datagramsocketfactory

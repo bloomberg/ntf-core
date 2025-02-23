@@ -541,12 +541,35 @@ ntsa::Error Compression::inflateNext(ntca::InflateContext*       context,
                                      const bdlbb::Blob&          data,
                                      const ntca::InflateOptions& options)
 {
-    NTCCFG_WARNING_UNUSED(context);
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_WARNING_UNUSED(data);
-    NTCCFG_WARNING_UNUSED(options);
+    ntsa::Error error;
 
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    const int numDataBuffers = data.numDataBuffers();
+
+    for (int i = 0; i < numDataBuffers; ++i) {
+        const bdlbb::BlobBuffer& buffer = data.buffer(i);
+
+        const bsl::uint8_t* bufferData =
+            reinterpret_cast<bsl::uint8_t*>(buffer.data());
+
+        bsl::size_t bufferSize;
+        if (i != numDataBuffers - 1) {
+            bufferSize = static_cast<bsl::size_t>(buffer.size());
+        }
+        else {
+            bufferSize = static_cast<bsl::size_t>(data.lastDataBufferLength());
+        }
+
+        error = this->inflateNext(context,
+                                  result,
+                                  bufferData,
+                                  bufferSize,
+                                  options);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error Compression::inflateEnd(ntca::InflateContext*       context,

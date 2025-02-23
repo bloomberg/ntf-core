@@ -46,7 +46,7 @@ namespace ntci {
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci_encryption
+/// @ingroup module_ntci_compression
 class Compression
 {
   private:
