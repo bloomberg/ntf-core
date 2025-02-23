@@ -573,6 +573,21 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verify)
 
     bsl::vector<bsl::size_t> bufferSizeVector;
     bufferSizeVector.push_back(16);
+    bufferSizeVector.push_back(17);
+    bufferSizeVector.push_back(18);
+    bufferSizeVector.push_back(19);
+    bufferSizeVector.push_back(20);
+    bufferSizeVector.push_back(21);
+    bufferSizeVector.push_back(22);
+    bufferSizeVector.push_back(23);
+    bufferSizeVector.push_back(24);
+    bufferSizeVector.push_back(25);
+    bufferSizeVector.push_back(26);
+    bufferSizeVector.push_back(27);
+    bufferSizeVector.push_back(28);
+    bufferSizeVector.push_back(29);
+    bufferSizeVector.push_back(30);
+    bufferSizeVector.push_back(31);
     bufferSizeVector.push_back(32);
     bufferSizeVector.push_back(64);
     bufferSizeVector.push_back(1024);
@@ -586,6 +601,9 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verify)
     ioSizeVector.push_back(2);
     ioSizeVector.push_back(3);
     ioSizeVector.push_back(4);
+    ioSizeVector.push_back(5);
+    ioSizeVector.push_back(6);
+    ioSizeVector.push_back(7);
     ioSizeVector.push_back(8);
     ioSizeVector.push_back(16);
     ioSizeVector.push_back(32);
