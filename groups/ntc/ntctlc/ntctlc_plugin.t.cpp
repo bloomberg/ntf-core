@@ -702,7 +702,7 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyAll)
     // algorithmVector.push_back(ntca::CompressionType::e_RLE);
 
 #if NTC_BUILD_WITH_LZ4
-    // algorithmVector.push_back(ntca::CompressionType::e_LZ4);
+    algorithmVector.push_back(ntca::CompressionType::e_LZ4);
 #endif
 
 #if NTC_BUILD_WITH_ZSTD

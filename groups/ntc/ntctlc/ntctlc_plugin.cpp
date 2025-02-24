@@ -22,6 +22,9 @@ BSLS_IDENT_RCSID(ntctls_plugin_cpp, "$Id$ $CSID$")
 #include <ntcd_compression.h>
 #include <ntci_log.h>
 #include <ntcs_datapool.h>
+#include <bdlbb_blob.h>
+#include <bdlbb_blobstreambuf.h>
+#include <bdlbb_blobutil.h>
 
 #if NTC_BUILD_WITH_LZ4
 #include <lz4.h>
@@ -52,6 +55,20 @@ namespace ntctlc {
 /// @ingroup module_ntctlc
 class Lz4 : public ntci::Compression
 {
+    /// Flag indicating that a checksum should be calculated for the content
+    /// of each frame when deflating.
+    static const bool k_CHECKSUM_CONTENT = true;
+
+    /// Flag indicating that a checksum should be calculated for the content
+    /// of each block when deflating.
+    static const bool k_CHECKSUM_BLOCK = true;
+
+    /// Flag indicating that checksums should be verified by the inflater.
+    static const bool k_CHECKSUM_VERIFY = true;
+
+    LZ4F_cctx*                      d_deflaterContext_p;
+    LZ4F_preferences_t              d_deflaterPrefs;
+    LZ4F_dctx*                      d_inflaterContext_p;
     bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
     ntca::CompressionConfig         d_config;
     bslma::Allocator*               d_allocator_p;
@@ -532,8 +549,32 @@ ntsa::Error Lz4::deflateBegin(ntca::DeflateContext*       context,
                               bdlbb::Blob*                result,
                               const ntca::DeflateOptions& options)
 {
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    NTCI_LOG_CONTEXT();
+
+    LZ4F_errorCode_t errorCode = 0;
+
+    char header[LZ4F_HEADER_SIZE_MAX];
+    bsl::memset(header, 0, sizeof header);
+
+    errorCode = LZ4F_compressBegin(d_deflaterContext_p, 
+                                   header, 
+                                   sizeof header, 
+                                   &d_deflaterPrefs);
+    if (LZ4F_isError(errorCode)) {
+        NTCI_LOG_ERROR("Failed to begin compression frame: %s", 
+                       LZ4F_getErrorName(errorCode));
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const bsl::size_t numBytesRead    = 0;
+    const bsl::size_t numBytesWritten = static_cast<bsl::size_t>(errorCode);
+
+    bdlbb::BlobUtil::append(result, header, numBytesWritten);
+
+    context->setBytesRead(context->bytesRead() + numBytesRead);
+    context->setBytesWritten(context->bytesWritten() + numBytesWritten);
+
+    return ntsa::Error();
 }
 
 ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
@@ -542,24 +583,115 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
                              bsl::size_t                 size,
                              const ntca::DeflateOptions& options)
 {
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    NTCI_LOG_CONTEXT();
+
+    LZ4F_errorCode_t errorCode = 0;
+
+    bsl::size_t bounds = LZ4F_compressBound(size, &d_deflaterPrefs);
+
+    char arena[4096];
+
+    bdlma::BufferedSequentialAllocator sequentialAllocator(
+        arena, sizeof arena, d_allocator_p);
+
+    char* destination = 
+        reinterpret_cast<char*>(sequentialAllocator.allocate(bounds));
+
+    bslma::DeallocatorGuard<bdlma::BufferedSequentialAllocator> 
+        destinationGuard(destination, &sequentialAllocator);
+
+    const bsl::size_t destinationCapacity = bounds;
+
+    LZ4F_compressOptions_t compressOptions;
+    bsl::memset(&compressOptions, 0, sizeof compressOptions);
+
+    compressOptions.stableSrc = 0;
+
+    errorCode = LZ4F_compressUpdate(d_deflaterContext_p, 
+                                    destination, 
+                                    destinationCapacity, 
+                                    data, 
+                                    size, 
+                                    &compressOptions);
+
+    if (LZ4F_isError(errorCode)) {
+        NTCI_LOG_ERROR("Failed to update compression frame: %s", 
+                        LZ4F_getErrorName(errorCode));
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const bsl::size_t numBytesRead    = size;
+    const bsl::size_t numBytesWritten = static_cast<bsl::size_t>(errorCode);
+
+    bdlbb::BlobUtil::append(result, destination, numBytesWritten);
+
+    context->setBytesRead(context->bytesRead() + numBytesRead);
+    context->setBytesWritten(context->bytesWritten() + numBytesWritten);
+
+    return ntsa::Error();
 }
 
 ntsa::Error Lz4::deflateEnd(ntca::DeflateContext*       context,
                             bdlbb::Blob*                result,
                             const ntca::DeflateOptions& options)
 {
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    NTCI_LOG_CONTEXT();
+
+    LZ4F_errorCode_t errorCode = 0;
+
+    bsl::size_t bounds = LZ4F_compressBound(0, &d_deflaterPrefs);
+
+    char arena[4096];
+
+    bdlma::BufferedSequentialAllocator sequentialAllocator(
+        arena, sizeof arena, d_allocator_p);
+
+    char* destination = 
+        reinterpret_cast<char*>(sequentialAllocator.allocate(bounds));
+
+    bslma::DeallocatorGuard<bdlma::BufferedSequentialAllocator> 
+        destinationGuard(destination, &sequentialAllocator);
+
+    const bsl::size_t destinationCapacity = bounds;
+
+    LZ4F_compressOptions_t compressOptions;
+    bsl::memset(&compressOptions, 0, sizeof compressOptions);
+
+    compressOptions.stableSrc = 0;
+
+    errorCode = LZ4F_compressEnd(d_deflaterContext_p,
+                                 destination, 
+                                 destinationCapacity, 
+                                 &compressOptions);
+    if (LZ4F_isError(errorCode)) {
+        NTCI_LOG_ERROR("Failed to end compression frame: %s", 
+                        LZ4F_getErrorName(errorCode));
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    const bsl::size_t numBytesRead    = 0;
+    const bsl::size_t numBytesWritten = static_cast<bsl::size_t>(errorCode);
+
+    bdlbb::BlobUtil::append(result, destination, numBytesWritten);
+
+    context->setCompressionType(ntca::CompressionType::e_LZ4);
+    context->setBytesRead(context->bytesRead() + numBytesRead);
+    context->setBytesWritten(context->bytesWritten() + numBytesWritten);
+
+    NTCI_LOG_DEBUG("Deflated frame");
+
+    return ntsa::Error();
 }
 
 ntsa::Error Lz4::inflateBegin(ntca::InflateContext*       context,
                               bdlbb::Blob*                result,
                               const ntca::InflateOptions& options)
 {
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    NTCCFG_WARNING_UNUSED(context);
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(options);
+
+    return ntsa::Error();
 }
 
 ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
@@ -568,29 +700,138 @@ ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
                              bsl::size_t                 size,
                              const ntca::InflateOptions& options)
 {
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    NTCI_LOG_CONTEXT();
+
+    LZ4F_errorCode_t errorCode = 0;
+
+    bsl::size_t totalBytesRead = 0;
+    bsl::size_t totalBytesWritten = 0;
+
+    const bsl::uint8_t* sourceCurrent = data;
+    const bsl::uint8_t* sourceEnd     = data + size;
+
+    LZ4F_decompressOptions_t decompressOptions;
+    bsl::memset(&decompressOptions, 0, sizeof decompressOptions);
+
+    decompressOptions.stableDst = 0;
+    decompressOptions.skipChecksums = 
+        static_cast<unsigned>(k_CHECKSUM_VERIFY);
+
+    while (sourceCurrent < sourceEnd) {
+        char destination[4096];
+
+        const bsl::size_t destinationCapacity = sizeof destination;
+        bsl::size_t destinationSize = destinationCapacity;
+        
+        bsl::size_t sourceSize = sourceEnd - sourceCurrent;
+
+        errorCode = LZ4F_decompress(d_inflaterContext_p, 
+                                    destination, 
+                                    &destinationSize, 
+                                    sourceCurrent, 
+                                    &sourceSize, 
+                                    &decompressOptions);
+
+        if (LZ4F_isError(errorCode)) {
+            NTCI_LOG_ERROR("Failed to end compression frame: %s", 
+                            LZ4F_getErrorName(errorCode));
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (destinationSize > 0) {
+            bdlbb::BlobUtil::append(result, destination, destinationSize);
+            totalBytesWritten += destinationSize;
+        }
+
+        if (sourceSize > 0) {
+            sourceCurrent += sourceSize;
+            totalBytesRead += sourceSize;
+        }
+    }
+
+    context->setBytesRead(context->bytesRead() + totalBytesRead);
+    context->setBytesWritten(context->bytesWritten() + totalBytesWritten);
+
+    return ntsa::Error();
 }
 
 ntsa::Error Lz4::inflateEnd(ntca::InflateContext*       context,
                             bdlbb::Blob*                result,
                             const ntca::InflateOptions& options)
 {
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    NTCCFG_WARNING_UNUSED(context);
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(options);
+
+    context->setCompressionType(ntca::CompressionType::e_LZ4);
+
+    return ntsa::Error();
 }
 
 Lz4::Lz4(const ntca::CompressionConfig&         configuration,
          const bsl::shared_ptr<ntci::DataPool>& dataPool,
          bslma::Allocator*                      basicAllocator)
-: d_dataPool_sp(dataPool)
+: d_deflaterContext_p(0)
+, d_inflaterContext_p(0)
+, d_dataPool_sp(dataPool)
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
+    NTCI_LOG_CONTEXT();
+
+    LZ4F_errorCode_t errorCode = 0;
+
+    errorCode = LZ4F_createCompressionContext(&d_deflaterContext_p, 
+                                              LZ4F_VERSION);
+    if (LZ4F_isError(errorCode)) {
+        NTCI_LOG_ERROR("Failed to create compression context: %s", 
+                        LZ4F_getErrorName(errorCode));
+        NTCCFG_ABORT();
+    }
+
+    bsl::memset(&d_deflaterPrefs, 0, sizeof d_deflaterPrefs);
+
+    d_deflaterPrefs.frameInfo.blockSizeID = LZ4F_max64KB;
+    d_deflaterPrefs.frameInfo.blockMode   = LZ4F_blockIndependent;
+    if (k_CHECKSUM_CONTENT) {
+        d_deflaterPrefs.frameInfo.contentChecksumFlag = 
+            LZ4F_contentChecksumEnabled;
+    }
+    else {
+        d_deflaterPrefs.frameInfo.contentChecksumFlag = 
+            LZ4F_noContentChecksum;
+    }
+    d_deflaterPrefs.frameInfo.frameType = LZ4F_frame;
+    d_deflaterPrefs.frameInfo.contentSize = 0;
+    d_deflaterPrefs.frameInfo.dictID = 0;
+    if (k_CHECKSUM_BLOCK) {
+        d_deflaterPrefs.frameInfo.blockChecksumFlag = 
+            LZ4F_blockChecksumEnabled;
+    }
+    else {
+        d_deflaterPrefs.frameInfo.blockChecksumFlag = 
+            LZ4F_noBlockChecksum;
+    }
+    d_deflaterPrefs.compressionLevel = 0; // MRM
+    d_deflaterPrefs.autoFlush = 0;
+    d_deflaterPrefs.favorDecSpeed = 0;
+
+    errorCode = LZ4F_createDecompressionContext(&d_inflaterContext_p, 
+                                                LZ4F_VERSION);
+    if (LZ4F_isError(errorCode)) {
+        NTCI_LOG_ERROR("Failed to create decompression context: %s", 
+                        LZ4F_getErrorName(errorCode));
+        NTCCFG_ABORT();
+    }
 }
 
 Lz4::~Lz4()
 {
+    LZ4F_freeDecompressionContext(d_inflaterContext_p);
+    d_inflaterContext_p = 0;
+
+    LZ4F_freeCompressionContext(d_deflaterContext_p);
+    d_deflaterContext_p = 0;
 }
 
 ntca::CompressionType::Value Lz4::type() const
