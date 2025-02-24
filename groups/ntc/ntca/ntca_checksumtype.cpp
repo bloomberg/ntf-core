@@ -28,6 +28,8 @@ namespace ntca {
 int ChecksumType::fromInt(ChecksumType::Value* result, int number)
 {
     switch (number) {
+    case ChecksumType::e_UNDEFINED:
+    case ChecksumType::e_ADLER32:
     case ChecksumType::e_CRC32:
     case ChecksumType::e_CRC32C:
     case ChecksumType::e_XXHASH32:
@@ -42,11 +44,19 @@ int ChecksumType::fromInt(ChecksumType::Value* result, int number)
 int ChecksumType::fromString(ChecksumType::Value*     result,
                              const bslstl::StringRef& string)
 {
+    if (bdlb::String::areEqualCaseless(string, "UNDEFINED")) {
+        *result = e_UNDEFINED;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "ADLER32")) {
+        *result = e_ADLER32;
+        return 0;
+    }
     if (bdlb::String::areEqualCaseless(string, "CRC32")) {
         *result = e_CRC32;
         return 0;
     }
-    if (bdlb::String::areEqualCaseless(string, "CRC32-C")) {
+    if (bdlb::String::areEqualCaseless(string, "CRC32C")) {
         *result = e_CRC32C;
         return 0;
     }
@@ -65,11 +75,17 @@ int ChecksumType::fromString(ChecksumType::Value*     result,
 const char* ChecksumType::toString(ChecksumType::Value value)
 {
     switch (value) {
+    case e_UNDEFINED: {
+        return "UNDEFINED";
+    } break;
+    case e_ADLER32: {
+        return "ADLER32";
+    } break;
     case e_CRC32: {
         return "CRC32";
     } break;
     case e_CRC32C: {
-        return "CRC32-C";
+        return "CRC32C";
     } break;
     case e_XXHASH32: {
         return "XXHASH32";

@@ -644,7 +644,7 @@ CompressionEncoder::CompressionEncoder(
 : d_frameHeader()
 , d_frameHeaderPosition(0)
 , d_frameContentBytesTotal(0)
-, d_frameContentCrc()
+, d_frameContentCrc(ntca::ChecksumType::e_CRC32)
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -673,6 +673,7 @@ ntsa::Error CompressionEncoder::deflateBegin(
     d_frameHeader.reset();
     d_frameContentBytesTotal = 0;
     d_frameContentCrc.reset();
+    d_frameContentCrc.initialize(ntca::ChecksumType::e_CRC32);
 
     bsl::size_t frameHeaderBytesEncoded = 0;
     error = d_frameHeader.encode(&frameHeaderBytesEncoded, result);
@@ -881,6 +882,7 @@ ntsa::Error CompressionEncoder::deflateEnd(ntca::DeflateContext*       context,
     d_frameHeaderPosition    = 0;
     d_frameContentBytesTotal = 0;
     d_frameContentCrc.reset();
+    d_frameContentCrc.initialize(ntca::ChecksumType::e_CRC32);
 
     return ntsa::Error();
 }
@@ -1141,7 +1143,7 @@ CompressionDecoder::CompressionDecoder(
 , d_expansion(basicAllocator)
 , d_frameHeader()
 , d_frameContentBytesNeeded(0)
-, d_frameContentCrc()
+, d_frameContentCrc(ntca::ChecksumType::e_CRC32)
 , d_block()
 , d_config(configuration)
 , d_error()

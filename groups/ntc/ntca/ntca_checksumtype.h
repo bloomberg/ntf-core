@@ -35,18 +35,24 @@ struct ChecksumType {
   public:
     /// Enumerate the checksum types.
     enum Value {
+        /// The checksum type is undefined.
+        e_UNDEFINED = 0,
+
+        /// The checksum is Adler-32.
+        e_ADLER32 = 1,
+
         /// The sum is a 32-bit cyclical redundancy check.
-        e_CRC32 = 0,
+        e_CRC32 = 2,
 
         /// The sum is a 32-bit cyclical redundancy check using a Castagnoli
         /// polynomial.
-        e_CRC32C = 1,
+        e_CRC32C = 3,
 
         /// The sum is calculated according to the 32-bit XXHASH algorithm.
-        e_XXHASH32 = 2,
+        e_XXHASH32 = 4,
 
         /// The sum is calculated according to the 64-bit XXHASH algorithm.
-        e_XXHASH64 = 3
+        e_XXHASH64 = 5
     };
 
     /// Return the string representation exactly matching the enumerator

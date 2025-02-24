@@ -52,11 +52,15 @@ namespace ntca {
 class Checksum
 {
     /// Defines a type alias for a representation of a checksum calculated by
-    /// the CRC32 algorithm.
+    /// the Adler-32 algorithm.
+    typedef bsl::uint32_t Adler32;
+
+    /// Defines a type alias for a representation of a checksum calculated by
+    /// the CRC-32 algorithm.
     typedef bdlde::Crc32 Crc32;
 
     /// Defines a type alias for a representation of a checksum calculated by
-    /// the CRC32-C algorithm.
+    /// the CRC-32c algorithm.
     typedef bsl::uint32_t Crc32c;
 
     /// Defines a type alias for a representation of a checksum calculated by
@@ -68,6 +72,7 @@ class Checksum
     typedef bsl::uint64_t XxHash64;
 
     union {
+        bsls::ObjectBuffer<Adler32>  d_adler32;
         bsls::ObjectBuffer<Crc32>    d_crc32;
         bsls::ObjectBuffer<Crc32c>   d_crc32c;
         bsls::ObjectBuffer<XxHash32> d_xxHash32;
@@ -98,6 +103,9 @@ class Checksum
 
     /// Reset the value of this object to its value upon construction.
     void reset();
+
+    /// Initialize the checksum for the specified 'type'.
+    ntsa::Error initialize(ntca::ChecksumType::Value type);
 
     /// Store the specified 'value' having the specified 'size' as the checksum
     /// of the specified 'type'.
