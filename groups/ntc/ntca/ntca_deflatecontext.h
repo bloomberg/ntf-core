@@ -19,6 +19,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_compressiontype.h>
 #include <ntca_checksum.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
@@ -33,6 +34,9 @@ namespace ntca {
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
+///
+/// @li @b compressionType:
+/// The compression technique.
 ///
 /// @li @b bytesRead:
 /// The number of bytes read from the input.
@@ -49,9 +53,10 @@ namespace ntca {
 /// @ingroup module_todo
 class DeflateContext
 {
-    bsl::size_t    d_bytesRead;
-    bsl::size_t    d_bytesWritten;
-    ntca::Checksum d_checksum;
+    ntca::CompressionType::Value        d_compressionType;
+    bsl::size_t                         d_bytesRead;
+    bsl::size_t                         d_bytesWritten;
+    bdlb::NullableValue<ntca::Checksum> d_checksum;
 
   public:
     /// Create a new deflate context having the default value.
@@ -71,6 +76,9 @@ class DeflateContext
     /// Reset the value of this object to its value upon default construction.
     void reset();
 
+    /// Set the compression technique to the specified 'value'.
+    void setCompressionType(ntca::CompressionType::Value value);
+
     /// Set the number of bytes read to the specified 'value'.
     void setBytesRead(bsl::size_t value);
 
@@ -80,6 +88,9 @@ class DeflateContext
     /// Set the checksum to the specified 'value'.
     void setChecksum(const ntca::Checksum& value);
 
+    /// Return the compression type.
+    ntca::CompressionType::Value compressionType() const;
+
     /// Return the number of bytes read.
     bsl::size_t bytesRead() const;
 
@@ -87,7 +98,7 @@ class DeflateContext
     bsl::size_t bytesWritten() const;
 
     /// Return the checksum.
-    const ntca::Checksum& checksum() const;
+    const bdlb::NullableValue<ntca::Checksum>& checksum() const;
 
     /// Return true if this object has the same value as the specified 'other'
     /// object, otherwise return false.
@@ -160,7 +171,8 @@ void hashAppend(HASH_ALGORITHM& algorithm, const DeflateContext& value);
 
 NTCCFG_INLINE
 DeflateContext::DeflateContext()
-: d_bytesRead(0)
+: d_compressionType(ntca::CompressionType::e_UNDEFINED)
+, d_bytesRead(0)
 , d_bytesWritten(0)
 , d_checksum()
 {
@@ -168,7 +180,8 @@ DeflateContext::DeflateContext()
 
 NTCCFG_INLINE
 DeflateContext::DeflateContext(const DeflateContext& original)
-: d_bytesRead(original.d_bytesRead)
+: d_compressionType(original.d_compressionType)
+, d_bytesRead(original.d_bytesRead)
 , d_bytesWritten(original.d_bytesWritten)
 , d_checksum(original.d_checksum)
 {
@@ -182,9 +195,10 @@ DeflateContext::~DeflateContext()
 NTCCFG_INLINE
 DeflateContext& DeflateContext::operator=(const DeflateContext& other)
 {
-    d_bytesRead    = other.d_bytesRead;
-    d_bytesWritten = other.d_bytesWritten;
-    d_checksum     = other.d_checksum;
+    d_compressionType = other.d_compressionType;
+    d_bytesRead       = other.d_bytesRead;
+    d_bytesWritten    = other.d_bytesWritten;
+    d_checksum        = other.d_checksum;
 
     return *this;
 }
@@ -192,9 +206,16 @@ DeflateContext& DeflateContext::operator=(const DeflateContext& other)
 NTCCFG_INLINE
 void DeflateContext::reset()
 {
+    d_compressionType = ntca::CompressionType::e_UNDEFINED;
     d_bytesRead    = 0;
     d_bytesWritten = 0;
     d_checksum.reset();
+}
+
+NTCCFG_INLINE
+void DeflateContext::setCompressionType(ntca::CompressionType::Value value)
+{
+    d_compressionType = value;
 }
 
 NTCCFG_INLINE
@@ -216,6 +237,12 @@ void DeflateContext::setChecksum(const ntca::Checksum& value)
 }
 
 NTCCFG_INLINE
+ntca::CompressionType::Value DeflateContext::compressionType() const
+{
+    return d_compressionType;
+}
+
+NTCCFG_INLINE
 bsl::size_t DeflateContext::bytesRead() const
 {
     return d_bytesRead;
@@ -228,7 +255,7 @@ bsl::size_t DeflateContext::bytesWritten() const
 }
 
 NTCCFG_INLINE
-const ntca::Checksum& DeflateContext::checksum() const
+const bdlb::NullableValue<ntca::Checksum>& DeflateContext::checksum() const
 {
     return d_checksum;
 }
@@ -237,6 +264,7 @@ template <typename HASH_ALGORITHM>
 NTCCFG_INLINE void DeflateContext::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
+    hashAppend(algorithm, d_compressionType);
     hashAppend(algorithm, d_bytesRead);
     hashAppend(algorithm, d_bytesWritten);
     hashAppend(algorithm, d_checksum);

@@ -710,7 +710,7 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyAll)
 #endif
 
 #if NTC_BUILD_WITH_ZLIB
-    // algorithmVector.push_back(ntca::CompressionType::e_ZLIB);
+    algorithmVector.push_back(ntca::CompressionType::e_ZLIB);
     algorithmVector.push_back(ntca::CompressionType::e_GZIP);
 #endif
 
