@@ -39,6 +39,7 @@ BSLS_IDENT_RCSID(ntsf_system_cpp, "$Id$ $CSID$")
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bslma_newdeleteallocator.h>
+#include <bslmf_movableref.h>
 #include <bslmt_lockguard.h>
 #include <bslmt_mutex.h>
 #include <bslmt_once.h>
@@ -1419,7 +1420,7 @@ ntsa::Error System::loadTcpCongestionControlAlgorithmSupport(
     bsl::string algorithmName;
     while (ssline >> algorithmName) {
         result->push_back(
-            BloombergLP::bslmf::MovableRef<bsl::string>(algorithmName));
+            BloombergLP::bslmf::MovableRefUtil::move(algorithmName));
     }
     return ntsa::Error();
 #else
