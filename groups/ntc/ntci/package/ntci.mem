@@ -114,6 +114,8 @@ ntci_threadpool
 ntci_upgradable
 ntci_upgradecallback
 ntci_upgradecallbackfactory
+ntci_upgradefuture
+ntci_upgraderesult
 ntci_user
 ntci_waiter
 

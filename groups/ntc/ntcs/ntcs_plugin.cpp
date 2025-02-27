@@ -42,6 +42,13 @@ class Plugin::Impl
         k_MAX_NAME_LENGTH = k_MAX_NAME_CAPACITY - 1
     };
 
+    /// Describe an compression driver.
+    struct CompressionDriverEntry {
+        char                     d_name[k_MAX_NAME_CAPACITY];
+        ntci::CompressionDriver* d_driver_p;
+        bslma::SharedPtrRep*     d_driverRep_p;
+    };
+
     /// Describe an encryption driver.
     struct EncryptionDriverEntry {
         char                    d_name[k_MAX_NAME_CAPACITY];
@@ -65,6 +72,13 @@ class Plugin::Impl
 
     /// The lock.
     static bsls::SpinLock s_lock;
+
+    /// The registered compression drivers.
+    static struct CompressionDriverEntry
+        s_compressionDriverArray[k_MAX_ENTRY_CAPACITY];
+
+    /// The number of registered compression drivers.
+    static bsl::size_t s_compressionDriverCount;
 
     /// The registered encryption drivers.
     static struct EncryptionDriverEntry
@@ -90,6 +104,10 @@ class Plugin::Impl
 
 bsls::SpinLock Plugin::Impl::s_lock;
 
+struct Plugin::Impl::CompressionDriverEntry
+            Plugin::Impl::s_compressionDriverArray[k_MAX_ENTRY_CAPACITY];
+bsl::size_t Plugin::Impl::s_compressionDriverCount;
+
 struct Plugin::Impl::EncryptionDriverEntry
             Plugin::Impl::s_encryptionDriverArray[k_MAX_ENTRY_CAPACITY];
 bsl::size_t Plugin::Impl::s_encryptionDriverCount;
@@ -104,6 +122,92 @@ bsl::size_t Plugin::Impl::s_proactorFactoryCount;
 
 void Plugin::initialize()
 {
+}
+
+ntsa::Error Plugin::registerCompressionDriver(
+    const bsl::shared_ptr<ntci::CompressionDriver>& compressionDriver)
+{
+    bsls::SpinLockGuard guard(&Impl::s_lock);
+
+    bool wasRegistered = false;
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (Impl::s_compressionDriverArray[i].d_driver_p == 0) {
+            bsl::shared_ptr<ntci::CompressionDriver> temp = compressionDriver;
+            if (!temp) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+            bsl::pair<ntci::CompressionDriver*, bslma::SharedPtrRep*> state =
+                temp.release();
+            Impl::s_compressionDriverArray[i].d_driver_p    = state.first;
+            Impl::s_compressionDriverArray[i].d_driverRep_p = state.second;
+            ++Impl::s_compressionDriverCount;
+            wasRegistered = true;
+            break;
+        }
+    }
+
+    if (!wasRegistered) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error Plugin::deregisterCompressionDriver(
+    const bsl::shared_ptr<ntci::CompressionDriver>& compressionDriver)
+{
+    bsls::SpinLockGuard guard(&Impl::s_lock);
+
+    bool wasDeregistered = false;
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (Impl::s_compressionDriverArray[i].d_driver_p ==
+            compressionDriver.get())
+        {
+            Impl::s_compressionDriverArray[i].d_driverRep_p->releaseRef();
+            Impl::s_compressionDriverArray[i].d_driver_p    = 0;
+            Impl::s_compressionDriverArray[i].d_driverRep_p = 0;
+            --Impl::s_compressionDriverCount;
+            wasDeregistered = true;
+            break;
+        }
+    }
+
+    if (!wasDeregistered) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error Plugin::lookupCompressionDriver(
+    bsl::shared_ptr<ntci::CompressionDriver>* result)
+{
+    bsls::SpinLockGuard guard(&Impl::s_lock);
+
+    result->reset();
+
+    bool wasFound = false;
+    for (bsl::size_t i = 0; i < Impl::k_MAX_ENTRY_CAPACITY; ++i) {
+        if (Impl::s_compressionDriverArray[i].d_driver_p != 0) {
+            Impl::s_compressionDriverArray[i].d_driverRep_p->acquireRef();
+            result->reset(Impl::s_compressionDriverArray[i].d_driver_p,
+                          Impl::s_compressionDriverArray[i].d_driverRep_p);
+            wasFound = true;
+            break;
+        }
+    }
+
+    if (!wasFound) {
+        return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    }
+
+    return ntsa::Error();
+}
+
+bool Plugin::supportsCompressionDriver()
+{
+    bsls::SpinLockGuard guard(&Impl::s_lock);
+    return Impl::s_compressionDriverCount > 0;
 }
 
 ntsa::Error Plugin::registerEncryptionDriver(

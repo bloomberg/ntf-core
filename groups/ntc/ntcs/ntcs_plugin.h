@@ -20,6 +20,7 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
+#include <ntci_compressiondriver.h>
 #include <ntci_encryptiondriver.h>
 #include <ntci_proactor.h>
 #include <ntci_proactorfactory.h>
@@ -38,7 +39,7 @@ namespace ntcs {
 ///
 /// @details
 /// Provide a utility to manage the plugins registered to create
-/// encryption sessions, reactors, and proactors.
+/// compression mechanisms, encryption sessions, reactors, and proactors.
 ///
 /// @par Thread Safety
 /// This struct is thread safe.
@@ -47,6 +48,23 @@ namespace ntcs {
 struct Plugin {
     /// Initialize the plugin manager.
     static void initialize();
+
+    /// Register the specified 'compressionDriver'. Return the error.
+    static ntsa::Error registerCompressionDriver(
+        const bsl::shared_ptr<ntci::CompressionDriver>& compressionDriver);
+
+    /// Deregister the specified 'compressionDriver'. Return the error.
+    static ntsa::Error deregisterCompressionDriver(
+        const bsl::shared_ptr<ntci::CompressionDriver>& compressionDriver);
+
+    /// Load into the specified 'result' the registered compression driver.
+    /// Return the error.
+    static ntsa::Error lookupCompressionDriver(
+        bsl::shared_ptr<ntci::CompressionDriver>* result);
+
+    /// Return true if an compression driver has been registered, and false
+    /// otherwise.
+    static bool supportsCompressionDriver();
 
     /// Register the specified 'encryptionDriver'. Return the error.
     static ntsa::Error registerEncryptionDriver(

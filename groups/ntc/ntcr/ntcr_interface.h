@@ -67,6 +67,18 @@ class Interface : public ntci::Interface,
                   public ntcs::Interruptor,
                   public ntccfg::Shared<Interface>
 {
+    /// Enumerates the constants used by this implementation.
+    enum Constant {
+        /// The object is stopped.
+        k_RUN_STATE_STOPPED  = 0,
+
+        /// The object is started.
+        k_RUN_STATE_STARTED  = 1,
+
+        /// The object is stopping.
+        k_RUN_STATE_STOPPING = 2
+    };
+
     /// Define a type alias for a map of thread handle
     /// identifiers as unsigned 64-bit integers to reactors driven by those
     /// threads.
@@ -100,6 +112,7 @@ class Interface : public ntci::Interface,
     ThreadMap                             d_threadMap;
     bslmt::Semaphore                      d_threadSemaphore;
     bsl::size_t                           d_threadWatermark;
+    bsls::AtomicInt                       d_runState;
     ntca::InterfaceConfig                 d_config;
     bslma::Allocator*                     d_allocator_p;
 

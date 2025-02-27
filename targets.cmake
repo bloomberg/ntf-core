@@ -674,6 +674,8 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntci_upgradable)
     ntf_component(NAME ntci_upgradecallback)
     ntf_component(NAME ntci_upgradecallbackfactory)
+    ntf_component(NAME ntci_upgradefuture)
+    ntf_component(NAME ntci_upgraderesult)
     ntf_component(NAME ntci_user)
     ntf_component(NAME ntci_waiter)
 

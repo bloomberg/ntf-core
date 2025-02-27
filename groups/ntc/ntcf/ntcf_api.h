@@ -263,6 +263,8 @@ BSLS_IDENT("$Id: $")
 #include <ntci_upgradable.h>
 #include <ntci_upgradecallback.h>
 #include <ntci_upgradecallbackfactory.h>
+#include <ntci_upgradefuture.h>
+#include <ntci_upgraderesult.h>
 #include <ntci_user.h>
 #include <ntci_waiter.h>
 

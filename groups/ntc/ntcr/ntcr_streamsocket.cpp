@@ -2921,6 +2921,10 @@ ntsa::Error StreamSocket::privateDequeueReceiveBuffer(
             return error;
         }
 
+        bdlbb::BlobUtil::erase(d_receiveBlob_sp.get(),
+                               0,
+                               d_receiveBlob_sp->length());
+
         const int receiveQueueLengthAfter = data->length();
 
         numBytesReceived = receiveQueueLengthAfter - receiveQueueLengthBefore;

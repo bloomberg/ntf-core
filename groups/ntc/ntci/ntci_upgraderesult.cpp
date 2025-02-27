@@ -13,32 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCF_TESTFRAMEWORK_T_CPP
-#define INCLUDED_NTCF_TESTFRAMEWORK_T_CPP
-
-#include <ntscfg_test.h>
+#include <ntci_upgraderesult.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcf_testframework_t_cpp, "$Id$ $CSID$")
-
-#include <ntcf_testframework.h>
-
-namespace BloombergLP {
-namespace ntcf {
-
-// Provide tests for 'ntcf::TestFramework'.
-class TestFrameworkTest
-{
-  public:
-    // TODO
-    static void verify();
-};
-
-NTSCFG_TEST_FUNCTION(ntcf::TestFrameworkTest::verify)
-{
-    
-}
-
-}  // close namespace ntcf
-}  // close namespace BloombergLP
-#endif
+BSLS_IDENT_RCSID(ntci_upgraderesult_cpp, "$Id$ $CSID$")

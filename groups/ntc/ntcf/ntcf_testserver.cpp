@@ -21,6 +21,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcf_testserver_cpp, "$Id$ $CSID$")
 
+#define NTCF_TESTCLIENT_DATAGRAM_SOCKET_ENABLED 0
+
 namespace BloombergLP {
 namespace ntcf {
 
@@ -428,11 +430,74 @@ void TestServerTransaction::deliverResponse(
     }
 }
 
+void TestServerTransaction::processUpgrade(
+    const bsl::shared_ptr<ntci::Upgradable>&   upgradable,
+    const ntca::UpgradeEvent&                  event,
+    bool                                       acknowledge,
+    ntcf::TestControlTransition::Value         transition)
+{
+    BSLS_ASSERT_OPT(d_streamSocket_sp);
+    BSLS_ASSERT_OPT(d_streamSocket_sp == upgradable);
+
+    if (event.type() == ntca::UpgradeEventType::e_COMPLETE) {
+        bsl::shared_ptr<ntci::EncryptionCertificate> remoteCertificate =
+            upgradable->remoteCertificate();
+
+        if (remoteCertificate) {
+            ntca::EncryptionCertificate remoteCertificateRecord;
+            remoteCertificate->unwrap(&remoteCertificateRecord);
+
+            BALL_LOG_INFO << "Server stream socket at "
+                          << d_streamSocket_sp->sourceEndpoint() << " to "
+                          << d_streamSocket_sp->remoteEndpoint()
+                          << " upgrade complete: " << event.context()
+                          << BALL_LOG_END;
+
+            BALL_LOG_INFO
+                << "Server stream socket at " 
+                << d_streamSocket_sp->sourceEndpoint() << " to "
+                << d_streamSocket_sp->remoteEndpoint()
+                << " encryption session has been established with "
+                << remoteCertificate->subject() << " issued by "
+                << remoteCertificate->issuer() << ": "
+                << remoteCertificateRecord << BALL_LOG_END;
+        }
+        else {
+            BALL_LOG_INFO << "Server stream socket at "
+                          << d_streamSocket_sp->sourceEndpoint() 
+                          << " to "
+                          << d_streamSocket_sp->remoteEndpoint()
+                          << " encryption session has been established"
+                          << BALL_LOG_END;
+        }
+
+        if (acknowledge && 
+            transition == 
+            ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER) 
+        {
+            this->acknowledge();
+        }
+    }
+    else if (event.type() == ntca::UpgradeEventType::e_ERROR) {
+        BALL_LOG_INFO
+            << "Stream socket at "
+            << d_streamSocket_sp->sourceEndpoint() << " to "
+            << d_streamSocket_sp->remoteEndpoint()
+            << " upgrade error: " << event.context() << BALL_LOG_END;
+
+        d_streamSocket_sp->close();
+    }
+    else {
+        NTCCFG_ABORT();
+    }
+}
+
 TestServerTransaction::TestServerTransaction(
     const bsl::shared_ptr<ntcf::TestMessagePool>& responsePool,
     const bsl::shared_ptr<ntci::DataPool>&        dataPool,
     const bsl::shared_ptr<ntci::Serialization>&   serialization,
     const bsl::shared_ptr<ntci::Compression>&     compression,
+    const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
     bslma::Allocator*                             basicAllocator)
 : d_mutex()
 , d_request_sp()
@@ -442,6 +507,7 @@ TestServerTransaction::TestServerTransaction(
 , d_streamSocket_sp()
 , d_serialization_sp(serialization)
 , d_compression_sp(compression)
+, d_encryption_sp(encryption)
 , d_endpoint()
 , d_timestamp()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -479,6 +545,32 @@ void TestServerTransaction::start(
     d_timestamp         = timestamp;
 }
 
+void TestServerTransaction::acknowledge()
+{
+    ntcf::TestAcknowledgment acknowledgment;
+    this->acknowledge(acknowledgment);
+}
+
+void TestServerTransaction::acknowledge(
+    const ntcf::TestAcknowledgment& acknowledgment)
+{
+    bsl::shared_ptr<ntcf::TestMessage> response = this->createResponse();
+
+    response->setType(ntcf::TestMessageType::e_ACKNOWLEDGMENT);
+    response->setFlag(ntcf::TestMessageFlag::e_RESPONSE);
+
+    if (d_request_sp->entity().value().isContentValue()) {
+        response->makeEntity().makeContent().makeAcknowledgment(
+            acknowledgment);
+    }
+    else if (d_request_sp->entity().value().isControlValue()) {
+        response->makeEntity().makeControl().makeAcknowledgment(
+            acknowledgment);
+    }
+
+    this->deliverResponse(response);
+}
+
 void TestServerTransaction::complete(const ntcf::TestTrade& trade)
 {
     bsl::shared_ptr<ntcf::TestMessage> response = this->createResponse();
@@ -503,27 +595,9 @@ void TestServerTransaction::complete(const ntcf::TestEcho& echo)
     this->deliverResponse(response);
 }
 
-void TestServerTransaction::complete(
-    const ntcf::TestAcknowledgment& acknowledgment)
-{
-    bsl::shared_ptr<ntcf::TestMessage> response = this->createResponse();
 
-    response->setType(ntcf::TestMessageType::e_ACKNOWLEDGMENT);
-    response->setFlag(ntcf::TestMessageFlag::e_RESPONSE);
 
-    if (d_request_sp->entity().value().isContentValue()) {
-        response->makeEntity().makeContent().makeAcknowledgment(
-            acknowledgment);
-    }
-    else if (d_request_sp->entity().value().isControlValue()) {
-        response->makeEntity().makeControl().makeAcknowledgment(
-            acknowledgment);
-    }
-
-    this->deliverResponse(response);
-}
-
-void TestServerTransaction::complete(const ntcf::TestFault& fault)
+void TestServerTransaction::fail(const ntcf::TestFault& fault)
 {
     bsl::shared_ptr<ntcf::TestMessage> response = this->createResponse();
 
@@ -538,6 +612,168 @@ void TestServerTransaction::complete(const ntcf::TestFault& fault)
     }
 
     this->deliverResponse(response);
+}
+
+void TestServerTransaction::enableCompression(
+    bool                               acknowledge,
+    ntcf::TestControlTransition::Value transition)
+{
+    if (acknowledge && 
+        transition == 
+        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE) 
+    {
+        this->acknowledge();
+    }
+
+    if (d_streamSocket_sp) {
+        d_streamSocket_sp->setWriteDeflater(d_compression_sp);
+        d_streamSocket_sp->setReadInflater(d_compression_sp);
+    }
+    else if (d_datagramSocket_sp) {
+        d_datagramSocket_sp->setWriteDeflater(d_compression_sp);
+        d_datagramSocket_sp->setReadInflater(d_compression_sp);
+    }
+
+    if (acknowledge && 
+        transition == 
+        ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER) 
+    {
+        this->acknowledge();
+    }
+}
+
+void TestServerTransaction::enableEncryption(
+    bool                               acknowledge,
+    ntcf::TestControlTransition::Value transition)
+{
+    ntsa::Error error;
+
+    if (d_streamSocket_sp) {
+        if (acknowledge && 
+            transition == 
+            ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE) 
+        {
+            this->acknowledge();
+        }
+
+        ntca::EncryptionServerOptions encryptionServerOptions;
+
+        encryptionServerOptions.setIdentity(
+            d_encryption_sp->serverCertificate());
+        encryptionServerOptions.setPrivateKey(
+            d_encryption_sp->serverPrivateKey());
+
+        bsl::shared_ptr<ntci::EncryptionServer> encryptionServer;
+        error = ntcf::System::createEncryptionServer(&encryptionServer,
+                                                     encryptionServerOptions,
+                                                     d_allocator_p);
+        BSLS_ASSERT_OPT(!error);
+
+        ntca::UpgradeOptions serverUpgradeOptions;
+
+        ntci::UpgradeCallback serverUpgradeCallback =
+            d_streamSocket_sp->createUpgradeCallback(
+                NTCCFG_BIND(&TestServerTransaction::processUpgrade,
+                            this->getSelf(this),
+                            NTCCFG_BIND_PLACEHOLDER_1,
+                            NTCCFG_BIND_PLACEHOLDER_2,
+                            acknowledge,
+                            transition));
+
+        error = d_streamSocket_sp->upgrade(encryptionServer,
+                                           serverUpgradeOptions,
+                                           serverUpgradeCallback);
+        BSLS_ASSERT_OPT(!error);
+    }
+}
+
+void TestServerTransaction::disableCompression(
+    bool                               acknowledge,
+    ntcf::TestControlTransition::Value transition)
+{
+    bsl::shared_ptr<ntci::Compression> none;
+
+    // MRM
+#if 0
+    if (d_streamSocket_sp) {
+        d_streamSocket_sp->applyFlowControl(
+            ntca::FlowControlType::e_RECEIVE, 
+            ntca::FlowControlMode::e_IMMEDIATE);
+    }
+    else if (d_datagramSocket_sp) {
+        d_datagramSocket_sp->applyFlowControl(
+            ntca::FlowControlType::e_RECEIVE, 
+            ntca::FlowControlMode::e_IMMEDIATE);
+    }
+#endif
+
+    if (acknowledge && 
+        transition == 
+        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE) 
+    {
+        this->acknowledge();
+    }
+
+    if (d_streamSocket_sp) {
+        d_streamSocket_sp->setWriteDeflater(none);
+        d_streamSocket_sp->setReadInflater(none);
+    }
+    else if (d_datagramSocket_sp) {
+        d_datagramSocket_sp->setWriteDeflater(none);
+        d_datagramSocket_sp->setReadInflater(none);
+    }
+
+    if (acknowledge && 
+        transition == 
+        ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER) 
+    {
+        this->acknowledge();
+    }
+
+    // MRM
+#if 0
+    if (d_streamSocket_sp) {
+        d_streamSocket_sp->relaxFlowControl(
+            ntca::FlowControlType::e_RECEIVE);
+    }
+    else if (d_datagramSocket_sp) {
+        d_datagramSocket_sp->relaxFlowControl(
+            ntca::FlowControlType::e_RECEIVE);
+    }
+#endif
+}
+
+void TestServerTransaction::disableEncryption(
+    bool                               acknowledge,
+    ntcf::TestControlTransition::Value transition)
+{
+    ntsa::Error error;
+
+    if (acknowledge && 
+        transition == 
+        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE) 
+    {
+        this->acknowledge();
+    }
+
+    if (d_streamSocket_sp) {
+        error = d_streamSocket_sp->downgrade();
+        BSLS_ASSERT_OPT(!error);
+    }
+
+    if (acknowledge && 
+        transition == 
+        ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER) 
+    {
+        this->acknowledge();
+    }
+}
+
+void TestServerTransaction::close()
+{
+    if (d_streamSocket_sp) {
+        d_streamSocket_sp->close();
+    }
 }
 
 void TestServer::processDatagramSocketEstablished(
@@ -728,6 +964,7 @@ void TestServer::processReadQueueLowWatermark(
                                       d_dataPool_sp,
                                       d_serialization_sp,
                                       d_compression_sp,
+                                      d_encryption_sp,
                                       d_allocator_p);
 
             transaction->start(message,
@@ -988,6 +1225,7 @@ void TestServer::processReadQueueLowWatermark(
                                       d_dataPool_sp,
                                       d_serialization_sp,
                                       d_compression_sp,
+                                      d_encryption_sp,
                                       d_allocator_p);
 
             transaction->start(message,
@@ -1346,8 +1584,6 @@ void TestServer::privateStreamSocketInitiateUpgrade(
 {
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(streamSocket);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestServer::privateStreamSocketCompleteUpgrade(
@@ -1358,8 +1594,6 @@ void TestServer::privateStreamSocketCompleteUpgrade(
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestServer::privateStreamSocketInitiateDowngrade(
@@ -1368,8 +1602,6 @@ void TestServer::privateStreamSocketInitiateDowngrade(
 {
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(streamSocket);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestServer::privateStreamSocketCompleteDowngrade(
@@ -1380,8 +1612,6 @@ void TestServer::privateStreamSocketCompleteDowngrade(
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestServer::privateDatagramSocketUp(
@@ -1577,11 +1807,17 @@ void TestServer::processEncryption(
     const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
     const ntcf::TestControlEncryption&                  encryption)
 {
-    // MRM: TODO
+    ntsa::Error error;
 
-    if (encryption.acknowledge) {
-        ntcf::TestAcknowledgment acknowledgment;
-        transaction->complete(acknowledgment);
+    if (encryption.enabled) {
+        transaction->enableEncryption(
+            encryption.acknowledge, 
+            encryption.transition);
+    }
+    else {
+        transaction->disableEncryption(
+            encryption.acknowledge, 
+            encryption.transition);
     }
 }
 
@@ -1589,11 +1825,15 @@ void TestServer::processCompression(
     const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
     const ntcf::TestControlCompression&                 compression)
 {
-    // MRM: TODO
-
-    if (compression.acknowledge) {
-        ntcf::TestAcknowledgment acknowledgment;
-        transaction->complete(acknowledgment);
+    if (compression.enabled) {
+        transaction->enableCompression(
+            compression.acknowledge, 
+            compression.transition);
+    }
+    else {
+        transaction->disableCompression(
+            compression.acknowledge, 
+            compression.transition);
     }
 }
 
@@ -1601,33 +1841,34 @@ void TestServer::processHeartbeat(
     const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
     const ntcf::TestControlHeartbeat&                   heartbeat)
 {
-    // MRM: TODO
-
     if (heartbeat.acknowledge) {
-        ntcf::TestAcknowledgment acknowledgment;
-        transaction->complete(acknowledgment);
+        transaction->acknowledge();
     }
 }
 
-TestServer::TestServer(const ntcf::TestServerConfig& configuration,
-                       bslma::Allocator*             basicAllocator)
+TestServer::TestServer(const ntcf::TestServerConfig&           configuration,
+                       const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+                       const bsl::shared_ptr<ntci::DataPool>&  dataPool,
+                       const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
+                       bslma::Allocator*                       basicAllocator)
 : d_mutex()
-, d_dataPool_sp()
+, d_dataPool_sp(dataPool)
 , d_messagePool_sp()
 , d_serialization_sp()
 , d_compression_sp()
-, d_scheduler_sp()
+, d_scheduler_sp(scheduler)
 , d_datagramSocket_sp()
 , d_datagramParser_sp()
 , d_datagramEndpoint()
 , d_listenerSocket_sp()
 , d_listenerEndpoint()
 , d_streamSocketMap(basicAllocator)
+, d_encryption_sp(encryption)
 , d_closed(false)
 , d_config(configuration, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    BALL_LOG_INFO << "Server constructing starting" << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Server constructing starting" << BALL_LOG_END;
 
     bsl::shared_ptr<Self> self(this->getSelf(this));
 
@@ -1643,16 +1884,28 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
 
     ntca::SerializationConfig serializationConfig;
 
-    d_serialization_sp =
-        ntcf::System::createSerialization(serializationConfig, d_allocator_p);
+    error = ntcf::System::createSerialization(&d_serialization_sp, 
+        serializationConfig, 
+        d_allocator_p);
+    BSLS_ASSERT_OPT(!error);
 
     ntca::CompressionConfig compressionConfig;
+
+#if NTC_BUILD_WITH_ZLIB
+    compressionConfig.setType(ntca::CompressionType::e_ZLIB);
+#elif NTC_BUILD_WITH_LZ4
+    compressionConfig.setType(ntca::CompressionType::e_LZ4);
+#else
     compressionConfig.setType(ntca::CompressionType::e_RLE);
+#endif
+
     compressionConfig.setGoal(ntca::CompressionGoal::e_BALANCED);
 
-    d_compression_sp = ntcf::System::createCompression(compressionConfig,
-                                                       d_dataPool_sp,
-                                                       d_allocator_p);
+    error = ntcf::System::createCompression(&d_compression_sp,
+        compressionConfig,
+        d_dataPool_sp,
+        d_allocator_p);
+    BSLS_ASSERT_OPT(!error);
 
     d_datagramParser_sp.createInplace(d_allocator_p,
                                       d_dataPool_sp,
@@ -1661,91 +1914,10 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
                                       d_compression_sp,
                                       d_allocator_p);
 
-    BALL_LOG_INFO << "Server scheduler construction starting" << BALL_LOG_END;
+#if NTCF_TESTCLIENT_DATAGRAM_SOCKET_ENABLED
 
-    ntca::SchedulerConfig schedulerConfig;
-
-    schedulerConfig.setThreadName(d_config.name.value());
-
-    if (d_config.driver.has_value()) {
-        schedulerConfig.setDriverName(d_config.driver.value());
-    }
-
-    if (d_config.numNetworkingThreads.has_value()) {
-        schedulerConfig.setMinThreads(d_config.numNetworkingThreads.value());
-        schedulerConfig.setMaxThreads(d_config.numNetworkingThreads.value());
-    }
-
-    if (d_config.dynamicLoadBalancing.has_value()) {
-        schedulerConfig.setDynamicLoadBalancing(
-            d_config.dynamicLoadBalancing.value());
-    }
-
-    if (d_config.keepAlive.has_value()) {
-        schedulerConfig.setKeepAlive(d_config.keepAlive.value());
-    }
-
-    if (d_config.keepHalfOpen.has_value()) {
-        schedulerConfig.setKeepHalfOpen(d_config.keepHalfOpen.value());
-    }
-
-    if (d_config.backlog.has_value()) {
-        schedulerConfig.setBacklog(d_config.backlog.value());
-    }
-
-    if (d_config.sendBufferSize.has_value()) {
-        schedulerConfig.setSendBufferSize(d_config.sendBufferSize.value());
-    }
-
-    if (d_config.receiveBufferSize.has_value()) {
-        schedulerConfig.setBacklog(d_config.receiveBufferSize.value());
-    }
-
-    if (d_config.acceptGreedily.has_value()) {
-        schedulerConfig.setAcceptGreedily(d_config.acceptGreedily.value());
-    }
-
-    if (d_config.acceptQueueLowWatermark.has_value()) {
-        schedulerConfig.setAcceptQueueLowWatermark(
-            d_config.acceptQueueLowWatermark.value());
-    }
-
-    if (d_config.acceptQueueHighWatermark.has_value()) {
-        schedulerConfig.setAcceptQueueHighWatermark(
-            d_config.acceptQueueHighWatermark.value());
-    }
-
-    if (d_config.readQueueLowWatermark.has_value()) {
-        schedulerConfig.setReadQueueLowWatermark(
-            d_config.readQueueLowWatermark.value());
-    }
-
-    if (d_config.readQueueHighWatermark.has_value()) {
-        schedulerConfig.setReadQueueHighWatermark(
-            d_config.readQueueHighWatermark.value());
-    }
-
-    if (d_config.writeQueueLowWatermark.has_value()) {
-        schedulerConfig.setWriteQueueLowWatermark(
-            d_config.writeQueueLowWatermark.value());
-    }
-
-    if (d_config.writeQueueHighWatermark.has_value()) {
-        schedulerConfig.setWriteQueueHighWatermark(
-            d_config.writeQueueHighWatermark.value());
-    }
-
-    d_scheduler_sp = ntcf::System::createScheduler(schedulerConfig,
-                                                   d_dataPool_sp,
-                                                   d_allocator_p);
-
-    error = d_scheduler_sp->start();
-    BSLS_ASSERT_OPT(!error);
-
-    BALL_LOG_INFO << "Server scheduler construction complete" << BALL_LOG_END;
-
-    BALL_LOG_INFO << "Server datagram socket construction starting"
-                  << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Server datagram socket construction starting"
+    // MRM:               << BALL_LOG_END;
 
     ntca::DatagramSocketOptions datagramSocketOptions;
     datagramSocketOptions.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
@@ -1767,11 +1939,13 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
 
     d_datagramEndpoint = d_datagramSocket_sp->sourceEndpoint();
 
-    BALL_LOG_INFO << "Server datagram socket construction complete"
-                  << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Server datagram socket construction complete"
+    // MRM:               << BALL_LOG_END;
 
-    BALL_LOG_INFO << "Server listening socket construction starting"
-                  << BALL_LOG_END;
+#endif
+
+    // MRM: BALL_LOG_INFO << "Server listening socket construction starting"
+    // MRM:               << BALL_LOG_END;
 
     ntca::ListenerSocketOptions listenerSocketOptions;
     listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
@@ -1796,21 +1970,18 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
 
     d_listenerEndpoint = d_listenerSocket_sp->sourceEndpoint();
 
-    BALL_LOG_INFO << "Server listening socket construction complete"
-                  << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Server listening socket construction complete"
+    // MRM:               << BALL_LOG_END;
 
-    BALL_LOG_INFO << "Server construction complete" << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Server construction complete" << BALL_LOG_END;
 
-    d_datagramParser_sp.createInplace(d_allocator_p,
-                                      d_dataPool_sp,
-                                      d_messagePool_sp,
-                                      d_serialization_sp,
-                                      d_compression_sp,
-                                      d_allocator_p);
+#if NTCF_TESTCLIENT_DATAGRAM_SOCKET_ENABLED
 
     error = d_datagramSocket_sp->relaxFlowControl(
         ntca::FlowControlType::e_RECEIVE);
     BSLS_ASSERT_OPT(!error);
+
+#endif
 
     error = d_listenerSocket_sp->relaxFlowControl(
         ntca::FlowControlType::e_RECEIVE);
@@ -1819,7 +1990,52 @@ TestServer::TestServer(const ntcf::TestServerConfig& configuration,
 
 TestServer::~TestServer()
 {
-    BALL_LOG_INFO << "Server destruction starting" << BALL_LOG_END;
+    this->close();
+}
+
+void TestServer::setAcceptQueueLowWatermark(bsl::size_t value)
+{
+    ntsa::Error error;
+
+    error = d_listenerSocket_sp->setAcceptQueueLowWatermark(value);
+    BSLS_ASSERT_OPT(!error);
+}
+
+void TestServer::setAcceptQueueHighWatermark(bsl::size_t value)
+{
+    ntsa::Error error;
+
+    error = d_listenerSocket_sp->setAcceptQueueHighWatermark(value);
+    BSLS_ASSERT_OPT(!error);
+}
+
+void TestServer::relaxFlowControl()
+{
+    ntsa::Error error;
+
+    error = d_listenerSocket_sp->relaxFlowControl(
+        ntca::FlowControlType::e_RECEIVE);
+    BSLS_ASSERT_OPT(!error);
+}
+
+void TestServer::applyFlowControl()
+{
+    ntsa::Error error;
+
+    error = d_listenerSocket_sp->applyFlowControl(
+        ntca::FlowControlType::e_RECEIVE, ntca::FlowControlMode::e_IMMEDIATE);
+    BSLS_ASSERT_OPT(!error);
+}
+
+void TestServer::close()
+{
+    if (d_closed) {
+        return;
+    }
+
+    d_closed = true;
+
+    // MRM: BALL_LOG_INFO << "Server destruction starting" << BALL_LOG_END;
 
     StreamSocketMap streamSocketMap(d_allocator_p);
     streamSocketMap.swap(d_streamSocketMap);
@@ -1844,8 +2060,8 @@ TestServer::~TestServer()
             streamSocketVector.back();
         streamSocketVector.pop_back();
 
-        BALL_LOG_INFO << "Server stream socket destruction starting"
-                      << BALL_LOG_END;
+        // MRM: BALL_LOG_INFO << "Server stream socket destruction starting"
+        // MRM:               << BALL_LOG_END;
 
         {
             ntci::StreamSocketCloseGuard closeGuard(streamSocket);
@@ -1853,43 +2069,35 @@ TestServer::~TestServer()
 
         streamSocket.reset();
 
-        BALL_LOG_INFO << "Server stream socket destruction complete"
-                      << BALL_LOG_END;
+        // MRM: BALL_LOG_INFO << "Server stream socket destruction complete"
+        // MRM:               << BALL_LOG_END;
     }
 
-    BALL_LOG_INFO << "Server listening socket destruction starting"
-                  << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Server listening socket destruction starting"
+    // MRM:               << BALL_LOG_END;
 
-    {
+    if (d_listenerSocket_sp) {
         ntci::ListenerSocketCloseGuard closeGuard(d_listenerSocket_sp);
     }
 
     d_listenerSocket_sp.reset();
 
-    BALL_LOG_INFO << "Server listening socket destruction complete"
-                  << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Server listening socket destruction complete"
+    // MRM:               << BALL_LOG_END;
 
-    BALL_LOG_INFO << "Server datagram socket destruction starting"
-                  << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Server datagram socket destruction starting"
+    // MRM:               << BALL_LOG_END;
 
-    {
+    if (d_datagramSocket_sp) {
         ntci::DatagramSocketCloseGuard closeGuard(d_datagramSocket_sp);
     }
 
     d_datagramSocket_sp.reset();
 
-    BALL_LOG_INFO << "Server datagram socket destruction complete"
-                  << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Server datagram socket destruction complete"
+    // MRM:               << BALL_LOG_END;
 
-    BALL_LOG_INFO << "Server scheduler destruction starting" << BALL_LOG_END;
-
-    d_scheduler_sp->shutdown();
-    d_scheduler_sp->linger();
-    d_scheduler_sp.reset();
-
-    BALL_LOG_INFO << "Server scheduler destruction complete" << BALL_LOG_END;
-
-    BALL_LOG_INFO << "Server destruction complete" << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Server destruction complete" << BALL_LOG_END;
 }
 
 const ntsa::Endpoint& TestServer::tcpEndpoint() const

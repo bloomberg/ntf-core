@@ -16,15 +16,21 @@
 #include <ntctlc_plugin.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntctls_plugin_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntctlc_plugin_cpp, "$Id$ $CSID$")
 
 #include <ntca_checksum.h>
 #include <ntcd_compression.h>
 #include <ntci_log.h>
 #include <ntcs_datapool.h>
+#include <ntcs_plugin.h>
+#include <ntsa_error.h>
 #include <bdlbb_blob.h>
 #include <bdlbb_blobstreambuf.h>
 #include <bdlbb_blobutil.h>
+#include <bslmt_once.h>
+#include <bslma_newdeleteallocator.h>
+#include <bslma_default.h>
+#include <bsls_assert.h>
 
 #if NTC_BUILD_WITH_LZ4
 #include <lz4.h>
@@ -67,8 +73,14 @@ class Lz4 : public ntci::Compression
     static const bool k_CHECKSUM_VERIFY = true;
 
     LZ4F_cctx*                      d_deflaterContext_p;
-    LZ4F_preferences_t              d_deflaterPrefs;
+    bdlbb::BlobBuffer               d_deflaterBuffer;
+    bsl::size_t                     d_deflaterBufferSize;
+    bsl::uint64_t                   d_deflaterGeneration;
     LZ4F_dctx*                      d_inflaterContext_p;
+    bdlbb::BlobBuffer               d_inflaterBuffer;
+    bsl::size_t                     d_inflaterBufferSize;
+    bsl::uint64_t                   d_inflaterGeneration;
+    LZ4F_preferences_t              d_preferences;
     bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
     ntca::CompressionConfig         d_config;
     bslma::Allocator*               d_allocator_p;
@@ -543,6 +555,62 @@ class Gzip : public ntci::Compression
 
 #endif
 
+/// Provide a factory for a mechanism to deflate and inflate a data stream.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntctlc
+class CompressionDriver : public ntci::CompressionDriver
+{
+    bslma::Allocator* d_allocator_p;
+
+  private:
+    CompressionDriver(const CompressionDriver&) BSLS_KEYWORD_DELETED;
+    CompressionDriver& operator=(const CompressionDriver&)
+        BSLS_KEYWORD_DELETED;
+
+  public:
+    /// Create a new compression driver. Optionally specify a 'basicAllocator'
+    /// used to supply memory. If 'basicAllocator' is 0, the currently
+    /// installed default allocator is used.
+    explicit CompressionDriver(bslma::Allocator* basicAllocator = 0);
+
+    /// Destroy this object.
+    ~CompressionDriver() BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' a new compression mechanism with the
+    /// specified 'configuration'. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used. Return the error.
+    ntsa::Error createCompression(bsl::shared_ptr<ntci::Compression>* result,
+                                  const ntca::CompressionConfig& configuration,
+                                  bslma::Allocator* basicAllocator = 0)
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' a new compression mechanism with the
+    /// specified 'options'. Allocate blob buffers using the specified
+    /// 'blobBufferFactory'. Optionally specify a 'basicAllocator' used to
+    /// supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used. Return the error.
+    ntsa::Error createCompression(
+        bsl::shared_ptr<ntci::Compression>*              result,
+        const ntca::CompressionConfig&                   configuration,
+        const bsl::shared_ptr<bdlbb::BlobBufferFactory>& blobBufferFactory,
+        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' a new compression mechanism with the
+    /// specified 'configuration'. Allocate data containers using the specified
+    /// 'dataPool'. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used. Return the error.
+    ntsa::Error createCompression(
+        bsl::shared_ptr<ntci::Compression>*    result,
+        const ntca::CompressionConfig&         configuration,
+        const bsl::shared_ptr<ntci::DataPool>& dataPool,
+        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
+};
+
 #if NTC_BUILD_WITH_LZ4
 
 ntsa::Error Lz4::deflateBegin(ntca::DeflateContext*       context,
@@ -559,7 +627,7 @@ ntsa::Error Lz4::deflateBegin(ntca::DeflateContext*       context,
     errorCode = LZ4F_compressBegin(d_deflaterContext_p, 
                                    header, 
                                    sizeof header, 
-                                   &d_deflaterPrefs);
+                                   &d_preferences);
     if (LZ4F_isError(errorCode)) {
         NTCI_LOG_ERROR("Failed to begin compression frame: %s", 
                        LZ4F_getErrorName(errorCode));
@@ -587,12 +655,12 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
 
     LZ4F_errorCode_t errorCode = 0;
 
-    bsl::size_t bounds = LZ4F_compressBound(size, &d_deflaterPrefs);
-
-    char arena[4096];
+    bsl::size_t bounds = LZ4F_compressBound(size, &d_preferences);
 
     bdlma::BufferedSequentialAllocator sequentialAllocator(
-        arena, sizeof arena, d_allocator_p);
+        d_deflaterBuffer.buffer().get(), 
+        d_deflaterBuffer.size(), 
+        d_allocator_p);
 
     char* destination = 
         reinterpret_cast<char*>(sequentialAllocator.allocate(bounds));
@@ -605,7 +673,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
     LZ4F_compressOptions_t compressOptions;
     bsl::memset(&compressOptions, 0, sizeof compressOptions);
 
-    compressOptions.stableSrc = 0;
+    compressOptions.stableSrc = 1;
 
     errorCode = LZ4F_compressUpdate(d_deflaterContext_p, 
                                     destination, 
@@ -639,7 +707,7 @@ ntsa::Error Lz4::deflateEnd(ntca::DeflateContext*       context,
 
     LZ4F_errorCode_t errorCode = 0;
 
-    bsl::size_t bounds = LZ4F_compressBound(0, &d_deflaterPrefs);
+    bsl::size_t bounds = LZ4F_compressBound(0, &d_preferences);
 
     char arena[4096];
 
@@ -715,13 +783,11 @@ ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
 
     decompressOptions.stableDst = 0;
     decompressOptions.skipChecksums = 
-        static_cast<unsigned>(k_CHECKSUM_VERIFY);
+        static_cast<unsigned>(!k_CHECKSUM_VERIFY);
 
     while (sourceCurrent < sourceEnd) {
-        char destination[4096];
-
-        const bsl::size_t destinationCapacity = sizeof destination;
-        bsl::size_t destinationSize = destinationCapacity;
+        char*       destination     = d_inflaterBuffer.data();
+        bsl::size_t destinationSize = d_inflaterBuffer.size();
         
         bsl::size_t sourceSize = sourceEnd - sourceCurrent;
 
@@ -772,7 +838,13 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
          const bsl::shared_ptr<ntci::DataPool>& dataPool,
          bslma::Allocator*                      basicAllocator)
 : d_deflaterContext_p(0)
+, d_deflaterBuffer()
+, d_deflaterBufferSize(0)
+, d_deflaterGeneration(0)
 , d_inflaterContext_p(0)
+, d_inflaterBuffer()
+, d_inflaterBufferSize(0)
+, d_inflaterGeneration(0)
 , d_dataPool_sp(dataPool)
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -789,32 +861,41 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
         NTCCFG_ABORT();
     }
 
-    bsl::memset(&d_deflaterPrefs, 0, sizeof d_deflaterPrefs);
+    const bsl::size_t k_DEFLATER_BUFFER_CAPACITY = 1024 * 64;
 
-    d_deflaterPrefs.frameInfo.blockSizeID = LZ4F_max64KB;
-    d_deflaterPrefs.frameInfo.blockMode   = LZ4F_blockIndependent;
+    d_deflaterBuffer.reset(
+        bslstl::SharedPtrUtil::createInplaceUninitializedBuffer(
+            k_DEFLATER_BUFFER_CAPACITY, d_allocator_p),
+        k_DEFLATER_BUFFER_CAPACITY);
+
+    d_deflaterBufferSize = k_DEFLATER_BUFFER_CAPACITY;
+
+    bsl::memset(&d_preferences, 0, sizeof d_preferences);
+
+    d_preferences.frameInfo.blockSizeID = LZ4F_max64KB;
+    d_preferences.frameInfo.blockMode   = LZ4F_blockIndependent;
     if (k_CHECKSUM_CONTENT) {
-        d_deflaterPrefs.frameInfo.contentChecksumFlag = 
+        d_preferences.frameInfo.contentChecksumFlag = 
             LZ4F_contentChecksumEnabled;
     }
     else {
-        d_deflaterPrefs.frameInfo.contentChecksumFlag = 
+        d_preferences.frameInfo.contentChecksumFlag = 
             LZ4F_noContentChecksum;
     }
-    d_deflaterPrefs.frameInfo.frameType = LZ4F_frame;
-    d_deflaterPrefs.frameInfo.contentSize = 0;
-    d_deflaterPrefs.frameInfo.dictID = 0;
+    d_preferences.frameInfo.frameType = LZ4F_frame;
+    d_preferences.frameInfo.contentSize = 0;
+    d_preferences.frameInfo.dictID = 0;
     if (k_CHECKSUM_BLOCK) {
-        d_deflaterPrefs.frameInfo.blockChecksumFlag = 
+        d_preferences.frameInfo.blockChecksumFlag = 
             LZ4F_blockChecksumEnabled;
     }
     else {
-        d_deflaterPrefs.frameInfo.blockChecksumFlag = 
+        d_preferences.frameInfo.blockChecksumFlag = 
             LZ4F_noBlockChecksum;
     }
-    d_deflaterPrefs.compressionLevel = 0; // MRM
-    d_deflaterPrefs.autoFlush = 0;
-    d_deflaterPrefs.favorDecSpeed = 0;
+    d_preferences.compressionLevel = 0; // MRM
+    d_preferences.autoFlush = 0;
+    d_preferences.favorDecSpeed = 0;
 
     errorCode = LZ4F_createDecompressionContext(&d_inflaterContext_p, 
                                                 LZ4F_VERSION);
@@ -823,6 +904,15 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
                         LZ4F_getErrorName(errorCode));
         NTCCFG_ABORT();
     }
+
+    const bsl::size_t k_INFLATER_BUFFER_CAPACITY = 1024 * 64;
+
+    d_inflaterBuffer.reset(
+        bslstl::SharedPtrUtil::createInplaceUninitializedBuffer(
+            k_INFLATER_BUFFER_CAPACITY, d_allocator_p),
+            k_INFLATER_BUFFER_CAPACITY);
+
+    d_inflaterBufferSize = k_INFLATER_BUFFER_CAPACITY;
 }
 
 Lz4::~Lz4()
@@ -830,8 +920,14 @@ Lz4::~Lz4()
     LZ4F_freeDecompressionContext(d_inflaterContext_p);
     d_inflaterContext_p = 0;
 
+    d_inflaterBuffer.reset();
+
     LZ4F_freeCompressionContext(d_deflaterContext_p);
     d_deflaterContext_p = 0;
+
+    d_deflaterBuffer.reset();
+
+    d_dataPool_sp.reset();
 }
 
 ntca::CompressionType::Value Lz4::type() const
@@ -1202,6 +1298,8 @@ ntsa::Error Zlib::deflateDestroy()
         Zlib::translateError(rc, "close deflater");
     }
 
+    d_deflaterBuffer.reset();
+
     return ntsa::Error();
 }
 
@@ -1476,6 +1574,8 @@ ntsa::Error Zlib::inflateDestroy()
         Zlib::translateError(rc, "close inflater");
     }
 
+    d_inflaterBuffer.reset();
+
     return ntsa::Error();
 }
 
@@ -1588,8 +1688,10 @@ Zlib::Zlib(const ntca::CompressionConfig&         configuration,
            bslma::Allocator*                      basicAllocator)
 : d_deflaterBuffer()
 , d_deflaterBufferSize(0)
+, d_deflaterGeneration(0)
 , d_inflaterBuffer()
 , d_inflaterBufferSize(0)
+, d_inflaterGeneration(0)
 , d_level(Z_DEFAULT_COMPRESSION)
 , d_dataPool_sp(dataPool)
 , d_config(configuration)
@@ -1619,6 +1721,8 @@ Zlib::~Zlib()
 
     error = this->deflateDestroy();
     BSLS_ASSERT_OPT(!error);
+
+    d_dataPool_sp.reset();
 }
 
 ntca::CompressionType::Value Zlib::type() const
@@ -1955,6 +2059,8 @@ ntsa::Error Gzip::deflateDestroy()
         Gzip::translateError(rc, "close deflater");
     }
 
+    d_deflaterBuffer.reset();
+
     return ntsa::Error();
 }
 
@@ -2251,6 +2357,8 @@ ntsa::Error Gzip::inflateDestroy()
         Gzip::translateError(rc, "close inflater");
     }
 
+    d_inflaterBuffer.reset();
+
     return ntsa::Error();
 }
 
@@ -2397,6 +2505,8 @@ Gzip::~Gzip()
 
     error = this->deflateDestroy();
     BSLS_ASSERT_OPT(!error);
+
+    d_dataPool_sp.reset();
 }
 
 ntca::CompressionType::Value Gzip::type() const
@@ -2407,7 +2517,7 @@ ntca::CompressionType::Value Gzip::type() const
 #endif
 
 CompressionDriver::CompressionDriver(bslma::Allocator* basicAllocator)
-: d_allocator_p(basicAllocator)
+: d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
 
@@ -2511,6 +2621,70 @@ ntsa::Error CompressionDriver::createCompression(
         return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
     }
 }
+
+void Plugin::initialize(bslma::Allocator* basicAllocator)
+{    
+    BSLMT_ONCE_DO
+    {
+        bslma::Allocator* allocator = basicAllocator;
+        if (allocator == 0) {
+            allocator = &bslma::NewDeleteAllocator::singleton();
+        }
+
+        bsl::shared_ptr<ntci::CompressionDriver> compressionDriver(
+            new (*allocator) ntctlc::CompressionDriver(allocator),
+            allocator);
+
+        ntcs::Plugin::registerCompressionDriver(compressionDriver);
+    }
+}
+
+void Plugin::load(bsl::shared_ptr<ntci::CompressionDriver>* result)
+{
+    ntsa::Error error;
+
+    ntctlc::Plugin::initialize(&bslma::NewDeleteAllocator::singleton());
+
+    error = ntcs::Plugin::lookupCompressionDriver(result);
+    if (error) {
+        bslma::Allocator* allocator = &bslma::NewDeleteAllocator::singleton();
+
+        bsl::shared_ptr<ntctlc::CompressionDriver> driver;
+        driver.createInplace(allocator, allocator);
+
+        *result = driver;
+    }
+}
+
+void Plugin::exit()
+{
+}
+
+PluginGuard::PluginGuard(bslma::Allocator* basicAllocator)
+{
+    ntctlc::Plugin::initialize(basicAllocator);
+}
+
+PluginGuard::~PluginGuard()
+{
+    ntctlc::Plugin::exit();
+}
+
+
+
+
+
+
+
+
+
+#if 0
+void Plugin::initialize()
+{
+
+    
+}
+#endif
 
 }  // close namespace ntctlc
 }  // close namespace BloombergLP

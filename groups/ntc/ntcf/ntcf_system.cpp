@@ -60,6 +60,7 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 #include <ntco_pollset.h>
 #include <ntco_select.h>
 
+#include <ntctlc_plugin.h>
 #include <ntctls_plugin.h>
 
 #include <bdlbb_pooledblobbufferfactory.h>
@@ -1373,28 +1374,10 @@ bsl::shared_ptr<ntci::Authorization> System::createAuthorization(
     return authorization;
 }
 
-
-bsl::shared_ptr<ntci::Compression> System::createCompression(
-        const ntca::CompressionConfig&         configuration,
-        const bsl::shared_ptr<ntci::DataPool>& dataPool,
-        bslma::Allocator*                      basicAllocator)
-{
-    ntsa::Error error;
-
-    error = ntcf::System::initialize();
-    BSLS_ASSERT_OPT(!error);
-
-    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
-
-    bsl::shared_ptr<ntcd::Compression> compression;
-    compression.createInplace(allocator, configuration, dataPool, allocator);
-
-    return compression;
-}
-
-bsl::shared_ptr<ntci::Serialization> System::createSerialization(
-        const ntca::SerializationConfig& configuration,
-        bslma::Allocator*                basicAllocator)
+ntsa::Error System::createSerialization(
+    bsl::shared_ptr<ntci::Serialization>* result,
+    const ntca::SerializationConfig&      configuration,
+    bslma::Allocator*                     basicAllocator)
 {
     ntsa::Error error;
 
@@ -1406,7 +1389,35 @@ bsl::shared_ptr<ntci::Serialization> System::createSerialization(
     bsl::shared_ptr<ntci::Serialization> serialization;
     serialization.createInplace(allocator, configuration, allocator);
 
-    return serialization;
+    *result = serialization;
+
+    return ntsa::Error();
+}
+
+ntsa::Error System::createCompression(
+        bsl::shared_ptr<ntci::Compression>*    result,
+        const ntca::CompressionConfig&         configuration,
+        const bsl::shared_ptr<ntci::DataPool>& dataPool,
+        bslma::Allocator*                      basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    ntctlc::Plugin::initialize();
+
+    bsl::shared_ptr<ntci::CompressionDriver> compressionDriver;
+    error = ntcs::Plugin::lookupCompressionDriver(&compressionDriver);
+    if (error) {
+        return error;
+    }
+
+    return compressionDriver->createCompression(result,
+                                                configuration,
+                                                basicAllocator);
 }
 
 ntsa::Error System::createEncryptionClient(

@@ -313,7 +313,7 @@ package ntcf
         multiple trade: ntcf.TestTrade;
     }
 
-    // Describes the content of a message.
+    // Describes the content of a test message.
     choice TestContent
     {
         // The bid to buy a security.
@@ -338,7 +338,7 @@ package ntcf
         selection fault: ntcf.TestFault;
     }
 
-    // Describes a signal sent to a peer.
+    // Describes a test signal sent to a peer.
     sequence TestSignal
     {
         // The unique identifier of the signal.
@@ -355,7 +355,7 @@ package ntcf
         required delay: unsignedInt;
     }
 
-    // Describes the reflection of a signal back from a peer.
+    // Describes the reflection of a test signal back from a peer.
     sequence TestEcho
     {
         // The unique identifier of the signal.
@@ -365,7 +365,7 @@ package ntcf
         required value: string;
     }
 
-    // Describes the value of a echo result.
+    // Describes the value of a test echo result.
     choice TestEchoResultValue
     {
         // The fault.
@@ -375,7 +375,7 @@ package ntcf
         selection success: ntcf.TestEcho;
     }
 
-    // Describe a echo result.
+    // Describe a test echo result.
     sequence TestEchoResult
     {
         // The context.
@@ -385,7 +385,32 @@ package ntcf
         required value: ntcf.TestEchoResultValue;
     }
 
-    // Describes a control message to enable or disable encryption.
+    // Enumerate when acknowledgments of control state transitions are 
+    // delivered to the client.
+    enumeration TestControlTransition
+    {
+        // Send the acknowledgment back to the peer then perform the state 
+        // transition. For encryption state transitions, this results in an 
+        // acknowledgement before upgrading into TLS (so the acknowledgment is
+        // sent in plaintext), or before downgrading from TLS (so the 
+        // acknowledgment is send in ciphertext.) For compression state 
+        // transitions, this results in an acknowledgment before applying
+        // compression (so the acknowledgment is sent uncompressed), or before
+        // removing compression (so the acknowledgment is sent compressed.)
+        option ACKNOWLEDGE_BEFORE;
+
+        // Perform the state transition then send the acknowledgment back to 
+        // the peer. For encryption state transitions, this results in an 
+        // acknowledgement after upgrading into TLS (so the acknowledgment is
+        // sent in ciphertext), or before downgrading from TLS (so the 
+        // acknowledgment is send in plaintext.) For compression state 
+        // transitions, this results in an acknowledgment after applying
+        // compression (so the acknowledgment is sent compressed), or before
+        // removing compression (so the acknowledgment is sent uncompressed.)
+        option ACKNOWLEDGE_AFTER;
+    }
+
+    // Describes a test control message to enable or disable encryption.
     sequence TestControlEncryption
     {
         // The flag indicating whether encryption is enabled or disabled.
@@ -393,9 +418,13 @@ package ntcf
 
         // The flag indicating whether the control must be acknowledged.
         required acknowledge: boolean;
+
+        // The indication of the order the acknowledgment is sent in relation
+        // to when the state transition is performed.
+        required transition: ntcf.TestControlTransition;
     }
 
-    // Describes a control message to enable or disable compression.
+    // Describes a test control message to enable or disable compression.
     sequence TestControlCompression
     {
         // The flag indicating whether compression is enabled or disabled.
@@ -403,17 +432,21 @@ package ntcf
 
         // The flag indicating whether the control must be acknowledged.
         required acknowledge: boolean;
+
+        // The indication of the order the acknowledgment is sent in relation
+        // to when the state transition is performed.
+        required transition: ntcf.TestControlTransition;
     }
 
-    // Describes a control message inform a peer that the sender is able to
-    // transmit.
+    // Describes a test control message inform a peer that the sender is able
+    // to transmit.
     sequence TestControlHeartbeat
     {
         // The flag indicating whether the control must be acknowledged.
         required acknowledge: boolean;
     }
 
-    // Describes the control messages.
+    // Describes the test control messages.
     choice TestControl
     {
         // Describes a signal sent to a peer.
@@ -439,7 +472,7 @@ package ntcf
         selection fault: ntcf.TestFault;
     }
 
-    // Describes a message header.
+    // Describes a test message header.
     sequence TestMessageHeader
     {
         // The message type.
@@ -485,7 +518,7 @@ package ntcf
         required deadline: uint64;
     }
 
-    // Describes meta-data about the messaging infrastructure.
+    // Describes meta-data about the test messaging infrastructure.
     sequence TestMessagePragma
     {
         // The URI of the sender.
@@ -495,7 +528,7 @@ package ntcf
         optional fault: ntcf.TestFault;
     }
 
-    // Describes the message entity.
+    // Describes the test message entity.
     choice TestMessageEntity
     {
         // The control.
@@ -505,7 +538,7 @@ package ntcf
         selection content: ntcf.TestContent;
     }
 
-    // Describes a message.
+    // Describes a test message.
     sequence TestMessageFrame
     {
         // The header.
@@ -518,7 +551,7 @@ package ntcf
         optional entity: ntcf.TestMessageEntity;
     }
 
-    // Describes the configurable parameters of a client.
+    // Describes the configurable parameters of a test client.
     sequence TestClientConfig
     {
         // The name of the client.
@@ -534,11 +567,11 @@ package ntcf
         // The flag that indicates all communication should be compressed.
         optional compression: boolean;
 
-        // The number of networking threads.
-        optional numNetworkingThreads: uint32;
+        // The minimum number of I/O threads.
+        optional minThreads: uint32;
 
-        // The number of processing threads.
-        optional numProcessingThreads: uint32;
+        // The maximum number of I/O threads.
+        optional maxThreads: uint32;
 
         // The flag that indicates socket I/O should be balanced and processed
         // by any networking thread.
@@ -553,6 +586,9 @@ package ntcf
 
         // The backlog depth.
         optional backlog: uint32;
+
+        // The size of each blob.
+        optional blobBufferSize: uint32;
 
         // The send buffer size.
         optional sendBufferSize: uint32;
@@ -582,7 +618,7 @@ package ntcf
         optional writeQueueHighWatermark: uint32;
     }
 
-    // Describes the configurable parameters of a server.
+    // Describes the configurable parameters of a test server.
     sequence TestServerConfig
     {
         // The name of the server.
@@ -598,11 +634,11 @@ package ntcf
         // The flag that indicates all communication should be compressed.
         optional compression: boolean;
 
-        // The number of networking threads.
-        optional numNetworkingThreads: uint32;
+        // The minimum number of I/O threads.
+        optional minThreads: uint32;
 
-        // The number of processing threads.
-        optional numProcessingThreads: uint32;
+        // The maximum number of I/O threads.
+        optional maxThreads: uint32;
 
         // The flag that indicates socket I/O should be balanced and processed
         // by any networking thread.
@@ -617,6 +653,9 @@ package ntcf
 
         // The backlog depth.
         optional backlog: uint32;
+
+        // The size of each blob.
+        optional blobBufferSize: uint32;
 
         // The send buffer size.
         optional sendBufferSize: uint32;
@@ -644,5 +683,15 @@ package ntcf
 
         // The write queue high watermark.
         optional writeQueueHighWatermark: uint32;
+    }
+
+    // Describes the configurable parameters of a test fixture.
+    sequence TestFixtureConfig
+    {
+        // The client configuration.
+        required client: ntcf.TestClientConfig;
+
+        // The server configuration.
+        required server: ntcf.TestServerConfig;
     }
 }

@@ -507,8 +507,8 @@ void PluginTest::verifyParameters(const Parameters& parameters)
 
     BALL_LOG_INFO << "Testing " << parameters << BALL_LOG_END;
 
-    bsl::shared_ptr<ntctlc::CompressionDriver> driver;
-    driver.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntci::CompressionDriver> driver;
+    ntctlc::Plugin::load(&driver);
 
     ntca::CompressionConfig compressionConfig;
     compressionConfig.setType(parameters.type());

@@ -13,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCF_TESTFRAMEWORK_CPP
-#define INCLUDED_NTCF_TESTFRAMEWORK_CPP
+#ifndef INCLUDED_NTCF_TESTMESSAGE_CPP
+#define INCLUDED_NTCF_TESTMESSAGE_CPP
 
-#include <ntcf_testframework.h>
+#include <ntcf_testmessage.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcf_testframework_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntcf_testmessage_cpp, "$Id$ $CSID$")
 
 #include <ntcs_blobutil.h>
 
@@ -659,6 +659,87 @@ ntsa::Error TestMessageFuture::wait(
 
 
 
+TestMessageEncryption::TestMessageEncryption(bslma::Allocator* basicAllocator)
+: d_authorityPrivateKey(basicAllocator)
+, d_authorityCertificate(basicAllocator)
+, d_serverPrivateKey(basicAllocator)
+, d_serverCertificate(basicAllocator)
+{
+    ntsa::Error error;
+
+    // Generate a certificate and private key for a certificate authority.
+
+    ntca::EncryptionKeyOptions authorityPrivateKeyOptions;
+    authorityPrivateKeyOptions.setType(ntca::EncryptionKeyType::e_NIST_P256);
+
+    error = ntcf::System::generateKey(&d_authorityPrivateKey,
+                                   authorityPrivateKeyOptions,
+                                   NTSCFG_TEST_ALLOCATOR);
+    BSLS_ASSERT_OPT(!error);
+
+    ntsa::DistinguishedName authorityIdentity;
+    authorityIdentity["CN"] = "Authority";
+
+    ntca::EncryptionCertificateOptions authorityCertificateOptions;
+    authorityCertificateOptions.setAuthority(true);
+
+    error = ntcf::System::generateCertificate(&d_authorityCertificate,
+                                           authorityIdentity,
+                                           d_authorityPrivateKey,
+                                           authorityCertificateOptions,
+                                           NTSCFG_TEST_ALLOCATOR);
+    BSLS_ASSERT_OPT(!error);
+
+    // Generate a certificate and private key for the server, signed by the
+    // certificate authority.
+
+    ntca::EncryptionKeyOptions serverPrivateKeyOptions;
+    serverPrivateKeyOptions.setType(ntca::EncryptionKeyType::e_NIST_P256);
+
+    error = ntcf::System::generateKey(&d_serverPrivateKey,
+                                   serverPrivateKeyOptions,
+                                   NTSCFG_TEST_ALLOCATOR);
+    BSLS_ASSERT_OPT(!error);
+
+    ntsa::DistinguishedName serverIdentity;
+    serverIdentity["CN"] = "Server";
+
+    ntca::EncryptionCertificateOptions serverCertificateOptions;
+    serverCertificateOptions.addHost("test.example.com");
+
+    error = ntcf::System::generateCertificate(&d_serverCertificate,
+                                           serverIdentity,
+                                           d_serverPrivateKey,
+                                           d_authorityCertificate,
+                                           d_authorityPrivateKey,
+                                           serverCertificateOptions,
+                                           NTSCFG_TEST_ALLOCATOR);
+    BSLS_ASSERT_OPT(!error);
+}
+
+TestMessageEncryption::~TestMessageEncryption()
+{
+}
+
+const ntca::EncryptionKey& TestMessageEncryption::authorityPrivateKey() const
+{
+    return d_authorityPrivateKey;
+}
+
+const ntca::EncryptionCertificate& TestMessageEncryption::authorityCertificate() const
+{
+    return d_authorityCertificate;
+}
+
+const ntca::EncryptionKey& TestMessageEncryption::serverPrivateKey() const
+{
+    return d_serverPrivateKey;
+}
+
+const ntca::EncryptionCertificate& TestMessageEncryption::serverCertificate() const
+{
+    return d_serverCertificate;
+}
 
 
 

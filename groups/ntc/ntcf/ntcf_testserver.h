@@ -19,7 +19,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntcf_testframework.h>
+#include <ntcf_testmessage.h>
 #include <ntcf_testvocabulary.h>
 
 namespace BloombergLP {
@@ -29,7 +29,7 @@ namespace ntcf {
 ///
 /// @par Thread Safety
 /// This class is thread safe.
-class TestServerTransaction
+class TestServerTransaction : public ntccfg::Shared<TestServerTransaction>
 {
     /// Defines a type alias for a mutex.
     typedef ntci::Mutex Mutex;
@@ -45,6 +45,7 @@ class TestServerTransaction
     bsl::shared_ptr<ntci::StreamSocket>    d_streamSocket_sp;
     bsl::shared_ptr<ntci::Serialization>   d_serialization_sp;
     bsl::shared_ptr<ntci::Compression>     d_compression_sp;
+    bsl::shared_ptr<ntcf::TestMessageEncryption> d_encryption_sp;
     bdlb::NullableValue<ntsa::Endpoint>    d_endpoint;
     bsls::TimeInterval                     d_timestamp;
     bslma::Allocator*                      d_allocator_p;
@@ -54,6 +55,13 @@ class TestServerTransaction
 
     /// Deliver the specified 'response' to the sender.
     void deliverResponse(const bsl::shared_ptr<ntcf::TestMessage>& response);
+
+    /// Process the specified upgrade 'event' from the specified 'upgradable'
+    /// socket.
+    void processUpgrade(const bsl::shared_ptr<ntci::Upgradable>&   upgradable,
+                        const ntca::UpgradeEvent&                  event,
+                        bool                                       acknowledge,
+                        ntcf::TestControlTransition::Value         transition);
 
     BALL_LOG_SET_CLASS_CATEGORY("NTCF.TEST.SERVER");
 
@@ -69,6 +77,7 @@ public:
         const bsl::shared_ptr<ntci::DataPool>&        dataPool,
         const bsl::shared_ptr<ntci::Serialization>&   serialization,
         const bsl::shared_ptr<ntci::Compression>&     compression,
+        const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
         bslma::Allocator*                             basicAllocator = 0);
 
     /// Reset the transaction.
@@ -89,17 +98,45 @@ public:
                const bsls::TimeInterval&                    timestamp,
                const ntsa::Endpoint&                        endpoint);
 
+    /// Complete the transaction with an acknowledgement.
+    void acknowledge();
+
+    /// Complete the transaction with the specified 'acknowledgement'. 
+    void acknowledge(const ntcf::TestAcknowledgment& acknowledgment);
+
     /// Complete the transaction with the specified 'trade'. 
     void complete(const ntcf::TestTrade& trade);
 
     /// Complete the transaction with the specified 'echo'. 
     void complete(const ntcf::TestEcho& echo);
 
-    /// Complete the transaction with the specified 'acknowledgement'. 
-    void complete(const ntcf::TestAcknowledgment& acknowledgment);
-
     /// Complete the transaction with the specified 'fault'. 
-    void complete(const ntcf::TestFault& fault);
+    void fail(const ntcf::TestFault& fault);
+
+    /// Enable compression on the underlying socket using the specified 
+    /// 'compression' mechanism.
+    void enableCompression(
+        bool                               acknowledge,
+        ntcf::TestControlTransition::Value transition);
+
+    /// Enable compression on the underlying socket using the specified 
+    /// 'encryption' mechanism.
+    void enableEncryption(
+        bool                               acknowledge,
+        ntcf::TestControlTransition::Value transition);
+
+    /// Disable compression on the underlying socket.
+    void disableCompression(
+        bool                               acknowledge,
+        ntcf::TestControlTransition::Value transition);
+
+    /// Disable encryption on the underlying socket.
+    void disableEncryption(
+        bool                               acknowledge,
+        ntcf::TestControlTransition::Value transition);
+
+    /// Close the transaction.
+    void close();
 };
 
 /// Provide a test server.
@@ -140,6 +177,7 @@ class TestServer : public ntci::DatagramSocketSession,
     bsl::shared_ptr<ntci::ListenerSocket>    d_listenerSocket_sp;
     ntsa::Endpoint                           d_listenerEndpoint;
     StreamSocketMap                          d_streamSocketMap;
+    bsl::shared_ptr<ntcf::TestMessageEncryption> d_encryption_sp;
     bsls::AtomicBool                         d_closed;
     ntcf::TestServerConfig                   d_config;
     bslma::Allocator*                        d_allocator_p;
@@ -601,11 +639,29 @@ public:
     /// Create a new server with the specified 'configuration'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
-    explicit TestServer(const ntcf::TestServerConfig& configuration,
-                        bslma::Allocator*             basicAllocator = 0);
+    TestServer(const ntcf::TestServerConfig&           configuration,
+               const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+               const bsl::shared_ptr<ntci::DataPool>&  dataPool,
+               const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
+               bslma::Allocator*                       basicAllocator = 0);
 
     /// Destroy this object.
     ~TestServer() BSLS_KEYWORD_OVERRIDE;
+
+    /// Set the server accept queue low watermark to the specified 'value'.
+    void setAcceptQueueLowWatermark(bsl::size_t value);
+
+    /// Set the server accept queue high watermark to the specified 'value'.
+    void setAcceptQueueHighWatermark(bsl::size_t value);
+
+    /// Start monitoring the listener socket backlog.
+    void relaxFlowControl();
+
+    /// Stop monitoring the listener socket backlog.
+    void applyFlowControl();
+
+    /// Close the server.
+    void close();
 
     /// Return the TCP endpoint.
     const ntsa::Endpoint& tcpEndpoint() const;
@@ -617,6 +673,12 @@ public:
     /// dynamically allocate memory during its operation.
     NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(TestServer);
 };
+
+/// Defines a type alias for shared pointer to a test server.
+typedef bsl::shared_ptr<ntcf::TestServer> TestServerPtr;
+
+/// Defines a type alias for vector of shared pointers to test servers.
+typedef bsl::vector<ntcf::TestServerPtr> TestServerVector;
     
 }  // end namespace ntcf
 }  // end namespace BloombergLP

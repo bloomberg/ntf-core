@@ -13,28 +13,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCF_TESTCLIENT_T_CPP
-#define INCLUDED_NTCF_TESTCLIENT_T_CPP
+#ifndef INCLUDED_NTCF_TESTMESSAGE_T_CPP
+#define INCLUDED_NTCF_TESTMESSAGE_T_CPP
 
 #include <ntscfg_test.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcf_testclient_t_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntcf_testmessage_t_cpp, "$Id$ $CSID$")
 
-#include <ntcf_testclient.h>
+#include <ntcf_testmessage.h>
 
 namespace BloombergLP {
 namespace ntcf {
 
-// Provide tests for 'ntcf::TestClient'.
-class TestClientTest
+// Provide tests for 'ntcf::TestMessage'.
+class TestMessageTest
 {
   public:
     // TODO
     static void verify();
 };
 
-NTSCFG_TEST_FUNCTION(ntcf::TestClientTest::verify)
+NTSCFG_TEST_FUNCTION(ntcf::TestMessageTest::verify)
 {
     
 }

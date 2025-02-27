@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCTLS_PLUGIN
-#define INCLUDED_NTCTLS_PLUGIN
+#ifndef INCLUDED_NTCTLC_PLUGIN
+#define INCLUDED_NTCTLC_PLUGIN
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
@@ -23,69 +23,66 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_platform.h>
 #include <ntci_compression.h>
 #include <ntci_compressiondriver.h>
-#include <ntci_datapool.h>
 #include <ntcscm_version.h>
-#include <ntsa_error.h>
 #include <bsl_memory.h>
 
 namespace BloombergLP {
 namespace ntctlc {
 
-/// Provide a factory for a mechanism to deflate and inflate a data stream.
+/// Provide a facility to inject the 'zlib', 'zstd', and 'lz4' compression 
+/// libraries into NTC.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
 ///
 /// @ingroup module_ntctlc
-class CompressionDriver : public ntci::CompressionDriver
-{
-    bslma::Allocator* d_allocator_p;
+struct Plugin {
+    /// Initialize this plugin and register support for compression in NTC
+    /// using the 'zlib', 'zstd', and 'lz4' third-party libraries. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is 0, the global allocator is used.
+    static void initialize(bslma::Allocator* basicAllocator = 0);
 
-  private:
-    CompressionDriver(const CompressionDriver&) BSLS_KEYWORD_DELETED;
-    CompressionDriver& operator=(const CompressionDriver&)
-        BSLS_KEYWORD_DELETED;
+    /// Load into the specified 'result' the compression driver implemented
+    /// using 'zlib', 'zstd', and 'lz4' third-party libraries.
+    static void load(bsl::shared_ptr<ntci::CompressionDriver>* result);
 
-  public:
-    /// Create a new compression driver. Optionally specify a 'basicAllocator'
-    /// used to supply memory. If 'basicAllocator' is 0, the currently
-    /// installed default allocator is used.
-    explicit CompressionDriver(bslma::Allocator* basicAllocator = 0);
-
-    /// Destroy this object.
-    ~CompressionDriver() BSLS_KEYWORD_OVERRIDE;
-
-    /// Load into the specified 'result' a new compression mechanism with the
-    /// specified 'configuration'. Optionally specify a 'basicAllocator' used
-    /// to supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used. Return the error.
-    ntsa::Error createCompression(bsl::shared_ptr<ntci::Compression>* result,
-                                  const ntca::CompressionConfig& configuration,
-                                  bslma::Allocator* basicAllocator = 0)
-        BSLS_KEYWORD_OVERRIDE;
-
-    /// Load into the specified 'result' a new compression mechanism with the
-    /// specified 'options'. Allocate blob buffers using the specified
-    /// 'blobBufferFactory'. Optionally specify a 'basicAllocator' used to
-    /// supply memory. If 'basicAllocator' is 0, the currently installed
-    /// default allocator is used. Return the error.
-    ntsa::Error createCompression(
-        bsl::shared_ptr<ntci::Compression>*              result,
-        const ntca::CompressionConfig&                   configuration,
-        const bsl::shared_ptr<bdlbb::BlobBufferFactory>& blobBufferFactory,
-        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
-
-    /// Load into the specified 'result' a new compression mechanism with the
-    /// specified 'configuration'. Allocate data containers using the specified
-    /// 'dataPool'. Optionally specify a 'basicAllocator' used to supply
-    /// memory. If 'basicAllocator' is 0, the currently installed default
-    /// allocator is used. Return the error.
-    ntsa::Error createCompression(
-        bsl::shared_ptr<ntci::Compression>*    result,
-        const ntca::CompressionConfig&         configuration,
-        const bsl::shared_ptr<ntci::DataPool>& dataPool,
-        bslma::Allocator* basicAllocator = 0) BSLS_KEYWORD_OVERRIDE;
+    /// Deregister support for compression in NTF using the 'zlib', 'zstd', and
+    /// 'lz4' third-party libraries and clean up all resources required by this
+    /// plugin.
+    static void exit();
 };
+
+/// Provide a a scoped guard to automatically initialize and clean up the NTC
+/// plugin provided by this library.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntctlc
+class PluginGuard
+{
+private:
+    PluginGuard(const PluginGuard&) BSLS_KEYWORD_DELETED;
+    PluginGuard& operator=(const PluginGuard&) BSLS_KEYWORD_DELETED;
+
+public:
+    /// Initialize this plugin and register support for compression in NTC
+    /// using the 'zlib', 'zstd', and 'lz4' third-party libraries. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is 0, the global allocator is used.
+    explicit PluginGuard(bslma::Allocator* allocator = 0);
+
+    /// Deregister support for compression in NTC using the 'zlib', 'zstd', and
+    /// 'lz4' third-party libraries and clean up all resources required by this
+    /// plugin.
+    ~PluginGuard();
+};
+
+/// Initialize this plugin and register support for TLS in NTF using the
+/// 'openssl' third-party library.
+#define NTF_REGISTER_PLUGIN_GZIP_ZLIB_ZSTD_LZ4()                              \
+  BloombergLP::ntctlc::PluginGuard ntfPluginGzipZlibZstdLz4
 
 }  // close namespace ntctlc
 }  // close namespace BloombergLP

@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCF_TESTFRAMEWORK
-#define INCLUDED_NTCF_TESTFRAMEWORK
+#ifndef INCLUDED_NTCF_TESTMESSAGE
+#define INCLUDED_NTCF_TESTMESSAGE
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
@@ -410,6 +410,12 @@ bool operator<(const TestMessage& lhs, const TestMessage& rhs);
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const TestMessage& value);
 
+/// Defines a type alias for shared pointer to a test message.
+typedef bsl::shared_ptr<ntcf::TestMessage> TestMessagePtr;
+
+/// Defines a type alias for vector of shared pointers to test messages.
+typedef bsl::vector<ntcf::TestMessagePtr> TestMessageVector;
+
 /// Provide a pool of test messages.
 ///
 /// @par Thread Safety
@@ -666,8 +672,40 @@ class TestMessageFuture : public ntcf::TestMessageCallback
 
 
 
+/// Provide suite of encryption certificates and keys used to secure a 
+/// transport through which to send and receive test messages.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+class TestMessageEncryption
+{
+    ntca::EncryptionKey         d_authorityPrivateKey;
+    ntca::EncryptionCertificate d_authorityCertificate;
+    ntca::EncryptionKey         d_serverPrivateKey;
+    ntca::EncryptionCertificate d_serverCertificate;
+    bslma::Allocator*           d_allocator_p;
 
+public:
+    /// Create a new test message encryption suite. Optionally specify a 
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit TestMessageEncryption(bslma::Allocator* basicAllocator = 0);
 
+    /// Destroy this object.
+    ~TestMessageEncryption();
+
+    /// Return the certificate authority's private key.
+    const ntca::EncryptionKey& authorityPrivateKey() const;
+
+    /// Return the certificate authority's certificate.
+    const ntca::EncryptionCertificate& authorityCertificate() const;
+
+    /// Return the server's private key.
+    const ntca::EncryptionKey& serverPrivateKey() const;
+
+    /// Return the server's certificate.
+    const ntca::EncryptionCertificate& serverCertificate() const;
+};
 
 
 

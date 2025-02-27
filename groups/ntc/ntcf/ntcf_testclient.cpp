@@ -21,6 +21,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcf_testclient_cpp, "$Id$ $CSID$")
 
+#define NTCF_TESTCLIENT_DATAGRAM_SOCKET_ENABLED 0
+
 namespace BloombergLP {
 namespace ntcf {
 
@@ -303,6 +305,42 @@ namespace ntcf {
                        << (streamSocket)->sourceEndpoint() << " to "          \
                        << (streamSocket)->remoteEndpoint() << " received:\n"  \
                        << bdlbb::BlobUtilHexDumper(&(blob)) << BALL_LOG_END;  \
+    } while (false)
+
+#define NTCF_TESTCLIENT_LOG_SIGNAL_FAILURE(streamSocket, failure) \
+    do {                                                                      \
+        BALL_LOG_ERROR << "Client stream socket at "                          \
+                    << (streamSocket)->sourceEndpoint() << " to "          \
+                    << (streamSocket)->remoteEndpoint() \
+                    << " failed to execute 'signal': fault = "  \
+                    << (failure) << BALL_LOG_END;  \
+    } while (false)
+
+#define NTCF_TESTCLIENT_LOG_ENCRYPTION_FAILURE(streamSocket, failure) \
+    do {                                                                      \
+        BALL_LOG_ERROR << "Client stream socket at "                          \
+                    << (streamSocket)->sourceEndpoint() << " to "          \
+                    << (streamSocket)->remoteEndpoint() \
+                    << " failed to execute 'encrypt': fault = "  \
+                    << (failure) << BALL_LOG_END;  \
+    } while (false)
+
+#define NTCF_TESTCLIENT_LOG_COMPRESS_FAILURE(streamSocket, failure) \
+    do {                                                                      \
+        BALL_LOG_ERROR << "Client stream socket at "                          \
+                    << (streamSocket)->sourceEndpoint() << " to "          \
+                    << (streamSocket)->remoteEndpoint() \
+                    << " failed to execute 'compress': fault = "  \
+                    << (failure) << BALL_LOG_END;  \
+    } while (false)
+
+#define NTCF_TESTCLIENT_LOG_HEARTBEAT_FAILURE(streamSocket, failure) \
+    do {                                                                      \
+        BALL_LOG_ERROR << "Client stream socket at "                          \
+                    << (streamSocket)->sourceEndpoint() << " to "          \
+                    << (streamSocket)->remoteEndpoint() \
+                    << " failed to execute 'heartbeat': fault = "  \
+                    << (failure) << BALL_LOG_END;  \
     } while (false)
 
 TestClientTransaction::TestClientTransaction(
@@ -709,6 +747,8 @@ void TestClient::processReadQueueLowWatermark(
                 NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_RESPONSE_UNSOLICITED(
                     d_datagramSocket_sp,
                     message);
+
+                NTCCFG_ABORT();
             }
         }
         else if (message->isPublication()) {
@@ -974,6 +1014,8 @@ void TestClient::processReadQueueLowWatermark(
                 NTCF_TESTCLIENT_LOG_STREAM_SOCKET_RESPONSE_UNSOLICITED(
                     d_streamSocket_sp,
                     message);
+
+                NTCCFG_ABORT();
             }
         }
         else if (message->isPublication()) {
@@ -1193,8 +1235,6 @@ void TestClient::privateStreamSocketCompleteUpgrade(
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestClient::privateStreamSocketInitiateDowngrade(
@@ -1203,8 +1243,6 @@ void TestClient::privateStreamSocketInitiateDowngrade(
 {
     NTCCFG_WARNING_UNUSED(self);
     NTCCFG_WARNING_UNUSED(streamSocket);
-
-    NTCCFG_NOT_IMPLEMENTED();
 }
 
 void TestClient::privateStreamSocketCompleteDowngrade(
@@ -1216,7 +1254,7 @@ void TestClient::privateStreamSocketCompleteDowngrade(
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
 
-    NTCCFG_NOT_IMPLEMENTED();
+    d_downgradeSemaphore.post();
 }
 
 void TestClient::privateDatagramSocketUp(
@@ -1357,6 +1395,47 @@ void TestClient::describeResultTypeFailure(ntcf::TestFault* fault)
     fault->uri         = d_streamSocket_sp->sourceEndpoint().text();
 }
 
+void TestClient::dispatchConnect(
+        const bsl::shared_ptr<ntci::Connector>& connector,
+        const ntca::ConnectEvent&               event,
+        const ntci::ConnectCallback&            callback)
+{
+    ntsa::Error error;
+
+    BSLS_ASSERT(connector == d_streamSocket_sp);
+
+    NTCF_TESTCLIENT_LOG_STREAM_SOCKET_EVENT(d_streamSocket_sp,
+        "connect",
+        event);
+
+    if (event.type() == ntca::ConnectEventType::e_COMPLETE) {
+        if (d_datagramSocket_sp) {
+            error = d_datagramSocket_sp->relaxFlowControl(
+                ntca::FlowControlType::e_RECEIVE);
+            BSLS_ASSERT_OPT(!error);
+        }
+    
+        if (d_streamSocket_sp) {
+            error = d_streamSocket_sp->setReadQueueLowWatermark(
+                d_streamParser_sp->numNeeded());
+            BSLS_ASSERT_OPT(!error);
+        
+            error = d_streamSocket_sp->relaxFlowControl(
+                ntca::FlowControlType::e_RECEIVE);
+            BSLS_ASSERT_OPT(!error);
+
+            NTCF_TESTCLIENT_LOG_STREAM_SOCKET_CONNECTED(d_streamSocket_sp);
+        }
+    }
+    else {
+        BSLS_ASSERT_OPT(event.context().error());
+    }
+
+    if (callback) {
+        callback.execute(connector, event, d_strand_sp);
+    }
+}
+
 void TestClient::dispatchTrade(
     const ntcf::TestContext&                  context,
     const ntcf::TestFault&                    fault,
@@ -1459,6 +1538,14 @@ void TestClient::dispatchAcknowledgment(
                     result.value.makeSuccess(acknowledgment);
                 }
             }
+            else if (entity.isControlValue()) {
+                const ntcf::TestControl& control = entity.control();
+                if (control.isAcknowledgmentValue()) {
+                    const ntcf::TestAcknowledgment& acknowledgment =
+                        control.acknowledgment();
+                    result.value.makeSuccess(acknowledgment);
+                }
+            }
         }
     }
 
@@ -1481,29 +1568,32 @@ const bsl::shared_ptr<ntci::Strand>& TestClient::strand() const
 }
 
 TestClient::TestClient(const ntcf::TestClientConfig& configuration,
+                       const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+                       const bsl::shared_ptr<ntci::DataPool>&  dataPool,
+                       const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
                        const ntsa::Endpoint&         tcpEndpoint,
                        const ntsa::Endpoint&         udpEndpoint,
                        bslma::Allocator*             basicAllocator)
 : d_mutex()
-, d_dataPool_sp()
+, d_dataPool_sp(dataPool)
 , d_messagePool_sp()
 , d_serialization_sp()
 , d_compression_sp()
-, d_scheduler_sp()
+, d_scheduler_sp(scheduler)
 , d_datagramSocket_sp()
 , d_datagramParser_sp()
 , d_streamSocket_sp()
 , d_streamParser_sp()
+, d_encryption_sp(encryption)
 , d_transactionCatalog(basicAllocator)
+, d_downgradeSemaphore()
 , d_tcpEndpoint(tcpEndpoint)
 , d_udpEndpoint(udpEndpoint)
 , d_closed(false)
 , d_config(configuration, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    BALL_LOG_INFO << "Client constructing starting" << BALL_LOG_END;
-
-    bsl::shared_ptr<Self> self(this->getSelf(this));
+    // MRM: BALL_LOG_INFO << "Client constructing starting" << BALL_LOG_END;
 
     ntsa::Error error;
 
@@ -1511,22 +1601,32 @@ TestClient::TestClient(const ntcf::TestClientConfig& configuration,
         d_config.name = "client";
     }
 
-    d_dataPool_sp = ntcf::System::createDataPool(d_allocator_p);
-
     d_messagePool_sp.createInplace(d_allocator_p, d_allocator_p);
 
     ntca::SerializationConfig serializationConfig;
 
-    d_serialization_sp =
-        ntcf::System::createSerialization(serializationConfig, d_allocator_p);
+    error = ntcf::System::createSerialization(&d_serialization_sp, 
+                                              serializationConfig, 
+                                              d_allocator_p);
+    BSLS_ASSERT_OPT(!error);
 
     ntca::CompressionConfig compressionConfig;
+
+#if NTC_BUILD_WITH_ZLIB
+    compressionConfig.setType(ntca::CompressionType::e_ZLIB);
+#elif NTC_BUILD_WITH_LZ4
+    compressionConfig.setType(ntca::CompressionType::e_LZ4);
+#else
     compressionConfig.setType(ntca::CompressionType::e_RLE);
+#endif
+    
     compressionConfig.setGoal(ntca::CompressionGoal::e_BALANCED);
 
-    d_compression_sp = ntcf::System::createCompression(compressionConfig,
-                                                       d_dataPool_sp,
-                                                       d_allocator_p);
+    error = ntcf::System::createCompression(&d_compression_sp,
+                                            compressionConfig,
+                                            d_dataPool_sp,
+                                            d_allocator_p);
+    BSLS_ASSERT_OPT(!error);
 
     d_datagramParser_sp.createInplace(d_allocator_p,
                                       d_dataPool_sp,
@@ -1542,91 +1642,24 @@ TestClient::TestClient(const ntcf::TestClientConfig& configuration,
                                     d_compression_sp,
                                     d_allocator_p);
 
-    BALL_LOG_INFO << "Client scheduler construction starting" << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Client construction complete" << BALL_LOG_END;
+}
 
-    ntca::SchedulerConfig schedulerConfig;
+TestClient::~TestClient()
+{
+    this->close();
+}
 
-    schedulerConfig.setThreadName(d_config.name.value());
+ntsa::Error TestClient::connect()
+{
+    ntsa::Error error;
 
-    if (d_config.driver.has_value()) {
-        schedulerConfig.setDriverName(d_config.driver.value());
-    }
+    bsl::shared_ptr<Self> self(this->getSelf(this));
 
-    if (d_config.numNetworkingThreads.has_value()) {
-        schedulerConfig.setMinThreads(d_config.numNetworkingThreads.value());
-        schedulerConfig.setMaxThreads(d_config.numNetworkingThreads.value());
-    }
+#if NTCF_TESTCLIENT_DATAGRAM_SOCKET_ENABLED
 
-    if (d_config.dynamicLoadBalancing.has_value()) {
-        schedulerConfig.setDynamicLoadBalancing(
-            d_config.dynamicLoadBalancing.value());
-    }
-
-    if (d_config.keepAlive.has_value()) {
-        schedulerConfig.setKeepAlive(d_config.keepAlive.value());
-    }
-
-    if (d_config.keepHalfOpen.has_value()) {
-        schedulerConfig.setKeepHalfOpen(d_config.keepHalfOpen.value());
-    }
-
-    if (d_config.backlog.has_value()) {
-        schedulerConfig.setBacklog(d_config.backlog.value());
-    }
-
-    if (d_config.sendBufferSize.has_value()) {
-        schedulerConfig.setSendBufferSize(d_config.sendBufferSize.value());
-    }
-
-    if (d_config.receiveBufferSize.has_value()) {
-        schedulerConfig.setBacklog(d_config.receiveBufferSize.value());
-    }
-
-    if (d_config.acceptGreedily.has_value()) {
-        schedulerConfig.setAcceptGreedily(d_config.acceptGreedily.value());
-    }
-
-    if (d_config.acceptQueueLowWatermark.has_value()) {
-        schedulerConfig.setAcceptQueueLowWatermark(
-            d_config.acceptQueueLowWatermark.value());
-    }
-
-    if (d_config.acceptQueueHighWatermark.has_value()) {
-        schedulerConfig.setAcceptQueueHighWatermark(
-            d_config.acceptQueueHighWatermark.value());
-    }
-
-    if (d_config.readQueueLowWatermark.has_value()) {
-        schedulerConfig.setReadQueueLowWatermark(
-            d_config.readQueueLowWatermark.value());
-    }
-
-    if (d_config.readQueueHighWatermark.has_value()) {
-        schedulerConfig.setReadQueueHighWatermark(
-            d_config.readQueueHighWatermark.value());
-    }
-
-    if (d_config.writeQueueLowWatermark.has_value()) {
-        schedulerConfig.setWriteQueueLowWatermark(
-            d_config.writeQueueLowWatermark.value());
-    }
-
-    if (d_config.writeQueueHighWatermark.has_value()) {
-        schedulerConfig.setWriteQueueHighWatermark(
-            d_config.writeQueueHighWatermark.value());
-    }
-
-    d_scheduler_sp = ntcf::System::createScheduler(schedulerConfig,
-                                                   d_dataPool_sp,
-                                                   d_allocator_p);
-
-    error = d_scheduler_sp->start();
-    BSLS_ASSERT_OPT(!error);
-
-    BALL_LOG_INFO << "Client scheduler construction complete" << BALL_LOG_END;
-
-    BALL_LOG_INFO << "Client datagram socket construction starting"
-                  << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Client datagram socket construction starting"
+    // MRM:               << BALL_LOG_END;
 
     ntca::DatagramSocketOptions datagramSocketOptions;
     datagramSocketOptions.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
@@ -1638,58 +1671,53 @@ TestClient::TestClient(const ntcf::TestClientConfig& configuration,
                                              d_allocator_p);
 
     error = d_datagramSocket_sp->registerSession(self);
-    BSLS_ASSERT_OPT(!error);
+    if (error) {
+        return error;
+    }
 
     error = d_datagramSocket_sp->registerManager(self);
-    BSLS_ASSERT_OPT(!error);
+    if (error) {
+        return error;
+    }
 
     error = d_datagramSocket_sp->open();
-    BSLS_ASSERT_OPT(!error);
-
-    // MRM
-#if 0
-    {
-        ntca::ConnectOptions connectOptions;
-
-        ntci::ConnectCallback connectCallback = 
-            d_streamSocket_sp->createConnectCallback(
-                NTCCFG_BIND(&TestClient::processDatagramSocketConnectEvent,
-                            this,
-                            d_datagramSocket_sp,
-                            NTCCFG_BIND_PLACEHOLDER_2),
-                d_allocator_p);
-
-        error = d_datagramSocket_sp->connect(udpEndpoint, 
-                                             connectOptions, 
-                                             connectCallback);
-        BSLS_ASSERT_OPT(!error);
+    if (error) {
+        return error;
     }
-#endif
 
     {
         ntci::ConnectFuture connectFuture;
         error = d_datagramSocket_sp->connect(d_udpEndpoint,
                                              ntca::ConnectOptions(),
                                              connectFuture);
-        BSLS_ASSERT_OPT(!error);
+        if (error) {
+            return error;
+        }
 
         ntci::ConnectResult connectResult;
         error = connectFuture.wait(&connectResult);
-        BSLS_ASSERT_OPT(!error);
-        BSLS_ASSERT_OPT(!connectResult.event().context().error());
+        if (error) {
+            return error;
+        }
 
         NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_EVENT(d_datagramSocket_sp,
                                                   "connect",
                                                   connectResult.event());
 
+        if (connectResult.event().context().error()) {
+            return connectResult.event().context().error();
+        }
+
         NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_CONNECTED(d_datagramSocket_sp);
     }
 
-    BALL_LOG_INFO << "Client datagram socket construction complete"
-                  << BALL_LOG_END;
+#endif
 
-    BALL_LOG_INFO << "Client stream socket construction starting"
-                  << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Client datagram socket construction complete"
+    // MRM:               << BALL_LOG_END;
+
+    // MRM: BALL_LOG_INFO << "Client stream socket construction starting"
+    // MRM:               << BALL_LOG_END;
 
     ntca::StreamSocketOptions streamSocketOptions;
     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
@@ -1698,108 +1726,186 @@ TestClient::TestClient(const ntcf::TestClientConfig& configuration,
         d_scheduler_sp->createStreamSocket(streamSocketOptions, d_allocator_p);
 
     error = d_streamSocket_sp->registerSession(self);
-    BSLS_ASSERT_OPT(!error);
+    if (error) {
+        return error;
+    }
 
     error = d_streamSocket_sp->registerManager(self);
-    BSLS_ASSERT_OPT(!error);
+    if (error) {
+        return error;
+    }
 
     error = d_streamSocket_sp->open();
-    BSLS_ASSERT_OPT(!error);
-
-    // MRM
-#if 0
-    {
-        ntca::ConnectOptions connectOptions;
-
-        ntci::ConnectCallback connectCallback = 
-            d_streamSocket_sp->createConnectCallback(
-                NTCCFG_BIND(&TestClient::processStreamSocketConnectEvent,
-                            this,
-                            d_streamSocket_sp,
-                            NTCCFG_BIND_PLACEHOLDER_2),
-                d_allocator_p);
-
-        error = d_streamSocket_sp->connect(tcpEndpoint, 
-                                           connectOptions, 
-                                           connectCallback);
-        BSLS_ASSERT_OPT(!error);
+    if (error) {
+        return error;
     }
-#endif
 
     {
         ntci::ConnectFuture connectFuture;
         error = d_streamSocket_sp->connect(d_tcpEndpoint,
                                            ntca::ConnectOptions(),
                                            connectFuture);
-        BSLS_ASSERT_OPT(!error);
+        if (error) {
+            return error;
+        }
 
         ntci::ConnectResult connectResult;
         error = connectFuture.wait(&connectResult);
-        BSLS_ASSERT_OPT(!error);
-        BSLS_ASSERT_OPT(!connectResult.event().context().error());
+        if (error) {
+            return error;
+        }
 
         NTCF_TESTCLIENT_LOG_STREAM_SOCKET_EVENT(d_streamSocket_sp,
                                                 "connect",
                                                 connectResult.event());
 
+        if (connectResult.event().context().error()) {
+            return connectResult.event().context().error();
+        }
+
         NTCF_TESTCLIENT_LOG_STREAM_SOCKET_CONNECTED(d_streamSocket_sp);
     }
 
-    BALL_LOG_INFO << "Client stream socket construction complete"
-                  << BALL_LOG_END;
+    // MRM: BALL_LOG_INFO << "Client stream socket construction complete"
+    // MRM:               << BALL_LOG_END;
 
-    BALL_LOG_INFO << "Client construction complete" << BALL_LOG_END;
+
+#if NTCF_TESTCLIENT_DATAGRAM_SOCKET_ENABLED
 
     error = d_datagramSocket_sp->relaxFlowControl(
         ntca::FlowControlType::e_RECEIVE);
-    BSLS_ASSERT_OPT(!error);
+    if (error) {
+        return error;
+    }
+
+#endif
 
     error = d_streamSocket_sp->setReadQueueLowWatermark(
         d_streamParser_sp->numNeeded());
-    BSLS_ASSERT_OPT(!error);
+    if (error) {
+        return error;
+    }
 
     error =
         d_streamSocket_sp->relaxFlowControl(ntca::FlowControlType::e_RECEIVE);
-    BSLS_ASSERT_OPT(!error);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
-TestClient::~TestClient()
+ntsa::Error TestClient::connect(const ntci::ConnectCallback& callback)
 {
-    BALL_LOG_INFO << "Client destruction starting" << BALL_LOG_END;
+    ntsa::Error error;
 
-    BALL_LOG_INFO << "Client stream socket destruction starting"
-                  << BALL_LOG_END;
+    bsl::shared_ptr<Self> self(this->getSelf(this));
 
-    {
-        ntci::StreamSocketCloseGuard closeGuard(d_streamSocket_sp);
+#if NTCF_TESTCLIENT_DATAGRAM_SOCKET_ENABLED
+    
+    // MRM: BALL_LOG_INFO << "Client datagram socket construction starting"
+    // MRM:               << BALL_LOG_END;
+
+    ntca::DatagramSocketOptions datagramSocketOptions;
+    datagramSocketOptions.setTransport(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    datagramSocketOptions.setSourceEndpoint(
+        ntsa::Endpoint(ntsa::Ipv4Endpoint(ntsa::Ipv4Address::loopback(), 0)));
+
+    d_datagramSocket_sp =
+        d_scheduler_sp->createDatagramSocket(datagramSocketOptions,
+                                             d_allocator_p);
+
+    error = d_datagramSocket_sp->registerSession(self);
+    if (error) {
+        return error;
     }
 
-    d_streamSocket_sp.reset();
-
-    BALL_LOG_INFO << "Client stream socket destruction complete"
-                  << BALL_LOG_END;
-
-    BALL_LOG_INFO << "Client datagram socket destruction starting"
-                  << BALL_LOG_END;
-
-    {
-        ntci::DatagramSocketCloseGuard closeGuard(d_datagramSocket_sp);
+    error = d_datagramSocket_sp->registerManager(self);
+    if (error) {
+        return error;
     }
 
-    d_datagramSocket_sp.reset();
+    error = d_datagramSocket_sp->open();
+    if (error) {
+        return error;
+    }
 
-    BALL_LOG_INFO << "Client datagram socket destruction complete"
-                  << BALL_LOG_END;
+    {
+        ntci::ConnectFuture connectFuture;
+        error = d_datagramSocket_sp->connect(d_udpEndpoint,
+                                             ntca::ConnectOptions(),
+                                             connectFuture);
+        if (error) {
+            return error;
+        }
 
-    BALL_LOG_INFO << "Client scheduler destruction starting" << BALL_LOG_END;
+        ntci::ConnectResult connectResult;
+        error = connectFuture.wait(&connectResult);
+        if (error) {
+            return error;
+        }
 
-    d_scheduler_sp->shutdown();
-    d_scheduler_sp->linger();
-    d_scheduler_sp.reset();
+        NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_EVENT(d_datagramSocket_sp,
+                                                  "connect",
+                                                  connectResult.event());
 
-    BALL_LOG_INFO << "Client scheduler destruction complete" << BALL_LOG_END;
+        if (connectResult.event().context().error()) {
+            return connectResult.event().context().error();
+        }
 
-    BALL_LOG_INFO << "Client destruction complete" << BALL_LOG_END;
+        NTCF_TESTCLIENT_LOG_DATAGRAM_SOCKET_CONNECTED(d_datagramSocket_sp);
+    }
+
+    // MRM: BALL_LOG_INFO << "Client datagram socket construction complete"
+    // MRM:               << BALL_LOG_END;
+
+#endif
+
+    // MRM: BALL_LOG_INFO << "Client stream socket construction starting"
+    // MRM:               << BALL_LOG_END;
+
+    ntca::StreamSocketOptions streamSocketOptions;
+    streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+    d_streamSocket_sp =
+        d_scheduler_sp->createStreamSocket(streamSocketOptions, d_allocator_p);
+
+    error = d_streamSocket_sp->registerSession(self);
+    if (error) {
+        return error;
+    }
+
+    error = d_streamSocket_sp->registerManager(self);
+    if (error) {
+        return error;
+    }
+
+    error = d_streamSocket_sp->open();
+    if (error) {
+        return error;
+    }
+
+    ntci::ConnectCallback callbackProxy = this->createConnectCallback(
+        NTCCFG_BIND(&TestClient::dispatchConnect, 
+                    this,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    callback),
+        d_allocator_p);
+
+    {
+        error = d_streamSocket_sp->connect(d_tcpEndpoint,
+                                           ntca::ConnectOptions(),
+                                           callbackProxy);
+        if (error) {
+            return error;
+        }
+    }
+
+    // MRM: BALL_LOG_INFO << "Client stream socket construction complete"
+    // MRM:               << BALL_LOG_END;
+
+    return ntsa::Error();
 }
 
 bsl::shared_ptr<ntcf::TestMessage> TestClient::createMessage()
@@ -1812,7 +1918,7 @@ bsl::shared_ptr<ntcf::TestMessage> TestClient::createMessage(
 {
     bsl::shared_ptr<ntcf::TestMessage> message = this->createMessage();
 
-    message->setSerializationType(ntca::SerializationType::e_XML);
+    message->setSerializationType(ntca::SerializationType::e_BER);
     message->setCompressionType(ntca::CompressionType::e_NONE);
 
     return message;
@@ -2278,6 +2384,49 @@ ntsa::Error TestClient::encrypt(ntcf::TestContext*           context,
 }
 
 ntsa::Error TestClient::encrypt(
+    ntcf::TestAcknowledgmentResult*     result,
+    const ntcf::TestControlEncryption&  encryption,
+    const ntcf::TestOptions&            options)
+{
+    ntsa::Error error;
+
+    result->reset();
+
+    if (!encryption.acknowledge) {
+        this->describeInititationFailure(&result->value.makeFailure());
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntcf::TestAcknowledgmentFuture future;
+    error = this->encrypt(encryption, options, future);
+    if (error) {
+        this->describeInititationFailure(&result->value.makeFailure());
+        return error;
+    }
+
+    error = future.wait(result);
+    if (error) {
+        this->describeWaitFailure(&result->value.makeFailure());
+        return error;
+    }
+
+    if (result->value.isUndefinedValue()) {
+        this->describeResultTypeFailure(&result->value.makeFailure());
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+    else if (result->value.isFailureValue()) {
+        if (result->context.error != 0) {
+            return ntsa::Error(result->context.error);
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error TestClient::encrypt(
     const ntcf::TestControlEncryption&      encryption,
     const ntcf::TestOptions&                options,
     const ntcf::TestAcknowledgmentCallback& callback)
@@ -2396,6 +2545,52 @@ ntsa::Error TestClient::compress(ntcf::TestContext*            context,
 
     this->describeResultTypeFailure(fault);
     return ntsa::Error(ntsa::Error::e_INVALID);
+}
+
+ntsa::Error TestClient::compress(
+    ntcf::TestAcknowledgmentResult*      result,
+    const ntcf::TestControlCompression&  compression,
+    const ntcf::TestOptions&             options)
+{
+    ntsa::Error error;
+
+    result->reset();
+
+    if (!compression.acknowledge) {
+        this->describeInititationFailure(&result->value.makeFailure());
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntcf::TestAcknowledgmentFuture future;
+    error = this->compress(compression, options, future);
+    if (error) {
+        this->describeInititationFailure(&result->value.makeFailure());
+        return error;
+    }
+
+    error = future.wait(result);
+    if (error) {
+        this->describeWaitFailure(&result->value.makeFailure());
+        return error;
+    }
+
+    if (result->value.isUndefinedValue()) {
+        this->describeResultTypeFailure(&result->value.makeFailure());
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+    else if (result->value.isFailureValue()) {
+        NTCF_TESTCLIENT_LOG_COMPRESS_FAILURE(
+            d_streamSocket_sp, result->value.failure());
+
+        if (result->context.error != 0) {
+            return ntsa::Error(result->context.error);
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error TestClient::compress(
@@ -2520,6 +2715,48 @@ ntsa::Error TestClient::heartbeat(ntcf::TestContext*          context,
     return ntsa::Error(ntsa::Error::e_INVALID);
 }
 
+ntsa::Error TestClient::heartbeat(ntcf::TestAcknowledgmentResult*    result,
+                                  const ntcf::TestControlHeartbeat&  heartbeat,
+                                  const ntcf::TestOptions&           options)
+{
+    ntsa::Error error;
+
+    result->reset();
+
+    if (!heartbeat.acknowledge) {
+        this->describeInititationFailure(&result->value.makeFailure());
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntcf::TestAcknowledgmentFuture future;
+    error = this->heartbeat(heartbeat, options, future);
+    if (error) {
+        this->describeInititationFailure(&result->value.makeFailure());
+        return error;
+    }
+
+    error = future.wait(result);
+    if (error) {
+        this->describeWaitFailure(&result->value.makeFailure());
+        return error;
+    }
+
+    if (result->value.isUndefinedValue()) {
+        this->describeResultTypeFailure(&result->value.makeFailure());
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+    else if (result->value.isFailureValue()) {
+        if (result->context.error != 0) {
+            return ntsa::Error(result->context.error);
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    return ntsa::Error();
+}
+
 ntsa::Error TestClient::heartbeat(
     const ntcf::TestControlHeartbeat&       heartbeat,
     const ntcf::TestOptions&                options,
@@ -2593,6 +2830,159 @@ ntsa::Error TestClient::heartbeat(const ntcf::TestControlHeartbeat& heartbeat,
     }
 
     return ntsa::Error();
+}
+
+void TestClient::enableCompression()
+{
+    if (d_streamSocket_sp) {
+        d_streamSocket_sp->setWriteDeflater(d_compression_sp);
+        d_streamSocket_sp->setReadInflater(d_compression_sp);
+    }
+    else if (d_datagramSocket_sp) {
+        d_datagramSocket_sp->setWriteDeflater(d_compression_sp);
+        d_datagramSocket_sp->setReadInflater(d_compression_sp);
+    }
+}
+
+void TestClient::enableEncryption()
+{
+    ntsa::Error error;
+
+    ntca::EncryptionClientOptions encryptionClientOptions;
+
+    encryptionClientOptions.addAuthority(
+        d_encryption_sp->authorityCertificate());
+
+    bsl::shared_ptr<ntci::EncryptionClient> encryptionClient;
+    error = ntcf::System::createEncryptionClient(&encryptionClient,
+                                                 encryptionClientOptions,
+                                                 d_allocator_p);
+    BSLS_ASSERT_OPT(!error);
+
+    ntca::UpgradeOptions upgradeOptions;
+    ntci::UpgradeFuture  upgradeFuture;
+
+    error = d_streamSocket_sp->upgrade(encryptionClient,
+                                       upgradeOptions,
+                                       upgradeFuture);
+    BSLS_ASSERT_OPT(!error);
+
+    ntci::UpgradeResult upgradeResult;
+    error = upgradeFuture.wait(&upgradeResult);
+    BSLS_ASSERT_OPT(!error);
+
+    if (upgradeResult.event().type() == ntca::UpgradeEventType::e_COMPLETE) {
+        BSLS_ASSERT_OPT(!upgradeResult.event().context().error());
+
+        bsl::shared_ptr<ntci::EncryptionCertificate> remoteCertificate =
+                d_streamSocket_sp->remoteCertificate();
+
+        if (remoteCertificate) {
+            ntca::EncryptionCertificate remoteCertificateRecord;
+            remoteCertificate->unwrap(&remoteCertificateRecord);
+
+            BALL_LOG_INFO << "Client stream socket at "
+                            << d_streamSocket_sp->sourceEndpoint() << " to "
+                            << d_streamSocket_sp->remoteEndpoint()
+                            << " upgrade complete: " 
+                            << upgradeResult.event().context()
+                            << BALL_LOG_END;
+
+            BALL_LOG_INFO
+                << "Client stream socket at " 
+                << d_streamSocket_sp->sourceEndpoint() << " to "
+                << d_streamSocket_sp->remoteEndpoint()
+                << " encryption session has been established with "
+                << remoteCertificate->subject() << " issued by "
+                << remoteCertificate->issuer() << ": "
+                << remoteCertificateRecord << BALL_LOG_END;
+        }
+        else {
+            BALL_LOG_INFO << "Client stream socket at "
+                        << d_streamSocket_sp->sourceEndpoint() 
+                        << " to "
+                        << d_streamSocket_sp->remoteEndpoint()
+                        << " encryption session has been established"
+                        << BALL_LOG_END;
+        }
+    }
+    else {
+        BALL_LOG_ERROR
+            << "Client stream socket at "
+            << d_streamSocket_sp->sourceEndpoint() 
+            << " to "
+            << d_streamSocket_sp->remoteEndpoint()
+            << " upgrade error: " 
+            << upgradeResult.event().context() 
+            << BALL_LOG_END;
+
+        BSLS_ASSERT_OPT(!upgradeResult.event().context().error());
+    }
+}
+
+void TestClient::disableCompression()
+{
+    bsl::shared_ptr<ntci::Compression> none;
+    
+    if (d_streamSocket_sp) {
+        d_streamSocket_sp->setWriteDeflater(none);
+        d_streamSocket_sp->setReadInflater(none);
+    }
+    else if (d_datagramSocket_sp) {
+        d_datagramSocket_sp->setWriteDeflater(none);
+        d_datagramSocket_sp->setReadInflater(none);
+    }
+}
+
+void TestClient::disableEncryption()
+{
+    ntsa::Error error;
+
+    if (d_streamSocket_sp) {
+        error = d_streamSocket_sp->downgrade();
+        BSLS_ASSERT_OPT(!error);
+
+        d_downgradeSemaphore.wait();
+
+        // MRM: Wait for downgrade event or enhance ntci::StreamSocket::down
+    }
+}
+
+void TestClient::close()
+{
+    if (d_closed) {
+        return;
+    }
+
+    d_closed = true;
+
+    // MRM: BALL_LOG_INFO << "Client destruction starting" << BALL_LOG_END;
+
+    // MRM: BALL_LOG_INFO << "Client stream socket destruction starting"
+    // MRM:               << BALL_LOG_END;
+
+    if (d_streamSocket_sp) {
+        ntci::StreamSocketCloseGuard closeGuard(d_streamSocket_sp);
+    }
+
+    d_streamSocket_sp.reset();
+
+    // MRM: BALL_LOG_INFO << "Client stream socket destruction complete"
+    // MRM:               << BALL_LOG_END;
+
+    // MRM: BALL_LOG_INFO << "Client datagram socket destruction starting"
+    // MRM:               << BALL_LOG_END;
+
+    if (d_datagramSocket_sp) {
+        ntci::DatagramSocketCloseGuard closeGuard(d_datagramSocket_sp);
+    }
+
+    d_datagramSocket_sp.reset();
+
+    // MRM: BALL_LOG_INFO << "Client datagram socket destruction complete"
+    // MRM:               << BALL_LOG_END;
+
+    // MRM: BALL_LOG_INFO << "Client destruction complete" << BALL_LOG_END;
 }
 
 }  // end namespace ntcf
