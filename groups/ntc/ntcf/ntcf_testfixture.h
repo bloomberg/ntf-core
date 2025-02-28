@@ -150,26 +150,40 @@ public:
 /// This class is thread safe.
 class TestFixtureUtil
 {
+    static bsls::AtomicUint64 s_pingId;
+    
 public:
     /// Signal the peer of the specified 'client' and block until a response is
     /// received.
-    void signal(const ntcf::TestClientPtr& client);
+    static void ping(const ntcf::TestClientPtr& client);
 
     /// Instruct the server to enable compression when communicating with the
     /// specified 'client'.
-    void enableRemoteCompression(const ntcf::TestClientPtr& client);
+    static void enableRemoteCompression(const ntcf::TestClientPtr& client);
 
     /// Enable compression at the specified 'client'.
-    void enableSourceCompression(const ntcf::TestClientPtr& client);
+    static void enableSourceCompression(const ntcf::TestClientPtr& client);
 
     /// Instruct the server to disable compression when communicating with the
     /// specified 'client'.
-    void disableRemoteCompression(const ntcf::TestClientPtr& client);
+    static void disableRemoteCompression(const ntcf::TestClientPtr& client);
 
     /// Disable compression at the specified 'client'.
-    void disableSourceCompression(const ntcf::TestClientPtr& client);
+    static void disableSourceCompression(const ntcf::TestClientPtr& client);
 
+    /// Instruct the server to enable encryption when communicating with the
+    /// specified 'client'.
+    static void enableRemoteEncryption(const ntcf::TestClientPtr& client);
 
+    /// Enable encryption at the specified 'client'.
+    static void enableSourceEncryption(const ntcf::TestClientPtr& client);
+
+    /// Instruct the server to disable encryption when communicating with the
+    /// specified 'client'.
+    static void disableRemoteEncryption(const ntcf::TestClientPtr& client);
+
+    /// Disable encryption at the specified 'client'.
+    static void disableSourceEncryption(const ntcf::TestClientPtr& client);
 };
 
 }  // end namespace ntcf

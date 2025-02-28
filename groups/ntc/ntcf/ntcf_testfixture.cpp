@@ -536,6 +536,116 @@ bsl::size_t TestFixture::clientCount() const
     return d_clientVector.size();
 }
 
+bsls::AtomicUint64 TestFixtureUtil::s_pingId;
+
+void TestFixtureUtil::ping(const ntcf::TestClientPtr& client)
+{
+    ntsa::Error error;
+
+    ntcf::TestEchoResult result;
+    ntcf::TestSignal     signal;
+    ntcf::TestOptions    options;
+
+    signal.id = ++s_pingId;
+    signal.reflect = 64;
+    ntscfg::TestDataUtil::generateData(
+        &signal.value, 
+        32, 
+        0, 
+        ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
+
+    error = client->signal(&result, signal, options);
+    NTSCFG_TEST_OK(error);
+}
+
+void TestFixtureUtil::enableRemoteCompression(const ntcf::TestClientPtr& client)
+{
+    ntsa::Error error;
+
+    ntcf::TestAcknowledgmentResult result;
+    ntcf::TestControlCompression   compression;
+    ntcf::TestOptions              options;
+
+    compression.enabled = true;
+    compression.acknowledge = true;
+    compression.transition = 
+        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
+
+    error = client->compress(&result, compression, options);
+    NTSCFG_TEST_OK(error);
+}
+
+void TestFixtureUtil::enableSourceCompression(const ntcf::TestClientPtr& client)
+{
+    client->enableCompression();
+}
+
+void TestFixtureUtil::disableRemoteCompression(const ntcf::TestClientPtr& client)
+{
+    ntsa::Error error;
+
+    ntcf::TestAcknowledgmentResult result;
+    ntcf::TestControlCompression   compression;
+    ntcf::TestOptions              options;
+
+    compression.enabled = false;
+    compression.acknowledge = true;
+    compression.transition = 
+        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
+
+    error = client->compress(&result, compression, options);
+    NTSCFG_TEST_OK(error);
+}
+
+void TestFixtureUtil::disableSourceCompression(const ntcf::TestClientPtr& client)
+{
+    client->disableCompression();
+}
+
+void TestFixtureUtil::enableRemoteEncryption(const ntcf::TestClientPtr& client)
+{
+    ntsa::Error error;
+
+    ntcf::TestAcknowledgmentResult result;
+    ntcf::TestControlEncryption    encryption;
+    ntcf::TestOptions              options;
+
+    encryption.enabled = true;
+    encryption.acknowledge = true;
+    encryption.transition = 
+        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
+
+    error = client->encrypt(&result, encryption, options);
+    NTSCFG_TEST_OK(error);
+}
+
+void TestFixtureUtil::enableSourceEncryption(const ntcf::TestClientPtr& client)
+{
+    client->enableEncryption();
+}
+
+void TestFixtureUtil::disableRemoteEncryption(const ntcf::TestClientPtr& client)
+{
+    ntsa::Error error;
+
+    ntcf::TestAcknowledgmentResult result;
+    ntcf::TestControlEncryption    encryption;
+    ntcf::TestOptions              options;
+
+    encryption.enabled = false;
+    encryption.acknowledge = true;
+    encryption.transition = 
+        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
+
+    error = client->encrypt(&result, encryption, options);
+    NTSCFG_TEST_OK(error);
+}
+
+void TestFixtureUtil::disableSourceEncryption(const ntcf::TestClientPtr& client)
+{
+    client->disableEncryption();
+}
+
 }  // close namespace ntcf
 }  // close namespace BloombergLP
 #endif

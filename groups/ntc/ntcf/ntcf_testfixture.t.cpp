@@ -70,6 +70,12 @@ NTSCFG_TEST_FUNCTION(ntcf::TestFixtureTest::verify)
 {
     ntsa::Error error;
 
+    // Configure the number of iterations.
+
+    const bsl::size_t k_NUM_ITERATIONS = 10;
+    const bsl::size_t k_NUM_STATE_TRANSITIONS = 10;
+    const bsl::size_t k_NUM_PINGS = 10;
+
     // Create a server.
 
     ntcf::TestFixtureConfig fixtureConfig;
@@ -83,190 +89,145 @@ NTSCFG_TEST_FUNCTION(ntcf::TestFixtureTest::verify)
     error = fixture.clientConnect(&client);
     NTSCFG_TEST_OK(error);
 
-    // MRM
-#if 1
+    for (bsl::size_t i = 0; i < k_NUM_ITERATIONS; ++i) {
+        // Ping the server with neither compression nor encryption.
 
-    // Ping the server with neither compression nor encryption.
+        for (bsl::size_t k = 0; k < k_NUM_PINGS; ++k) {
+            ntcf::TestFixtureUtil::ping(client);
+        }
 
-    {
-        ntcf::TestEchoResult result;
-        ntcf::TestSignal     signal;
-        ntcf::TestOptions    options;
+        // Test compression.
 
-        signal.id = 1;
-        signal.reflect = 64;
-        ntscfg::TestDataUtil::generateData(
-            &signal.value, 
-            32, 
-            0, 
-            ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
+        for (bsl::size_t j = 0; j < k_NUM_STATE_TRANSITIONS; ++j) {
+            // Instruct the server to enable compression when communicating
+            // with this client.
 
-        error = client->signal(&result, signal, options);
-        NTSCFG_TEST_OK(error);
+            ntcf::TestFixtureUtil::enableRemoteCompression(client);
+
+            // Enable compression at the client.
+
+            ntcf::TestFixtureUtil::enableSourceCompression(client);
+
+            // Ping the server with compression.
+
+            for (bsl::size_t k = 0; k < k_NUM_PINGS; ++k) {
+                ntcf::TestFixtureUtil::ping(client);
+            }
+
+            // Instruct the server to disable compression when communicating
+            // with this client.
+
+            ntcf::TestFixtureUtil::disableRemoteCompression(client);
+
+            // Disable compression at the client.
+
+            ntcf::TestFixtureUtil::disableSourceCompression(client);
+
+            // Ping the server with neither compression nor encryption.
+
+            for (bsl::size_t k = 0; k < k_NUM_PINGS; ++k) {
+                ntcf::TestFixtureUtil::ping(client);
+            }
+        }
+
+        // Test encryption.
+
+        for (bsl::size_t j = 0; j < k_NUM_STATE_TRANSITIONS; ++j) {
+            // Instruct the server to enable encryption when communicating with
+            // this client.
+
+            ntcf::TestFixtureUtil::enableRemoteEncryption(client);
+
+            // Enable encryption at the client.
+
+            ntcf::TestFixtureUtil::enableSourceEncryption(client);
+
+            // Ping the server with encryption.
+
+            for (bsl::size_t k = 0; k < k_NUM_PINGS; ++k) {
+                ntcf::TestFixtureUtil::ping(client);
+            }
+
+            // Instruct the server to disable encryption when communicating
+            // with this client.
+
+            ntcf::TestFixtureUtil::disableRemoteEncryption(client);
+
+            // Disable encryption at the client.
+
+            ntcf::TestFixtureUtil::disableSourceEncryption(client);
+
+            // Ping the server with neither compression nor encryption.
+
+            for (bsl::size_t k = 0; k < k_NUM_PINGS; ++k) {
+                ntcf::TestFixtureUtil::ping(client);
+            }
+        }
+
+        // Test compression and encryption.
+
+        for (bsl::size_t j = 0; j < k_NUM_STATE_TRANSITIONS; ++j) {
+            // Instruct the server to enable compression when communicating
+            // with this client.
+
+            ntcf::TestFixtureUtil::enableRemoteCompression(client);
+
+            // Enable compression at the client.
+
+            ntcf::TestFixtureUtil::enableSourceCompression(client);
+
+            // Ping the server with compression.
+
+            for (bsl::size_t k = 0; k < k_NUM_PINGS; ++k) {
+                ntcf::TestFixtureUtil::ping(client);
+            }
+
+            // Instruct the server to enable encryption when communicating with
+            // this client.
+
+            ntcf::TestFixtureUtil::enableRemoteEncryption(client);
+
+            // Enable encryption at the client.
+
+            ntcf::TestFixtureUtil::enableSourceEncryption(client);
+
+            // Ping the server with compression and encryption.
+
+            for (bsl::size_t k = 0; k < k_NUM_PINGS; ++k) {
+                ntcf::TestFixtureUtil::ping(client);
+            }
+
+            // Instruct the server to disable encryption when communicating
+            // with this client.
+
+            ntcf::TestFixtureUtil::disableRemoteEncryption(client);
+
+            // Disable encryption at the client.
+
+            ntcf::TestFixtureUtil::disableSourceEncryption(client);
+
+            // Ping the server with compression.
+
+            for (bsl::size_t k = 0; k < k_NUM_PINGS; ++k) {
+                ntcf::TestFixtureUtil::ping(client);
+            }
+
+            // Instruct the server to disable compression when communicating
+            // with this client.
+
+            ntcf::TestFixtureUtil::disableRemoteCompression(client);
+
+            // Disable compression at the client.
+
+            ntcf::TestFixtureUtil::disableSourceCompression(client);
+
+            // Ping the server with neither compression nor encryption.
+
+            for (bsl::size_t k = 0; k < k_NUM_PINGS; ++k) {
+                ntcf::TestFixtureUtil::ping(client);
+            }
+        }
     }
-
-    // Instruct the server to enable compression when communicating with this
-    // client.
-
-    {
-        ntcf::TestAcknowledgmentResult result;
-        ntcf::TestControlCompression   compression;
-        ntcf::TestOptions              options;
-
-        compression.enabled = true;
-        compression.acknowledge = true;
-        compression.transition = 
-            ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
-
-        error = client->compress(&result, compression, options);
-        NTSCFG_TEST_OK(error);
-    }
-
-    // Enable compression at the client.
-
-    client->enableCompression();
-
-    // Ping the server with compression.
-
-    {
-        ntcf::TestEchoResult result;
-        ntcf::TestSignal     signal;
-        ntcf::TestOptions    options;
-
-        signal.id = 2;
-        signal.reflect = 64;
-        ntscfg::TestDataUtil::generateData(
-            &signal.value, 
-            32, 
-            0, 
-            ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
-
-        error = client->signal(&result, signal, options);
-        NTSCFG_TEST_OK(error);
-    }
-
-    // Instruct the server to disable compression when communicating with this
-    // client.
-
-    {
-        ntcf::TestAcknowledgmentResult result;
-        ntcf::TestControlCompression   compression;
-        ntcf::TestOptions              options;
-
-        compression.enabled = false;
-        compression.acknowledge = true;
-        compression.transition = 
-            ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
-
-        error = client->compress(&result, compression, options);
-        NTSCFG_TEST_OK(error);
-    }
-
-    // Disable compression at the client.
-
-    client->disableCompression();
-
-    // Ping the server with neither compression nor encryption.
-
-    {
-        ntcf::TestEchoResult result;
-        ntcf::TestSignal     signal;
-        ntcf::TestOptions    options;
-
-        signal.id = 2;
-        signal.reflect = 64;
-        ntscfg::TestDataUtil::generateData(
-            &signal.value, 
-            32, 
-            0, 
-            ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
-
-        error = client->signal(&result, signal, options);
-        NTSCFG_TEST_OK(error);
-    }
-
-#endif
-
-    // Instruct the server to enable encryption when communicating with this
-    // client.
-
-    {
-        ntcf::TestAcknowledgmentResult result;
-        ntcf::TestControlEncryption    encryption;
-        ntcf::TestOptions              options;
-
-        encryption.enabled = true;
-        encryption.acknowledge = true;
-        encryption.transition = 
-            ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
-
-        error = client->encrypt(&result, encryption, options);
-        NTSCFG_TEST_OK(error);
-    }
-
-    // Enable encryption at the client.
-
-    client->enableEncryption();
-
-    // Ping the server with encryption.
-
-    {
-        ntcf::TestEchoResult result;
-        ntcf::TestSignal     signal;
-        ntcf::TestOptions    options;
-
-        signal.id = 2;
-        signal.reflect = 64;
-        ntscfg::TestDataUtil::generateData(
-            &signal.value, 
-            32, 
-            0, 
-            ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
-
-        error = client->signal(&result, signal, options);
-        NTSCFG_TEST_OK(error);
-    }
-
-    // Instruct the server to disable encryption when communicating with this
-    // client.
-
-    {
-        ntcf::TestAcknowledgmentResult result;
-        ntcf::TestControlEncryption    encryption;
-        ntcf::TestOptions              options;
-
-        encryption.enabled = false;
-        encryption.acknowledge = true;
-        encryption.transition = 
-            ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
-
-        error = client->encrypt(&result, encryption, options);
-        NTSCFG_TEST_OK(error);
-    }
-
-    // Disable encryption at the client.
-
-    client->disableEncryption();
-
-    // Ping the server neither compression nor encryption.
-
-    {
-        ntcf::TestEchoResult result;
-        ntcf::TestSignal     signal;
-        ntcf::TestOptions    options;
-
-        signal.id = 2;
-        signal.reflect = 64;
-        ntscfg::TestDataUtil::generateData(
-            &signal.value, 
-            32, 
-            0, 
-            ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
-
-        error = client->signal(&result, signal, options);
-        NTSCFG_TEST_OK(error);
-    }
-
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::TestFixtureTest::verifyBacklog)

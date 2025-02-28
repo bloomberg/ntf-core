@@ -2943,8 +2943,6 @@ void TestClient::disableEncryption()
         BSLS_ASSERT_OPT(!error);
 
         d_downgradeSemaphore.wait();
-
-        // MRM: Wait for downgrade event or enhance ntci::StreamSocket::down
     }
 }
 

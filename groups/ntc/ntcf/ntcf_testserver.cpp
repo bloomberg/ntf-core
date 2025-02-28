@@ -756,10 +756,11 @@ void TestServerTransaction::disableEncryption(
         this->acknowledge();
     }
 
-    if (d_streamSocket_sp) {
-        error = d_streamSocket_sp->downgrade();
-        BSLS_ASSERT_OPT(!error);
-    }
+    // Note: the server will automatically proceed with the downgrade once it 
+    // receives the TLS shutdown from the client.
+    //
+    // error = d_streamSocket_sp->downgrade():
+    // BSLS_ASSERT_OPT(!error);
 
     if (acknowledge && 
         transition == 
