@@ -29,7 +29,7 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntctlc {
 
-/// Provide a facility to inject the 'zlib', 'zstd', and 'lz4' compression 
+/// Provide a facility to inject the 'zlib', 'zstd', and 'lz4' compression
 /// libraries into NTC.
 ///
 /// @par Thread Safety
@@ -62,11 +62,11 @@ struct Plugin {
 /// @ingroup module_ntctlc
 class PluginGuard
 {
-private:
+  private:
     PluginGuard(const PluginGuard&) BSLS_KEYWORD_DELETED;
     PluginGuard& operator=(const PluginGuard&) BSLS_KEYWORD_DELETED;
 
-public:
+  public:
     /// Initialize this plugin and register support for compression in NTC
     /// using the 'zlib', 'zstd', and 'lz4' third-party libraries. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
@@ -82,7 +82,7 @@ public:
 /// Initialize this plugin and register support for TLS in NTF using the
 /// 'openssl' third-party library.
 #define NTF_REGISTER_PLUGIN_GZIP_ZLIB_ZSTD_LZ4()                              \
-  BloombergLP::ntctlc::PluginGuard ntfPluginGzipZlibZstdLz4
+    BloombergLP::ntctlc::PluginGuard ntfPluginGzipZlibZstdLz4
 
 }  // close namespace ntctlc
 }  // close namespace BloombergLP

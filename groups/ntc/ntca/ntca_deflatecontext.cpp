@@ -25,7 +25,7 @@ namespace ntca {
 
 bool DeflateContext::equals(const DeflateContext& other) const
 {
-    return d_compressionType == other.d_compressionType && 
+    return d_compressionType == other.d_compressionType &&
            d_bytesRead == other.d_bytesRead &&
            d_bytesWritten == other.d_bytesWritten &&
            d_checksum == other.d_checksum;

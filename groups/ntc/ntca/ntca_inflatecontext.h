@@ -19,8 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntca_compressiontype.h>
 #include <ntca_checksum.h>
+#include <ntca_compressiontype.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <bslh_hash.h>
@@ -206,8 +206,8 @@ NTCCFG_INLINE
 void InflateContext::reset()
 {
     d_compressionType = ntca::CompressionType::e_UNDEFINED;
-    d_bytesRead    = 0;
-    d_bytesWritten = 0;
+    d_bytesRead       = 0;
+    d_bytesWritten    = 0;
     d_checksum.reset();
 }
 

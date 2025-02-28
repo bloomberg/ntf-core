@@ -27,9 +27,9 @@ BSLS_IDENT_RCSID(ntctlc_plugin_cpp, "$Id$ $CSID$")
 #include <bdlbb_blob.h>
 #include <bdlbb_blobstreambuf.h>
 #include <bdlbb_blobutil.h>
-#include <bslmt_once.h>
-#include <bslma_newdeleteallocator.h>
 #include <bslma_default.h>
+#include <bslma_newdeleteallocator.h>
+#include <bslmt_once.h>
 #include <bsls_assert.h>
 
 #if NTC_BUILD_WITH_LZ4
@@ -624,12 +624,12 @@ ntsa::Error Lz4::deflateBegin(ntca::DeflateContext*       context,
     char header[LZ4F_HEADER_SIZE_MAX];
     bsl::memset(header, 0, sizeof header);
 
-    errorCode = LZ4F_compressBegin(d_deflaterContext_p, 
-                                   header, 
-                                   sizeof header, 
+    errorCode = LZ4F_compressBegin(d_deflaterContext_p,
+                                   header,
+                                   sizeof header,
                                    &d_preferences);
     if (LZ4F_isError(errorCode)) {
-        NTCI_LOG_ERROR("Failed to begin compression frame: %s", 
+        NTCI_LOG_ERROR("Failed to begin compression frame: %s",
                        LZ4F_getErrorName(errorCode));
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
@@ -658,14 +658,14 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
     bsl::size_t bounds = LZ4F_compressBound(size, &d_preferences);
 
     bdlma::BufferedSequentialAllocator sequentialAllocator(
-        d_deflaterBuffer.buffer().get(), 
-        d_deflaterBuffer.size(), 
+        d_deflaterBuffer.buffer().get(),
+        d_deflaterBuffer.size(),
         d_allocator_p);
 
-    char* destination = 
+    char* destination =
         reinterpret_cast<char*>(sequentialAllocator.allocate(bounds));
 
-    bslma::DeallocatorGuard<bdlma::BufferedSequentialAllocator> 
+    bslma::DeallocatorGuard<bdlma::BufferedSequentialAllocator>
         destinationGuard(destination, &sequentialAllocator);
 
     const bsl::size_t destinationCapacity = bounds;
@@ -675,16 +675,16 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
 
     compressOptions.stableSrc = 1;
 
-    errorCode = LZ4F_compressUpdate(d_deflaterContext_p, 
-                                    destination, 
-                                    destinationCapacity, 
-                                    data, 
-                                    size, 
+    errorCode = LZ4F_compressUpdate(d_deflaterContext_p,
+                                    destination,
+                                    destinationCapacity,
+                                    data,
+                                    size,
                                     &compressOptions);
 
     if (LZ4F_isError(errorCode)) {
-        NTCI_LOG_ERROR("Failed to update compression frame: %s", 
-                        LZ4F_getErrorName(errorCode));
+        NTCI_LOG_ERROR("Failed to update compression frame: %s",
+                       LZ4F_getErrorName(errorCode));
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -711,13 +711,14 @@ ntsa::Error Lz4::deflateEnd(ntca::DeflateContext*       context,
 
     char arena[4096];
 
-    bdlma::BufferedSequentialAllocator sequentialAllocator(
-        arena, sizeof arena, d_allocator_p);
+    bdlma::BufferedSequentialAllocator sequentialAllocator(arena,
+                                                           sizeof arena,
+                                                           d_allocator_p);
 
-    char* destination = 
+    char* destination =
         reinterpret_cast<char*>(sequentialAllocator.allocate(bounds));
 
-    bslma::DeallocatorGuard<bdlma::BufferedSequentialAllocator> 
+    bslma::DeallocatorGuard<bdlma::BufferedSequentialAllocator>
         destinationGuard(destination, &sequentialAllocator);
 
     const bsl::size_t destinationCapacity = bounds;
@@ -728,12 +729,12 @@ ntsa::Error Lz4::deflateEnd(ntca::DeflateContext*       context,
     compressOptions.stableSrc = 0;
 
     errorCode = LZ4F_compressEnd(d_deflaterContext_p,
-                                 destination, 
-                                 destinationCapacity, 
+                                 destination,
+                                 destinationCapacity,
                                  &compressOptions);
     if (LZ4F_isError(errorCode)) {
-        NTCI_LOG_ERROR("Failed to end compression frame: %s", 
-                        LZ4F_getErrorName(errorCode));
+        NTCI_LOG_ERROR("Failed to end compression frame: %s",
+                       LZ4F_getErrorName(errorCode));
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -772,7 +773,7 @@ ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
 
     LZ4F_errorCode_t errorCode = 0;
 
-    bsl::size_t totalBytesRead = 0;
+    bsl::size_t totalBytesRead    = 0;
     bsl::size_t totalBytesWritten = 0;
 
     const bsl::uint8_t* sourceCurrent = data;
@@ -782,25 +783,25 @@ ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
     bsl::memset(&decompressOptions, 0, sizeof decompressOptions);
 
     decompressOptions.stableDst = 0;
-    decompressOptions.skipChecksums = 
+    decompressOptions.skipChecksums =
         static_cast<unsigned>(!k_CHECKSUM_VERIFY);
 
     while (sourceCurrent < sourceEnd) {
         char*       destination     = d_inflaterBuffer.data();
         bsl::size_t destinationSize = d_inflaterBuffer.size();
-        
+
         bsl::size_t sourceSize = sourceEnd - sourceCurrent;
 
-        errorCode = LZ4F_decompress(d_inflaterContext_p, 
-                                    destination, 
-                                    &destinationSize, 
-                                    sourceCurrent, 
-                                    &sourceSize, 
+        errorCode = LZ4F_decompress(d_inflaterContext_p,
+                                    destination,
+                                    &destinationSize,
+                                    sourceCurrent,
+                                    &sourceSize,
                                     &decompressOptions);
 
         if (LZ4F_isError(errorCode)) {
-            NTCI_LOG_ERROR("Failed to end compression frame: %s", 
-                            LZ4F_getErrorName(errorCode));
+            NTCI_LOG_ERROR("Failed to end compression frame: %s",
+                           LZ4F_getErrorName(errorCode));
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
@@ -810,7 +811,7 @@ ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
         }
 
         if (sourceSize > 0) {
-            sourceCurrent += sourceSize;
+            sourceCurrent  += sourceSize;
             totalBytesRead += sourceSize;
         }
     }
@@ -853,11 +854,11 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
 
     LZ4F_errorCode_t errorCode = 0;
 
-    errorCode = LZ4F_createCompressionContext(&d_deflaterContext_p, 
-                                              LZ4F_VERSION);
+    errorCode =
+        LZ4F_createCompressionContext(&d_deflaterContext_p, LZ4F_VERSION);
     if (LZ4F_isError(errorCode)) {
-        NTCI_LOG_ERROR("Failed to create compression context: %s", 
-                        LZ4F_getErrorName(errorCode));
+        NTCI_LOG_ERROR("Failed to create compression context: %s",
+                       LZ4F_getErrorName(errorCode));
         NTCCFG_ABORT();
     }
 
@@ -865,7 +866,8 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
 
     d_deflaterBuffer.reset(
         bslstl::SharedPtrUtil::createInplaceUninitializedBuffer(
-            k_DEFLATER_BUFFER_CAPACITY, d_allocator_p),
+            k_DEFLATER_BUFFER_CAPACITY,
+            d_allocator_p),
         k_DEFLATER_BUFFER_CAPACITY);
 
     d_deflaterBufferSize = k_DEFLATER_BUFFER_CAPACITY;
@@ -875,33 +877,30 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
     d_preferences.frameInfo.blockSizeID = LZ4F_max64KB;
     d_preferences.frameInfo.blockMode   = LZ4F_blockIndependent;
     if (k_CHECKSUM_CONTENT) {
-        d_preferences.frameInfo.contentChecksumFlag = 
+        d_preferences.frameInfo.contentChecksumFlag =
             LZ4F_contentChecksumEnabled;
     }
     else {
-        d_preferences.frameInfo.contentChecksumFlag = 
-            LZ4F_noContentChecksum;
+        d_preferences.frameInfo.contentChecksumFlag = LZ4F_noContentChecksum;
     }
-    d_preferences.frameInfo.frameType = LZ4F_frame;
+    d_preferences.frameInfo.frameType   = LZ4F_frame;
     d_preferences.frameInfo.contentSize = 0;
-    d_preferences.frameInfo.dictID = 0;
+    d_preferences.frameInfo.dictID      = 0;
     if (k_CHECKSUM_BLOCK) {
-        d_preferences.frameInfo.blockChecksumFlag = 
-            LZ4F_blockChecksumEnabled;
+        d_preferences.frameInfo.blockChecksumFlag = LZ4F_blockChecksumEnabled;
     }
     else {
-        d_preferences.frameInfo.blockChecksumFlag = 
-            LZ4F_noBlockChecksum;
+        d_preferences.frameInfo.blockChecksumFlag = LZ4F_noBlockChecksum;
     }
-    d_preferences.compressionLevel = 0; // MRM
-    d_preferences.autoFlush = 0;
-    d_preferences.favorDecSpeed = 0;
+    d_preferences.compressionLevel = 0;  // MRM
+    d_preferences.autoFlush        = 0;
+    d_preferences.favorDecSpeed    = 0;
 
-    errorCode = LZ4F_createDecompressionContext(&d_inflaterContext_p, 
-                                                LZ4F_VERSION);
+    errorCode =
+        LZ4F_createDecompressionContext(&d_inflaterContext_p, LZ4F_VERSION);
     if (LZ4F_isError(errorCode)) {
-        NTCI_LOG_ERROR("Failed to create decompression context: %s", 
-                        LZ4F_getErrorName(errorCode));
+        NTCI_LOG_ERROR("Failed to create decompression context: %s",
+                       LZ4F_getErrorName(errorCode));
         NTCCFG_ABORT();
     }
 
@@ -909,8 +908,9 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
 
     d_inflaterBuffer.reset(
         bslstl::SharedPtrUtil::createInplaceUninitializedBuffer(
-            k_INFLATER_BUFFER_CAPACITY, d_allocator_p),
-            k_INFLATER_BUFFER_CAPACITY);
+            k_INFLATER_BUFFER_CAPACITY,
+            d_allocator_p),
+        k_INFLATER_BUFFER_CAPACITY);
 
     d_inflaterBufferSize = k_INFLATER_BUFFER_CAPACITY;
 }
@@ -2623,7 +2623,7 @@ ntsa::Error CompressionDriver::createCompression(
 }
 
 void Plugin::initialize(bslma::Allocator* basicAllocator)
-{    
+{
     BSLMT_ONCE_DO
     {
         bslma::Allocator* allocator = basicAllocator;

@@ -37,7 +37,7 @@ namespace ntci {
 /// @ingroup module_ntci_compression
 class CompressionDriver
 {
-public:
+  public:
     /// Destroy this object.
     virtual ~CompressionDriver();
 
