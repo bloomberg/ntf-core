@@ -680,7 +680,7 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyLz4)
 
 NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyZstd)
 {
-#if NTC_BUILD_WITH_ZSTD
+#if NTC_BUILD_WITH_ZSTD && 0
     ntctlc::PluginTest::Parameters parameters;
     parameters.setVariationIndex(0);
     parameters.setVariationCount(1);

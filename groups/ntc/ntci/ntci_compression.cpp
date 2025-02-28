@@ -44,19 +44,11 @@ ntsa::Error Compression::deflateRep(ntca::DeflateContext*       context,
             bufferSize = static_cast<bsl::size_t>(data.lastDataBufferLength());
         }
 
-        const ntca::DeflateOptions*               optionsPtr = &options;
-        bdlb::NullableValue<ntca::DeflateOptions> optionsOverride;
-
-        if (i != numDataBuffers - 1 && !options.partial().value_or(false)) {
-            optionsPtr = &optionsOverride.makeValue(options);
-            optionsOverride.value().setPartial(true);
-        }
-
         error = this->deflateNext(context,
                                   result,
                                   bufferData,
                                   bufferSize,
-                                  *optionsPtr);
+                                  options);
         if (error) {
             return error;
         }

@@ -2670,21 +2670,5 @@ PluginGuard::~PluginGuard()
     ntctlc::Plugin::exit();
 }
 
-
-
-
-
-
-
-
-
-#if 0
-void Plugin::initialize()
-{
-
-    
-}
-#endif
-
 }  // close namespace ntctlc
 }  // close namespace BloombergLP
