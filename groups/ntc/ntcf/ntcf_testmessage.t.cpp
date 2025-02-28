@@ -36,7 +36,6 @@ class TestMessageTest
 
 NTSCFG_TEST_FUNCTION(ntcf::TestMessageTest::verify)
 {
-    
 }
 
 }  // close namespace ntcf

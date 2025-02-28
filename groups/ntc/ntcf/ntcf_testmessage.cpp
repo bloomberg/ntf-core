@@ -48,44 +48,44 @@ ntsa::Error TestMessage::decode(bdlbb::Blob*         source,
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
-        const bsl::streamsize numHeaderBytesRead = 
-            isb.sgetn(reinterpret_cast<char*>(&d_frame.header), 
+        const bsl::streamsize numHeaderBytesRead = isb.sgetn(
+            reinterpret_cast<char*>(&d_frame.header),
             static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)));
 
-        if (numHeaderBytesRead != 
-            static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader))) 
+        if (numHeaderBytesRead !=
+            static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)))
         {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
         ntcf::TestMessageType::Value messageType;
         if (ntcf::TestMessageType::fromInt(
-            &messageType, 
-            static_cast<int>(d_frame.header.messageType)) != 0)
+                &messageType,
+                static_cast<int>(d_frame.header.messageType)) != 0)
         {
             NTCCFG_WARNING_UNUSED(messageType);
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
-        const bsl::size_t headerSize = 
+        const bsl::size_t headerSize =
             static_cast<bsl::size_t>(d_frame.header.headerSize);
         if (headerSize != sizeof(ntcf::TestMessageHeader)) {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
-        const bsl::size_t pragmaSize = 
+        const bsl::size_t pragmaSize =
             static_cast<bsl::size_t>(d_frame.header.pragmaSize);
         if (pragmaSize > static_cast<bsl::size_t>(k_MAX_PRAGMA_SIZE)) {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
-        const bsl::size_t entitySize = 
+        const bsl::size_t entitySize =
             static_cast<bsl::size_t>(d_frame.header.entitySize);
         if (entitySize > static_cast<bsl::size_t>(k_MAX_ENTITY_SIZE)) {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
-        const bsl::size_t messageSize = 
+        const bsl::size_t messageSize =
             static_cast<bsl::size_t>(d_frame.header.messageSize);
 
         if (messageSize != headerSize + pragmaSize + entitySize) {
@@ -94,8 +94,8 @@ ntsa::Error TestMessage::decode(bdlbb::Blob*         source,
 
         ntca::SerializationType::Value serializationType;
         if (ntca::SerializationType::fromInt(
-            &serializationType, 
-            static_cast<int>(d_frame.header.serialization)) != 0)
+                &serializationType,
+                static_cast<int>(d_frame.header.serialization)) != 0)
         {
             NTCCFG_WARNING_UNUSED(serializationType);
             return ntsa::Error(ntsa::Error::e_INVALID);
@@ -103,16 +103,16 @@ ntsa::Error TestMessage::decode(bdlbb::Blob*         source,
 
         ntca::CompressionType::Value compressionType;
         if (ntca::CompressionType::fromInt(
-            &compressionType, 
-            static_cast<int>(d_frame.header.compression)) != 0)
+                &compressionType,
+                static_cast<int>(d_frame.header.compression)) != 0)
         {
             NTCCFG_WARNING_UNUSED(compressionType);
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
         if (pragmaSize > 0) {
-            error = serialization->decode(&d_frame.pragma.makeValue(), 
-                                          &isb, 
+            error = serialization->decode(&d_frame.pragma.makeValue(),
+                                          &isb,
                                           ntca::SerializationType::e_XML);
             if (error) {
                 return error;
@@ -120,8 +120,8 @@ ntsa::Error TestMessage::decode(bdlbb::Blob*         source,
         }
 
         if (entitySize > 0) {
-            error = serialization->decode(&d_frame.entity.makeValue(), 
-                                          &isb, 
+            error = serialization->decode(&d_frame.entity.makeValue(),
+                                          &isb,
                                           serializationType);
             if (error) {
                 return error;
@@ -129,7 +129,7 @@ ntsa::Error TestMessage::decode(bdlbb::Blob*         source,
         }
 
         bsl::streampos offsetToEnd =
-                isb.pubseekoff(0, bsl::ios_base::cur, bsl::ios_base::in);
+            isb.pubseekoff(0, bsl::ios_base::cur, bsl::ios_base::in);
         if (offsetToEnd == bsl::streampos(-1)) {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
@@ -149,12 +149,12 @@ ntsa::Error TestMessage::encode(bdlbb::Blob*         destination,
     ntsa::Error error;
     int         rc;
 
-    const ntca::SerializationType::Value serializationType = 
+    const ntca::SerializationType::Value serializationType =
         static_cast<ntca::SerializationType::Value>(
             static_cast<int>(d_frame.header.serialization));
     NTCCFG_WARNING_UNUSED(serializationType);
 
-    const ntca::CompressionType::Value compressionType = 
+    const ntca::CompressionType::Value compressionType =
         static_cast<ntca::CompressionType::Value>(
             static_cast<int>(d_frame.header.compression));
     NTCCFG_WARNING_UNUSED(compressionType);
@@ -174,16 +174,16 @@ ntsa::Error TestMessage::encode(bdlbb::Blob*         destination,
     }
 
     {
-        bsl::streamsize numHeaderBytesWritten = 
-            osb.sputn(reinterpret_cast<const char*>(&d_frame.header),                   
+        bsl::streamsize numHeaderBytesWritten = osb.sputn(
+            reinterpret_cast<const char*>(&d_frame.header),
             static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)));
-        if (numHeaderBytesWritten != 
-            static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader))) 
+        if (numHeaderBytesWritten !=
+            static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)))
         {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
-   }
-    
+    }
+
     rc = osb.pubsync();
     if (rc != 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -198,8 +198,8 @@ ntsa::Error TestMessage::encode(bdlbb::Blob*         destination,
     bsl::streampos offsetToEntity = 0;
 
     if (d_frame.pragma.has_value()) {
-        error = serialization->encode(&osb, 
-                                      d_frame.pragma.value(), 
+        error = serialization->encode(&osb,
+                                      d_frame.pragma.value(),
                                       ntca::SerializationType::e_XML);
         if (error) {
             return error;
@@ -223,8 +223,8 @@ ntsa::Error TestMessage::encode(bdlbb::Blob*         destination,
     bsl::streampos offsetToEnd = 0;
 
     if (d_frame.entity.has_value()) {
-        error = serialization->encode(&osb, 
-                                      d_frame.entity.value(), 
+        error = serialization->encode(&osb,
+                                      d_frame.entity.value(),
                                       serializationType);
         if (error) {
             return error;
@@ -244,7 +244,7 @@ ntsa::Error TestMessage::encode(bdlbb::Blob*         destination,
     else {
         offsetToEnd = offsetToEntity;
     }
-    
+
     const bsl::size_t headerSize =
         static_cast<bsl::size_t>(offsetToPragma - offsetToHeader);
 
@@ -258,26 +258,26 @@ ntsa::Error TestMessage::encode(bdlbb::Blob*         destination,
     d_frame.header.pragmaSize = static_cast<bsl::uint32_t>(pragmaSize);
     d_frame.header.entitySize = static_cast<bsl::uint32_t>(entitySize);
 
-    d_frame.header.messageSize = 
+    d_frame.header.messageSize =
         static_cast<bsl::uint32_t>(headerSize + pragmaSize + entitySize);
 
-    bsl::streampos offsetToFixup = osb.pubseekpos(offsetToHeader,
-                                                  bsl::ios_base::out);
+    bsl::streampos offsetToFixup =
+        osb.pubseekpos(offsetToHeader, bsl::ios_base::out);
 
     if (offsetToFixup != offsetToHeader) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
     {
-        bsl::streamsize numHeaderBytesWritten = 
-            osb.sputn(reinterpret_cast<const char*>(&d_frame.header),                   
+        bsl::streamsize numHeaderBytesWritten = osb.sputn(
+            reinterpret_cast<const char*>(&d_frame.header),
             static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)));
-        if (numHeaderBytesWritten != 
-            static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader))) 
+        if (numHeaderBytesWritten !=
+            static_cast<bsl::streamsize>(sizeof(ntcf::TestMessageHeader)))
         {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
-   }
+    }
 
     rc = osb.pubsync();
     if (rc != 0) {
@@ -309,7 +309,7 @@ bsl::ostream& TestMessage::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    
+
     // printer.printAttribute("header", d_frame.header);
 
     stream << " header = [";
@@ -337,15 +337,12 @@ bsl::ostream& TestMessage::print(bsl::ostream& stream,
     return stream;
 }
 
-void TestMessagePool::construct(
-    void*                                  address,
-    bslma::Allocator*                      allocator)
+void TestMessagePool::construct(void* address, bslma::Allocator* allocator)
 {
     new (address) ntcf::TestMessage(allocator);
 }
 
-TestMessagePool::TestMessagePool(
-    bslma::Allocator*                      basicAllocator)
+TestMessagePool::TestMessagePool(bslma::Allocator* basicAllocator)
 : d_pool(NTCCFG_BIND(&TestMessagePool::construct,
                      NTCCFG_BIND_PLACEHOLDER_1,
                      NTCCFG_BIND_PLACEHOLDER_2),
@@ -358,7 +355,6 @@ TestMessagePool::TestMessagePool(
 TestMessagePool::~TestMessagePool()
 {
 }
-
 
 ntsa::Error TestMessageParser::process()
 {
@@ -377,12 +373,11 @@ ntsa::Error TestMessageParser::process()
                 {
                     bdlbb::InBlobStreamBuf isb(d_data_sp.get());
 
-                    bsl::streamsize numHeaderBytesDecoded = 
-                        isb.sgetn(
-                            reinterpret_cast<char*>(&header), 
-                            static_cast<bsl::streamsize>(k_HEADER_SIZE));
+                    bsl::streamsize numHeaderBytesDecoded =
+                        isb.sgetn(reinterpret_cast<char*>(&header),
+                                  static_cast<bsl::streamsize>(k_HEADER_SIZE));
 
-                    if (numHeaderBytesDecoded != 
+                    if (numHeaderBytesDecoded !=
                         static_cast<bsl::streamsize>(k_HEADER_SIZE))
                     {
                         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -402,11 +397,11 @@ ntsa::Error TestMessageParser::process()
 
         if (d_state == e_WANT_MESSAGE) {
             if (dataLength >= d_numNeeded) {
-                bsl::shared_ptr<ntcf::TestMessage> message = 
+                bsl::shared_ptr<ntcf::TestMessage> message =
                     d_messagePool_sp->create();
 
-                error = message->decode(d_data_sp.get(), 
-                                        d_serialization_sp.get(), 
+                error = message->decode(d_data_sp.get(),
+                                        d_serialization_sp.get(),
                                         d_compression_sp.get());
                 if (error) {
                     return error;
@@ -535,7 +530,7 @@ ntsa::Error TestMessageParser::dequeue(
 bsl::size_t TestMessageParser::numNeeded() const
 {
     if (d_data_sp) {
-        const bsl::size_t dataLength = 
+        const bsl::size_t dataLength =
             static_cast<bsl::size_t>(d_data_sp->length());
 
         if (d_numNeeded > dataLength) {
@@ -554,14 +549,6 @@ bool TestMessageParser::hasAnyAvailable() const
 {
     return !d_messageQueue.empty();
 }
-
-
-
-
-
-
-
-
 
 TestMessageCallbackFactory::~TestMessageCallbackFactory()
 {
@@ -588,17 +575,17 @@ TestMessageFuture::TestMessageFuture(bslma::Allocator* basicAllocator)
 , d_condition()
 , d_resultQueue(basicAllocator)
 {
-    this->setFunction(bdlf::MemFnUtil::memFn(&TestMessageFuture::arrive, this));
+    this->setFunction(
+        bdlf::MemFnUtil::memFn(&TestMessageFuture::arrive, this));
 }
 
 TestMessageFuture::~TestMessageFuture()
 {
 }
 
-ntsa::Error TestMessageFuture::wait(
-    ntcf::TestContext*                  context,
-    ntcf::TestFault*                    fault,
-    bsl::shared_ptr<ntcf::TestMessage>* result)
+ntsa::Error TestMessageFuture::wait(ntcf::TestContext* context,
+                                    ntcf::TestFault*   fault,
+                                    bsl::shared_ptr<ntcf::TestMessage>* result)
 {
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -619,11 +606,10 @@ ntsa::Error TestMessageFuture::wait(
     return ntsa::Error();
 }
 
-ntsa::Error TestMessageFuture::wait(
-    ntcf::TestContext*                  context,
-    ntcf::TestFault*                    fault,
-    bsl::shared_ptr<ntcf::TestMessage>* result,
-    const bsls::TimeInterval&           timeout)
+ntsa::Error TestMessageFuture::wait(ntcf::TestContext* context,
+                                    ntcf::TestFault*   fault,
+                                    bsl::shared_ptr<ntcf::TestMessage>* result,
+                                    const bsls::TimeInterval& timeout)
 {
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -639,7 +625,7 @@ ntsa::Error TestMessageFuture::wait(
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
     }
-    
+
     {
         Entry& entry = d_resultQueue.front();
 
@@ -652,12 +638,6 @@ ntsa::Error TestMessageFuture::wait(
 
     return ntsa::Error();
 }
-
-
-
-
-
-
 
 TestMessageEncryption::TestMessageEncryption(bslma::Allocator* basicAllocator)
 : d_authorityPrivateKey(basicAllocator)
@@ -673,8 +653,8 @@ TestMessageEncryption::TestMessageEncryption(bslma::Allocator* basicAllocator)
     authorityPrivateKeyOptions.setType(ntca::EncryptionKeyType::e_NIST_P256);
 
     error = ntcf::System::generateKey(&d_authorityPrivateKey,
-                                   authorityPrivateKeyOptions,
-                                   NTSCFG_TEST_ALLOCATOR);
+                                      authorityPrivateKeyOptions,
+                                      NTSCFG_TEST_ALLOCATOR);
     BSLS_ASSERT_OPT(!error);
 
     ntsa::DistinguishedName authorityIdentity;
@@ -684,10 +664,10 @@ TestMessageEncryption::TestMessageEncryption(bslma::Allocator* basicAllocator)
     authorityCertificateOptions.setAuthority(true);
 
     error = ntcf::System::generateCertificate(&d_authorityCertificate,
-                                           authorityIdentity,
-                                           d_authorityPrivateKey,
-                                           authorityCertificateOptions,
-                                           NTSCFG_TEST_ALLOCATOR);
+                                              authorityIdentity,
+                                              d_authorityPrivateKey,
+                                              authorityCertificateOptions,
+                                              NTSCFG_TEST_ALLOCATOR);
     BSLS_ASSERT_OPT(!error);
 
     // Generate a certificate and private key for the server, signed by the
@@ -697,8 +677,8 @@ TestMessageEncryption::TestMessageEncryption(bslma::Allocator* basicAllocator)
     serverPrivateKeyOptions.setType(ntca::EncryptionKeyType::e_NIST_P256);
 
     error = ntcf::System::generateKey(&d_serverPrivateKey,
-                                   serverPrivateKeyOptions,
-                                   NTSCFG_TEST_ALLOCATOR);
+                                      serverPrivateKeyOptions,
+                                      NTSCFG_TEST_ALLOCATOR);
     BSLS_ASSERT_OPT(!error);
 
     ntsa::DistinguishedName serverIdentity;
@@ -708,12 +688,12 @@ TestMessageEncryption::TestMessageEncryption(bslma::Allocator* basicAllocator)
     serverCertificateOptions.addHost("test.example.com");
 
     error = ntcf::System::generateCertificate(&d_serverCertificate,
-                                           serverIdentity,
-                                           d_serverPrivateKey,
-                                           d_authorityCertificate,
-                                           d_authorityPrivateKey,
-                                           serverCertificateOptions,
-                                           NTSCFG_TEST_ALLOCATOR);
+                                              serverIdentity,
+                                              d_serverPrivateKey,
+                                              d_authorityCertificate,
+                                              d_authorityPrivateKey,
+                                              serverCertificateOptions,
+                                              NTSCFG_TEST_ALLOCATOR);
     BSLS_ASSERT_OPT(!error);
 }
 
@@ -726,7 +706,8 @@ const ntca::EncryptionKey& TestMessageEncryption::authorityPrivateKey() const
     return d_authorityPrivateKey;
 }
 
-const ntca::EncryptionCertificate& TestMessageEncryption::authorityCertificate() const
+const ntca::EncryptionCertificate& TestMessageEncryption::
+    authorityCertificate() const
 {
     return d_authorityCertificate;
 }
@@ -736,13 +717,11 @@ const ntca::EncryptionKey& TestMessageEncryption::serverPrivateKey() const
     return d_serverPrivateKey;
 }
 
-const ntca::EncryptionCertificate& TestMessageEncryption::serverCertificate() const
+const ntca::EncryptionCertificate& TestMessageEncryption::serverCertificate()
+    const
 {
     return d_serverCertificate;
 }
-
-
-
 
 TestTradeCallbackFactory::~TestTradeCallbackFactory()
 {
@@ -806,17 +785,6 @@ ntsa::Error TestTradeFuture::wait(ntcf::TestTradeResult*    result,
     return ntsa::Error();
 }
 
-
-
-
-
-
-
-
-
-
-
-
 TestEchoCallbackFactory::~TestEchoCallbackFactory()
 {
 }
@@ -855,8 +823,8 @@ ntsa::Error TestEchoFuture::wait(ntcf::TestEchoResult* result)
     return ntsa::Error();
 }
 
-ntsa::Error TestEchoFuture::wait(ntcf::TestEchoResult*    result,
-                                  const bsls::TimeInterval& timeout)
+ntsa::Error TestEchoFuture::wait(ntcf::TestEchoResult*     result,
+                                 const bsls::TimeInterval& timeout)
 {
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -879,43 +847,35 @@ ntsa::Error TestEchoFuture::wait(ntcf::TestEchoResult*    result,
     return ntsa::Error();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 TestAcknowledgmentCallbackFactory::~TestAcknowledgmentCallbackFactory()
 {
 }
 
-void TestAcknowledgmentFuture::arrive(const ntcf::TestAcknowledgmentResult& result)
+void TestAcknowledgmentFuture::arrive(
+    const ntcf::TestAcknowledgmentResult& result)
 {
     ntccfg::ConditionMutexGuard lock(&d_mutex);
     d_resultQueue.push_back(result);
     d_condition.signal();
 }
 
-TestAcknowledgmentFuture::TestAcknowledgmentFuture(bslma::Allocator* basicAllocator)
+TestAcknowledgmentFuture::TestAcknowledgmentFuture(
+    bslma::Allocator* basicAllocator)
 : ntcf::TestAcknowledgmentCallback(basicAllocator)
 , d_mutex()
 , d_condition()
 , d_resultQueue(basicAllocator)
 {
-    this->setFunction(bdlf::MemFnUtil::memFn(&TestAcknowledgmentFuture::arrive, this));
+    this->setFunction(
+        bdlf::MemFnUtil::memFn(&TestAcknowledgmentFuture::arrive, this));
 }
 
 TestAcknowledgmentFuture::~TestAcknowledgmentFuture()
 {
 }
 
-ntsa::Error TestAcknowledgmentFuture::wait(ntcf::TestAcknowledgmentResult* result)
+ntsa::Error TestAcknowledgmentFuture::wait(
+    ntcf::TestAcknowledgmentResult* result)
 {
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -929,8 +889,9 @@ ntsa::Error TestAcknowledgmentFuture::wait(ntcf::TestAcknowledgmentResult* resul
     return ntsa::Error();
 }
 
-ntsa::Error TestAcknowledgmentFuture::wait(ntcf::TestAcknowledgmentResult*    result,
-                                  const bsls::TimeInterval& timeout)
+ntsa::Error TestAcknowledgmentFuture::wait(
+    ntcf::TestAcknowledgmentResult* result,
+    const bsls::TimeInterval&       timeout)
 {
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -952,8 +913,6 @@ ntsa::Error TestAcknowledgmentFuture::wait(ntcf::TestAcknowledgmentResult*    re
 
     return ntsa::Error();
 }
-
-
 
 }  // close package namespace
 }  // close enterprise namespace

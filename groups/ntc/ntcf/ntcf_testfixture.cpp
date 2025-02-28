@@ -29,23 +29,23 @@ namespace ntcf {
 bsl::shared_ptr<ntcf::TestClient> TestFixture::createClient()
 {
     bsl::shared_ptr<ntcf::TestClient> client;
-    client.createInplace(d_allocator_p, 
-                         d_config.client, 
+    client.createInplace(d_allocator_p,
+                         d_config.client,
                          d_clientScheduler_sp,
                          d_clientDataPool_sp,
                          d_encryption_sp,
-                         d_server_sp->tcpEndpoint(), 
-                         d_server_sp->udpEndpoint(), 
+                         d_server_sp->tcpEndpoint(),
+                         d_server_sp->udpEndpoint(),
                          d_allocator_p);
 
     return client;
 }
 
 void TestFixture::dispatchConnect(
-        const bsl::shared_ptr<ntcf::TestClient>& client,
-        const bsl::shared_ptr<ntci::Connector>&  connector,
-        const ntca::ConnectEvent&                event,
-        const ntci::ConnectCallback&             callback)
+    const bsl::shared_ptr<ntcf::TestClient>& client,
+    const bsl::shared_ptr<ntci::Connector>&  connector,
+    const ntca::ConnectEvent&                event,
+    const ntci::ConnectCallback&             callback)
 {
     if (event.type() == ntca::ConnectEventType::e_COMPLETE) {
         LockGuard lock(&d_mutex);
@@ -57,7 +57,7 @@ void TestFixture::dispatchConnect(
     }
 }
 
-void TestFixture::configure(ntca::SchedulerConfig*        result, 
+void TestFixture::configure(ntca::SchedulerConfig*        result,
                             const ntcf::TestClientConfig& configuration)
 {
     result->setThreadName(configuration.name.value());
@@ -134,9 +134,9 @@ void TestFixture::configure(ntca::SchedulerConfig*        result,
     }
 }
 
-void TestFixture::configure(ntca::SchedulerConfig*        result, 
+void TestFixture::configure(ntca::SchedulerConfig*        result,
                             const ntcf::TestServerConfig& configuration)
-{    
+{
     result->setThreadName(configuration.name.value());
 
     if (configuration.driver.has_value()) {
@@ -234,8 +234,8 @@ TestFixture::TestFixture(const ntcf::TestFixtureConfig& configuration,
         d_config.server.name = "server";
     }
 
-    if (d_config.server.minThreads.isNull() && 
-        d_config.server.maxThreads.isNull()) 
+    if (d_config.server.minThreads.isNull() &&
+        d_config.server.maxThreads.isNull())
     {
         d_config.server.minThreads = 1;
         d_config.server.maxThreads = 1;
@@ -249,10 +249,10 @@ TestFixture::TestFixture(const ntcf::TestFixtureConfig& configuration,
         d_config.server.blobBufferSize.makeValue(4096);
     }
 
-    d_serverDataPool_sp = ntcf::System::createDataPool(
-        d_config.server.blobBufferSize.value(), 
-        d_config.server.blobBufferSize.value(), 
-        d_allocator_p);
+    d_serverDataPool_sp =
+        ntcf::System::createDataPool(d_config.server.blobBufferSize.value(),
+                                     d_config.server.blobBufferSize.value(),
+                                     d_allocator_p);
 
     ntca::SchedulerConfig serverSchedulerConfig;
     ntcf::TestFixture::configure(&serverSchedulerConfig, d_config.server);
@@ -276,8 +276,8 @@ TestFixture::TestFixture(const ntcf::TestFixtureConfig& configuration,
         d_config.client.blobBufferSize.makeValue(4096);
     }
 
-    if (d_config.server.minThreads.isNull() && 
-        d_config.server.maxThreads.isNull()) 
+    if (d_config.server.minThreads.isNull() &&
+        d_config.server.maxThreads.isNull())
     {
         d_config.server.minThreads = 1;
         d_config.server.maxThreads = 1;
@@ -287,10 +287,10 @@ TestFixture::TestFixture(const ntcf::TestFixtureConfig& configuration,
         d_config.server.keepHalfOpen = false;
     }
 
-    d_clientDataPool_sp = ntcf::System::createDataPool(
-        d_config.client.blobBufferSize.value(), 
-        d_config.client.blobBufferSize.value(), 
-        d_allocator_p);
+    d_clientDataPool_sp =
+        ntcf::System::createDataPool(d_config.client.blobBufferSize.value(),
+                                     d_config.client.blobBufferSize.value(),
+                                     d_allocator_p);
 
     ntca::SchedulerConfig clientSchedulerConfig;
     ntcf::TestFixture::configure(&clientSchedulerConfig, d_config.client);
@@ -304,10 +304,10 @@ TestFixture::TestFixture(const ntcf::TestFixtureConfig& configuration,
 
     // MRM: BALL_LOG_INFO << "Client scheduler construction complete" << BALL_LOG_END;
 
-    d_server_sp.createInplace(d_allocator_p, 
-                              d_config.server, 
-                              d_serverScheduler_sp, 
-                              d_serverDataPool_sp, 
+    d_server_sp.createInplace(d_allocator_p,
+                              d_config.server,
+                              d_serverScheduler_sp,
+                              d_serverDataPool_sp,
                               d_encryption_sp,
                               d_allocator_p);
 }
@@ -318,7 +318,7 @@ TestFixture::~TestFixture()
 
     for (bsl::size_t i = 0; i < d_clientVector.size(); ++i) {
         const ntcf::TestClientPtr& client = d_clientVector[i];
-        client->close();    
+        client->close();
     }
 
     d_clientVector.clear();
@@ -388,7 +388,7 @@ ntsa::Error TestFixture::clientConnect()
     ntsa::Error error;
 
     bsl::shared_ptr<ntcf::TestClient> client = this->createClient();
-    error = client->connect();
+    error                                    = client->connect();
     if (error) {
         BALL_LOG_ERROR << "Failed to connect: " << error << BALL_LOG_END;
         return error;
@@ -409,7 +409,7 @@ ntsa::Error TestFixture::clientConnect(
     result->reset();
 
     bsl::shared_ptr<ntcf::TestClient> client = this->createClient();
-    error = client->connect();
+    error                                    = client->connect();
     if (error) {
         BALL_LOG_ERROR << "Failed to connect: " << error << BALL_LOG_END;
         return error;
@@ -420,7 +420,6 @@ ntsa::Error TestFixture::clientConnect(
 
     return ntsa::Error();
 }
-
 
 ntsa::Error TestFixture::clientConnect(const ntci::ConnectCallback& callback)
 {
@@ -448,7 +447,6 @@ ntsa::Error TestFixture::clientConnect(const ntci::ConnectCallback& callback)
     return ntsa::Error();
 }
 
-
 ntsa::Error TestFixture::clientConnect(
     bsl::shared_ptr<ntcf::TestClient>* result,
     const ntci::ConnectCallback&       callback)
@@ -462,13 +460,13 @@ ntsa::Error TestFixture::clientConnect(
     bsl::shared_ptr<ntcf::TestClient> client = this->createClient();
 
     ntci::ConnectCallback callbackProxy = client->createConnectCallback(
-    NTCCFG_BIND(&TestFixture::dispatchConnect,
-                this,
-                client,
-                NTCCFG_BIND_PLACEHOLDER_1,
-                NTCCFG_BIND_PLACEHOLDER_2,
-                callback),
-    d_allocator_p);
+        NTCCFG_BIND(&TestFixture::dispatchConnect,
+                    this,
+                    client,
+                    NTCCFG_BIND_PLACEHOLDER_1,
+                    NTCCFG_BIND_PLACEHOLDER_2,
+                    callback),
+        d_allocator_p);
 
     error = client->connect(callbackProxy);
     if (error) {
@@ -501,7 +499,7 @@ ntsa::Error TestFixture::clientConnect(ntcf::TestClientVector* result)
     return ntsa::Error();
 }
 
-ntsa::Error TestFixture::clientConnect(ntcf::TestClientVector* result, 
+ntsa::Error TestFixture::clientConnect(ntcf::TestClientVector* result,
                                        bsl::size_t             count)
 {
     LockGuard lock(&d_mutex);
@@ -546,19 +544,20 @@ void TestFixtureUtil::ping(const ntcf::TestClientPtr& client)
     ntcf::TestSignal     signal;
     ntcf::TestOptions    options;
 
-    signal.id = ++s_pingId;
+    signal.id      = ++s_pingId;
     signal.reflect = 64;
     ntscfg::TestDataUtil::generateData(
-        &signal.value, 
-        32, 
-        0, 
+        &signal.value,
+        32,
+        0,
         ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
 
     error = client->signal(&result, signal, options);
     NTSCFG_TEST_OK(error);
 }
 
-void TestFixtureUtil::enableRemoteCompression(const ntcf::TestClientPtr& client)
+void TestFixtureUtil::enableRemoteCompression(
+    const ntcf::TestClientPtr& client)
 {
     ntsa::Error error;
 
@@ -566,21 +565,22 @@ void TestFixtureUtil::enableRemoteCompression(const ntcf::TestClientPtr& client)
     ntcf::TestControlCompression   compression;
     ntcf::TestOptions              options;
 
-    compression.enabled = true;
+    compression.enabled     = true;
     compression.acknowledge = true;
-    compression.transition = 
-        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
+    compression.transition = ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
 
     error = client->compress(&result, compression, options);
     NTSCFG_TEST_OK(error);
 }
 
-void TestFixtureUtil::enableSourceCompression(const ntcf::TestClientPtr& client)
+void TestFixtureUtil::enableSourceCompression(
+    const ntcf::TestClientPtr& client)
 {
     client->enableCompression();
 }
 
-void TestFixtureUtil::disableRemoteCompression(const ntcf::TestClientPtr& client)
+void TestFixtureUtil::disableRemoteCompression(
+    const ntcf::TestClientPtr& client)
 {
     ntsa::Error error;
 
@@ -588,16 +588,16 @@ void TestFixtureUtil::disableRemoteCompression(const ntcf::TestClientPtr& client
     ntcf::TestControlCompression   compression;
     ntcf::TestOptions              options;
 
-    compression.enabled = false;
+    compression.enabled     = false;
     compression.acknowledge = true;
-    compression.transition = 
-        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
+    compression.transition = ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
 
     error = client->compress(&result, compression, options);
     NTSCFG_TEST_OK(error);
 }
 
-void TestFixtureUtil::disableSourceCompression(const ntcf::TestClientPtr& client)
+void TestFixtureUtil::disableSourceCompression(
+    const ntcf::TestClientPtr& client)
 {
     client->disableCompression();
 }
@@ -610,10 +610,9 @@ void TestFixtureUtil::enableRemoteEncryption(const ntcf::TestClientPtr& client)
     ntcf::TestControlEncryption    encryption;
     ntcf::TestOptions              options;
 
-    encryption.enabled = true;
+    encryption.enabled     = true;
     encryption.acknowledge = true;
-    encryption.transition = 
-        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
+    encryption.transition  = ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
 
     error = client->encrypt(&result, encryption, options);
     NTSCFG_TEST_OK(error);
@@ -624,7 +623,8 @@ void TestFixtureUtil::enableSourceEncryption(const ntcf::TestClientPtr& client)
     client->enableEncryption();
 }
 
-void TestFixtureUtil::disableRemoteEncryption(const ntcf::TestClientPtr& client)
+void TestFixtureUtil::disableRemoteEncryption(
+    const ntcf::TestClientPtr& client)
 {
     ntsa::Error error;
 
@@ -632,16 +632,16 @@ void TestFixtureUtil::disableRemoteEncryption(const ntcf::TestClientPtr& client)
     ntcf::TestControlEncryption    encryption;
     ntcf::TestOptions              options;
 
-    encryption.enabled = false;
+    encryption.enabled     = false;
     encryption.acknowledge = true;
-    encryption.transition = 
-        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
+    encryption.transition  = ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE;
 
     error = client->encrypt(&result, encryption, options);
     NTSCFG_TEST_OK(error);
 }
 
-void TestFixtureUtil::disableSourceEncryption(const ntcf::TestClientPtr& client)
+void TestFixtureUtil::disableSourceEncryption(
+    const ntcf::TestClientPtr& client)
 {
     client->disableEncryption();
 }

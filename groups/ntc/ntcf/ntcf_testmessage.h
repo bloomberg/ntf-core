@@ -165,7 +165,7 @@ namespace ntcf {
 /// @par Thread Safety
 /// This class is not thread safe.
 class TestMessage
-{    
+{
     /// The maximum size, in bytes, of the pragma section.
     static const bsl::size_t k_MAX_PRAGMA_SIZE = 1024 * 1024 * 8;
 
@@ -175,9 +175,9 @@ class TestMessage
     ntcf::TestMessageFrame d_frame;
     bslma::Allocator*      d_allocator_p;
 
-public:
-    /// Create a new message. Optionally specify a 'basicAllocator' used to 
-    /// supply memory. If 'basicAllocator' is 0, the currently installed 
+  public:
+    /// Create a new message. Optionally specify a 'basicAllocator' used to
+    /// supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     explicit TestMessage(bslma::Allocator* basicAllocator = 0);
 
@@ -185,7 +185,7 @@ public:
     /// object. Optionally specify a 'basicAllocator' used to supply memory. If
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
-    TestMessage(const TestMessage& original, 
+    TestMessage(const TestMessage& original,
                 bslma::Allocator*  basicAllocator = 0);
 
     /// Destroy this object.
@@ -212,7 +212,7 @@ public:
 
     /// Set the transaction identifier to the specified 'value'.
     void setTransaction(bsl::uint64_t value);
-    
+
     /// Set the compression type to the specified 'value'.
     void setCompressionType(ntca::CompressionType::Value value);
 
@@ -231,25 +231,25 @@ public:
     /// the Unix epoch.
     void setDeadline(const bsls::TimeInterval& value);
 
-    /// Set the flag corresponding to the specified 'value'. 
+    /// Set the flag corresponding to the specified 'value'.
     void setFlag(ntcf::TestMessageFlag::Value value);
 
     /// Set the flag corresponding to the specified 'value1', and 'value2'.
-    void setFlag(ntcf::TestMessageFlag::Value value1, 
+    void setFlag(ntcf::TestMessageFlag::Value value1,
                  ntcf::TestMessageFlag::Value value2);
 
-    /// Set the flag corresponding to the specified 'value1', 'value2', and 
+    /// Set the flag corresponding to the specified 'value1', 'value2', and
     /// 'value3'.
-    void setFlag(ntcf::TestMessageFlag::Value value1, 
+    void setFlag(ntcf::TestMessageFlag::Value value1,
                  ntcf::TestMessageFlag::Value value2,
                  ntcf::TestMessageFlag::Value value3);
 
     /// Define a pragma collection for the message. Return a reference to the
-    /// modifiable pragmas. 
+    /// modifiable pragmas.
     ntcf::TestMessagePragma& makePragma();
 
     /// Define an entity for the message. Return a reference to the modifiable
-    /// pragmas. 
+    /// pragmas.
     ntcf::TestMessageEntity& makeEntity();
 
     /// Decode this object from the specified 'source' and pop the number
@@ -259,7 +259,7 @@ public:
                        ntci::Compression*   compression);
 
     /// Encode this object to the specified 'destination'.
-    ntsa::Error encode(bdlbb::Blob*         destination, 
+    ntsa::Error encode(bdlbb::Blob*         destination,
                        ntci::Serialization* serialization,
                        ntci::Compression*   compression);
 
@@ -291,38 +291,38 @@ public:
     ntca::SerializationType::Value serializationType() const;
 
     /// Return the client timestamp, as a relative duration since the Unix
-    /// epoch. 
+    /// epoch.
     bsls::TimeInterval clientTimestamp() const;
 
     /// Return the server timestamp, as a relative duration since the Unix
-    /// epoch. 
+    /// epoch.
     bsls::TimeInterval serverTimestamp() const;
 
     /// Return the deadline, as a relative duration since the Unix epoch.
     bsls::TimeInterval deadline() const;
 
-    /// Return the defined pragma collection. 
+    /// Return the defined pragma collection.
     const bdlb::NullableValue<ntcf::TestMessagePragma>& pragma() const;
 
     /// Return the entity.
     const bdlb::NullableValue<ntcf::TestMessageEntity>& entity() const;
 
-    /// Return true if the message has the flag set corresponding to the 
+    /// Return true if the message has the flag set corresponding to the
     /// specified 'value'.
     bool hasFlag(ntcf::TestMessageFlag::Value value) const;
 
-    /// Return true if the message has the flag set corresponding to the 
+    /// Return true if the message has the flag set corresponding to the
     /// specified 'value1' and 'value2'.
     bool hasFlag(ntcf::TestMessageFlag::Value value1,
                  ntcf::TestMessageFlag::Value value2) const;
 
-    /// Return true if the message has the flag set corresponding to the 
+    /// Return true if the message has the flag set corresponding to the
     /// specified 'value1', 'value2', and 'value3'.
     bool hasFlag(ntcf::TestMessageFlag::Value value1,
                  ntcf::TestMessageFlag::Value value2,
                  ntcf::TestMessageFlag::Value value3) const;
 
-    /// Return true if the message defines a pragma collection, otherwise 
+    /// Return true if the message defines a pragma collection, otherwise
     /// return false.
     bool hasPragma() const;
 
@@ -339,11 +339,11 @@ public:
     /// Return true if the message is a request, otherwise return false.
     bool isRequest() const;
 
-    /// Return true if the message reprsents a response, otherwise return 
+    /// Return true if the message reprsents a response, otherwise return
     /// false.
     bool isResponse() const;
 
-    /// Return true if the message is a request that expects a response, 
+    /// Return true if the message is a request that expects a response,
     /// otherwise return false.
     bool isResponseExpected() const;
 
@@ -543,19 +543,15 @@ class TestMessageParser
     bool hasAnyAvailable() const;
 };
 
-
 /// Define a type alias for callback invoked on a optional strand with an
 /// optional cancelable authorization mechanism when message is received..
-typedef ntci::Callback<void(
-    const ntcf::TestContext&                  context,
-    const ntcf::TestFault&                    fault,
-    const bsl::shared_ptr<ntcf::TestMessage>& message)
-> TestMessageCallback;
+typedef ntci::Callback<void(const ntcf::TestContext&                  context,
+                            const ntcf::TestFault&                    fault,
+                            const bsl::shared_ptr<ntcf::TestMessage>& message)>
+    TestMessageCallback;
 
 /// Define a type alias for function invoked when a message is received.
 typedef TestMessageCallback::FunctionType TestMessageFunction;
-
-
 
 /// Provide an interface to create message callbacks.
 ///
@@ -578,7 +574,7 @@ class TestMessageCallbackFactory
     /// used.
     ntcf::TestMessageCallback createMessageCallback(
         const ntcf::TestMessageFunction& function,
-        bslma::Allocator*           basicAllocator = 0);
+        bslma::Allocator*                basicAllocator = 0);
 
     /// Create a new message callback to invoke the specified 'function' with
     /// the specified cancellable 'authorization' mechanism on this object's
@@ -586,7 +582,7 @@ class TestMessageCallbackFactory
     /// If 'basicAllocator' is 0, the currently installed default allocator
     /// is used.
     ntcf::TestMessageCallback createMessageCallback(
-        const ntcf::TestMessageFunction&              function,
+        const ntcf::TestMessageFunction&            function,
         const bsl::shared_ptr<ntci::Authorization>& authorization,
         bslma::Allocator*                           basicAllocator = 0);
 
@@ -596,7 +592,7 @@ class TestMessageCallbackFactory
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     ntcf::TestMessageCallback createMessageCallback(
-        const ntcf::TestMessageFunction&       function,
+        const ntcf::TestMessageFunction&     function,
         const bsl::shared_ptr<ntci::Strand>& strand,
         bslma::Allocator*                    basicAllocator = 0);
 
@@ -606,7 +602,7 @@ class TestMessageCallbackFactory
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     ntcf::TestMessageCallback createMessageCallback(
-        const ntcf::TestMessageFunction&              function,
+        const ntcf::TestMessageFunction&            function,
         const bsl::shared_ptr<ntci::Authorization>& authorization,
         const bsl::shared_ptr<ntci::Strand>&        strand,
         bslma::Allocator*                           basicAllocator = 0);
@@ -638,7 +634,8 @@ class TestMessageFuture : public ntcf::TestMessageCallback
 
   private:
     TestMessageFuture(const TestMessageFuture&) BSLS_KEYWORD_DELETED;
-    TestMessageFuture& operator=(const TestMessageFuture&) BSLS_KEYWORD_DELETED;
+    TestMessageFuture& operator=(const TestMessageFuture&)
+        BSLS_KEYWORD_DELETED;
 
   private:
     /// Arrive at the specified 'result'.
@@ -670,9 +667,7 @@ class TestMessageFuture : public ntcf::TestMessageCallback
                      const bsls::TimeInterval&           timeout);
 };
 
-
-
-/// Provide suite of encryption certificates and keys used to secure a 
+/// Provide suite of encryption certificates and keys used to secure a
 /// transport through which to send and receive test messages.
 ///
 /// @par Thread Safety
@@ -685,8 +680,8 @@ class TestMessageEncryption
     ntca::EncryptionCertificate d_serverCertificate;
     bslma::Allocator*           d_allocator_p;
 
-public:
-    /// Create a new test message encryption suite. Optionally specify a 
+  public:
+    /// Create a new test message encryption suite. Optionally specify a
     /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
     /// currently installed default allocator is used.
     explicit TestMessageEncryption(bslma::Allocator* basicAllocator = 0);
@@ -707,29 +702,10 @@ public:
     const ntca::EncryptionCertificate& serverCertificate() const;
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /// Define a type alias for callback invoked on a optional strand with an
 /// optional cancelable authorization mechanism when a bid or ask completes or
 /// fails.
-typedef ntci::Callback<void(
-    const ntcf::TestTradeResult& result)>
+typedef ntci::Callback<void(const ntcf::TestTradeResult& result)>
     TestTradeCallback;
 
 /// Define a type alias for function invoked when a bid or ask completes or
@@ -757,7 +733,7 @@ class TestTradeCallbackFactory
     /// used.
     ntcf::TestTradeCallback createTradeCallback(
         const ntcf::TestTradeFunction& function,
-        bslma::Allocator*           basicAllocator = 0);
+        bslma::Allocator*              basicAllocator = 0);
 
     /// Create a new trade callback to invoke the specified 'function' with
     /// the specified cancellable 'authorization' mechanism on this object's
@@ -835,37 +811,15 @@ class TestTradeFuture : public ntcf::TestTradeCallback
                      const bsls::TimeInterval& timeout);
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /// Define a type alias for callback invoked on a optional strand with an
 /// optional cancelable authorization mechanism when a signal completes or
 /// fails.
-typedef ntci::Callback<void(
-    const ntcf::TestEchoResult& result)>
+typedef ntci::Callback<void(const ntcf::TestEchoResult& result)>
     TestEchoCallback;
 
 /// Define a type alias for function invoked when a signal completes or
 /// fails.
 typedef TestEchoCallback::FunctionType TestEchoFunction;
-
-
 
 /// Provide an interface to create echo callbacks.
 ///
@@ -888,7 +842,7 @@ class TestEchoCallbackFactory
     /// used.
     ntcf::TestEchoCallback createEchoCallback(
         const ntcf::TestEchoFunction& function,
-        bslma::Allocator*           basicAllocator = 0);
+        bslma::Allocator*             basicAllocator = 0);
 
     /// Create a new echo callback to invoke the specified 'function' with
     /// the specified cancellable 'authorization' mechanism on this object's
@@ -896,7 +850,7 @@ class TestEchoCallbackFactory
     /// If 'basicAllocator' is 0, the currently installed default allocator
     /// is used.
     ntcf::TestEchoCallback createEchoCallback(
-        const ntcf::TestEchoFunction&              function,
+        const ntcf::TestEchoFunction&               function,
         const bsl::shared_ptr<ntci::Authorization>& authorization,
         bslma::Allocator*                           basicAllocator = 0);
 
@@ -906,7 +860,7 @@ class TestEchoCallbackFactory
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     ntcf::TestEchoCallback createEchoCallback(
-        const ntcf::TestEchoFunction&       function,
+        const ntcf::TestEchoFunction&        function,
         const bsl::shared_ptr<ntci::Strand>& strand,
         bslma::Allocator*                    basicAllocator = 0);
 
@@ -916,7 +870,7 @@ class TestEchoCallbackFactory
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     ntcf::TestEchoCallback createEchoCallback(
-        const ntcf::TestEchoFunction&              function,
+        const ntcf::TestEchoFunction&               function,
         const bsl::shared_ptr<ntci::Authorization>& authorization,
         const bsl::shared_ptr<ntci::Strand>&        strand,
         bslma::Allocator*                           basicAllocator = 0);
@@ -962,35 +916,14 @@ class TestEchoFuture : public ntcf::TestEchoCallback
     /// Wait for the echo operation to complete or until the specified
     /// 'timeout', in absolute time since the Unix epoch, elapses. Return
     /// the error.
-    ntsa::Error wait(ntcf::TestEchoResult*    result,
+    ntsa::Error wait(ntcf::TestEchoResult*     result,
                      const bsls::TimeInterval& timeout);
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /// Define a type alias for callback invoked on a optional strand with an
 /// optional cancelable authorization mechanism when a control message
 /// completes or fails.
-typedef ntci::Callback<void(
-    const ntcf::TestAcknowledgmentResult& result)>
+typedef ntci::Callback<void(const ntcf::TestAcknowledgmentResult& result)>
     TestAcknowledgmentCallback;
 
 /// Define a type alias for function invoked when a control message completes
@@ -1018,7 +951,7 @@ class TestAcknowledgmentCallbackFactory
     /// used.
     ntcf::TestAcknowledgmentCallback createAcknowledgmentCallback(
         const ntcf::TestAcknowledgmentFunction& function,
-        bslma::Allocator*           basicAllocator = 0);
+        bslma::Allocator*                       basicAllocator = 0);
 
     /// Create a new trade callback to invoke the specified 'function' with
     /// the specified cancellable 'authorization' mechanism on this object's
@@ -1026,7 +959,7 @@ class TestAcknowledgmentCallbackFactory
     /// If 'basicAllocator' is 0, the currently installed default allocator
     /// is used.
     ntcf::TestAcknowledgmentCallback createAcknowledgmentCallback(
-        const ntcf::TestAcknowledgmentFunction&              function,
+        const ntcf::TestAcknowledgmentFunction&     function,
         const bsl::shared_ptr<ntci::Authorization>& authorization,
         bslma::Allocator*                           basicAllocator = 0);
 
@@ -1036,9 +969,9 @@ class TestAcknowledgmentCallbackFactory
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     ntcf::TestAcknowledgmentCallback createAcknowledgmentCallback(
-        const ntcf::TestAcknowledgmentFunction&       function,
-        const bsl::shared_ptr<ntci::Strand>& strand,
-        bslma::Allocator*                    basicAllocator = 0);
+        const ntcf::TestAcknowledgmentFunction& function,
+        const bsl::shared_ptr<ntci::Strand>&    strand,
+        bslma::Allocator*                       basicAllocator = 0);
 
     /// Create a new trade callback to invoke the specified 'function' with
     /// the specified cancellable 'authorization' mechanism on the specified
@@ -1046,7 +979,7 @@ class TestAcknowledgmentCallbackFactory
     /// memory. If 'basicAllocator' is 0, the currently installed default
     /// allocator is used.
     ntcf::TestAcknowledgmentCallback createAcknowledgmentCallback(
-        const ntcf::TestAcknowledgmentFunction&              function,
+        const ntcf::TestAcknowledgmentFunction&     function,
         const bsl::shared_ptr<ntci::Authorization>& authorization,
         const bsl::shared_ptr<ntci::Strand>&        strand,
         bslma::Allocator*                           basicAllocator = 0);
@@ -1069,8 +1002,10 @@ class TestAcknowledgmentFuture : public ntcf::TestAcknowledgmentCallback
     ResultQueue            d_resultQueue;
 
   private:
-    TestAcknowledgmentFuture(const TestAcknowledgmentFuture&) BSLS_KEYWORD_DELETED;
-    TestAcknowledgmentFuture& operator=(const TestAcknowledgmentFuture&) BSLS_KEYWORD_DELETED;
+    TestAcknowledgmentFuture(const TestAcknowledgmentFuture&)
+        BSLS_KEYWORD_DELETED;
+    TestAcknowledgmentFuture& operator=(const TestAcknowledgmentFuture&)
+        BSLS_KEYWORD_DELETED;
 
   private:
     /// Arrive at the specified 'result'.
@@ -1092,50 +1027,9 @@ class TestAcknowledgmentFuture : public ntcf::TestAcknowledgmentCallback
     /// Wait for the trade operation to complete or until the specified
     /// 'timeout', in absolute time since the Unix epoch, elapses. Return
     /// the error.
-    ntsa::Error wait(ntcf::TestAcknowledgmentResult*    result,
-                     const bsls::TimeInterval& timeout);
+    ntsa::Error wait(ntcf::TestAcknowledgmentResult* result,
+                     const bsls::TimeInterval&       timeout);
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 NTCCFG_INLINE
 TestMessage::TestMessage(bslma::Allocator* basicAllocator)
@@ -1145,7 +1039,7 @@ TestMessage::TestMessage(bslma::Allocator* basicAllocator)
 }
 
 NTCCFG_INLINE
-TestMessage::TestMessage(const TestMessage& original, 
+TestMessage::TestMessage(const TestMessage& original,
                          bslma::Allocator*  basicAllocator)
 : d_frame(original.d_frame, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -1176,7 +1070,7 @@ void TestMessage::reset()
 NTCCFG_INLINE
 void TestMessage::setType(ntcf::TestMessageType::Value value)
 {
-    d_frame.header.messageType = 
+    d_frame.header.messageType =
         static_cast<bsl::uint16_t>(static_cast<int>(value));
 }
 
@@ -1240,7 +1134,7 @@ void TestMessage::setDeadline(const bsls::TimeInterval& value)
 NTCCFG_INLINE
 void TestMessage::setFlag(ntcf::TestMessageFlag::Value value)
 {
-    bsl::uint16_t flags = 
+    bsl::uint16_t flags =
         static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
 
     flags |= (1 << value);
@@ -1249,10 +1143,10 @@ void TestMessage::setFlag(ntcf::TestMessageFlag::Value value)
 }
 
 NTCCFG_INLINE
-void TestMessage::setFlag(ntcf::TestMessageFlag::Value value1, 
+void TestMessage::setFlag(ntcf::TestMessageFlag::Value value1,
                           ntcf::TestMessageFlag::Value value2)
 {
-    bsl::uint16_t flags = 
+    bsl::uint16_t flags =
         static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
 
     flags |= (1 << value1);
@@ -1262,11 +1156,11 @@ void TestMessage::setFlag(ntcf::TestMessageFlag::Value value1,
 }
 
 NTCCFG_INLINE
-void TestMessage::setFlag(ntcf::TestMessageFlag::Value value1, 
+void TestMessage::setFlag(ntcf::TestMessageFlag::Value value1,
                           ntcf::TestMessageFlag::Value value2,
                           ntcf::TestMessageFlag::Value value3)
 {
-    bsl::uint16_t flags = 
+    bsl::uint16_t flags =
         static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
 
     flags |= (1 << value1);
@@ -1354,9 +1248,8 @@ NTCCFG_INLINE
 bsls::TimeInterval TestMessage::clientTimestamp() const
 {
     bsls::TimeInterval result;
-    result.addNanoseconds(
-        static_cast<bsls::Types::Int64>(static_cast<bsl::uint64_t>(
-            d_frame.header.clientTimestamp)));
+    result.addNanoseconds(static_cast<bsls::Types::Int64>(
+        static_cast<bsl::uint64_t>(d_frame.header.clientTimestamp)));
     return result;
 }
 
@@ -1364,9 +1257,8 @@ NTCCFG_INLINE
 bsls::TimeInterval TestMessage::serverTimestamp() const
 {
     bsls::TimeInterval result;
-    result.addNanoseconds(
-        static_cast<bsls::Types::Int64>(static_cast<bsl::uint64_t>(
-            d_frame.header.serverTimestamp)));
+    result.addNanoseconds(static_cast<bsls::Types::Int64>(
+        static_cast<bsl::uint64_t>(d_frame.header.serverTimestamp)));
     return result;
 }
 
@@ -1374,9 +1266,8 @@ NTCCFG_INLINE
 bsls::TimeInterval TestMessage::deadline() const
 {
     bsls::TimeInterval result;
-    result.addNanoseconds(
-        static_cast<bsls::Types::Int64>(static_cast<bsl::uint64_t>(
-            d_frame.header.deadline)));
+    result.addNanoseconds(static_cast<bsls::Types::Int64>(
+        static_cast<bsl::uint64_t>(d_frame.header.deadline)));
     return result;
 }
 
@@ -1395,7 +1286,7 @@ const bdlb::NullableValue<ntcf::TestMessageEntity>& TestMessage::entity() const
 NTCCFG_INLINE
 bool TestMessage::hasFlag(ntcf::TestMessageFlag::Value value) const
 {
-    const bsl::uint16_t flags = 
+    const bsl::uint16_t flags =
         static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
 
     const bsl::uint16_t mask = (1 << value);
@@ -1407,7 +1298,7 @@ NTCCFG_INLINE
 bool TestMessage::hasFlag(ntcf::TestMessageFlag::Value value1,
                           ntcf::TestMessageFlag::Value value2) const
 {
-    const bsl::uint16_t flags = 
+    const bsl::uint16_t flags =
         static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
 
     const bsl::uint16_t mask = (1 << value1) | (1 << value2);
@@ -1420,7 +1311,7 @@ bool TestMessage::hasFlag(ntcf::TestMessageFlag::Value value1,
                           ntcf::TestMessageFlag::Value value2,
                           ntcf::TestMessageFlag::Value value3) const
 {
-    const bsl::uint16_t flags = 
+    const bsl::uint16_t flags =
         static_cast<bsl::uint16_t>(d_frame.header.messageFlags);
 
     const bsl::uint16_t mask = (1 << value1) | (1 << value2) | (1 << value3);
@@ -1507,36 +1398,29 @@ bsl::shared_ptr<ntcf::TestMessage> TestMessagePool::create()
     return d_pool.getObject();
 }
 
-
-
-
-
-
-
-
 NTCCFG_INLINE
 ntcf::TestMessageCallback TestMessageCallbackFactory::createMessageCallback(
     const ntcf::TestMessageFunction& function,
-    bslma::Allocator*              basicAllocator)
+    bslma::Allocator*                basicAllocator)
 {
     return ntcf::TestMessageCallback(function, this->strand(), basicAllocator);
 }
 
 NTCCFG_INLINE
 ntcf::TestMessageCallback TestMessageCallbackFactory::createMessageCallback(
-    const ntcf::TestMessageFunction&              function,
+    const ntcf::TestMessageFunction&            function,
     const bsl::shared_ptr<ntci::Authorization>& authorization,
     bslma::Allocator*                           basicAllocator)
 {
     return ntcf::TestMessageCallback(function,
-                                   authorization,
-                                   this->strand(),
-                                   basicAllocator);
+                                     authorization,
+                                     this->strand(),
+                                     basicAllocator);
 }
 
 NTCCFG_INLINE
 ntcf::TestMessageCallback TestMessageCallbackFactory::createMessageCallback(
-    const ntcf::TestMessageFunction&       function,
+    const ntcf::TestMessageFunction&     function,
     const bsl::shared_ptr<ntci::Strand>& strand,
     bslma::Allocator*                    basicAllocator)
 {
@@ -1545,23 +1429,16 @@ ntcf::TestMessageCallback TestMessageCallbackFactory::createMessageCallback(
 
 NTCCFG_INLINE
 ntcf::TestMessageCallback TestMessageCallbackFactory::createMessageCallback(
-    const ntcf::TestMessageFunction&              function,
+    const ntcf::TestMessageFunction&            function,
     const bsl::shared_ptr<ntci::Authorization>& authorization,
     const bsl::shared_ptr<ntci::Strand>&        strand,
     bslma::Allocator*                           basicAllocator)
 {
     return ntcf::TestMessageCallback(function,
-                                   authorization,
-                                   strand,
-                                   basicAllocator);
+                                     authorization,
+                                     strand,
+                                     basicAllocator);
 }
-
-
-
-
-
-
-
 
 NTCCFG_INLINE
 ntcf::TestTradeCallback TestTradeCallbackFactory::createTradeCallback(
@@ -1605,49 +1482,29 @@ ntcf::TestTradeCallback TestTradeCallbackFactory::createTradeCallback(
                                    basicAllocator);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 NTCCFG_INLINE
 ntcf::TestEchoCallback TestEchoCallbackFactory::createEchoCallback(
     const ntcf::TestEchoFunction& function,
-    bslma::Allocator*              basicAllocator)
+    bslma::Allocator*             basicAllocator)
 {
     return ntcf::TestEchoCallback(function, this->strand(), basicAllocator);
 }
 
 NTCCFG_INLINE
 ntcf::TestEchoCallback TestEchoCallbackFactory::createEchoCallback(
-    const ntcf::TestEchoFunction&              function,
+    const ntcf::TestEchoFunction&               function,
     const bsl::shared_ptr<ntci::Authorization>& authorization,
     bslma::Allocator*                           basicAllocator)
 {
     return ntcf::TestEchoCallback(function,
-                                   authorization,
-                                   this->strand(),
-                                   basicAllocator);
+                                  authorization,
+                                  this->strand(),
+                                  basicAllocator);
 }
 
 NTCCFG_INLINE
 ntcf::TestEchoCallback TestEchoCallbackFactory::createEchoCallback(
-    const ntcf::TestEchoFunction&       function,
+    const ntcf::TestEchoFunction&        function,
     const bsl::shared_ptr<ntci::Strand>& strand,
     bslma::Allocator*                    basicAllocator)
 {
@@ -1656,73 +1513,64 @@ ntcf::TestEchoCallback TestEchoCallbackFactory::createEchoCallback(
 
 NTCCFG_INLINE
 ntcf::TestEchoCallback TestEchoCallbackFactory::createEchoCallback(
-    const ntcf::TestEchoFunction&              function,
+    const ntcf::TestEchoFunction&               function,
     const bsl::shared_ptr<ntci::Authorization>& authorization,
     const bsl::shared_ptr<ntci::Strand>&        strand,
     bslma::Allocator*                           basicAllocator)
 {
     return ntcf::TestEchoCallback(function,
-                                   authorization,
-                                   strand,
-                                   basicAllocator);
-}
-
-
-
-
-
-
-
-
-
-
-NTCCFG_INLINE
-ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::createAcknowledgmentCallback(
-    const ntcf::TestAcknowledgmentFunction& function,
-    bslma::Allocator*              basicAllocator)
-{
-    return ntcf::TestAcknowledgmentCallback(function, this->strand(), basicAllocator);
+                                  authorization,
+                                  strand,
+                                  basicAllocator);
 }
 
 NTCCFG_INLINE
-ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::createAcknowledgmentCallback(
-    const ntcf::TestAcknowledgmentFunction&              function,
-    const bsl::shared_ptr<ntci::Authorization>& authorization,
-    bslma::Allocator*                           basicAllocator)
+ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::
+    createAcknowledgmentCallback(
+        const ntcf::TestAcknowledgmentFunction& function,
+        bslma::Allocator*                       basicAllocator)
 {
     return ntcf::TestAcknowledgmentCallback(function,
-                                   authorization,
-                                   this->strand(),
-                                   basicAllocator);
+                                            this->strand(),
+                                            basicAllocator);
 }
 
 NTCCFG_INLINE
-ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::createAcknowledgmentCallback(
-    const ntcf::TestAcknowledgmentFunction&       function,
-    const bsl::shared_ptr<ntci::Strand>& strand,
-    bslma::Allocator*                    basicAllocator)
+ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::
+    createAcknowledgmentCallback(
+        const ntcf::TestAcknowledgmentFunction&     function,
+        const bsl::shared_ptr<ntci::Authorization>& authorization,
+        bslma::Allocator*                           basicAllocator)
+{
+    return ntcf::TestAcknowledgmentCallback(function,
+                                            authorization,
+                                            this->strand(),
+                                            basicAllocator);
+}
+
+NTCCFG_INLINE
+ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::
+    createAcknowledgmentCallback(
+        const ntcf::TestAcknowledgmentFunction& function,
+        const bsl::shared_ptr<ntci::Strand>&    strand,
+        bslma::Allocator*                       basicAllocator)
 {
     return ntcf::TestAcknowledgmentCallback(function, strand, basicAllocator);
 }
 
 NTCCFG_INLINE
-ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::createAcknowledgmentCallback(
-    const ntcf::TestAcknowledgmentFunction&              function,
-    const bsl::shared_ptr<ntci::Authorization>& authorization,
-    const bsl::shared_ptr<ntci::Strand>&        strand,
-    bslma::Allocator*                           basicAllocator)
+ntcf::TestAcknowledgmentCallback TestAcknowledgmentCallbackFactory::
+    createAcknowledgmentCallback(
+        const ntcf::TestAcknowledgmentFunction&     function,
+        const bsl::shared_ptr<ntci::Authorization>& authorization,
+        const bsl::shared_ptr<ntci::Strand>&        strand,
+        bslma::Allocator*                           basicAllocator)
 {
     return ntcf::TestAcknowledgmentCallback(function,
-                                   authorization,
-                                   strand,
-                                   basicAllocator);
+                                            authorization,
+                                            strand,
+                                            basicAllocator);
 }
-
-
-
-
-
-
 
 }  // end namespace ntcf
 }  // end namespace BloombergLP

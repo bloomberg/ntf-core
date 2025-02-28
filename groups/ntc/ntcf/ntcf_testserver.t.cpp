@@ -36,7 +36,6 @@ class TestServerTest
 
 NTSCFG_TEST_FUNCTION(ntcf::TestServerTest::verify)
 {
-    
 }
 
 }  // close namespace ntcf

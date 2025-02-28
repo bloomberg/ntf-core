@@ -19,10 +19,10 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntcf_testvocabulary.h>
-#include <ntcf_testmessage.h>
 #include <ntcf_testclient.h>
+#include <ntcf_testmessage.h>
 #include <ntcf_testserver.h>
+#include <ntcf_testvocabulary.h>
 
 namespace BloombergLP {
 namespace ntcf {
@@ -43,7 +43,7 @@ class TestFixture
     typedef ntci::LockGuard LockGuard;
 
     /// Defines a type alias for a vector of clients.
-    typedef bsl::vector< bsl::shared_ptr<ntcf::TestClient> > ClientVector;
+    typedef bsl::vector<bsl::shared_ptr<ntcf::TestClient> > ClientVector;
 
     mutable Mutex                                d_mutex;
     bsl::shared_ptr<ntcf::TestMessageEncryption> d_encryption_sp;
@@ -58,36 +58,35 @@ class TestFixture
 
     BALL_LOG_SET_CLASS_CATEGORY("NTCF.TEST.FIXTURE");
 
-private:
+  private:
     TestFixture(const TestFixture&) BSLS_KEYWORD_DELETED;
     TestFixture& operator=(const TestFixture&) BSLS_KEYWORD_DELETED;
 
-private:
+  private:
     /// Create and return a new client.
     bsl::shared_ptr<ntcf::TestClient> createClient();
 
     /// Invoke the specified 'callback' with the specified 'connector' and
     /// 'event'.
-    void dispatchConnect(
-        const bsl::shared_ptr<ntcf::TestClient>& client,
-        const bsl::shared_ptr<ntci::Connector>&  connector,
-        const ntca::ConnectEvent&                event,
-        const ntci::ConnectCallback&             callback);
+    void dispatchConnect(const bsl::shared_ptr<ntcf::TestClient>& client,
+                         const bsl::shared_ptr<ntci::Connector>&  connector,
+                         const ntca::ConnectEvent&                event,
+                         const ntci::ConnectCallback&             callback);
 
     /// Load the appropriate scheduler configuration into the specified
     /// 'result' for the specified client 'configuration'.
-    static void configure(ntca::SchedulerConfig*        result, 
+    static void configure(ntca::SchedulerConfig*        result,
                           const ntcf::TestClientConfig& configuration);
 
     /// Load the appropriate scheduler configuration into the specified
     /// 'result' for the specified server 'configuration'.
-    static void configure(ntca::SchedulerConfig*        result, 
+    static void configure(ntca::SchedulerConfig*        result,
                           const ntcf::TestServerConfig& configuration);
 
-public:
-    /// Create a new test fixture having the specified 'configuration'. 
+  public:
+    /// Create a new test fixture having the specified 'configuration'.
     /// Optionally specify a 'basicAllocator' used to supply memory. If
-    /// 'basicAllocator' is 0, the currently installed default allocator is 
+    /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     explicit TestFixture(const ntcf::TestFixtureConfig& configuration,
                          bslma::Allocator*              basicAllocator = 0);
@@ -134,7 +133,7 @@ public:
     /// Connect another 'count' specified number of clients to the server,
     /// block until the connection for each is established, then append each
     /// client to the specified 'result'. Return the error.
-    ntsa::Error clientConnect(ntcf::TestClientVector* result, 
+    ntsa::Error clientConnect(ntcf::TestClientVector* result,
                               bsl::size_t             count);
 
     /// Return the client at the specified 'index'.
@@ -151,8 +150,8 @@ public:
 class TestFixtureUtil
 {
     static bsls::AtomicUint64 s_pingId;
-    
-public:
+
+  public:
     /// Signal the peer of the specified 'client' and block until a response is
     /// received.
     static void ping(const ntcf::TestClientPtr& client);

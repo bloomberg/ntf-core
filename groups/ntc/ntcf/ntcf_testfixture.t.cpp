@@ -45,8 +45,7 @@ class TestFixtureTest
 // Provide state used to manage a test.
 class TestFixtureTest::State
 {
-
-public:
+  public:
     // Create new test state. Optionally specify a 'basicAllocator' used to
     // supply memory. If 'basicAllocator' is 0, the currently installed default
     // allocator is used.
@@ -58,12 +57,10 @@ public:
 
 TestFixtureTest::State::State(bslma::Allocator* basicAllocator)
 {
-
 }
 
 TestFixtureTest::State::~State()
 {
-
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::TestFixtureTest::verify)
@@ -72,9 +69,9 @@ NTSCFG_TEST_FUNCTION(ntcf::TestFixtureTest::verify)
 
     // Configure the number of iterations.
 
-    const bsl::size_t k_NUM_ITERATIONS = 10;
+    const bsl::size_t k_NUM_ITERATIONS        = 10;
     const bsl::size_t k_NUM_STATE_TRANSITIONS = 10;
-    const bsl::size_t k_NUM_PINGS = 10;
+    const bsl::size_t k_NUM_PINGS             = 10;
 
     // Create a server.
 
@@ -256,20 +253,19 @@ NTSCFG_TEST_FUNCTION(ntcf::TestFixtureTest::verifyBacklog)
 
     // Ping the server.
 
-    for (bsl::size_t i = 0; i < fixture.clientCount(); ++i)
-    {
+    for (bsl::size_t i = 0; i < fixture.clientCount(); ++i) {
         const ntcf::TestClientPtr& client = fixture.client(i);
 
         ntcf::TestEchoResult result;
         ntcf::TestSignal     signal;
         ntcf::TestOptions    options;
 
-        signal.id = i + 1;
+        signal.id      = i + 1;
         signal.reflect = 64;
         ntscfg::TestDataUtil::generateData(
-            &signal.value, 
-            32, 
-            0, 
+            &signal.value,
+            32,
+            0,
             ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
 
         error = client->signal(&result, signal, options);

@@ -307,40 +307,40 @@ namespace ntcf {
                        << bdlbb::BlobUtilHexDumper(&(blob)) << BALL_LOG_END;  \
     } while (false)
 
-#define NTCF_TESTCLIENT_LOG_SIGNAL_FAILURE(streamSocket, failure) \
+#define NTCF_TESTCLIENT_LOG_SIGNAL_FAILURE(streamSocket, failure)             \
     do {                                                                      \
         BALL_LOG_ERROR << "Client stream socket at "                          \
-                    << (streamSocket)->sourceEndpoint() << " to "          \
-                    << (streamSocket)->remoteEndpoint() \
-                    << " failed to execute 'signal': fault = "  \
-                    << (failure) << BALL_LOG_END;  \
+                       << (streamSocket)->sourceEndpoint() << " to "          \
+                       << (streamSocket)->remoteEndpoint()                    \
+                       << " failed to execute 'signal': fault = "             \
+                       << (failure) << BALL_LOG_END;                          \
     } while (false)
 
-#define NTCF_TESTCLIENT_LOG_ENCRYPTION_FAILURE(streamSocket, failure) \
+#define NTCF_TESTCLIENT_LOG_ENCRYPTION_FAILURE(streamSocket, failure)         \
     do {                                                                      \
         BALL_LOG_ERROR << "Client stream socket at "                          \
-                    << (streamSocket)->sourceEndpoint() << " to "          \
-                    << (streamSocket)->remoteEndpoint() \
-                    << " failed to execute 'encrypt': fault = "  \
-                    << (failure) << BALL_LOG_END;  \
+                       << (streamSocket)->sourceEndpoint() << " to "          \
+                       << (streamSocket)->remoteEndpoint()                    \
+                       << " failed to execute 'encrypt': fault = "            \
+                       << (failure) << BALL_LOG_END;                          \
     } while (false)
 
-#define NTCF_TESTCLIENT_LOG_COMPRESS_FAILURE(streamSocket, failure) \
+#define NTCF_TESTCLIENT_LOG_COMPRESS_FAILURE(streamSocket, failure)           \
     do {                                                                      \
         BALL_LOG_ERROR << "Client stream socket at "                          \
-                    << (streamSocket)->sourceEndpoint() << " to "          \
-                    << (streamSocket)->remoteEndpoint() \
-                    << " failed to execute 'compress': fault = "  \
-                    << (failure) << BALL_LOG_END;  \
+                       << (streamSocket)->sourceEndpoint() << " to "          \
+                       << (streamSocket)->remoteEndpoint()                    \
+                       << " failed to execute 'compress': fault = "           \
+                       << (failure) << BALL_LOG_END;                          \
     } while (false)
 
-#define NTCF_TESTCLIENT_LOG_HEARTBEAT_FAILURE(streamSocket, failure) \
+#define NTCF_TESTCLIENT_LOG_HEARTBEAT_FAILURE(streamSocket, failure)          \
     do {                                                                      \
         BALL_LOG_ERROR << "Client stream socket at "                          \
-                    << (streamSocket)->sourceEndpoint() << " to "          \
-                    << (streamSocket)->remoteEndpoint() \
-                    << " failed to execute 'heartbeat': fault = "  \
-                    << (failure) << BALL_LOG_END;  \
+                       << (streamSocket)->sourceEndpoint() << " to "          \
+                       << (streamSocket)->remoteEndpoint()                    \
+                       << " failed to execute 'heartbeat': fault = "          \
+                       << (failure) << BALL_LOG_END;                          \
     } while (false)
 
 TestClientTransaction::TestClientTransaction(
@@ -1396,17 +1396,17 @@ void TestClient::describeResultTypeFailure(ntcf::TestFault* fault)
 }
 
 void TestClient::dispatchConnect(
-        const bsl::shared_ptr<ntci::Connector>& connector,
-        const ntca::ConnectEvent&               event,
-        const ntci::ConnectCallback&            callback)
+    const bsl::shared_ptr<ntci::Connector>& connector,
+    const ntca::ConnectEvent&               event,
+    const ntci::ConnectCallback&            callback)
 {
     ntsa::Error error;
 
     BSLS_ASSERT(connector == d_streamSocket_sp);
 
     NTCF_TESTCLIENT_LOG_STREAM_SOCKET_EVENT(d_streamSocket_sp,
-        "connect",
-        event);
+                                            "connect",
+                                            event);
 
     if (event.type() == ntca::ConnectEventType::e_COMPLETE) {
         if (d_datagramSocket_sp) {
@@ -1414,12 +1414,12 @@ void TestClient::dispatchConnect(
                 ntca::FlowControlType::e_RECEIVE);
             BSLS_ASSERT_OPT(!error);
         }
-    
+
         if (d_streamSocket_sp) {
             error = d_streamSocket_sp->setReadQueueLowWatermark(
                 d_streamParser_sp->numNeeded());
             BSLS_ASSERT_OPT(!error);
-        
+
             error = d_streamSocket_sp->relaxFlowControl(
                 ntca::FlowControlType::e_RECEIVE);
             BSLS_ASSERT_OPT(!error);
@@ -1567,13 +1567,14 @@ const bsl::shared_ptr<ntci::Strand>& TestClient::strand() const
     return d_strand_sp;
 }
 
-TestClient::TestClient(const ntcf::TestClientConfig& configuration,
-                       const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                       const bsl::shared_ptr<ntci::DataPool>&  dataPool,
-                       const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
-                       const ntsa::Endpoint&         tcpEndpoint,
-                       const ntsa::Endpoint&         udpEndpoint,
-                       bslma::Allocator*             basicAllocator)
+TestClient::TestClient(
+    const ntcf::TestClientConfig&                       configuration,
+    const bsl::shared_ptr<ntci::Scheduler>&             scheduler,
+    const bsl::shared_ptr<ntci::DataPool>&              dataPool,
+    const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
+    const ntsa::Endpoint&                               tcpEndpoint,
+    const ntsa::Endpoint&                               udpEndpoint,
+    bslma::Allocator*                                   basicAllocator)
 : d_mutex()
 , d_dataPool_sp(dataPool)
 , d_messagePool_sp()
@@ -1605,8 +1606,8 @@ TestClient::TestClient(const ntcf::TestClientConfig& configuration,
 
     ntca::SerializationConfig serializationConfig;
 
-    error = ntcf::System::createSerialization(&d_serialization_sp, 
-                                              serializationConfig, 
+    error = ntcf::System::createSerialization(&d_serialization_sp,
+                                              serializationConfig,
                                               d_allocator_p);
     BSLS_ASSERT_OPT(!error);
 
@@ -1619,7 +1620,7 @@ TestClient::TestClient(const ntcf::TestClientConfig& configuration,
 #else
     compressionConfig.setType(ntca::CompressionType::e_RLE);
 #endif
-    
+
     compressionConfig.setGoal(ntca::CompressionGoal::e_BALANCED);
 
     error = ntcf::System::createCompression(&d_compression_sp,
@@ -1769,7 +1770,6 @@ ntsa::Error TestClient::connect()
     // MRM: BALL_LOG_INFO << "Client stream socket construction complete"
     // MRM:               << BALL_LOG_END;
 
-
 #if NTCF_TESTCLIENT_DATAGRAM_SOCKET_ENABLED
 
     error = d_datagramSocket_sp->relaxFlowControl(
@@ -1802,7 +1802,7 @@ ntsa::Error TestClient::connect(const ntci::ConnectCallback& callback)
     bsl::shared_ptr<Self> self(this->getSelf(this));
 
 #if NTCF_TESTCLIENT_DATAGRAM_SOCKET_ENABLED
-    
+
     // MRM: BALL_LOG_INFO << "Client datagram socket construction starting"
     // MRM:               << BALL_LOG_END;
 
@@ -1885,13 +1885,13 @@ ntsa::Error TestClient::connect(const ntci::ConnectCallback& callback)
         return error;
     }
 
-    ntci::ConnectCallback callbackProxy = this->createConnectCallback(
-        NTCCFG_BIND(&TestClient::dispatchConnect, 
-                    this,
-                    NTCCFG_BIND_PLACEHOLDER_1,
-                    NTCCFG_BIND_PLACEHOLDER_2,
-                    callback),
-        d_allocator_p);
+    ntci::ConnectCallback callbackProxy =
+        this->createConnectCallback(NTCCFG_BIND(&TestClient::dispatchConnect,
+                                                this,
+                                                NTCCFG_BIND_PLACEHOLDER_1,
+                                                NTCCFG_BIND_PLACEHOLDER_2,
+                                                callback),
+                                    d_allocator_p);
 
     {
         error = d_streamSocket_sp->connect(d_tcpEndpoint,
@@ -1983,8 +1983,7 @@ ntsa::Error TestClient::message(
     NTCF_TESTCLIENT_LOG_STREAM_SOCKET_OUTGOING_MESSAGE(d_streamSocket_sp,
                                                        request);
 
-    NTCF_TESTCLIENT_LOG_STREAM_SOCKET_OUTGOING_BLOB(d_streamSocket_sp,
-                                                        *blob);
+    NTCF_TESTCLIENT_LOG_STREAM_SOCKET_OUTGOING_BLOB(d_streamSocket_sp, *blob);
 
     ntsa::Data data(blob);
 
@@ -2269,10 +2268,9 @@ ntsa::Error TestClient::signal(ntcf::TestContext*       context,
     return ntsa::Error(ntsa::Error::e_INVALID);
 }
 
-ntsa::Error TestClient::signal(
-    ntcf::TestEchoResult*    result,
-    const ntcf::TestSignal&  signal,
-    const ntcf::TestOptions& options)
+ntsa::Error TestClient::signal(ntcf::TestEchoResult*    result,
+                               const ntcf::TestSignal&  signal,
+                               const ntcf::TestOptions& options)
 {
     ntsa::Error error;
 
@@ -2383,10 +2381,9 @@ ntsa::Error TestClient::encrypt(ntcf::TestContext*           context,
     return ntsa::Error(ntsa::Error::e_INVALID);
 }
 
-ntsa::Error TestClient::encrypt(
-    ntcf::TestAcknowledgmentResult*     result,
-    const ntcf::TestControlEncryption&  encryption,
-    const ntcf::TestOptions&            options)
+ntsa::Error TestClient::encrypt(ntcf::TestAcknowledgmentResult*    result,
+                                const ntcf::TestControlEncryption& encryption,
+                                const ntcf::TestOptions&           options)
 {
     ntsa::Error error;
 
@@ -2548,9 +2545,9 @@ ntsa::Error TestClient::compress(ntcf::TestContext*            context,
 }
 
 ntsa::Error TestClient::compress(
-    ntcf::TestAcknowledgmentResult*      result,
-    const ntcf::TestControlCompression&  compression,
-    const ntcf::TestOptions&             options)
+    ntcf::TestAcknowledgmentResult*     result,
+    const ntcf::TestControlCompression& compression,
+    const ntcf::TestOptions&            options)
 {
     ntsa::Error error;
 
@@ -2579,8 +2576,8 @@ ntsa::Error TestClient::compress(
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
     else if (result->value.isFailureValue()) {
-        NTCF_TESTCLIENT_LOG_COMPRESS_FAILURE(
-            d_streamSocket_sp, result->value.failure());
+        NTCF_TESTCLIENT_LOG_COMPRESS_FAILURE(d_streamSocket_sp,
+                                             result->value.failure());
 
         if (result->context.error != 0) {
             return ntsa::Error(result->context.error);
@@ -2715,9 +2712,9 @@ ntsa::Error TestClient::heartbeat(ntcf::TestContext*          context,
     return ntsa::Error(ntsa::Error::e_INVALID);
 }
 
-ntsa::Error TestClient::heartbeat(ntcf::TestAcknowledgmentResult*    result,
-                                  const ntcf::TestControlHeartbeat&  heartbeat,
-                                  const ntcf::TestOptions&           options)
+ntsa::Error TestClient::heartbeat(ntcf::TestAcknowledgmentResult*   result,
+                                  const ntcf::TestControlHeartbeat& heartbeat,
+                                  const ntcf::TestOptions&          options)
 {
     ntsa::Error error;
 
@@ -2875,46 +2872,40 @@ void TestClient::enableEncryption()
         BSLS_ASSERT_OPT(!upgradeResult.event().context().error());
 
         bsl::shared_ptr<ntci::EncryptionCertificate> remoteCertificate =
-                d_streamSocket_sp->remoteCertificate();
+            d_streamSocket_sp->remoteCertificate();
 
         if (remoteCertificate) {
             ntca::EncryptionCertificate remoteCertificateRecord;
             remoteCertificate->unwrap(&remoteCertificateRecord);
 
             BALL_LOG_INFO << "Client stream socket at "
-                            << d_streamSocket_sp->sourceEndpoint() << " to "
-                            << d_streamSocket_sp->remoteEndpoint()
-                            << " upgrade complete: " 
-                            << upgradeResult.event().context()
-                            << BALL_LOG_END;
+                          << d_streamSocket_sp->sourceEndpoint() << " to "
+                          << d_streamSocket_sp->remoteEndpoint()
+                          << " upgrade complete: "
+                          << upgradeResult.event().context() << BALL_LOG_END;
 
-            BALL_LOG_INFO
-                << "Client stream socket at " 
-                << d_streamSocket_sp->sourceEndpoint() << " to "
-                << d_streamSocket_sp->remoteEndpoint()
-                << " encryption session has been established with "
-                << remoteCertificate->subject() << " issued by "
-                << remoteCertificate->issuer() << ": "
-                << remoteCertificateRecord << BALL_LOG_END;
+            BALL_LOG_INFO << "Client stream socket at "
+                          << d_streamSocket_sp->sourceEndpoint() << " to "
+                          << d_streamSocket_sp->remoteEndpoint()
+                          << " encryption session has been established with "
+                          << remoteCertificate->subject() << " issued by "
+                          << remoteCertificate->issuer() << ": "
+                          << remoteCertificateRecord << BALL_LOG_END;
         }
         else {
             BALL_LOG_INFO << "Client stream socket at "
-                        << d_streamSocket_sp->sourceEndpoint() 
-                        << " to "
-                        << d_streamSocket_sp->remoteEndpoint()
-                        << " encryption session has been established"
-                        << BALL_LOG_END;
+                          << d_streamSocket_sp->sourceEndpoint() << " to "
+                          << d_streamSocket_sp->remoteEndpoint()
+                          << " encryption session has been established"
+                          << BALL_LOG_END;
         }
     }
     else {
-        BALL_LOG_ERROR
-            << "Client stream socket at "
-            << d_streamSocket_sp->sourceEndpoint() 
-            << " to "
-            << d_streamSocket_sp->remoteEndpoint()
-            << " upgrade error: " 
-            << upgradeResult.event().context() 
-            << BALL_LOG_END;
+        BALL_LOG_ERROR << "Client stream socket at "
+                       << d_streamSocket_sp->sourceEndpoint() << " to "
+                       << d_streamSocket_sp->remoteEndpoint()
+                       << " upgrade error: " << upgradeResult.event().context()
+                       << BALL_LOG_END;
 
         BSLS_ASSERT_OPT(!upgradeResult.event().context().error());
     }
@@ -2923,7 +2914,7 @@ void TestClient::enableEncryption()
 void TestClient::disableCompression()
 {
     bsl::shared_ptr<ntci::Compression> none;
-    
+
     if (d_streamSocket_sp) {
         d_streamSocket_sp->setWriteDeflater(none);
         d_streamSocket_sp->setReadInflater(none);

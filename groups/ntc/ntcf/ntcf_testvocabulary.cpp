@@ -1,12 +1,12 @@
+#include <ntcf_testvocabulary.h>
 #include <bdlat_formattingmode.h>
 #include <bdlb_string.h>
 #include <bslalg_swaputil.h>
 #include <bslim_printer.h>
 #include <bslma_default.h>
-#include <ntcf_testvocabulary.h>
 
 namespace BloombergLP {
-namespace ntcf { 
+namespace ntcf {
 
 TestSecurity::TestSecurity(bslma::Allocator* allocator)
 : id()
@@ -14,7 +14,8 @@ TestSecurity::TestSecurity(bslma::Allocator* allocator)
 {
 }
 
-TestSecurity::TestSecurity(const TestSecurity& original, bslma::Allocator* allocator)
+TestSecurity::TestSecurity(const TestSecurity& original,
+                           bslma::Allocator*   allocator)
 : id(original.id)
 , name(original.name, allocator)
 {
@@ -27,7 +28,7 @@ TestSecurity::~TestSecurity()
 TestSecurity& TestSecurity::operator=(const TestSecurity& other)
 {
     if (this != &other) {
-        this->id = other.id;
+        this->id   = other.id;
         this->name = other.name;
     }
 
@@ -74,26 +75,23 @@ bool TestSecurity::less(const TestSecurity& other) const
     return this->name < other.name;
 }
 
-bsl::ostream& TestSecurity::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestSecurity::print(bsl::ostream& stream,
+                                  int           level,
+                                  int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "id",
-        this->id);
-    printer.printAttribute(
-        "name",
-        this->name);
+    printer.printAttribute("id", this->id);
+    printer.printAttribute("name", this->name);
     printer.end();
     return stream;
 }
 
 const char TestSecurity::CLASS_NAME[] = "ntcf::TestSecurity";
 
-const bdlat_AttributeInfo TestSecurity::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "name", 4, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestSecurity::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,   "id", 2, "", bdlat_FormattingMode::e_DEFAULT},
+    {1, "name", 4, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestSecurity::lookupAttributeInfo(int id)
@@ -108,12 +106,13 @@ const bdlat_AttributeInfo* TestSecurity::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestSecurity::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestSecurity::lookupAttributeInfo(const char* name,
+                                                             int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -144,9 +143,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestSecurity& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestPerson::TestPerson(bslma::Allocator* allocator)
 : id()
@@ -171,8 +170,8 @@ TestPerson::~TestPerson()
 TestPerson& TestPerson::operator=(const TestPerson& other)
 {
     if (this != &other) {
-        this->id = other.id;
-        this->name = other.name;
+        this->id      = other.id;
+        this->name    = other.name;
         this->address = other.address;
         this->country = other.country;
     }
@@ -248,36 +247,29 @@ bool TestPerson::less(const TestPerson& other) const
     return this->country < other.country;
 }
 
-bsl::ostream& TestPerson::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestPerson::print(bsl::ostream& stream,
+                                int           level,
+                                int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "id",
-        this->id);
-    printer.printAttribute(
-        "name",
-        this->name);
+    printer.printAttribute("id", this->id);
+    printer.printAttribute("name", this->name);
     if (!this->address.empty()) {
-        printer.printAttribute(
-            "address",
-            this->address);
+        printer.printAttribute("address", this->address);
     }
-    printer.printAttribute(
-        "country",
-        this->country);
+    printer.printAttribute("country", this->country);
     printer.end();
     return stream;
 }
 
 const char TestPerson::CLASS_NAME[] = "ntcf::TestPerson";
 
-const bdlat_AttributeInfo TestPerson::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "name", 4, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "address", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "country", 7, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestPerson::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,      "id", 2, "", bdlat_FormattingMode::e_DEFAULT},
+    {1,    "name", 4, "", bdlat_FormattingMode::e_DEFAULT},
+    {2, "address", 7, "", bdlat_FormattingMode::e_DEFAULT},
+    {3, "country", 7, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestPerson::lookupAttributeInfo(int id)
@@ -296,12 +288,13 @@ const bdlat_AttributeInfo* TestPerson::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestPerson::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestPerson::lookupAttributeInfo(const char* name,
+                                                           int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -332,9 +325,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestPerson& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestTrade::TestTrade(bslma::Allocator* allocator)
 : id()
@@ -365,12 +358,12 @@ TestTrade::~TestTrade()
 TestTrade& TestTrade::operator=(const TestTrade& other)
 {
     if (this != &other) {
-        this->id = other.id;
-        this->buyer = other.buyer;
-        this->seller = other.seller;
-        this->security = other.security;
-        this->shares = other.shares;
-        this->price = other.price;
+        this->id        = other.id;
+        this->buyer     = other.buyer;
+        this->seller    = other.seller;
+        this->security  = other.security;
+        this->shares    = other.shares;
+        this->price     = other.price;
         this->timestamp = other.timestamp;
     }
 
@@ -487,46 +480,33 @@ bool TestTrade::less(const TestTrade& other) const
     return this->timestamp.gmtDatetime() < other.timestamp.gmtDatetime();
 }
 
-bsl::ostream& TestTrade::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestTrade::print(bsl::ostream& stream,
+                               int           level,
+                               int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "id",
-        this->id);
-    printer.printAttribute(
-        "buyer",
-        this->buyer);
-    printer.printAttribute(
-        "seller",
-        this->seller);
-    printer.printAttribute(
-        "security",
-        this->security);
-    printer.printAttribute(
-        "shares",
-        this->shares);
-    printer.printAttribute(
-        "price",
-        this->price);
-    printer.printAttribute(
-        "timestamp",
-        this->timestamp);
+    printer.printAttribute("id", this->id);
+    printer.printAttribute("buyer", this->buyer);
+    printer.printAttribute("seller", this->seller);
+    printer.printAttribute("security", this->security);
+    printer.printAttribute("shares", this->shares);
+    printer.printAttribute("price", this->price);
+    printer.printAttribute("timestamp", this->timestamp);
     printer.end();
     return stream;
 }
 
 const char TestTrade::CLASS_NAME[] = "ntcf::TestTrade";
 
-const bdlat_AttributeInfo TestTrade::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "buyer", 5, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "seller", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "security", 8, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "shares", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 5, "price", 5, "", bdlat_FormattingMode::e_DEFAULT },
-    { 6, "timestamp", 9, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestTrade::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,        "id", 2, "", bdlat_FormattingMode::e_DEFAULT},
+    {1,     "buyer", 5, "", bdlat_FormattingMode::e_DEFAULT},
+    {2,    "seller", 6, "", bdlat_FormattingMode::e_DEFAULT},
+    {3,  "security", 8, "", bdlat_FormattingMode::e_DEFAULT},
+    {4,    "shares", 6, "", bdlat_FormattingMode::e_DEFAULT},
+    {5,     "price", 5, "", bdlat_FormattingMode::e_DEFAULT},
+    {6, "timestamp", 9, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestTrade::lookupAttributeInfo(int id)
@@ -551,12 +531,13 @@ const bdlat_AttributeInfo* TestTrade::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestTrade::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestTrade::lookupAttributeInfo(const char* name,
+                                                          int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -587,9 +568,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestTrade& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 const char* TestFaultCode::toString(Value value)
 {
@@ -621,7 +602,9 @@ const char* TestFaultCode::toString(Value value)
     }
 }
 
-int TestFaultCode::fromString(Value* result, const char* string, int stringLength)
+int TestFaultCode::fromString(Value*      result,
+                              const char* string,
+                              int         stringLength)
 {
     int rc;
     for (int i = 0; i < 11; ++i) {
@@ -670,28 +653,27 @@ bsl::ostream& TestFaultCode::print(bsl::ostream& stream, Value value)
 
 const char TestFaultCode::CLASS_NAME[] = "ntcf::TestFaultCode";
 
-const bdlat_EnumeratorInfo TestFaultCode::ENUMERATOR_INFO_ARRAY[] =
-{
-    { 0, "OK", 2, "" },
-    { 1, "ERROR", 5, "" },
-    { 2, "TIMEOUT", 7, "" },
-    { 3, "CANCELLED", 9, "" },
-    { 4, "INVALID", 7, "" },
-    { 5, "LIMIT", 5, "" },
-    { 6, "NOT_IMPLEMENTED", 15, "" },
-    { 7, "NOT_AUTHORIZED", 14, "" },
-    { 8, "NOT_FOUND", 9, "" },
-    { 9, "NOT_TRANSPORTABLE", 17, "" },
-    { 10, "NOT_DECODABLE", 13, "" }
+const bdlat_EnumeratorInfo TestFaultCode::ENUMERATOR_INFO_ARRAY[] = {
+    { 0,                "OK",  2, ""},
+    { 1,             "ERROR",  5, ""},
+    { 2,           "TIMEOUT",  7, ""},
+    { 3,         "CANCELLED",  9, ""},
+    { 4,           "INVALID",  7, ""},
+    { 5,             "LIMIT",  5, ""},
+    { 6,   "NOT_IMPLEMENTED", 15, ""},
+    { 7,    "NOT_AUTHORIZED", 14, ""},
+    { 8,         "NOT_FOUND",  9, ""},
+    { 9, "NOT_TRANSPORTABLE", 17, ""},
+    {10,     "NOT_DECODABLE", 13, ""}
 };
 
 bsl::ostream& operator<<(bsl::ostream& stream, TestFaultCode::Value value)
 {
     return TestFaultCode::print(stream, value);
 }
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 const char* TestRole::toString(Value value)
 {
@@ -745,19 +727,18 @@ bsl::ostream& TestRole::print(bsl::ostream& stream, Value value)
 
 const char TestRole::CLASS_NAME[] = "ntcf::TestRole";
 
-const bdlat_EnumeratorInfo TestRole::ENUMERATOR_INFO_ARRAY[] =
-{
-    { 0, "CLIENT", 6, "" },
-    { 1, "SERVER", 6, "" }
+const bdlat_EnumeratorInfo TestRole::ENUMERATOR_INFO_ARRAY[] = {
+    {0, "CLIENT", 6, ""},
+    {1, "SERVER", 6, ""}
 };
 
 bsl::ostream& operator<<(bsl::ostream& stream, TestRole::Value value)
 {
     return TestRole::print(stream, value);
 }
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestFault::TestFault(bslma::Allocator* allocator)
 : role()
@@ -782,9 +763,9 @@ TestFault::~TestFault()
 TestFault& TestFault::operator=(const TestFault& other)
 {
     if (this != &other) {
-        this->role = other.role;
-        this->code = other.code;
-        this->uri = other.uri;
+        this->role        = other.role;
+        this->code        = other.code;
+        this->uri         = other.uri;
         this->description = other.description;
     }
 
@@ -859,34 +840,27 @@ bool TestFault::less(const TestFault& other) const
     return this->description < other.description;
 }
 
-bsl::ostream& TestFault::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestFault::print(bsl::ostream& stream,
+                               int           level,
+                               int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "role",
-        this->role);
-    printer.printAttribute(
-        "code",
-        this->code);
-    printer.printAttribute(
-        "uri",
-        this->uri);
-    printer.printAttribute(
-        "description",
-        this->description);
+    printer.printAttribute("role", this->role);
+    printer.printAttribute("code", this->code);
+    printer.printAttribute("uri", this->uri);
+    printer.printAttribute("description", this->description);
     printer.end();
     return stream;
 }
 
 const char TestFault::CLASS_NAME[] = "ntcf::TestFault";
 
-const bdlat_AttributeInfo TestFault::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "role", 4, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "code", 4, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "uri", 3, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "description", 11, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestFault::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,        "role",  4, "", bdlat_FormattingMode::e_DEFAULT},
+    {1,        "code",  4, "", bdlat_FormattingMode::e_DEFAULT},
+    {2,         "uri",  3, "", bdlat_FormattingMode::e_DEFAULT},
+    {3, "description", 11, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestFault::lookupAttributeInfo(int id)
@@ -905,12 +879,13 @@ const bdlat_AttributeInfo* TestFault::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestFault::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestFault::lookupAttributeInfo(const char* name,
+                                                          int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -941,9 +916,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestFault& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestTradeResultValue::TestTradeResultValue(bslma::Allocator* allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
@@ -951,7 +926,9 @@ TestTradeResultValue::TestTradeResultValue(bslma::Allocator* allocator)
 {
 }
 
-TestTradeResultValue::TestTradeResultValue(const TestTradeResultValue& original, bslma::Allocator* allocator)
+TestTradeResultValue::TestTradeResultValue(
+    const TestTradeResultValue& original,
+    bslma::Allocator*           allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(allocator))
 {
@@ -972,7 +949,8 @@ TestTradeResultValue::~TestTradeResultValue()
     reset();
 }
 
-TestTradeResultValue& TestTradeResultValue::operator=(const TestTradeResultValue& other)
+TestTradeResultValue& TestTradeResultValue::operator=(
+    const TestTradeResultValue& other)
 {
     if (this == &other) {
         return *this;
@@ -1000,11 +978,11 @@ void TestTradeResultValue::reset()
     case SELECTION_ID_FAILURE: {
         typedef ntcf::TestFault Type;
         d_failure.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_SUCCESS: {
         typedef ntcf::TestTrade Type;
         d_success.object().~Type();
-        } break;
+    } break;
     default:
         BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
     }
@@ -1016,8 +994,8 @@ void TestTradeResultValue::swap(TestTradeResultValue& other)
 {
     if (d_selectionId != other.d_selectionId) {
         TestTradeResultValue temp = other;
-        other = *this;
-        *this = other;
+        other                     = *this;
+        *this                     = other;
         return;
     }
 
@@ -1054,7 +1032,7 @@ int TestTradeResultValue::makeSelection(int id)
 
 int TestTradeResultValue::makeSelection(const char* name, int nameLength)
 {
-    const bdlat_SelectionInfo *selectionInfo =
+    const bdlat_SelectionInfo* selectionInfo =
         lookupSelectionInfo(name, nameLength);
     if (selectionInfo == 0) {
         return -1;
@@ -1070,14 +1048,15 @@ ntcf::TestFault& TestTradeResultValue::makeFailure()
     }
     else {
         reset();
-        new(d_failure.buffer()) ntcf::TestFault(d_allocator_p);
+        new (d_failure.buffer()) ntcf::TestFault(d_allocator_p);
         d_selectionId = SELECTION_ID_FAILURE;
     }
 
     return d_failure.object();
 }
 
-ntcf::TestFault& TestTradeResultValue::makeFailure(const ntcf::TestFault& value)
+ntcf::TestFault& TestTradeResultValue::makeFailure(
+    const ntcf::TestFault& value)
 {
     if (d_selectionId == SELECTION_ID_FAILURE) {
         d_failure.object() = value;
@@ -1098,14 +1077,15 @@ ntcf::TestTrade& TestTradeResultValue::makeSuccess()
     }
     else {
         reset();
-        new(d_success.buffer()) ntcf::TestTrade(d_allocator_p);
+        new (d_success.buffer()) ntcf::TestTrade(d_allocator_p);
         d_selectionId = SELECTION_ID_SUCCESS;
     }
 
     return d_success.object();
 }
 
-ntcf::TestTrade& TestTradeResultValue::makeSuccess(const ntcf::TestTrade& value)
+ntcf::TestTrade& TestTradeResultValue::makeSuccess(
+    const ntcf::TestTrade& value)
 {
     if (d_selectionId == SELECTION_ID_SUCCESS) {
         d_success.object() = value;
@@ -1197,7 +1177,9 @@ bool TestTradeResultValue::less(const TestTradeResultValue& other) const
     }
 }
 
-bsl::ostream& TestTradeResultValue::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestTradeResultValue::print(bsl::ostream& stream,
+                                          int           level,
+                                          int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -1218,10 +1200,9 @@ bsl::ostream& TestTradeResultValue::print(bsl::ostream& stream, int level, int s
 
 const char TestTradeResultValue::CLASS_NAME[] = "ntcf::TestTradeResultValue";
 
-const bdlat_SelectionInfo TestTradeResultValue::SELECTION_INFO_ARRAY[] =
-{
-    { 0, "failure", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "success", 7, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_SelectionInfo TestTradeResultValue::SELECTION_INFO_ARRAY[] = {
+    {0, "failure", 7, "", bdlat_FormattingMode::e_DEFAULT},
+    {1, "success", 7, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_SelectionInfo* TestTradeResultValue::lookupSelectionInfo(int id)
@@ -1236,12 +1217,14 @@ const bdlat_SelectionInfo* TestTradeResultValue::lookupSelectionInfo(int id)
     }
 }
 
-const bdlat_SelectionInfo* TestTradeResultValue::lookupSelectionInfo(const char* name, int nameLength)
+const bdlat_SelectionInfo* TestTradeResultValue::lookupSelectionInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_SELECTIONS; ++i) {
         const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
         if (selectionInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &selectionInfo;
@@ -1252,29 +1235,33 @@ const bdlat_SelectionInfo* TestTradeResultValue::lookupSelectionInfo(const char*
     return 0;
 }
 
-bool operator==(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs)
+bool operator==(const TestTradeResultValue& lhs,
+                const TestTradeResultValue& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs)
+bool operator!=(const TestTradeResultValue& lhs,
+                const TestTradeResultValue& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestTradeResultValue& lhs, const TestTradeResultValue& rhs)
+bool operator<(const TestTradeResultValue& lhs,
+               const TestTradeResultValue& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestTradeResultValue& object)
+bsl::ostream& operator<<(bsl::ostream&               stream,
+                         const TestTradeResultValue& object)
 {
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestMessageHeader::TestMessageHeader()
 : messageType()
@@ -1317,19 +1304,19 @@ TestMessageHeader::~TestMessageHeader()
 TestMessageHeader& TestMessageHeader::operator=(const TestMessageHeader& other)
 {
     if (this != &other) {
-        this->messageType = other.messageType;
-        this->messageFlags = other.messageFlags;
-        this->messageSize = other.messageSize;
-        this->headerSize = other.headerSize;
-        this->pragmaSize = other.pragmaSize;
-        this->entitySize = other.entitySize;
-        this->serialization = other.serialization;
-        this->compression = other.compression;
-        this->checksum = other.checksum;
-        this->transaction = other.transaction;
+        this->messageType     = other.messageType;
+        this->messageFlags    = other.messageFlags;
+        this->messageSize     = other.messageSize;
+        this->headerSize      = other.headerSize;
+        this->pragmaSize      = other.pragmaSize;
+        this->entitySize      = other.entitySize;
+        this->serialization   = other.serialization;
+        this->compression     = other.compression;
+        this->checksum        = other.checksum;
+        this->transaction     = other.transaction;
         this->clientTimestamp = other.clientTimestamp;
         this->serverTimestamp = other.serverTimestamp;
-        this->deadline = other.deadline;
+        this->deadline        = other.deadline;
     }
 
     return *this;
@@ -1529,70 +1516,45 @@ bool TestMessageHeader::less(const TestMessageHeader& other) const
     return this->deadline < other.deadline;
 }
 
-bsl::ostream& TestMessageHeader::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestMessageHeader::print(bsl::ostream& stream,
+                                       int           level,
+                                       int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "messageType",
-        this->messageType);
-    printer.printAttribute(
-        "messageFlags",
-        this->messageFlags);
-    printer.printAttribute(
-        "messageSize",
-        this->messageSize);
-    printer.printAttribute(
-        "headerSize",
-        this->headerSize);
-    printer.printAttribute(
-        "pragmaSize",
-        this->pragmaSize);
-    printer.printAttribute(
-        "entitySize",
-        this->entitySize);
-    printer.printAttribute(
-        "serialization",
-        this->serialization);
-    printer.printAttribute(
-        "compression",
-        this->compression);
-    printer.printAttribute(
-        "checksum",
-        this->checksum);
-    printer.printAttribute(
-        "transaction",
-        this->transaction);
-    printer.printAttribute(
-        "clientTimestamp",
-        this->clientTimestamp);
-    printer.printAttribute(
-        "serverTimestamp",
-        this->serverTimestamp);
-    printer.printAttribute(
-        "deadline",
-        this->deadline);
+    printer.printAttribute("messageType", this->messageType);
+    printer.printAttribute("messageFlags", this->messageFlags);
+    printer.printAttribute("messageSize", this->messageSize);
+    printer.printAttribute("headerSize", this->headerSize);
+    printer.printAttribute("pragmaSize", this->pragmaSize);
+    printer.printAttribute("entitySize", this->entitySize);
+    printer.printAttribute("serialization", this->serialization);
+    printer.printAttribute("compression", this->compression);
+    printer.printAttribute("checksum", this->checksum);
+    printer.printAttribute("transaction", this->transaction);
+    printer.printAttribute("clientTimestamp", this->clientTimestamp);
+    printer.printAttribute("serverTimestamp", this->serverTimestamp);
+    printer.printAttribute("deadline", this->deadline);
     printer.end();
     return stream;
 }
 
 const char TestMessageHeader::CLASS_NAME[] = "ntcf::TestMessageHeader";
 
-const bdlat_AttributeInfo TestMessageHeader::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "messageType", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "messageFlags", 12, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "messageSize", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "headerSize", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "pragmaSize", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 5, "entitySize", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 6, "serialization", 13, "", bdlat_FormattingMode::e_DEFAULT },
-    { 7, "compression", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 8, "checksum", 8, "", bdlat_FormattingMode::e_DEFAULT },
-    { 9, "transaction", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 10, "clientTimestamp", 15, "", bdlat_FormattingMode::e_DEFAULT },
-    { 11, "serverTimestamp", 15, "", bdlat_FormattingMode::e_DEFAULT },
-    { 12, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestMessageHeader::ATTRIBUTE_INFO_ARRAY[] = {
+    { 0,     "messageType", 11, "", bdlat_FormattingMode::e_DEFAULT},
+    { 1,    "messageFlags", 12, "", bdlat_FormattingMode::e_DEFAULT},
+    { 2,     "messageSize", 11, "", bdlat_FormattingMode::e_DEFAULT},
+    { 3,      "headerSize", 10, "", bdlat_FormattingMode::e_DEFAULT},
+    { 4,      "pragmaSize", 10, "", bdlat_FormattingMode::e_DEFAULT},
+    { 5,      "entitySize", 10, "", bdlat_FormattingMode::e_DEFAULT},
+    { 6,   "serialization", 13, "", bdlat_FormattingMode::e_DEFAULT},
+    { 7,     "compression", 11, "", bdlat_FormattingMode::e_DEFAULT},
+    { 8,        "checksum",  8, "", bdlat_FormattingMode::e_DEFAULT},
+    { 9,     "transaction", 11, "", bdlat_FormattingMode::e_DEFAULT},
+    {10, "clientTimestamp", 15, "", bdlat_FormattingMode::e_DEFAULT},
+    {11, "serverTimestamp", 15, "", bdlat_FormattingMode::e_DEFAULT},
+    {12,        "deadline",  8, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestMessageHeader::lookupAttributeInfo(int id)
@@ -1629,12 +1591,14 @@ const bdlat_AttributeInfo* TestMessageHeader::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestMessageHeader::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestMessageHeader::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -1665,9 +1629,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageHeader& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestAsk::TestAsk(bslma::Allocator* allocator)
 : id()
@@ -1696,11 +1660,11 @@ TestAsk::~TestAsk()
 TestAsk& TestAsk::operator=(const TestAsk& other)
 {
     if (this != &other) {
-        this->id = other.id;
-        this->seller = other.seller;
+        this->id       = other.id;
+        this->seller   = other.seller;
         this->security = other.security;
-        this->shares = other.shares;
-        this->price = other.price;
+        this->shares   = other.shares;
+        this->price    = other.price;
         this->deadline = other.deadline;
     }
 
@@ -1803,42 +1767,31 @@ bool TestAsk::less(const TestAsk& other) const
     return this->deadline.gmtDatetime() < other.deadline.gmtDatetime();
 }
 
-bsl::ostream& TestAsk::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestAsk::print(bsl::ostream& stream,
+                             int           level,
+                             int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "id",
-        this->id);
-    printer.printAttribute(
-        "seller",
-        this->seller);
-    printer.printAttribute(
-        "security",
-        this->security);
-    printer.printAttribute(
-        "shares",
-        this->shares);
-    printer.printAttribute(
-        "price",
-        this->price);
-    printer.printAttribute(
-        "deadline",
-        this->deadline);
+    printer.printAttribute("id", this->id);
+    printer.printAttribute("seller", this->seller);
+    printer.printAttribute("security", this->security);
+    printer.printAttribute("shares", this->shares);
+    printer.printAttribute("price", this->price);
+    printer.printAttribute("deadline", this->deadline);
     printer.end();
     return stream;
 }
 
 const char TestAsk::CLASS_NAME[] = "ntcf::TestAsk";
 
-const bdlat_AttributeInfo TestAsk::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "seller", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "security", 8, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "shares", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "price", 5, "", bdlat_FormattingMode::e_DEFAULT },
-    { 5, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestAsk::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,       "id", 2, "", bdlat_FormattingMode::e_DEFAULT},
+    {1,   "seller", 6, "", bdlat_FormattingMode::e_DEFAULT},
+    {2, "security", 8, "", bdlat_FormattingMode::e_DEFAULT},
+    {3,   "shares", 6, "", bdlat_FormattingMode::e_DEFAULT},
+    {4,    "price", 5, "", bdlat_FormattingMode::e_DEFAULT},
+    {5, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestAsk::lookupAttributeInfo(int id)
@@ -1861,12 +1814,13 @@ const bdlat_AttributeInfo* TestAsk::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestAsk::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestAsk::lookupAttributeInfo(const char* name,
+                                                        int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -1897,9 +1851,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestAsk& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestAcknowledgment::TestAcknowledgment()
 {
@@ -1914,11 +1868,11 @@ TestAcknowledgment::~TestAcknowledgment()
 {
 }
 
-TestAcknowledgment& TestAcknowledgment::operator=(const TestAcknowledgment& other)
+TestAcknowledgment& TestAcknowledgment::operator=(
+    const TestAcknowledgment& other)
 {
     (void)(other);
     return *this;
-
 }
 
 void TestAcknowledgment::reset()
@@ -1931,16 +1885,20 @@ void TestAcknowledgment::swap(TestAcknowledgment& other)
 }
 
 bool TestAcknowledgment::equals(const TestAcknowledgment& other) const
-{    (void)(other);
+{
+    (void)(other);
     return true;
 }
 
 bool TestAcknowledgment::less(const TestAcknowledgment& other) const
-{    (void)(other);
+{
+    (void)(other);
     return false;
 }
 
-bsl::ostream& TestAcknowledgment::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestAcknowledgment::print(bsl::ostream& stream,
+                                        int           level,
+                                        int           spacesPerLevel) const
 {
     (void)(stream);
     (void)(level);
@@ -1956,7 +1914,9 @@ const bdlat_AttributeInfo* TestAcknowledgment::lookupAttributeInfo(int id)
     return 0;
 }
 
-const bdlat_AttributeInfo* TestAcknowledgment::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestAcknowledgment::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     (void)(name);
     (void)(nameLength);
@@ -1978,14 +1938,15 @@ bool operator<(const TestAcknowledgment& lhs, const TestAcknowledgment& rhs)
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgment& object)
+bsl::ostream& operator<<(bsl::ostream&             stream,
+                         const TestAcknowledgment& object)
 {
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestBid::TestBid(bslma::Allocator* allocator)
 : id()
@@ -2014,11 +1975,11 @@ TestBid::~TestBid()
 TestBid& TestBid::operator=(const TestBid& other)
 {
     if (this != &other) {
-        this->id = other.id;
-        this->buyer = other.buyer;
+        this->id       = other.id;
+        this->buyer    = other.buyer;
         this->security = other.security;
-        this->shares = other.shares;
-        this->price = other.price;
+        this->shares   = other.shares;
+        this->price    = other.price;
         this->deadline = other.deadline;
     }
 
@@ -2121,42 +2082,31 @@ bool TestBid::less(const TestBid& other) const
     return this->deadline.gmtDatetime() < other.deadline.gmtDatetime();
 }
 
-bsl::ostream& TestBid::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestBid::print(bsl::ostream& stream,
+                             int           level,
+                             int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "id",
-        this->id);
-    printer.printAttribute(
-        "buyer",
-        this->buyer);
-    printer.printAttribute(
-        "security",
-        this->security);
-    printer.printAttribute(
-        "shares",
-        this->shares);
-    printer.printAttribute(
-        "price",
-        this->price);
-    printer.printAttribute(
-        "deadline",
-        this->deadline);
+    printer.printAttribute("id", this->id);
+    printer.printAttribute("buyer", this->buyer);
+    printer.printAttribute("security", this->security);
+    printer.printAttribute("shares", this->shares);
+    printer.printAttribute("price", this->price);
+    printer.printAttribute("deadline", this->deadline);
     printer.end();
     return stream;
 }
 
 const char TestBid::CLASS_NAME[] = "ntcf::TestBid";
 
-const bdlat_AttributeInfo TestBid::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "buyer", 5, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "security", 8, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "shares", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "price", 5, "", bdlat_FormattingMode::e_DEFAULT },
-    { 5, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestBid::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,       "id", 2, "", bdlat_FormattingMode::e_DEFAULT},
+    {1,    "buyer", 5, "", bdlat_FormattingMode::e_DEFAULT},
+    {2, "security", 8, "", bdlat_FormattingMode::e_DEFAULT},
+    {3,   "shares", 6, "", bdlat_FormattingMode::e_DEFAULT},
+    {4,    "price", 5, "", bdlat_FormattingMode::e_DEFAULT},
+    {5, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestBid::lookupAttributeInfo(int id)
@@ -2179,12 +2129,13 @@ const bdlat_AttributeInfo* TestBid::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestBid::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestBid::lookupAttributeInfo(const char* name,
+                                                        int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -2215,9 +2166,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestBid& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestSubscription::TestSubscription()
 {
@@ -2236,7 +2187,6 @@ TestSubscription& TestSubscription::operator=(const TestSubscription& other)
 {
     (void)(other);
     return *this;
-
 }
 
 void TestSubscription::reset()
@@ -2249,16 +2199,20 @@ void TestSubscription::swap(TestSubscription& other)
 }
 
 bool TestSubscription::equals(const TestSubscription& other) const
-{    (void)(other);
+{
+    (void)(other);
     return true;
 }
 
 bool TestSubscription::less(const TestSubscription& other) const
-{    (void)(other);
+{
+    (void)(other);
     return false;
 }
 
-bsl::ostream& TestSubscription::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestSubscription::print(bsl::ostream& stream,
+                                      int           level,
+                                      int           spacesPerLevel) const
 {
     (void)(stream);
     (void)(level);
@@ -2274,7 +2228,9 @@ const bdlat_AttributeInfo* TestSubscription::lookupAttributeInfo(int id)
     return 0;
 }
 
-const bdlat_AttributeInfo* TestSubscription::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestSubscription::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     (void)(name);
     (void)(nameLength);
@@ -2301,16 +2257,17 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestSubscription& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestPublication::TestPublication(bslma::Allocator* allocator)
 : trade(allocator)
 {
 }
 
-TestPublication::TestPublication(const TestPublication& original, bslma::Allocator* allocator)
+TestPublication::TestPublication(const TestPublication& original,
+                                 bslma::Allocator*      allocator)
 : trade(original.trade, allocator)
 {
 }
@@ -2354,14 +2311,14 @@ bool TestPublication::less(const TestPublication& other) const
     return this->trade < other.trade;
 }
 
-bsl::ostream& TestPublication::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestPublication::print(bsl::ostream& stream,
+                                     int           level,
+                                     int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     if (!this->trade.empty()) {
-        printer.printAttribute(
-            "trade",
-            this->trade);
+        printer.printAttribute("trade", this->trade);
     }
     printer.end();
     return stream;
@@ -2369,9 +2326,8 @@ bsl::ostream& TestPublication::print(bsl::ostream& stream, int level, int spaces
 
 const char TestPublication::CLASS_NAME[] = "ntcf::TestPublication";
 
-const bdlat_AttributeInfo TestPublication::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "trade", 5, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestPublication::ATTRIBUTE_INFO_ARRAY[] = {
+    {0, "trade", 5, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestPublication::lookupAttributeInfo(int id)
@@ -2384,12 +2340,14 @@ const bdlat_AttributeInfo* TestPublication::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestPublication::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestPublication::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -2420,9 +2378,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestPublication& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestContent::TestContent(bslma::Allocator* allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
@@ -2430,7 +2388,8 @@ TestContent::TestContent(bslma::Allocator* allocator)
 {
 }
 
-TestContent::TestContent(const TestContent& original, bslma::Allocator* allocator)
+TestContent::TestContent(const TestContent& original,
+                         bslma::Allocator*  allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(allocator))
 {
@@ -2509,31 +2468,31 @@ void TestContent::reset()
     case SELECTION_ID_BID: {
         typedef ntcf::TestBid Type;
         d_bid.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_ASK: {
         typedef ntcf::TestAsk Type;
         d_ask.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_TRADE: {
         typedef ntcf::TestTrade Type;
         d_trade.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_SUBSCRIPTION: {
         typedef ntcf::TestSubscription Type;
         d_subscription.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_PUBLICATION: {
         typedef ntcf::TestPublication Type;
         d_publication.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_ACKNOWLEDGMENT: {
         typedef ntcf::TestAcknowledgment Type;
         d_acknowledgment.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_FAULT: {
         typedef ntcf::TestFault Type;
         d_fault.object().~Type();
-        } break;
+    } break;
     default:
         BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
     }
@@ -2545,8 +2504,8 @@ void TestContent::swap(TestContent& other)
 {
     if (d_selectionId != other.d_selectionId) {
         TestContent temp = other;
-        other = *this;
-        *this = other;
+        other            = *this;
+        *this            = other;
         return;
     }
 
@@ -2561,13 +2520,16 @@ void TestContent::swap(TestContent& other)
         bslalg::SwapUtil::swap(&d_trade.object(), &other.d_trade.object());
         break;
     case SELECTION_ID_SUBSCRIPTION:
-        bslalg::SwapUtil::swap(&d_subscription.object(), &other.d_subscription.object());
+        bslalg::SwapUtil::swap(&d_subscription.object(),
+                               &other.d_subscription.object());
         break;
     case SELECTION_ID_PUBLICATION:
-        bslalg::SwapUtil::swap(&d_publication.object(), &other.d_publication.object());
+        bslalg::SwapUtil::swap(&d_publication.object(),
+                               &other.d_publication.object());
         break;
     case SELECTION_ID_ACKNOWLEDGMENT:
-        bslalg::SwapUtil::swap(&d_acknowledgment.object(), &other.d_acknowledgment.object());
+        bslalg::SwapUtil::swap(&d_acknowledgment.object(),
+                               &other.d_acknowledgment.object());
         break;
     case SELECTION_ID_FAULT:
         bslalg::SwapUtil::swap(&d_fault.object(), &other.d_fault.object());
@@ -2613,7 +2575,7 @@ int TestContent::makeSelection(int id)
 
 int TestContent::makeSelection(const char* name, int nameLength)
 {
-    const bdlat_SelectionInfo *selectionInfo =
+    const bdlat_SelectionInfo* selectionInfo =
         lookupSelectionInfo(name, nameLength);
     if (selectionInfo == 0) {
         return -1;
@@ -2629,7 +2591,7 @@ ntcf::TestBid& TestContent::makeBid()
     }
     else {
         reset();
-        new(d_bid.buffer()) ntcf::TestBid(d_allocator_p);
+        new (d_bid.buffer()) ntcf::TestBid(d_allocator_p);
         d_selectionId = SELECTION_ID_BID;
     }
 
@@ -2657,7 +2619,7 @@ ntcf::TestAsk& TestContent::makeAsk()
     }
     else {
         reset();
-        new(d_ask.buffer()) ntcf::TestAsk(d_allocator_p);
+        new (d_ask.buffer()) ntcf::TestAsk(d_allocator_p);
         d_selectionId = SELECTION_ID_ASK;
     }
 
@@ -2685,7 +2647,7 @@ ntcf::TestTrade& TestContent::makeTrade()
     }
     else {
         reset();
-        new(d_trade.buffer()) ntcf::TestTrade(d_allocator_p);
+        new (d_trade.buffer()) ntcf::TestTrade(d_allocator_p);
         d_selectionId = SELECTION_ID_TRADE;
     }
 
@@ -2713,14 +2675,15 @@ ntcf::TestSubscription& TestContent::makeSubscription()
     }
     else {
         reset();
-        new(d_subscription.buffer()) ntcf::TestSubscription();
+        new (d_subscription.buffer()) ntcf::TestSubscription();
         d_selectionId = SELECTION_ID_SUBSCRIPTION;
     }
 
     return d_subscription.object();
 }
 
-ntcf::TestSubscription& TestContent::makeSubscription(const ntcf::TestSubscription& value)
+ntcf::TestSubscription& TestContent::makeSubscription(
+    const ntcf::TestSubscription& value)
 {
     if (d_selectionId == SELECTION_ID_SUBSCRIPTION) {
         d_subscription.object() = value;
@@ -2741,21 +2704,23 @@ ntcf::TestPublication& TestContent::makePublication()
     }
     else {
         reset();
-        new(d_publication.buffer()) ntcf::TestPublication(d_allocator_p);
+        new (d_publication.buffer()) ntcf::TestPublication(d_allocator_p);
         d_selectionId = SELECTION_ID_PUBLICATION;
     }
 
     return d_publication.object();
 }
 
-ntcf::TestPublication& TestContent::makePublication(const ntcf::TestPublication& value)
+ntcf::TestPublication& TestContent::makePublication(
+    const ntcf::TestPublication& value)
 {
     if (d_selectionId == SELECTION_ID_PUBLICATION) {
         d_publication.object() = value;
     }
     else {
         reset();
-        new (d_publication.buffer()) ntcf::TestPublication(value, d_allocator_p);
+        new (d_publication.buffer())
+            ntcf::TestPublication(value, d_allocator_p);
         d_selectionId = SELECTION_ID_PUBLICATION;
     }
 
@@ -2769,14 +2734,15 @@ ntcf::TestAcknowledgment& TestContent::makeAcknowledgment()
     }
     else {
         reset();
-        new(d_acknowledgment.buffer()) ntcf::TestAcknowledgment();
+        new (d_acknowledgment.buffer()) ntcf::TestAcknowledgment();
         d_selectionId = SELECTION_ID_ACKNOWLEDGMENT;
     }
 
     return d_acknowledgment.object();
 }
 
-ntcf::TestAcknowledgment& TestContent::makeAcknowledgment(const ntcf::TestAcknowledgment& value)
+ntcf::TestAcknowledgment& TestContent::makeAcknowledgment(
+    const ntcf::TestAcknowledgment& value)
 {
     if (d_selectionId == SELECTION_ID_ACKNOWLEDGMENT) {
         d_acknowledgment.object() = value;
@@ -2797,7 +2763,7 @@ ntcf::TestFault& TestContent::makeFault()
     }
     else {
         reset();
-        new(d_fault.buffer()) ntcf::TestFault(d_allocator_p);
+        new (d_fault.buffer()) ntcf::TestFault(d_allocator_p);
         d_selectionId = SELECTION_ID_FAULT;
     }
 
@@ -3001,7 +2967,9 @@ bool TestContent::less(const TestContent& other) const
     }
 }
 
-bsl::ostream& TestContent::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestContent::print(bsl::ostream& stream,
+                                 int           level,
+                                 int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -3037,15 +3005,14 @@ bsl::ostream& TestContent::print(bsl::ostream& stream, int level, int spacesPerL
 
 const char TestContent::CLASS_NAME[] = "ntcf::TestContent";
 
-const bdlat_SelectionInfo TestContent::SELECTION_INFO_ARRAY[] =
-{
-    { 0, "bid", 3, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "ask", 3, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "trade", 5, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "subscription", 12, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "publication", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 5, "acknowledgment", 14, "", bdlat_FormattingMode::e_DEFAULT },
-    { 6, "fault", 5, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_SelectionInfo TestContent::SELECTION_INFO_ARRAY[] = {
+    {0,            "bid",  3, "", bdlat_FormattingMode::e_DEFAULT},
+    {1,            "ask",  3, "", bdlat_FormattingMode::e_DEFAULT},
+    {2,          "trade",  5, "", bdlat_FormattingMode::e_DEFAULT},
+    {3,   "subscription", 12, "", bdlat_FormattingMode::e_DEFAULT},
+    {4,    "publication", 11, "", bdlat_FormattingMode::e_DEFAULT},
+    {5, "acknowledgment", 14, "", bdlat_FormattingMode::e_DEFAULT},
+    {6,          "fault",  5, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_SelectionInfo* TestContent::lookupSelectionInfo(int id)
@@ -3070,12 +3037,13 @@ const bdlat_SelectionInfo* TestContent::lookupSelectionInfo(int id)
     }
 }
 
-const bdlat_SelectionInfo* TestContent::lookupSelectionInfo(const char* name, int nameLength)
+const bdlat_SelectionInfo* TestContent::lookupSelectionInfo(const char* name,
+                                                            int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_SELECTIONS; ++i) {
         const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
         if (selectionInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &selectionInfo;
@@ -3106,9 +3074,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestContent& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestSignal::TestSignal(bslma::Allocator* allocator)
 : id()
@@ -3133,10 +3101,10 @@ TestSignal::~TestSignal()
 TestSignal& TestSignal::operator=(const TestSignal& other)
 {
     if (this != &other) {
-        this->id = other.id;
-        this->value = other.value;
+        this->id      = other.id;
+        this->value   = other.value;
         this->reflect = other.reflect;
-        this->delay = other.delay;
+        this->delay   = other.delay;
     }
 
     return *this;
@@ -3210,34 +3178,27 @@ bool TestSignal::less(const TestSignal& other) const
     return this->delay < other.delay;
 }
 
-bsl::ostream& TestSignal::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestSignal::print(bsl::ostream& stream,
+                                int           level,
+                                int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "id",
-        this->id);
-    printer.printAttribute(
-        "value",
-        this->value);
-    printer.printAttribute(
-        "reflect",
-        this->reflect);
-    printer.printAttribute(
-        "delay",
-        this->delay);
+    printer.printAttribute("id", this->id);
+    printer.printAttribute("value", this->value);
+    printer.printAttribute("reflect", this->reflect);
+    printer.printAttribute("delay", this->delay);
     printer.end();
     return stream;
 }
 
 const char TestSignal::CLASS_NAME[] = "ntcf::TestSignal";
 
-const bdlat_AttributeInfo TestSignal::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "reflect", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "delay", 5, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestSignal::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,      "id", 2, "", bdlat_FormattingMode::e_DEFAULT},
+    {1,   "value", 5, "", bdlat_FormattingMode::e_DEFAULT},
+    {2, "reflect", 7, "", bdlat_FormattingMode::e_DEFAULT},
+    {3,   "delay", 5, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestSignal::lookupAttributeInfo(int id)
@@ -3256,12 +3217,13 @@ const bdlat_AttributeInfo* TestSignal::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestSignal::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestSignal::lookupAttributeInfo(const char* name,
+                                                           int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -3292,9 +3254,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestSignal& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestControlHeartbeat::TestControlHeartbeat()
 : acknowledge()
@@ -3310,7 +3272,8 @@ TestControlHeartbeat::~TestControlHeartbeat()
 {
 }
 
-TestControlHeartbeat& TestControlHeartbeat::operator=(const TestControlHeartbeat& other)
+TestControlHeartbeat& TestControlHeartbeat::operator=(
+    const TestControlHeartbeat& other)
 {
     if (this != &other) {
         this->acknowledge = other.acknowledge;
@@ -3345,22 +3308,21 @@ bool TestControlHeartbeat::less(const TestControlHeartbeat& other) const
     return this->acknowledge < other.acknowledge;
 }
 
-bsl::ostream& TestControlHeartbeat::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestControlHeartbeat::print(bsl::ostream& stream,
+                                          int           level,
+                                          int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "acknowledge",
-        this->acknowledge);
+    printer.printAttribute("acknowledge", this->acknowledge);
     printer.end();
     return stream;
 }
 
 const char TestControlHeartbeat::CLASS_NAME[] = "ntcf::TestControlHeartbeat";
 
-const bdlat_AttributeInfo TestControlHeartbeat::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "acknowledge", 11, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestControlHeartbeat::ATTRIBUTE_INFO_ARRAY[] = {
+    {0, "acknowledge", 11, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestControlHeartbeat::lookupAttributeInfo(int id)
@@ -3373,12 +3335,14 @@ const bdlat_AttributeInfo* TestControlHeartbeat::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestControlHeartbeat::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestControlHeartbeat::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -3389,29 +3353,33 @@ const bdlat_AttributeInfo* TestControlHeartbeat::lookupAttributeInfo(const char*
     return 0;
 }
 
-bool operator==(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs)
+bool operator==(const TestControlHeartbeat& lhs,
+                const TestControlHeartbeat& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs)
+bool operator!=(const TestControlHeartbeat& lhs,
+                const TestControlHeartbeat& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestControlHeartbeat& lhs, const TestControlHeartbeat& rhs)
+bool operator<(const TestControlHeartbeat& lhs,
+               const TestControlHeartbeat& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestControlHeartbeat& object)
+bsl::ostream& operator<<(bsl::ostream&               stream,
+                         const TestControlHeartbeat& object)
 {
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestEcho::TestEcho(bslma::Allocator* allocator)
 : id()
@@ -3432,7 +3400,7 @@ TestEcho::~TestEcho()
 TestEcho& TestEcho::operator=(const TestEcho& other)
 {
     if (this != &other) {
-        this->id = other.id;
+        this->id    = other.id;
         this->value = other.value;
     }
 
@@ -3479,26 +3447,23 @@ bool TestEcho::less(const TestEcho& other) const
     return this->value < other.value;
 }
 
-bsl::ostream& TestEcho::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestEcho::print(bsl::ostream& stream,
+                              int           level,
+                              int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "id",
-        this->id);
-    printer.printAttribute(
-        "value",
-        this->value);
+    printer.printAttribute("id", this->id);
+    printer.printAttribute("value", this->value);
     printer.end();
     return stream;
 }
 
 const char TestEcho::CLASS_NAME[] = "ntcf::TestEcho";
 
-const bdlat_AttributeInfo TestEcho::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "id", 2, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestEcho::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,    "id", 2, "", bdlat_FormattingMode::e_DEFAULT},
+    {1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestEcho::lookupAttributeInfo(int id)
@@ -3513,12 +3478,13 @@ const bdlat_AttributeInfo* TestEcho::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestEcho::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestEcho::lookupAttributeInfo(const char* name,
+                                                         int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -3549,9 +3515,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestEcho& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 const char* TestControlTransition::toString(Value value)
 {
@@ -3565,7 +3531,9 @@ const char* TestControlTransition::toString(Value value)
     }
 }
 
-int TestControlTransition::fromString(Value* result, const char* string, int stringLength)
+int TestControlTransition::fromString(Value*      result,
+                                      const char* string,
+                                      int         stringLength)
 {
     int rc;
     for (int i = 0; i < 2; ++i) {
@@ -3605,19 +3573,19 @@ bsl::ostream& TestControlTransition::print(bsl::ostream& stream, Value value)
 
 const char TestControlTransition::CLASS_NAME[] = "ntcf::TestControlTransition";
 
-const bdlat_EnumeratorInfo TestControlTransition::ENUMERATOR_INFO_ARRAY[] =
-{
-    { 0, "ACKNOWLEDGE_BEFORE", 18, "" },
-    { 1, "ACKNOWLEDGE_AFTER", 17, "" }
+const bdlat_EnumeratorInfo TestControlTransition::ENUMERATOR_INFO_ARRAY[] = {
+    {0, "ACKNOWLEDGE_BEFORE", 18, ""},
+    {1,  "ACKNOWLEDGE_AFTER", 17, ""}
 };
 
-bsl::ostream& operator<<(bsl::ostream& stream, TestControlTransition::Value value)
+bsl::ostream& operator<<(bsl::ostream&                stream,
+                         TestControlTransition::Value value)
 {
     return TestControlTransition::print(stream, value);
 }
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestControlEncryption::TestControlEncryption()
 : enabled()
@@ -3626,7 +3594,8 @@ TestControlEncryption::TestControlEncryption()
 {
 }
 
-TestControlEncryption::TestControlEncryption(const TestControlEncryption& other)
+TestControlEncryption::TestControlEncryption(
+    const TestControlEncryption& other)
 : enabled(other.enabled)
 , acknowledge(other.acknowledge)
 , transition(other.transition)
@@ -3637,12 +3606,13 @@ TestControlEncryption::~TestControlEncryption()
 {
 }
 
-TestControlEncryption& TestControlEncryption::operator=(const TestControlEncryption& other)
+TestControlEncryption& TestControlEncryption::operator=(
+    const TestControlEncryption& other)
 {
     if (this != &other) {
-        this->enabled = other.enabled;
+        this->enabled     = other.enabled;
         this->acknowledge = other.acknowledge;
-        this->transition = other.transition;
+        this->transition  = other.transition;
     }
 
     return *this;
@@ -3702,30 +3672,25 @@ bool TestControlEncryption::less(const TestControlEncryption& other) const
     return this->transition < other.transition;
 }
 
-bsl::ostream& TestControlEncryption::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestControlEncryption::print(bsl::ostream& stream,
+                                           int           level,
+                                           int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "enabled",
-        this->enabled);
-    printer.printAttribute(
-        "acknowledge",
-        this->acknowledge);
-    printer.printAttribute(
-        "transition",
-        this->transition);
+    printer.printAttribute("enabled", this->enabled);
+    printer.printAttribute("acknowledge", this->acknowledge);
+    printer.printAttribute("transition", this->transition);
     printer.end();
     return stream;
 }
 
 const char TestControlEncryption::CLASS_NAME[] = "ntcf::TestControlEncryption";
 
-const bdlat_AttributeInfo TestControlEncryption::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "enabled", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "acknowledge", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "transition", 10, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestControlEncryption::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,     "enabled",  7, "", bdlat_FormattingMode::e_DEFAULT},
+    {1, "acknowledge", 11, "", bdlat_FormattingMode::e_DEFAULT},
+    {2,  "transition", 10, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestControlEncryption::lookupAttributeInfo(int id)
@@ -3742,12 +3707,14 @@ const bdlat_AttributeInfo* TestControlEncryption::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestControlEncryption::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestControlEncryption::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -3758,29 +3725,33 @@ const bdlat_AttributeInfo* TestControlEncryption::lookupAttributeInfo(const char
     return 0;
 }
 
-bool operator==(const TestControlEncryption& lhs, const TestControlEncryption& rhs)
+bool operator==(const TestControlEncryption& lhs,
+                const TestControlEncryption& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestControlEncryption& lhs, const TestControlEncryption& rhs)
+bool operator!=(const TestControlEncryption& lhs,
+                const TestControlEncryption& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestControlEncryption& lhs, const TestControlEncryption& rhs)
+bool operator<(const TestControlEncryption& lhs,
+               const TestControlEncryption& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestControlEncryption& object)
+bsl::ostream& operator<<(bsl::ostream&                stream,
+                         const TestControlEncryption& object)
 {
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestControlCompression::TestControlCompression()
 : enabled()
@@ -3789,7 +3760,8 @@ TestControlCompression::TestControlCompression()
 {
 }
 
-TestControlCompression::TestControlCompression(const TestControlCompression& other)
+TestControlCompression::TestControlCompression(
+    const TestControlCompression& other)
 : enabled(other.enabled)
 , acknowledge(other.acknowledge)
 , transition(other.transition)
@@ -3800,12 +3772,13 @@ TestControlCompression::~TestControlCompression()
 {
 }
 
-TestControlCompression& TestControlCompression::operator=(const TestControlCompression& other)
+TestControlCompression& TestControlCompression::operator=(
+    const TestControlCompression& other)
 {
     if (this != &other) {
-        this->enabled = other.enabled;
+        this->enabled     = other.enabled;
         this->acknowledge = other.acknowledge;
-        this->transition = other.transition;
+        this->transition  = other.transition;
     }
 
     return *this;
@@ -3865,30 +3838,26 @@ bool TestControlCompression::less(const TestControlCompression& other) const
     return this->transition < other.transition;
 }
 
-bsl::ostream& TestControlCompression::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestControlCompression::print(bsl::ostream& stream,
+                                            int           level,
+                                            int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "enabled",
-        this->enabled);
-    printer.printAttribute(
-        "acknowledge",
-        this->acknowledge);
-    printer.printAttribute(
-        "transition",
-        this->transition);
+    printer.printAttribute("enabled", this->enabled);
+    printer.printAttribute("acknowledge", this->acknowledge);
+    printer.printAttribute("transition", this->transition);
     printer.end();
     return stream;
 }
 
-const char TestControlCompression::CLASS_NAME[] = "ntcf::TestControlCompression";
+const char TestControlCompression::CLASS_NAME[] =
+    "ntcf::TestControlCompression";
 
-const bdlat_AttributeInfo TestControlCompression::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "enabled", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "acknowledge", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "transition", 10, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestControlCompression::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,     "enabled",  7, "", bdlat_FormattingMode::e_DEFAULT},
+    {1, "acknowledge", 11, "", bdlat_FormattingMode::e_DEFAULT},
+    {2,  "transition", 10, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestControlCompression::lookupAttributeInfo(int id)
@@ -3905,12 +3874,14 @@ const bdlat_AttributeInfo* TestControlCompression::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestControlCompression::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestControlCompression::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -3921,29 +3892,33 @@ const bdlat_AttributeInfo* TestControlCompression::lookupAttributeInfo(const cha
     return 0;
 }
 
-bool operator==(const TestControlCompression& lhs, const TestControlCompression& rhs)
+bool operator==(const TestControlCompression& lhs,
+                const TestControlCompression& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestControlCompression& lhs, const TestControlCompression& rhs)
+bool operator!=(const TestControlCompression& lhs,
+                const TestControlCompression& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestControlCompression& lhs, const TestControlCompression& rhs)
+bool operator<(const TestControlCompression& lhs,
+               const TestControlCompression& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestControlCompression& object)
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         const TestControlCompression& object)
 {
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestControl::TestControl(bslma::Allocator* allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
@@ -3951,7 +3926,8 @@ TestControl::TestControl(bslma::Allocator* allocator)
 {
 }
 
-TestControl::TestControl(const TestControl& original, bslma::Allocator* allocator)
+TestControl::TestControl(const TestControl& original,
+                         bslma::Allocator*  allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(allocator))
 {
@@ -4030,31 +4006,31 @@ void TestControl::reset()
     case SELECTION_ID_SIGNAL: {
         typedef ntcf::TestSignal Type;
         d_signal.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_ECHO: {
         typedef ntcf::TestEcho Type;
         d_echo.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_ENCRYPTION: {
         typedef ntcf::TestControlEncryption Type;
         d_encryption.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_COMPRESSION: {
         typedef ntcf::TestControlCompression Type;
         d_compression.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_HEARTBEAT: {
         typedef ntcf::TestControlHeartbeat Type;
         d_heartbeat.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_ACKNOWLEDGMENT: {
         typedef ntcf::TestAcknowledgment Type;
         d_acknowledgment.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_FAULT: {
         typedef ntcf::TestFault Type;
         d_fault.object().~Type();
-        } break;
+    } break;
     default:
         BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
     }
@@ -4066,8 +4042,8 @@ void TestControl::swap(TestControl& other)
 {
     if (d_selectionId != other.d_selectionId) {
         TestControl temp = other;
-        other = *this;
-        *this = other;
+        other            = *this;
+        *this            = other;
         return;
     }
 
@@ -4079,16 +4055,20 @@ void TestControl::swap(TestControl& other)
         bslalg::SwapUtil::swap(&d_echo.object(), &other.d_echo.object());
         break;
     case SELECTION_ID_ENCRYPTION:
-        bslalg::SwapUtil::swap(&d_encryption.object(), &other.d_encryption.object());
+        bslalg::SwapUtil::swap(&d_encryption.object(),
+                               &other.d_encryption.object());
         break;
     case SELECTION_ID_COMPRESSION:
-        bslalg::SwapUtil::swap(&d_compression.object(), &other.d_compression.object());
+        bslalg::SwapUtil::swap(&d_compression.object(),
+                               &other.d_compression.object());
         break;
     case SELECTION_ID_HEARTBEAT:
-        bslalg::SwapUtil::swap(&d_heartbeat.object(), &other.d_heartbeat.object());
+        bslalg::SwapUtil::swap(&d_heartbeat.object(),
+                               &other.d_heartbeat.object());
         break;
     case SELECTION_ID_ACKNOWLEDGMENT:
-        bslalg::SwapUtil::swap(&d_acknowledgment.object(), &other.d_acknowledgment.object());
+        bslalg::SwapUtil::swap(&d_acknowledgment.object(),
+                               &other.d_acknowledgment.object());
         break;
     case SELECTION_ID_FAULT:
         bslalg::SwapUtil::swap(&d_fault.object(), &other.d_fault.object());
@@ -4134,7 +4114,7 @@ int TestControl::makeSelection(int id)
 
 int TestControl::makeSelection(const char* name, int nameLength)
 {
-    const bdlat_SelectionInfo *selectionInfo =
+    const bdlat_SelectionInfo* selectionInfo =
         lookupSelectionInfo(name, nameLength);
     if (selectionInfo == 0) {
         return -1;
@@ -4150,7 +4130,7 @@ ntcf::TestSignal& TestControl::makeSignal()
     }
     else {
         reset();
-        new(d_signal.buffer()) ntcf::TestSignal(d_allocator_p);
+        new (d_signal.buffer()) ntcf::TestSignal(d_allocator_p);
         d_selectionId = SELECTION_ID_SIGNAL;
     }
 
@@ -4178,7 +4158,7 @@ ntcf::TestEcho& TestControl::makeEcho()
     }
     else {
         reset();
-        new(d_echo.buffer()) ntcf::TestEcho(d_allocator_p);
+        new (d_echo.buffer()) ntcf::TestEcho(d_allocator_p);
         d_selectionId = SELECTION_ID_ECHO;
     }
 
@@ -4206,14 +4186,15 @@ ntcf::TestControlEncryption& TestControl::makeEncryption()
     }
     else {
         reset();
-        new(d_encryption.buffer()) ntcf::TestControlEncryption();
+        new (d_encryption.buffer()) ntcf::TestControlEncryption();
         d_selectionId = SELECTION_ID_ENCRYPTION;
     }
 
     return d_encryption.object();
 }
 
-ntcf::TestControlEncryption& TestControl::makeEncryption(const ntcf::TestControlEncryption& value)
+ntcf::TestControlEncryption& TestControl::makeEncryption(
+    const ntcf::TestControlEncryption& value)
 {
     if (d_selectionId == SELECTION_ID_ENCRYPTION) {
         d_encryption.object() = value;
@@ -4234,14 +4215,15 @@ ntcf::TestControlCompression& TestControl::makeCompression()
     }
     else {
         reset();
-        new(d_compression.buffer()) ntcf::TestControlCompression();
+        new (d_compression.buffer()) ntcf::TestControlCompression();
         d_selectionId = SELECTION_ID_COMPRESSION;
     }
 
     return d_compression.object();
 }
 
-ntcf::TestControlCompression& TestControl::makeCompression(const ntcf::TestControlCompression& value)
+ntcf::TestControlCompression& TestControl::makeCompression(
+    const ntcf::TestControlCompression& value)
 {
     if (d_selectionId == SELECTION_ID_COMPRESSION) {
         d_compression.object() = value;
@@ -4262,14 +4244,15 @@ ntcf::TestControlHeartbeat& TestControl::makeHeartbeat()
     }
     else {
         reset();
-        new(d_heartbeat.buffer()) ntcf::TestControlHeartbeat();
+        new (d_heartbeat.buffer()) ntcf::TestControlHeartbeat();
         d_selectionId = SELECTION_ID_HEARTBEAT;
     }
 
     return d_heartbeat.object();
 }
 
-ntcf::TestControlHeartbeat& TestControl::makeHeartbeat(const ntcf::TestControlHeartbeat& value)
+ntcf::TestControlHeartbeat& TestControl::makeHeartbeat(
+    const ntcf::TestControlHeartbeat& value)
 {
     if (d_selectionId == SELECTION_ID_HEARTBEAT) {
         d_heartbeat.object() = value;
@@ -4290,14 +4273,15 @@ ntcf::TestAcknowledgment& TestControl::makeAcknowledgment()
     }
     else {
         reset();
-        new(d_acknowledgment.buffer()) ntcf::TestAcknowledgment();
+        new (d_acknowledgment.buffer()) ntcf::TestAcknowledgment();
         d_selectionId = SELECTION_ID_ACKNOWLEDGMENT;
     }
 
     return d_acknowledgment.object();
 }
 
-ntcf::TestAcknowledgment& TestControl::makeAcknowledgment(const ntcf::TestAcknowledgment& value)
+ntcf::TestAcknowledgment& TestControl::makeAcknowledgment(
+    const ntcf::TestAcknowledgment& value)
 {
     if (d_selectionId == SELECTION_ID_ACKNOWLEDGMENT) {
         d_acknowledgment.object() = value;
@@ -4318,7 +4302,7 @@ ntcf::TestFault& TestControl::makeFault()
     }
     else {
         reset();
-        new(d_fault.buffer()) ntcf::TestFault(d_allocator_p);
+        new (d_fault.buffer()) ntcf::TestFault(d_allocator_p);
         d_selectionId = SELECTION_ID_FAULT;
     }
 
@@ -4522,7 +4506,9 @@ bool TestControl::less(const TestControl& other) const
     }
 }
 
-bsl::ostream& TestControl::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestControl::print(bsl::ostream& stream,
+                                 int           level,
+                                 int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -4558,15 +4544,14 @@ bsl::ostream& TestControl::print(bsl::ostream& stream, int level, int spacesPerL
 
 const char TestControl::CLASS_NAME[] = "ntcf::TestControl";
 
-const bdlat_SelectionInfo TestControl::SELECTION_INFO_ARRAY[] =
-{
-    { 0, "signal", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "echo", 4, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "encryption", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "compression", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "heartbeat", 9, "", bdlat_FormattingMode::e_DEFAULT },
-    { 5, "acknowledgment", 14, "", bdlat_FormattingMode::e_DEFAULT },
-    { 6, "fault", 5, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_SelectionInfo TestControl::SELECTION_INFO_ARRAY[] = {
+    {0,         "signal",  6, "", bdlat_FormattingMode::e_DEFAULT},
+    {1,           "echo",  4, "", bdlat_FormattingMode::e_DEFAULT},
+    {2,     "encryption", 10, "", bdlat_FormattingMode::e_DEFAULT},
+    {3,    "compression", 11, "", bdlat_FormattingMode::e_DEFAULT},
+    {4,      "heartbeat",  9, "", bdlat_FormattingMode::e_DEFAULT},
+    {5, "acknowledgment", 14, "", bdlat_FormattingMode::e_DEFAULT},
+    {6,          "fault",  5, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_SelectionInfo* TestControl::lookupSelectionInfo(int id)
@@ -4591,12 +4576,13 @@ const bdlat_SelectionInfo* TestControl::lookupSelectionInfo(int id)
     }
 }
 
-const bdlat_SelectionInfo* TestControl::lookupSelectionInfo(const char* name, int nameLength)
+const bdlat_SelectionInfo* TestControl::lookupSelectionInfo(const char* name,
+                                                            int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_SELECTIONS; ++i) {
         const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
         if (selectionInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &selectionInfo;
@@ -4627,9 +4613,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestControl& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestMessageEntity::TestMessageEntity(bslma::Allocator* allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
@@ -4637,7 +4623,8 @@ TestMessageEntity::TestMessageEntity(bslma::Allocator* allocator)
 {
 }
 
-TestMessageEntity::TestMessageEntity(const TestMessageEntity& original, bslma::Allocator* allocator)
+TestMessageEntity::TestMessageEntity(const TestMessageEntity& original,
+                                     bslma::Allocator*        allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(allocator))
 {
@@ -4686,11 +4673,11 @@ void TestMessageEntity::reset()
     case SELECTION_ID_CONTROL: {
         typedef ntcf::TestControl Type;
         d_control.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_CONTENT: {
         typedef ntcf::TestContent Type;
         d_content.object().~Type();
-        } break;
+    } break;
     default:
         BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
     }
@@ -4702,8 +4689,8 @@ void TestMessageEntity::swap(TestMessageEntity& other)
 {
     if (d_selectionId != other.d_selectionId) {
         TestMessageEntity temp = other;
-        other = *this;
-        *this = other;
+        other                  = *this;
+        *this                  = other;
         return;
     }
 
@@ -4740,7 +4727,7 @@ int TestMessageEntity::makeSelection(int id)
 
 int TestMessageEntity::makeSelection(const char* name, int nameLength)
 {
-    const bdlat_SelectionInfo *selectionInfo =
+    const bdlat_SelectionInfo* selectionInfo =
         lookupSelectionInfo(name, nameLength);
     if (selectionInfo == 0) {
         return -1;
@@ -4756,14 +4743,15 @@ ntcf::TestControl& TestMessageEntity::makeControl()
     }
     else {
         reset();
-        new(d_control.buffer()) ntcf::TestControl(d_allocator_p);
+        new (d_control.buffer()) ntcf::TestControl(d_allocator_p);
         d_selectionId = SELECTION_ID_CONTROL;
     }
 
     return d_control.object();
 }
 
-ntcf::TestControl& TestMessageEntity::makeControl(const ntcf::TestControl& value)
+ntcf::TestControl& TestMessageEntity::makeControl(
+    const ntcf::TestControl& value)
 {
     if (d_selectionId == SELECTION_ID_CONTROL) {
         d_control.object() = value;
@@ -4784,14 +4772,15 @@ ntcf::TestContent& TestMessageEntity::makeContent()
     }
     else {
         reset();
-        new(d_content.buffer()) ntcf::TestContent(d_allocator_p);
+        new (d_content.buffer()) ntcf::TestContent(d_allocator_p);
         d_selectionId = SELECTION_ID_CONTENT;
     }
 
     return d_content.object();
 }
 
-ntcf::TestContent& TestMessageEntity::makeContent(const ntcf::TestContent& value)
+ntcf::TestContent& TestMessageEntity::makeContent(
+    const ntcf::TestContent& value)
 {
     if (d_selectionId == SELECTION_ID_CONTENT) {
         d_content.object() = value;
@@ -4883,7 +4872,9 @@ bool TestMessageEntity::less(const TestMessageEntity& other) const
     }
 }
 
-bsl::ostream& TestMessageEntity::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestMessageEntity::print(bsl::ostream& stream,
+                                       int           level,
+                                       int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -4904,10 +4895,9 @@ bsl::ostream& TestMessageEntity::print(bsl::ostream& stream, int level, int spac
 
 const char TestMessageEntity::CLASS_NAME[] = "ntcf::TestMessageEntity";
 
-const bdlat_SelectionInfo TestMessageEntity::SELECTION_INFO_ARRAY[] =
-{
-    { 0, "control", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "content", 7, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_SelectionInfo TestMessageEntity::SELECTION_INFO_ARRAY[] = {
+    {0, "control", 7, "", bdlat_FormattingMode::e_DEFAULT},
+    {1, "content", 7, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_SelectionInfo* TestMessageEntity::lookupSelectionInfo(int id)
@@ -4922,12 +4912,14 @@ const bdlat_SelectionInfo* TestMessageEntity::lookupSelectionInfo(int id)
     }
 }
 
-const bdlat_SelectionInfo* TestMessageEntity::lookupSelectionInfo(const char* name, int nameLength)
+const bdlat_SelectionInfo* TestMessageEntity::lookupSelectionInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_SELECTIONS; ++i) {
         const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
         if (selectionInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &selectionInfo;
@@ -4958,9 +4950,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageEntity& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestMessagePragma::TestMessagePragma(bslma::Allocator* allocator)
 : uri(allocator)
@@ -4968,7 +4960,8 @@ TestMessagePragma::TestMessagePragma(bslma::Allocator* allocator)
 {
 }
 
-TestMessagePragma::TestMessagePragma(const TestMessagePragma& original, bslma::Allocator* allocator)
+TestMessagePragma::TestMessagePragma(const TestMessagePragma& original,
+                                     bslma::Allocator*        allocator)
 : uri(original.uri, allocator)
 , fault(original.fault, allocator)
 {
@@ -4981,7 +4974,7 @@ TestMessagePragma::~TestMessagePragma()
 TestMessagePragma& TestMessagePragma::operator=(const TestMessagePragma& other)
 {
     if (this != &other) {
-        this->uri = other.uri;
+        this->uri   = other.uri;
         this->fault = other.fault;
     }
 
@@ -5028,19 +5021,17 @@ bool TestMessagePragma::less(const TestMessagePragma& other) const
     return this->fault < other.fault;
 }
 
-bsl::ostream& TestMessagePragma::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestMessagePragma::print(bsl::ostream& stream,
+                                       int           level,
+                                       int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     if (this->uri.has_value()) {
-        printer.printAttribute(
-            "uri",
-            this->uri.value());
+        printer.printAttribute("uri", this->uri.value());
     }
     if (this->fault.has_value()) {
-        printer.printAttribute(
-            "fault",
-            this->fault.value());
+        printer.printAttribute("fault", this->fault.value());
     }
     printer.end();
     return stream;
@@ -5048,10 +5039,9 @@ bsl::ostream& TestMessagePragma::print(bsl::ostream& stream, int level, int spac
 
 const char TestMessagePragma::CLASS_NAME[] = "ntcf::TestMessagePragma";
 
-const bdlat_AttributeInfo TestMessagePragma::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "uri", 3, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "fault", 5, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestMessagePragma::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,   "uri", 3, "", bdlat_FormattingMode::e_DEFAULT},
+    {1, "fault", 5, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestMessagePragma::lookupAttributeInfo(int id)
@@ -5066,12 +5056,14 @@ const bdlat_AttributeInfo* TestMessagePragma::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestMessagePragma::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestMessagePragma::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -5102,9 +5094,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestMessagePragma& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestMessageFrame::TestMessageFrame(bslma::Allocator* allocator)
 : header()
@@ -5113,7 +5105,8 @@ TestMessageFrame::TestMessageFrame(bslma::Allocator* allocator)
 {
 }
 
-TestMessageFrame::TestMessageFrame(const TestMessageFrame& original, bslma::Allocator* allocator)
+TestMessageFrame::TestMessageFrame(const TestMessageFrame& original,
+                                   bslma::Allocator*       allocator)
 : header(original.header)
 , pragma(original.pragma, allocator)
 , entity(original.entity, allocator)
@@ -5189,22 +5182,18 @@ bool TestMessageFrame::less(const TestMessageFrame& other) const
     return this->entity < other.entity;
 }
 
-bsl::ostream& TestMessageFrame::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestMessageFrame::print(bsl::ostream& stream,
+                                      int           level,
+                                      int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "header",
-        this->header);
+    printer.printAttribute("header", this->header);
     if (this->pragma.has_value()) {
-        printer.printAttribute(
-            "pragma",
-            this->pragma.value());
+        printer.printAttribute("pragma", this->pragma.value());
     }
     if (this->entity.has_value()) {
-        printer.printAttribute(
-            "entity",
-            this->entity.value());
+        printer.printAttribute("entity", this->entity.value());
     }
     printer.end();
     return stream;
@@ -5212,11 +5201,10 @@ bsl::ostream& TestMessageFrame::print(bsl::ostream& stream, int level, int space
 
 const char TestMessageFrame::CLASS_NAME[] = "ntcf::TestMessageFrame";
 
-const bdlat_AttributeInfo TestMessageFrame::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "header", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "pragma", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "entity", 6, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestMessageFrame::ATTRIBUTE_INFO_ARRAY[] = {
+    {0, "header", 6, "", bdlat_FormattingMode::e_DEFAULT},
+    {1, "pragma", 6, "", bdlat_FormattingMode::e_DEFAULT},
+    {2, "entity", 6, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestMessageFrame::lookupAttributeInfo(int id)
@@ -5233,12 +5221,14 @@ const bdlat_AttributeInfo* TestMessageFrame::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestMessageFrame::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestMessageFrame::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -5269,9 +5259,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestMessageFrame& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestContext::TestContext()
 : error()
@@ -5296,10 +5286,10 @@ TestContext::~TestContext()
 TestContext& TestContext::operator=(const TestContext& other)
 {
     if (this != &other) {
-        this->error = other.error;
+        this->error             = other.error;
         this->latencyFromClient = other.latencyFromClient;
         this->latencyFromServer = other.latencyFromServer;
-        this->latencyOverall = other.latencyOverall;
+        this->latencyOverall    = other.latencyOverall;
     }
 
     return *this;
@@ -5317,8 +5307,10 @@ void TestContext::swap(TestContext& other)
 {
     if (this != &other) {
         bslalg::SwapUtil::swap(&this->error, &other.error);
-        bslalg::SwapUtil::swap(&this->latencyFromClient, &other.latencyFromClient);
-        bslalg::SwapUtil::swap(&this->latencyFromServer, &other.latencyFromServer);
+        bslalg::SwapUtil::swap(&this->latencyFromClient,
+                               &other.latencyFromClient);
+        bslalg::SwapUtil::swap(&this->latencyFromServer,
+                               &other.latencyFromServer);
         bslalg::SwapUtil::swap(&this->latencyOverall, &other.latencyOverall);
     }
 }
@@ -5373,34 +5365,27 @@ bool TestContext::less(const TestContext& other) const
     return this->latencyOverall < other.latencyOverall;
 }
 
-bsl::ostream& TestContext::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestContext::print(bsl::ostream& stream,
+                                 int           level,
+                                 int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "error",
-        this->error);
-    printer.printAttribute(
-        "latencyFromClient",
-        this->latencyFromClient);
-    printer.printAttribute(
-        "latencyFromServer",
-        this->latencyFromServer);
-    printer.printAttribute(
-        "latencyOverall",
-        this->latencyOverall);
+    printer.printAttribute("error", this->error);
+    printer.printAttribute("latencyFromClient", this->latencyFromClient);
+    printer.printAttribute("latencyFromServer", this->latencyFromServer);
+    printer.printAttribute("latencyOverall", this->latencyOverall);
     printer.end();
     return stream;
 }
 
 const char TestContext::CLASS_NAME[] = "ntcf::TestContext";
 
-const bdlat_AttributeInfo TestContext::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "error", 5, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "latencyFromClient", 17, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "latencyFromServer", 17, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "latencyOverall", 14, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestContext::ATTRIBUTE_INFO_ARRAY[] = {
+    {0,             "error",  5, "", bdlat_FormattingMode::e_DEFAULT},
+    {1, "latencyFromClient", 17, "", bdlat_FormattingMode::e_DEFAULT},
+    {2, "latencyFromServer", 17, "", bdlat_FormattingMode::e_DEFAULT},
+    {3,    "latencyOverall", 14, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestContext::lookupAttributeInfo(int id)
@@ -5419,12 +5404,13 @@ const bdlat_AttributeInfo* TestContext::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestContext::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestContext::lookupAttributeInfo(const char* name,
+                                                            int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -5455,9 +5441,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestContext& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestTradeResult::TestTradeResult(bslma::Allocator* allocator)
 : context()
@@ -5465,7 +5451,8 @@ TestTradeResult::TestTradeResult(bslma::Allocator* allocator)
 {
 }
 
-TestTradeResult::TestTradeResult(const TestTradeResult& original, bslma::Allocator* allocator)
+TestTradeResult::TestTradeResult(const TestTradeResult& original,
+                                 bslma::Allocator*      allocator)
 : context(original.context)
 , value(original.value, allocator)
 {
@@ -5479,7 +5466,7 @@ TestTradeResult& TestTradeResult::operator=(const TestTradeResult& other)
 {
     if (this != &other) {
         this->context = other.context;
-        this->value = other.value;
+        this->value   = other.value;
     }
 
     return *this;
@@ -5525,26 +5512,23 @@ bool TestTradeResult::less(const TestTradeResult& other) const
     return this->value < other.value;
 }
 
-bsl::ostream& TestTradeResult::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestTradeResult::print(bsl::ostream& stream,
+                                     int           level,
+                                     int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "context",
-        this->context);
-    printer.printAttribute(
-        "value",
-        this->value);
+    printer.printAttribute("context", this->context);
+    printer.printAttribute("value", this->value);
     printer.end();
     return stream;
 }
 
 const char TestTradeResult::CLASS_NAME[] = "ntcf::TestTradeResult";
 
-const bdlat_AttributeInfo TestTradeResult::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestTradeResult::ATTRIBUTE_INFO_ARRAY[] = {
+    {0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT},
+    {1,   "value", 5, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestTradeResult::lookupAttributeInfo(int id)
@@ -5559,12 +5543,14 @@ const bdlat_AttributeInfo* TestTradeResult::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestTradeResult::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestTradeResult::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -5595,9 +5581,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestTradeResult& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestOptions::TestOptions()
 : deadline()
@@ -5648,14 +5634,14 @@ bool TestOptions::less(const TestOptions& other) const
     return this->deadline < other.deadline;
 }
 
-bsl::ostream& TestOptions::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestOptions::print(bsl::ostream& stream,
+                                 int           level,
+                                 int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     if (this->deadline.has_value()) {
-        printer.printAttribute(
-            "deadline",
-            this->deadline.value());
+        printer.printAttribute("deadline", this->deadline.value());
     }
     printer.end();
     return stream;
@@ -5663,9 +5649,8 @@ bsl::ostream& TestOptions::print(bsl::ostream& stream, int level, int spacesPerL
 
 const char TestOptions::CLASS_NAME[] = "ntcf::TestOptions";
 
-const bdlat_AttributeInfo TestOptions::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestOptions::ATTRIBUTE_INFO_ARRAY[] = {
+    {0, "deadline", 8, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestOptions::lookupAttributeInfo(int id)
@@ -5678,12 +5663,13 @@ const bdlat_AttributeInfo* TestOptions::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestOptions::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestOptions::lookupAttributeInfo(const char* name,
+                                                            int nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -5714,9 +5700,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestOptions& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestServerConfig::TestServerConfig(bslma::Allocator* allocator)
 : name(allocator)
@@ -5742,7 +5728,8 @@ TestServerConfig::TestServerConfig(bslma::Allocator* allocator)
 {
 }
 
-TestServerConfig::TestServerConfig(const TestServerConfig& original, bslma::Allocator* allocator)
+TestServerConfig::TestServerConfig(const TestServerConfig& original,
+                                   bslma::Allocator*       allocator)
 : name(original.name, allocator)
 , driver(original.driver, allocator)
 , encryption(original.encryption)
@@ -5773,26 +5760,26 @@ TestServerConfig::~TestServerConfig()
 TestServerConfig& TestServerConfig::operator=(const TestServerConfig& other)
 {
     if (this != &other) {
-        this->name = other.name;
-        this->driver = other.driver;
-        this->encryption = other.encryption;
-        this->compression = other.compression;
-        this->minThreads = other.minThreads;
-        this->maxThreads = other.maxThreads;
-        this->dynamicLoadBalancing = other.dynamicLoadBalancing;
-        this->keepAlive = other.keepAlive;
-        this->keepHalfOpen = other.keepHalfOpen;
-        this->backlog = other.backlog;
-        this->blobBufferSize = other.blobBufferSize;
-        this->sendBufferSize = other.sendBufferSize;
-        this->receiveBufferSize = other.receiveBufferSize;
-        this->acceptGreedily = other.acceptGreedily;
-        this->acceptQueueLowWatermark = other.acceptQueueLowWatermark;
+        this->name                     = other.name;
+        this->driver                   = other.driver;
+        this->encryption               = other.encryption;
+        this->compression              = other.compression;
+        this->minThreads               = other.minThreads;
+        this->maxThreads               = other.maxThreads;
+        this->dynamicLoadBalancing     = other.dynamicLoadBalancing;
+        this->keepAlive                = other.keepAlive;
+        this->keepHalfOpen             = other.keepHalfOpen;
+        this->backlog                  = other.backlog;
+        this->blobBufferSize           = other.blobBufferSize;
+        this->sendBufferSize           = other.sendBufferSize;
+        this->receiveBufferSize        = other.receiveBufferSize;
+        this->acceptGreedily           = other.acceptGreedily;
+        this->acceptQueueLowWatermark  = other.acceptQueueLowWatermark;
         this->acceptQueueHighWatermark = other.acceptQueueHighWatermark;
-        this->readQueueLowWatermark = other.readQueueLowWatermark;
-        this->readQueueHighWatermark = other.readQueueHighWatermark;
-        this->writeQueueLowWatermark = other.writeQueueLowWatermark;
-        this->writeQueueHighWatermark = other.writeQueueHighWatermark;
+        this->readQueueLowWatermark    = other.readQueueLowWatermark;
+        this->readQueueHighWatermark   = other.readQueueHighWatermark;
+        this->writeQueueLowWatermark   = other.writeQueueLowWatermark;
+        this->writeQueueHighWatermark  = other.writeQueueHighWatermark;
     }
 
     return *this;
@@ -5831,20 +5818,28 @@ void TestServerConfig::swap(TestServerConfig& other)
         bslalg::SwapUtil::swap(&this->compression, &other.compression);
         bslalg::SwapUtil::swap(&this->minThreads, &other.minThreads);
         bslalg::SwapUtil::swap(&this->maxThreads, &other.maxThreads);
-        bslalg::SwapUtil::swap(&this->dynamicLoadBalancing, &other.dynamicLoadBalancing);
+        bslalg::SwapUtil::swap(&this->dynamicLoadBalancing,
+                               &other.dynamicLoadBalancing);
         bslalg::SwapUtil::swap(&this->keepAlive, &other.keepAlive);
         bslalg::SwapUtil::swap(&this->keepHalfOpen, &other.keepHalfOpen);
         bslalg::SwapUtil::swap(&this->backlog, &other.backlog);
         bslalg::SwapUtil::swap(&this->blobBufferSize, &other.blobBufferSize);
         bslalg::SwapUtil::swap(&this->sendBufferSize, &other.sendBufferSize);
-        bslalg::SwapUtil::swap(&this->receiveBufferSize, &other.receiveBufferSize);
+        bslalg::SwapUtil::swap(&this->receiveBufferSize,
+                               &other.receiveBufferSize);
         bslalg::SwapUtil::swap(&this->acceptGreedily, &other.acceptGreedily);
-        bslalg::SwapUtil::swap(&this->acceptQueueLowWatermark, &other.acceptQueueLowWatermark);
-        bslalg::SwapUtil::swap(&this->acceptQueueHighWatermark, &other.acceptQueueHighWatermark);
-        bslalg::SwapUtil::swap(&this->readQueueLowWatermark, &other.readQueueLowWatermark);
-        bslalg::SwapUtil::swap(&this->readQueueHighWatermark, &other.readQueueHighWatermark);
-        bslalg::SwapUtil::swap(&this->writeQueueLowWatermark, &other.writeQueueLowWatermark);
-        bslalg::SwapUtil::swap(&this->writeQueueHighWatermark, &other.writeQueueHighWatermark);
+        bslalg::SwapUtil::swap(&this->acceptQueueLowWatermark,
+                               &other.acceptQueueLowWatermark);
+        bslalg::SwapUtil::swap(&this->acceptQueueHighWatermark,
+                               &other.acceptQueueHighWatermark);
+        bslalg::SwapUtil::swap(&this->readQueueLowWatermark,
+                               &other.readQueueLowWatermark);
+        bslalg::SwapUtil::swap(&this->readQueueHighWatermark,
+                               &other.readQueueHighWatermark);
+        bslalg::SwapUtil::swap(&this->writeQueueLowWatermark,
+                               &other.writeQueueLowWatermark);
+        bslalg::SwapUtil::swap(&this->writeQueueHighWatermark,
+                               &other.writeQueueHighWatermark);
     }
 }
 
@@ -6090,109 +6085,79 @@ bool TestServerConfig::less(const TestServerConfig& other) const
     return this->writeQueueHighWatermark < other.writeQueueHighWatermark;
 }
 
-bsl::ostream& TestServerConfig::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestServerConfig::print(bsl::ostream& stream,
+                                      int           level,
+                                      int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     if (this->name.has_value()) {
-        printer.printAttribute(
-            "name",
-            this->name.value());
+        printer.printAttribute("name", this->name.value());
     }
     if (this->driver.has_value()) {
-        printer.printAttribute(
-            "driver",
-            this->driver.value());
+        printer.printAttribute("driver", this->driver.value());
     }
     if (this->encryption.has_value()) {
-        printer.printAttribute(
-            "encryption",
-            this->encryption.value());
+        printer.printAttribute("encryption", this->encryption.value());
     }
     if (this->compression.has_value()) {
-        printer.printAttribute(
-            "compression",
-            this->compression.value());
+        printer.printAttribute("compression", this->compression.value());
     }
     if (this->minThreads.has_value()) {
-        printer.printAttribute(
-            "minThreads",
-            this->minThreads.value());
+        printer.printAttribute("minThreads", this->minThreads.value());
     }
     if (this->maxThreads.has_value()) {
-        printer.printAttribute(
-            "maxThreads",
-            this->maxThreads.value());
+        printer.printAttribute("maxThreads", this->maxThreads.value());
     }
     if (this->dynamicLoadBalancing.has_value()) {
-        printer.printAttribute(
-            "dynamicLoadBalancing",
-            this->dynamicLoadBalancing.value());
+        printer.printAttribute("dynamicLoadBalancing",
+                               this->dynamicLoadBalancing.value());
     }
     if (this->keepAlive.has_value()) {
-        printer.printAttribute(
-            "keepAlive",
-            this->keepAlive.value());
+        printer.printAttribute("keepAlive", this->keepAlive.value());
     }
     if (this->keepHalfOpen.has_value()) {
-        printer.printAttribute(
-            "keepHalfOpen",
-            this->keepHalfOpen.value());
+        printer.printAttribute("keepHalfOpen", this->keepHalfOpen.value());
     }
     if (this->backlog.has_value()) {
-        printer.printAttribute(
-            "backlog",
-            this->backlog.value());
+        printer.printAttribute("backlog", this->backlog.value());
     }
     if (this->blobBufferSize.has_value()) {
-        printer.printAttribute(
-            "blobBufferSize",
-            this->blobBufferSize.value());
+        printer.printAttribute("blobBufferSize", this->blobBufferSize.value());
     }
     if (this->sendBufferSize.has_value()) {
-        printer.printAttribute(
-            "sendBufferSize",
-            this->sendBufferSize.value());
+        printer.printAttribute("sendBufferSize", this->sendBufferSize.value());
     }
     if (this->receiveBufferSize.has_value()) {
-        printer.printAttribute(
-            "receiveBufferSize",
-            this->receiveBufferSize.value());
+        printer.printAttribute("receiveBufferSize",
+                               this->receiveBufferSize.value());
     }
     if (this->acceptGreedily.has_value()) {
-        printer.printAttribute(
-            "acceptGreedily",
-            this->acceptGreedily.value());
+        printer.printAttribute("acceptGreedily", this->acceptGreedily.value());
     }
     if (this->acceptQueueLowWatermark.has_value()) {
-        printer.printAttribute(
-            "acceptQueueLowWatermark",
-            this->acceptQueueLowWatermark.value());
+        printer.printAttribute("acceptQueueLowWatermark",
+                               this->acceptQueueLowWatermark.value());
     }
     if (this->acceptQueueHighWatermark.has_value()) {
-        printer.printAttribute(
-            "acceptQueueHighWatermark",
-            this->acceptQueueHighWatermark.value());
+        printer.printAttribute("acceptQueueHighWatermark",
+                               this->acceptQueueHighWatermark.value());
     }
     if (this->readQueueLowWatermark.has_value()) {
-        printer.printAttribute(
-            "readQueueLowWatermark",
-            this->readQueueLowWatermark.value());
+        printer.printAttribute("readQueueLowWatermark",
+                               this->readQueueLowWatermark.value());
     }
     if (this->readQueueHighWatermark.has_value()) {
-        printer.printAttribute(
-            "readQueueHighWatermark",
-            this->readQueueHighWatermark.value());
+        printer.printAttribute("readQueueHighWatermark",
+                               this->readQueueHighWatermark.value());
     }
     if (this->writeQueueLowWatermark.has_value()) {
-        printer.printAttribute(
-            "writeQueueLowWatermark",
-            this->writeQueueLowWatermark.value());
+        printer.printAttribute("writeQueueLowWatermark",
+                               this->writeQueueLowWatermark.value());
     }
     if (this->writeQueueHighWatermark.has_value()) {
-        printer.printAttribute(
-            "writeQueueHighWatermark",
-            this->writeQueueHighWatermark.value());
+        printer.printAttribute("writeQueueHighWatermark",
+                               this->writeQueueHighWatermark.value());
     }
     printer.end();
     return stream;
@@ -6200,28 +6165,27 @@ bsl::ostream& TestServerConfig::print(bsl::ostream& stream, int level, int space
 
 const char TestServerConfig::CLASS_NAME[] = "ntcf::TestServerConfig";
 
-const bdlat_AttributeInfo TestServerConfig::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "name", 4, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "driver", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "encryption", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "compression", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "minThreads", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 5, "maxThreads", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 6, "dynamicLoadBalancing", 20, "", bdlat_FormattingMode::e_DEFAULT },
-    { 7, "keepAlive", 9, "", bdlat_FormattingMode::e_DEFAULT },
-    { 8, "keepHalfOpen", 12, "", bdlat_FormattingMode::e_DEFAULT },
-    { 9, "backlog", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 10, "blobBufferSize", 14, "", bdlat_FormattingMode::e_DEFAULT },
-    { 11, "sendBufferSize", 14, "", bdlat_FormattingMode::e_DEFAULT },
-    { 12, "receiveBufferSize", 17, "", bdlat_FormattingMode::e_DEFAULT },
-    { 13, "acceptGreedily", 14, "", bdlat_FormattingMode::e_DEFAULT },
-    { 14, "acceptQueueLowWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT },
-    { 15, "acceptQueueHighWatermark", 24, "", bdlat_FormattingMode::e_DEFAULT },
-    { 16, "readQueueLowWatermark", 21, "", bdlat_FormattingMode::e_DEFAULT },
-    { 17, "readQueueHighWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT },
-    { 18, "writeQueueLowWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT },
-    { 19, "writeQueueHighWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestServerConfig::ATTRIBUTE_INFO_ARRAY[] = {
+    { 0,                     "name",  4, "", bdlat_FormattingMode::e_DEFAULT},
+    { 1,                   "driver",  6, "", bdlat_FormattingMode::e_DEFAULT},
+    { 2,               "encryption", 10, "", bdlat_FormattingMode::e_DEFAULT},
+    { 3,              "compression", 11, "", bdlat_FormattingMode::e_DEFAULT},
+    { 4,               "minThreads", 10, "", bdlat_FormattingMode::e_DEFAULT},
+    { 5,               "maxThreads", 10, "", bdlat_FormattingMode::e_DEFAULT},
+    { 6,     "dynamicLoadBalancing", 20, "", bdlat_FormattingMode::e_DEFAULT},
+    { 7,                "keepAlive",  9, "", bdlat_FormattingMode::e_DEFAULT},
+    { 8,             "keepHalfOpen", 12, "", bdlat_FormattingMode::e_DEFAULT},
+    { 9,                  "backlog",  7, "", bdlat_FormattingMode::e_DEFAULT},
+    {10,           "blobBufferSize", 14, "", bdlat_FormattingMode::e_DEFAULT},
+    {11,           "sendBufferSize", 14, "", bdlat_FormattingMode::e_DEFAULT},
+    {12,        "receiveBufferSize", 17, "", bdlat_FormattingMode::e_DEFAULT},
+    {13,           "acceptGreedily", 14, "", bdlat_FormattingMode::e_DEFAULT},
+    {14,  "acceptQueueLowWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT},
+    {15, "acceptQueueHighWatermark", 24, "", bdlat_FormattingMode::e_DEFAULT},
+    {16,    "readQueueLowWatermark", 21, "", bdlat_FormattingMode::e_DEFAULT},
+    {17,   "readQueueHighWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT},
+    {18,   "writeQueueLowWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT},
+    {19,  "writeQueueHighWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestServerConfig::lookupAttributeInfo(int id)
@@ -6256,28 +6220,35 @@ const bdlat_AttributeInfo* TestServerConfig::lookupAttributeInfo(int id)
     case ATTRIBUTE_ID_ACCEPT_GREEDILY:
         return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY];
     case ATTRIBUTE_ID_ACCEPT_QUEUE_LOW_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK];
+        return &ATTRIBUTE_INFO_ARRAY
+            [ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK];
     case ATTRIBUTE_ID_ACCEPT_QUEUE_HIGH_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK];
+        return &ATTRIBUTE_INFO_ARRAY
+            [ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK];
     case ATTRIBUTE_ID_READ_QUEUE_LOW_WATERMARK:
         return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK];
     case ATTRIBUTE_ID_READ_QUEUE_HIGH_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK];
+        return &ATTRIBUTE_INFO_ARRAY
+            [ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK];
     case ATTRIBUTE_ID_WRITE_QUEUE_LOW_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK];
+        return &ATTRIBUTE_INFO_ARRAY
+            [ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK];
     case ATTRIBUTE_ID_WRITE_QUEUE_HIGH_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK];
+        return &ATTRIBUTE_INFO_ARRAY
+            [ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK];
     default:
         return 0;
     }
 }
 
-const bdlat_AttributeInfo* TestServerConfig::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestServerConfig::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -6308,17 +6279,20 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestServerConfig& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
-TestAcknowledgmentResultValue::TestAcknowledgmentResultValue(bslma::Allocator* allocator)
+TestAcknowledgmentResultValue::TestAcknowledgmentResultValue(
+    bslma::Allocator* allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(allocator))
 {
 }
 
-TestAcknowledgmentResultValue::TestAcknowledgmentResultValue(const TestAcknowledgmentResultValue& original, bslma::Allocator* allocator)
+TestAcknowledgmentResultValue::TestAcknowledgmentResultValue(
+    const TestAcknowledgmentResultValue& original,
+    bslma::Allocator*                    allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(allocator))
 {
@@ -6339,7 +6313,8 @@ TestAcknowledgmentResultValue::~TestAcknowledgmentResultValue()
     reset();
 }
 
-TestAcknowledgmentResultValue& TestAcknowledgmentResultValue::operator=(const TestAcknowledgmentResultValue& other)
+TestAcknowledgmentResultValue& TestAcknowledgmentResultValue::operator=(
+    const TestAcknowledgmentResultValue& other)
 {
     if (this == &other) {
         return *this;
@@ -6367,11 +6342,11 @@ void TestAcknowledgmentResultValue::reset()
     case SELECTION_ID_FAILURE: {
         typedef ntcf::TestFault Type;
         d_failure.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_SUCCESS: {
         typedef ntcf::TestAcknowledgment Type;
         d_success.object().~Type();
-        } break;
+    } break;
     default:
         BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
     }
@@ -6383,8 +6358,8 @@ void TestAcknowledgmentResultValue::swap(TestAcknowledgmentResultValue& other)
 {
     if (d_selectionId != other.d_selectionId) {
         TestAcknowledgmentResultValue temp = other;
-        other = *this;
-        *this = other;
+        other                              = *this;
+        *this                              = other;
         return;
     }
 
@@ -6419,9 +6394,10 @@ int TestAcknowledgmentResultValue::makeSelection(int id)
     return 0;
 }
 
-int TestAcknowledgmentResultValue::makeSelection(const char* name, int nameLength)
+int TestAcknowledgmentResultValue::makeSelection(const char* name,
+                                                 int         nameLength)
 {
-    const bdlat_SelectionInfo *selectionInfo =
+    const bdlat_SelectionInfo* selectionInfo =
         lookupSelectionInfo(name, nameLength);
     if (selectionInfo == 0) {
         return -1;
@@ -6437,14 +6413,15 @@ ntcf::TestFault& TestAcknowledgmentResultValue::makeFailure()
     }
     else {
         reset();
-        new(d_failure.buffer()) ntcf::TestFault(d_allocator_p);
+        new (d_failure.buffer()) ntcf::TestFault(d_allocator_p);
         d_selectionId = SELECTION_ID_FAILURE;
     }
 
     return d_failure.object();
 }
 
-ntcf::TestFault& TestAcknowledgmentResultValue::makeFailure(const ntcf::TestFault& value)
+ntcf::TestFault& TestAcknowledgmentResultValue::makeFailure(
+    const ntcf::TestFault& value)
 {
     if (d_selectionId == SELECTION_ID_FAILURE) {
         d_failure.object() = value;
@@ -6465,14 +6442,15 @@ ntcf::TestAcknowledgment& TestAcknowledgmentResultValue::makeSuccess()
     }
     else {
         reset();
-        new(d_success.buffer()) ntcf::TestAcknowledgment();
+        new (d_success.buffer()) ntcf::TestAcknowledgment();
         d_selectionId = SELECTION_ID_SUCCESS;
     }
 
     return d_success.object();
 }
 
-ntcf::TestAcknowledgment& TestAcknowledgmentResultValue::makeSuccess(const ntcf::TestAcknowledgment& value)
+ntcf::TestAcknowledgment& TestAcknowledgmentResultValue::makeSuccess(
+    const ntcf::TestAcknowledgment& value)
 {
     if (d_selectionId == SELECTION_ID_SUCCESS) {
         d_success.object() = value;
@@ -6530,7 +6508,8 @@ int TestAcknowledgmentResultValue::selectionId() const
     return d_selectionId;
 }
 
-bool TestAcknowledgmentResultValue::equals(const TestAcknowledgmentResultValue& other) const
+bool TestAcknowledgmentResultValue::equals(
+    const TestAcknowledgmentResultValue& other) const
 {
     if (d_selectionId != other.d_selectionId) {
         return false;
@@ -6547,7 +6526,8 @@ bool TestAcknowledgmentResultValue::equals(const TestAcknowledgmentResultValue& 
     }
 }
 
-bool TestAcknowledgmentResultValue::less(const TestAcknowledgmentResultValue& other) const
+bool TestAcknowledgmentResultValue::less(
+    const TestAcknowledgmentResultValue& other) const
 {
     if (d_selectionId != other.d_selectionId) {
         return false;
@@ -6564,7 +6544,9 @@ bool TestAcknowledgmentResultValue::less(const TestAcknowledgmentResultValue& ot
     }
 }
 
-bsl::ostream& TestAcknowledgmentResultValue::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestAcknowledgmentResultValue::print(bsl::ostream& stream,
+                                                   int           level,
+                                                   int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -6583,15 +6565,17 @@ bsl::ostream& TestAcknowledgmentResultValue::print(bsl::ostream& stream, int lev
     return stream;
 }
 
-const char TestAcknowledgmentResultValue::CLASS_NAME[] = "ntcf::TestAcknowledgmentResultValue";
+const char TestAcknowledgmentResultValue::CLASS_NAME[] =
+    "ntcf::TestAcknowledgmentResultValue";
 
-const bdlat_SelectionInfo TestAcknowledgmentResultValue::SELECTION_INFO_ARRAY[] =
-{
-    { 0, "failure", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "success", 7, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_SelectionInfo
+    TestAcknowledgmentResultValue::SELECTION_INFO_ARRAY[] = {
+        {0, "failure", 7, "", bdlat_FormattingMode::e_DEFAULT},
+        {1, "success", 7, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
-const bdlat_SelectionInfo* TestAcknowledgmentResultValue::lookupSelectionInfo(int id)
+const bdlat_SelectionInfo* TestAcknowledgmentResultValue::lookupSelectionInfo(
+    int id)
 {
     switch (id) {
     case SELECTION_ID_FAILURE:
@@ -6603,12 +6587,14 @@ const bdlat_SelectionInfo* TestAcknowledgmentResultValue::lookupSelectionInfo(in
     }
 }
 
-const bdlat_SelectionInfo* TestAcknowledgmentResultValue::lookupSelectionInfo(const char* name, int nameLength)
+const bdlat_SelectionInfo* TestAcknowledgmentResultValue::lookupSelectionInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_SELECTIONS; ++i) {
         const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
         if (selectionInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &selectionInfo;
@@ -6619,29 +6605,33 @@ const bdlat_SelectionInfo* TestAcknowledgmentResultValue::lookupSelectionInfo(co
     return 0;
 }
 
-bool operator==(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs)
+bool operator==(const TestAcknowledgmentResultValue& lhs,
+                const TestAcknowledgmentResultValue& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs)
+bool operator!=(const TestAcknowledgmentResultValue& lhs,
+                const TestAcknowledgmentResultValue& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestAcknowledgmentResultValue& lhs, const TestAcknowledgmentResultValue& rhs)
+bool operator<(const TestAcknowledgmentResultValue& lhs,
+               const TestAcknowledgmentResultValue& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgmentResultValue& object)
+bsl::ostream& operator<<(bsl::ostream&                        stream,
+                         const TestAcknowledgmentResultValue& object)
 {
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestAcknowledgmentResult::TestAcknowledgmentResult(bslma::Allocator* allocator)
 : context()
@@ -6649,7 +6639,9 @@ TestAcknowledgmentResult::TestAcknowledgmentResult(bslma::Allocator* allocator)
 {
 }
 
-TestAcknowledgmentResult::TestAcknowledgmentResult(const TestAcknowledgmentResult& original, bslma::Allocator* allocator)
+TestAcknowledgmentResult::TestAcknowledgmentResult(
+    const TestAcknowledgmentResult& original,
+    bslma::Allocator*               allocator)
 : context(original.context)
 , value(original.value, allocator)
 {
@@ -6659,11 +6651,12 @@ TestAcknowledgmentResult::~TestAcknowledgmentResult()
 {
 }
 
-TestAcknowledgmentResult& TestAcknowledgmentResult::operator=(const TestAcknowledgmentResult& other)
+TestAcknowledgmentResult& TestAcknowledgmentResult::operator=(
+    const TestAcknowledgmentResult& other)
 {
     if (this != &other) {
         this->context = other.context;
-        this->value = other.value;
+        this->value   = other.value;
     }
 
     return *this;
@@ -6683,7 +6676,8 @@ void TestAcknowledgmentResult::swap(TestAcknowledgmentResult& other)
     }
 }
 
-bool TestAcknowledgmentResult::equals(const TestAcknowledgmentResult& other) const
+bool TestAcknowledgmentResult::equals(
+    const TestAcknowledgmentResult& other) const
 {
     if (this->context != other.context) {
         return false;
@@ -6696,7 +6690,8 @@ bool TestAcknowledgmentResult::equals(const TestAcknowledgmentResult& other) con
     return true;
 }
 
-bool TestAcknowledgmentResult::less(const TestAcknowledgmentResult& other) const
+bool TestAcknowledgmentResult::less(
+    const TestAcknowledgmentResult& other) const
 {
     if (this->context < other.context) {
         return true;
@@ -6709,29 +6704,28 @@ bool TestAcknowledgmentResult::less(const TestAcknowledgmentResult& other) const
     return this->value < other.value;
 }
 
-bsl::ostream& TestAcknowledgmentResult::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestAcknowledgmentResult::print(bsl::ostream& stream,
+                                              int           level,
+                                              int spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "context",
-        this->context);
-    printer.printAttribute(
-        "value",
-        this->value);
+    printer.printAttribute("context", this->context);
+    printer.printAttribute("value", this->value);
     printer.end();
     return stream;
 }
 
-const char TestAcknowledgmentResult::CLASS_NAME[] = "ntcf::TestAcknowledgmentResult";
+const char TestAcknowledgmentResult::CLASS_NAME[] =
+    "ntcf::TestAcknowledgmentResult";
 
-const bdlat_AttributeInfo TestAcknowledgmentResult::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestAcknowledgmentResult::ATTRIBUTE_INFO_ARRAY[] = {
+    {0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT},
+    {1,   "value", 5, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
-const bdlat_AttributeInfo* TestAcknowledgmentResult::lookupAttributeInfo(int id)
+const bdlat_AttributeInfo* TestAcknowledgmentResult::lookupAttributeInfo(
+    int id)
 {
     switch (id) {
     case ATTRIBUTE_ID_CONTEXT:
@@ -6743,12 +6737,14 @@ const bdlat_AttributeInfo* TestAcknowledgmentResult::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestAcknowledgmentResult::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestAcknowledgmentResult::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -6759,29 +6755,33 @@ const bdlat_AttributeInfo* TestAcknowledgmentResult::lookupAttributeInfo(const c
     return 0;
 }
 
-bool operator==(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs)
+bool operator==(const TestAcknowledgmentResult& lhs,
+                const TestAcknowledgmentResult& rhs)
 {
     return lhs.equals(rhs);
 }
 
-bool operator!=(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs)
+bool operator!=(const TestAcknowledgmentResult& lhs,
+                const TestAcknowledgmentResult& rhs)
 {
     return (!operator==(lhs, rhs));
 }
 
-bool operator<(const TestAcknowledgmentResult& lhs, const TestAcknowledgmentResult& rhs)
+bool operator<(const TestAcknowledgmentResult& lhs,
+               const TestAcknowledgmentResult& rhs)
 {
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestAcknowledgmentResult& object)
+bsl::ostream& operator<<(bsl::ostream&                   stream,
+                         const TestAcknowledgmentResult& object)
 {
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 const char* TestMessageType::toString(Value value)
 {
@@ -6817,7 +6817,9 @@ const char* TestMessageType::toString(Value value)
     }
 }
 
-int TestMessageType::fromString(Value* result, const char* string, int stringLength)
+int TestMessageType::fromString(Value*      result,
+                                const char* string,
+                                int         stringLength)
 {
     int rc;
     for (int i = 0; i < 13; ++i) {
@@ -6868,30 +6870,29 @@ bsl::ostream& TestMessageType::print(bsl::ostream& stream, Value value)
 
 const char TestMessageType::CLASS_NAME[] = "ntcf::TestMessageType";
 
-const bdlat_EnumeratorInfo TestMessageType::ENUMERATOR_INFO_ARRAY[] =
-{
-    { 0, "UNDEFINED", 9, "" },
-    { 1, "FAULT", 5, "" },
-    { 2, "ACKNOWLEDGMENT", 14, "" },
-    { 3, "BID", 3, "" },
-    { 4, "ASK", 3, "" },
-    { 5, "TRADE", 5, "" },
-    { 6, "SUBSCRIPTION", 12, "" },
-    { 7, "PUBLICATION", 11, "" },
-    { 8, "SIGNAL", 6, "" },
-    { 9, "ECHO", 4, "" },
-    { 10, "ENCRYPT", 7, "" },
-    { 11, "COMPRESS", 8, "" },
-    { 12, "HEARTBEAT", 9, "" }
+const bdlat_EnumeratorInfo TestMessageType::ENUMERATOR_INFO_ARRAY[] = {
+    { 0,      "UNDEFINED",  9, ""},
+    { 1,          "FAULT",  5, ""},
+    { 2, "ACKNOWLEDGMENT", 14, ""},
+    { 3,            "BID",  3, ""},
+    { 4,            "ASK",  3, ""},
+    { 5,          "TRADE",  5, ""},
+    { 6,   "SUBSCRIPTION", 12, ""},
+    { 7,    "PUBLICATION", 11, ""},
+    { 8,         "SIGNAL",  6, ""},
+    { 9,           "ECHO",  4, ""},
+    {10,        "ENCRYPT",  7, ""},
+    {11,       "COMPRESS",  8, ""},
+    {12,      "HEARTBEAT",  9, ""}
 };
 
 bsl::ostream& operator<<(bsl::ostream& stream, TestMessageType::Value value)
 {
     return TestMessageType::print(stream, value);
 }
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestClientConfig::TestClientConfig(bslma::Allocator* allocator)
 : name(allocator)
@@ -6917,7 +6918,8 @@ TestClientConfig::TestClientConfig(bslma::Allocator* allocator)
 {
 }
 
-TestClientConfig::TestClientConfig(const TestClientConfig& original, bslma::Allocator* allocator)
+TestClientConfig::TestClientConfig(const TestClientConfig& original,
+                                   bslma::Allocator*       allocator)
 : name(original.name, allocator)
 , driver(original.driver, allocator)
 , encryption(original.encryption)
@@ -6948,26 +6950,26 @@ TestClientConfig::~TestClientConfig()
 TestClientConfig& TestClientConfig::operator=(const TestClientConfig& other)
 {
     if (this != &other) {
-        this->name = other.name;
-        this->driver = other.driver;
-        this->encryption = other.encryption;
-        this->compression = other.compression;
-        this->minThreads = other.minThreads;
-        this->maxThreads = other.maxThreads;
-        this->dynamicLoadBalancing = other.dynamicLoadBalancing;
-        this->keepAlive = other.keepAlive;
-        this->keepHalfOpen = other.keepHalfOpen;
-        this->backlog = other.backlog;
-        this->blobBufferSize = other.blobBufferSize;
-        this->sendBufferSize = other.sendBufferSize;
-        this->receiveBufferSize = other.receiveBufferSize;
-        this->acceptGreedily = other.acceptGreedily;
-        this->acceptQueueLowWatermark = other.acceptQueueLowWatermark;
+        this->name                     = other.name;
+        this->driver                   = other.driver;
+        this->encryption               = other.encryption;
+        this->compression              = other.compression;
+        this->minThreads               = other.minThreads;
+        this->maxThreads               = other.maxThreads;
+        this->dynamicLoadBalancing     = other.dynamicLoadBalancing;
+        this->keepAlive                = other.keepAlive;
+        this->keepHalfOpen             = other.keepHalfOpen;
+        this->backlog                  = other.backlog;
+        this->blobBufferSize           = other.blobBufferSize;
+        this->sendBufferSize           = other.sendBufferSize;
+        this->receiveBufferSize        = other.receiveBufferSize;
+        this->acceptGreedily           = other.acceptGreedily;
+        this->acceptQueueLowWatermark  = other.acceptQueueLowWatermark;
         this->acceptQueueHighWatermark = other.acceptQueueHighWatermark;
-        this->readQueueLowWatermark = other.readQueueLowWatermark;
-        this->readQueueHighWatermark = other.readQueueHighWatermark;
-        this->writeQueueLowWatermark = other.writeQueueLowWatermark;
-        this->writeQueueHighWatermark = other.writeQueueHighWatermark;
+        this->readQueueLowWatermark    = other.readQueueLowWatermark;
+        this->readQueueHighWatermark   = other.readQueueHighWatermark;
+        this->writeQueueLowWatermark   = other.writeQueueLowWatermark;
+        this->writeQueueHighWatermark  = other.writeQueueHighWatermark;
     }
 
     return *this;
@@ -7006,20 +7008,28 @@ void TestClientConfig::swap(TestClientConfig& other)
         bslalg::SwapUtil::swap(&this->compression, &other.compression);
         bslalg::SwapUtil::swap(&this->minThreads, &other.minThreads);
         bslalg::SwapUtil::swap(&this->maxThreads, &other.maxThreads);
-        bslalg::SwapUtil::swap(&this->dynamicLoadBalancing, &other.dynamicLoadBalancing);
+        bslalg::SwapUtil::swap(&this->dynamicLoadBalancing,
+                               &other.dynamicLoadBalancing);
         bslalg::SwapUtil::swap(&this->keepAlive, &other.keepAlive);
         bslalg::SwapUtil::swap(&this->keepHalfOpen, &other.keepHalfOpen);
         bslalg::SwapUtil::swap(&this->backlog, &other.backlog);
         bslalg::SwapUtil::swap(&this->blobBufferSize, &other.blobBufferSize);
         bslalg::SwapUtil::swap(&this->sendBufferSize, &other.sendBufferSize);
-        bslalg::SwapUtil::swap(&this->receiveBufferSize, &other.receiveBufferSize);
+        bslalg::SwapUtil::swap(&this->receiveBufferSize,
+                               &other.receiveBufferSize);
         bslalg::SwapUtil::swap(&this->acceptGreedily, &other.acceptGreedily);
-        bslalg::SwapUtil::swap(&this->acceptQueueLowWatermark, &other.acceptQueueLowWatermark);
-        bslalg::SwapUtil::swap(&this->acceptQueueHighWatermark, &other.acceptQueueHighWatermark);
-        bslalg::SwapUtil::swap(&this->readQueueLowWatermark, &other.readQueueLowWatermark);
-        bslalg::SwapUtil::swap(&this->readQueueHighWatermark, &other.readQueueHighWatermark);
-        bslalg::SwapUtil::swap(&this->writeQueueLowWatermark, &other.writeQueueLowWatermark);
-        bslalg::SwapUtil::swap(&this->writeQueueHighWatermark, &other.writeQueueHighWatermark);
+        bslalg::SwapUtil::swap(&this->acceptQueueLowWatermark,
+                               &other.acceptQueueLowWatermark);
+        bslalg::SwapUtil::swap(&this->acceptQueueHighWatermark,
+                               &other.acceptQueueHighWatermark);
+        bslalg::SwapUtil::swap(&this->readQueueLowWatermark,
+                               &other.readQueueLowWatermark);
+        bslalg::SwapUtil::swap(&this->readQueueHighWatermark,
+                               &other.readQueueHighWatermark);
+        bslalg::SwapUtil::swap(&this->writeQueueLowWatermark,
+                               &other.writeQueueLowWatermark);
+        bslalg::SwapUtil::swap(&this->writeQueueHighWatermark,
+                               &other.writeQueueHighWatermark);
     }
 }
 
@@ -7265,109 +7275,79 @@ bool TestClientConfig::less(const TestClientConfig& other) const
     return this->writeQueueHighWatermark < other.writeQueueHighWatermark;
 }
 
-bsl::ostream& TestClientConfig::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestClientConfig::print(bsl::ostream& stream,
+                                      int           level,
+                                      int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     if (this->name.has_value()) {
-        printer.printAttribute(
-            "name",
-            this->name.value());
+        printer.printAttribute("name", this->name.value());
     }
     if (this->driver.has_value()) {
-        printer.printAttribute(
-            "driver",
-            this->driver.value());
+        printer.printAttribute("driver", this->driver.value());
     }
     if (this->encryption.has_value()) {
-        printer.printAttribute(
-            "encryption",
-            this->encryption.value());
+        printer.printAttribute("encryption", this->encryption.value());
     }
     if (this->compression.has_value()) {
-        printer.printAttribute(
-            "compression",
-            this->compression.value());
+        printer.printAttribute("compression", this->compression.value());
     }
     if (this->minThreads.has_value()) {
-        printer.printAttribute(
-            "minThreads",
-            this->minThreads.value());
+        printer.printAttribute("minThreads", this->minThreads.value());
     }
     if (this->maxThreads.has_value()) {
-        printer.printAttribute(
-            "maxThreads",
-            this->maxThreads.value());
+        printer.printAttribute("maxThreads", this->maxThreads.value());
     }
     if (this->dynamicLoadBalancing.has_value()) {
-        printer.printAttribute(
-            "dynamicLoadBalancing",
-            this->dynamicLoadBalancing.value());
+        printer.printAttribute("dynamicLoadBalancing",
+                               this->dynamicLoadBalancing.value());
     }
     if (this->keepAlive.has_value()) {
-        printer.printAttribute(
-            "keepAlive",
-            this->keepAlive.value());
+        printer.printAttribute("keepAlive", this->keepAlive.value());
     }
     if (this->keepHalfOpen.has_value()) {
-        printer.printAttribute(
-            "keepHalfOpen",
-            this->keepHalfOpen.value());
+        printer.printAttribute("keepHalfOpen", this->keepHalfOpen.value());
     }
     if (this->backlog.has_value()) {
-        printer.printAttribute(
-            "backlog",
-            this->backlog.value());
+        printer.printAttribute("backlog", this->backlog.value());
     }
     if (this->blobBufferSize.has_value()) {
-        printer.printAttribute(
-            "blobBufferSize",
-            this->blobBufferSize.value());
+        printer.printAttribute("blobBufferSize", this->blobBufferSize.value());
     }
     if (this->sendBufferSize.has_value()) {
-        printer.printAttribute(
-            "sendBufferSize",
-            this->sendBufferSize.value());
+        printer.printAttribute("sendBufferSize", this->sendBufferSize.value());
     }
     if (this->receiveBufferSize.has_value()) {
-        printer.printAttribute(
-            "receiveBufferSize",
-            this->receiveBufferSize.value());
+        printer.printAttribute("receiveBufferSize",
+                               this->receiveBufferSize.value());
     }
     if (this->acceptGreedily.has_value()) {
-        printer.printAttribute(
-            "acceptGreedily",
-            this->acceptGreedily.value());
+        printer.printAttribute("acceptGreedily", this->acceptGreedily.value());
     }
     if (this->acceptQueueLowWatermark.has_value()) {
-        printer.printAttribute(
-            "acceptQueueLowWatermark",
-            this->acceptQueueLowWatermark.value());
+        printer.printAttribute("acceptQueueLowWatermark",
+                               this->acceptQueueLowWatermark.value());
     }
     if (this->acceptQueueHighWatermark.has_value()) {
-        printer.printAttribute(
-            "acceptQueueHighWatermark",
-            this->acceptQueueHighWatermark.value());
+        printer.printAttribute("acceptQueueHighWatermark",
+                               this->acceptQueueHighWatermark.value());
     }
     if (this->readQueueLowWatermark.has_value()) {
-        printer.printAttribute(
-            "readQueueLowWatermark",
-            this->readQueueLowWatermark.value());
+        printer.printAttribute("readQueueLowWatermark",
+                               this->readQueueLowWatermark.value());
     }
     if (this->readQueueHighWatermark.has_value()) {
-        printer.printAttribute(
-            "readQueueHighWatermark",
-            this->readQueueHighWatermark.value());
+        printer.printAttribute("readQueueHighWatermark",
+                               this->readQueueHighWatermark.value());
     }
     if (this->writeQueueLowWatermark.has_value()) {
-        printer.printAttribute(
-            "writeQueueLowWatermark",
-            this->writeQueueLowWatermark.value());
+        printer.printAttribute("writeQueueLowWatermark",
+                               this->writeQueueLowWatermark.value());
     }
     if (this->writeQueueHighWatermark.has_value()) {
-        printer.printAttribute(
-            "writeQueueHighWatermark",
-            this->writeQueueHighWatermark.value());
+        printer.printAttribute("writeQueueHighWatermark",
+                               this->writeQueueHighWatermark.value());
     }
     printer.end();
     return stream;
@@ -7375,28 +7355,27 @@ bsl::ostream& TestClientConfig::print(bsl::ostream& stream, int level, int space
 
 const char TestClientConfig::CLASS_NAME[] = "ntcf::TestClientConfig";
 
-const bdlat_AttributeInfo TestClientConfig::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "name", 4, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "driver", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 2, "encryption", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 3, "compression", 11, "", bdlat_FormattingMode::e_DEFAULT },
-    { 4, "minThreads", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 5, "maxThreads", 10, "", bdlat_FormattingMode::e_DEFAULT },
-    { 6, "dynamicLoadBalancing", 20, "", bdlat_FormattingMode::e_DEFAULT },
-    { 7, "keepAlive", 9, "", bdlat_FormattingMode::e_DEFAULT },
-    { 8, "keepHalfOpen", 12, "", bdlat_FormattingMode::e_DEFAULT },
-    { 9, "backlog", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 10, "blobBufferSize", 14, "", bdlat_FormattingMode::e_DEFAULT },
-    { 11, "sendBufferSize", 14, "", bdlat_FormattingMode::e_DEFAULT },
-    { 12, "receiveBufferSize", 17, "", bdlat_FormattingMode::e_DEFAULT },
-    { 13, "acceptGreedily", 14, "", bdlat_FormattingMode::e_DEFAULT },
-    { 14, "acceptQueueLowWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT },
-    { 15, "acceptQueueHighWatermark", 24, "", bdlat_FormattingMode::e_DEFAULT },
-    { 16, "readQueueLowWatermark", 21, "", bdlat_FormattingMode::e_DEFAULT },
-    { 17, "readQueueHighWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT },
-    { 18, "writeQueueLowWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT },
-    { 19, "writeQueueHighWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestClientConfig::ATTRIBUTE_INFO_ARRAY[] = {
+    { 0,                     "name",  4, "", bdlat_FormattingMode::e_DEFAULT},
+    { 1,                   "driver",  6, "", bdlat_FormattingMode::e_DEFAULT},
+    { 2,               "encryption", 10, "", bdlat_FormattingMode::e_DEFAULT},
+    { 3,              "compression", 11, "", bdlat_FormattingMode::e_DEFAULT},
+    { 4,               "minThreads", 10, "", bdlat_FormattingMode::e_DEFAULT},
+    { 5,               "maxThreads", 10, "", bdlat_FormattingMode::e_DEFAULT},
+    { 6,     "dynamicLoadBalancing", 20, "", bdlat_FormattingMode::e_DEFAULT},
+    { 7,                "keepAlive",  9, "", bdlat_FormattingMode::e_DEFAULT},
+    { 8,             "keepHalfOpen", 12, "", bdlat_FormattingMode::e_DEFAULT},
+    { 9,                  "backlog",  7, "", bdlat_FormattingMode::e_DEFAULT},
+    {10,           "blobBufferSize", 14, "", bdlat_FormattingMode::e_DEFAULT},
+    {11,           "sendBufferSize", 14, "", bdlat_FormattingMode::e_DEFAULT},
+    {12,        "receiveBufferSize", 17, "", bdlat_FormattingMode::e_DEFAULT},
+    {13,           "acceptGreedily", 14, "", bdlat_FormattingMode::e_DEFAULT},
+    {14,  "acceptQueueLowWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT},
+    {15, "acceptQueueHighWatermark", 24, "", bdlat_FormattingMode::e_DEFAULT},
+    {16,    "readQueueLowWatermark", 21, "", bdlat_FormattingMode::e_DEFAULT},
+    {17,   "readQueueHighWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT},
+    {18,   "writeQueueLowWatermark", 22, "", bdlat_FormattingMode::e_DEFAULT},
+    {19,  "writeQueueHighWatermark", 23, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestClientConfig::lookupAttributeInfo(int id)
@@ -7431,28 +7410,35 @@ const bdlat_AttributeInfo* TestClientConfig::lookupAttributeInfo(int id)
     case ATTRIBUTE_ID_ACCEPT_GREEDILY:
         return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_GREEDILY];
     case ATTRIBUTE_ID_ACCEPT_QUEUE_LOW_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK];
+        return &ATTRIBUTE_INFO_ARRAY
+            [ATTRIBUTE_INDEX_ACCEPT_QUEUE_LOW_WATERMARK];
     case ATTRIBUTE_ID_ACCEPT_QUEUE_HIGH_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK];
+        return &ATTRIBUTE_INFO_ARRAY
+            [ATTRIBUTE_INDEX_ACCEPT_QUEUE_HIGH_WATERMARK];
     case ATTRIBUTE_ID_READ_QUEUE_LOW_WATERMARK:
         return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_LOW_WATERMARK];
     case ATTRIBUTE_ID_READ_QUEUE_HIGH_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK];
+        return &ATTRIBUTE_INFO_ARRAY
+            [ATTRIBUTE_INDEX_READ_QUEUE_HIGH_WATERMARK];
     case ATTRIBUTE_ID_WRITE_QUEUE_LOW_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK];
+        return &ATTRIBUTE_INFO_ARRAY
+            [ATTRIBUTE_INDEX_WRITE_QUEUE_LOW_WATERMARK];
     case ATTRIBUTE_ID_WRITE_QUEUE_HIGH_WATERMARK:
-        return &ATTRIBUTE_INFO_ARRAY[ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK];
+        return &ATTRIBUTE_INFO_ARRAY
+            [ATTRIBUTE_INDEX_WRITE_QUEUE_HIGH_WATERMARK];
     default:
         return 0;
     }
 }
 
-const bdlat_AttributeInfo* TestClientConfig::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestClientConfig::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -7483,9 +7469,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestClientConfig& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestEchoResultValue::TestEchoResultValue(bslma::Allocator* allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
@@ -7493,7 +7479,8 @@ TestEchoResultValue::TestEchoResultValue(bslma::Allocator* allocator)
 {
 }
 
-TestEchoResultValue::TestEchoResultValue(const TestEchoResultValue& original, bslma::Allocator* allocator)
+TestEchoResultValue::TestEchoResultValue(const TestEchoResultValue& original,
+                                         bslma::Allocator*          allocator)
 : d_selectionId(SELECTION_ID_UNDEFINED)
 , d_allocator_p(bslma::Default::allocator(allocator))
 {
@@ -7514,7 +7501,8 @@ TestEchoResultValue::~TestEchoResultValue()
     reset();
 }
 
-TestEchoResultValue& TestEchoResultValue::operator=(const TestEchoResultValue& other)
+TestEchoResultValue& TestEchoResultValue::operator=(
+    const TestEchoResultValue& other)
 {
     if (this == &other) {
         return *this;
@@ -7542,11 +7530,11 @@ void TestEchoResultValue::reset()
     case SELECTION_ID_FAILURE: {
         typedef ntcf::TestFault Type;
         d_failure.object().~Type();
-        } break;
+    } break;
     case SELECTION_ID_SUCCESS: {
         typedef ntcf::TestEcho Type;
         d_success.object().~Type();
-        } break;
+    } break;
     default:
         BSLS_ASSERT(d_selectionId == SELECTION_ID_UNDEFINED);
     }
@@ -7558,8 +7546,8 @@ void TestEchoResultValue::swap(TestEchoResultValue& other)
 {
     if (d_selectionId != other.d_selectionId) {
         TestEchoResultValue temp = other;
-        other = *this;
-        *this = other;
+        other                    = *this;
+        *this                    = other;
         return;
     }
 
@@ -7596,7 +7584,7 @@ int TestEchoResultValue::makeSelection(int id)
 
 int TestEchoResultValue::makeSelection(const char* name, int nameLength)
 {
-    const bdlat_SelectionInfo *selectionInfo =
+    const bdlat_SelectionInfo* selectionInfo =
         lookupSelectionInfo(name, nameLength);
     if (selectionInfo == 0) {
         return -1;
@@ -7612,7 +7600,7 @@ ntcf::TestFault& TestEchoResultValue::makeFailure()
     }
     else {
         reset();
-        new(d_failure.buffer()) ntcf::TestFault(d_allocator_p);
+        new (d_failure.buffer()) ntcf::TestFault(d_allocator_p);
         d_selectionId = SELECTION_ID_FAILURE;
     }
 
@@ -7640,7 +7628,7 @@ ntcf::TestEcho& TestEchoResultValue::makeSuccess()
     }
     else {
         reset();
-        new(d_success.buffer()) ntcf::TestEcho(d_allocator_p);
+        new (d_success.buffer()) ntcf::TestEcho(d_allocator_p);
         d_selectionId = SELECTION_ID_SUCCESS;
     }
 
@@ -7739,7 +7727,9 @@ bool TestEchoResultValue::less(const TestEchoResultValue& other) const
     }
 }
 
-bsl::ostream& TestEchoResultValue::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestEchoResultValue::print(bsl::ostream& stream,
+                                         int           level,
+                                         int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
@@ -7760,10 +7750,9 @@ bsl::ostream& TestEchoResultValue::print(bsl::ostream& stream, int level, int sp
 
 const char TestEchoResultValue::CLASS_NAME[] = "ntcf::TestEchoResultValue";
 
-const bdlat_SelectionInfo TestEchoResultValue::SELECTION_INFO_ARRAY[] =
-{
-    { 0, "failure", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "success", 7, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_SelectionInfo TestEchoResultValue::SELECTION_INFO_ARRAY[] = {
+    {0, "failure", 7, "", bdlat_FormattingMode::e_DEFAULT},
+    {1, "success", 7, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_SelectionInfo* TestEchoResultValue::lookupSelectionInfo(int id)
@@ -7778,12 +7767,14 @@ const bdlat_SelectionInfo* TestEchoResultValue::lookupSelectionInfo(int id)
     }
 }
 
-const bdlat_SelectionInfo* TestEchoResultValue::lookupSelectionInfo(const char* name, int nameLength)
+const bdlat_SelectionInfo* TestEchoResultValue::lookupSelectionInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_SELECTIONS; ++i) {
         const bdlat_SelectionInfo& selectionInfo = SELECTION_INFO_ARRAY[i];
         if (selectionInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(selectionInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &selectionInfo;
@@ -7809,14 +7800,15 @@ bool operator<(const TestEchoResultValue& lhs, const TestEchoResultValue& rhs)
     return lhs.less(rhs);
 }
 
-bsl::ostream& operator<<(bsl::ostream& stream, const TestEchoResultValue& object)
+bsl::ostream& operator<<(bsl::ostream&              stream,
+                         const TestEchoResultValue& object)
 {
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestEchoResult::TestEchoResult(bslma::Allocator* allocator)
 : context()
@@ -7824,7 +7816,8 @@ TestEchoResult::TestEchoResult(bslma::Allocator* allocator)
 {
 }
 
-TestEchoResult::TestEchoResult(const TestEchoResult& original, bslma::Allocator* allocator)
+TestEchoResult::TestEchoResult(const TestEchoResult& original,
+                               bslma::Allocator*     allocator)
 : context(original.context)
 , value(original.value, allocator)
 {
@@ -7838,7 +7831,7 @@ TestEchoResult& TestEchoResult::operator=(const TestEchoResult& other)
 {
     if (this != &other) {
         this->context = other.context;
-        this->value = other.value;
+        this->value   = other.value;
     }
 
     return *this;
@@ -7884,26 +7877,23 @@ bool TestEchoResult::less(const TestEchoResult& other) const
     return this->value < other.value;
 }
 
-bsl::ostream& TestEchoResult::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestEchoResult::print(bsl::ostream& stream,
+                                    int           level,
+                                    int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "context",
-        this->context);
-    printer.printAttribute(
-        "value",
-        this->value);
+    printer.printAttribute("context", this->context);
+    printer.printAttribute("value", this->value);
     printer.end();
     return stream;
 }
 
 const char TestEchoResult::CLASS_NAME[] = "ntcf::TestEchoResult";
 
-const bdlat_AttributeInfo TestEchoResult::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "value", 5, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestEchoResult::ATTRIBUTE_INFO_ARRAY[] = {
+    {0, "context", 7, "", bdlat_FormattingMode::e_DEFAULT},
+    {1,   "value", 5, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestEchoResult::lookupAttributeInfo(int id)
@@ -7918,12 +7908,14 @@ const bdlat_AttributeInfo* TestEchoResult::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestEchoResult::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestEchoResult::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -7954,9 +7946,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestEchoResult& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 TestFixtureConfig::TestFixtureConfig(bslma::Allocator* allocator)
 : client(allocator)
@@ -7964,7 +7956,8 @@ TestFixtureConfig::TestFixtureConfig(bslma::Allocator* allocator)
 {
 }
 
-TestFixtureConfig::TestFixtureConfig(const TestFixtureConfig& original, bslma::Allocator* allocator)
+TestFixtureConfig::TestFixtureConfig(const TestFixtureConfig& original,
+                                     bslma::Allocator*        allocator)
 : client(original.client, allocator)
 , server(original.server, allocator)
 {
@@ -8024,26 +8017,23 @@ bool TestFixtureConfig::less(const TestFixtureConfig& other) const
     return this->server < other.server;
 }
 
-bsl::ostream& TestFixtureConfig::print(bsl::ostream& stream, int level, int spacesPerLevel) const
+bsl::ostream& TestFixtureConfig::print(bsl::ostream& stream,
+                                       int           level,
+                                       int           spacesPerLevel) const
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute(
-        "client",
-        this->client);
-    printer.printAttribute(
-        "server",
-        this->server);
+    printer.printAttribute("client", this->client);
+    printer.printAttribute("server", this->server);
     printer.end();
     return stream;
 }
 
 const char TestFixtureConfig::CLASS_NAME[] = "ntcf::TestFixtureConfig";
 
-const bdlat_AttributeInfo TestFixtureConfig::ATTRIBUTE_INFO_ARRAY[] =
-{
-    { 0, "client", 6, "", bdlat_FormattingMode::e_DEFAULT },
-    { 1, "server", 6, "", bdlat_FormattingMode::e_DEFAULT }
+const bdlat_AttributeInfo TestFixtureConfig::ATTRIBUTE_INFO_ARRAY[] = {
+    {0, "client", 6, "", bdlat_FormattingMode::e_DEFAULT},
+    {1, "server", 6, "", bdlat_FormattingMode::e_DEFAULT}
 };
 
 const bdlat_AttributeInfo* TestFixtureConfig::lookupAttributeInfo(int id)
@@ -8058,12 +8048,14 @@ const bdlat_AttributeInfo* TestFixtureConfig::lookupAttributeInfo(int id)
     }
 }
 
-const bdlat_AttributeInfo* TestFixtureConfig::lookupAttributeInfo(const char* name, int nameLength)
+const bdlat_AttributeInfo* TestFixtureConfig::lookupAttributeInfo(
+    const char* name,
+    int         nameLength)
 {
     for (bsl::size_t i = 0; i < NUM_ATTRIBUTES; ++i) {
         const bdlat_AttributeInfo& attributeInfo = ATTRIBUTE_INFO_ARRAY[i];
         if (attributeInfo.d_nameLength == nameLength) {
-            const int compare = 
+            const int compare =
                 bsl::memcmp(attributeInfo.d_name_p, name, nameLength);
             if (compare == 0) {
                 return &attributeInfo;
@@ -8094,9 +8086,9 @@ bsl::ostream& operator<<(bsl::ostream& stream, const TestFixtureConfig& object)
     return object.print(stream, 0, -1);
 }
 
-} // close namespace ntcf
+}  // close namespace ntcf
 
-namespace ntcf { 
+namespace ntcf {
 
 const char* TestMessageFlag::toString(Value value)
 {
@@ -8118,7 +8110,9 @@ const char* TestMessageFlag::toString(Value value)
     }
 }
 
-int TestMessageFlag::fromString(Value* result, const char* string, int stringLength)
+int TestMessageFlag::fromString(Value*      result,
+                                const char* string,
+                                int         stringLength)
 {
     int rc;
     for (int i = 0; i < 6; ++i) {
@@ -8162,21 +8156,19 @@ bsl::ostream& TestMessageFlag::print(bsl::ostream& stream, Value value)
 
 const char TestMessageFlag::CLASS_NAME[] = "ntcf::TestMessageFlag";
 
-const bdlat_EnumeratorInfo TestMessageFlag::ENUMERATOR_INFO_ARRAY[] =
-{
-    { 0, "NONE", 4, "" },
-    { 1, "SUBSCRIPTION", 12, "" },
-    { 2, "PUBLICATION", 11, "" },
-    { 3, "REQUEST", 7, "" },
-    { 4, "RESPONSE", 8, "" },
-    { 5, "UNACKNOWLEDGED", 14, "" }
+const bdlat_EnumeratorInfo TestMessageFlag::ENUMERATOR_INFO_ARRAY[] = {
+    {0,           "NONE",  4, ""},
+    {1,   "SUBSCRIPTION", 12, ""},
+    {2,    "PUBLICATION", 11, ""},
+    {3,        "REQUEST",  7, ""},
+    {4,       "RESPONSE",  8, ""},
+    {5, "UNACKNOWLEDGED", 14, ""}
 };
 
 bsl::ostream& operator<<(bsl::ostream& stream, TestMessageFlag::Value value)
 {
     return TestMessageFlag::print(stream, value);
 }
-} // close namespace ntcf
+}  // close namespace ntcf
 
-} // close namespace BloombergLP
-
+}  // close namespace BloombergLP

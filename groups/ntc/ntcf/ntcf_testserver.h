@@ -37,18 +37,18 @@ class TestServerTransaction : public ntccfg::Shared<TestServerTransaction>
     /// Defines a type alias for a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    Mutex                                  d_mutex;
-    bsl::shared_ptr<ntcf::TestMessage>     d_request_sp;
-    bsl::shared_ptr<ntcf::TestMessagePool> d_responsePool_sp;
-    bsl::shared_ptr<ntci::DataPool>        d_dataPool_sp;
-    bsl::shared_ptr<ntci::DatagramSocket>  d_datagramSocket_sp;
-    bsl::shared_ptr<ntci::StreamSocket>    d_streamSocket_sp;
-    bsl::shared_ptr<ntci::Serialization>   d_serialization_sp;
-    bsl::shared_ptr<ntci::Compression>     d_compression_sp;
+    Mutex                                        d_mutex;
+    bsl::shared_ptr<ntcf::TestMessage>           d_request_sp;
+    bsl::shared_ptr<ntcf::TestMessagePool>       d_responsePool_sp;
+    bsl::shared_ptr<ntci::DataPool>              d_dataPool_sp;
+    bsl::shared_ptr<ntci::DatagramSocket>        d_datagramSocket_sp;
+    bsl::shared_ptr<ntci::StreamSocket>          d_streamSocket_sp;
+    bsl::shared_ptr<ntci::Serialization>         d_serialization_sp;
+    bsl::shared_ptr<ntci::Compression>           d_compression_sp;
     bsl::shared_ptr<ntcf::TestMessageEncryption> d_encryption_sp;
-    bdlb::NullableValue<ntsa::Endpoint>    d_endpoint;
-    bsls::TimeInterval                     d_timestamp;
-    bslma::Allocator*                      d_allocator_p;
+    bdlb::NullableValue<ntsa::Endpoint>          d_endpoint;
+    bsls::TimeInterval                           d_timestamp;
+    bslma::Allocator*                            d_allocator_p;
 
     /// Return a new response.
     bsl::shared_ptr<ntcf::TestMessage> createResponse();
@@ -58,14 +58,14 @@ class TestServerTransaction : public ntccfg::Shared<TestServerTransaction>
 
     /// Process the specified upgrade 'event' from the specified 'upgradable'
     /// socket.
-    void processUpgrade(const bsl::shared_ptr<ntci::Upgradable>&   upgradable,
-                        const ntca::UpgradeEvent&                  event,
-                        bool                                       acknowledge,
-                        ntcf::TestControlTransition::Value         transition);
+    void processUpgrade(const bsl::shared_ptr<ntci::Upgradable>& upgradable,
+                        const ntca::UpgradeEvent&                event,
+                        bool                                     acknowledge,
+                        ntcf::TestControlTransition::Value       transition);
 
     BALL_LOG_SET_CLASS_CATEGORY("NTCF.TEST.SERVER");
 
-public:
+  public:
     /// Create a new server transaction. Create responses from the specified
     /// 'responsePool'. Create buffers from the specified 'dataPool'. Serialize
     /// structures using the specified 'serialization'. Compress payloads using
@@ -73,12 +73,12 @@ public:
     /// to supply memory. If 'basicAllocator' is 0, the currently installed
     /// default allocator is used.
     TestServerTransaction(
-        const bsl::shared_ptr<ntcf::TestMessagePool>& responsePool,
-        const bsl::shared_ptr<ntci::DataPool>&        dataPool,
-        const bsl::shared_ptr<ntci::Serialization>&   serialization,
-        const bsl::shared_ptr<ntci::Compression>&     compression,
+        const bsl::shared_ptr<ntcf::TestMessagePool>&       responsePool,
+        const bsl::shared_ptr<ntci::DataPool>&              dataPool,
+        const bsl::shared_ptr<ntci::Serialization>&         serialization,
+        const bsl::shared_ptr<ntci::Compression>&           compression,
         const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
-        bslma::Allocator*                             basicAllocator = 0);
+        bslma::Allocator* basicAllocator = 0);
 
     /// Reset the transaction.
     void reset();
@@ -91,7 +91,7 @@ public:
                const bsls::TimeInterval&                  timestamp);
 
     /// Start the transaction to process the specified 'request' received at
-    /// the specified 'timestamp'. Send any responses to the specified 
+    /// the specified 'timestamp'. Send any responses to the specified
     /// 'endpoint' through the specified 'sender'.
     void start(const bsl::shared_ptr<ntcf::TestMessage>&    request,
                const bsl::shared_ptr<ntci::DatagramSocket>& sender,
@@ -101,39 +101,35 @@ public:
     /// Complete the transaction with an acknowledgement.
     void acknowledge();
 
-    /// Complete the transaction with the specified 'acknowledgement'. 
+    /// Complete the transaction with the specified 'acknowledgement'.
     void acknowledge(const ntcf::TestAcknowledgment& acknowledgment);
 
-    /// Complete the transaction with the specified 'trade'. 
+    /// Complete the transaction with the specified 'trade'.
     void complete(const ntcf::TestTrade& trade);
 
-    /// Complete the transaction with the specified 'echo'. 
+    /// Complete the transaction with the specified 'echo'.
     void complete(const ntcf::TestEcho& echo);
 
-    /// Complete the transaction with the specified 'fault'. 
+    /// Complete the transaction with the specified 'fault'.
     void fail(const ntcf::TestFault& fault);
 
-    /// Enable compression on the underlying socket using the specified 
+    /// Enable compression on the underlying socket using the specified
     /// 'compression' mechanism.
-    void enableCompression(
-        bool                               acknowledge,
-        ntcf::TestControlTransition::Value transition);
+    void enableCompression(bool                               acknowledge,
+                           ntcf::TestControlTransition::Value transition);
 
-    /// Enable compression on the underlying socket using the specified 
+    /// Enable compression on the underlying socket using the specified
     /// 'encryption' mechanism.
-    void enableEncryption(
-        bool                               acknowledge,
-        ntcf::TestControlTransition::Value transition);
+    void enableEncryption(bool                               acknowledge,
+                          ntcf::TestControlTransition::Value transition);
 
     /// Disable compression on the underlying socket.
-    void disableCompression(
-        bool                               acknowledge,
-        ntcf::TestControlTransition::Value transition);
+    void disableCompression(bool                               acknowledge,
+                            ntcf::TestControlTransition::Value transition);
 
     /// Disable encryption on the underlying socket.
-    void disableEncryption(
-        bool                               acknowledge,
-        ntcf::TestControlTransition::Value transition);
+    void disableEncryption(bool                               acknowledge,
+                           ntcf::TestControlTransition::Value transition);
 
     /// Close the transaction.
     void close();
@@ -143,18 +139,17 @@ public:
 ///
 /// @par Thread Safety
 /// This class is thread safe.
-class TestServer : public ntci::DatagramSocketSession, 
+class TestServer : public ntci::DatagramSocketSession,
                    public ntci::DatagramSocketManager,
                    public ntci::StreamSocketSession,
                    public ntci::ListenerSocketSession,
-                   public ntci::ListenerSocketManager, 
+                   public ntci::ListenerSocketManager,
                    public ntccfg::Shared<TestServer>
 {
     /// This type defines a map of stream sockets to their message parsers.
-    typedef bsl::map< 
-        bsl::shared_ptr<ntci::StreamSocket>, 
-        bsl::shared_ptr<ntcf::TestMessageParser>
-    > StreamSocketMap;
+    typedef bsl::map<bsl::shared_ptr<ntci::StreamSocket>,
+                     bsl::shared_ptr<ntcf::TestMessageParser> >
+        StreamSocketMap;
 
     /// This type defines a type alias for this type.
     typedef TestServer Self;
@@ -165,30 +160,30 @@ class TestServer : public ntci::DatagramSocketSession,
     /// Defines a type alias for a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    Mutex                                    d_mutex;
-    bsl::shared_ptr<ntci::DataPool>          d_dataPool_sp;
-    bsl::shared_ptr<ntcf::TestMessagePool>   d_messagePool_sp;
-    bsl::shared_ptr<ntci::Serialization>     d_serialization_sp;
-    bsl::shared_ptr<ntci::Compression>       d_compression_sp;
-    bsl::shared_ptr<ntci::Scheduler>         d_scheduler_sp;
-    bsl::shared_ptr<ntci::DatagramSocket>    d_datagramSocket_sp;
-    bsl::shared_ptr<ntcf::TestMessageParser> d_datagramParser_sp;
-    ntsa::Endpoint                           d_datagramEndpoint;
-    bsl::shared_ptr<ntci::ListenerSocket>    d_listenerSocket_sp;
-    ntsa::Endpoint                           d_listenerEndpoint;
-    StreamSocketMap                          d_streamSocketMap;
+    Mutex                                        d_mutex;
+    bsl::shared_ptr<ntci::DataPool>              d_dataPool_sp;
+    bsl::shared_ptr<ntcf::TestMessagePool>       d_messagePool_sp;
+    bsl::shared_ptr<ntci::Serialization>         d_serialization_sp;
+    bsl::shared_ptr<ntci::Compression>           d_compression_sp;
+    bsl::shared_ptr<ntci::Scheduler>             d_scheduler_sp;
+    bsl::shared_ptr<ntci::DatagramSocket>        d_datagramSocket_sp;
+    bsl::shared_ptr<ntcf::TestMessageParser>     d_datagramParser_sp;
+    ntsa::Endpoint                               d_datagramEndpoint;
+    bsl::shared_ptr<ntci::ListenerSocket>        d_listenerSocket_sp;
+    ntsa::Endpoint                               d_listenerEndpoint;
+    StreamSocketMap                              d_streamSocketMap;
     bsl::shared_ptr<ntcf::TestMessageEncryption> d_encryption_sp;
-    bsls::AtomicBool                         d_closed;
-    ntcf::TestServerConfig                   d_config;
-    bslma::Allocator*                        d_allocator_p;
+    bsls::AtomicBool                             d_closed;
+    ntcf::TestServerConfig                       d_config;
+    bslma::Allocator*                            d_allocator_p;
 
     BALL_LOG_SET_CLASS_CATEGORY("NTCF.TEST.SERVER");
 
-private:
+  private:
     TestServer(const TestServer&) BSLS_KEYWORD_DELETED;
     TestServer& operator=(const TestServer&) BSLS_KEYWORD_DELETED;
 
-private:
+  private:
     /// Process the establishment of the specified 'datagramSocket'. Return
     /// the application protocol of the 'datagramSocket'.
     void processDatagramSocketEstablished(
@@ -208,7 +203,7 @@ private:
 
     /// Process the closure of the specified 'streamSocket'.
     void processStreamSocketClosed(const bsl::shared_ptr<ntci::StreamSocket>&
-        streamSocket) BSLS_KEYWORD_OVERRIDE;
+                                       streamSocket) BSLS_KEYWORD_OVERRIDE;
 
     /// Process the establishment of the specified 'listenerSocket'. Return
     /// the application protocol of the 'listenerSocket'.
@@ -220,9 +215,6 @@ private:
     void processListenerSocketClosed(
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
         BSLS_KEYWORD_OVERRIDE;
-
-    
-
 
     // MRM: ntci::DatagramSocketSession
 
@@ -322,7 +314,6 @@ private:
     void processError(
         const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
         const ntca::ErrorEvent& event) BSLS_KEYWORD_OVERRIDE;
-
 
     // MRM: ntci::StreamSocketSession
 
@@ -434,7 +425,6 @@ private:
     void processError(const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
                       const ntca::ErrorEvent& event) BSLS_KEYWORD_OVERRIDE;
 
-
     // MRM: ntci::ListenerSocketSession
 
     /// Process the condition that accept queue flow control has been
@@ -495,23 +485,17 @@ private:
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
         const ntca::ErrorEvent& event) BSLS_KEYWORD_OVERRIDE;
 
-
-
-
     /// Process the upgrade of the specified 'streamSocket' that is the
     /// specified 'upgradable' object used by the specified 'clientSocket'
     /// according to the specified 'event'.
     void processStreamSocketUpgradeEvent(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::UpgradeEvent&                  event);
-    
-
-
 
     /// Wait for the TLS handshake to begin upgrading the connection to the
     /// authority to be authenticated and secured.
     void privateStreamSocketInitiateUpgrade(
-        const bsl::shared_ptr<Self>&                self,
+        const bsl::shared_ptr<Self>&               self,
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket);
 
     /// Process completion or failure of the upgrade of the connection to the
@@ -546,15 +530,14 @@ private:
     /// Process the termination of the trensport-level connection for the
     /// specified 'datagramSocket'.
     void privateDatagramSocketDown(
-            const bsl::shared_ptr<Self>&                 self,
-            const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket);
+        const bsl::shared_ptr<Self>&                 self,
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket);
 
     /// Process the failure of the specified 'datagramSocket'.
     void privateDatagramSocketError(
         const bsl::shared_ptr<Self>&                 self,
         const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
         const ntsa::Error&                           error);
-
 
     /// Process the conclusion of phases required by the protocol after the
     /// transport-level connection for the specified 'socket' is established.
@@ -565,8 +548,8 @@ private:
     /// Process the termination of the trensport-level connection for the
     /// specified 'socket'.
     void privateStreamSocketDown(
-            const bsl::shared_ptr<Self>&               self,
-            const bsl::shared_ptr<ntci::StreamSocket>& streamSocket);
+        const bsl::shared_ptr<Self>&               self,
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket);
 
     /// Process the failure of the specified 'streamSocket'.
     void privateStreamSocketError(
@@ -574,68 +557,67 @@ private:
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntsa::Error&                         error);
 
-
-    /// Process the establishment of the specified 'listenerSocket'. 
+    /// Process the establishment of the specified 'listenerSocket'.
     void privateListenerSocketUp(
-            const bsl::shared_ptr<Self>&                 self,
-            const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket);
+        const bsl::shared_ptr<Self>&                 self,
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket);
 
     /// Process the termination of the specified 'listeningSocket'.
     void privateListenerSocketDown(
         const bsl::shared_ptr<Self>&                 self,
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket);
-        
+
     /// Process the failure of the specified 'listeningSocket'.
     void privateListenerSocketError(
         const bsl::shared_ptr<Self>&                 self,
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
         const ntsa::Error&                           error);
 
-    /// Dispatch the specified 'transaction' to an appropriate processor. 
+    /// Dispatch the specified 'transaction' to an appropriate processor.
     void dispatchMessage(
         const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
         const bsl::shared_ptr<ntcf::TestMessage>&           request);
 
-    /// Process the specified 'bid' in the specified 'transaction'. 
+    /// Process the specified 'bid' in the specified 'transaction'.
     void processBid(
-            const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
-            const ntcf::TestBid&                                bid);
+        const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
+        const ntcf::TestBid&                                bid);
 
-    /// Process the specified 'ask' in the specified 'transaction'. 
+    /// Process the specified 'ask' in the specified 'transaction'.
     void processAsk(
         const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
         const ntcf::TestAsk&                                ask);
 
-    /// Process the specified 'subscription' in the specified 'transaction'. 
+    /// Process the specified 'subscription' in the specified 'transaction'.
     void processSubscription(
         const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
         const ntcf::TestSubscription&                       subscription);
 
     /// Process the specified 'signal' control request in the specified
-    /// 'transaction'. 
+    /// 'transaction'.
     void processSignal(
         const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
         const ntcf::TestSignal&                             signal);
 
     /// Process the specified 'encryption' control request in the specified
-    /// 'transaction'. 
+    /// 'transaction'.
     void processEncryption(
         const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
         const ntcf::TestControlEncryption&                  encryption);
 
     /// Process the specified 'compression' control request in the specified
-    /// 'transaction'. 
+    /// 'transaction'.
     void processCompression(
         const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
         const ntcf::TestControlCompression&                 compression);
 
     /// Process the specified 'heartbeat' control request in the specified
-    /// 'transaction'. 
+    /// 'transaction'.
     void processHeartbeat(
         const bsl::shared_ptr<ntcf::TestServerTransaction>& transaction,
         const ntcf::TestControlHeartbeat&                   heartbeat);
 
-public:
+  public:
     /// Create a new server with the specified 'configuration'. Optionally
     /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
     /// is 0, the currently installed default allocator is used.
@@ -643,7 +625,7 @@ public:
                const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                const bsl::shared_ptr<ntci::DataPool>&  dataPool,
                const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
-               bslma::Allocator*                       basicAllocator = 0);
+               bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~TestServer() BSLS_KEYWORD_OVERRIDE;
@@ -679,7 +661,7 @@ typedef bsl::shared_ptr<ntcf::TestServer> TestServerPtr;
 
 /// Defines a type alias for vector of shared pointers to test servers.
 typedef bsl::vector<ntcf::TestServerPtr> TestServerVector;
-    
+
 }  // end namespace ntcf
 }  // end namespace BloombergLP
 #endif

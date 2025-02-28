@@ -431,10 +431,10 @@ void TestServerTransaction::deliverResponse(
 }
 
 void TestServerTransaction::processUpgrade(
-    const bsl::shared_ptr<ntci::Upgradable>&   upgradable,
-    const ntca::UpgradeEvent&                  event,
-    bool                                       acknowledge,
-    ntcf::TestControlTransition::Value         transition)
+    const bsl::shared_ptr<ntci::Upgradable>& upgradable,
+    const ntca::UpgradeEvent&                event,
+    bool                                     acknowledge,
+    ntcf::TestControlTransition::Value       transition)
 {
     BSLS_ASSERT_OPT(d_streamSocket_sp);
     BSLS_ASSERT_OPT(d_streamSocket_sp == upgradable);
@@ -453,37 +453,33 @@ void TestServerTransaction::processUpgrade(
                           << " upgrade complete: " << event.context()
                           << BALL_LOG_END;
 
-            BALL_LOG_INFO
-                << "Server stream socket at " 
-                << d_streamSocket_sp->sourceEndpoint() << " to "
-                << d_streamSocket_sp->remoteEndpoint()
-                << " encryption session has been established with "
-                << remoteCertificate->subject() << " issued by "
-                << remoteCertificate->issuer() << ": "
-                << remoteCertificateRecord << BALL_LOG_END;
+            BALL_LOG_INFO << "Server stream socket at "
+                          << d_streamSocket_sp->sourceEndpoint() << " to "
+                          << d_streamSocket_sp->remoteEndpoint()
+                          << " encryption session has been established with "
+                          << remoteCertificate->subject() << " issued by "
+                          << remoteCertificate->issuer() << ": "
+                          << remoteCertificateRecord << BALL_LOG_END;
         }
         else {
             BALL_LOG_INFO << "Server stream socket at "
-                          << d_streamSocket_sp->sourceEndpoint() 
-                          << " to "
+                          << d_streamSocket_sp->sourceEndpoint() << " to "
                           << d_streamSocket_sp->remoteEndpoint()
                           << " encryption session has been established"
                           << BALL_LOG_END;
         }
 
-        if (acknowledge && 
-            transition == 
-            ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER) 
+        if (acknowledge &&
+            transition == ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER)
         {
             this->acknowledge();
         }
     }
     else if (event.type() == ntca::UpgradeEventType::e_ERROR) {
-        BALL_LOG_INFO
-            << "Stream socket at "
-            << d_streamSocket_sp->sourceEndpoint() << " to "
-            << d_streamSocket_sp->remoteEndpoint()
-            << " upgrade error: " << event.context() << BALL_LOG_END;
+        BALL_LOG_INFO << "Stream socket at "
+                      << d_streamSocket_sp->sourceEndpoint() << " to "
+                      << d_streamSocket_sp->remoteEndpoint()
+                      << " upgrade error: " << event.context() << BALL_LOG_END;
 
         d_streamSocket_sp->close();
     }
@@ -493,12 +489,12 @@ void TestServerTransaction::processUpgrade(
 }
 
 TestServerTransaction::TestServerTransaction(
-    const bsl::shared_ptr<ntcf::TestMessagePool>& responsePool,
-    const bsl::shared_ptr<ntci::DataPool>&        dataPool,
-    const bsl::shared_ptr<ntci::Serialization>&   serialization,
-    const bsl::shared_ptr<ntci::Compression>&     compression,
+    const bsl::shared_ptr<ntcf::TestMessagePool>&       responsePool,
+    const bsl::shared_ptr<ntci::DataPool>&              dataPool,
+    const bsl::shared_ptr<ntci::Serialization>&         serialization,
+    const bsl::shared_ptr<ntci::Compression>&           compression,
     const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
-    bslma::Allocator*                             basicAllocator)
+    bslma::Allocator*                                   basicAllocator)
 : d_mutex()
 , d_request_sp()
 , d_responsePool_sp(responsePool)
@@ -595,8 +591,6 @@ void TestServerTransaction::complete(const ntcf::TestEcho& echo)
     this->deliverResponse(response);
 }
 
-
-
 void TestServerTransaction::fail(const ntcf::TestFault& fault)
 {
     bsl::shared_ptr<ntcf::TestMessage> response = this->createResponse();
@@ -618,9 +612,8 @@ void TestServerTransaction::enableCompression(
     bool                               acknowledge,
     ntcf::TestControlTransition::Value transition)
 {
-    if (acknowledge && 
-        transition == 
-        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE) 
+    if (acknowledge &&
+        transition == ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE)
     {
         this->acknowledge();
     }
@@ -634,9 +627,8 @@ void TestServerTransaction::enableCompression(
         d_datagramSocket_sp->setReadInflater(d_compression_sp);
     }
 
-    if (acknowledge && 
-        transition == 
-        ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER) 
+    if (acknowledge &&
+        transition == ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER)
     {
         this->acknowledge();
     }
@@ -649,9 +641,8 @@ void TestServerTransaction::enableEncryption(
     ntsa::Error error;
 
     if (d_streamSocket_sp) {
-        if (acknowledge && 
-            transition == 
-            ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE) 
+        if (acknowledge &&
+            transition == ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE)
         {
             this->acknowledge();
         }
@@ -707,9 +698,8 @@ void TestServerTransaction::disableCompression(
     }
 #endif
 
-    if (acknowledge && 
-        transition == 
-        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE) 
+    if (acknowledge &&
+        transition == ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE)
     {
         this->acknowledge();
     }
@@ -723,9 +713,8 @@ void TestServerTransaction::disableCompression(
         d_datagramSocket_sp->setReadInflater(none);
     }
 
-    if (acknowledge && 
-        transition == 
-        ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER) 
+    if (acknowledge &&
+        transition == ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER)
     {
         this->acknowledge();
     }
@@ -749,22 +738,20 @@ void TestServerTransaction::disableEncryption(
 {
     ntsa::Error error;
 
-    if (acknowledge && 
-        transition == 
-        ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE) 
+    if (acknowledge &&
+        transition == ntcf::TestControlTransition::e_ACKNOWLEDGE_BEFORE)
     {
         this->acknowledge();
     }
 
-    // Note: the server will automatically proceed with the downgrade once it 
+    // Note: the server will automatically proceed with the downgrade once it
     // receives the TLS shutdown from the client.
     //
     // error = d_streamSocket_sp->downgrade():
     // BSLS_ASSERT_OPT(!error);
 
-    if (acknowledge && 
-        transition == 
-        ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER) 
+    if (acknowledge &&
+        transition == ntcf::TestControlTransition::e_ACKNOWLEDGE_AFTER)
     {
         this->acknowledge();
     }
@@ -1795,9 +1782,9 @@ void TestServer::processSignal(
 
     if (signal.reflect > 0) {
         ntscfg::TestDataUtil::generateData(
-            &echo.value, 
-            signal.reflect, 
-            0, 
+            &echo.value,
+            signal.reflect,
+            0,
             ntscfg::TestDataUtil::k_DATASET_SERVER_COMPRESSABLE);
     }
 
@@ -1811,14 +1798,12 @@ void TestServer::processEncryption(
     ntsa::Error error;
 
     if (encryption.enabled) {
-        transaction->enableEncryption(
-            encryption.acknowledge, 
-            encryption.transition);
+        transaction->enableEncryption(encryption.acknowledge,
+                                      encryption.transition);
     }
     else {
-        transaction->disableEncryption(
-            encryption.acknowledge, 
-            encryption.transition);
+        transaction->disableEncryption(encryption.acknowledge,
+                                       encryption.transition);
     }
 }
 
@@ -1827,14 +1812,12 @@ void TestServer::processCompression(
     const ntcf::TestControlCompression&                 compression)
 {
     if (compression.enabled) {
-        transaction->enableCompression(
-            compression.acknowledge, 
-            compression.transition);
+        transaction->enableCompression(compression.acknowledge,
+                                       compression.transition);
     }
     else {
-        transaction->disableCompression(
-            compression.acknowledge, 
-            compression.transition);
+        transaction->disableCompression(compression.acknowledge,
+                                        compression.transition);
     }
 }
 
@@ -1847,11 +1830,12 @@ void TestServer::processHeartbeat(
     }
 }
 
-TestServer::TestServer(const ntcf::TestServerConfig&           configuration,
-                       const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                       const bsl::shared_ptr<ntci::DataPool>&  dataPool,
-                       const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
-                       bslma::Allocator*                       basicAllocator)
+TestServer::TestServer(
+    const ntcf::TestServerConfig&                       configuration,
+    const bsl::shared_ptr<ntci::Scheduler>&             scheduler,
+    const bsl::shared_ptr<ntci::DataPool>&              dataPool,
+    const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
+    bslma::Allocator*                                   basicAllocator)
 : d_mutex()
 , d_dataPool_sp(dataPool)
 , d_messagePool_sp()
@@ -1885,9 +1869,9 @@ TestServer::TestServer(const ntcf::TestServerConfig&           configuration,
 
     ntca::SerializationConfig serializationConfig;
 
-    error = ntcf::System::createSerialization(&d_serialization_sp, 
-        serializationConfig, 
-        d_allocator_p);
+    error = ntcf::System::createSerialization(&d_serialization_sp,
+                                              serializationConfig,
+                                              d_allocator_p);
     BSLS_ASSERT_OPT(!error);
 
     ntca::CompressionConfig compressionConfig;
@@ -1903,9 +1887,9 @@ TestServer::TestServer(const ntcf::TestServerConfig&           configuration,
     compressionConfig.setGoal(ntca::CompressionGoal::e_BALANCED);
 
     error = ntcf::System::createCompression(&d_compression_sp,
-        compressionConfig,
-        d_dataPool_sp,
-        d_allocator_p);
+                                            compressionConfig,
+                                            d_dataPool_sp,
+                                            d_allocator_p);
     BSLS_ASSERT_OPT(!error);
 
     d_datagramParser_sp.createInplace(d_allocator_p,
@@ -2024,7 +2008,8 @@ void TestServer::applyFlowControl()
     ntsa::Error error;
 
     error = d_listenerSocket_sp->applyFlowControl(
-        ntca::FlowControlType::e_RECEIVE, ntca::FlowControlMode::e_IMMEDIATE);
+        ntca::FlowControlType::e_RECEIVE,
+        ntca::FlowControlMode::e_IMMEDIATE);
     BSLS_ASSERT_OPT(!error);
 }
 

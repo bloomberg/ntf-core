@@ -242,25 +242,25 @@ class TestClient : public ntci::DatagramSocketSession,
     /// Defines a type alias for a mutex lock guard.
     typedef ntci::LockGuard LockGuard;
 
-    Mutex                                    d_mutex;
-    bsl::shared_ptr<ntci::DataPool>          d_dataPool_sp;
-    bsl::shared_ptr<ntcf::TestMessagePool>   d_messagePool_sp;
-    bsl::shared_ptr<ntci::Serialization>     d_serialization_sp;
-    bsl::shared_ptr<ntci::Compression>       d_compression_sp;
-    bsl::shared_ptr<ntci::Scheduler>         d_scheduler_sp;
-    bsl::shared_ptr<ntci::Strand>            d_strand_sp;
-    bsl::shared_ptr<ntci::DatagramSocket>    d_datagramSocket_sp;
-    bsl::shared_ptr<ntcf::TestMessageParser> d_datagramParser_sp;
-    bsl::shared_ptr<ntci::StreamSocket>      d_streamSocket_sp;
-    bsl::shared_ptr<ntcf::TestMessageParser> d_streamParser_sp;
+    Mutex                                        d_mutex;
+    bsl::shared_ptr<ntci::DataPool>              d_dataPool_sp;
+    bsl::shared_ptr<ntcf::TestMessagePool>       d_messagePool_sp;
+    bsl::shared_ptr<ntci::Serialization>         d_serialization_sp;
+    bsl::shared_ptr<ntci::Compression>           d_compression_sp;
+    bsl::shared_ptr<ntci::Scheduler>             d_scheduler_sp;
+    bsl::shared_ptr<ntci::Strand>                d_strand_sp;
+    bsl::shared_ptr<ntci::DatagramSocket>        d_datagramSocket_sp;
+    bsl::shared_ptr<ntcf::TestMessageParser>     d_datagramParser_sp;
+    bsl::shared_ptr<ntci::StreamSocket>          d_streamSocket_sp;
+    bsl::shared_ptr<ntcf::TestMessageParser>     d_streamParser_sp;
     bsl::shared_ptr<ntcf::TestMessageEncryption> d_encryption_sp;
-    ntcf::TestClientTransactionCatalog       d_transactionCatalog;
-    bslmt::Semaphore                         d_downgradeSemaphore;
-    ntsa::Endpoint                           d_tcpEndpoint;
-    ntsa::Endpoint                           d_udpEndpoint;
-    bsls::AtomicBool                         d_closed;
-    ntcf::TestClientConfig                   d_config;
-    bslma::Allocator*                        d_allocator_p;
+    ntcf::TestClientTransactionCatalog           d_transactionCatalog;
+    bslmt::Semaphore                             d_downgradeSemaphore;
+    ntsa::Endpoint                               d_tcpEndpoint;
+    ntsa::Endpoint                               d_udpEndpoint;
+    bsls::AtomicBool                             d_closed;
+    ntcf::TestClientConfig                       d_config;
+    bslma::Allocator*                            d_allocator_p;
 
     BALL_LOG_SET_CLASS_CATEGORY("NTCF.TEST.CLIENT");
 
@@ -643,9 +643,9 @@ class TestClient : public ntci::DatagramSocketSession,
                const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                const bsl::shared_ptr<ntci::DataPool>&  dataPool,
                const bsl::shared_ptr<ntcf::TestMessageEncryption>& encryption,
-               const ntsa::Endpoint&                   tcpEndpoint,
-               const ntsa::Endpoint&                   udpEndpoint,
-               bslma::Allocator*                       basicAllocator = 0);
+               const ntsa::Endpoint&                               tcpEndpoint,
+               const ntsa::Endpoint&                               udpEndpoint,
+               bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
     ~TestClient();
@@ -765,9 +765,9 @@ class TestClient : public ntci::DatagramSocketSession,
     /// Send the specified 'encryption' control message to the server and
     /// block until a response is received or an error occurs. On success, load
     /// the result into the specified 'result'. Return the error.
-    ntsa::Error encrypt(ntcf::TestAcknowledgmentResult*     result,
-                        const ntcf::TestControlEncryption&  encryption,
-                        const ntcf::TestOptions&            options);
+    ntsa::Error encrypt(ntcf::TestAcknowledgmentResult*    result,
+                        const ntcf::TestControlEncryption& encryption,
+                        const ntcf::TestOptions&           options);
 
     /// Send the specified 'encryption' control message to the server. Return
     /// the error.
@@ -794,9 +794,9 @@ class TestClient : public ntci::DatagramSocketSession,
     /// Send the specified 'compression' control message to the server and
     /// block until a response is received or an error occurs. On success, load
     /// the result into the specified 'result'. Return the error.
-    ntsa::Error compress(ntcf::TestAcknowledgmentResult*      result,
-                         const ntcf::TestControlCompression&  compression,
-                         const ntcf::TestOptions&             options);
+    ntsa::Error compress(ntcf::TestAcknowledgmentResult*     result,
+                         const ntcf::TestControlCompression& compression,
+                         const ntcf::TestOptions&            options);
 
     /// Send the specified 'compression' control message to the server. Invoke
     /// the specified 'callback' when a response is received or an error
@@ -823,9 +823,9 @@ class TestClient : public ntci::DatagramSocketSession,
     /// Send the specified 'heartbeat' control message to the server and
     /// block until a response is received or an error occurs. On success, load
     /// the result into the specified 'result'. Return the error.
-    ntsa::Error heartbeat(ntcf::TestAcknowledgmentResult*    result,
-                          const ntcf::TestControlHeartbeat&  heartbeat,
-                          const ntcf::TestOptions&           options);
+    ntsa::Error heartbeat(ntcf::TestAcknowledgmentResult*   result,
+                          const ntcf::TestControlHeartbeat& heartbeat,
+                          const ntcf::TestOptions&          options);
 
     /// Send the specified 'heartbeat' control message to the server. Invoke
     /// the specified 'callback' when a response is received or an error
