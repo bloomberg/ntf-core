@@ -20,15 +20,15 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 
 #include <ntccfg_limits.h>
 #include <ntccfg_tune.h>
+#include <ntcd_compression.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcd_compression.h>
-#include <ntcs_monitorable.h>
 #include <ntcs_authorization.h>
 #include <ntcs_compat.h>
 #include <ntcs_datapool.h>
 #include <ntcs_global.h>
 #include <ntcs_metrics.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_plugin.h>
 #include <ntcs_proactormetrics.h>
 #include <ntcs_processmetrics.h>
@@ -1395,10 +1395,10 @@ ntsa::Error System::createSerialization(
 }
 
 ntsa::Error System::createCompression(
-        bsl::shared_ptr<ntci::Compression>*    result,
-        const ntca::CompressionConfig&         configuration,
-        const bsl::shared_ptr<ntci::DataPool>& dataPool,
-        bslma::Allocator*                      basicAllocator)
+    bsl::shared_ptr<ntci::Compression>*    result,
+    const ntca::CompressionConfig&         configuration,
+    const bsl::shared_ptr<ntci::DataPool>& dataPool,
+    bslma::Allocator*                      basicAllocator)
 {
     ntsa::Error error;
 

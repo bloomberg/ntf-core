@@ -47,8 +47,6 @@ BSLS_IDENT_RCSID(ntcf_system_t_cpp, "$Id$ $CSID$")
 
 using namespace BloombergLP;
 
-
-
 // Uncomment to test a particular style of socket-to-thread load balancing,
 // instead of both static and dynamic load balancing.
 // #define NTCF_SYSTEM_TEST_DYNAMIC_LOAD_BALANCING true
@@ -100,9 +98,8 @@ class SystemTest
 {
     typedef SystemTest test;
 
-    typedef NTCCFG_FUNCTION(
-        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-        bslma::Allocator* allocator) ConcernCallback;
+    typedef NTCCFG_FUNCTION(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+                            bslma::Allocator* allocator) ConcernCallback;
 
     /// Describe the parameters of a datagram socket test.
     class DatagramSocketParameters;
@@ -187,9 +184,8 @@ class SystemTest
         const bsl::shared_ptr<ntci::Scheduler>& scheduler,
         bslma::Allocator*                       allocator);
 
-    static void concernClose(
-        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-        bslma::Allocator*                       allocator);
+    static void concernClose(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+                             bslma::Allocator* allocator);
 
     static void concernConnectAndShutdown(
         const bsl::shared_ptr<ntci::Scheduler>& scheduler,
@@ -269,101 +265,107 @@ class SystemTest
         const test::DatagramSocketParameters&   parameters,
         bslma::Allocator*                       allocator);
 
-    static void concernDatagramSocketBasicReactive(bslma::Allocator* allocator);
+    static void concernDatagramSocketBasicReactive(
+        bslma::Allocator* allocator);
 
-    static void concernDatagramSocketBasicProactive(bslma::Allocator* allocator);
+    static void concernDatagramSocketBasicProactive(
+        bslma::Allocator* allocator);
 
-    static void concernDatagramSocketStressReactive(bslma::Allocator* allocator);
+    static void concernDatagramSocketStressReactive(
+        bslma::Allocator* allocator);
 
-    static void concernDatagramSocketStressProactive(bslma::Allocator* allocator);
+    static void concernDatagramSocketStressProactive(
+        bslma::Allocator* allocator);
 
     static void concernDatagramSocketReceiveDeadline(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernDatagramSocketReceiveDeadlineClose(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernDatagramSocketReceiveCancellation(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernListenerSocketAcceptDeadline(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernListenerSocketAcceptCancellation(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
-    static void concernStreamSocket(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                         const test::StreamSocketParameters&     parameters,
-                         bslma::Allocator*                       allocator);
+    static void concernStreamSocket(
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        const test::StreamSocketParameters&     parameters,
+        bslma::Allocator*                       allocator);
 
     static void concernStreamSocketBasicReactive(bslma::Allocator* allocator);
 
     static void concernStreamSocketBasicProactive(bslma::Allocator* allocator);
 
     static void concernStreamSocketMinimalReadQueueHighWatermarkReactive(
-    bslma::Allocator* allocator);
+        bslma::Allocator* allocator);
 
     static void concernStreamSocketMinimalReadQueueHighWatermarkProactive(
-    bslma::Allocator* allocator);
+        bslma::Allocator* allocator);
 
     static void concernStreamSocketMinimalWriteQueueHighWatermarkReactive(
-    bslma::Allocator* allocator);
+        bslma::Allocator* allocator);
 
     static void concernStreamSocketMinimalWriteQueueHighWatermarkProactive(
-    bslma::Allocator* allocator);
+        bslma::Allocator* allocator);
 
     static void concernStreamSocketRateLimitReceiveBufferReactive(
-    bslma::Allocator* allocator);
+        bslma::Allocator* allocator);
 
     static void concernStreamSocketRateLimitReceiveBufferProactive(
-    bslma::Allocator* allocator);
+        bslma::Allocator* allocator);
 
     static void concernStreamSocketRateLimitSendBufferReactive(
-    bslma::Allocator* allocator);
+        bslma::Allocator* allocator);
 
     static void concernStreamSocketRateLimitSendBufferProactive(
-    bslma::Allocator* allocator);
+        bslma::Allocator* allocator);
 
     static void concernStreamSocketStressReactive(bslma::Allocator* allocator);
 
-    static void concernStreamSocketStressProactive(bslma::Allocator* allocator);
+    static void concernStreamSocketStressProactive(
+        bslma::Allocator* allocator);
 
     static void concernStreamSocketReceiveDeadline(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernStreamSocketReceiveCancellation(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernStreamSocketReceiveDeadlineClose(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernStreamSocketSendDeadline(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernStreamSocketSendCancellation(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernStreamSocketSendDeadlineClose(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernListenerSocketAcceptClose(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernInterfaceFunctionAndTimerDistribution(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
   public:
     static void verifyBasicThreadUsage();
@@ -399,7 +401,6 @@ class SystemTest
     static void verifyConnectEndpoint6();
     static void verifyConnectEndpoint7();
     static void verifyConnectEndpoint8();
-
 
     static void verifyConnectName1();
     static void verifyConnectName2();
@@ -453,7 +454,6 @@ class SystemTest
     static void verifyDefaultExecutors();
     static void verifyDefaultInterfaces();
 
-
     // Verify the usage example.
     static void verifyTlsUsage();
 
@@ -474,8 +474,9 @@ class SystemTest
 };
 
 /// Describes the parameters of a datagram socket test.
-class SystemTest::DatagramSocketParameters {
-public:
+class SystemTest::DatagramSocketParameters
+{
+  public:
     ntsa::Transport::Value             d_transport;
     bsl::size_t                        d_numSocketPairs;
     bsl::size_t                        d_numTimers;
@@ -595,8 +596,9 @@ class SystemTest::DatagramSocketSession : public ntci::DatagramSocketSession
 };
 
 /// Provide a datagram socket manager for this test driver.
-class SystemTest::DatagramSocketManager : public ntci::DatagramSocketManager,
-                              public ntccfg::Shared<DatagramSocketManager>
+class SystemTest::DatagramSocketManager
+: public ntci::DatagramSocketManager,
+  public ntccfg::Shared<DatagramSocketManager>
 {
     /// Define a type alias for a set of managed datagram
     /// sockets.
@@ -654,8 +656,9 @@ class SystemTest::DatagramSocketManager : public ntci::DatagramSocketManager,
 };
 
 /// Describe the parameters of a stream socket test.
-class SystemTest::StreamSocketParameters {
-public:
+class SystemTest::StreamSocketParameters
+{
+  public:
     ntsa::Transport::Value             d_transport;
     bsl::size_t                        d_numListeners;
     bsl::size_t                        d_numConnectionsPerListener;
@@ -854,8 +857,9 @@ class SystemTest::StreamSocketSession : public ntci::StreamSocketSession
 };
 
 /// Provide a stream socket manager for this test driver.
-class SystemTest::StreamSocketManager : public ntci::ListenerSocketManager,
-                            public ntccfg::Shared<StreamSocketManager>
+class SystemTest::StreamSocketManager
+: public ntci::ListenerSocketManager,
+  public ntccfg::Shared<StreamSocketManager>
 {
     typedef bsl::unordered_map<bsl::shared_ptr<ntci::ListenerSocket>,
                                bsl::shared_ptr<ListenerSocketSession> >
@@ -938,8 +942,9 @@ class SystemTest::StreamSocketManager : public ntci::ListenerSocketManager,
 };
 
 /// This struct defines the parameters of a test.
-class SystemTest::TransferParameters {
-public:
+class SystemTest::TransferParameters
+{
+  public:
     enum AddressFamily {
         // Enumerates the address families supported by this server.
 
@@ -999,7 +1004,8 @@ public:
 
 /// Provide a stream socket session used by a client during a data transfer
 /// test.
-class SystemTest::TransferClientStreamSocketSession : public ntci::StreamSocketSession
+class SystemTest::TransferClientStreamSocketSession
+: public ntci::StreamSocketSession
 {
     /// Define a type alias for a mutex.
     typedef ntccfg::Mutex Mutex;
@@ -1203,7 +1209,8 @@ class SystemTest::TransferClient : public ntci::StreamSocketManager
 };
 
 /// Provide a listener.
-class SystemTest::TransferServerListenerSocketSession : public ntci::ListenerSocketSession
+class SystemTest::TransferServerListenerSocketSession
+: public ntci::ListenerSocketSession
 {
     /// Define a type alias for a mutex.
     typedef ntccfg::Mutex Mutex;
@@ -1248,7 +1255,8 @@ class SystemTest::TransferServerListenerSocketSession : public ntci::ListenerSoc
 };
 
 /// Provide a connection used by a server.
-class SystemTest::TransferServerStreamSocketSession : public ntci::StreamSocketSession
+class SystemTest::TransferServerStreamSocketSession
+: public ntci::StreamSocketSession
 {
     /// Define a type alias for a mutex.
     typedef ntccfg::Mutex Mutex;
@@ -1470,7 +1478,8 @@ class SystemTest::TransferServer : public ntci::ListenerSocketManager
 
 /// Provide a test resolver for use by this test driver. This class is thread
 /// safe.
-class SystemTest::Resolver : public ntci::Resolver, public ntccfg::Shared<Resolver>
+class SystemTest::Resolver : public ntci::Resolver,
+                             public ntccfg::Shared<Resolver>
 {
     bsl::shared_ptr<ntsi::Resolver> d_resolver_sp;
     bdlmt::EventScheduler           d_scheduler;
@@ -1783,8 +1792,9 @@ class SystemTest::Resolver : public ntci::Resolver, public ntccfg::Shared<Resolv
 
 /// Provide utilities for processing resolver events in this
 /// test driver.
-class SystemTest::ResolverUtil {
-public:
+class SystemTest::ResolverUtil
+{
+  public:
     /// Process the resolution of a domain name to the specified
     /// 'ipAddressList' by the specified 'resolver' according to the
     /// specified 'event'. Post to the specified 'semaphore'.
@@ -1845,8 +1855,9 @@ public:
 };
 
 /// Provide callbacks used in examples.
-class SystemTest::ExampleUtil {
-public:
+class SystemTest::ExampleUtil
+{
+  public:
     /// Assert the specified 'event' indicates an asynchronous 'connect'
     /// operation on the specified 'streamSocket' completed successfully
     /// then post to the specified 'semaphore'.
@@ -1890,8 +1901,9 @@ public:
 
 /// Provide a callback for processing connection events for sockets that are
 /// closed while the connection is in progress.
-class SystemTest::CloseUtil {
-public:
+class SystemTest::CloseUtil
+{
+  public:
     /// Assert the specified 'event' indicates an asynchronous 'connect'
     /// operation on the specified 'streamSocket' completed successfully
     /// then post to the specified 'semaphore'.
@@ -1902,8 +1914,9 @@ public:
 };
 
 /// Provide callbacks for datagram socket tests.
-class SystemTest::DatagramSocketUtil {
-public:
+class SystemTest::DatagramSocketUtil
+{
+  public:
     static void processReceiveFailed(
         const bsl::shared_ptr<ntci::Receiver>& receiver,
         const bsl::shared_ptr<bdlbb::Blob>&    data,
@@ -1929,8 +1942,9 @@ public:
 };
 
 /// Provide callbacks for listener socket tests.
-class SystemTest::ListenerSocketUtil {
-public:
+class SystemTest::ListenerSocketUtil
+{
+  public:
     static void processAcceptTimeout(
         const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
         const bsl::shared_ptr<ntci::Acceptor>&       acceptor,
@@ -1952,8 +1966,9 @@ public:
 };
 
 /// Provide callbacks for stream socket tests.
-class SystemTest::StreamSocketUtil {
-public:
+class SystemTest::StreamSocketUtil
+{
+  public:
     static void processReceiveTimeout(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const bsl::shared_ptr<ntci::Receiver>&     receiver,
@@ -2022,22 +2037,22 @@ public:
 /// Provide callbackcs for deferred functions and timers.
 class SystemTest::ChronologyUtil
 {
-public:
+  public:
     static void distributedFunction(bslmt::Barrier* suspendBarrier,
-                                         bslmt::Barrier* releaseBarrier,
-                                         bsl::size_t     threadIndex);
+                                    bslmt::Barrier* releaseBarrier,
+                                    bsl::size_t     threadIndex);
 
-    static void distributedTimer(bslmt::Barrier*                     suspendBarrier,
-                      bslmt::Barrier*                     releaseBarrier,
-                      const bsl::shared_ptr<ntci::Timer>& timer,
-                      const ntca::TimerEvent&             event,
-                      bsl::size_t                         threadIndex); 
+    static void distributedTimer(bslmt::Barrier* suspendBarrier,
+                                 bslmt::Barrier* releaseBarrier,
+                                 const bsl::shared_ptr<ntci::Timer>& timer,
+                                 const ntca::TimerEvent&             event,
+                                 bsl::size_t threadIndex);
 };
 
 /// Provide callbacks for TLS tests.
 class SystemTest::TlsUtil
 {
-public:
+  public:
     static void processConnect(
         bslmt::Semaphore*                          semaphore,
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
@@ -2077,7 +2092,6 @@ public:
     static bool processValidation(
         const ntca::EncryptionCertificate& certificate);
 };
-
 
 void SystemTest::DatagramSocketSession::processReadQueueLowWatermark(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
@@ -3625,8 +3639,7 @@ void SystemTest::StreamSocketManager::run()
     for (bsl::size_t i = 0; i < d_parameters.d_numListeners; ++i) {
         ntca::ListenerSocketOptions options;
         options.setTransport(d_parameters.d_transport);
-        options.setSourceEndpoint(
-            SystemTest::any(d_parameters.d_transport));
+        options.setSourceEndpoint(SystemTest::any(d_parameters.d_transport));
         options.setAcceptQueueLowWatermark(1);
         options.setAcceptQueueHighWatermark(
             d_parameters.d_acceptQueueHighWatermark);
@@ -3900,9 +3913,10 @@ void SystemTest::StreamSocketManager::run()
     d_listenerSocketsClosed.wait();
 }
 
-void SystemTest::TransferClientStreamSocketSession::processReadQueueLowWatermark(
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const ntca::ReadQueueEvent&                event)
+void SystemTest::TransferClientStreamSocketSession::
+    processReadQueueLowWatermark(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ReadQueueEvent&                event)
 {
     NTSCFG_TEST_LOG_DEBUG << "TransferClient stream socket descriptor "
                           << d_streamSocket_sp->handle() << " at "
@@ -3928,9 +3942,10 @@ void SystemTest::TransferClientStreamSocketSession::processReadQueueLowWatermark
                           << " received EOF" << NTSCFG_TEST_LOG_END;
 }
 
-void SystemTest::TransferClientStreamSocketSession::processReadQueueHighWatermark(
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const ntca::ReadQueueEvent&                event)
+void SystemTest::TransferClientStreamSocketSession::
+    processReadQueueHighWatermark(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ReadQueueEvent&                event)
 {
     NTSCFG_TEST_FALSE(true);
 }
@@ -3942,9 +3957,10 @@ void SystemTest::TransferClientStreamSocketSession::processReadQueueDiscarded(
     NTSCFG_TEST_FALSE(true);
 }
 
-void SystemTest::TransferClientStreamSocketSession::processWriteQueueLowWatermark(
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const ntca::WriteQueueEvent&               event)
+void SystemTest::TransferClientStreamSocketSession::
+    processWriteQueueLowWatermark(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::WriteQueueEvent&               event)
 {
     NTSCFG_TEST_LOG_DEBUG << "TransferClient stream socket descriptor "
                           << d_streamSocket_sp->handle() << " at "
@@ -3978,9 +3994,10 @@ void SystemTest::TransferClientStreamSocketSession::processWriteQueueLowWatermar
     }
 }
 
-void SystemTest::TransferClientStreamSocketSession::processWriteQueueHighWatermark(
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const ntca::WriteQueueEvent&               event)
+void SystemTest::TransferClientStreamSocketSession::
+    processWriteQueueHighWatermark(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::WriteQueueEvent&               event)
 {
     NTSCFG_TEST_LOG_DEBUG << "TransferClient stream socket descriptor "
                           << d_streamSocket_sp->handle() << " at "
@@ -4155,10 +4172,11 @@ void SystemTest::TransferClientStreamSocketSession::processUpgrade(
     }
 }
 
-SystemTest::TransferClientStreamSocketSession::TransferClientStreamSocketSession(
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const test::TransferParameters&            parameters,
-    bslma::Allocator*                          basicAllocator)
+SystemTest::TransferClientStreamSocketSession::
+    TransferClientStreamSocketSession(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const test::TransferParameters&            parameters,
+        bslma::Allocator*                          basicAllocator)
 : d_mutex()
 , d_streamSocket_sp(streamSocket)
 , d_numMessagesToSend(static_cast<int>(parameters.d_numMessages))
@@ -4167,7 +4185,8 @@ SystemTest::TransferClientStreamSocketSession::TransferClientStreamSocketSession
 {
 }
 
-SystemTest::TransferClientStreamSocketSession::~TransferClientStreamSocketSession()
+SystemTest::TransferClientStreamSocketSession::
+    ~TransferClientStreamSocketSession()
 {
 }
 
@@ -4409,9 +4428,10 @@ void SystemTest::TransferClient::wait()
     d_streamSocketsClosed.wait();
 }
 
-void SystemTest::TransferServerListenerSocketSession::processAcceptQueueLowWatermark(
-    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-    const ntca::AcceptQueueEvent&                event)
+void SystemTest::TransferServerListenerSocketSession::
+    processAcceptQueueLowWatermark(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const ntca::AcceptQueueEvent&                event)
 {
     NTSCFG_TEST_LOG_DEBUG << "TransferServer listener socket descriptor "
                           << d_listenerSocket_sp->handle() << " at "
@@ -4447,10 +4467,11 @@ void SystemTest::TransferServerListenerSocketSession::processAcceptQueueLowWater
     }
 }
 
-SystemTest::TransferServerListenerSocketSession::TransferServerListenerSocketSession(
-    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-    const test::TransferParameters&              parameters,
-    bslma::Allocator*                            basicAllocator)
+SystemTest::TransferServerListenerSocketSession::
+    TransferServerListenerSocketSession(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
+        const test::TransferParameters&              parameters,
+        bslma::Allocator*                            basicAllocator)
 : d_mutex()
 , d_listenerSocket_sp(listenerSocket)
 , d_parameters(parameters)
@@ -4458,7 +4479,8 @@ SystemTest::TransferServerListenerSocketSession::TransferServerListenerSocketSes
 {
 }
 
-SystemTest::TransferServerListenerSocketSession::~TransferServerListenerSocketSession()
+SystemTest::TransferServerListenerSocketSession::
+    ~TransferServerListenerSocketSession()
 {
 }
 
@@ -4471,9 +4493,10 @@ void SystemTest::TransferServerListenerSocketSession::run()
     NTSCFG_TEST_OK(error);
 }
 
-void SystemTest::TransferServerStreamSocketSession::processReadQueueLowWatermark(
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const ntca::ReadQueueEvent&                event)
+void SystemTest::TransferServerStreamSocketSession::
+    processReadQueueLowWatermark(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ReadQueueEvent&                event)
 {
     NTSCFG_TEST_LOG_DEBUG << "TransferServer stream socket descriptor "
                           << d_streamSocket_sp->handle() << " at "
@@ -4569,9 +4592,10 @@ void SystemTest::TransferServerStreamSocketSession::processReadQueueLowWatermark
     }
 }
 
-void SystemTest::TransferServerStreamSocketSession::processReadQueueHighWatermark(
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const ntca::ReadQueueEvent&                event)
+void SystemTest::TransferServerStreamSocketSession::
+    processReadQueueHighWatermark(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ReadQueueEvent&                event)
 {
     NTSCFG_TEST_FALSE(true);
 }
@@ -4583,16 +4607,18 @@ void SystemTest::TransferServerStreamSocketSession::processReadQueueDiscarded(
     NTSCFG_TEST_FALSE(true);
 }
 
-void SystemTest::TransferServerStreamSocketSession::processWriteQueueLowWatermark(
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const ntca::WriteQueueEvent&               event)
+void SystemTest::TransferServerStreamSocketSession::
+    processWriteQueueLowWatermark(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::WriteQueueEvent&               event)
 {
     NTSCFG_TEST_FALSE(true);
 }
 
-void SystemTest::TransferServerStreamSocketSession::processWriteQueueHighWatermark(
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const ntca::WriteQueueEvent&               event)
+void SystemTest::TransferServerStreamSocketSession::
+    processWriteQueueHighWatermark(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::WriteQueueEvent&               event)
 {
     NTSCFG_TEST_FALSE(true);
 }
@@ -4760,10 +4786,11 @@ void SystemTest::TransferServerStreamSocketSession::processUpgrade(
     }
 }
 
-SystemTest::TransferServerStreamSocketSession::TransferServerStreamSocketSession(
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    const test::TransferParameters&            parameters,
-    bslma::Allocator*                          basicAllocator)
+SystemTest::TransferServerStreamSocketSession::
+    TransferServerStreamSocketSession(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const test::TransferParameters&            parameters,
+        bslma::Allocator*                          basicAllocator)
 : d_mutex()
 , d_streamSocket_sp(streamSocket)
 , d_receiveData(basicAllocator)
@@ -4773,7 +4800,8 @@ SystemTest::TransferServerStreamSocketSession::TransferServerStreamSocketSession
 {
 }
 
-SystemTest::TransferServerStreamSocketSession::~TransferServerStreamSocketSession()
+SystemTest::TransferServerStreamSocketSession::
+    ~TransferServerStreamSocketSession()
 {
 }
 
@@ -5091,9 +5119,10 @@ void SystemTest::TransferServer::getListenerEndpoints(
     }
 }
 
-void SystemTest::Resolver::processGetIpAddress(const bslstl::StringRef&         domainName,
-                                   const ntca::GetIpAddressOptions& options,
-                                   const ntci::GetIpAddressCallback& callback)
+void SystemTest::Resolver::processGetIpAddress(
+    const bslstl::StringRef&          domainName,
+    const ntca::GetIpAddressOptions&  options,
+    const ntci::GetIpAddressCallback& callback)
 {
 }
 
@@ -5104,9 +5133,10 @@ void SystemTest::Resolver::processGetDomainName(
 {
 }
 
-void SystemTest::Resolver::processGetPort(const bslstl::StringRef&     serviceName,
-                              const ntca::GetPortOptions&  options,
-                              const ntci::GetPortCallback& callback)
+void SystemTest::Resolver::processGetPort(
+    const bslstl::StringRef&     serviceName,
+    const ntca::GetPortOptions&  options,
+    const ntci::GetPortCallback& callback)
 {
 }
 
@@ -5117,9 +5147,10 @@ void SystemTest::Resolver::processGetServiceName(
 {
 }
 
-void SystemTest::Resolver::processGetEndpoint(const bslstl::StringRef&         text,
-                                  const ntca::GetEndpointOptions&  options,
-                                  const ntci::GetEndpointCallback& callback)
+void SystemTest::Resolver::processGetEndpoint(
+    const bslstl::StringRef&         text,
+    const ntca::GetEndpointOptions&  options,
+    const ntci::GetEndpointCallback& callback)
 {
     bsl::shared_ptr<Resolver> self = this->getSelf(this);
 
@@ -5192,29 +5223,32 @@ ntsa::Error SystemTest::Resolver::addIpAddress(
     return d_resolver_sp->addIpAddress(domainName, ipAddressList);
 }
 
-ntsa::Error SystemTest::Resolver::addIpAddress(const bslstl::StringRef& domainName,
-                                   const ntsa::IpAddress&   ipAddress)
+ntsa::Error SystemTest::Resolver::addIpAddress(
+    const bslstl::StringRef& domainName,
+    const ntsa::IpAddress&   ipAddress)
 {
     return d_resolver_sp->addIpAddress(domainName, ipAddress);
 }
 
-ntsa::Error SystemTest::Resolver::setPort(const bslstl::StringRef&       serviceName,
-                              const bsl::vector<ntsa::Port>& portList,
-                              ntsa::Transport::Value         transport)
+ntsa::Error SystemTest::Resolver::setPort(
+    const bslstl::StringRef&       serviceName,
+    const bsl::vector<ntsa::Port>& portList,
+    ntsa::Transport::Value         transport)
 {
     return d_resolver_sp->setPort(serviceName, portList, transport);
 }
 
-ntsa::Error SystemTest::Resolver::addPort(const bslstl::StringRef&       serviceName,
-                              const bsl::vector<ntsa::Port>& portList,
-                              ntsa::Transport::Value         transport)
+ntsa::Error SystemTest::Resolver::addPort(
+    const bslstl::StringRef&       serviceName,
+    const bsl::vector<ntsa::Port>& portList,
+    ntsa::Transport::Value         transport)
 {
     return d_resolver_sp->addPort(serviceName, portList, transport);
 }
 
 ntsa::Error SystemTest::Resolver::addPort(const bslstl::StringRef& serviceName,
-                              ntsa::Port               port,
-                              ntsa::Transport::Value   transport)
+                                          ntsa::Port               port,
+                                          ntsa::Transport::Value   transport)
 {
     return d_resolver_sp->addPort(serviceName, port, transport);
 }
@@ -5230,14 +5264,16 @@ ntsa::Error SystemTest::Resolver::setHostname(const bsl::string& name)
     return d_resolver_sp->setHostname(name);
 }
 
-ntsa::Error SystemTest::Resolver::setHostnameFullyQualified(const bsl::string& name)
+ntsa::Error SystemTest::Resolver::setHostnameFullyQualified(
+    const bsl::string& name)
 {
     return d_resolver_sp->setHostnameFullyQualified(name);
 }
 
-ntsa::Error SystemTest::Resolver::getIpAddress(const bslstl::StringRef&         domainName,
-                                   const ntca::GetIpAddressOptions& options,
-                                   const ntci::GetIpAddressCallback& callback)
+ntsa::Error SystemTest::Resolver::getIpAddress(
+    const bslstl::StringRef&          domainName,
+    const ntca::GetIpAddressOptions&  options,
+    const ntci::GetIpAddressCallback& callback)
 {
     d_scheduler.scheduleEvent(
         bdlt::CurrentTime::now() + d_delay,
@@ -5266,9 +5302,10 @@ ntsa::Error SystemTest::Resolver::getDomainName(
     return ntsa::Error();
 }
 
-ntsa::Error SystemTest::Resolver::getPort(const bslstl::StringRef&     serviceName,
-                              const ntca::GetPortOptions&  options,
-                              const ntci::GetPortCallback& callback)
+ntsa::Error SystemTest::Resolver::getPort(
+    const bslstl::StringRef&     serviceName,
+    const ntca::GetPortOptions&  options,
+    const ntci::GetPortCallback& callback)
 {
     d_scheduler.scheduleEvent(bdlt::CurrentTime::now() + d_delay,
                               bdlf::BindUtil::bind(&Resolver::processGetPort,
@@ -5296,9 +5333,10 @@ ntsa::Error SystemTest::Resolver::getServiceName(
     return ntsa::Error();
 }
 
-ntsa::Error SystemTest::Resolver::getEndpoint(const bslstl::StringRef&         text,
-                                  const ntca::GetEndpointOptions&  options,
-                                  const ntci::GetEndpointCallback& callback)
+ntsa::Error SystemTest::Resolver::getEndpoint(
+    const bslstl::StringRef&         text,
+    const ntca::GetEndpointOptions&  options,
+    const ntci::GetEndpointCallback& callback)
 {
     d_scheduler.scheduleEvent(
         bdlt::CurrentTime::now() + d_delay,
@@ -5311,8 +5349,9 @@ ntsa::Error SystemTest::Resolver::getEndpoint(const bslstl::StringRef&         t
     return ntsa::Error();
 }
 
-ntsa::Error SystemTest::Resolver::getLocalIpAddress(bsl::vector<ntsa::IpAddress>* result,
-                                        const ntsa::IpAddressOptions& options)
+ntsa::Error SystemTest::Resolver::getLocalIpAddress(
+    bsl::vector<ntsa::IpAddress>* result,
+    const ntsa::IpAddressOptions& options)
 {
     return d_resolver_sp->getLocalIpAddress(result, options);
 }
@@ -5322,7 +5361,8 @@ ntsa::Error SystemTest::Resolver::getHostname(bsl::string* result)
     return d_resolver_sp->getHostname(result);
 }
 
-ntsa::Error SystemTest::Resolver::getHostnameFullyQualified(bsl::string* result)
+ntsa::Error SystemTest::Resolver::getHostnameFullyQualified(
+    bsl::string* result)
 {
     return d_resolver_sp->getHostnameFullyQualified(result);
 }
@@ -5332,7 +5372,7 @@ void SystemTest::Resolver::execute(const Functor& functor)
 }
 
 void SystemTest::Resolver::moveAndExecute(FunctorSequence* functorSequence,
-                              const Functor&   functor)
+                                          const Functor&   functor)
 {
 }
 
@@ -5548,9 +5588,10 @@ void SystemTest::ExampleUtil::processAccept(
     semaphore->post();
 }
 
-void SystemTest::ExampleUtil::processSend(const bsl::shared_ptr<ntci::Sender>& sender,
-                              const ntca::SendEvent&               event,
-                              bslmt::Semaphore*                    semaphore)
+void SystemTest::ExampleUtil::processSend(
+    const bsl::shared_ptr<ntci::Sender>& sender,
+    const ntca::SendEvent&               event,
+    bslmt::Semaphore*                    semaphore)
 {
     BSLS_ASSERT(event.type() == ntca::SendEventType::e_COMPLETE);
     semaphore->post();
@@ -5953,9 +5994,10 @@ void SystemTest::StreamSocketUtil::cancelReceive(
     NTSCFG_TEST_FALSE(error);
 }
 
-void SystemTest::ChronologyUtil::distributedFunction(bslmt::Barrier* suspendBarrier,
-                         bslmt::Barrier* releaseBarrier,
-                         bsl::size_t     threadIndex)
+void SystemTest::ChronologyUtil::distributedFunction(
+    bslmt::Barrier* suspendBarrier,
+    bslmt::Barrier* releaseBarrier,
+    bsl::size_t     threadIndex)
 {
     NTCCFG_WARNING_UNUSED(suspendBarrier);
     NTCCFG_WARNING_UNUSED(releaseBarrier);
@@ -5972,11 +6014,12 @@ void SystemTest::ChronologyUtil::distributedFunction(bslmt::Barrier* suspendBarr
     releaseBarrier->wait();
 }
 
-void SystemTest::ChronologyUtil::distributedTimer(bslmt::Barrier*                     suspendBarrier,
-                      bslmt::Barrier*                     releaseBarrier,
-                      const bsl::shared_ptr<ntci::Timer>& timer,
-                      const ntca::TimerEvent&             event,
-                      bsl::size_t                         threadIndex)
+void SystemTest::ChronologyUtil::distributedTimer(
+    bslmt::Barrier*                     suspendBarrier,
+    bslmt::Barrier*                     releaseBarrier,
+    const bsl::shared_ptr<ntci::Timer>& timer,
+    const ntca::TimerEvent&             event,
+    bsl::size_t                         threadIndex)
 {
     NTCCFG_WARNING_UNUSED(suspendBarrier);
     NTCCFG_WARNING_UNUSED(releaseBarrier);
@@ -6196,7 +6239,6 @@ bool SystemTest::TlsUtil::processValidation(
 
     return true;
 }
-
 
 ntsa::Endpoint SystemTest::any(ntsa::Transport::Value transport)
 {
@@ -6647,8 +6689,9 @@ void SystemTest::concernConnectAndShutdown(
     NTSCFG_TEST_OK(error);
 }
 
-void SystemTest::concernConnectEndpoint1(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                             bslma::Allocator*                       allocator)
+void SystemTest::concernConnectEndpoint1(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically fails but eventually succeeds
     // Testing: ECONNREFUSED, connection established
@@ -6829,8 +6872,9 @@ void SystemTest::concernConnectEndpoint1(const bsl::shared_ptr<ntci::Scheduler>&
     }
 }
 
-void SystemTest::concernConnectEndpoint2(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                             bslma::Allocator*                       allocator)
+void SystemTest::concernConnectEndpoint2(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically refused until all attempts are
     // exhausted
@@ -6949,8 +6993,9 @@ void SystemTest::concernConnectEndpoint2(const bsl::shared_ptr<ntci::Scheduler>&
     }
 }
 
-void SystemTest::concernConnectEndpoint3(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                             bslma::Allocator*                       allocator)
+void SystemTest::concernConnectEndpoint3(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically failes due to either timeouts
     // or ICMP messages leading to e_UNREACHABLE error until all attempts are
@@ -7050,8 +7095,9 @@ void SystemTest::concernConnectEndpoint3(const bsl::shared_ptr<ntci::Scheduler>&
     }
 }
 
-void SystemTest::concernConnectEndpoint4(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                             bslma::Allocator*                       allocator)
+void SystemTest::concernConnectEndpoint4(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may be cancelled while waiting to
     // begin connecting.
@@ -7211,8 +7257,9 @@ void SystemTest::concernConnectEndpoint4(const bsl::shared_ptr<ntci::Scheduler>&
     }
 }
 
-void SystemTest::concernConnectEndpoint5(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                             bslma::Allocator*                       allocator)
+void SystemTest::concernConnectEndpoint5(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may be cancelled while connections
     // have been initiated but not yet complete.
@@ -7375,8 +7422,9 @@ void SystemTest::concernConnectEndpoint5(const bsl::shared_ptr<ntci::Scheduler>&
     }
 }
 
-void SystemTest::concernConnectEndpoint6(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                             bslma::Allocator*                       allocator)
+void SystemTest::concernConnectEndpoint6(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may reach their deadline while waiting
     // to begin connecting.
@@ -7505,8 +7553,9 @@ void SystemTest::concernConnectEndpoint6(const bsl::shared_ptr<ntci::Scheduler>&
     }
 }
 
-void SystemTest::concernConnectEndpoint7(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                             bslma::Allocator*                       allocator)
+void SystemTest::concernConnectEndpoint7(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connections to endpoints may be reach their deadline while
     // connections have been initiated but not yet complete.
@@ -7635,8 +7684,9 @@ void SystemTest::concernConnectEndpoint7(const bsl::shared_ptr<ntci::Scheduler>&
     }
 }
 
-void SystemTest::concernConnectEndpoint8(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                             bslma::Allocator*                       allocator)
+void SystemTest::concernConnectEndpoint8(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connect to endpoint periodically times out nearly
     // instantaneously or the timer races with the system refusing or aborting
@@ -7748,8 +7798,9 @@ void SystemTest::concernConnectEndpoint8(const bsl::shared_ptr<ntci::Scheduler>&
     }
 }
 
-void SystemTest::concernConnectName1(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                         bslma::Allocator*                       allocator)
+void SystemTest::concernConnectName1(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically fails but eventually succeeds
     // Testing: ECONNREFUSED, connection established
@@ -7935,8 +7986,9 @@ void SystemTest::concernConnectName1(const bsl::shared_ptr<ntci::Scheduler>& sch
     }
 }
 
-void SystemTest::concernConnectName2(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                         bslma::Allocator*                       allocator)
+void SystemTest::concernConnectName2(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically refused until all attempts are
     // exhausted
@@ -8058,8 +8110,9 @@ void SystemTest::concernConnectName2(const bsl::shared_ptr<ntci::Scheduler>& sch
     }
 }
 
-void SystemTest::concernConnectName3(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                         bslma::Allocator*                       allocator)
+void SystemTest::concernConnectName3(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically times out until all attempts
     // are exhausted
@@ -8164,8 +8217,9 @@ void SystemTest::concernConnectName3(const bsl::shared_ptr<ntci::Scheduler>& sch
     resolver->linger();
 }
 
-void SystemTest::concernConnectName4(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                         bslma::Allocator*                       allocator)
+void SystemTest::concernConnectName4(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may be cancelled while waiting to
     // begin connecting.
@@ -8325,8 +8379,9 @@ void SystemTest::concernConnectName4(const bsl::shared_ptr<ntci::Scheduler>& sch
     }
 }
 
-void SystemTest::concernConnectName5(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                         bslma::Allocator*                       allocator)
+void SystemTest::concernConnectName5(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may be cancelled while connections have
     // been initiated but not yet complete.
@@ -8501,8 +8556,9 @@ void SystemTest::concernConnectName5(const bsl::shared_ptr<ntci::Scheduler>& sch
     resolver->linger();
 }
 
-void SystemTest::concernConnectName6(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                         bslma::Allocator*                       allocator)
+void SystemTest::concernConnectName6(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may be reach their deadline while waiting
     // to begin connecting.
@@ -8630,8 +8686,9 @@ void SystemTest::concernConnectName6(const bsl::shared_ptr<ntci::Scheduler>& sch
     }
 }
 
-void SystemTest::concernConnectName7(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                         bslma::Allocator*                       allocator)
+void SystemTest::concernConnectName7(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connections to names may reach their deadline while connections
     // have been initiated but not yet complete.
@@ -8774,8 +8831,9 @@ void SystemTest::concernConnectName7(const bsl::shared_ptr<ntci::Scheduler>& sch
     resolver->linger();
 }
 
-void SystemTest::concernConnectName8(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                         bslma::Allocator*                       allocator)
+void SystemTest::concernConnectName8(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
 {
     // Concern: Connect to name periodically times out with a nearly
     // instantaneous timeout or the timer races with the resolution of a name
@@ -8899,8 +8957,7 @@ void SystemTest::concernConnectName8(const bsl::shared_ptr<ntci::Scheduler>& sch
     }
 }
 
-void SystemTest::concernConnectLimitActive(
-    bslma::Allocator*                       allocator)
+void SystemTest::concernConnectLimitActive(bslma::Allocator* allocator)
 {
     // Concern: Connection limit reached on active side.
     // Plan:
@@ -9285,9 +9342,10 @@ void SystemTest::concernAcceptClosure(bslma::Allocator* allocator)
     scheduler->linger();
 }
 
-void SystemTest::concernDatagramSocket(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                           const test::DatagramSocketParameters&   parameters,
-                           bslma::Allocator*                       allocator)
+void SystemTest::concernDatagramSocket(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    const test::DatagramSocketParameters&   parameters,
+    bslma::Allocator*                       allocator)
 {
     NTCI_LOG_CONTEXT();
 
@@ -9312,8 +9370,8 @@ void SystemTest::concernDatagramSocket(const bsl::shared_ptr<ntci::Scheduler>& s
     NTCI_LOG_DEBUG("Datagram socket test complete");
 }
 
-
-void SystemTest::concernDatagramSocketBasicReactive(bslma::Allocator* allocator)
+void SystemTest::concernDatagramSocketBasicReactive(
+    bslma::Allocator* allocator)
 {
     // Concern: Breathing test.
 
@@ -9332,7 +9390,8 @@ void SystemTest::concernDatagramSocketBasicReactive(bslma::Allocator* allocator)
                   allocator);
 }
 
-void SystemTest::concernDatagramSocketBasicProactive(bslma::Allocator* allocator)
+void SystemTest::concernDatagramSocketBasicProactive(
+    bslma::Allocator* allocator)
 {
     // Concern: Breathing test using asynchronous callbacks.
 
@@ -9351,7 +9410,8 @@ void SystemTest::concernDatagramSocketBasicProactive(bslma::Allocator* allocator
                   allocator);
 }
 
-void SystemTest::concernDatagramSocketStressReactive(bslma::Allocator* allocator)
+void SystemTest::concernDatagramSocketStressReactive(
+    bslma::Allocator* allocator)
 {
     // Concern: Stress test.
 
@@ -9376,7 +9436,8 @@ void SystemTest::concernDatagramSocketStressReactive(bslma::Allocator* allocator
 #endif
 }
 
-void SystemTest::concernDatagramSocketStressProactive(bslma::Allocator* allocator)
+void SystemTest::concernDatagramSocketStressProactive(
+    bslma::Allocator* allocator)
 {
     // Concern: Stress test using asynchronous callbacks.
 
@@ -9608,7 +9669,6 @@ void SystemTest::concernDatagramSocketReceiveCancellation(
     NTCI_LOG_DEBUG("Datagram socket receive cancellation test complete");
 }
 
-
 void SystemTest::concernListenerSocketAcceptDeadline(
     const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
@@ -9757,9 +9817,10 @@ void SystemTest::concernListenerSocketAcceptCancellation(
     NTCI_LOG_DEBUG("Listener socket accept cancellation test complete");
 }
 
-void SystemTest::concernStreamSocket(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-                         const test::StreamSocketParameters&     parameters,
-                         bslma::Allocator*                       allocator)
+void SystemTest::concernStreamSocket(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    const test::StreamSocketParameters&     parameters,
+    bslma::Allocator*                       allocator)
 {
     NTCI_LOG_CONTEXT();
 
@@ -10033,7 +10094,8 @@ void SystemTest::concernStreamSocketStressReactive(bslma::Allocator* allocator)
                   allocator);
 }
 
-void SystemTest::concernStreamSocketStressProactive(bslma::Allocator* allocator)
+void SystemTest::concernStreamSocketStressProactive(
+    bslma::Allocator* allocator)
 {
     // Concern: Stress test using asynchronous callbacks.
 
@@ -10935,7 +10997,6 @@ void SystemTest::concernInterfaceFunctionAndTimerDistribution(
 
     NTCI_LOG_DEBUG("Test complete");
 }
-
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyBasicThreadUsage)
 {
@@ -12214,27 +12275,34 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyDatagramSocketStressProactive)
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyDatagramSocketReceiveDeadline)
 {
-    test::concern(&test::concernDatagramSocketReceiveDeadline, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernDatagramSocketReceiveDeadline,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyDatagramSocketReceiveDeadlineClose)
+NTSCFG_TEST_FUNCTION(
+    ntcf::SystemTest::verifyDatagramSocketReceiveDeadlineClose)
 {
-    test::concern(&test::concernDatagramSocketReceiveDeadlineClose, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernDatagramSocketReceiveDeadlineClose,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyDatagramSocketReceiveDeadlineCancellation)
+NTSCFG_TEST_FUNCTION(
+    ntcf::SystemTest::verifyDatagramSocketReceiveDeadlineCancellation)
 {
-    test::concern(&test::concernDatagramSocketReceiveCancellation, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernDatagramSocketReceiveCancellation,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyListenerSocketAcceptDeadline)
 {
-    test::concern(&test::concernListenerSocketAcceptDeadline, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernListenerSocketAcceptDeadline,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyListenerSocketAcceptCancellation)
 {
-    test::concern(&test::concernListenerSocketAcceptCancellation, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernListenerSocketAcceptCancellation,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketBasicReactive)
@@ -12247,44 +12315,61 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketBasicProactive)
     test::concernStreamSocketBasicProactive(NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketMinimalReadQueueHighWatermarkReactive)
+NTSCFG_TEST_FUNCTION(
+    ntcf::SystemTest::verifyStreamSocketMinimalReadQueueHighWatermarkReactive)
 {
-    test::concernStreamSocketMinimalReadQueueHighWatermarkReactive(NTSCFG_TEST_ALLOCATOR);
+    test::concernStreamSocketMinimalReadQueueHighWatermarkReactive(
+        NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketMinimalReadQueueHighWatermarkProactive)
+NTSCFG_TEST_FUNCTION(
+    ntcf::SystemTest::verifyStreamSocketMinimalReadQueueHighWatermarkProactive)
 {
-    test::concernStreamSocketMinimalReadQueueHighWatermarkProactive(NTSCFG_TEST_ALLOCATOR);
+    test::concernStreamSocketMinimalReadQueueHighWatermarkProactive(
+        NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketMinimalWriteQueueHighWatermarkReactive)
+NTSCFG_TEST_FUNCTION(
+    ntcf::SystemTest::verifyStreamSocketMinimalWriteQueueHighWatermarkReactive)
 {
-    test::concernStreamSocketMinimalWriteQueueHighWatermarkReactive(NTSCFG_TEST_ALLOCATOR);
+    test::concernStreamSocketMinimalWriteQueueHighWatermarkReactive(
+        NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketMinimalWriteQueueHighWatermarkProactive)
+NTSCFG_TEST_FUNCTION(
+    ntcf::SystemTest::
+        verifyStreamSocketMinimalWriteQueueHighWatermarkProactive)
 {
-    test::concernStreamSocketMinimalWriteQueueHighWatermarkProactive(NTSCFG_TEST_ALLOCATOR);
+    test::concernStreamSocketMinimalWriteQueueHighWatermarkProactive(
+        NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketRateLimitReceiveBufferReactive)
+NTSCFG_TEST_FUNCTION(
+    ntcf::SystemTest::verifyStreamSocketRateLimitReceiveBufferReactive)
 {
-    test::concernStreamSocketRateLimitReceiveBufferReactive(NTSCFG_TEST_ALLOCATOR);
+    test::concernStreamSocketRateLimitReceiveBufferReactive(
+        NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketRateLimitReceiveBufferProactive)
+NTSCFG_TEST_FUNCTION(
+    ntcf::SystemTest::verifyStreamSocketRateLimitReceiveBufferProactive)
 {
-    test::concernStreamSocketRateLimitReceiveBufferProactive(NTSCFG_TEST_ALLOCATOR);
+    test::concernStreamSocketRateLimitReceiveBufferProactive(
+        NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketRateLimitSendBufferReactive)
+NTSCFG_TEST_FUNCTION(
+    ntcf::SystemTest::verifyStreamSocketRateLimitSendBufferReactive)
 {
-    test::concernStreamSocketRateLimitSendBufferReactive(NTSCFG_TEST_ALLOCATOR);
+    test::concernStreamSocketRateLimitSendBufferReactive(
+        NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketRateLimitSendBufferProactive)
+NTSCFG_TEST_FUNCTION(
+    ntcf::SystemTest::verifyStreamSocketRateLimitSendBufferProactive)
 {
-    test::concernStreamSocketRateLimitSendBufferProactive(NTSCFG_TEST_ALLOCATOR);
+    test::concernStreamSocketRateLimitSendBufferProactive(
+        NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketStressReactive)
@@ -12299,43 +12384,51 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketStressProactive)
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketReceiveDeadline)
 {
-    test::concern(&test::concernStreamSocketReceiveDeadline, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernStreamSocketReceiveDeadline,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketReceiveCancellation)
 {
-    test::concern(&test::concernStreamSocketReceiveCancellation, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernStreamSocketReceiveCancellation,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketReceiveDeadlineClose)
 {
-    test::concern(&test::concernStreamSocketReceiveDeadlineClose, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernStreamSocketReceiveDeadlineClose,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketSendDeadline)
 {
-    test::concern(&test::concernStreamSocketSendDeadline, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernStreamSocketSendDeadline,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketSendCancellation)
 {
-    test::concern(&test::concernStreamSocketSendCancellation, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernStreamSocketSendCancellation,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketSendDeadlineClose)
 {
-    test::concern(&test::concernStreamSocketSendDeadlineClose, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernStreamSocketSendDeadlineClose,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyListenerSocketAcceptClose)
 {
-    test::concern(&test::concernListenerSocketAcceptClose, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernListenerSocketAcceptClose,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
-
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyInterfaceFunctionAndTimerDistribution)
+NTSCFG_TEST_FUNCTION(
+    ntcf::SystemTest::verifyInterfaceFunctionAndTimerDistribution)
 {
-    test::concern(&test::concernInterfaceFunctionAndTimerDistribution, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernInterfaceFunctionAndTimerDistribution,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyDefaultExecutors)
@@ -12497,7 +12590,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsUsage)
         ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        interface->createListenerSocket(listenerSocketOptions, NTSCFG_TEST_ALLOCATOR);
+        interface->createListenerSocket(listenerSocketOptions,
+                                        NTSCFG_TEST_ALLOCATOR);
 
     error = listenerSocket->open();
     NTSCFG_TEST_OK(error);
@@ -12510,7 +12604,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsUsage)
     ntca::StreamSocketOptions streamSocketOptions;
 
     bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-        interface->createStreamSocket(streamSocketOptions, NTSCFG_TEST_ALLOCATOR);
+        interface->createStreamSocket(streamSocketOptions,
+                                      NTSCFG_TEST_ALLOCATOR);
 
     ntci::ConnectCallback connectCallback =
         clientSocket->createConnectCallback(
@@ -12779,7 +12874,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsShutdown)
         ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        interface->createListenerSocket(listenerSocketOptions, NTSCFG_TEST_ALLOCATOR);
+        interface->createListenerSocket(listenerSocketOptions,
+                                        NTSCFG_TEST_ALLOCATOR);
 
     error = listenerSocket->open();
     NTSCFG_TEST_OK(error);
@@ -12792,7 +12888,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsShutdown)
     ntca::StreamSocketOptions streamSocketOptions;
 
     bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-        interface->createStreamSocket(streamSocketOptions, NTSCFG_TEST_ALLOCATOR);
+        interface->createStreamSocket(streamSocketOptions,
+                                      NTSCFG_TEST_ALLOCATOR);
 
     ntci::ConnectCallback connectCallback =
         clientSocket->createConnectCallback(
@@ -12832,7 +12929,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsShutdown)
 
     bsl::shared_ptr<ntcu::StreamSocketEventQueue> clientSocketEventQueue;
 
-    clientSocketEventQueue.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    clientSocketEventQueue.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                         NTSCFG_TEST_ALLOCATOR);
     clientSocketEventQueue->hideAll();
     clientSocketEventQueue->show(ntca::DowngradeEventType::e_INITIATED);
     clientSocketEventQueue->show(ntca::DowngradeEventType::e_COMPLETE);
@@ -12842,7 +12940,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsShutdown)
 
     bsl::shared_ptr<ntcu::StreamSocketEventQueue> serverSocketEventQueue;
 
-    serverSocketEventQueue.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+    serverSocketEventQueue.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                         NTSCFG_TEST_ALLOCATOR);
     serverSocketEventQueue->hideAll();
     serverSocketEventQueue->show(ntca::DowngradeEventType::e_INITIATED);
     serverSocketEventQueue->show(ntca::DowngradeEventType::e_COMPLETE);
@@ -13104,8 +13203,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCA)
 
         ntca::EncryptionKey authorityPrivateKey;
         error = interface->generateKey(&authorityPrivateKey,
-                                        authorityPrivateKeyOptions,
-                                        NTSCFG_TEST_ALLOCATOR);
+                                       authorityPrivateKeyOptions,
+                                       NTSCFG_TEST_ALLOCATOR);
         NTSCFG_TEST_OK(error);
 
         authorityKeyVector.push_back(authorityPrivateKey);
@@ -13114,8 +13213,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCA)
 
         if (i != 0) {
             bsl::string name = "Intermediate Authority ";
-            name.append(
-                1, static_cast<char>('A' + (k_NUM_INTERMEDIATE_CA - i)));
+            name.append(1,
+                        static_cast<char>('A' + (k_NUM_INTERMEDIATE_CA - i)));
             authorityIdentity["CN"] = name;
         }
         else {
@@ -13139,22 +13238,20 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCA)
             NTSCFG_TEST_OK(error);
         }
         else {
-            error = interface->generateCertificate(
-                &authorityCertificate,
-                authorityIdentity,
-                authorityPrivateKey,
-                authorityCertificateOptions,
-                NTSCFG_TEST_ALLOCATOR);
+            error = interface->generateCertificate(&authorityCertificate,
+                                                   authorityIdentity,
+                                                   authorityPrivateKey,
+                                                   authorityCertificateOptions,
+                                                   NTSCFG_TEST_ALLOCATOR);
             NTSCFG_TEST_OK(error);
         }
 
         authorityCertificateVector.push_back(authorityCertificate);
     }
 
-    bsl::reverse(
-        authorityKeyVector.begin(), authorityKeyVector.end());
-    bsl::reverse(
-        authorityCertificateVector.begin(), authorityCertificateVector.end());
+    bsl::reverse(authorityKeyVector.begin(), authorityKeyVector.end());
+    bsl::reverse(authorityCertificateVector.begin(),
+                 authorityCertificateVector.end());
 
     // Generate a certificate and private key for the server, signed by the
     // intermediate certificate authority farthest from the root certificate
@@ -13216,7 +13313,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCA)
     encryptionServerOptions.setPrivateKey(serverPrivateKey);
 
     for (bsl::size_t i = 0; i < authorityCertificateVector.size() - 1; ++i) {
-        const ntca::EncryptionCertificate& intermediateAuthority = 
+        const ntca::EncryptionCertificate& intermediateAuthority =
             authorityCertificateVector[i];
 
         encryptionServerOptions.addIntermediary(intermediateAuthority);
@@ -13235,7 +13332,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCA)
         ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        interface->createListenerSocket(listenerSocketOptions, 
+        interface->createListenerSocket(listenerSocketOptions,
                                         NTSCFG_TEST_ALLOCATOR);
 
     error = listenerSocket->open();
@@ -13249,7 +13346,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCA)
     ntca::StreamSocketOptions streamSocketOptions;
 
     bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-        interface->createStreamSocket(streamSocketOptions, 
+        interface->createStreamSocket(streamSocketOptions,
                                       NTSCFG_TEST_ALLOCATOR);
 
     ntci::ConnectCallback connectCallback =
@@ -13440,8 +13537,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
 
         ntca::EncryptionKey authorityPrivateKey;
         error = interface->generateKey(&authorityPrivateKey,
-                                        authorityPrivateKeyOptions,
-                                        NTSCFG_TEST_ALLOCATOR);
+                                       authorityPrivateKeyOptions,
+                                       NTSCFG_TEST_ALLOCATOR);
         NTSCFG_TEST_OK(error);
 
         authorityKeyVector.push_back(authorityPrivateKey);
@@ -13450,8 +13547,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
 
         if (i != 0) {
             bsl::string name = "Intermediate Authority ";
-            name.append(
-                1, static_cast<char>('A' + (k_NUM_INTERMEDIATE_CA - i)));
+            name.append(1,
+                        static_cast<char>('A' + (k_NUM_INTERMEDIATE_CA - i)));
             authorityIdentity["CN"] = name;
         }
         else {
@@ -13475,22 +13572,20 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
             NTSCFG_TEST_OK(error);
         }
         else {
-            error = interface->generateCertificate(
-                &authorityCertificate,
-                authorityIdentity,
-                authorityPrivateKey,
-                authorityCertificateOptions,
-                NTSCFG_TEST_ALLOCATOR);
+            error = interface->generateCertificate(&authorityCertificate,
+                                                   authorityIdentity,
+                                                   authorityPrivateKey,
+                                                   authorityCertificateOptions,
+                                                   NTSCFG_TEST_ALLOCATOR);
             NTSCFG_TEST_OK(error);
         }
 
         authorityCertificateVector.push_back(authorityCertificate);
     }
 
-    bsl::reverse(
-        authorityKeyVector.begin(), authorityKeyVector.end());
-    bsl::reverse(
-        authorityCertificateVector.begin(), authorityCertificateVector.end());
+    bsl::reverse(authorityKeyVector.begin(), authorityKeyVector.end());
+    bsl::reverse(authorityCertificateVector.begin(),
+                 authorityCertificateVector.end());
 
     // Generate a certificate and private key for the server, signed by the
     // intermediate certificate authority farthest from the root certificate
@@ -13555,7 +13650,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
             ntca::EncryptionResourceType::e_ASN1_PEM);
 
         bsl::shared_ptr<ntci::EncryptionResource> serverResource;
-        error = interface->createEncryptionResource(&serverResource, 
+        error = interface->createEncryptionResource(&serverResource,
                                                     NTSCFG_TEST_ALLOCATOR);
         NTSCFG_TEST_OK(error);
 
@@ -13565,18 +13660,18 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
         error = serverResource->setPrivateKey(serverPrivateKey);
         NTSCFG_TEST_OK(error);
 
-        for (bsl::size_t i = 0; i < authorityCertificateVector.size() - 1; ++i) 
+        for (bsl::size_t i = 0; i < authorityCertificateVector.size() - 1; ++i)
         {
-            const ntca::EncryptionCertificate& intermediateAuthority = 
+            const ntca::EncryptionCertificate& intermediateAuthority =
                 authorityCertificateVector[i];
 
-            error = serverResource->addCertificateAuthority(
-                intermediateAuthority);
+            error =
+                serverResource->addCertificateAuthority(intermediateAuthority);
             NTSCFG_TEST_OK(error);
         }
 
-        error = serverResource->encode(
-            &serverFileContent, serverFileContentOptions);
+        error = serverResource->encode(&serverFileContent,
+                                       serverFileContentOptions);
         NTSCFG_TEST_OK(error);
 
         error = serverFile.write(serverFileContent);
@@ -13602,7 +13697,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
         ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0));
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        interface->createListenerSocket(listenerSocketOptions, 
+        interface->createListenerSocket(listenerSocketOptions,
                                         NTSCFG_TEST_ALLOCATOR);
 
     error = listenerSocket->open();
@@ -13616,7 +13711,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
     ntca::StreamSocketOptions streamSocketOptions;
 
     bsl::shared_ptr<ntci::StreamSocket> clientSocket =
-        interface->createStreamSocket(streamSocketOptions, 
+        interface->createStreamSocket(streamSocketOptions,
                                       NTSCFG_TEST_ALLOCATOR);
 
     ntci::ConnectCallback connectCallback =
@@ -13766,8 +13861,6 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
     interface->shutdown();
     interface->linger();
 }
-
-
 
 }  // close namespace ntcf
 }  // close namespace BloombergLP
