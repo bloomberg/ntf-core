@@ -1305,6 +1305,9 @@ void DatagramSocket::privateShutdownSequencePart2(
 
         d_resolver.reset();
 
+        d_sendDeflater_sp.reset();
+        d_receiveInflater_sp.reset();
+
         d_sessionStrand_sp.reset();
         d_session_sp.reset();
 

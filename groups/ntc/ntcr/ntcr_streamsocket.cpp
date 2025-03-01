@@ -1634,6 +1634,9 @@ void StreamSocket::privateFailConnectPart2(
     if (d_connectOptions.retryCount().valueOr(bsl::size_t(0)) == 0) {
         d_resolver.reset();
 
+        d_sendDeflater_sp.reset();
+        d_receiveInflater_sp.reset();
+
         d_sessionStrand_sp.reset();
         d_session_sp.reset();
 
@@ -2256,6 +2259,9 @@ void StreamSocket::privateShutdownSequenceComplete(
         }
 
         d_resolver.reset();
+
+        d_sendDeflater_sp.reset();
+        d_receiveInflater_sp.reset();
 
         d_sessionStrand_sp.reset();
         d_session_sp.reset();
