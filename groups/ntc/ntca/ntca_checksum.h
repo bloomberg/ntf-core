@@ -43,7 +43,7 @@ class ChecksumAdler32
 {
     bsl::uint32_t d_value;
 
-public:
+  public:
     /// Defines a type alias for the unsigned 32-bit integer that represents
     /// the value of the checksum.
     typedef bsl::uint32_t Digest;
@@ -61,7 +61,7 @@ public:
     /// Create a new checksum having the same value as the specified 'original'
     /// object. The value of the 'original' object becomes unspecified but
     /// valid.
-    ChecksumAdler32(bslmf::MovableRef<ChecksumAdler32> original) 
+    ChecksumAdler32(bslmf::MovableRef<ChecksumAdler32> original)
         NTSCFG_NOEXCEPT;
 
     /// Destroy this object.
@@ -74,7 +74,7 @@ public:
     /// Assign the value of the specified 'other' object to this object. Assign
     /// an unspecified but valid value to the 'original' original. Return a
     /// reference to this modifiable object.
-    ChecksumAdler32& operator=(bslmf::MovableRef<ChecksumAdler32> other) 
+    ChecksumAdler32& operator=(bslmf::MovableRef<ChecksumAdler32> other)
         NTSCFG_NOEXCEPT;
 
     /// Reset the value of this object to its value upon default construction.
@@ -172,9 +172,6 @@ bool operator<(const ChecksumAdler32& lhs, const ChecksumAdler32& rhs);
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const ChecksumAdler32& value);
 
-
-
-
 /// Provide a checksum calculated according to the CRC-32 algorithm.
 ///
 /// @par Thread Safety
@@ -185,7 +182,7 @@ class ChecksumCrc32
 {
     bsl::uint32_t d_value;
 
-public:
+  public:
     /// Defines a type alias for the unsigned 32-bit integer that represents
     /// the value of the checksum.
     typedef bsl::uint32_t Digest;
@@ -203,8 +200,7 @@ public:
     /// Create a new checksum having the same value as the specified 'original'
     /// object. The value of the 'original' object becomes unspecified but
     /// valid.
-    ChecksumCrc32(bslmf::MovableRef<ChecksumCrc32> original) 
-        NTSCFG_NOEXCEPT;
+    ChecksumCrc32(bslmf::MovableRef<ChecksumCrc32> original) NTSCFG_NOEXCEPT;
 
     /// Destroy this object.
     ~ChecksumCrc32();
@@ -216,7 +212,7 @@ public:
     /// Assign the value of the specified 'other' object to this object. Assign
     /// an unspecified but valid value to the 'original' original. Return a
     /// reference to this modifiable object.
-    ChecksumCrc32& operator=(bslmf::MovableRef<ChecksumCrc32> other) 
+    ChecksumCrc32& operator=(bslmf::MovableRef<ChecksumCrc32> other)
         NTSCFG_NOEXCEPT;
 
     /// Reset the value of this object to its value upon default construction.
@@ -314,20 +310,6 @@ bool operator<(const ChecksumCrc32& lhs, const ChecksumCrc32& rhs);
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const ChecksumCrc32& value);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /// Provide a checksum calculated according to the XXHASH-32 algorithm.
 ///
 /// @par Thread Safety
@@ -355,7 +337,7 @@ class ChecksumXxHash32
     bsl::uint32_t d_entireSize;
     bsl::uint32_t d_full;
 
-private:
+  private:
     /// Decode a 32-bit unsigned integer from the specified 'offset' into the
     /// specified 'data'. Return the result.
     static bsl::uint32_t decode(const bsl::uint8_t* data, bsl::size_t offset);
@@ -370,7 +352,7 @@ private:
     /// Combine the specified 'hash' into the final value. Return the result.
     static bsl::uint32_t avalanche(bsl::uint32_t hash);
 
-public:
+  public:
     /// Defines a type alias for the unsigned 32-bit integer that represents
     /// the value of the checksum.
     typedef bsl::uint32_t Digest;
@@ -388,7 +370,7 @@ public:
     /// Create a new checksum having the same value as the specified 'original'
     /// object. The value of the 'original' object becomes unspecified but
     /// valid.
-    ChecksumXxHash32(bslmf::MovableRef<ChecksumXxHash32> original) 
+    ChecksumXxHash32(bslmf::MovableRef<ChecksumXxHash32> original)
         NTSCFG_NOEXCEPT;
 
     /// Destroy this object.
@@ -401,7 +383,7 @@ public:
     /// Assign the value of the specified 'other' object to this object. Assign
     /// an unspecified but valid value to the 'original' original. Return a
     /// reference to this modifiable object.
-    ChecksumXxHash32& operator=(bslmf::MovableRef<ChecksumXxHash32> other) 
+    ChecksumXxHash32& operator=(bslmf::MovableRef<ChecksumXxHash32> other)
         NTSCFG_NOEXCEPT;
 
     /// Reset the value of this object to its value upon default construction.
@@ -562,7 +544,7 @@ class Checksum
     void reset();
 
     /// Reset the value of this object to its value upon construction for the
-    /// specified checksum 'type'. 
+    /// specified checksum 'type'.
     void reset(ntca::ChecksumType::Value type);
 
     /// Store the specified 'value' having the specified 'size' as the checksum
@@ -670,39 +652,6 @@ bool operator<(const Checksum& lhs, const Checksum& rhs);
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const Checksum& value);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 NTCCFG_INLINE bsl::size_t ChecksumAdler32::hash() const
 {
     bslh::DefaultHashAlgorithm algorithm;
@@ -750,35 +699,11 @@ bool operator<(const ChecksumAdler32& lhs, const ChecksumAdler32& rhs)
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE void hashAppend(HASH_ALGORITHM& algorithm,
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&        algorithm,
                               const ChecksumAdler32& value)
 {
     value.hash(algorithm);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 NTCCFG_INLINE bsl::size_t ChecksumCrc32::hash() const
 {
@@ -827,25 +752,11 @@ bool operator<(const ChecksumCrc32& lhs, const ChecksumCrc32& rhs)
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE void hashAppend(HASH_ALGORITHM& algorithm,
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&      algorithm,
                               const ChecksumCrc32& value)
 {
     value.hash(algorithm);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 NTCCFG_INLINE bsl::size_t ChecksumXxHash32::hash() const
 {
@@ -901,23 +812,11 @@ bool operator<(const ChecksumXxHash32& lhs, const ChecksumXxHash32& rhs)
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE void hashAppend(HASH_ALGORITHM& algorithm,
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&         algorithm,
                               const ChecksumXxHash32& value)
 {
     value.hash(algorithm);
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 NTCCFG_INLINE bsl::size_t Checksum::hash() const
 {
@@ -975,8 +874,7 @@ bool operator<(const Checksum& lhs, const Checksum& rhs)
 }
 
 template <typename HASH_ALGORITHM>
-NTSCFG_INLINE void hashAppend(HASH_ALGORITHM& algorithm,
-                              const Checksum& value)
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM& algorithm, const Checksum& value)
 {
     value.hash(algorithm);
 }

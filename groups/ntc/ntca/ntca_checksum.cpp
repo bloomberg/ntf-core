@@ -38,7 +38,6 @@ BSLS_IDENT_RCSID(ntca_checksum_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
-
 ChecksumAdler32::ChecksumAdler32()
 : d_value(1)
 {
@@ -54,8 +53,8 @@ ChecksumAdler32::ChecksumAdler32(const ChecksumAdler32& original)
 {
 }
 
-ChecksumAdler32::ChecksumAdler32(
-    bslmf::MovableRef<ChecksumAdler32> original) NTSCFG_NOEXCEPT
+ChecksumAdler32::ChecksumAdler32(bslmf::MovableRef<ChecksumAdler32> original)
+    NTSCFG_NOEXCEPT
 {
     d_value = NTSCFG_MOVE_FROM(original, d_value);
     NTSCFG_MOVE_RESET(original);
@@ -74,8 +73,8 @@ ChecksumAdler32& ChecksumAdler32::operator=(const ChecksumAdler32& other)
     return *this;
 }
 
-ChecksumAdler32& ChecksumAdler32::operator=(bslmf::MovableRef<ChecksumAdler32> other)
-    NTSCFG_NOEXCEPT
+ChecksumAdler32& ChecksumAdler32::operator=(
+    bslmf::MovableRef<ChecksumAdler32> other) NTSCFG_NOEXCEPT
 {
     d_value = NTSCFG_MOVE_FROM(other, d_value);
     NTSCFG_MOVE_RESET(other);
@@ -98,10 +97,10 @@ ntsa::Error ChecksumAdler32::update(const void* data, bsl::size_t size)
 
     while (current < end) {
         const bsl::uint8_t byte = *current++;
-        s1 = (s1 + byte) % 65521;
-        s2 = (s2 + s1) % 65521;
+        s1                      = (s1 + byte) % 65521;
+        s2                      = (s2 + s1) % 65521;
     }
-    
+
     d_value = (s2 << 16) + s1;
 
     return ntsa::Error();
@@ -175,41 +174,14 @@ bool ChecksumAdler32::less(const ChecksumAdler32& other) const
 }
 
 bsl::ostream& ChecksumAdler32::print(bsl::ostream& stream,
-                              int           level,
-                              int           spacesPerLevel) const
+                                     int           level,
+                                     int           spacesPerLevel) const
 {
     NTCCFG_WARNING_UNUSED(level);
     NTCCFG_WARNING_UNUSED(spacesPerLevel);
 
     return stream << d_value;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ChecksumCrc32::ChecksumCrc32()
 : d_value(0)
@@ -226,7 +198,8 @@ ChecksumCrc32::ChecksumCrc32(const ChecksumCrc32& original)
 {
 }
 
-ChecksumCrc32::ChecksumCrc32(bslmf::MovableRef<ChecksumCrc32> original) NTSCFG_NOEXCEPT
+ChecksumCrc32::ChecksumCrc32(bslmf::MovableRef<ChecksumCrc32> original)
+    NTSCFG_NOEXCEPT
 {
     d_value = NTSCFG_MOVE_FROM(original, d_value);
     NTSCFG_MOVE_RESET(original);
@@ -354,8 +327,8 @@ bool ChecksumCrc32::less(const ChecksumCrc32& other) const
 }
 
 bsl::ostream& ChecksumCrc32::print(bsl::ostream& stream,
-                              int           level,
-                              int           spacesPerLevel) const
+                                   int           level,
+                                   int           spacesPerLevel) const
 {
     NTCCFG_WARNING_UNUSED(level);
     NTCCFG_WARNING_UNUSED(spacesPerLevel);
@@ -363,17 +336,7 @@ bsl::ostream& ChecksumCrc32::print(bsl::ostream& stream,
     return stream << d_value;
 }
 
-
-
-
-
-
-
-
-
-
-
-bsl::uint32_t ChecksumXxHash32::decode(const bsl::uint8_t* data, 
+bsl::uint32_t ChecksumXxHash32::decode(const bsl::uint8_t* data,
                                        bsl::size_t         offset)
 {
     const bsl::uint8_t* source = data + offset;
@@ -386,13 +349,13 @@ bsl::uint32_t ChecksumXxHash32::decode(const bsl::uint8_t* data,
     return byte0 | (byte1 << 8) | (byte2 << 16) | (byte3 << 24);
 }
 
-bsl::uint32_t ChecksumXxHash32::rotate(bsl::uint32_t value, 
+bsl::uint32_t ChecksumXxHash32::rotate(bsl::uint32_t value,
                                        bsl::uint32_t amount)
 {
     return (value << (amount % 32)) | (value >> (32 - amount % 32));
 }
 
-bsl::uint32_t ChecksumXxHash32::round(bsl::uint32_t accumulator, 
+bsl::uint32_t ChecksumXxHash32::round(bsl::uint32_t accumulator,
                                       bsl::uint32_t input)
 {
     accumulator += input * Self::k_P2;
@@ -411,11 +374,6 @@ bsl::uint32_t ChecksumXxHash32::avalanche(bsl::uint32_t hash)
     return hash;
 }
 
-
-
-
-
-
 ChecksumXxHash32::ChecksumXxHash32()
 {
     BSLMF_ASSERT(sizeof(ChecksumXxHash32) == 44);
@@ -432,7 +390,8 @@ ChecksumXxHash32::ChecksumXxHash32(const ChecksumXxHash32& original)
     bsl::memcpy(this, &original, sizeof *this);
 }
 
-ChecksumXxHash32::ChecksumXxHash32(bslmf::MovableRef<ChecksumXxHash32> original) NTSCFG_NOEXCEPT
+ChecksumXxHash32::ChecksumXxHash32(
+    bslmf::MovableRef<ChecksumXxHash32> original) NTSCFG_NOEXCEPT
 {
     bsl::memcpy(this, &original, sizeof *this);
     NTSCFG_MOVE_RESET(original);
@@ -451,8 +410,8 @@ ChecksumXxHash32& ChecksumXxHash32::operator=(const ChecksumXxHash32& other)
     return *this;
 }
 
-ChecksumXxHash32& ChecksumXxHash32::operator=(bslmf::MovableRef<ChecksumXxHash32> other)
-    NTSCFG_NOEXCEPT
+ChecksumXxHash32& ChecksumXxHash32::operator=(
+    bslmf::MovableRef<ChecksumXxHash32> other) NTSCFG_NOEXCEPT
 {
     bsl::memcpy(this, &other, sizeof *this);
     NTSCFG_MOVE_RESET(other);
@@ -471,7 +430,7 @@ void ChecksumXxHash32::reset()
 
     d_bufferSize = 0;
     d_entireSize = 0;
-    d_full = 0;
+    d_full       = 0;
 }
 
 void ChecksumXxHash32::reset(Digest digest)
@@ -485,23 +444,23 @@ void ChecksumXxHash32::reset(Digest digest)
 
     d_bufferSize = 0;
     d_entireSize = 0;
-    d_full = 0;
+    d_full       = 0;
 }
 
 ntsa::Error ChecksumXxHash32::update(const void* data, bsl::size_t size)
 {
     const bsl::uint8_t* source = reinterpret_cast<const bsl::uint8_t*>(data);
-    
+
     bsl::size_t offset    = 0;
     bsl::size_t remaining = 0;
-    
+
     d_entireSize += static_cast<bsl::uint32_t>(size);
 
     if (d_full == 0 && (size >= 16 || d_entireSize >= 16)) {
         d_full = 1;
     }
 
-    if (d_bufferSize + size < 16)  {
+    if (d_bufferSize + size < 16) {
         bsl::memcpy(&d_buffer[d_bufferSize], source, size);
         d_bufferSize += static_cast<bsl::uint32_t>(size);
         return ntsa::Error();
@@ -509,18 +468,19 @@ ntsa::Error ChecksumXxHash32::update(const void* data, bsl::size_t size)
 
     remaining = d_bufferSize + size;
 
-     while (remaining >= 16) {
-        bsl::memcpy(
-            &d_buffer[d_bufferSize], &source[offset], 16 - d_bufferSize);
+    while (remaining >= 16) {
+        bsl::memcpy(&d_buffer[d_bufferSize],
+                    &source[offset],
+                    16 - d_bufferSize);
 
         d_acc1 = Self::round(d_acc1, Self::decode(d_buffer, 0));
         d_acc2 = Self::round(d_acc2, Self::decode(d_buffer, 4));
         d_acc3 = Self::round(d_acc3, Self::decode(d_buffer, 8));
         d_acc4 = Self::round(d_acc4, Self::decode(d_buffer, 12));
 
-        offset += 16 - d_bufferSize;
-        remaining -= 16;
-        d_bufferSize = 0;
+        offset       += 16 - d_bufferSize;
+        remaining    -= 16;
+        d_bufferSize  = 0;
     }
 
     if (remaining != 0) {
@@ -590,11 +550,9 @@ bsl::uint32_t ChecksumXxHash32::value() const
     bsl::uint32_t remaining = d_bufferSize;
 
     if (d_full == 1) {
-        hash = Self::rotate(d_acc1, 1)
-             + Self::rotate(d_acc2, 7)
-             + Self::rotate(d_acc3, 12)
-             + Self::rotate(d_acc4, 18);
-    } 
+        hash = Self::rotate(d_acc1, 1) + Self::rotate(d_acc2, 7) +
+               Self::rotate(d_acc3, 12) + Self::rotate(d_acc4, 18);
+    }
     else {
         hash = d_acc3 + Self::k_P5;
     }
@@ -602,10 +560,10 @@ bsl::uint32_t ChecksumXxHash32::value() const
     hash += d_entireSize;
 
     while (remaining >= 4) {
-        hash += Self::decode(d_buffer, offset) * Self::k_P3;
-        hash  = Self::rotate(hash, 17);
-        hash *= Self::k_P4;
-        offset += 4;
+        hash      += Self::decode(d_buffer, offset) * Self::k_P3;
+        hash       = Self::rotate(hash, 17);
+        hash      *= Self::k_P4;
+        offset    += 4;
         remaining -= 4;
     }
 
@@ -631,8 +589,8 @@ bool ChecksumXxHash32::less(const ChecksumXxHash32& other) const
 }
 
 bsl::ostream& ChecksumXxHash32::print(bsl::ostream& stream,
-                                    int           level,
-                                    int           spacesPerLevel) const
+                                      int           level,
+                                      int           spacesPerLevel) const
 {
     NTCCFG_WARNING_UNUSED(level);
     NTCCFG_WARNING_UNUSED(spacesPerLevel);
@@ -640,25 +598,6 @@ bsl::ostream& ChecksumXxHash32::print(bsl::ostream& stream,
     const bsl::uint32_t value = this->value();
     return stream << value;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 Checksum::Checksum()
 : d_type(ntca::ChecksumType::e_UNDEFINED)
@@ -686,15 +625,15 @@ Checksum::Checksum(const Checksum& original)
 : d_type(original.d_type)
 {
     if (original.d_type == ntca::ChecksumType::e_ADLER32) {
-        new (d_adler32.buffer()) ntca::ChecksumAdler32(
-            original.d_adler32.object());
+        new (d_adler32.buffer())
+            ntca::ChecksumAdler32(original.d_adler32.object());
     }
     else if (original.d_type == ntca::ChecksumType::e_CRC32) {
         new (d_crc32.buffer()) ntca::ChecksumCrc32(original.d_crc32.object());
     }
     else if (original.d_type == ntca::ChecksumType::e_XXH32) {
-        new (d_xxHash32.buffer()) ntca::ChecksumXxHash32(
-            original.d_xxHash32.object());
+        new (d_xxHash32.buffer())
+            ntca::ChecksumXxHash32(original.d_xxHash32.object());
     }
 }
 
@@ -726,15 +665,15 @@ Checksum& Checksum::operator=(const Checksum& other)
 {
     if (this != &other) {
         if (other.d_type == ntca::ChecksumType::e_ADLER32) {
-            new (d_adler32.buffer()) ntca::ChecksumAdler32(
-                other.d_adler32.object());
+            new (d_adler32.buffer())
+                ntca::ChecksumAdler32(other.d_adler32.object());
         }
         else if (other.d_type == ntca::ChecksumType::e_CRC32) {
             new (d_crc32.buffer()) ntca::ChecksumCrc32(other.d_crc32.object());
         }
         else if (other.d_type == ntca::ChecksumType::e_XXH32) {
-            new (d_xxHash32.buffer()) ntca::ChecksumXxHash32(
-                other.d_xxHash32.object());
+            new (d_xxHash32.buffer())
+                ntca::ChecksumXxHash32(other.d_xxHash32.object());
         }
         d_type = other.d_type;
     }

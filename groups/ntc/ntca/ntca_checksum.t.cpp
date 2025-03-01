@@ -36,8 +36,8 @@ class ChecksumTest
     // Defines a type alias for a vector of bytes.
     typedef bsl::vector<bsl::uint8_t> ByteVector;
 
-    // Load into the specified 'result' test data for having the specified 
-    // 'size'. 
+    // Load into the specified 'result' test data for having the specified
+    // 'size'.
     static void generateData(ByteVector* result, bsl::size_t size);
 
     // Verify the update function for Adler-32 checksums.
@@ -93,7 +93,7 @@ class ChecksumTest
     static void verifyPrint();
 };
 
-void ChecksumTest::generateData(bsl::vector<bsl::uint8_t>* result, 
+void ChecksumTest::generateData(bsl::vector<bsl::uint8_t>* result,
                                 bsl::size_t                size)
 {
     // 0b10011110001101110111100110110001
@@ -118,8 +118,8 @@ void ChecksumTest::generateData(bsl::vector<bsl::uint8_t>* result,
 
     bsl::uint32_t generator = prime;
     for (bsl::size_t i; i < size; ++i) {
-        (*result)[i] = static_cast<bsl::uint8_t>(generator >> 24);
-        generator *= generator;
+        (*result)[i]  = static_cast<bsl::uint8_t>(generator >> 24);
+        generator    *= generator;
     }
 }
 
@@ -135,14 +135,13 @@ void ChecksumTest::verifyUpdateAdler32(const ByteVector& input)
         const bsl::uint32_t z = adler32(0L, Z_NULL, 0);
         NTSCFG_TEST_EQ(z, 1);
 
-        const bsl::uint32_t e = 
-            static_cast<bsl::uint32_t>(
-                adler32(z, 
-                    reinterpret_cast<const Bytef*>(&input.front()), 
+        const bsl::uint32_t e = static_cast<bsl::uint32_t>(
+            adler32(z,
+                    reinterpret_cast<const Bytef*>(&input.front()),
                     static_cast<uInt>(input.size())));
 
         ntca::ChecksumAdler32 checksum;
-        bsl::uint32_t f = checksum.value();
+        bsl::uint32_t         f = checksum.value();
         NTSCFG_TEST_EQ(f, z);
 
         error = checksum.update(&input.front(), input.size());
@@ -158,10 +157,9 @@ void ChecksumTest::verifyUpdateAdler32(const ByteVector& input)
         const bsl::uint32_t z = adler32(0L, Z_NULL, 0);
         NTSCFG_TEST_EQ(z, 1);
 
-        const bsl::uint32_t e = 
-            static_cast<bsl::uint32_t>(
-                adler32(z, 
-                    reinterpret_cast<const Bytef*>(&input.front()), 
+        const bsl::uint32_t e = static_cast<bsl::uint32_t>(
+            adler32(z,
+                    reinterpret_cast<const Bytef*>(&input.front()),
                     static_cast<uInt>(input.size())));
 
         for (bsl::size_t chunkSize = 1; chunkSize <= 4; ++chunkSize) {
@@ -169,7 +167,7 @@ void ChecksumTest::verifyUpdateAdler32(const ByteVector& input)
             bsl::size_t         c = input.size();
 
             ntca::ChecksumAdler32 checksum;
-            bsl::uint32_t f = checksum.value();
+            bsl::uint32_t         f = checksum.value();
             NTSCFG_TEST_EQ(f, z);
 
             while (c != 0) {
@@ -210,9 +208,9 @@ void ChecksumTest::verifyUpdateCrc32(const ByteVector& input)
 
         x.update(&input.front(), input.size());
         const bsl::uint32_t e = x.checksum();
-        
+
         ntca::ChecksumCrc32 checksum;
-        bsl::uint32_t f = checksum.value();
+        bsl::uint32_t       f = checksum.value();
         NTSCFG_TEST_EQ(f, z);
 
         error = checksum.update(&input.front(), input.size());
@@ -238,7 +236,7 @@ void ChecksumTest::verifyUpdateCrc32(const ByteVector& input)
             bsl::size_t         c = input.size();
 
             ntca::ChecksumCrc32 checksum;
-            bsl::uint32_t f = checksum.value();
+            bsl::uint32_t       f = checksum.value();
             NTSCFG_TEST_EQ(f, z);
 
             while (c != 0) {
@@ -270,14 +268,13 @@ void ChecksumTest::verifyUpdateCrc32(const ByteVector& input)
         const bsl::uint32_t z = crc32(0L, Z_NULL, 0);
         NTSCFG_TEST_EQ(z, 0);
 
-        const bsl::uint32_t e = 
-            static_cast<bsl::uint32_t>(
-                crc32(z, 
-                    reinterpret_cast<const Bytef*>(&input.front()), 
-                    static_cast<uInt>(input.size())));
-        
+        const bsl::uint32_t e = static_cast<bsl::uint32_t>(
+            crc32(z,
+                  reinterpret_cast<const Bytef*>(&input.front()),
+                  static_cast<uInt>(input.size())));
+
         ntca::ChecksumCrc32 checksum;
-        bsl::uint32_t f = checksum.value();
+        bsl::uint32_t       f = checksum.value();
         NTSCFG_TEST_EQ(f, z);
 
         error = checksum.update(&input.front(), input.size());
@@ -293,18 +290,17 @@ void ChecksumTest::verifyUpdateCrc32(const ByteVector& input)
         const bsl::uint32_t z = crc32(0L, Z_NULL, 0);
         NTSCFG_TEST_EQ(z, 0);
 
-        const bsl::uint32_t e = 
-            static_cast<bsl::uint32_t>(
-                crc32(z, 
-                    reinterpret_cast<const Bytef*>(&input.front()), 
-                    static_cast<uInt>(input.size())));
+        const bsl::uint32_t e = static_cast<bsl::uint32_t>(
+            crc32(z,
+                  reinterpret_cast<const Bytef*>(&input.front()),
+                  static_cast<uInt>(input.size())));
 
         for (bsl::size_t chunkSize = 1; chunkSize <= 4; ++chunkSize) {
             const bsl::uint8_t* p = &input.front();
             bsl::size_t         c = input.size();
 
             ntca::ChecksumCrc32 checksum;
-            bsl::uint32_t f = checksum.value();
+            bsl::uint32_t       f = checksum.value();
             NTSCFG_TEST_EQ(f, z);
 
             while (c != 0) {
@@ -395,40 +391,38 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyCopyConstructor)
     bsl::uint32_t otherChecksumInitializer = 0xFFFFFFFF;
 
     ntca::Checksum otherChecksum;
-    error = otherChecksum.store(
-        ntca::ChecksumType::e_CRC32, 
-        &otherChecksumInitializer, 
-        sizeof otherChecksumInitializer);
+    error = otherChecksum.store(ntca::ChecksumType::e_CRC32,
+                                &otherChecksumInitializer,
+                                sizeof otherChecksumInitializer);
     NTSCFG_TEST_OK(error);
 
     // Ensure the other value has the expected value.
 
     bsl::uint32_t otherChecksumValue = 0;
 
-    bsl::size_t otherChecksumValueLength = otherChecksum.load(
-        &otherChecksumValue, sizeof otherChecksumValue);
+    bsl::size_t otherChecksumValueLength =
+        otherChecksum.load(&otherChecksumValue, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValueLength, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValue, otherChecksumInitializer);
 
     // Copy-construct a value from the other value.
 
     char            buffer[sizeof(ntca::Checksum)];
-    ntca::Checksum* checksum =
-        new (buffer) ntca::Checksum(otherChecksum);
+    ntca::Checksum* checksum = new (buffer) ntca::Checksum(otherChecksum);
 
     // Ensure the copy-constructed value has the expected value.
 
     bsl::uint32_t checksumValue = 0;
 
-    bsl::size_t checksumValueLength = checksum->load(
-        &checksumValue, sizeof checksumValue);
+    bsl::size_t checksumValueLength =
+        checksum->load(&checksumValue, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValueLength, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValue, otherChecksumInitializer);
 
     // Ensure the other value still has its original value.
 
-    otherChecksumValueLength = otherChecksum.load(
-        &otherChecksumValue, sizeof otherChecksumValue);
+    otherChecksumValueLength =
+        otherChecksum.load(&otherChecksumValue, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValueLength, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValue, otherChecksumInitializer);
 }
@@ -443,24 +437,23 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyMoveConstructor)
     bsl::uint32_t otherChecksumInitializer = 0xFFFFFFFF;
 
     ntca::Checksum otherChecksum;
-    error = otherChecksum.store(
-        ntca::ChecksumType::e_CRC32, 
-        &otherChecksumInitializer, 
-        sizeof otherChecksumInitializer);
+    error = otherChecksum.store(ntca::ChecksumType::e_CRC32,
+                                &otherChecksumInitializer,
+                                sizeof otherChecksumInitializer);
     NTSCFG_TEST_OK(error);
 
     // Ensure the other value has the expected value.
 
     bsl::uint32_t otherChecksumValue = 0;
 
-    bsl::size_t otherChecksumValueLength = otherChecksum.load(
-        &otherChecksumValue, sizeof otherChecksumValue);
+    bsl::size_t otherChecksumValueLength =
+        otherChecksum.load(&otherChecksumValue, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValueLength, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValue, otherChecksumInitializer);
 
     // Move-construct a value from the other value.
 
-    char                buffer[sizeof(ntca::Checksum)];
+    char            buffer[sizeof(ntca::Checksum)];
     ntca::Checksum* checksum = new (buffer)
         ntca::Checksum(bslmf::MovableRefUtil::move(otherChecksum));
 
@@ -468,8 +461,8 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyMoveConstructor)
 
     bsl::uint32_t checksumValue = 0;
 
-    bsl::size_t checksumValueLength = checksum->load(
-        &checksumValue, sizeof checksumValue);
+    bsl::size_t checksumValueLength =
+        checksum->load(&checksumValue, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValueLength, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValue, otherChecksumInitializer);
 
@@ -488,18 +481,17 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyCopyAssignmentOperator)
     bsl::uint32_t otherChecksumInitializer = 0xFFFFFFFF;
 
     ntca::Checksum otherChecksum;
-    error = otherChecksum.store(
-        ntca::ChecksumType::e_CRC32, 
-        &otherChecksumInitializer, 
-        sizeof otherChecksumInitializer);
+    error = otherChecksum.store(ntca::ChecksumType::e_CRC32,
+                                &otherChecksumInitializer,
+                                sizeof otherChecksumInitializer);
     NTSCFG_TEST_OK(error);
 
     // Ensure the other value has the expected value.
 
     bsl::uint32_t otherChecksumValue = 0;
 
-    bsl::size_t otherChecksumValueLength = otherChecksum.load(
-        &otherChecksumValue, sizeof otherChecksumValue);
+    bsl::size_t otherChecksumValueLength =
+        otherChecksum.load(&otherChecksumValue, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValueLength, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValue, otherChecksumInitializer);
 
@@ -512,15 +504,15 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyCopyAssignmentOperator)
 
     bsl::uint32_t checksumValue = 0;
 
-    bsl::size_t checksumValueLength = checksum.load(
-        &checksumValue, sizeof checksumValue);
+    bsl::size_t checksumValueLength =
+        checksum.load(&checksumValue, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValueLength, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValue, otherChecksumInitializer);
 
     // Ensure the other value still has its original value.
 
-    otherChecksumValueLength = otherChecksum.load(
-        &otherChecksumValue, sizeof otherChecksumValue);
+    otherChecksumValueLength =
+        otherChecksum.load(&otherChecksumValue, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValueLength, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValue, otherChecksumInitializer);
 }
@@ -535,18 +527,17 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyMoveAssignmentOperator)
     bsl::uint32_t otherChecksumInitializer = 0xFFFFFFFF;
 
     ntca::Checksum otherChecksum;
-    error = otherChecksum.store(
-        ntca::ChecksumType::e_CRC32, 
-        &otherChecksumInitializer, 
-        sizeof otherChecksumInitializer);
+    error = otherChecksum.store(ntca::ChecksumType::e_CRC32,
+                                &otherChecksumInitializer,
+                                sizeof otherChecksumInitializer);
     NTSCFG_TEST_OK(error);
 
     // Ensure the other value has the expected value.
 
     bsl::uint32_t otherChecksumValue = 0;
 
-    bsl::size_t otherChecksumValueLength = otherChecksum.load(
-        &otherChecksumValue, sizeof otherChecksumValue);
+    bsl::size_t otherChecksumValueLength =
+        otherChecksum.load(&otherChecksumValue, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValueLength, sizeof otherChecksumValue);
     NTSCFG_TEST_EQ(otherChecksumValue, otherChecksumInitializer);
 
@@ -559,8 +550,8 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyMoveAssignmentOperator)
 
     bsl::uint32_t checksumValue = 0;
 
-    bsl::size_t checksumValueLength = checksum.load(
-        &checksumValue, sizeof checksumValue);
+    bsl::size_t checksumValueLength =
+        checksum.load(&checksumValue, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValueLength, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValue, otherChecksumInitializer);
 
@@ -579,18 +570,17 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyReset)
     bsl::uint32_t checksumInitializer = 0xFFFFFFFF;
 
     ntca::Checksum checksum;
-    error = checksum.store(
-        ntca::ChecksumType::e_CRC32, 
-        &checksumInitializer, 
-        sizeof checksumInitializer);
+    error = checksum.store(ntca::ChecksumType::e_CRC32,
+                           &checksumInitializer,
+                           sizeof checksumInitializer);
     NTSCFG_TEST_OK(error);
 
     // Ensure the other value has the expected value.
 
     bsl::uint32_t checksumValue = 0;
 
-    bsl::size_t checksumValueLength = checksum.load(
-        &checksumValue, sizeof checksumValue);
+    bsl::size_t checksumValueLength =
+        checksum.load(&checksumValue, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValueLength, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValue, checksumInitializer);
 
@@ -657,10 +647,9 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyEquals)
 
         bsl::uint32_t checksumInitializer = 0xFFFFFFFF;
 
-        error = checksum.store(
-            ntca::ChecksumType::e_CRC32, 
-            &checksumInitializer, 
-            sizeof checksumInitializer);
+        error = checksum.store(ntca::ChecksumType::e_CRC32,
+                               &checksumInitializer,
+                               sizeof checksumInitializer);
         NTSCFG_TEST_OK(error);
 
         {
@@ -694,19 +683,17 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyLess)
         ntca::Checksum otherChecksum;
 
         bsl::uint32_t checksumInitializer = 1;
-        
-        error = checksum.store(
-            ntca::ChecksumType::e_CRC32, 
-            &checksumInitializer, 
-            sizeof checksumInitializer);
+
+        error = checksum.store(ntca::ChecksumType::e_CRC32,
+                               &checksumInitializer,
+                               sizeof checksumInitializer);
         NTSCFG_TEST_OK(error);
 
         bsl::uint32_t otherChecksumInitializer = 2;
 
-        error = otherChecksum.store(
-            ntca::ChecksumType::e_CRC32, 
-            &otherChecksumInitializer, 
-            sizeof otherChecksumInitializer);
+        error = otherChecksum.store(ntca::ChecksumType::e_CRC32,
+                                    &otherChecksumInitializer,
+                                    sizeof otherChecksumInitializer);
         NTSCFG_TEST_OK(error);
 
         {
@@ -738,10 +725,9 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyHash)
 
         bsl::uint32_t otherChecksumInitializer = 0xFFFFFFFF;
 
-        error = otherChecksum.store(
-            ntca::ChecksumType::e_CRC32, 
-            &otherChecksumInitializer, 
-            sizeof otherChecksumInitializer);
+        error = otherChecksum.store(ntca::ChecksumType::e_CRC32,
+                                    &otherChecksumInitializer,
+                                    sizeof otherChecksumInitializer);
         NTSCFG_TEST_OK(error);
 
         bsl::size_t h1 = checksum.hash();
@@ -768,10 +754,9 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyHash)
 
         bsl::uint32_t otherChecksumInitializer = 0xFFFFFFFF;
 
-        error = otherChecksum.store(
-            ntca::ChecksumType::e_CRC32, 
-            &otherChecksumInitializer, 
-            sizeof otherChecksumInitializer);
+        error = otherChecksum.store(ntca::ChecksumType::e_CRC32,
+                                    &otherChecksumInitializer,
+                                    sizeof otherChecksumInitializer);
         NTSCFG_TEST_OK(error);
 
         bsl::size_t h1 = checksum.hash<bslh::DefaultHashAlgorithm>();
@@ -798,10 +783,9 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyHash)
 
         bsl::uint32_t otherChecksumInitializer = 0xFFFFFFFF;
 
-        error = otherChecksum.store(
-            ntca::ChecksumType::e_CRC32, 
-            &otherChecksumInitializer, 
-            sizeof otherChecksumInitializer);
+        error = otherChecksum.store(ntca::ChecksumType::e_CRC32,
+                                    &otherChecksumInitializer,
+                                    sizeof otherChecksumInitializer);
         NTSCFG_TEST_OK(error);
 
         bsl::size_t h1 = bslh::Hash<>()(checksum);
@@ -839,10 +823,9 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyPrint)
 
     bsl::uint32_t otherChecksumInitializer = 0xFFFFFFFF;
 
-    error = otherChecksum.store(
-        ntca::ChecksumType::e_CRC32, 
-        &otherChecksumInitializer, 
-        sizeof otherChecksumInitializer);
+    error = otherChecksum.store(ntca::ChecksumType::e_CRC32,
+                                &otherChecksumInitializer,
+                                sizeof otherChecksumInitializer);
     NTSCFG_TEST_OK(error);
 
     {
