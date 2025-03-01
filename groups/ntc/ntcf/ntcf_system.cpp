@@ -1405,8 +1405,6 @@ ntsa::Error System::createCompression(
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
 
-    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
-
     ntctlc::Plugin::initialize();
 
     bsl::shared_ptr<ntci::CompressionDriver> compressionDriver;
@@ -1417,6 +1415,7 @@ ntsa::Error System::createCompression(
 
     return compressionDriver->createCompression(result,
                                                 configuration,
+                                                dataPool,
                                                 basicAllocator);
 }
 

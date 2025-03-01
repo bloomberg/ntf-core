@@ -672,8 +672,7 @@ ntsa::Error CompressionEncoder::deflateBegin(
 
     d_frameHeader.reset();
     d_frameContentBytesTotal = 0;
-    d_frameContentCrc.reset();
-    d_frameContentCrc.initialize(ntca::ChecksumType::e_CRC32);
+    d_frameContentCrc.reset(ntca::ChecksumType::e_CRC32);
 
     bsl::size_t frameHeaderBytesEncoded = 0;
     error = d_frameHeader.encode(&frameHeaderBytesEncoded, result);
@@ -832,7 +831,10 @@ ntsa::Error CompressionEncoder::deflateNext(
 
     context->setBytesRead(context->bytesRead() + size);
 
-    d_frameContentCrc.update(data, size);
+    error = d_frameContentCrc.update(data, size);
+    if (error) {
+        return error;
+    }
 
     return ntsa::Error();
 }
@@ -862,6 +864,8 @@ ntsa::Error CompressionEncoder::deflateEnd(ntca::DeflateContext*       context,
         return error;
     }
 
+    context->setCompressionType(ntca::CompressionType::e_RLE);
+
     ntcd::CompressionFrameFooter frameFooter;
     frameFooter.setChecksum(d_frameContentCrc);
 
@@ -881,8 +885,7 @@ ntsa::Error CompressionEncoder::deflateEnd(ntca::DeflateContext*       context,
     d_frameHeader.reset();
     d_frameHeaderPosition    = 0;
     d_frameContentBytesTotal = 0;
-    d_frameContentCrc.reset();
-    d_frameContentCrc.initialize(ntca::ChecksumType::e_CRC32);
+    d_frameContentCrc.reset(ntca::ChecksumType::e_CRC32);
 
     return ntsa::Error();
 }
@@ -1001,8 +1004,11 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
                                            &d_expansion[0],
                                            d_expansion.size());
 
-                    d_frameContentCrc.update(&d_expansion[0],
-                                             d_expansion.size());
+                    error = d_frameContentCrc.update(&d_expansion[0],
+                                                     d_expansion.size());
+                    if (error) {
+                        return error;
+                    }
 
                     d_expansion.clear();
 
@@ -1034,7 +1040,10 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
                                         0,
                                         static_cast<int>(d_block.length()));
 
-                d_frameContentCrc.update(d_input, d_block.length());
+                error = d_frameContentCrc.update(d_input, d_block.length());
+                if (error) {
+                    return error;
+                }
 
                 ntcs::BlobUtil::pop(&d_input, d_block.length());
                 d_frameContentBytesNeeded -= d_block.length();
@@ -1092,7 +1101,7 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
 
             d_frameHeader.reset();
             d_frameContentBytesNeeded = 0;
-            d_frameContentCrc.reset();
+            d_frameContentCrc.reset(ntca::ChecksumType::e_CRC32);
             d_block.reset();
 
             continue;
@@ -1129,7 +1138,7 @@ ntsa::Error CompressionDecoder::fail(ntsa::Error error)
     d_expansion.clear();
     d_frameHeader.reset();
     d_frameContentBytesNeeded = 0;
-    d_frameContentCrc.reset();
+    d_frameContentCrc.reset(ntca::ChecksumType::e_CRC32);
     d_block.reset();
 
     return error;
@@ -1216,6 +1225,8 @@ ntsa::Error CompressionDecoder::inflateEnd(ntca::InflateContext*       context,
     NTCCFG_WARNING_UNUSED(context);
     NTCCFG_WARNING_UNUSED(result);
     NTCCFG_WARNING_UNUSED(options);
+
+    context->setCompressionType(ntca::CompressionType::e_RLE);
 
     return ntsa::Error();
 }

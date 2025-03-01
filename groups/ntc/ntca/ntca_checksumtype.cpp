@@ -31,9 +31,7 @@ int ChecksumType::fromInt(ChecksumType::Value* result, int number)
     case ChecksumType::e_UNDEFINED:
     case ChecksumType::e_ADLER32:
     case ChecksumType::e_CRC32:
-    case ChecksumType::e_CRC32C:
-    case ChecksumType::e_XXHASH32:
-    case ChecksumType::e_XXHASH64:
+    case ChecksumType::e_XXH32:
         *result = static_cast<ChecksumType::Value>(number);
         return 0;
     default:
@@ -56,16 +54,8 @@ int ChecksumType::fromString(ChecksumType::Value*     result,
         *result = e_CRC32;
         return 0;
     }
-    if (bdlb::String::areEqualCaseless(string, "CRC32C")) {
-        *result = e_CRC32C;
-        return 0;
-    }
-    if (bdlb::String::areEqualCaseless(string, "XXHASH32")) {
-        *result = e_XXHASH32;
-        return 0;
-    }
-    if (bdlb::String::areEqualCaseless(string, "XXHASH64")) {
-        *result = e_XXHASH64;
+    if (bdlb::String::areEqualCaseless(string, "XXH32")) {
+        *result = e_XXH32;
         return 0;
     }
 
@@ -84,14 +74,8 @@ const char* ChecksumType::toString(ChecksumType::Value value)
     case e_CRC32: {
         return "CRC32";
     } break;
-    case e_CRC32C: {
-        return "CRC32C";
-    } break;
-    case e_XXHASH32: {
-        return "XXHASH32";
-    } break;
-    case e_XXHASH64: {
-        return "XXHASH64";
+    case e_XXH32: {
+        return "XXH32";
     } break;
     }
 

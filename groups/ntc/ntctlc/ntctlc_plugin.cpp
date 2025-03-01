@@ -31,6 +31,7 @@ BSLS_IDENT_RCSID(ntctlc_plugin_cpp, "$Id$ $CSID$")
 #include <bslma_newdeleteallocator.h>
 #include <bslmt_once.h>
 #include <bsls_assert.h>
+#include <bslalg_numericformatterutil.h>
 
 #if NTC_BUILD_WITH_LZ4
 #include <lz4.h>
@@ -75,11 +76,9 @@ class Lz4 : public ntci::Compression
     LZ4F_cctx*                      d_deflaterContext_p;
     bdlbb::BlobBuffer               d_deflaterBuffer;
     bsl::size_t                     d_deflaterBufferSize;
-    bsl::uint64_t                   d_deflaterGeneration;
     LZ4F_dctx*                      d_inflaterContext_p;
     bdlbb::BlobBuffer               d_inflaterBuffer;
     bsl::size_t                     d_inflaterBufferSize;
-    bsl::uint64_t                   d_inflaterGeneration;
     LZ4F_preferences_t              d_preferences;
     bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
     ntca::CompressionConfig         d_config;
@@ -617,6 +616,8 @@ ntsa::Error Lz4::deflateBegin(ntca::DeflateContext*       context,
                               bdlbb::Blob*                result,
                               const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCI_LOG_CONTEXT();
 
     LZ4F_errorCode_t errorCode = 0;
@@ -651,6 +652,8 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
                              bsl::size_t                 size,
                              const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCI_LOG_CONTEXT();
 
     LZ4F_errorCode_t errorCode = 0;
@@ -703,6 +706,8 @@ ntsa::Error Lz4::deflateEnd(ntca::DeflateContext*       context,
                             bdlbb::Blob*                result,
                             const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCI_LOG_CONTEXT();
 
     LZ4F_errorCode_t errorCode = 0;
@@ -769,6 +774,8 @@ ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
                              bsl::size_t                 size,
                              const ntca::InflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCI_LOG_CONTEXT();
 
     LZ4F_errorCode_t errorCode = 0;
@@ -841,11 +848,9 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
 : d_deflaterContext_p(0)
 , d_deflaterBuffer()
 , d_deflaterBufferSize(0)
-, d_deflaterGeneration(0)
 , d_inflaterContext_p(0)
 , d_inflaterBuffer()
 , d_inflaterBufferSize(0)
-, d_inflaterGeneration(0)
 , d_dataPool_sp(dataPool)
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -943,6 +948,10 @@ ntsa::Error Zstd::deflateBegin(ntca::DeflateContext*       context,
                                bdlbb::Blob*                result,
                                const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(context);
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
@@ -953,6 +962,12 @@ ntsa::Error Zstd::deflateNext(ntca::DeflateContext*       context,
                               bsl::size_t                 size,
                               const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(context);
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(data);
+    NTCCFG_WARNING_UNUSED(size);
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
@@ -961,6 +976,10 @@ ntsa::Error Zstd::deflateEnd(ntca::DeflateContext*       context,
                              bdlbb::Blob*                result,
                              const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(context);
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
@@ -969,6 +988,10 @@ ntsa::Error Zstd::inflateBegin(ntca::InflateContext*       context,
                                bdlbb::Blob*                result,
                                const ntca::InflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(context);
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
@@ -979,6 +1002,12 @@ ntsa::Error Zstd::inflateNext(ntca::InflateContext*       context,
                               bsl::size_t                 size,
                               const ntca::InflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(context);
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(data);
+    NTCCFG_WARNING_UNUSED(size);
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
@@ -987,6 +1016,10 @@ ntsa::Error Zstd::inflateEnd(ntca::InflateContext*       context,
                              bdlbb::Blob*                result,
                              const ntca::InflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(context);
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCCFG_NOT_IMPLEMENTED();
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
@@ -1077,6 +1110,10 @@ ntsa::Error Zlib::deflateBegin(ntca::DeflateContext*       context,
                                bdlbb::Blob*                result,
                                const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(context);
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(options);
+
     ntsa::Error error;
 
     d_deflaterStream.next_in  = 0;
@@ -1102,6 +1139,8 @@ ntsa::Error Zlib::deflateNext(ntca::DeflateContext*       context,
                               bsl::size_t                 size,
                               const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     int rc = 0;
 
     bsl::size_t totalBytesWritten = 0;
@@ -1138,6 +1177,8 @@ ntsa::Error Zlib::deflateEnd(ntca::DeflateContext*       context,
                              bdlbb::Blob*                result,
                              const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCI_LOG_CONTEXT();
 
     int rc = 0;
@@ -1344,6 +1385,8 @@ ntsa::Error Zlib::inflateNext(ntca::InflateContext*       context,
                               bsl::size_t                 size,
                               const ntca::InflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -1406,6 +1449,8 @@ ntsa::Error Zlib::inflateEnd(ntca::InflateContext*       context,
                              bdlbb::Blob*                result,
                              const ntca::InflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -1815,6 +1860,10 @@ ntsa::Error Gzip::deflateBegin(ntca::DeflateContext*       context,
                                bdlbb::Blob*                result,
                                const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(context);
+    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(options);
+
     ntsa::Error error;
 
     d_deflaterStream.next_in  = 0;
@@ -1840,6 +1889,8 @@ ntsa::Error Gzip::deflateNext(ntca::DeflateContext*       context,
                               bsl::size_t                 size,
                               const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     int rc = 0;
 
     bsl::size_t totalBytesWritten = 0;
@@ -1876,6 +1927,8 @@ ntsa::Error Gzip::deflateEnd(ntca::DeflateContext*       context,
                              bdlbb::Blob*                result,
                              const ntca::DeflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCI_LOG_CONTEXT();
 
     int rc = 0;
@@ -2015,9 +2068,11 @@ ntsa::Error Gzip::deflateReset()
 
     bsl::strcpy(reinterpret_cast<char*>(d_deflaterEntityName), "NTF");
 
-    bsl::sprintf(reinterpret_cast<char*>(d_deflaterEntityComment),
-                 "msg-%llu",
-                 id);
+    char* deflaterEntityCommentLast = bslalg::NumericFormatterUtil::toChars(
+        d_deflaterEntityComment, 
+        d_deflaterEntityComment + sizeof(d_deflaterEntityComment), 
+        id);
+    *deflaterEntityCommentLast = 0;
 
     d_deflaterHeader.name =
         reinterpret_cast<unsigned char*>(d_deflaterEntityName);
@@ -2108,6 +2163,8 @@ ntsa::Error Gzip::inflateNext(ntca::InflateContext*       context,
                               bsl::size_t                 size,
                               const ntca::InflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -2171,6 +2228,8 @@ ntsa::Error Gzip::inflateEnd(ntca::InflateContext*       context,
                              bdlbb::Blob*                result,
                              const ntca::InflateOptions& options)
 {
+    NTCCFG_WARNING_UNUSED(options);
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -2481,7 +2540,6 @@ Gzip::Gzip(const ntca::CompressionConfig&         configuration,
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
     ntsa::Error error;
-    int         rc;
 
     BSLS_ASSERT_OPT(d_config.type().isNull() ||
                     d_config.type().value() == ntca::CompressionType::e_GZIP);
