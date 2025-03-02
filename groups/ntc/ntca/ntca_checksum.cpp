@@ -364,16 +364,6 @@ bsl::uint32_t ChecksumXxHash32::round(bsl::uint32_t accumulator,
     return accumulator;
 }
 
-bsl::uint32_t ChecksumXxHash32::avalanche(bsl::uint32_t hash)
-{
-    hash ^= hash >> 15;
-    hash *= Self::k_P2;
-    hash ^= hash >> 13;
-    hash *= Self::k_P3;
-    hash ^= hash >> 16;
-    return hash;
-}
-
 ChecksumXxHash32::ChecksumXxHash32()
 {
     BSLMF_ASSERT(sizeof(ChecksumXxHash32) == 44);
@@ -421,10 +411,10 @@ ChecksumXxHash32& ChecksumXxHash32::operator=(
 
 void ChecksumXxHash32::reset()
 {
-    d_acc1 = Self::k_SEED + Self::k_P1 + Self::k_P2;
-    d_acc2 = Self::k_SEED + Self::k_P2;
-    d_acc3 = Self::k_SEED + 0;
-    d_acc4 = Self::k_SEED - Self::k_P1;
+    d_accumulator[0] = Self::k_SEED + Self::k_P1 + Self::k_P2;
+    d_accumulator[1] = Self::k_SEED + Self::k_P2;
+    d_accumulator[2] = Self::k_SEED + 0;
+    d_accumulator[3] = Self::k_SEED - Self::k_P1;
 
     bsl::memset(d_buffer, 0, sizeof d_buffer);
 
@@ -435,10 +425,10 @@ void ChecksumXxHash32::reset()
 
 void ChecksumXxHash32::reset(Digest digest)
 {
-    d_acc1 = digest + Self::k_P1 + Self::k_P2;
-    d_acc2 = digest + Self::k_P2;
-    d_acc3 = digest + 0;
-    d_acc4 = digest - Self::k_P1;
+    d_accumulator[0] = digest + Self::k_P1 + Self::k_P2;
+    d_accumulator[1] = digest + Self::k_P2;
+    d_accumulator[2] = digest + 0;
+    d_accumulator[3] = digest - Self::k_P1;
 
     bsl::memset(d_buffer, 0, sizeof d_buffer);
 
@@ -450,9 +440,6 @@ void ChecksumXxHash32::reset(Digest digest)
 ntsa::Error ChecksumXxHash32::update(const void* data, bsl::size_t size)
 {
     const bsl::uint8_t* source = reinterpret_cast<const bsl::uint8_t*>(data);
-
-    bsl::size_t offset    = 0;
-    bsl::size_t remaining = 0;
 
     d_entireSize += static_cast<bsl::uint32_t>(size);
 
@@ -466,17 +453,25 @@ ntsa::Error ChecksumXxHash32::update(const void* data, bsl::size_t size)
         return ntsa::Error();
     }
 
-    remaining = d_bufferSize + size;
+    bsl::size_t offset    = 0;
+    bsl::size_t remaining = d_bufferSize + size;
 
     while (remaining >= 16) {
         bsl::memcpy(&d_buffer[d_bufferSize],
                     &source[offset],
                     16 - d_bufferSize);
 
-        d_acc1 = Self::round(d_acc1, Self::decode(d_buffer, 0));
-        d_acc2 = Self::round(d_acc2, Self::decode(d_buffer, 4));
-        d_acc3 = Self::round(d_acc3, Self::decode(d_buffer, 8));
-        d_acc4 = Self::round(d_acc4, Self::decode(d_buffer, 12));
+        d_accumulator[0] =
+            Self::round(d_accumulator[0], Self::decode(d_buffer, 0));
+
+        d_accumulator[1] =
+            Self::round(d_accumulator[1], Self::decode(d_buffer, 4));
+
+        d_accumulator[2] =
+            Self::round(d_accumulator[2], Self::decode(d_buffer, 8));
+
+        d_accumulator[3] =
+            Self::round(d_accumulator[3], Self::decode(d_buffer, 12));
 
         offset       += 16 - d_bufferSize;
         remaining    -= 16;
@@ -545,37 +540,47 @@ ntsa::Error ChecksumXxHash32::update(const bdlbb::Blob& data, bsl::size_t size)
 
 bsl::uint32_t ChecksumXxHash32::value() const
 {
-    bsl::uint32_t hash      = 0;
-    bsl::uint32_t offset    = 0;
-    bsl::uint32_t remaining = d_bufferSize;
+    bsl::uint32_t result = 0;
 
     if (d_full == 1) {
-        hash = Self::rotate(d_acc1, 1) + Self::rotate(d_acc2, 7) +
-               Self::rotate(d_acc3, 12) + Self::rotate(d_acc4, 18);
+        result = Self::rotate(d_accumulator[0], 1) +
+                 Self::rotate(d_accumulator[1], 7) +
+                 Self::rotate(d_accumulator[2], 12) +
+                 Self::rotate(d_accumulator[3], 18);
     }
     else {
-        hash = d_acc3 + Self::k_P5;
+        result = d_accumulator[2] + Self::k_P5;
     }
 
-    hash += d_entireSize;
+    result += d_entireSize;
 
-    while (remaining >= 4) {
-        hash      += Self::decode(d_buffer, offset) * Self::k_P3;
-        hash       = Self::rotate(hash, 17);
-        hash      *= Self::k_P4;
-        offset    += 4;
-        remaining -= 4;
+    bsl::uint32_t offset = 0;
+    bsl::uint32_t length = d_bufferSize;
+
+    while (length >= sizeof(bsl::uint32_t)) {
+        result += Self::decode(d_buffer, offset) * Self::k_P3;
+        result  = Self::rotate(result, 17);
+        result *= Self::k_P4;
+        offset += sizeof(bsl::uint32_t);
+        length -= sizeof(bsl::uint32_t);
     }
 
-    while (remaining != 0) {
-        hash += static_cast<uint32_t>(d_buffer[offset]) * Self::k_P5;
-        hash  = Self::rotate(hash, 11);
-        hash *= Self::k_P1;
-        --remaining;
+    while (length != 0) {
+        result += static_cast<uint32_t>(d_buffer[offset]) * Self::k_P5;
+        result  = Self::rotate(result, 11);
+        result *= Self::k_P1;
+
+        --length;
         ++offset;
     }
 
-    return Self::avalanche(hash);
+    result ^= result >> 15;
+    result *= Self::k_P2;
+    result ^= result >> 13;
+    result *= Self::k_P3;
+    result ^= result >> 16;
+
+    return result;
 }
 
 bool ChecksumXxHash32::equals(const ChecksumXxHash32& other) const

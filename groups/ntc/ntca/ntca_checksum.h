@@ -328,10 +328,7 @@ class ChecksumXxHash32
 
     static const uint32_t k_SEED = 0;
 
-    bsl::uint32_t d_acc1;
-    bsl::uint32_t d_acc2;
-    bsl::uint32_t d_acc3;
-    bsl::uint32_t d_acc4;
+    bsl::uint32_t d_accumulator[4];
     bsl::uint8_t  d_buffer[16];
     bsl::uint32_t d_bufferSize;
     bsl::uint32_t d_entireSize;
@@ -348,9 +345,6 @@ class ChecksumXxHash32
 
     /// Process the specified 'input' into the specified 'accumulator'.
     static bsl::uint32_t round(bsl::uint32_t accumulator, bsl::uint32_t input);
-
-    /// Combine the specified 'hash' into the final value. Return the result.
-    static bsl::uint32_t avalanche(bsl::uint32_t hash);
 
   public:
     /// Defines a type alias for the unsigned 32-bit integer that represents
@@ -777,12 +771,9 @@ template <typename HASH_ALGORITHM>
 NTCCFG_INLINE void ChecksumXxHash32::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
-    hashAppend(algorithm, d_acc1);
-    hashAppend(algorithm, d_acc2);
-    hashAppend(algorithm, d_acc3);
-    hashAppend(algorithm, d_acc4);
-    algorithm(reinterpret_cast<const char*>(d_buffer), sizeof d_buffer);
-    hashAppend(algorithm, d_bufferSize);
+    algorithm(reinterpret_cast<const char*>(d_accumulator),
+              sizeof d_accumulator);
+    algorithm(reinterpret_cast<const char*>(d_buffer), d_bufferSize);
     hashAppend(algorithm, d_entireSize);
     hashAppend(algorithm, d_full);
 }
