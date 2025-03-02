@@ -56,6 +56,9 @@ class PluginTest
     // TODO.
     static void verifyAll();
 
+    // TODO.
+    static void verifyUsage();
+
   private:
     /// Verify the integrity of inflating and deflating a data stream
     /// according to the specified 'parameters'.
@@ -806,6 +809,52 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyAll)
 
         ntctlc::PluginTest::verifyParameters(parametersVector[i]);
     }
+}
+
+NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyUsage)
+{
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::CompressionDriver> driver;
+    ntctlc::Plugin::load(&driver);
+
+    ntca::CompressionConfig compressionConfig;
+    compressionConfig.setType(ntca::CompressionType::e_ZLIB);
+    compressionConfig.setGoal(ntca::CompressionGoal::e_BALANCED);
+
+    bsl::shared_ptr<ntci::Compression> compression;
+    error = driver->createCompression(&compression,
+                                      compressionConfig);
+    NTSCFG_TEST_OK(error);
+
+    bdlbb::SimpleBlobBufferFactory blobBufferFactory(64);
+
+    const char k_DATA[] = "abbcccddddeeeffg";
+
+    bdlbb::Blob initial(&blobBufferFactory);
+    bdlbb::BlobUtil::append(&initial, k_DATA, sizeof k_DATA - 1);
+
+    ntca::DeflateContext deflateContext;
+    ntca::DeflateOptions deflateOptions;
+
+    bdlbb::Blob deflated(&blobBufferFactory);
+    error = compression->deflate(&deflateContext,
+                                 &deflated,
+                                 initial,
+                                 deflateOptions);
+    NTSCFG_TEST_OK(error);
+
+    ntca::InflateContext inflateContext;
+    ntca::InflateOptions inflateOptions;
+
+    bdlbb::Blob inflated(&blobBufferFactory);
+    error = compression->inflate(&inflateContext,
+                                 &inflated,
+                                 deflated,
+                                 inflateOptions);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(inflated, initial), 0);
 }
 
 }  // close namespace ntctlc

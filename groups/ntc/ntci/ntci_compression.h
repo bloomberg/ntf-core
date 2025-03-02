@@ -46,6 +46,67 @@ namespace ntci {
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
+/// @par Usage Example
+/// This example illustrates how to create a compression mechanism and use it
+/// to deflate data to a (usually) reduced size, then inflate it back to its
+/// original form.
+///
+/// First, create a compression mechanism using a particular compression 
+/// technique. For the purposes of this example, we'll choose the popular
+/// "DEFLATE" algorithm framed by the "zlib" framing protocol as described in
+/// RFC 1950. For brevity, error handling is elided from this example.
+///
+///     ntsa::Error error;
+///
+///
+///     ntca::CompressionConfig compressionConfig;
+///     compressionConfig.setType(ntca::CompressionType::e_ZLIB);
+///     compressionConfig.setGoal(ntca::CompressionGoal::e_BALANCED);
+///
+///     bsl::shared_ptr<ntci::Compression> compression;
+///     error = ntcf::System::createCompression(&compression,
+///                                      compressionConfig);
+///     BSLS_ASSERT(!error);
+///
+/// Next, let's initialize some data that we want to compress. We'll choose
+/// something with a repeating pattern, which most compression algorithms
+/// usually reduce to somthing smaller.
+///
+///     bdlbb::SimpleBlobBufferFactory blobBufferFactory(64);
+///
+///     const char k_DATA[] = "abbcccddddeeeffg";
+///
+///     bdlbb::Blob initial(&blobBufferFactory);
+///     bdlbb::BlobUtil::append(&initial, k_DATA, sizeof k_DATA - 1);
+///
+/// Then, deflate our original data in to a (hopefully) reduced size.
+///
+///     ntca::DeflateContext deflateContext;
+///     ntca::DeflateOptions deflateOptions;
+///
+///     bdlbb::Blob deflated(&blobBufferFactory);
+///     error = compression->deflate(&deflateContext,
+///                                  &deflated,
+///                                  initial,
+///                                  deflateOptions);
+///     NTSCFG_TEST_OK(error);
+///
+/// Now, inflate the deflated data.
+///
+///     ntca::InflateContext inflateContext;
+///     ntca::InflateOptions inflateOptions;
+///
+///     bdlbb::Blob inflated(&blobBufferFactory);
+///     error = compression->inflate(&inflateContext,
+///                                  &inflated,
+///                                  deflated,
+///                                  inflateOptions);
+///     NTSCFG_TEST_OK(error);
+///
+/// Finally, ensure the inflated data matches our original data.
+///
+///     NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(inflated, initial), 0);
+///
 /// @ingroup module_ntci_compression
 class Compression
 {
