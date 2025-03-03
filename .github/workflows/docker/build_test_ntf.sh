@@ -41,6 +41,9 @@ build_ntf() {
                 --output /workspace/ntf-core/build \
                 --jobs ${jobs} \
                 --standalone \
+                --with-zlib \
+                --with-zstd \
+                --with-lz4 \
                 --without-warnings \
                 --without-warnings-as-errors \
                 --from-continuous-integration
