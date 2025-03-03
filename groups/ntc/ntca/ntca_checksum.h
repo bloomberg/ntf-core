@@ -343,9 +343,6 @@ class ChecksumXxHash32
     /// result.
     static bsl::uint32_t rotate(bsl::uint32_t value, bsl::uint32_t amount);
 
-    /// Process the specified 'input' into the specified 'accumulator'.
-    static bsl::uint32_t round(bsl::uint32_t accumulator, bsl::uint32_t input);
-
   public:
     /// Defines a type alias for the unsigned 32-bit integer that represents
     /// the value of the checksum.

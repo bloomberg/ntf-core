@@ -355,15 +355,6 @@ bsl::uint32_t ChecksumXxHash32::rotate(bsl::uint32_t value,
     return (value << (amount % 32)) | (value >> (32 - amount % 32));
 }
 
-bsl::uint32_t ChecksumXxHash32::round(bsl::uint32_t accumulator,
-                                      bsl::uint32_t input)
-{
-    accumulator += input * Self::k_P2;
-    accumulator  = Self::rotate(accumulator, 13);
-    accumulator *= Self::k_P1;
-    return accumulator;
-}
-
 ChecksumXxHash32::ChecksumXxHash32()
 {
     BSLMF_ASSERT(sizeof(ChecksumXxHash32) == 44);
@@ -461,17 +452,20 @@ ntsa::Error ChecksumXxHash32::update(const void* data, bsl::size_t size)
                     &source[offset],
                     16 - d_bufferSize);
 
-        d_accumulator[0] =
-            Self::round(d_accumulator[0], Self::decode(d_buffer, 0));
+        for (bsl::size_t accumulator = 0; accumulator < 4; ++accumulator) {
+            for (bsl::size_t offset = 0; offset < 16; offset += 16) {
+                const bsl::uint32_t next = 
+                    ChecksumXxHash32::decode(d_buffer, offset);
 
-        d_accumulator[1] =
-            Self::round(d_accumulator[1], Self::decode(d_buffer, 4));
+                bsl::uint32_t value = d_accumulator[accumulator];
 
-        d_accumulator[2] =
-            Self::round(d_accumulator[2], Self::decode(d_buffer, 8));
+                value += next * Self::k_P2;
+                value  = Self::rotate(value, 13);
+                value *= Self::k_P1;
 
-        d_accumulator[3] =
-            Self::round(d_accumulator[3], Self::decode(d_buffer, 12));
+                d_accumulator[accumulator] = value;
+            }
+        }
 
         offset       += 16 - d_bufferSize;
         remaining    -= 16;
