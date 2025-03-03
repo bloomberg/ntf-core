@@ -182,6 +182,7 @@
 #include <ntci_closefuture.cpp>
 #include <ntci_closeresult.cpp>
 #include <ntci_compression.cpp>
+#include <ntci_compressiondriver.cpp>
 #include <ntci_connectcallback.cpp>
 #include <ntci_connectcallbackfactory.cpp>
 #include <ntci_connectfuture.cpp>
@@ -256,6 +257,7 @@
 #include <ntci_sender.cpp>
 #include <ntci_sendfuture.cpp>
 #include <ntci_sendresult.cpp>
+#include <ntci_serialization.cpp>
 #include <ntci_strand.cpp>
 #include <ntci_strandfactory.cpp>
 #include <ntci_streamsocket.cpp>
@@ -275,6 +277,8 @@
 #include <ntci_upgradable.cpp>
 #include <ntci_upgradecallback.cpp>
 #include <ntci_upgradecallbackfactory.cpp>
+#include <ntci_upgradefuture.cpp>
+#include <ntci_upgraderesult.cpp>
 #include <ntci_user.cpp>
 #include <ntci_waiter.cpp>
 
@@ -365,6 +369,10 @@
 #include <ntcdns_system.cpp>
 #include <ntcdns_utility.cpp>
 #include <ntcdns_vocabulary.cpp>
+
+// ntctlc
+
+#include <ntctlc_plugin.cpp>
 
 // ntctls
 
