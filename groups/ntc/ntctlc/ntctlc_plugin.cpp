@@ -614,7 +614,7 @@ class CompressionDriver : public ntci::CompressionDriver
 #if NTC_BUILD_WITH_LZ4
 
 #define NTCTLC_PLUGIN_LZ4_VERSION_MAKE(major, minor, patch) \
-    ((major) *100*100 + (minor) *100 + (patch)))
+    (((major) * 100 * 100) + ((minor) * 100) + (patch))
 
 #define NTCTLC_PLUGIN_LZ4_VERSION_NUMBER LZ4_VERSION_NUMBER
 
