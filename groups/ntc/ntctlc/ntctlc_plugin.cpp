@@ -613,6 +613,11 @@ class CompressionDriver : public ntci::CompressionDriver
 
 #if NTC_BUILD_WITH_LZ4
 
+#define NTCTLC_PLUGIN_LZ4_VERSION_MAKE(major, minor, patch) \
+    ((major) *100*100 + (minor) *100 + (patch)))
+
+#define NTCTLC_PLUGIN_LZ4_VERSION_NUMBER LZ4_VERSION_NUMBER
+
 ntsa::Error Lz4::deflateBegin(ntca::DeflateContext*       context,
                               bdlbb::Blob*                result,
                               const ntca::DeflateOptions& options)
@@ -791,8 +796,12 @@ ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
     bsl::memset(&decompressOptions, 0, sizeof decompressOptions);
 
     decompressOptions.stableDst = 0;
+
+#if NTCTLC_PLUGIN_LZ4_VERSION_NUMBER >= \
+    NTCTLC_PLUGIN_LZ4_VERSION_MAKE(1, 10, 0)
     decompressOptions.skipChecksums =
         static_cast<unsigned>(!k_CHECKSUM_VERIFY);
+#endif
 
     while (sourceCurrent < sourceEnd) {
         char*       destination     = d_inflaterBuffer.data();
