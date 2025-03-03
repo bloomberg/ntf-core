@@ -6146,7 +6146,7 @@ void SystemTest::TlsUtil::processUpgrade(
         }
     }
     else if (event.type() == ntca::UpgradeEventType::e_ERROR) {
-        NTSCFG_TEST_LOG_DEBUG
+        NTSCFG_TEST_LOG_ERROR
             << "Stream socket descriptor " << streamSocket->handle() << " at "
             << streamSocket->sourceEndpoint() << " to "
             << streamSocket->remoteEndpoint()
@@ -13674,11 +13674,31 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
                                        serverFileContentOptions);
         NTSCFG_TEST_OK(error);
 
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+
+        // TODO: There is a bug somewhere between encoding the resource, 
+        // writing it to a file, then reading it out again. Likely from 
+        // mishandling "text mode" translation of newlines in an inconsistent
+        // fashion.
+
+        bsl::ofstream serverFileStream(serverFile.path().c_str(), 
+                                       bsl::ios_base::out);
+        NTSCFG_TEST_TRUE(serverFileStream);
+
+        serverFileStream << serverFileContent;
+        NTSCFG_TEST_TRUE(serverFileStream);
+ 
+        serverFileStream.flush();
+
+#else
+
         error = serverFile.write(serverFileContent);
         NTSCFG_TEST_OK(error);
 
-        // bsl::printf("Using server resource:\n%s\n",
-        //             serverFileContent.c_str());
+#endif
+        
+        BSLS_LOG_INFO("Using server resource:\n%s",
+                      serverFileContent.c_str());
     }
 
     ntca::EncryptionServerOptions encryptionServerOptions;

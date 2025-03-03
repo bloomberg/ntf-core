@@ -21,6 +21,7 @@ BSLS_IDENT_RCSID(ntctlc_plugin_cpp, "$Id$ $CSID$")
 #include <ntca_checksum.h>
 #include <ntcd_compression.h>
 #include <ntci_log.h>
+#include <ntcs_blobutil.h>
 #include <ntcs_datapool.h>
 #include <ntcs_plugin.h>
 #include <ntsa_error.h>
@@ -638,7 +639,7 @@ ntsa::Error Lz4::deflateBegin(ntca::DeflateContext*       context,
     const bsl::size_t numBytesRead    = 0;
     const bsl::size_t numBytesWritten = static_cast<bsl::size_t>(errorCode);
 
-    bdlbb::BlobUtil::append(result, header, numBytesWritten);
+    ntcs::BlobUtil::append(result, header, numBytesWritten);
 
     context->setBytesRead(context->bytesRead() + numBytesRead);
     context->setBytesWritten(context->bytesWritten() + numBytesWritten);
@@ -694,7 +695,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
     const bsl::size_t numBytesRead    = size;
     const bsl::size_t numBytesWritten = static_cast<bsl::size_t>(errorCode);
 
-    bdlbb::BlobUtil::append(result, destination, numBytesWritten);
+    ntcs::BlobUtil::append(result, destination, numBytesWritten);
 
     context->setBytesRead(context->bytesRead() + numBytesRead);
     context->setBytesWritten(context->bytesWritten() + numBytesWritten);
@@ -746,7 +747,7 @@ ntsa::Error Lz4::deflateEnd(ntca::DeflateContext*       context,
     const bsl::size_t numBytesRead    = 0;
     const bsl::size_t numBytesWritten = static_cast<bsl::size_t>(errorCode);
 
-    bdlbb::BlobUtil::append(result, destination, numBytesWritten);
+    ntcs::BlobUtil::append(result, destination, numBytesWritten);
 
     context->setCompressionType(ntca::CompressionType::e_LZ4);
     context->setBytesRead(context->bytesRead() + numBytesRead);
@@ -813,7 +814,7 @@ ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
         }
 
         if (destinationSize > 0) {
-            bdlbb::BlobUtil::append(result, destination, destinationSize);
+            ntcs::BlobUtil::append(result, destination, destinationSize);
             totalBytesWritten += destinationSize;
         }
 
@@ -1147,7 +1148,7 @@ ntsa::Error Zlib::deflateNext(ntca::DeflateContext*       context,
     bsl::size_t totalBytesRead    = 0;
 
     d_deflaterStream.next_in  = const_cast<bsl::uint8_t*>(data);
-    d_deflaterStream.avail_in = size;
+    d_deflaterStream.avail_in = static_cast<uInt>(size);
 
     while (d_deflaterStream.avail_in != 0) {
         if (d_deflaterStream.avail_out == 0) {
@@ -1253,7 +1254,7 @@ NTCCFG_INLINE
 void Zlib::deflateCommit(bdlbb::Blob* result)
 {
     if (d_deflaterBufferSize != 0) {
-        d_deflaterBuffer.setSize(d_deflaterBufferSize);
+        d_deflaterBuffer.setSize(static_cast<int>(d_deflaterBufferSize));
 
         BSLS_ASSERT(d_deflaterBuffer.buffer().get() != 0);
         BSLS_ASSERT(d_deflaterBuffer.size() > 0);
@@ -1399,7 +1400,7 @@ ntsa::Error Zlib::inflateNext(ntca::InflateContext*       context,
     BSLS_ASSERT(d_inflaterStream.avail_in == 0);
 
     d_inflaterStream.next_in  = const_cast<bsl::uint8_t*>(data);
-    d_inflaterStream.avail_in = size;
+    d_inflaterStream.avail_in = static_cast<uInt>(size);
 
     while (d_inflaterStream.avail_in != 0) {
         if (d_inflaterStream.avail_out == 0) {
@@ -1533,7 +1534,7 @@ NTCCFG_INLINE
 void Zlib::inflateCommit(bdlbb::Blob* result)
 {
     if (d_inflaterBufferSize != 0) {
-        d_inflaterBuffer.setSize(d_inflaterBufferSize);
+        d_inflaterBuffer.setSize(static_cast<int>(d_inflaterBufferSize));
 
         BSLS_ASSERT(d_inflaterBuffer.buffer().get() != 0);
         BSLS_ASSERT(d_inflaterBuffer.size() > 0);
@@ -1897,7 +1898,7 @@ ntsa::Error Gzip::deflateNext(ntca::DeflateContext*       context,
     bsl::size_t totalBytesRead    = 0;
 
     d_deflaterStream.next_in  = const_cast<bsl::uint8_t*>(data);
-    d_deflaterStream.avail_in = size;
+    d_deflaterStream.avail_in = static_cast<uInt>(size);
 
     while (d_deflaterStream.avail_in != 0) {
         if (d_deflaterStream.avail_out == 0) {
@@ -2003,7 +2004,7 @@ NTCCFG_INLINE
 void Gzip::deflateCommit(bdlbb::Blob* result)
 {
     if (d_deflaterBufferSize != 0) {
-        d_deflaterBuffer.setSize(d_deflaterBufferSize);
+        d_deflaterBuffer.setSize(static_cast<int>(d_deflaterBufferSize));
 
         BSLS_ASSERT(d_deflaterBuffer.buffer().get() != 0);
         BSLS_ASSERT(d_deflaterBuffer.size() > 0);
@@ -2076,11 +2077,13 @@ ntsa::Error Gzip::deflateReset()
 
     d_deflaterHeader.name =
         reinterpret_cast<unsigned char*>(d_deflaterEntityName);
-    d_deflaterHeader.name_max = bsl::strlen(d_deflaterEntityName);
+    d_deflaterHeader.name_max = 
+        static_cast<uInt>(bsl::strlen(d_deflaterEntityName));
 
     d_deflaterHeader.comment =
         reinterpret_cast<unsigned char*>(d_deflaterEntityComment);
-    d_deflaterHeader.comm_max = bsl::strlen(d_deflaterEntityComment);
+    d_deflaterHeader.comm_max = 
+        static_cast<uInt>(bsl::strlen(d_deflaterEntityComment));
 
     rc = ::deflateSetHeader(&d_deflaterStream, &d_deflaterHeader);
     if (rc != Z_OK) {
@@ -2177,7 +2180,7 @@ ntsa::Error Gzip::inflateNext(ntca::InflateContext*       context,
     BSLS_ASSERT(d_inflaterStream.avail_in == 0);
 
     d_inflaterStream.next_in  = const_cast<bsl::uint8_t*>(data);
-    d_inflaterStream.avail_in = size;
+    d_inflaterStream.avail_in = static_cast<uInt>(size);
 
     while (d_inflaterStream.avail_in != 0) {
         if (d_inflaterStream.avail_out == 0) {
@@ -2313,7 +2316,7 @@ NTCCFG_INLINE
 void Gzip::inflateCommit(bdlbb::Blob* result)
 {
     if (d_inflaterBufferSize != 0) {
-        d_inflaterBuffer.setSize(d_inflaterBufferSize);
+        d_inflaterBuffer.setSize(static_cast<int>(d_inflaterBufferSize));
 
         BSLS_ASSERT(d_inflaterBuffer.buffer().get() != 0);
         BSLS_ASSERT(d_inflaterBuffer.size() > 0);

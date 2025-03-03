@@ -117,7 +117,7 @@ void ChecksumTest::generateData(bsl::vector<bsl::uint8_t>* result,
     const uint32_t prime = k_PRIME32_1;
 
     bsl::uint32_t generator = prime;
-    for (bsl::size_t i; i < size; ++i) {
+    for (bsl::size_t i = 0; i < size; ++i) {
         (*result)[i]  = static_cast<bsl::uint8_t>(generator >> 24);
         generator    *= generator;
     }

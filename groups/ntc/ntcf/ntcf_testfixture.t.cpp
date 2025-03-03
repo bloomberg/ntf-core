@@ -236,7 +236,8 @@ NTSCFG_TEST_FUNCTION(ntcf::TestFixtureTest::verifyBacklog)
     // Create a server.
 
     ntcf::TestFixtureConfig fixtureConfig;
-    fixtureConfig.server.backlog = k_NUM_CONNECTIONS;
+    fixtureConfig.server.backlog.makeValue(
+        static_cast<bsl::uint32_t>(k_NUM_CONNECTIONS));
 
     ntcf::TestFixture fixture(fixtureConfig, NTSCFG_TEST_ALLOCATOR);
 

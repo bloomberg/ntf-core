@@ -13,9 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#define _CRT_SECURE_NO_WARNINGS
-#define _CRT_DISABLE_PERFCRIT_LOCKS
-
 #include <ntcd_compression.h>
 
 #include <bsls_ident.h>
@@ -732,7 +729,8 @@ ntsa::Error CompressionEncoder::deflateNext(
 
                     ntcd::CompressionBlock block;
                     block.setType(ntcd::CompressionBlockType::e_RLE);
-                    block.setLength(current - mark);
+                    block.setLength(
+                        static_cast<bsl::uint16_t>(current - mark));
                     block.setLiteral(*previous);
 
                     NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RLE(block);
@@ -756,7 +754,8 @@ ntsa::Error CompressionEncoder::deflateNext(
                 if (*current == *previous) {
                     ntcd::CompressionBlock block;
                     block.setType(ntcd::CompressionBlockType::e_RAW);
-                    block.setLength(previous - mark);
+                    block.setLength(
+                        static_cast<bsl::uint16_t>(previous - mark));
 
                     NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RAW(
                         block,
@@ -794,7 +793,7 @@ ntsa::Error CompressionEncoder::deflateNext(
     if (mode == k_MODE_SAME) {
         ntcd::CompressionBlock block;
         block.setType(ntcd::CompressionBlockType::e_RLE);
-        block.setLength(current - mark);
+        block.setLength(static_cast<bsl::uint16_t>(current - mark));
         block.setLiteral(*previous);
 
         NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RLE(block);
@@ -811,7 +810,7 @@ ntsa::Error CompressionEncoder::deflateNext(
     else {
         ntcd::CompressionBlock block;
         block.setType(ntcd::CompressionBlockType::e_RAW);
-        block.setLength(current - mark);
+        block.setLength(static_cast<bsl::uint16_t>(current - mark));
 
         NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RAW(
             block,
@@ -854,7 +853,8 @@ ntsa::Error CompressionEncoder::deflateEnd(ntca::DeflateContext*       context,
 
     context->setChecksum(d_frameContentCrc);
 
-    d_frameHeader.setLength(d_frameContentBytesTotal);
+    d_frameHeader.setLength(
+        static_cast<bsl::uint32_t>(d_frameContentBytesTotal));
     d_frameHeader.setChecksum(d_frameContentCrc);
 
     error = d_frameHeader.encode(&frameHeaderBytesEncoded,
