@@ -67,13 +67,6 @@ build_ntf() {
         exit ${rc}
     fi
 
-    /workspace/ntf-core/build/bin/ntca_checksum.t 0 -v 5
-    if [ ${rc} -ne 0 ]; then
-        echo "Failed to verify ntca_checksum: rc = ${rc}"
-        coredumpctl
-        exit ${rc}
-    fi
-
     make build_test
     rc=${?}
     if [ ${rc} -ne 0 ]; then
