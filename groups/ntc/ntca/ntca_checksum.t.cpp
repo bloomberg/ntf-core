@@ -466,9 +466,11 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyMoveConstructor)
     NTSCFG_TEST_EQ(checksumValueLength, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValue, otherChecksumInitializer);
 
-    // Ensure the other value has the default value.
+    if (NTSCFG_MOVE_RESET_ENABLED) {
+        // Ensure the other value has the default value.
 
-    NTSCFG_TEST_EQ(otherChecksum.type(), ntca::ChecksumType::e_UNDEFINED);
+        NTSCFG_TEST_EQ(otherChecksum.type(), ntca::ChecksumType::e_UNDEFINED);
+    }
 }
 
 NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyCopyAssignmentOperator)
@@ -555,9 +557,11 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyMoveAssignmentOperator)
     NTSCFG_TEST_EQ(checksumValueLength, sizeof checksumValue);
     NTSCFG_TEST_EQ(checksumValue, otherChecksumInitializer);
 
-    // Ensure the other value has the default value.
+    if (NTSCFG_MOVE_RESET_ENABLED) {
+        // Ensure the other value has the default value.
 
-    NTSCFG_TEST_EQ(otherChecksum.type(), ntca::ChecksumType::e_UNDEFINED);
+        NTSCFG_TEST_EQ(otherChecksum.type(), ntca::ChecksumType::e_UNDEFINED);
+    }
 }
 
 NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyReset)
