@@ -683,7 +683,7 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyLz4)
 
 NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyZstd)
 {
-#if NTC_BUILD_WITH_ZSTD && 0
+#if NTC_BUILD_WITH_ZSTD
     ntctlc::PluginTest::Parameters parameters;
     parameters.setVariationIndex(0);
     parameters.setVariationCount(1);
@@ -709,7 +709,7 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyAll)
 #endif
 
 #if NTC_BUILD_WITH_ZSTD
-    // algorithmVector.push_back(ntca::CompressionType::e_ZSTD);
+    algorithmVector.push_back(ntca::CompressionType::e_ZSTD);
 #endif
 
 #if NTC_BUILD_WITH_ZLIB

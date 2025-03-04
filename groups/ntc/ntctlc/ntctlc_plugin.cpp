@@ -40,6 +40,7 @@ BSLS_IDENT_RCSID(ntctlc_plugin_cpp, "$Id$ $CSID$")
 #endif
 
 #if NTC_BUILD_WITH_ZSTD
+#define ZSTD_STATIC_LINKING_ONLY
 #include <zstd.h>
 #include <zstd_errors.h>
 #endif
@@ -81,6 +82,7 @@ class Lz4 : public ntci::Compression
     bdlbb::BlobBuffer               d_inflaterBuffer;
     bsl::size_t                     d_inflaterBufferSize;
     LZ4F_preferences_t              d_preferences;
+    int                             d_level;
     bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
     ntca::CompressionConfig         d_config;
     bslma::Allocator*               d_allocator_p;
@@ -166,6 +168,17 @@ class Lz4 : public ntci::Compression
 /// @ingroup module_ntctlc
 class Zstd : public ntci::Compression
 {
+    ZSTD_CCtx*                      d_deflaterContext_p;
+    ZSTD_inBuffer                   d_deflaterInput;
+    ZSTD_outBuffer                  d_deflaterOutput;
+    bdlbb::BlobBuffer               d_deflaterBuffer;
+    bsl::size_t                     d_deflaterBufferSize;
+    ZSTD_DCtx*                      d_inflaterContext_p;
+    ZSTD_inBuffer                   d_inflaterInput;
+    ZSTD_outBuffer                  d_inflaterOutput;
+    bdlbb::BlobBuffer               d_inflaterBuffer;
+    bsl::size_t                     d_inflaterBufferSize;
+    int                             d_level;
     bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
     ntca::CompressionConfig         d_config;
     bslma::Allocator*               d_allocator_p;
@@ -175,6 +188,9 @@ class Zstd : public ntci::Compression
     Zstd& operator=(const Zstd&) BSLS_KEYWORD_DELETED;
 
   private:
+    /// Create the deflater. Return the error.
+    ntsa::Error deflateCreate();
+
     /// Begin a deflation stream into the specified 'result' according to the
     /// specified 'options'.
     ntsa::Error deflateBegin(ntca::DeflateContext*       context,
@@ -198,6 +214,29 @@ class Zstd : public ntci::Compression
                            const ntca::DeflateOptions& options)
         BSLS_KEYWORD_OVERRIDE;
 
+    /// Handle the lack of lack of output capacity available to the deflater
+    /// by committing the previous buffer, if any, and allocating a new one.
+    void deflateOverflow(bdlbb::Blob* result);
+
+    /// Commit the deflater buffer, if any bytes have been been written to it,
+    /// to the specified 'result'.
+    void deflateCommit(bdlbb::Blob* result);
+
+    /// Feed the input bytes available to the deflate algorithm and write
+    /// any output bytes to the output buffer. Return the error.
+    bsl::size_t deflateCycle(bsl::size_t*      numBytesRead,
+                             bsl::size_t*      numBytesWritten,
+                             ZSTD_EndDirective mode);
+
+    /// Reset the deflater to prepare for a new frame. Return the error.
+    ntsa::Error deflateReset();
+
+    /// Destroy the deflater. Return the error.
+    ntsa::Error deflateDestroy();
+
+    /// Create the inflater. Return the error.
+    ntsa::Error inflateCreate();
+
     /// Begin an inflation stream into the specified 'result' according to the
     /// specified 'options'.
     ntsa::Error inflateBegin(ntca::InflateContext*       context,
@@ -220,6 +259,41 @@ class Zstd : public ntci::Compression
                            bdlbb::Blob*                result,
                            const ntca::InflateOptions& options)
         BSLS_KEYWORD_OVERRIDE;
+
+    /// Handle the lack of lack of output capacity available to the inflater
+    /// by committing the previous buffer, if any, and allocating a new one.
+    void inflateOverflow(bdlbb::Blob* result);
+
+    /// Commit the inflater buffer, if any bytes have been been written to it,
+    /// to the specified 'result'.
+    void inflateCommit(bdlbb::Blob* result);
+
+    /// Feed the input bytes available to the inflate algorithm and write
+    /// any output bytes to the output buffer. Return the error.
+    bsl::size_t inflateCycle(bsl::size_t* numBytesRead,
+                             bsl::size_t* numBytesWritten);
+
+    /// Reset the inflater to prepare for a new frame. Return the error.
+    ntsa::Error inflateReset();
+
+    /// Destroy the deflater. Return the error.
+    ntsa::Error inflateDestroy();
+
+    /// Allocate the specified 'size' number of bytes. The specified 'opaque'
+    /// field points to the allocator object.
+    static void* allocate(void* opaque, bsl::size_t size);
+
+    /// Free memory pointed to by the specified 'address'. The specified
+    /// 'opaque' field points to the allocator object.
+    static void free(void* opaque, void* address);
+
+    /// Return the string description of the specified 'error' code.
+    static const char* describeError(bsl::size_t error);
+
+    /// Return the error associated with the specified zstd 'error' code
+    /// detected when performing the specified 'operation'.
+    static ntsa::Error translateError(bsl::size_t error, 
+                                      const char* operation);
 
   public:
     /// Create a new mechanism to inflate and deflate data according to the
@@ -361,7 +435,7 @@ class Zlib : public ntci::Compression
     /// Destroy the deflater. Return the error.
     ntsa::Error inflateDestroy();
 
-    /// Allocate the specify 'number' of elements of the specified 'size' in
+    /// Allocate the specified 'number' of elements of the specified 'size' in
     /// bytes. The specified 'opaque' field points to the allocator object.
     static void* allocate(void*        opaque,
                           unsigned int number,
@@ -520,7 +594,7 @@ class Gzip : public ntci::Compression
     /// Destroy the deflater. Return the error.
     ntsa::Error inflateDestroy();
 
-    /// Allocate the specify 'number' of elements of the specified 'size' in
+    /// Allocate the specified 'number' of elements of the specified 'size' in
     /// bytes. The specified 'opaque' field points to the allocator object.
     static void* allocate(void*        opaque,
                           unsigned int number,
@@ -758,8 +832,6 @@ ntsa::Error Lz4::deflateEnd(ntca::DeflateContext*       context,
     context->setBytesRead(context->bytesRead() + numBytesRead);
     context->setBytesWritten(context->bytesWritten() + numBytesWritten);
 
-    NTCI_LOG_DEBUG("Deflated frame");
-
     return ntsa::Error();
 }
 
@@ -843,7 +915,6 @@ ntsa::Error Lz4::inflateEnd(ntca::InflateContext*       context,
                             bdlbb::Blob*                result,
                             const ntca::InflateOptions& options)
 {
-    NTCCFG_WARNING_UNUSED(context);
     NTCCFG_WARNING_UNUSED(result);
     NTCCFG_WARNING_UNUSED(options);
 
@@ -861,6 +932,7 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
 , d_inflaterContext_p(0)
 , d_inflaterBuffer()
 , d_inflaterBufferSize(0)
+, d_level(0)
 , d_dataPool_sp(dataPool)
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -907,7 +979,7 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
     else {
         d_preferences.frameInfo.blockChecksumFlag = LZ4F_noBlockChecksum;
     }
-    d_preferences.compressionLevel = 0;  // MRM
+    d_preferences.compressionLevel = d_level;
     d_preferences.autoFlush        = 0;
     d_preferences.favorDecSpeed    = 0;
 
@@ -954,16 +1026,107 @@ ntca::CompressionType::Value Lz4::type() const
 
 #if NTC_BUILD_WITH_ZSTD
 
+#define NTCTLC_PLUGIN_ZSTD_VERSION_MAKE(major, minor, patch) \
+    (((major) * 100 * 100) + ((minor) * 100) + (patch))
+
+#define NTCTLC_PLUGIN_ZSTD_VERSION_NUMBER ZSTD_VERSION_NUMBER
+
+ntsa::Error Zstd::deflateCreate()
+{
+    bsl::size_t rc = 0;
+
+    const int minLevel = ZSTD_minCLevel();
+    const int maxLevel = ZSTD_maxCLevel();
+
+    const int defaultLevel = ZSTD_defaultCLevel();
+
+    if (d_config.goal().has_value()) {
+        switch (d_config.goal().value()) {
+        case ntca::CompressionGoal::e_BEST_SIZE:
+            d_level = maxLevel;
+            break;
+        case ntca::CompressionGoal::e_BETTER_SIZE:
+            d_level = defaultLevel + bsl::abs((maxLevel - defaultLevel) / 2);
+            break;
+        case ntca::CompressionGoal::e_BALANCED:
+            d_level = defaultLevel;
+            break;
+        case ntca::CompressionGoal::e_BETTER_SPEED:
+            d_level = defaultLevel - bsl::abs((defaultLevel - minLevel) / 2);
+            break;
+        case ntca::CompressionGoal::e_BEST_SPEED:
+            d_level = minLevel;
+            break;
+        default:
+            break;
+        }
+    }
+
+#if defined(ZSTD_STATIC_LINKING_ONLY)
+
+    ZSTD_customMem memoryManager;
+    bsl::memset(&memoryManager, 0, sizeof memoryManager);
+
+    memoryManager.customAlloc = &Zstd::allocate;
+    memoryManager.customFree  = &Zstd::free;
+    memoryManager.opaque      = d_allocator_p;
+
+    d_deflaterContext_p = ZSTD_createCCtx_advanced(memoryManager);
+    if (d_deflaterContext_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+#else
+
+    d_deflaterContext_p = ZSTD_createCCtx();
+    if (d_deflaterContext_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+#endif
+
+    rc = ZSTD_CCtx_setParameter(d_deflaterContext_p, 
+                                ZSTD_c_compressionLevel, 
+                                d_level);
+    if (ZSTD_isError(rc)) {
+        return Zstd::translateError(rc, "set compression level");
+    }
+
+    rc = ZSTD_CCtx_setParameter(d_deflaterContext_p, ZSTD_c_checksumFlag, 1);
+    if (ZSTD_isError(rc)) {
+        return Zstd::translateError(rc, "set checksum flag");
+    }
+
+    bsl::memset(&d_deflaterInput, 0, sizeof d_deflaterInput);
+    bsl::memset(&d_deflaterOutput, 0, sizeof d_deflaterOutput);
+
+    return ntsa::Error();
+}
+
 ntsa::Error Zstd::deflateBegin(ntca::DeflateContext*       context,
                                bdlbb::Blob*                result,
                                const ntca::DeflateOptions& options)
 {
+    ntsa::Error error;
+
     NTCCFG_WARNING_UNUSED(context);
     NTCCFG_WARNING_UNUSED(result);
     NTCCFG_WARNING_UNUSED(options);
 
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    d_deflaterInput.src  = 0;
+    d_deflaterInput.size = 0;
+    d_deflaterInput.pos  = 0;
+
+    d_deflaterOutput.dst  = 0;
+    d_deflaterOutput.size = 0;
+    d_deflaterOutput.pos  = 0;
+
+    error = this->deflateReset();
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error Zstd::deflateNext(ntca::DeflateContext*       context,
@@ -972,26 +1135,215 @@ ntsa::Error Zstd::deflateNext(ntca::DeflateContext*       context,
                               bsl::size_t                 size,
                               const ntca::DeflateOptions& options)
 {
-    NTCCFG_WARNING_UNUSED(context);
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_WARNING_UNUSED(data);
-    NTCCFG_WARNING_UNUSED(size);
     NTCCFG_WARNING_UNUSED(options);
 
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    bsl::size_t rc = 0;
+
+    bsl::size_t totalBytesWritten = 0;
+    bsl::size_t totalBytesRead    = 0;
+
+    d_deflaterInput.src  = data;
+    d_deflaterInput.size = size;
+    d_deflaterInput.pos  = 0;
+
+    while (d_deflaterInput.pos != d_deflaterInput.size) {
+        if (d_deflaterOutput.pos == d_deflaterOutput.size) {
+            this->deflateOverflow(result);
+        }
+
+        bsl::size_t numBytesRead    = 0;
+        bsl::size_t numBytesWritten = 0;
+
+        rc = this->deflateCycle(&numBytesRead, 
+                                &numBytesWritten, 
+                                ZSTD_e_continue);
+
+        totalBytesRead    += numBytesRead;
+        totalBytesWritten += numBytesWritten;
+
+        if (ZSTD_isError(rc)) {
+            return this->translateError(rc, "deflate");
+        }
+    }
+
+    context->setBytesRead(context->bytesRead() + totalBytesRead);
+    context->setBytesWritten(context->bytesWritten() + totalBytesWritten);
+
+    return ntsa::Error();
 }
 
 ntsa::Error Zstd::deflateEnd(ntca::DeflateContext*       context,
                              bdlbb::Blob*                result,
                              const ntca::DeflateOptions& options)
 {
-    NTCCFG_WARNING_UNUSED(context);
-    NTCCFG_WARNING_UNUSED(result);
     NTCCFG_WARNING_UNUSED(options);
 
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    bsl::size_t rc = 0;
+
+    bsl::size_t totalBytesWritten = 0;
+    bsl::size_t totalBytesRead    = 0;
+
+    while (true) {
+        if (d_deflaterOutput.pos == d_deflaterOutput.size) {
+            this->deflateOverflow(result);
+        }
+
+        bsl::size_t numBytesRead    = 0;
+        bsl::size_t numBytesWritten = 0;
+
+        rc = this->deflateCycle(&numBytesRead, &numBytesWritten, ZSTD_e_end);
+
+        totalBytesRead    += numBytesRead;
+        totalBytesWritten += numBytesWritten;
+
+        if (rc > 0) {
+            continue;
+        }
+        else if (rc == 0) {
+            if (d_deflaterBufferSize != 0) {
+                this->deflateCommit(result);
+            }
+            break;
+        }
+        else {
+            return this->translateError(rc, "deflate");
+        }
+    }
+
+    context->setCompressionType(ntca::CompressionType::e_ZSTD);
+    context->setBytesRead(context->bytesRead() + totalBytesRead);
+    context->setBytesWritten(context->bytesWritten() + totalBytesWritten);
+
+    return ntsa::Error();
+}
+
+NTCCFG_INLINE
+void Zstd::deflateOverflow(bdlbb::Blob* result)
+{
+    if (d_deflaterBufferSize != 0) {
+        this->deflateCommit(result);
+    }
+
+    d_deflaterBuffer.reset();
+    d_deflaterBufferSize = 0;
+
+    d_dataPool_sp->createOutgoingBlobBuffer(&d_deflaterBuffer);
+
+    d_deflaterOutput.dst  = d_deflaterBuffer.data();
+    d_deflaterOutput.size = d_deflaterBuffer.size();
+    d_deflaterOutput.pos  = 0;
+}
+
+NTCCFG_INLINE
+void Zstd::deflateCommit(bdlbb::Blob* result)
+{
+    if (d_deflaterBufferSize != 0) {
+        d_deflaterBuffer.setSize(static_cast<int>(d_deflaterBufferSize));
+
+        BSLS_ASSERT(d_deflaterBuffer.buffer().get() != 0);
+        BSLS_ASSERT(d_deflaterBuffer.size() > 0);
+
+        result->appendDataBuffer(d_deflaterBuffer);
+
+        d_deflaterBuffer.reset();
+        d_deflaterBufferSize = 0;
+
+        d_deflaterOutput.dst  = 0;
+        d_deflaterOutput.size = 0;
+        d_deflaterOutput.pos  = 0;
+    }
+}
+
+NTCCFG_INLINE
+bsl::size_t Zstd::deflateCycle(bsl::size_t*      numBytesRead,
+                               bsl::size_t*      numBytesWritten,
+                               ZSTD_EndDirective mode)
+{
+    bsl::size_t rc = 0;
+
+    *numBytesRead    = 0;
+    *numBytesWritten = 0;
+
+    bsl::size_t posIn0  = d_deflaterInput.pos;
+    bsl::size_t posOut0 = d_deflaterOutput.pos;
+
+    rc = ZSTD_compressStream2(d_deflaterContext_p, 
+                              &d_deflaterOutput, 
+                              &d_deflaterInput,
+                              mode);
+
+    bsl::size_t posIn1  = d_deflaterInput.pos;
+    bsl::size_t posOut1 = d_deflaterOutput.pos;
+
+    BSLS_ASSERT(posIn1 >= posIn0);
+    BSLS_ASSERT(posOut1 >= posOut0);
+
+    bsl::size_t posInDiff  = static_cast<bsl::size_t>(posIn1 - posIn0);
+    bsl::size_t posOutDiff = static_cast<bsl::size_t>(posOut1 - posOut0);
+
+    *numBytesRead    = posInDiff;
+    *numBytesWritten = posOutDiff;
+
+    d_deflaterBufferSize += posOutDiff;
+
+    return rc;
+}
+
+ntsa::Error Zstd::deflateReset()
+{
+    bsl::size_t rc = 0;
+
+    rc = ZSTD_CCtx_reset(d_deflaterContext_p, ZSTD_reset_session_only);
+    if (ZSTD_isError(rc)) {
+        return Zstd::translateError(rc, "reset defflater");
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error Zstd::deflateDestroy()
+{
+    bsl::size_t rc = 0;
+    
+    rc = ZSTD_freeCCtx(d_deflaterContext_p);
+    if (ZSTD_isError(rc)) {
+        Zstd::translateError(rc, "destroy deflater");
+    }
+
+    d_deflaterContext_p = 0;
+
+    return ntsa::Error();
+}
+
+ntsa::Error Zstd::inflateCreate()
+{
+#if defined(ZSTD_STATIC_LINKING_ONLY)
+
+    ZSTD_customMem memoryManager;
+    bsl::memset(&memoryManager, 0, sizeof memoryManager);
+
+    memoryManager.customAlloc = &Zstd::allocate;
+    memoryManager.customFree  = &Zstd::free;
+    memoryManager.opaque      = d_allocator_p;
+
+    d_inflaterContext_p = ZSTD_createDCtx_advanced(memoryManager);
+    if (d_inflaterContext_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+#else
+
+    d_inflaterContext_p = ZSTD_createDCtx();
+    if (d_inflaterContext_p == 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+#endif
+
+    bsl::memset(&d_inflaterInput, 0, sizeof d_inflaterInput);
+    bsl::memset(&d_inflaterOutput, 0, sizeof d_inflaterOutput);
+
+    return ntsa::Error();
 }
 
 ntsa::Error Zstd::inflateBegin(ntca::InflateContext*       context,
@@ -1002,8 +1354,7 @@ ntsa::Error Zstd::inflateBegin(ntca::InflateContext*       context,
     NTCCFG_WARNING_UNUSED(result);
     NTCCFG_WARNING_UNUSED(options);
 
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    return ntsa::Error();
 }
 
 ntsa::Error Zstd::inflateNext(ntca::InflateContext*       context,
@@ -1012,39 +1363,262 @@ ntsa::Error Zstd::inflateNext(ntca::InflateContext*       context,
                               bsl::size_t                 size,
                               const ntca::InflateOptions& options)
 {
-    NTCCFG_WARNING_UNUSED(context);
-    NTCCFG_WARNING_UNUSED(result);
-    NTCCFG_WARNING_UNUSED(data);
-    NTCCFG_WARNING_UNUSED(size);
     NTCCFG_WARNING_UNUSED(options);
 
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    ntsa::Error error;
+    bsl::size_t rc = 0;
+
+    bsl::size_t totalBytesWritten = 0;
+    bsl::size_t totalBytesRead    = 0;
+
+    d_inflaterInput.src  = data;
+    d_inflaterInput.size = size;
+    d_inflaterInput.pos  = 0;
+
+    while (d_inflaterInput.pos != d_inflaterInput.size) {
+        if (d_inflaterOutput.pos == d_inflaterOutput.size) {
+            this->inflateOverflow(result);
+        }
+
+        bsl::size_t numBytesRead    = 0;
+        bsl::size_t numBytesWritten = 0;
+
+        rc = this->inflateCycle(&numBytesRead, &numBytesWritten);
+
+        totalBytesRead    += numBytesRead;
+        totalBytesWritten += numBytesWritten;
+
+        if (rc > 0) {
+            continue;
+        }
+        else if (rc == 0) {
+            if (d_inflaterBufferSize != 0) {
+                this->inflateCommit(result);
+            }
+
+            error = this->inflateReset();
+            if (error) {
+                return error;
+            }
+
+            continue;
+        }
+        else {
+            return this->translateError(rc, "inflate");
+        }
+    }
+
+    d_inflaterInput.src  = 0;
+    d_inflaterInput.size = 0;
+    d_inflaterInput.pos  = 0;
+
+    context->setBytesRead(context->bytesRead() + totalBytesRead);
+    context->setBytesWritten(context->bytesWritten() + totalBytesWritten);
+
+    return ntsa::Error();
 }
 
 ntsa::Error Zstd::inflateEnd(ntca::InflateContext*       context,
                              bdlbb::Blob*                result,
                              const ntca::InflateOptions& options)
 {
-    NTCCFG_WARNING_UNUSED(context);
     NTCCFG_WARNING_UNUSED(result);
     NTCCFG_WARNING_UNUSED(options);
 
-    NTCCFG_NOT_IMPLEMENTED();
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+    context->setCompressionType(ntca::CompressionType::e_ZSTD);
+
+    return ntsa::Error();
+}
+
+NTCCFG_INLINE
+void Zstd::inflateOverflow(bdlbb::Blob* result)
+{
+    if (d_inflaterBufferSize != 0) {
+        this->inflateCommit(result);
+    }
+
+    d_inflaterBuffer.reset();
+    d_inflaterBufferSize = 0;
+
+    d_dataPool_sp->createIncomingBlobBuffer(&d_inflaterBuffer);
+
+    d_inflaterOutput.dst  = d_inflaterBuffer.data();
+    d_inflaterOutput.size = d_inflaterBuffer.size();
+    d_inflaterOutput.pos  = 0;
+}
+
+NTCCFG_INLINE
+void Zstd::inflateCommit(bdlbb::Blob* result)
+{
+    if (d_inflaterBufferSize != 0) {
+        d_inflaterBuffer.setSize(static_cast<int>(d_inflaterBufferSize));
+
+        BSLS_ASSERT(d_inflaterBuffer.buffer().get() != 0);
+        BSLS_ASSERT(d_inflaterBuffer.size() > 0);
+
+        result->appendDataBuffer(d_inflaterBuffer);
+
+        d_inflaterBuffer.reset();
+        d_inflaterBufferSize = 0;
+
+        d_inflaterOutput.dst  = 0;
+        d_inflaterOutput.size = 0;
+        d_inflaterOutput.pos  = 0;
+    }
+}
+
+NTCCFG_INLINE
+bsl::size_t Zstd::inflateCycle(bsl::size_t* numBytesRead,
+                               bsl::size_t* numBytesWritten)
+{
+    bsl::size_t rc = 0;
+
+    *numBytesRead    = 0;
+    *numBytesWritten = 0;
+
+    bsl::size_t posIn0  = d_inflaterInput.pos;
+    bsl::size_t posOut0 = d_inflaterOutput.pos;
+
+    rc = ZSTD_decompressStream(d_inflaterContext_p, 
+                               &d_inflaterOutput, 
+                               &d_inflaterInput);
+
+    bsl::size_t posIn1  = d_inflaterInput.pos;
+    bsl::size_t posOut1 = d_inflaterOutput.pos;
+
+    BSLS_ASSERT(posIn1 >= posIn0);
+    BSLS_ASSERT(posOut1 >= posOut0);
+
+    bsl::size_t posInDiff  = static_cast<bsl::size_t>(posIn1 - posIn0);
+    bsl::size_t posOutDiff = static_cast<bsl::size_t>(posOut1 - posOut0);
+
+    *numBytesRead    = posInDiff;
+    *numBytesWritten = posOutDiff;
+
+    d_inflaterBufferSize += posOutDiff;
+
+    return rc;
+}
+
+ntsa::Error Zstd::inflateReset()
+{
+    bsl::size_t rc = 0;
+
+    rc = ZSTD_DCtx_reset(d_inflaterContext_p, ZSTD_reset_session_only);
+    if (ZSTD_isError(rc)) {
+        return Zstd::translateError(rc, "reset inflater");
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error Zstd::inflateDestroy()
+{
+    bsl::size_t rc = 0;
+    
+    rc = ZSTD_freeDCtx(d_inflaterContext_p);
+    if (ZSTD_isError(rc)) {
+        Zstd::translateError(rc, "destroy inflater");
+    }
+
+    d_inflaterContext_p = 0;
+
+    return ntsa::Error();
+}
+
+const char* Zstd::describeError(bsl::size_t error)
+{
+    return ZSTD_getErrorName(error);
+}
+
+void* Zstd::allocate(void* opaque, bsl::size_t size)
+{
+    bslma::Allocator* allocator = reinterpret_cast<bslma::Allocator*>(opaque);
+
+    return allocator->allocate(size);
+}
+
+void Zstd::free(void* opaque, void* address)
+{
+    bslma::Allocator* allocator = reinterpret_cast<bslma::Allocator*>(opaque);
+
+    allocator->deallocate(address);
+}
+
+ntsa::Error Zstd::translateError(bsl::size_t error, const char* operation)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error result;
+
+    if (ZSTD_isError(error)) {
+        ZSTD_ErrorCode errorCode = ZSTD_getErrorCode(error);
+        if (errorCode == ZSTD_error_dstBuffer_null ||
+            errorCode == ZSTD_error_dstSize_tooSmall ||
+            errorCode == ZSTD_error_noForwardProgress_destFull ||
+            errorCode == ZSTD_error_noForwardProgress_inputEmpty) 
+        {
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
+        else {
+            result = ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+    else {
+        return ntsa::Error();
+    }
+
+    const char* errorDescription = Zstd::describeError(error);
+
+    if (result) {
+        NTCI_LOG_STREAM_WARN << "Failed to " << operation << ": "
+                             << errorDescription << " (rc = " << error << ")"
+                             << NTCI_LOG_STREAM_END;
+    }
+
+    return result;
 }
 
 Zstd::Zstd(const ntca::CompressionConfig&         configuration,
            const bsl::shared_ptr<ntci::DataPool>& dataPool,
            bslma::Allocator*                      basicAllocator)
-: d_dataPool_sp(dataPool)
+: d_deflaterContext_p(0)
+, d_deflaterBuffer()
+, d_deflaterBufferSize(0)
+, d_inflaterContext_p(0)
+, d_inflaterBuffer()
+, d_inflaterBufferSize(0)
+, d_level(ZSTD_defaultCLevel())
+, d_dataPool_sp(dataPool)
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
+    ntsa::Error error;
+
+    BSLS_ASSERT_OPT(d_config.type().isNull() ||
+                    d_config.type().value() == ntca::CompressionType::e_ZSTD);
+
+    error = this->deflateCreate();
+    BSLS_ASSERT_OPT(!error);
+
+    error = this->inflateCreate();
+    BSLS_ASSERT_OPT(!error);
+
+    error = this->inflateReset();
+    BSLS_ASSERT_OPT(!error);
 }
 
 Zstd::~Zstd()
 {
+    ntsa::Error error;
+
+    error = this->inflateDestroy();
+    BSLS_ASSERT_OPT(!error);
+
+    error = this->deflateDestroy();
+    BSLS_ASSERT_OPT(!error);
+
+    d_dataPool_sp.reset();
 }
 
 ntca::CompressionType::Value Zstd::type() const
