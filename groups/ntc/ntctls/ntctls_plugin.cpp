@@ -6407,12 +6407,12 @@ bool Certificate::isAuthority() const
 }
 
 bool Certificate::isSelfSigned() const
-{    
+{
     if (X509_check_purpose(d_x509.get(), -1, 0) != 1) {
         return false;
     }
 
-    const bsl::uint32_t extension_flags = 
+    const bsl::uint32_t extension_flags =
         X509_get_extension_flags(d_x509.get());
 
     if ((extension_flags & EXFLAG_SS) != 0) {
@@ -8243,6 +8243,7 @@ ntsa::Error Session::process(LockGuard* lock)
 
         OSSL_HANDSHAKE_STATE state = SSL_get_state(d_ssl_p);
         BSLS_ASSERT(state == TLS_ST_OK);
+        NTCCFG_WARNING_UNUSED(state);
 
         X509* sourceX509 = SSL_get_certificate(d_ssl_p);
         if (sourceX509) {
@@ -8570,7 +8571,7 @@ ntsa::Error Session::authenticate(X509_STORE_CTX* x509StoreCtx, X509* x509)
             "Failed to verify certificate: invalid certificate");
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-    
+
     const bdlb::NullableValue<ntca::EncryptionValidation>& validation =
         d_upgradeOptions.validation().has_value()
             ? d_upgradeOptions.validation()
@@ -8584,7 +8585,7 @@ ntsa::Error Session::authenticate(X509_STORE_CTX* x509StoreCtx, X509* x509)
 
             bsl::vector<ntca::EncryptionCertificate> certificateVector;
             {
-                STACK_OF(X509)* chain = 
+                STACK_OF(X509)* chain =
                     X509_STORE_CTX_get1_chain(x509StoreCtx);
                 if (chain != 0) {
                     const int chainSize = sk_X509_num(chain);
@@ -8610,19 +8611,19 @@ ntsa::Error Session::authenticate(X509_STORE_CTX* x509StoreCtx, X509* x509)
                                                 X509_dup(x509),
                                                 d_allocator_p);
 
-                
+
                 certificate = nativeCertificate->record();
             }
 
             // for (bsl::size_t i = 0; i < certificateVector.size(); ++i) {
-            //     NTCI_LOG_STREAM_DEBUG << "Certificate chain [" 
-            //                           << i 
-            //                           << "] = " 
-            //                           << certificateVector[i] 
+            //     NTCI_LOG_STREAM_DEBUG << "Certificate chain ["
+            //                           << i
+            //                           << "] = "
+            //                           << certificateVector[i]
             //                           << NTCI_LOG_STREAM_END;
             // }
 
-            const ntca::EncryptionCertificateValidator& validator = 
+            const ntca::EncryptionCertificateValidator& validator =
                 validation.value().callback().value();
 
             const bool isValid = validator(certificate);
