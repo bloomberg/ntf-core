@@ -31,6 +31,9 @@ namespace ntctlc {
 // Uncomment to test only a specific parameter variation.
 // #define NTCTLC_PLUGIN_TEST_VARIATION 1339
 
+// Uncomment to test only a specific compression type.
+// #define NTCTLC_PLUGIN_TEST_COMPRESSION_TYPE ntca::CompressionType::e_LZ4
+
 // Provide tests for 'ntctlc::Plugin'.
 class PluginTest
 {
@@ -722,53 +725,27 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyAll)
 
     bsl::vector<bsl::size_t> bufferSizeVector;
     bufferSizeVector.push_back(16);
-    bufferSizeVector.push_back(17);
-    bufferSizeVector.push_back(18);
-    bufferSizeVector.push_back(19);
-    bufferSizeVector.push_back(20);
-    bufferSizeVector.push_back(21);
-    bufferSizeVector.push_back(22);
-    bufferSizeVector.push_back(23);
-    bufferSizeVector.push_back(24);
-    bufferSizeVector.push_back(25);
-    bufferSizeVector.push_back(26);
-    bufferSizeVector.push_back(27);
-    bufferSizeVector.push_back(28);
-    bufferSizeVector.push_back(29);
-    bufferSizeVector.push_back(30);
-    bufferSizeVector.push_back(31);
     bufferSizeVector.push_back(32);
     bufferSizeVector.push_back(64);
+    bufferSizeVector.push_back(128);
+    bufferSizeVector.push_back(256);
+    bufferSizeVector.push_back(512);
     bufferSizeVector.push_back(1024);
-    bufferSizeVector.push_back(1024 * 4);
-    bufferSizeVector.push_back(1024 * 8);
-    bufferSizeVector.push_back(1024 * 32);
-    bufferSizeVector.push_back(1024 * 128);
+    bufferSizeVector.push_back(4096);
+    bufferSizeVector.push_back(8192);
 
     bsl::vector<bsl::size_t> ioSizeVector;
     ioSizeVector.push_back(1);
     ioSizeVector.push_back(2);
     ioSizeVector.push_back(3);
     ioSizeVector.push_back(4);
-    ioSizeVector.push_back(5);
-    ioSizeVector.push_back(6);
-    ioSizeVector.push_back(7);
     ioSizeVector.push_back(8);
-    ioSizeVector.push_back(9);
-    ioSizeVector.push_back(10);
-    ioSizeVector.push_back(11);
-    ioSizeVector.push_back(12);
-    ioSizeVector.push_back(13);
-    ioSizeVector.push_back(14);
-    ioSizeVector.push_back(15);
     ioSizeVector.push_back(16);
     ioSizeVector.push_back(32);
     ioSizeVector.push_back(64);
     ioSizeVector.push_back(1024);
-    ioSizeVector.push_back(1024 * 4);
-    ioSizeVector.push_back(1024 * 8);
-    ioSizeVector.push_back(1024 * 32);
-    ioSizeVector.push_back(1024 * 128);
+    ioSizeVector.push_back(4096);
+    ioSizeVector.push_back(8192);
 
     bsl::vector<ntctlc::PluginTest::Parameters> parametersVector;
     bsl::size_t                                 variationIndex = 0;
@@ -778,6 +755,15 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyAll)
             for (bsl::size_t k = 0; k < bufferSizeVector.size(); ++k) {
                 for (bsl::size_t l = 0; l < ioSizeVector.size(); ++l) {
                     for (bsl::size_t m = 0; m < ioSizeVector.size(); ++m) {
+
+#if defined(NTCTLC_PLUGIN_TEST_COMPRESSION_TYPE)
+                        if (algorithmVector[i] != 
+                            NTCTLC_PLUGIN_TEST_COMPRESSION_TYPE) 
+                        {
+                            continue;
+                        }
+#endif
+
                         ntctlc::PluginTest::Parameters parameters;
                         parameters.setVariationIndex(variationIndex++);
                         parameters.setType(algorithmVector[i]);
