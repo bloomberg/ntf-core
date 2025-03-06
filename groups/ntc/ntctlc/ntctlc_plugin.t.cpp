@@ -32,7 +32,7 @@ namespace ntctlc {
 // #define NTCTLC_PLUGIN_TEST_VARIATION 1339
 
 // Uncomment to test only a specific compression type.
-// #define NTCTLC_PLUGIN_TEST_COMPRESSION_TYPE ntca::CompressionType::e_LZ4
+#define NTCTLC_PLUGIN_TEST_COMPRESSION_TYPE ntca::CompressionType::e_LZ4
 
 // Provide tests for 'ntctlc::Plugin'.
 class PluginTest

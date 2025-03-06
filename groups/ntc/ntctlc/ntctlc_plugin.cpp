@@ -52,7 +52,6 @@ BSLS_IDENT_RCSID(ntctlc_plugin_cpp, "$Id$ $CSID$")
 #include <zlib.h>
 #endif
 
-
 // Uncomment and set to 1 to log the hex dump of all deflated and inflated 
 // data.
 #define NTCTLC_PLUGIN_LOG_HEX_DUMP 0
@@ -136,6 +135,8 @@ class Lz4 : public ntci::Compression
     LZ4F_cctx*                      d_deflaterContext_p;
     bdlbb::BlobBuffer               d_deflaterBuffer;
     bsl::size_t                     d_deflaterBufferSize;
+    bsl::uint8_t*                   d_deflaterArena;
+    bsl::size_t                     d_deflaterArenaCapacity;
     LZ4F_compressOptions_t          d_deflaterOptions;
     LZ4F_dctx*                      d_inflaterContext_p;
     bdlbb::BlobBuffer               d_inflaterBuffer;
@@ -974,6 +975,8 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
     bsl::size_t totalBytesRead = 0;
     bsl::size_t totalBytesWritten = 0;
 
+    bool permitSlowPath = false;
+
     while (source < sourceEnd) {
         void* destination = d_deflaterBuffer.data() + d_deflaterBufferSize;
 
@@ -987,10 +990,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
 
         bsl::size_t sourceSize = static_cast<bsl::size_t>(sourceEnd - source);
         if (sourceSize + k_OVERHEAD > destinationCapacity) {
-            const bsl::size_t sourceSizeAdjustment = 
-                (sourceSize + k_OVERHEAD) - destinationCapacity;
-
-            if (sourceSizeAdjustment >= sourceSize) {
+            if (destinationCapacity <= k_OVERHEAD) {
                 // Slow path: We cannot reduce the amount we feed into the
                 // compressor enough to guarantee its worst-case deflated size
                 // is less than the available blob buffer capacity. Fall back
@@ -999,19 +999,56 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
 
                 this->deflateOverflow(result);
 
-                bsl::uint8_t arena[1024];
+                if (!permitSlowPath) {
+                    permitSlowPath = true;
+                    continue;
+                }
+
+                
+
+                if (d_deflaterArena == 0) {
+                    d_deflaterArenaCapacity = (1024 * 64) + k_OVERHEAD;
+                    d_deflaterArena = 
+                        reinterpret_cast<bsl::uint8_t*>(
+                            d_allocator_p->allocate(d_deflaterArenaCapacity));
+                }
+
+                if (sourceSize > d_deflaterArenaCapacity - k_OVERHEAD) {
+                    sourceSize = d_deflaterArenaCapacity - k_OVERHEAD;
+                }
+
+                NTCI_LOG_WARN("Deflating %d bytes in the slow path", 
+                              (int)(sourceSize));
 
                 errorCode = LZ4F_compressUpdate(d_deflaterContext_p,
-                    arena,
-                    sizeof arena,
+                    d_deflaterArena,
+                    d_deflaterArenaCapacity,
                     source,
                     sourceSize,
                     &d_deflaterOptions);
 
                 if (LZ4F_isError(errorCode)) {
-                    NTCI_LOG_ERROR("Failed to update compression frame: %s",
-                    LZ4F_getErrorName(errorCode));
-                    return ntsa::Error(ntsa::Error::e_INVALID);
+                    if (LZ4F_getErrorCode(errorCode) == 
+                        LZ4F_ERROR_dstMaxSize_tooSmall) 
+                    {
+                        const bsl::size_t destinationCapacityRequired = 
+                            LZ4F_compressBound(sourceSize, &d_preferences);
+                        NTCCFG_WARNING_UNUSED(destinationCapacityRequired);
+
+                        NTCI_LOG_ERROR(
+                            "Failed to update compression frame: "
+                            "destination capacity too small: "
+                            "expected at least %d, found %d",
+                            (int)(destinationCapacityRequired),
+                            (int)(d_deflaterArenaCapacity));
+                        return ntsa::Error(ntsa::Error::e_INVALID);
+                    }
+                    else {
+                        NTCI_LOG_ERROR(
+                            "Failed to update compression frame: %s",
+                            LZ4F_getErrorName(errorCode));
+                        return ntsa::Error(ntsa::Error::e_INVALID);
+                    }
                 }
 
                 const bsl::size_t numBytesRead    = sourceSize;
@@ -1021,9 +1058,11 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
                 BSLS_ASSERT_OPT(numBytesRead > 0);
                 BSLS_ASSERT_OPT(numBytesWritten > 0);
 
-                NTCTLC_PLUGIN_LOG_DEFLATED_CHAR_BUFFER(arena, numBytesWritten);
+                NTCTLC_PLUGIN_LOG_DEFLATED_CHAR_BUFFER(
+                    d_deflaterArena, numBytesWritten);
 
-                ntcs::BlobUtil::append(result, arena, numBytesWritten);
+                ntcs::BlobUtil::append(
+                    result, d_deflaterArena, numBytesWritten);
 
                 totalBytesRead += numBytesRead;
                 totalBytesWritten += numBytesWritten;
@@ -1032,7 +1071,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
                 continue;
             }
             else {
-                sourceSize -= sourceSizeAdjustment;
+                sourceSize = destinationCapacity - k_OVERHEAD;
             }
         }
 
@@ -1168,6 +1207,11 @@ ntsa::Error Lz4::deflateDestroy()
     d_deflaterContext_p = 0;
 
     d_deflaterBuffer.reset();
+
+    if (d_deflaterArena != 0) {
+        d_allocator_p->deleteObject(d_deflaterArena);
+        d_deflaterArena = 0;
+    }
 
     return ntsa::Error();
 }
@@ -1394,6 +1438,8 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
 : d_deflaterContext_p(0)
 , d_deflaterBuffer()
 , d_deflaterBufferSize(0)
+, d_deflaterArena(0)
+, d_deflaterArenaCapacity(0)
 , d_inflaterContext_p(0)
 , d_inflaterBuffer()
 , d_inflaterBufferSize(0)
