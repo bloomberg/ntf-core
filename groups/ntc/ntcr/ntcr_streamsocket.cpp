@@ -29,6 +29,7 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 #include <ntcs_blobutil.h>
 #include <ntcs_compat.h>
 #include <ntcs_dispatch.h>
+#include <ntcs_plugin.h>
 #include <ntcu_streamsocketsession.h>
 #include <ntcu_streamsocketutil.h>
 #include <ntsa_data.h>
@@ -3725,6 +3726,34 @@ ntsa::Error StreamSocket::privateOpen(
     error = ntcs::Compat::configure(streamSocket, d_options);
     if (error) {
         return error;
+    }
+
+    if (d_options.compressionConfig().has_value()) {
+        if (d_options.compressionConfig().value().type() != 
+            ntca::CompressionType::e_UNDEFINED &&
+            d_options.compressionConfig().value().type() != 
+            ntca::CompressionType::e_NONE)
+        {
+            bsl::shared_ptr<ntci::CompressionDriver> compressionDriver;
+            error = ntcs::Plugin::lookupCompressionDriver(
+                &compressionDriver);
+            if (error) {
+                return error;
+            }
+
+            bsl::shared_ptr<ntci::Compression> compression;
+            error = compressionDriver->createCompression(
+                &compression,
+                d_options.compressionConfig().value(),
+                d_dataPool_sp,
+                d_allocator_p);
+            if (error) {
+                return error;
+            }
+
+            d_sendDeflater_sp = compression;
+            d_receiveInflater_sp = compression;
+        }
     }
 
     error = streamSocket->setBlocking(false);

@@ -19,6 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_compressionconfig.h>
+#include <ntca_serializationconfig.h>
 #include <ntca_loadbalancingoptions.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
@@ -207,6 +209,15 @@ namespace ntca {
 /// The configurable parameters used select a reactor or proactor that drives
 /// the I/O for the socket.
 ///
+/// @li @b compressionConfig:
+/// The configurable parameters used to automatically apply compression to 
+/// all outgoing and incoming traffic. If not specified, no compression is 
+/// used.
+///
+/// @li @b serializationConfig:
+/// The configurable parameters of the serialization mechanism used by this
+/// socket.
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
@@ -248,16 +259,23 @@ class ListenerSocketOptions
     bdlb::NullableValue<bool>           d_timestampIncomingData;
     bdlb::NullableValue<bsl::size_t>    d_zeroCopyThreshold;
     ntca::LoadBalancingOptions          d_loadBalancingOptions;
+    bdlb::NullableValue<ntca::CompressionConfig> d_compressionConfig;
+    bdlb::NullableValue<ntca::SerializationConfig> d_serializationConfig;
 
     static const bool k_DEFAULT_REUSE_ADDRESS;
 
   public:
-    /// Create new listener socket options.
-    ListenerSocketOptions();
+    /// Create new listener socket options. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit ListenerSocketOptions(bslma::Allocator* basicAllocator = 0);
 
     /// Create new listener socket options having the same value as the
-    /// specified 'other' object.
-    ListenerSocketOptions(const ListenerSocketOptions& other);
+    /// specified 'other' object. Optionally specify a 'basicAllocator' used to
+    /// supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
+    ListenerSocketOptions(const ListenerSocketOptions& other,
+                          bslma::Allocator*            basicAllocator = 0);
 
     /// Destroy this object.
     ~ListenerSocketOptions();
@@ -387,6 +405,12 @@ class ListenerSocketOptions
     /// Set the load balancing options to the specified 'value'.
     void setLoadBalancingOptions(const ntca::LoadBalancingOptions& value);
 
+    /// Set the compression configuration to the specified 'value'.
+    void setCompressionConfig(const ntca::CompressionConfig& value);
+
+    /// Set the serialization configuration to the specified 'value'.
+    void setSerializationConfig(const ntca::SerializationConfig& value);
+
     /// Return the transport.
     ntsa::Transport::Value transport() const;
 
@@ -501,6 +525,14 @@ class ListenerSocketOptions
 
     /// Return the load balancing options.
     const ntca::LoadBalancingOptions& loadBalancingOptions() const;
+
+    /// Return the compression configuration.
+    const bdlb::NullableValue<ntca::CompressionConfig>& 
+    compressionConfig() const;
+
+    /// Return the serialization configuration.
+    const bdlb::NullableValue<ntca::SerializationConfig>& 
+    serializationConfig() const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to

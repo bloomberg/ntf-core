@@ -333,6 +333,14 @@ void Compat::convert(ntca::StreamSocketOptions*         result,
     }
 
     result->setLoadBalancingOptions(options.loadBalancingOptions());
+
+    if (!options.compressionConfig().isNull()) {
+        result->setCompressionConfig(options.compressionConfig().value());
+    }
+
+    if (!options.serializationConfig().isNull()) {
+        result->setSerializationConfig(options.serializationConfig().value());
+    }
 }
 
 void Compat::convert(ntca::ListenerSocketOptions*     result,
@@ -463,6 +471,14 @@ void Compat::convert(ntca::ListenerSocketOptions*     result,
     }
 
     result->setLoadBalancingOptions(options.loadBalancingOptions());
+
+    if (!options.compressionConfig().isNull()) {
+        result->setCompressionConfig(options.compressionConfig().value());
+    }
+
+    if (!options.serializationConfig().isNull()) {
+        result->setSerializationConfig(options.serializationConfig().value());
+    }
 }
 
 void Compat::convert(ntca::DatagramSocketOptions*       result,
@@ -628,6 +644,19 @@ void Compat::convert(ntca::DatagramSocketOptions*       result,
     if (result->metrics().isNull()) {
         if (!config.socketMetricsPerHandle().isNull()) {
             result->setMetrics(config.socketMetricsPerHandle().value());
+        }
+    }
+
+    if (result->compressionConfig().isNull()) {
+        if (!config.compressionConfig().isNull()) {
+            result->setCompressionConfig(config.compressionConfig().value());
+        }
+    }
+
+    if (result->serializationConfig().isNull()) {
+        if (!config.serializationConfig().isNull()) {
+            result->setSerializationConfig(
+                config.serializationConfig().value());
         }
     }
 }
@@ -840,6 +869,19 @@ void Compat::convert(ntca::ListenerSocketOptions*       result,
             result->setMetrics(config.socketMetricsPerHandle().value());
         }
     }
+
+    if (result->compressionConfig().isNull()) {
+        if (!config.compressionConfig().isNull()) {
+            result->setCompressionConfig(config.compressionConfig().value());
+        }
+    }
+
+    if (result->serializationConfig().isNull()) {
+        if (!config.serializationConfig().isNull()) {
+            result->setSerializationConfig(
+                config.serializationConfig().value());
+        }
+    }
 }
 
 void Compat::convert(ntca::StreamSocketOptions*       result,
@@ -1022,6 +1064,19 @@ void Compat::convert(ntca::StreamSocketOptions*       result,
     if (result->metrics().isNull()) {
         if (!config.socketMetricsPerHandle().isNull()) {
             result->setMetrics(config.socketMetricsPerHandle().value());
+        }
+    }
+
+    if (result->compressionConfig().isNull()) {
+        if (!config.compressionConfig().isNull()) {
+            result->setCompressionConfig(config.compressionConfig().value());
+        }
+    }
+
+    if (result->serializationConfig().isNull()) {
+        if (!config.serializationConfig().isNull()) {
+            result->setSerializationConfig(
+                config.serializationConfig().value());
         }
     }
 }

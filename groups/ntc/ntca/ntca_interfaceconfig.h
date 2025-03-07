@@ -19,6 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_compressionconfig.h>
+#include <ntca_serializationconfig.h>
 #include <ntca_resolverconfig.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
@@ -296,6 +298,15 @@ namespace ntca {
 /// indicating that when an asynchronous resolver is enabled it is configured
 /// with the default configuration.
 ///
+/// @li @b compressionConfig:
+/// The configurable parameters used to automatically apply compression to 
+/// all outgoing and incoming traffic. If not specified, no compression is 
+/// used.
+///
+/// @li @b serializationConfig:
+/// The configurable parameters of the serialization mechanism used by this
+/// socket.
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
@@ -367,6 +378,9 @@ class InterfaceConfig
 
     bdlb::NullableValue<bool>                 d_resolverEnabled;
     bdlb::NullableValue<ntca::ResolverConfig> d_resolverConfig;
+
+    bdlb::NullableValue<ntca::CompressionConfig> d_compressionConfig;
+    bdlb::NullableValue<ntca::SerializationConfig> d_serializationConfig;
 
   public:
     /// Create a new thread configuration having a default value. Optionally
@@ -580,6 +594,12 @@ class InterfaceConfig
     /// configuration.
     void setResolverConfig(const ntca::ResolverConfig& value);
 
+    /// Set the compression configuration to the specified 'value'.
+    void setCompressionConfig(const ntca::CompressionConfig& value);
+
+    /// Set the serialization configuration to the specified 'value'.
+    void setSerializationConfig(const ntca::SerializationConfig& value);
+
     /// Set the name of the driver used to implement the interface to the
     /// specified 'driverName'.
     const bsl::string& driverName() const;
@@ -766,6 +786,14 @@ class InterfaceConfig
     /// null, indicating that when an asynchronous resolver is enabled it is
     /// configured with the default configuration.
     const bdlb::NullableValue<ntca::ResolverConfig>& resolverConfig() const;
+
+    /// Return the compression configuration.
+    const bdlb::NullableValue<ntca::CompressionConfig>& 
+    compressionConfig() const;
+
+    /// Return the serialization configuration.
+    const bdlb::NullableValue<ntca::SerializationConfig>& 
+    serializationConfig() const;
 
     /// Format this object to the specified output 'stream' at the
     /// optionally specified indentation 'level' and return a reference to
