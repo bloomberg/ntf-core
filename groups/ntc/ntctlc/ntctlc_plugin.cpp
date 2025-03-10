@@ -822,34 +822,30 @@ ntsa::Error Lz4::deflateCreate()
     LZ4F_errorCode_t errorCode = 0;
     NTCCFG_WARNING_UNUSED(errorCode);
 
-    const int minLevel = 0;
-    const int maxLevel = LZ4F_compressionLevel_max();
-
-    const int defaultLevel = 1;
-
     if (d_config.goal().has_value()) {
         switch (d_config.goal().value()) {
         case ntca::CompressionGoal::e_BEST_SIZE:
-            d_level = maxLevel;
+            d_level = 12;
             break;
         case ntca::CompressionGoal::e_BETTER_SIZE:
-            d_level = defaultLevel + bsl::abs((maxLevel - defaultLevel) / 2);
+            d_level = 8;
             break;
         case ntca::CompressionGoal::e_BALANCED:
-            d_level = defaultLevel;
+            d_level = 3;
             break;
         case ntca::CompressionGoal::e_BETTER_SPEED:
-            d_level = defaultLevel - bsl::abs((defaultLevel - minLevel) / 2);
+            d_level = 2;
             break;
         case ntca::CompressionGoal::e_BEST_SPEED:
-            d_level = minLevel;
+            d_level = 1;
             break;
         default:
             break;
         }
     }
 
-#if defined(LZ4F_STATIC_LINKING_ONLY)
+#if defined(LZ4F_STATIC_LINKING_ONLY) && \
+    NTCTLC_PLUGIN_LZ4_VERSION_NUMBER >= NTCTLC_PLUGIN_LZ4_VERSION_MAKE(1, 9, 4)
 
     LZ4F_CustomMem memoryManager;
     bsl::memset(&memoryManager, 0, sizeof memoryManager);
@@ -1224,7 +1220,8 @@ ntsa::Error Lz4::inflateCreate()
     LZ4F_errorCode_t errorCode = 0;
     NTCCFG_WARNING_UNUSED(errorCode);
 
-#if defined(LZ4F_STATIC_LINKING_ONLY)
+#if defined(LZ4F_STATIC_LINKING_ONLY)  && \
+    NTCTLC_PLUGIN_LZ4_VERSION_NUMBER >= NTCTLC_PLUGIN_LZ4_VERSION_MAKE(1, 9, 4)
 
     LZ4F_CustomMem memoryManager;
     bsl::memset(&memoryManager, 0, sizeof memoryManager);
@@ -1495,27 +1492,22 @@ ntsa::Error Zstd::deflateCreate()
 {
     bsl::size_t rc = 0;
 
-    const int minLevel = ZSTD_minCLevel();
-    const int maxLevel = ZSTD_maxCLevel();
-
-    const int defaultLevel = ZSTD_defaultCLevel();
-
     if (d_config.goal().has_value()) {
         switch (d_config.goal().value()) {
         case ntca::CompressionGoal::e_BEST_SIZE:
-            d_level = maxLevel;
+            d_level = 22;
             break;
         case ntca::CompressionGoal::e_BETTER_SIZE:
-            d_level = defaultLevel + bsl::abs((maxLevel - defaultLevel) / 2);
+            d_level = 11;
             break;
         case ntca::CompressionGoal::e_BALANCED:
-            d_level = defaultLevel;
+            d_level = 3;
             break;
         case ntca::CompressionGoal::e_BETTER_SPEED:
-            d_level = defaultLevel - bsl::abs((defaultLevel - minLevel) / 2);
+            d_level = 2;
             break;
         case ntca::CompressionGoal::e_BEST_SPEED:
-            d_level = minLevel;
+            d_level = 1;
             break;
         default:
             break;
@@ -2022,10 +2014,14 @@ ntsa::Error Zstd::translateError(bsl::size_t error, const char* operation)
 
     if (ZSTD_isError(error)) {
         ZSTD_ErrorCode errorCode = ZSTD_getErrorCode(error);
-        if (errorCode == ZSTD_error_dstBuffer_null ||
-            errorCode == ZSTD_error_dstSize_tooSmall ||
+        if ( 
+#if NTCTLC_PLUGIN_ZSTD_VERSION_NUMBER >= \
+    NTCTLC_PLUGIN_ZSTD_VERSION_MAKE(1, 5, 7)
             errorCode == ZSTD_error_noForwardProgress_destFull ||
-            errorCode == ZSTD_error_noForwardProgress_inputEmpty) 
+            errorCode == ZSTD_error_noForwardProgress_inputEmpty ||
+#endif
+            errorCode == ZSTD_error_dstBuffer_null ||
+            errorCode == ZSTD_error_dstSize_tooSmall) 
         {
             return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
         }
@@ -2057,7 +2053,7 @@ Zstd::Zstd(const ntca::CompressionConfig&         configuration,
 , d_inflaterContext_p(0)
 , d_inflaterBuffer()
 , d_inflaterBufferSize(0)
-, d_level(ZSTD_defaultCLevel())
+, d_level(0)
 , d_dataPool_sp(dataPool)
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
