@@ -963,7 +963,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
 
     LZ4F_errorCode_t errorCode = 0;
 
-    const bsl::size_t k_OVERHEAD = 16;
+    const bsl::size_t k_OVERHEAD = 64;
 
     const bsl::uint8_t* source = data;
     const bsl::uint8_t* sourceEnd = data + size;
@@ -999,8 +999,6 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
                     permitSlowPath = true;
                     continue;
                 }
-
-                
 
                 if (d_deflaterArena == 0) {
                     d_deflaterArenaCapacity = (1024 * 64) + k_OVERHEAD;
@@ -1084,8 +1082,11 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
             &d_deflaterOptions);
 
         if (LZ4F_isError(errorCode)) {
-            NTCI_LOG_ERROR("Failed to update compression frame: %s",
-            LZ4F_getErrorName(errorCode));
+            NTCI_LOG_ERROR("Failed to update compression frame: %s, sourceSize = %d, destinationCapacity = %d, destinationCapacityRequired = %d",
+            LZ4F_getErrorName(errorCode),
+            (int)(sourceSize),
+            (int)(destinationCapacity),
+            (int)(LZ4F_compressBound(sourceSize, &d_preferences)));
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
