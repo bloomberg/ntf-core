@@ -429,6 +429,7 @@ class StreamSocket : public ntci::StreamSocket,
                                const bdlbb::Blob&                   data,
                                const ntcq::SendState&               state,
                                const ntca::SendOptions&             options,
+                               const ntca::SendContext&             context,
                                const ntci::SendCallback&            callback);
 
     /// Send the specified raw or already encrypted 'data' according to the
@@ -439,6 +440,7 @@ class StreamSocket : public ntci::StreamSocket,
                                const ntsa::Data&                    data,
                                const ntcq::SendState&               state,
                                const ntca::SendOptions&             options,
+                               const ntca::SendContext&             context,
                                const ntci::SendCallback&            callback);
 
     /// Send the encryption of the specified 'data' according to the specified
@@ -449,6 +451,7 @@ class StreamSocket : public ntci::StreamSocket,
                                      const bdlbb::Blob&                   data,
                                      const ntcq::SendState&    state,
                                      const ntca::SendOptions&  options,
+                                     const ntca::SendContext&             context,
                                      const ntci::SendCallback& callback);
 
     /// Send the encryption of the specified 'data' according to the specified
@@ -459,6 +462,7 @@ class StreamSocket : public ntci::StreamSocket,
                                      const ntsa::Data&                    data,
                                      const ntcq::SendState&    state,
                                      const ntca::SendOptions&  options,
+                                     const ntca::SendContext&             context,
                                      const ntci::SendCallback& callback);
 
     /// Open the stream socket. Return the error.

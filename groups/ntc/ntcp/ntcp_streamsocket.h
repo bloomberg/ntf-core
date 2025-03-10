@@ -394,6 +394,7 @@ class StreamSocket : public ntci::StreamSocket,
     ntsa::Error privateSendRaw(const bsl::shared_ptr<StreamSocket>& self,
                                const bdlbb::Blob&                   data,
                                const ntca::SendOptions&             options,
+                               const ntca::SendContext&             context,
                                const ntci::SendCallback&            callback);
 
     /// Send the specified raw or already encrypted 'data' according to the
@@ -403,6 +404,7 @@ class StreamSocket : public ntci::StreamSocket,
     ntsa::Error privateSendRaw(const bsl::shared_ptr<StreamSocket>& self,
                                const ntsa::Data&                    data,
                                const ntca::SendOptions&             options,
+                               const ntca::SendContext&             context,
                                const ntci::SendCallback&            callback);
 
     /// Send the encryption of the specified 'data' according to the specified
@@ -413,6 +415,7 @@ class StreamSocket : public ntci::StreamSocket,
                                 const bsl::shared_ptr<StreamSocket>& self,
                                 const bdlbb::Blob&                   data,
                                 const ntca::SendOptions&             options,
+                                const ntca::SendContext&             context,
                                 const ntci::SendCallback&            callback);
 
     /// Send the encryption of the specified 'data' according to the specified
@@ -423,6 +426,7 @@ class StreamSocket : public ntci::StreamSocket,
                                 const bsl::shared_ptr<StreamSocket>& self,
                                 const ntsa::Data&                    data,
                                 const ntca::SendOptions&             options,
+                                const ntca::SendContext&             context,
                                 const ntci::SendCallback&            callback);
 
     /// Return true if the proactor socket has stream semantics, otherwise

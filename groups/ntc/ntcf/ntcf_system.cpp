@@ -309,6 +309,7 @@ ntsa::Error System::initialize()
         ntcs::MonitorableUtil::initialize();
         ntcs::Plugin::initialize();
         ntcs::Global::initialize();
+        ntctlc::Plugin::initialize();
 
         // We use a new delete allocator instead of the global allocator here
         // because we want prevent a visible "memory leak" if the global
@@ -1404,8 +1405,6 @@ ntsa::Error System::createCompression(
 
     error = ntcf::System::initialize();
     BSLS_ASSERT_OPT(!error);
-
-    ntctlc::Plugin::initialize();
 
     bsl::shared_ptr<ntci::CompressionDriver> compressionDriver;
     error = ntcs::Plugin::lookupCompressionDriver(&compressionDriver);

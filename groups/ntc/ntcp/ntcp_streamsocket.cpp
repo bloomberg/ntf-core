@@ -533,7 +533,11 @@ void StreamSocket::processSendDeadlineTimer(
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         ntci::SendCallback callback;
-        bool becameEmpty = d_sendQueue.removeEntryId(&callback, entryId);
+        ntca::SendContext  context;
+
+        bool becameEmpty = d_sendQueue.removeEntryId(&callback, 
+                                                     &context, 
+                                                     entryId);
         if (becameEmpty) {
             this->privateApplyFlowControl(self,
                                           ntca::FlowControlType::e_SEND,
@@ -543,12 +547,11 @@ void StreamSocket::processSendDeadlineTimer(
         }
 
         if (callback) {
-            ntca::SendContext sendContext;
-            sendContext.setError(ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+            context.setError(ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 
             ntca::SendEvent sendEvent;
             sendEvent.setType(ntca::SendEventType::e_ERROR);
-            sendEvent.setContext(sendContext);
+            sendEvent.setContext(context);
 
             callback.dispatch(self,
                               sendEvent,
@@ -1479,6 +1482,7 @@ void StreamSocket::privateCompleteReceive(
                 error = this->privateSendRaw(self,
                                              cipherData,
                                              ntca::SendOptions(),
+                                             ntca::SendContext(),
                                              d_sendComplete);
                 if (error) {
                     this->privateFailReceive(self, error);
@@ -1622,10 +1626,12 @@ void StreamSocket::privateCompleteSend(
 
     ntcq::SendQueueEntry& entry = d_sendQueue.frontEntry();
 
+    ntca::SendContext  context;
     ntci::SendCallback callback;
 
     if (numBytesSent == entry.length()) {
         NTCS_METRICS_UPDATE_WRITE_QUEUE_DELAY(entry.delay());
+        context  = entry.context();
         callback = entry.callback();
         d_sendQueue.popEntry();
     }
@@ -1637,11 +1643,9 @@ void StreamSocket::privateCompleteSend(
     NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
 
     if (callback) {
-        ntca::SendContext sendContext;
-
         ntca::SendEvent sendEvent;
         sendEvent.setType(ntca::SendEventType::e_COMPLETE);
-        sendEvent.setContext(sendContext);
+        sendEvent.setContext(context);
 
         callback.dispatch(self,
                           sendEvent,
@@ -1688,17 +1692,17 @@ void StreamSocket::privateFailSend(const bsl::shared_ptr<StreamSocket>& self,
         return;
     }
 
+    ntca::SendContext  context  = d_sendQueue.frontEntry().context();
     ntci::SendCallback callback = d_sendQueue.frontEntry().callback();
 
     d_sendQueue.popEntry();
 
     if (callback) {
-        ntca::SendContext sendContext;
-        sendContext.setError(error);
+        context.setError(error);
 
         ntca::SendEvent sendEvent;
         sendEvent.setType(ntca::SendEventType::e_ERROR);
-        sendEvent.setContext(sendContext);
+        sendEvent.setContext(context);
 
         callback.dispatch(self,
                           sendEvent,
@@ -1891,31 +1895,29 @@ void StreamSocket::privateShutdownSequence(
     NTCCFG_WARNING_UNUSED(origin);
 
     // Forcibly override the indication that the announcements should be
-    // deferred on execute on the strand or asynchonrously on the reactor.
+    // deferred on execute on the strand or asynchonrously on the proactor.
     // The announcements must always be deferred, otherwise, the user may
     // process the announcements out-of-order, say, when the shutdown is
     // initiated by the calling thread but completed by the proactor thread,
     // or when a write queue high watermark event has been deferred but the
-    // reactor next learns that the socket has been shut down by the peer and
+    // proactor next learns that the socket has been shut down by the peer and
     // the socket is not kept half-open.
     //
     // TODO: Remove the 'defer' parameter and always defer the announcements.
-
-    // MRM
-#if 0
-    bool keepHalfOpen = NTCCFG_DEFAULT_STREAM_SOCKET_KEEP_HALF_OPEN;
-    if (!d_options.keepHalfOpen().isNull()) {
-        keepHalfOpen = d_options.keepHalfOpen().value();
-    }
-
-    if (keepHalfOpen) {
-        defer = true;
-    }
-#endif
+    //
+    // bool keepHalfOpen = NTCCFG_DEFAULT_STREAM_SOCKET_KEEP_HALF_OPEN;
+    // if (!d_options.keepHalfOpen().isNull()) {
+    //     keepHalfOpen = d_options.keepHalfOpen().value();
+    // }
+    //
+    // if (keepHalfOpen) {
+    //     defer = true;
+    // }
 
     defer = true;
 
-    // First handle flow control and detachment from the reactor, if necessary.
+    // First handle flow control and detachment from the proactor, if 
+    // necessary.
 
     bool asyncDetachmentStarted = false;
     if (context.shutdownCompleted()) {
@@ -2003,7 +2005,10 @@ void StreamSocket::privateShutdownSequencePart2(
 
         NTCP_STREAMSOCKET_LOG_SHUTDOWN_SEND();
 
-        bsl::vector<ntci::SendCallback> callbackVector;
+        typedef bsl::pair<ntca::SendContext, ntci::SendCallback> 
+        SendContextCallback;
+
+        bsl::vector<SendContextCallback> callbackVector;
 
         bool announceWriteQueueDiscarded = false;
         {
@@ -2012,8 +2017,20 @@ void StreamSocket::privateShutdownSequencePart2(
                 d_sendRateTimer_sp.reset();
             }
 
-            announceWriteQueueDiscarded =
-                d_sendQueue.removeAll(&callbackVector);
+            {
+                bsl::vector<ntcq::SendQueueEntry> sendQueueEntryVector;
+                announceWriteQueueDiscarded =
+                    d_sendQueue.removeAll(&sendQueueEntryVector);
+                for (bsl::size_t i = 0; i < sendQueueEntryVector.size(); ++i) {
+                    const ntcq::SendQueueEntry& entry = 
+                        sendQueueEntryVector[i];
+                    if (entry.callback()) {
+                        callbackVector.push_back(
+                            SendContextCallback(
+                                entry.context(), entry.callback()));
+                    }
+                }
+            }
         }
 
         if (d_upgradeInProgress) {
@@ -2053,19 +2070,23 @@ void StreamSocket::privateShutdownSequencePart2(
         }
 
         for (bsl::size_t i = 0; i < callbackVector.size(); ++i) {
-            ntca::SendContext sendContext;
+            ntca::SendContext  sendContext  = callbackVector[i].first;
+            ntci::SendCallback sendCallback = callbackVector[i].second;
+
             sendContext.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
 
             ntca::SendEvent sendEvent;
             sendEvent.setType(ntca::SendEventType::e_ERROR);
             sendEvent.setContext(sendContext);
 
-            callbackVector[i].dispatch(self,
-                                       sendEvent,
-                                       d_proactorStrand_sp,
-                                       self,
-                                       defer,
-                                       &d_mutex);
+            if (sendCallback) {
+                sendCallback.dispatch(self,
+                                      sendEvent,
+                                      d_proactorStrand_sp,
+                                      self,
+                                      defer,
+                                      &d_mutex);
+            }
         }
 
         callbackVector.clear();
@@ -2621,6 +2642,7 @@ ntsa::Error StreamSocket::privateSendRaw(
     const bsl::shared_ptr<StreamSocket>& self,
     const bdlbb::Blob&                   data,
     const ntca::SendOptions&             options,
+    const ntca::SendContext&             setting,
     const ntci::SendCallback&            callback)
 {
     NTCI_LOG_CONTEXT();
@@ -2634,7 +2656,7 @@ ntsa::Error StreamSocket::privateSendRaw(
 
     ntcq::SendQueueEntry entry;
     entry.setId(d_sendQueue.generateEntryId());
-    entry.setToken(options.token());
+    entry.setContext(setting);
     entry.setData(dataContainer);
     entry.setLength(dataContainer->blob().length());
     entry.setTimestamp(bsls::TimeUtil::getTimer());
@@ -2687,6 +2709,7 @@ ntsa::Error StreamSocket::privateSendRaw(
     const bsl::shared_ptr<StreamSocket>& self,
     const ntsa::Data&                    data,
     const ntca::SendOptions&             options,
+    const ntca::SendContext&             setting,
     const ntci::SendCallback&            callback)
 {
     NTCI_LOG_CONTEXT();
@@ -2700,7 +2723,7 @@ ntsa::Error StreamSocket::privateSendRaw(
 
     ntcq::SendQueueEntry entry;
     entry.setId(d_sendQueue.generateEntryId());
-    entry.setToken(options.token());
+    entry.setContext(setting);
     entry.setData(dataContainer);
     entry.setLength(dataContainer->size());
     entry.setTimestamp(bsls::TimeUtil::getTimer());
@@ -2753,6 +2776,7 @@ ntsa::Error StreamSocket::privateSendEncrypted(
     const bsl::shared_ptr<StreamSocket>& self,
     const bdlbb::Blob&                   data,
     const ntca::SendOptions&             options,
+    const ntca::SendContext&             setting,
     const ntci::SendCallback&            callback)
 {
     ntsa::Error error;
@@ -2772,17 +2796,16 @@ ntsa::Error StreamSocket::privateSendEncrypted(
     }
 
     if (cipherData.length() > 0) {
-        error = this->privateSendRaw(self, cipherData, options, callback);
+        error = this->privateSendRaw(
+            self, cipherData, options, setting, callback);
         if (error) {
             return error;
         }
     }
     else if (callback) {
-        ntca::SendContext sendContext;
-
         ntca::SendEvent sendEvent;
         sendEvent.setType(ntca::SendEventType::e_COMPLETE);
-        sendEvent.setContext(sendContext);
+        sendEvent.setContext(setting);
 
         const bool defer = !options.recurse();
 
@@ -2801,6 +2824,7 @@ ntsa::Error StreamSocket::privateSendEncrypted(
     const bsl::shared_ptr<StreamSocket>& self,
     const ntsa::Data&                    data,
     const ntca::SendOptions&             options,
+    const ntca::SendContext&             setting,
     const ntci::SendCallback&            callback)
 {
     ntsa::Error error;
@@ -2820,17 +2844,16 @@ ntsa::Error StreamSocket::privateSendEncrypted(
     }
 
     if (cipherData.length() > 0) {
-        error = this->privateSendRaw(self, cipherData, options, callback);
+        error = this->privateSendRaw(
+            self, cipherData, options, setting, callback);
         if (error) {
             return error;
         }
     }
     else if (callback) {
-        ntca::SendContext sendContext;
-
         ntca::SendEvent sendEvent;
         sendEvent.setType(ntca::SendEventType::e_COMPLETE);
-        sendEvent.setContext(sendContext);
+        sendEvent.setContext(setting);
 
         const bool defer = !options.recurse();
 
@@ -3402,6 +3425,7 @@ ntsa::Error StreamSocket::privateUpgrade(
         error = this->privateSendRaw(self, 
                                      cipherData, 
                                      ntca::SendOptions(), 
+                                     ntca::SendContext(),
                                      d_sendComplete);
         if (error) {
             return error;
@@ -4368,14 +4392,22 @@ ntsa::Error StreamSocket::send(const bdlbb::Blob&        data,
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
 
+    ntca::SendContext context;
+
+    if (options.token().has_value()) {
+        context.setToken(options.token().value());
+    }
+
     if (NTCCFG_LIKELY(!d_sendDeflater_sp)) {
         if (NTCCFG_LIKELY(!d_encryption_sp)) {
-            return this->privateSendRaw(self, data, options, callback);
+            return this->privateSendRaw(
+                self, data, options, context, callback);
         }
         else {
             return this->privateSendEncrypted(self,
                                               data,
                                               options,
+                                              context,
                                               callback);
         }
     }
@@ -4393,16 +4425,23 @@ ntsa::Error StreamSocket::send(const bdlbb::Blob&        data,
             return error;
         }
 
+        context.setCompressionType(deflateContext.compressionType());
+        context.setCompressionRatio(
+            static_cast<double>(deflateContext.bytesWritten()) / 
+            deflateContext.bytesRead());
+
         if (NTCCFG_LIKELY(!d_encryption_sp)) {
             return this->privateSendRaw(self, 
                                         deflatedData, 
                                         options, 
+                                        context,
                                         callback);
         }
         else {
             return this->privateSendEncrypted(self,
                                               deflatedData,
                                               options,
+                                              context,
                                               callback);
         }
     }
@@ -4470,14 +4509,22 @@ ntsa::Error StreamSocket::send(const ntsa::Data&         data,
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
 
+    ntca::SendContext context;
+
+    if (options.token().has_value()) {
+        context.setToken(options.token().value());
+    }
+
     if (NTCCFG_LIKELY(!d_sendDeflater_sp)) {
         if (NTCCFG_LIKELY(!d_encryption_sp)) {
-            return this->privateSendRaw(self, data, options, callback);
+            return this->privateSendRaw(
+                self, data, options, context, callback);
         }
         else {
             return this->privateSendEncrypted(self,
                                               data,
                                               options,
+                                              context,
                                               callback);
         }
     }
@@ -4495,16 +4542,23 @@ ntsa::Error StreamSocket::send(const ntsa::Data&         data,
             return error;
         }
 
+        context.setCompressionType(deflateContext.compressionType());
+        context.setCompressionRatio(
+            static_cast<double>(deflateContext.bytesWritten()) / 
+            deflateContext.bytesRead());
+
         if (NTCCFG_LIKELY(!d_encryption_sp)) {
             return this->privateSendRaw(self, 
                                         deflatedData, 
                                         options, 
+                                        context,
                                         callback);
         }
         else {
             return this->privateSendEncrypted(self,
                                               deflatedData,
                                               options,
+                                              context,
                                               callback);
         }
     }
@@ -5405,7 +5459,11 @@ ntsa::Error StreamSocket::cancel(const ntca::SendToken& token)
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     ntci::SendCallback callback;
-    bool becameEmpty = d_sendQueue.removeEntryToken(&callback, token);
+    ntca::SendContext  context;
+
+    bool becameEmpty = d_sendQueue.removeEntryToken(&callback, 
+                                                    &context, 
+                                                    token);
 
     if (becameEmpty) {
         this->privateApplyFlowControl(self,
@@ -5416,12 +5474,11 @@ ntsa::Error StreamSocket::cancel(const ntca::SendToken& token)
     }
 
     if (callback) {
-        ntca::SendContext sendContext;
-        sendContext.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
+        context.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
 
         ntca::SendEvent sendEvent;
         sendEvent.setType(ntca::SendEventType::e_ERROR);
-        sendEvent.setContext(sendContext);
+        sendEvent.setContext(context);
 
         callback.dispatch(self,
                           sendEvent,
@@ -5536,6 +5593,7 @@ ntsa::Error StreamSocket::downgrade()
         error = this->privateSendRaw(self, 
                                      cipherData, 
                                      ntca::SendOptions(), 
+                                     ntca::SendContext(),
                                      d_sendComplete);
         if (error) {
             return error;

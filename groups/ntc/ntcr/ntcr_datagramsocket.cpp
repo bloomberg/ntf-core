@@ -672,8 +672,10 @@ void DatagramSocket::privateZeroCopyUpdate(
 
     if (d_zeroCopyQueue.ready()) {
         while (true) {
+            ntca::SendContext  setting;
             ntci::SendCallback callback;
-            bool               found = d_zeroCopyQueue.pop(&callback);
+
+            bool found = d_zeroCopyQueue.pop(&setting, &callback);
             if (!found) {
                 break;
             }
@@ -681,6 +683,7 @@ void DatagramSocket::privateZeroCopyUpdate(
             if (callback) {
                 ntca::SendEvent event;
                 event.setType(ntca::SendEventType::e_COMPLETE);
+                event.setContext(setting);
 
                 callback.dispatch(self,
                                   event,
@@ -758,7 +761,11 @@ void DatagramSocket::processSendDeadlineTimer(
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         ntci::SendCallback callback;
-        bool becameEmpty = d_sendQueue.removeEntryId(&callback, entryId);
+        ntca::SendContext  context;
+
+        bool becameEmpty = d_sendQueue.removeEntryId(&callback, 
+                                                     &context, 
+                                                     entryId);
         if (becameEmpty) {
             this->privateApplyFlowControl(self,
                                           ntca::FlowControlType::e_SEND,
@@ -768,12 +775,11 @@ void DatagramSocket::processSendDeadlineTimer(
         }
 
         if (callback) {
-            ntca::SendContext sendContext;
-            sendContext.setError(ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+            context.setError(ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 
             ntca::SendEvent sendEvent;
             sendEvent.setType(ntca::SendEventType::e_ERROR);
-            sendEvent.setContext(sendContext);
+            sendEvent.setContext(context);
 
             callback.dispatch(self,
                               sendEvent,
@@ -1034,6 +1040,7 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
 
         ntcq::SendCounter           group    = entry.id();
         bsl::shared_ptr<ntsa::Data> data     = entry.data();
+        ntca::SendContext           context  = entry.context();
         ntci::SendCallback          callback = entry.callback();
 
         d_sendQueue.popEntry();
@@ -1044,7 +1051,7 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
 
         if (sendContext.zeroCopy()) {
             ntcq::ZeroCopyCounter zeroCopyCounter =
-                d_zeroCopyQueue.push(group, data, callback);
+                d_zeroCopyQueue.push(group, data, context, callback);
 
             NTCCFG_WARNING_UNUSED(zeroCopyCounter);
             NTCR_DATAGRAMSOCKET_LOG_ZERO_COPY_STARTING(zeroCopyCounter);
@@ -1054,6 +1061,7 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
         else if (callback) {
             ntca::SendEvent sendEvent;
             sendEvent.setType(ntca::SendEventType::e_COMPLETE);
+            sendEvent.setContext(context);
 
             callback.dispatch(self,
                               sendEvent,
@@ -1244,6 +1252,8 @@ void DatagramSocket::privateShutdownSequence(
     const ntcs::ShutdownContext&           context,
     bool                                   defer)
 {
+    NTCCFG_WARNING_UNUSED(origin);
+
     // Forcibly override the indication that the announcements should be
     // deferred on execute on the strand or asynchonrously on the reactor.
     // The announcements must always be deferred, otherwise, the user may
@@ -1255,17 +1265,17 @@ void DatagramSocket::privateShutdownSequence(
     // immeditiately by the reactor thread.
     //
     // TODO: Remove the 'defer' parameter and always defer the announcements.
+    // 
+    // bool keepHalfOpen = NTCCFG_DEFAULT_DATAGRAM_SOCKET_KEEP_HALF_OPEN;
+    // if (!d_options.keepHalfOpen().isNull()) {
+    //     keepHalfOpen = d_options.keepHalfOpen().value();
+    // }
+    // 
+    // if (keepHalfOpen) {
+    //     defer = true;
+    // }
 
-    NTCCFG_WARNING_UNUSED(origin);
-
-    bool keepHalfOpen = NTCCFG_DEFAULT_DATAGRAM_SOCKET_KEEP_HALF_OPEN;
-    if (!d_options.keepHalfOpen().isNull()) {
-        keepHalfOpen = d_options.keepHalfOpen().value();
-    }
-
-    if (keepHalfOpen) {
-        defer = true;
-    }
+    defer = true;
 
     // First, handle flow control and detachment from the reactor, if
     // necessary.
@@ -1366,7 +1376,10 @@ void DatagramSocket::privateShutdownSequenceComplete(
 
         NTCR_DATAGRAMSOCKET_LOG_SHUTDOWN_SEND();
 
-        bsl::vector<ntci::SendCallback> callbackVector;
+        typedef bsl::pair<ntca::SendContext, ntci::SendCallback> 
+        SendContextCallback;
+
+        bsl::vector<SendContextCallback> callbackVector;
 
         bool announceWriteQueueDiscarded = false;
         {
@@ -1375,26 +1388,53 @@ void DatagramSocket::privateShutdownSequenceComplete(
                 d_sendRateTimer_sp.reset();
             }
 
-            d_zeroCopyQueue.clear(&callbackVector);
+            {
+                bsl::vector<ntcq::ZeroCopyEntry> zeroCopyEntryVector;
+                d_zeroCopyQueue.clear(&zeroCopyEntryVector);
+                for (bsl::size_t i = 0; i < zeroCopyEntryVector.size(); ++i) {
+                    const ntcq::ZeroCopyEntry& entry = zeroCopyEntryVector[i];
+                    if (entry.callback()) {
+                        callbackVector.push_back(
+                            SendContextCallback(
+                                entry.context(), entry.callback()));
+                    }
+                }
+            }
 
-            announceWriteQueueDiscarded =
-                d_sendQueue.removeAll(&callbackVector);
+            {
+                bsl::vector<ntcq::SendQueueEntry> sendQueueEntryVector;
+                announceWriteQueueDiscarded =
+                    d_sendQueue.removeAll(&sendQueueEntryVector);
+                for (bsl::size_t i = 0; i < sendQueueEntryVector.size(); ++i) {
+                    const ntcq::SendQueueEntry& entry = 
+                        sendQueueEntryVector[i];
+                    if (entry.callback()) {
+                        callbackVector.push_back(
+                            SendContextCallback(
+                                entry.context(), entry.callback()));
+                    }
+                }
+            }
         }
 
         for (bsl::size_t i = 0; i < callbackVector.size(); ++i) {
-            ntca::SendContext sendContext;
+            ntca::SendContext  sendContext  = callbackVector[i].first;
+            ntci::SendCallback sendCallback = callbackVector[i].second;
+
             sendContext.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
 
             ntca::SendEvent sendEvent;
             sendEvent.setType(ntca::SendEventType::e_ERROR);
             sendEvent.setContext(sendContext);
 
-            callbackVector[i].dispatch(self,
-                                       sendEvent,
-                                       d_reactorStrand_sp,
-                                       self,
-                                       defer,
-                                       &d_mutex);
+            if (sendCallback) {
+                sendCallback.dispatch(self,
+                                      sendEvent,
+                                      d_reactorStrand_sp,
+                                      self,
+                                      defer,
+                                      &d_mutex);
+            }
         }
 
         callbackVector.clear();
@@ -1952,6 +1992,7 @@ ntsa::Error DatagramSocket::privateSend(
     const bdlbb::Blob&                     data,
     const ntcq::SendState&                 state,
     const ntca::SendOptions&               options,
+    const ntca::SendContext&               setting,
     const ntci::SendCallback&              callback)
 {
     NTCI_LOG_CONTEXT();
@@ -1972,7 +2013,10 @@ ntsa::Error DatagramSocket::privateSend(
         else {
             if (sendContext.zeroCopy()) {
                 ntcq::ZeroCopyCounter zeroCopyCounter =
-                    d_zeroCopyQueue.push(state.counter(), data, callback);
+                    d_zeroCopyQueue.push(state.counter(), 
+                                         data, 
+                                         setting, 
+                                         callback);
 
                 NTCCFG_WARNING_UNUSED(zeroCopyCounter);
                 NTCR_DATAGRAMSOCKET_LOG_ZERO_COPY_STARTING(zeroCopyCounter);
@@ -1982,6 +2026,7 @@ ntsa::Error DatagramSocket::privateSend(
             else if (callback) {
                 ntca::SendEvent sendEvent;
                 sendEvent.setType(ntca::SendEventType::e_COMPLETE);
+                sendEvent.setContext(setting);
 
                 const bool defer = !options.recurse();
 
@@ -2004,7 +2049,7 @@ ntsa::Error DatagramSocket::privateSend(
 
     ntcq::SendQueueEntry entry;
     entry.setId(state.counter());
-    entry.setToken(options.token());
+    entry.setContext(setting);
     entry.setEndpoint(options.endpoint());
     entry.setData(dataContainer);
     entry.setLength(data.length());
@@ -2081,6 +2126,7 @@ ntsa::Error DatagramSocket::privateSend(
     const ntsa::Data&                      data,
     const ntcq::SendState&                 state,
     const ntca::SendOptions&               options,
+    const ntca::SendContext&               setting,
     const ntci::SendCallback&              callback)
 {
     NTCI_LOG_CONTEXT();
@@ -2101,7 +2147,10 @@ ntsa::Error DatagramSocket::privateSend(
         else {
             if (sendContext.zeroCopy()) {
                 ntcq::ZeroCopyCounter zeroCopyCounter =
-                    d_zeroCopyQueue.push(state.counter(), data, callback);
+                    d_zeroCopyQueue.push(state.counter(), 
+                                         data, 
+                                         setting, 
+                                         callback);
 
                 NTCCFG_WARNING_UNUSED(zeroCopyCounter);
                 NTCR_DATAGRAMSOCKET_LOG_ZERO_COPY_STARTING(zeroCopyCounter);
@@ -2111,6 +2160,7 @@ ntsa::Error DatagramSocket::privateSend(
             else if (callback) {
                 ntca::SendEvent sendEvent;
                 sendEvent.setType(ntca::SendEventType::e_COMPLETE);
+                sendEvent.setContext(setting);
 
                 const bool defer = !options.recurse();
 
@@ -2133,7 +2183,7 @@ ntsa::Error DatagramSocket::privateSend(
 
     ntcq::SendQueueEntry entry;
     entry.setId(state.counter());
-    entry.setToken(options.token());
+    entry.setContext(setting);
     entry.setEndpoint(options.endpoint());
     entry.setData(dataContainer);
     entry.setLength(dataContainer->size());
@@ -3487,8 +3537,15 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
 
+    ntca::SendContext context;
+
+    if (options.token().has_value()) {
+        context.setToken(options.token().value());
+    }
+
     if (NTCCFG_LIKELY(!d_sendDeflater_sp)) {
-        return this->privateSend(self, data, state, options, callback);
+        return this->privateSend(
+            self, data, state, options, context, callback);
     }
     else {
         ntca::DeflateOptions deflateOptions;
@@ -3504,10 +3561,16 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
             return error;
         }
 
+        context.setCompressionType(deflateContext.compressionType());
+        context.setCompressionRatio(
+            static_cast<double>(deflateContext.bytesWritten()) / 
+            deflateContext.bytesRead());
+
         return this->privateSend(self, 
                                  deflatedData, 
                                  state, 
                                  options, 
+                                 context,
                                  callback);
     }
 }
@@ -3576,8 +3639,15 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
 
+    ntca::SendContext context;
+
+    if (options.token().has_value()) {
+        context.setToken(options.token().value());
+    }
+
     if (NTCCFG_LIKELY(!d_sendDeflater_sp)) {
-        return this->privateSend(self, data, state, options, callback);
+        return this->privateSend(
+            self, data, state, options, context, callback);
     }
     else {
         ntca::DeflateOptions deflateOptions;
@@ -3593,10 +3663,16 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
             return error;
         }
 
+        context.setCompressionType(deflateContext.compressionType());
+        context.setCompressionRatio(
+            static_cast<double>(deflateContext.bytesWritten()) / 
+            deflateContext.bytesRead());
+
         return this->privateSend(self, 
                                  deflatedData, 
                                  state, 
                                  options, 
+                                 context,
                                  callback);
     }
 }
@@ -4513,7 +4589,11 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     ntci::SendCallback callback;
-    bool becameEmpty = d_sendQueue.removeEntryToken(&callback, token);
+    ntca::SendContext  context;
+
+    bool becameEmpty = d_sendQueue.removeEntryToken(&callback, 
+                                                    &context, 
+                                                    token);
 
     if (becameEmpty) {
         this->privateApplyFlowControl(self,
@@ -4524,12 +4604,11 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
     }
 
     if (callback) {
-        ntca::SendContext sendContext;
-        sendContext.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
+        context.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
 
         ntca::SendEvent sendEvent;
         sendEvent.setType(ntca::SendEventType::e_ERROR);
-        sendEvent.setContext(sendContext);
+        sendEvent.setContext(context);
 
         callback.dispatch(self,
                           sendEvent,
