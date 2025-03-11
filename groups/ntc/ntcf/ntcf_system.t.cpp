@@ -11031,7 +11031,7 @@ void SystemTest::concernStreamSocketRelease(
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_OK(acceptResult.event().context().error());
 
-    bsl::shared_ptr<ntci::StreamSocket> serverSocket = 
+    bsl::shared_ptr<ntci::StreamSocket> serverSocket =
         acceptResult.streamSocket();
     NTSCFG_TEST_TRUE(serverSocket);
     acceptResult.reset();
@@ -11081,13 +11081,13 @@ void SystemTest::concernStreamSocketRelease(
     NTSCFG_TEST_EQ(clientHandle1, clientHandle0);
 
     ntsa::Endpoint clientSourceEndpoint1;
-    error = ntsf::System::getSourceEndpoint(&clientSourceEndpoint1, 
+    error = ntsf::System::getSourceEndpoint(&clientSourceEndpoint1,
                                             clientHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(clientSourceEndpoint1, clientSourceEndpoint0);
 
     ntsa::Endpoint clientRemoteEndpoint1;
-    error = ntsf::System::getRemoteEndpoint(&clientRemoteEndpoint1, 
+    error = ntsf::System::getRemoteEndpoint(&clientRemoteEndpoint1,
                                             clientHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(clientRemoteEndpoint1, clientRemoteEndpoint0);
@@ -11097,13 +11097,13 @@ void SystemTest::concernStreamSocketRelease(
     NTSCFG_TEST_EQ(serverHandle1, serverHandle0);
 
     ntsa::Endpoint serverSourceEndpoint1;
-    error = ntsf::System::getSourceEndpoint(&serverSourceEndpoint1, 
+    error = ntsf::System::getSourceEndpoint(&serverSourceEndpoint1,
                                             serverHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(serverSourceEndpoint1, serverSourceEndpoint0);
 
     ntsa::Endpoint serverRemoteEndpoint1;
-    error = ntsf::System::getRemoteEndpoint(&serverRemoteEndpoint1, 
+    error = ntsf::System::getRemoteEndpoint(&serverRemoteEndpoint1,
                                             serverHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(serverRemoteEndpoint1, serverRemoteEndpoint0);
@@ -11131,7 +11131,139 @@ void SystemTest::concernDatagramSocketRelease(
     // handles "released" to remain open and valid even after closing an
     // ntci::DatagramSocket object.
 
-    // KKKK
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM;
+
+    ntsa::Error error;
+
+    // Create a datagram socket to act as a server.
+
+    ntca::DatagramSocketOptions serverSocketOptions;
+    serverSocketOptions.setTransport(transport);
+    serverSocketOptions.setSourceEndpoint(SystemTest::any(transport));
+
+    bsl::shared_ptr<ntci::DatagramSocket> serverSocket = 
+        scheduler->createDatagramSocket(serverSocketOptions, allocator);
+
+    error = serverSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    // Create a datagram socket to act as a client.
+
+    ntca::DatagramSocketOptions clientSocketOptions;
+    clientSocketOptions.setTransport(transport);
+    clientSocketOptions.setSourceEndpoint(SystemTest::any(transport));
+
+    bsl::shared_ptr<ntci::DatagramSocket> clientSocket = 
+        scheduler->createDatagramSocket(clientSocketOptions, allocator);
+
+    error = clientSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    // Connect the client datagram socket to the server.
+
+    ntci::ConnectFuture clientConnectFuture;
+    error = clientSocket->connect(
+        serverSocket->sourceEndpoint(),
+        ntca::ConnectOptions(),
+        clientConnectFuture);
+    NTSCFG_TEST_OK(error);
+
+    ntci::ConnectResult clientConnectResult;
+    error = clientConnectFuture.wait(&clientConnectResult);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(clientConnectResult.event().context().error());
+
+    // Connect the server datagram socket to the client.
+
+    ntci::ConnectFuture serverConnectFuture;
+    error = serverSocket->connect(
+        clientSocket->sourceEndpoint(),
+        ntca::ConnectOptions(),
+        serverConnectFuture);
+    NTSCFG_TEST_OK(error);
+
+    ntci::ConnectResult serverConnectResult;
+    error = serverConnectFuture.wait(&serverConnectResult);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(serverConnectResult.event().context().error());
+
+    // We now have a connected client and server stream socket pair.
+
+    ntsa::Handle   clientHandle0         = clientSocket->handle();
+    ntsa::Endpoint clientSourceEndpoint0 = clientSocket->sourceEndpoint();
+    ntsa::Endpoint clientRemoteEndpoint0 = clientSocket->remoteEndpoint();
+
+    ntsa::Handle   serverHandle0         = serverSocket->handle();
+    ntsa::Endpoint serverSourceEndpoint0 = serverSocket->sourceEndpoint();
+    ntsa::Endpoint serverRemoteEndpoint0 = serverSocket->remoteEndpoint();
+
+    NTSCFG_TEST_NE(clientHandle0, ntsa::k_INVALID_HANDLE);
+    NTSCFG_TEST_NE(serverHandle0, ntsa::k_INVALID_HANDLE);
+
+    NTSCFG_TEST_EQ(clientRemoteEndpoint0, serverSourceEndpoint0);
+    NTSCFG_TEST_EQ(serverRemoteEndpoint0, clientSourceEndpoint0);
+
+    // Release the handle underneath the client socket into our control.
+
+    ntci::CloseFuture clientCloseFuture;
+
+    ntsa::Handle clientHandle1 = ntsa::k_INVALID_HANDLE;
+    error = clientSocket->release(&clientHandle1, clientCloseFuture);
+    NTSCFG_TEST_OK(error);
+
+    ntci::CloseResult clientCloseResult;
+    error = clientCloseFuture.wait(&clientCloseResult);
+    NTSCFG_TEST_OK(error);
+
+    // Release the handle underneath the server socket into our control.
+
+    ntci::CloseFuture serverCloseFuture;
+
+    ntsa::Handle serverHandle1 = ntsa::k_INVALID_HANDLE;
+    error = serverSocket->release(&serverHandle1, serverCloseFuture);
+    NTSCFG_TEST_OK(error);
+
+    ntci::CloseResult serverCloseResult;
+    error = serverCloseFuture.wait(&serverCloseResult);
+    NTSCFG_TEST_OK(error);
+
+    // Ensure the client socket handle is still valid.
+
+    NTSCFG_TEST_EQ(clientHandle1, clientHandle0);
+
+    ntsa::Endpoint clientSourceEndpoint1;
+    error = ntsf::System::getSourceEndpoint(&clientSourceEndpoint1,
+                                            clientHandle1);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(clientSourceEndpoint1, clientSourceEndpoint0);
+
+    ntsa::Endpoint clientRemoteEndpoint1;
+    error = ntsf::System::getRemoteEndpoint(&clientRemoteEndpoint1,
+                                            clientHandle1);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(clientRemoteEndpoint1, clientRemoteEndpoint0);
+
+    // Ensure the server socket handle is still valid.
+
+    NTSCFG_TEST_EQ(serverHandle1, serverHandle0);
+
+    ntsa::Endpoint serverSourceEndpoint1;
+    error = ntsf::System::getSourceEndpoint(&serverSourceEndpoint1,
+                                            serverHandle1);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(serverSourceEndpoint1, serverSourceEndpoint0);
+
+    ntsa::Endpoint serverRemoteEndpoint1;
+    error = ntsf::System::getRemoteEndpoint(&serverRemoteEndpoint1,
+                                            serverHandle1);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(serverRemoteEndpoint1, serverRemoteEndpoint0);
+
+    // Close the client and server socket handles.
+
+    ntsf::System::close(clientHandle1);
+    ntsf::System::close(serverHandle1);
 }
 
 void SystemTest::concernInterfaceFunctionAndTimerDistribution(
