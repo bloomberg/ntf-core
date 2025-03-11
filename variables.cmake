@@ -557,6 +557,43 @@ if (NOT DEFINED NTF_BUILD_WITH_IORING)
     endif()
 endif()
 
+if (NOT DEFINED NTF_BUILD_WITH_LZ4)
+    if (DEFINED NTF_CONFIGURE_WITH_LZ4)
+        set(NTF_BUILD_WITH_LZ4
+            ${NTF_CONFIGURE_WITH_LZ4} CACHE INTERNAL "")
+    elseif (DEFINED ENV{NTF_CONFIGURE_WITH_LZ4})
+        set(NTF_BUILD_WITH_LZ4
+            $ENV{NTF_CONFIGURE_WITH_LZ4} CACHE INTERNAL "")
+    else()
+        set(NTF_BUILD_WITH_LZ4 FALSE CACHE INTERNAL "")
+    endif()
+endif()
+
+
+if (NOT DEFINED NTF_BUILD_WITH_ZSTD)
+    if (DEFINED NTF_CONFIGURE_WITH_ZSTD)
+        set(NTF_BUILD_WITH_ZSTD
+            ${NTF_CONFIGURE_WITH_ZSTD} CACHE INTERNAL "")
+    elseif (DEFINED ENV{NTF_CONFIGURE_WITH_ZSTD})
+        set(NTF_BUILD_WITH_ZSTD
+            $ENV{NTF_CONFIGURE_WITH_ZSTD} CACHE INTERNAL "")
+    else()
+        set(NTF_BUILD_WITH_ZSTD FALSE CACHE INTERNAL "")
+    endif()
+endif()
+
+if (NOT DEFINED NTF_BUILD_WITH_ZLIB)
+    if (DEFINED NTF_CONFIGURE_WITH_ZLIB)
+        set(NTF_BUILD_WITH_ZLIB
+            ${NTF_CONFIGURE_WITH_ZLIB} CACHE INTERNAL "")
+    elseif (DEFINED ENV{NTF_CONFIGURE_WITH_ZLIB})
+        set(NTF_BUILD_WITH_ZLIB
+            $ENV{NTF_CONFIGURE_WITH_ZLIB} CACHE INTERNAL "")
+    else()
+        set(NTF_BUILD_WITH_ZLIB FALSE CACHE INTERNAL "")
+    endif()
+endif()
+
 if (NOT DEFINED NTF_BUILD_WITH_OPENSSL)
     if (DEFINED NTF_CONFIGURE_WITH_OPENSSL)
         set(NTF_BUILD_WITH_OPENSSL
@@ -990,6 +1027,24 @@ if (${NTF_BUILD_WITH_IOCP})
     message(STATUS "NTF: Building with I/O completion ports:        yes")
 else()
     message(STATUS "NTF: Building with I/O completion ports:        no")
+endif()
+
+if (${NTF_BUILD_WITH_LZ4})
+    message(STATUS "NTF: Building with lz4:                         yes")
+else()
+    message(STATUS "NTF: Building with lz4:                         no")
+endif()
+
+if (${NTF_BUILD_WITH_ZSTD})
+    message(STATUS "NTF: Building with zstd:                        yes")
+else()
+    message(STATUS "NTF: Building with zstd:                        no")
+endif()
+
+if (${NTF_BUILD_WITH_ZLIB})
+    message(STATUS "NTF: Building with zlib:                        yes")
+else()
+    message(STATUS "NTF: Building with zlib:                        no")
 endif()
 
 if (${NTF_BUILD_WITH_OPENSSL})

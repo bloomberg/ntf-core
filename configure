@@ -303,6 +303,18 @@ else
     NTF_CONFIGURE_WITH_IORING=0
 fi
 
+if [[ -z "${NTF_CONFIGURE_WITH_LZ4}" ]]; then
+    NTF_CONFIGURE_WITH_LZ4=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_ZSTD}" ]]; then
+    NTF_CONFIGURE_WITH_ZSTD=0
+fi
+
+if [[ -z "${NTF_CONFIGURE_WITH_ZLIB}" ]]; then
+    NTF_CONFIGURE_WITH_ZLIB=0
+fi
+
 if [[ -z "${NTF_CONFIGURE_WITH_OPENSSL}" ]]; then
     NTF_CONFIGURE_WITH_OPENSSL=1
 fi
@@ -490,6 +502,10 @@ usage()
     echo "    --with-iocp                        Enable the proactor driver implemented with I/O completion ports (Windows only) [${NTF_CONFIGURE_WITH_IOCP}]"
     echo "    --with-ioring                      Enable the proactor driver implemented with 'io_uring' (Linux only) [${NTF_CONFIGURE_WITH_IORING}]"
 
+    echo "    --with-lz4                         Enable the compression driver implemented with lz4 [${NTF_CONFIGURE_WITH_LZ4}]"
+    echo "    --with-zstd                        Enable the compression driver implemented with zstd [${NTF_CONFIGURE_WITH_ZSTD}]"
+    echo "    --with-zlib                        Enable the compression driver implemented with zlib [${NTF_CONFIGURE_WITH_ZLIB}]"
+
     echo "    --with-openssl                     Enable the encryption driver implemented with OpenSSL [${NTF_CONFIGURE_WITH_OPENSSL}]"
 
     echo "    --with-dynamic-load-balancing      Enable processing I/O on any thread, rather than a single thread [${NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING}]"
@@ -666,6 +682,13 @@ while true ; do
         --with-ioring)
             NTF_CONFIGURE_WITH_IORING=1 ; shift ;;
 
+        --with-lz4)
+            NTF_CONFIGURE_WITH_LZ4=1 ; shift ;;
+        --with-zstd)
+            NTF_CONFIGURE_WITH_ZSTD=1 ; shift ;;
+        --with-zlib)
+            NTF_CONFIGURE_WITH_ZLIB=1 ; shift ;;
+
         --with-openssl)
             NTF_CONFIGURE_WITH_OPENSSL=1 ; shift ;;
 
@@ -777,6 +800,13 @@ while true ; do
             NTF_CONFIGURE_WITH_IOCP=0 ; shift ;;
         --without-ioring)
             NTF_CONFIGURE_WITH_IORING=0 ; shift ;;
+
+        --without-lz4)
+            NTF_CONFIGURE_WITH_LZ4=0 ; shift ;;
+        --without-zstd)
+            NTF_CONFIGURE_WITH_ZSTD=0 ; shift ;;
+        --without-zlib)
+            NTF_CONFIGURE_WITH_ZLIB=0 ; shift ;;
 
         --without-openssl)
             NTF_CONFIGURE_WITH_OPENSSL=0 ; shift ;;
@@ -905,6 +935,10 @@ export NTF_CONFIGURE_WITH_POLLSET
 export NTF_CONFIGURE_WITH_KQUEUE
 export NTF_CONFIGURE_WITH_IOCP
 export NTF_CONFIGURE_WITH_IORING
+
+export NTF_CONFIGURE_WITH_LZ4
+export NTF_CONFIGURE_WITH_ZSTD
+export NTF_CONFIGURE_WITH_ZLIB
 
 export NTF_CONFIGURE_WITH_OPENSSL
 

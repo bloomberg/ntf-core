@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_datagramsocketoptions.h>
 #include <ntccfg_platform.h>
+#include <ntci_compression.h>
 #include <ntci_datagramsocket.h>
 #include <ntci_datagramsocketmanager.h>
 #include <ntci_datagramsocketsession.h>
@@ -96,11 +97,14 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntcs::FlowControlState                       d_flowControlState;
     ntcs::ShutdownState                          d_shutdownState;
     ntcq::SendQueue                              d_sendQueue;
+    bsl::shared_ptr<ntci::Compression>           d_sendDeflater_sp;
     bsl::shared_ptr<ntci::RateLimiter>           d_sendRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>                 d_sendRateTimer_sp;
     bool                                         d_sendPending;
     bool                                         d_sendGreedily;
+    ntci::SendCallback                           d_sendComplete;
     ntcq::ReceiveQueue                           d_receiveQueue;
+    bsl::shared_ptr<ntci::Compression>           d_receiveInflater_sp;
     bsl::shared_ptr<ntci::RateLimiter>           d_receiveRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>                 d_receiveRateTimer_sp;
     bool                                         d_receivePending;
@@ -829,6 +833,12 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntsa::Error setWriteRateLimiter(const bsl::shared_ptr<ntci::RateLimiter>&
                                         rateLimiter) BSLS_KEYWORD_OVERRIDE;
 
+    /// Set the write deflater to the specified 'compression' technique. Return
+    /// the error.
+    ntsa::Error setWriteDeflater(
+        const bsl::shared_ptr<ntci::Compression>& compression) 
+        BSLS_KEYWORD_OVERRIDE;
+
     /// Set the write queue low watermark to the specified 'lowWatermark'.
     /// Return the error.
     ntsa::Error setWriteQueueLowWatermark(bsl::size_t lowWatermark)
@@ -849,6 +859,12 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// the error.
     ntsa::Error setReadRateLimiter(const bsl::shared_ptr<ntci::RateLimiter>&
                                        rateLimiter) BSLS_KEYWORD_OVERRIDE;
+
+    /// Set the read inflater to the specified 'compression' technique. Return
+    /// the error.
+    ntsa::Error setReadInflater(
+        const bsl::shared_ptr<ntci::Compression>& compression)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Set the read queue low watermark to the specified 'lowWatermark'.
     /// Return the error.

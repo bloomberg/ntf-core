@@ -25,11 +25,38 @@ namespace ntca {
 
 bool SendContext::equals(const SendContext& other) const
 {
-    return (d_error == other.d_error);
+    return (d_token            == other.d_token &&
+            d_compressionType  == other.d_compressionType &&
+            d_compressionRatio == other.d_compressionRatio && 
+            d_error            == other.d_error);
 }
 
 bool SendContext::less(const SendContext& other) const
 {
+    if (d_token < other.d_token) {
+        return true;
+    }
+
+    if (other.d_token < d_token) {
+        return false;
+    }
+
+    if (d_compressionType < other.d_compressionType) {
+        return true;
+    }
+
+    if (other.d_compressionType < d_compressionType) {
+        return false;
+    }
+
+    if (d_compressionRatio < other.d_compressionRatio) {
+        return true;
+    }
+
+    if (other.d_compressionRatio < d_compressionRatio) {
+        return false;
+    }
+
     return d_error < other.d_error;
 }
 
@@ -39,7 +66,29 @@ bsl::ostream& SendContext::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
-    printer.printAttribute("error", d_error);
+
+    if (d_token.has_value()) {
+        printer.printAttribute("token", d_token.value());
+    }
+
+    if (d_compressionType.has_value()) {
+        printer.printAttribute("compressionType", d_compressionType.value());
+    }
+
+    if (d_compressionRatio.has_value()) {
+
+        bsl::ostringstream ss;
+        ss << bsl::setprecision(2);
+        ss << bsl::fixed;
+        ss << d_compressionRatio.value() * 100;
+
+        printer.printAttribute("compressionRatio", ss.str());
+    }
+
+    if (d_error) {
+        printer.printAttribute("error", d_error);
+    }
+
     printer.end();
     return stream;
 }

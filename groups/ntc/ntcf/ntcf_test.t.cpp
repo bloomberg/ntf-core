@@ -20,8 +20,6 @@ BSLS_IDENT_RCSID(ntcf_test_t_cpp, "$Id$ $CSID$")
 
 #include <ntcf_test.h>
 
-using namespace BloombergLP;
-
 namespace BloombergLP {
 namespace ntcf {
 
@@ -140,3 +138,22 @@ NTSCFG_TEST_FUNCTION(ntcf::TestTest::verify)
 
 }  // close namespace ntcf
 }  // close namespace BloombergLP
+
+#include <ntcf_testvocabulary.h>
+#include <ntcf_testvocabulary.cpp>
+
+#include <ntcf_testmessage.h>
+#include <ntcf_testmessage.cpp>
+#include <ntcf_testmessage.t.cpp>
+
+#include <ntcf_testserver.h>
+#include <ntcf_testserver.cpp>
+#include <ntcf_testserver.t.cpp>
+
+#include <ntcf_testclient.h>
+#include <ntcf_testclient.cpp>
+#include <ntcf_testclient.t.cpp>
+
+#include <ntcf_testfixture.h>
+#include <ntcf_testfixture.cpp>
+#include <ntcf_testfixture.t.cpp>

@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_streamsocketoptions.h>
 #include <ntccfg_platform.h>
+#include <ntci_compression.h>
 #include <ntci_datapool.h>
 #include <ntci_listenersocket.h>
 #include <ntci_reactor.h>
@@ -118,6 +119,7 @@ class StreamSocket : public ntci::StreamSocket,
     bsl::size_t                                d_zeroCopyThreshold;
     ntsa::SendOptions                          d_sendOptions;
     ntcq::SendQueue                            d_sendQueue;
+    bsl::shared_ptr<ntci::Compression>         d_sendDeflater_sp;
     bsl::shared_ptr<ntci::RateLimiter>         d_sendRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>               d_sendRateTimer_sp;
     bool                                       d_sendGreedily;
@@ -127,6 +129,7 @@ class StreamSocket : public ntci::StreamSocket,
     ntsa::ReceiveOptions                       d_receiveOptions;
     ntcq::ReceiveQueue                         d_receiveQueue;
     ntcq::ReceiveFeedback                      d_receiveFeedback;
+    bsl::shared_ptr<ntci::Compression>         d_receiveInflater_sp;
     bsl::shared_ptr<ntci::RateLimiter>         d_receiveRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>               d_receiveRateTimer_sp;
     bool                                       d_receiveGreedily;
@@ -426,6 +429,7 @@ class StreamSocket : public ntci::StreamSocket,
                                const bdlbb::Blob&                   data,
                                const ntcq::SendState&               state,
                                const ntca::SendOptions&             options,
+                               const ntca::SendContext&             context,
                                const ntci::SendCallback&            callback);
 
     /// Send the specified raw or already encrypted 'data' according to the
@@ -436,9 +440,10 @@ class StreamSocket : public ntci::StreamSocket,
                                const ntsa::Data&                    data,
                                const ntcq::SendState&               state,
                                const ntca::SendOptions&             options,
+                               const ntca::SendContext&             context,
                                const ntci::SendCallback&            callback);
 
-    /// Send the specified encrypted 'data' according to the specified
+    /// Send the encryption of the specified 'data' according to the specified
     /// 'options'. When the 'data' is entirely copied to the send buffer,
     /// invoke the specified 'callback' on the callback's strand, if any.
     /// Return the error.
@@ -446,9 +451,10 @@ class StreamSocket : public ntci::StreamSocket,
                                      const bdlbb::Blob&                   data,
                                      const ntcq::SendState&    state,
                                      const ntca::SendOptions&  options,
+                                     const ntca::SendContext&             context,
                                      const ntci::SendCallback& callback);
 
-    /// Send the specified encrypted 'data' according to the specified
+    /// Send the encryption of the specified 'data' according to the specified
     /// 'options'. When the 'data' is entirely copied to the send buffer,
     /// invoke the specified 'callback' on the callback's strand, if any.
     /// Return the error.
@@ -456,6 +462,7 @@ class StreamSocket : public ntci::StreamSocket,
                                      const ntsa::Data&                    data,
                                      const ntcq::SendState&    state,
                                      const ntca::SendOptions&  options,
+                                     const ntca::SendContext&             context,
                                      const ntci::SendCallback& callback);
 
     /// Open the stream socket. Return the error.
@@ -1149,6 +1156,12 @@ class StreamSocket : public ntci::StreamSocket,
     ntsa::Error setWriteRateLimiter(const bsl::shared_ptr<ntci::RateLimiter>&
                                         rateLimiter) BSLS_KEYWORD_OVERRIDE;
 
+    /// Set the write deflater to the specified 'compression' technique. Return
+    /// the error.
+    ntsa::Error setWriteDeflater(
+        const bsl::shared_ptr<ntci::Compression>& compression) 
+        BSLS_KEYWORD_OVERRIDE;
+
     /// Set the write queue low watermark to the specified 'lowWatermark'.
     /// Return the error.
     ntsa::Error setWriteQueueLowWatermark(bsl::size_t lowWatermark)
@@ -1169,6 +1182,12 @@ class StreamSocket : public ntci::StreamSocket,
     /// the error.
     ntsa::Error setReadRateLimiter(const bsl::shared_ptr<ntci::RateLimiter>&
                                        rateLimiter) BSLS_KEYWORD_OVERRIDE;
+
+    /// Set the read inflater to the specified 'compression' technique. Return
+    /// the error.
+    ntsa::Error setReadInflater(
+        const bsl::shared_ptr<ntci::Compression>& compression)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Set the read queue low watermark to the specified 'lowWatermark'.
     /// Return the error.

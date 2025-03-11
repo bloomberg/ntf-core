@@ -826,6 +826,27 @@ bool TestMemoryUtil::check1s(void* address, bsl::size_t capacity)
 class TestDataUtil
 {
   public:
+    /// Enumerate the constants used by this implementation.
+    enum Constant {
+        /// The dataset from which the data is generated is associated with
+        /// transmissions from a client.
+        k_DATASET_CLIENT = 0,
+
+        /// The dataset from which the data is generated is associated with
+        /// transmissions from a server.
+        k_DATASET_SERVER = 1,
+
+        /// The dataset from which the data is generated is associated with
+        /// transmissions from a client, but in the form that is likely to be
+        /// well-compressed.
+        k_DATASET_CLIENT_COMPRESSABLE = 2,
+
+        /// The dataset from which the data is generated is associated with
+        /// transmissions from a server, but in the form that is likely to be
+        /// well-compressed.
+        k_DATASET_SERVER_COMPRESSABLE = 3
+    };
+
     /// Return the byte at the specified 'position' in the specified
     /// 'dataset'.
     static char generateByte(bsl::size_t position, bsl::size_t dataset);
@@ -850,13 +871,69 @@ class TestDataUtil
 inline char TestDataUtil::generateByte(bsl::size_t position,
                                        bsl::size_t dataset)
 {
+    // clang-format off
     struct {
         const char* source;
         bsl::size_t length;
     } DATA[] = {
         {"abcdefghijklmnopqrstuvwxyz", 26},
-        {"ABCDEFGHIJKLMNOPQRSTUVWXYZ", 26}
+        {"ABCDEFGHIJKLMNOPQRSTUVWXYZ", 26},
+        {
+        "a"
+        "bb"
+        "ccc"
+        "dddd"
+        "eeeee"
+        "ffffff"
+        "ggggggg"
+        "hhhhhhhh"
+        "iiiiiiiii"
+        "jjjjjjjjjj"
+        "kkkkkkkkkkk"
+        "llllllllllll"
+        "mmmmmmmmmmmmm"
+        "nnnnnnnnnnnnnn"
+        "ooooooooooooooo"
+        "pppppppppppppppp"
+        "qqqqqqqqqqqqqqqqq"
+        "rrrrrrrrrrrrrrrrrr"
+        "sssssssssssssssssss"
+        "tttttttttttttttttttt"
+        "uuuuuuuuuuuuuuuuuuuuu"
+        "vvvvvvvvvvvvvvvvvvvvvv"
+        "wwwwwwwwwwwwwwwwwwwwwww"
+        "xxxxxxxxxxxxxxxxxxxxxxxx"
+        "yyyyyyyyyyyyyyyyyyyyyyyyy"
+        "zzzzzzzzzzzzzzzzzzzzzzzzzz", 351 },
+        {
+        "A"
+        "BB"
+        "CCC"
+        "DDDD"
+        "EEEEE"
+        "FFFFFF"
+        "GGGGGGG"
+        "HHHHHHHH"
+        "IIIIIIIII"
+        "JJJJJJJJJJ"
+        "KKKKKKKKKKK"
+        "LLLLLLLLLLLL"
+        "MMMMMMMMMMMMM"
+        "NNNNNNNNNNNNNN"
+        "OOOOOOOOOOOOOOO"
+        "PPPPPPPPPPPPPPPP"
+        "QQQQQQQQQQQQQQQQQ"
+        "RRRRRRRRRRRRRRRRRR"
+        "SSSSSSSSSSSSSSSSSSS"
+        "TTTTTTTTTTTTTTTTTTTT"
+        "UUUUUUUUUUUUUUUUUUUUU"
+        "VVVVVVVVVVVVVVVVVVVVVV"
+        "WWWWWWWWWWWWWWWWWWWWWWW"
+        "XXXXXXXXXXXXXXXXXXXXXXXX"
+        "YYYYYYYYYYYYYYYYYYYYYYYYY"
+        "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", 351 },
     };
+    // clang-format on
 
     enum { NUM_DATA = sizeof(DATA) / sizeof(*DATA) };
 

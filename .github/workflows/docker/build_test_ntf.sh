@@ -41,6 +41,9 @@ build_ntf() {
                 --output /workspace/ntf-core/build \
                 --jobs ${jobs} \
                 --standalone \
+                --with-zlib \
+                --with-zstd \
+                --with-lz4 \
                 --without-warnings \
                 --without-warnings-as-errors \
                 --from-continuous-integration
@@ -51,6 +54,13 @@ build_ntf() {
     fi
 
     make build
+    rc=${?}
+    if [ ${rc} -ne 0 ]; then
+        echo "Failed to build: rc = ${rc}"
+        exit ${rc}
+    fi
+
+    make ntca_checksum.t
     rc=${?}
     if [ ${rc} -ne 0 ]; then
         echo "Failed to build: rc = ${rc}"

@@ -23,6 +23,8 @@ ntci_closecallback
 ntci_closecallbackfactory
 ntci_closefuture
 ntci_closeresult
+ntci_compression
+ntci_compressiondriver
 ntci_datapool
 ntci_datagramsocket
 ntci_datagramsocketfactory
@@ -86,18 +88,19 @@ ntci_proactorfactory
 ntci_proactormetrics
 ntci_proactorsocket
 ntci_proactorpool
+ntci_scheduler
 ntci_sender
 ntci_sendcallback
 ntci_sendcallbackfactory
 ntci_sendfuture
 ntci_sendresult
+ntci_serialization
 ntci_strand
 ntci_strandfactory
 ntci_streamsocket
 ntci_streamsocketfactory
 ntci_streamsocketmanager
 ntci_streamsocketsession
-ntci_scheduler
 ntci_timer
 ntci_timercallback
 ntci_timercallbackfactory
@@ -111,6 +114,8 @@ ntci_threadpool
 ntci_upgradable
 ntci_upgradecallback
 ntci_upgradecallbackfactory
+ntci_upgradefuture
+ntci_upgraderesult
 ntci_user
 ntci_waiter
 

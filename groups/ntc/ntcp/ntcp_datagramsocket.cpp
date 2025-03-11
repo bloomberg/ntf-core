@@ -27,6 +27,7 @@ BSLS_IDENT_RCSID(ntcp_datagramsocket_cpp, "$Id$ $CSID$")
 #include <ntcs_blobutil.h>
 #include <ntcs_compat.h>
 #include <ntcs_dispatch.h>
+#include <ntcs_plugin.h>
 #include <ntcu_datagramsocketsession.h>
 #include <ntcu_datagramsocketutil.h>
 #include <ntsa_receivecontext.h>
@@ -364,7 +365,11 @@ void DatagramSocket::processSendDeadlineTimer(
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         ntci::SendCallback callback;
-        bool becameEmpty = d_sendQueue.removeEntryId(&callback, entryId);
+        ntca::SendContext  context;
+
+        bool becameEmpty = d_sendQueue.removeEntryId(&callback, 
+                                                     &context,
+                                                     entryId);
         if (becameEmpty) {
             this->privateApplyFlowControl(self,
                                           ntca::FlowControlType::e_SEND,
@@ -374,12 +379,11 @@ void DatagramSocket::processSendDeadlineTimer(
         }
 
         if (callback) {
-            ntca::SendContext sendContext;
-            sendContext.setError(ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
+            context.setError(ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 
             ntca::SendEvent sendEvent;
             sendEvent.setType(ntca::SendEventType::e_ERROR);
-            sendEvent.setContext(sendContext);
+            sendEvent.setContext(context);
 
             callback.dispatch(self,
                               sendEvent,
@@ -541,15 +545,38 @@ void DatagramSocket::privateCompleteReceive(
 
     {
         ntcq::ReceiveQueueEntry entry;
+        entry.setTimestamp(bsls::TimeUtil::getTimer());
+
         if (!endpoint.isUndefined()) {
             entry.setEndpoint(endpoint);
         }
         else {
             entry.setEndpoint(d_remoteEndpoint);
         }
-        entry.setData(data);
-        entry.setLength(data->length());
-        entry.setTimestamp(bsls::TimeUtil::getTimer());
+
+        if (!d_receiveInflater_sp) {
+            entry.setData(data);
+            entry.setLength(data->length());
+        }
+        else {
+            bsl::shared_ptr<bdlbb::Blob> inflatedData = 
+                d_dataPool_sp->createIncomingBlob();
+
+            ntca::InflateOptions inflateOptions;
+            ntca::InflateContext inflateContext;
+
+            error = d_receiveInflater_sp->inflate(&inflateContext,
+                                                  inflatedData.get(),
+                                                  *data,
+                                                  inflateOptions);
+            if (NTCCFG_UNLIKELY(error)) {
+                this->privateFailReceive(self, error);
+                return;
+            }
+
+            entry.setData(inflatedData);
+            entry.setLength(inflatedData->length());
+        }
 
         d_receiveQueue.pushEntry(entry);
 
@@ -755,6 +782,7 @@ void DatagramSocket::privateCompleteSend(
 
     NTCS_METRICS_UPDATE_WRITE_QUEUE_DELAY(entry.delay());
 
+    ntca::SendContext  context  = entry.context();
     ntci::SendCallback callback = entry.callback();
 
     d_sendQueue.popEntry();
@@ -764,11 +792,9 @@ void DatagramSocket::privateCompleteSend(
     NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
 
     if (callback) {
-        ntca::SendContext sendContext;
-
         ntca::SendEvent sendEvent;
         sendEvent.setType(ntca::SendEventType::e_COMPLETE);
-        sendEvent.setContext(sendContext);
+        sendEvent.setContext(context);
 
         callback.dispatch(self,
                           sendEvent,
@@ -816,17 +842,17 @@ void DatagramSocket::privateFailSend(
         return;
     }
 
+    ntca::SendContext  context  = d_sendQueue.frontEntry().context();
     ntci::SendCallback callback = d_sendQueue.frontEntry().callback();
 
     d_sendQueue.popEntry();
 
     if (callback) {
-        ntca::SendContext sendContext;
-        sendContext.setError(error);
+        context.setError(error);
 
         ntca::SendEvent sendEvent;
         sendEvent.setType(ntca::SendEventType::e_ERROR);
-        sendEvent.setContext(sendContext);
+        sendEvent.setContext(context);
 
         callback.dispatch(self,
                           sendEvent,
@@ -986,27 +1012,27 @@ void DatagramSocket::privateShutdownSequence(
     // deferred on execute on the strand or asynchonrously on the reactor.
     // The announcements must always be deferred, otherwise, the user may
     // process the announcements out-of-order, say, when the shutdown is
-    // initiated by the calling thread but completed by the reactor thread.
+    // initiated by the calling thread but completed by the proactor thread.
     //
     // This only needs to be done when supported half-open connections.
     // Otherwise, the announcements are always deferred or always processed
-    // immediately by the reactor thread.
+    // immediately by the proactor thread.
     //
     // TODO: Remove the 'defer' parameter and always defer the announcements.
+    //
+    // bool keepHalfOpen = NTCCFG_DEFAULT_DATAGRAM_SOCKET_KEEP_HALF_OPEN;
+    // if (!d_options.keepHalfOpen().isNull()) {
+    //     keepHalfOpen = d_options.keepHalfOpen().value();
+    // }
+    // 
+    // if (keepHalfOpen) {
+    //     defer = true;
+    // }
 
-    bool keepHalfOpen = NTCCFG_DEFAULT_DATAGRAM_SOCKET_KEEP_HALF_OPEN;
-    if (!d_options.keepHalfOpen().isNull()) {
-        keepHalfOpen = d_options.keepHalfOpen().value();
-    }
-
-    if (keepHalfOpen) {
-        defer = true;
-    }
-
-    // MRM: Always defer to properly clean up pending operations?
     defer = true;
 
-    // First handle flow control and detachment from the reactor, if necessary.
+    // First handle flow control and detachment from the proactor, if 
+    // necessary.
 
     bool asyncDetachInitiated = false;
 
@@ -1091,7 +1117,10 @@ void DatagramSocket::privateShutdownSequencePart2(
 
         NTCP_DATAGRAMSOCKET_LOG_SHUTDOWN_SEND();
 
-        bsl::vector<ntci::SendCallback> callbackVector;
+        typedef bsl::pair<ntca::SendContext, ntci::SendCallback> 
+        SendContextCallback;
+
+        bsl::vector<SendContextCallback> callbackVector;
 
         bool announceWriteQueueDiscarded = false;
         {
@@ -1100,24 +1129,40 @@ void DatagramSocket::privateShutdownSequencePart2(
                 d_sendRateTimer_sp.reset();
             }
 
-            announceWriteQueueDiscarded =
-                d_sendQueue.removeAll(&callbackVector);
+            {
+                bsl::vector<ntcq::SendQueueEntry> sendQueueEntryVector;
+                announceWriteQueueDiscarded =
+                    d_sendQueue.removeAll(&sendQueueEntryVector);
+                for (bsl::size_t i = 0; i < sendQueueEntryVector.size(); ++i) {
+                    const ntcq::SendQueueEntry& entry = 
+                        sendQueueEntryVector[i];
+                    if (entry.callback()) {
+                        callbackVector.push_back(
+                            SendContextCallback(
+                                entry.context(), entry.callback()));
+                    }
+                }
+            }
         }
 
         for (bsl::size_t i = 0; i < callbackVector.size(); ++i) {
-            ntca::SendContext sendContext;
+            ntca::SendContext  sendContext  = callbackVector[i].first;
+            ntci::SendCallback sendCallback = callbackVector[i].second;
+
             sendContext.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
 
             ntca::SendEvent sendEvent;
             sendEvent.setType(ntca::SendEventType::e_ERROR);
             sendEvent.setContext(sendContext);
 
-            callbackVector[i].dispatch(self,
-                                       sendEvent,
-                                       d_proactorStrand_sp,
-                                       self,
-                                       defer,
-                                       &d_mutex);
+            if (sendCallback) {
+                sendCallback.dispatch(self,
+                                      sendEvent,
+                                      d_proactorStrand_sp,
+                                      self,
+                                      defer,
+                                      &d_mutex);
+            }
         }
 
         callbackVector.clear();
@@ -1281,6 +1326,9 @@ void DatagramSocket::privateShutdownSequencePart2(
         }
 
         d_resolver.reset();
+
+        d_sendDeflater_sp.reset();
+        d_receiveInflater_sp.reset();
 
         d_sessionStrand_sp.reset();
         d_session_sp.reset();
@@ -1804,6 +1852,33 @@ ntsa::Error DatagramSocket::privateOpen(
         return error;
     }
 
+    if (d_options.compressionConfig().has_value()) {
+        if (d_options.compressionConfig().value().type() != 
+            ntca::CompressionType::e_UNDEFINED &&
+            d_options.compressionConfig().value().type() != 
+            ntca::CompressionType::e_NONE)
+        {
+            bsl::shared_ptr<ntci::CompressionDriver> compressionDriver;
+            error = ntcs::Plugin::lookupCompressionDriver(&compressionDriver);
+            if (error) {
+                return error;
+            }
+
+            bsl::shared_ptr<ntci::Compression> compression;
+            error = compressionDriver->createCompression(
+                &compression,
+                d_options.compressionConfig().value(),
+                d_dataPool_sp,
+                d_allocator_p);
+            if (error) {
+                return error;
+            }
+
+            d_sendDeflater_sp = compression;
+            d_receiveInflater_sp = compression;
+        }
+    }
+
     error = datagramSocket->setBlocking(false);
     if (error) {
         return error;
@@ -2059,11 +2134,14 @@ DatagramSocket::DatagramSocket(
 , d_flowControlState()
 , d_shutdownState()
 , d_sendQueue(basicAllocator)
+, d_sendDeflater_sp()
 , d_sendRateLimiter_sp()
 , d_sendRateTimer_sp()
 , d_sendPending(false)
 , d_sendGreedily(NTCCFG_DEFAULT_DATAGRAM_SOCKET_WRITE_GREEDILY)
+, d_sendComplete(basicAllocator)
 , d_receiveQueue(basicAllocator)
+, d_receiveInflater_sp()
 , d_receiveRateLimiter_sp()
 , d_receiveRateTimer_sp()
 , d_receivePending(false)
@@ -2443,211 +2521,13 @@ ntsa::Error DatagramSocket::connect(const bsl::string&           name,
 ntsa::Error DatagramSocket::send(const bdlbb::Blob&       data,
                                  const ntca::SendOptions& options)
 {
-    bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
-
-    LockGuard lock(&d_mutex);
-
-    NTCI_LOG_CONTEXT();
-
-    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-
-    if (NTCCFG_UNLIKELY(NTCCFG_WARNING_PROMOTE(bsl::size_t, data.length()) >
-                        d_maxDatagramSize))
-    {
-        return ntsa::Error::invalid();
-    }
-
-    bsl::size_t effectiveHighWatermark = d_sendQueue.highWatermark();
-    if (!options.highWatermark().isNull()) {
-        effectiveHighWatermark = options.highWatermark().value();
-    }
-
-    if (NTCCFG_UNLIKELY(
-            d_sendQueue.isHighWatermarkViolated(effectiveHighWatermark)))
-    {
-        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
-    }
-
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntsa::Data> dataContainer =
-        d_dataPool_sp->createOutgoingData();
-
-    dataContainer->makeBlob(data);
-
-    ntcq::SendQueueEntry entry;
-    entry.setId(d_sendQueue.generateEntryId());
-    entry.setToken(options.token());
-    entry.setEndpoint(options.endpoint());
-    entry.setData(dataContainer);
-    entry.setLength(data.length());
-    entry.setTimestamp(bsls::TimeUtil::getTimer());
-
-    if (NTCCFG_UNLIKELY(!options.deadline().isNull())) {
-        ntca::TimerOptions timerOptions;
-        timerOptions.setOneShot(true);
-        timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
-        timerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
-        timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
-
-        ntci::TimerCallback timerCallback = this->createTimerCallback(
-            bdlf::BindUtil::bind(&DatagramSocket::processSendDeadlineTimer,
-                                 self,
-                                 bdlf::PlaceHolders::_1,
-                                 bdlf::PlaceHolders::_2,
-                                 entry.id()),
-            d_allocator_p);
-
-        bsl::shared_ptr<ntci::Timer> timer =
-            this->createTimer(timerOptions, timerCallback, d_allocator_p);
-
-        entry.setDeadline(options.deadline().value());
-        entry.setTimer(timer);
-
-        timer->schedule(options.deadline().value());
-    }
-
-    bool becameNonEmpty = d_sendQueue.pushEntry(entry);
-
-    NTCP_DATAGRAMSOCKET_LOG_WRITE_QUEUE_FILLED(d_sendQueue.size());
-
-    NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
-
-    if (d_sendQueue.authorizeHighWatermarkEvent()) {
-        NTCP_DATAGRAMSOCKET_LOG_WRITE_QUEUE_HIGH_WATERMARK(
-            d_sendQueue.highWatermark(),
-            d_sendQueue.size());
-
-        if (d_session_sp) {
-            ntca::WriteQueueEvent event;
-            event.setType(ntca::WriteQueueEventType::e_HIGH_WATERMARK);
-            event.setContext(d_sendQueue.context());
-
-            ntcs::Dispatch::announceWriteQueueHighWatermark(
-                d_session_sp,
-                self,
-                event,
-                d_sessionStrand_sp,
-                ntci::Strand::unknown(),
-                self,
-                true,
-                &d_mutex);
-        }
-    }
-
-    if (becameNonEmpty) {
-        this->privateRelaxFlowControl(self,
-                                      ntca::FlowControlType::e_SEND,
-                                      true,
-                                      false);
-    }
-
-    return ntsa::Error();
+    return this->send(data, options, d_sendComplete);
 }
 
 ntsa::Error DatagramSocket::send(const ntsa::Data&        data,
                                  const ntca::SendOptions& options)
 {
-    bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
-
-    LockGuard lock(&d_mutex);
-
-    NTCI_LOG_CONTEXT();
-
-    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-
-    if (NTCCFG_UNLIKELY(data.size() > d_maxDatagramSize)) {
-        return ntsa::Error::invalid();
-    }
-
-    bsl::size_t effectiveHighWatermark = d_sendQueue.highWatermark();
-    if (!options.highWatermark().isNull()) {
-        effectiveHighWatermark = options.highWatermark().value();
-    }
-
-    if (NTCCFG_UNLIKELY(
-            d_sendQueue.isHighWatermarkViolated(effectiveHighWatermark)))
-    {
-        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
-    }
-
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntsa::Data> dataContainer =
-        d_dataPool_sp->createOutgoingData();
-
-    *dataContainer = data;
-
-    ntcq::SendQueueEntry entry;
-    entry.setId(d_sendQueue.generateEntryId());
-    entry.setToken(options.token());
-    entry.setEndpoint(options.endpoint());
-    entry.setData(dataContainer);
-    entry.setLength(dataContainer->size());
-    entry.setTimestamp(bsls::TimeUtil::getTimer());
-
-    if (NTCCFG_UNLIKELY(!options.deadline().isNull())) {
-        ntca::TimerOptions timerOptions;
-        timerOptions.setOneShot(true);
-        timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
-        timerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
-        timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
-
-        ntci::TimerCallback timerCallback = this->createTimerCallback(
-            bdlf::BindUtil::bind(&DatagramSocket::processSendDeadlineTimer,
-                                 self,
-                                 bdlf::PlaceHolders::_1,
-                                 bdlf::PlaceHolders::_2,
-                                 entry.id()),
-            d_allocator_p);
-
-        bsl::shared_ptr<ntci::Timer> timer =
-            this->createTimer(timerOptions, timerCallback, d_allocator_p);
-
-        entry.setDeadline(options.deadline().value());
-        entry.setTimer(timer);
-
-        timer->schedule(options.deadline().value());
-    }
-
-    bool becameNonEmpty = d_sendQueue.pushEntry(entry);
-
-    NTCP_DATAGRAMSOCKET_LOG_WRITE_QUEUE_FILLED(d_sendQueue.size());
-
-    NTCS_METRICS_UPDATE_WRITE_QUEUE_SIZE(d_sendQueue.size());
-
-    if (d_sendQueue.authorizeHighWatermarkEvent()) {
-        NTCP_DATAGRAMSOCKET_LOG_WRITE_QUEUE_HIGH_WATERMARK(
-            d_sendQueue.highWatermark(),
-            d_sendQueue.size());
-
-        if (d_session_sp) {
-            ntca::WriteQueueEvent event;
-            event.setType(ntca::WriteQueueEventType::e_HIGH_WATERMARK);
-            event.setContext(d_sendQueue.context());
-
-            ntcs::Dispatch::announceWriteQueueHighWatermark(
-                d_session_sp,
-                self,
-                event,
-                d_sessionStrand_sp,
-                ntci::Strand::unknown(),
-                self,
-                true,
-                &d_mutex);
-        }
-    }
-
-    if (becameNonEmpty) {
-        this->privateRelaxFlowControl(self,
-                                      ntca::FlowControlType::e_SEND,
-                                      true,
-                                      false);
-    }
-
-    return ntsa::Error();
+    return this->send(data, options, d_sendComplete);
 }
 
 ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
@@ -2686,22 +2566,76 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
     if (NTCCFG_UNLIKELY(
             d_sendQueue.isHighWatermarkViolated(effectiveHighWatermark)))
     {
+        if (d_sendQueue.authorizeHighWatermarkEvent(effectiveHighWatermark)) {
+            NTCP_DATAGRAMSOCKET_LOG_WRITE_QUEUE_HIGH_WATERMARK(
+                effectiveHighWatermark,
+                d_sendQueue.size());
+
+            if (d_session_sp) {
+                ntca::WriteQueueEvent event;
+                event.setType(ntca::WriteQueueEventType::e_HIGH_WATERMARK);
+                event.setContext(d_sendQueue.context());
+
+                ntcs::Dispatch::announceWriteQueueHighWatermark(
+                    d_session_sp,
+                    self,
+                    event,
+                    d_sessionStrand_sp,
+                    ntci::Strand::unknown(),
+                    self,
+                    true,
+                    &d_mutex);
+            }
+        }
+
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
 
     ntsa::Error error;
 
+    ntca::SendContext context;
+
+    if (options.token().has_value()) {
+        context.setToken(options.token().value());
+    }
+
     bsl::shared_ptr<ntsa::Data> dataContainer =
         d_dataPool_sp->createOutgoingData();
 
-    dataContainer->makeBlob(data);
+    bsl::size_t dataLength = 0;
+
+    if (NTCCFG_LIKELY(!d_sendDeflater_sp)) {
+        dataContainer->makeBlob(data);
+        dataLength = static_cast<bsl::size_t>(data.length());
+    }
+    else {
+        bdlbb::Blob& deflatedData = dataContainer->makeBlob();
+
+        ntca::DeflateOptions deflateOptions;
+        ntca::DeflateContext deflateContext;
+
+        error = d_sendDeflater_sp->deflate(&deflateContext, 
+                                           &deflatedData, 
+                                           data, 
+                                           deflateOptions);
+        if (error) {
+            return error;
+        }
+
+        context.setCompressionType(deflateContext.compressionType());
+        context.setCompressionRatio(
+            static_cast<double>(deflateContext.bytesWritten()) / 
+            deflateContext.bytesRead());
+
+        dataLength = static_cast<bsl::size_t>(deflatedData.length());
+    }
 
     ntcq::SendQueueEntry entry;
     entry.setId(d_sendQueue.generateEntryId());
-    entry.setToken(options.token());
+    entry.setContext(context);
     entry.setEndpoint(options.endpoint());
     entry.setData(dataContainer);
-    entry.setLength(data.length());
+    entry.setLength(dataLength);
     entry.setTimestamp(bsls::TimeUtil::getTimer());
 
     if (callback) {
@@ -2804,22 +2738,77 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
     if (NTCCFG_UNLIKELY(
             d_sendQueue.isHighWatermarkViolated(effectiveHighWatermark)))
     {
+        if (d_sendQueue.authorizeHighWatermarkEvent(effectiveHighWatermark)) {
+            NTCP_DATAGRAMSOCKET_LOG_WRITE_QUEUE_HIGH_WATERMARK(
+                effectiveHighWatermark,
+                d_sendQueue.size());
+
+            if (d_session_sp) {
+                ntca::WriteQueueEvent event;
+                event.setType(ntca::WriteQueueEventType::e_HIGH_WATERMARK);
+                event.setContext(d_sendQueue.context());
+
+                ntcs::Dispatch::announceWriteQueueHighWatermark(
+                    d_session_sp,
+                    self,
+                    event,
+                    d_sessionStrand_sp,
+                    ntci::Strand::unknown(),
+                    self,
+                    true,
+                    &d_mutex);
+            }
+        }
+
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
 
     ntsa::Error error;
 
+    ntca::SendContext context;
+
+    if (options.token().has_value()) {
+        context.setToken(options.token().value());
+    }
+
     bsl::shared_ptr<ntsa::Data> dataContainer =
         d_dataPool_sp->createOutgoingData();
 
-    *dataContainer = data;
+    bsl::size_t dataLength = 0;
+
+    if (NTCCFG_LIKELY(!d_sendDeflater_sp)) {
+
+        *dataContainer = data;
+        dataLength = dataContainer->size();
+    }
+    else {
+        bdlbb::Blob& deflatedData = dataContainer->makeBlob();
+
+        ntca::DeflateOptions deflateOptions;
+        ntca::DeflateContext deflateContext;
+
+        error = d_sendDeflater_sp->deflate(&deflateContext, 
+                                           &deflatedData, 
+                                           data, 
+                                           deflateOptions);
+        if (error) {
+            return error;
+        }
+
+        context.setCompressionType(deflateContext.compressionType());
+        context.setCompressionRatio(
+            static_cast<double>(deflateContext.bytesWritten()) / 
+            deflateContext.bytesRead());
+
+        dataLength = static_cast<bsl::size_t>(deflatedData.length());
+    }
 
     ntcq::SendQueueEntry entry;
     entry.setId(d_sendQueue.generateEntryId());
-    entry.setToken(options.token());
+    entry.setContext(context);
     entry.setEndpoint(options.endpoint());
     entry.setData(dataContainer);
-    entry.setLength(dataContainer->size());
+    entry.setLength(dataLength);
     entry.setTimestamp(bsls::TimeUtil::getTimer());
 
     if (callback) {
@@ -3227,6 +3216,16 @@ ntsa::Error DatagramSocket::deregisterSession()
     return ntsa::Error();
 }
 
+ntsa::Error DatagramSocket::setWriteDeflater(
+        const bsl::shared_ptr<ntci::Compression>& compression)
+{
+    LockGuard lock(&d_mutex);
+
+    d_sendDeflater_sp = compression;
+
+    return ntsa::Error();
+}
+
 ntsa::Error DatagramSocket::setWriteRateLimiter(
     const bsl::shared_ptr<ntci::RateLimiter>& rateLimiter)
 {
@@ -3375,6 +3374,16 @@ ntsa::Error DatagramSocket::setWriteQueueWatermarks(bsl::size_t lowWatermark,
                 &d_mutex);
         }
     }
+
+    return ntsa::Error();
+}
+
+ntsa::Error DatagramSocket::setReadInflater(
+        const bsl::shared_ptr<ntci::Compression>& compression)
+{
+    LockGuard lock(&d_mutex);
+
+    d_receiveInflater_sp = compression;
 
     return ntsa::Error();
 }
@@ -3646,7 +3655,11 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
 
     ntci::SendCallback callback;
-    bool becameEmpty = d_sendQueue.removeEntryToken(&callback, token);
+    ntca::SendContext  context;
+
+    bool becameEmpty = d_sendQueue.removeEntryToken(&callback, 
+                                                    &context,
+                                                    token);
 
     if (becameEmpty) {
         this->privateApplyFlowControl(self,
@@ -3657,12 +3670,11 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
     }
 
     if (callback) {
-        ntca::SendContext sendContext;
-        sendContext.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
+        context.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
 
         ntca::SendEvent sendEvent;
         sendEvent.setType(ntca::SendEventType::e_ERROR);
-        sendEvent.setContext(sendContext);
+        sendEvent.setContext(context);
 
         callback.dispatch(self,
                           sendEvent,

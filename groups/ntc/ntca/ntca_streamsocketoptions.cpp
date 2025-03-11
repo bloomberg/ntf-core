@@ -23,7 +23,7 @@ BSLS_IDENT_RCSID(ntca_streamsocketoptions_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntca {
 
-StreamSocketOptions::StreamSocketOptions()
+StreamSocketOptions::StreamSocketOptions(bslma::Allocator* basicAllocator)
 : d_transport(ntsa::Transport::e_UNDEFINED)
 , d_sourceEndpoint()
 , d_reuseAddress(false)
@@ -55,10 +55,13 @@ StreamSocketOptions::StreamSocketOptions()
 , d_timestampIncomingData()
 , d_zeroCopyThreshold()
 , d_loadBalancingOptions()
+, d_compressionConfig()
+, d_serializationConfig(basicAllocator)
 {
 }
 
-StreamSocketOptions::StreamSocketOptions(const StreamSocketOptions& other)
+StreamSocketOptions::StreamSocketOptions(const StreamSocketOptions& other,
+                                         bslma::Allocator* basicAllocator)
 : d_transport(other.d_transport)
 , d_sourceEndpoint(other.d_sourceEndpoint)
 , d_reuseAddress(other.d_reuseAddress)
@@ -90,6 +93,8 @@ StreamSocketOptions::StreamSocketOptions(const StreamSocketOptions& other)
 , d_timestampIncomingData(other.d_timestampIncomingData)
 , d_zeroCopyThreshold(other.d_zeroCopyThreshold)
 , d_loadBalancingOptions(other.d_loadBalancingOptions)
+, d_compressionConfig(other.d_compressionConfig)
+, d_serializationConfig(other.d_serializationConfig, basicAllocator)
 {
 }
 
@@ -134,6 +139,8 @@ StreamSocketOptions& StreamSocketOptions::operator=(
         d_timestampIncomingData     = other.d_timestampIncomingData;
         d_zeroCopyThreshold         = other.d_zeroCopyThreshold;
         d_loadBalancingOptions      = other.d_loadBalancingOptions;
+        d_compressionConfig         = other.d_compressionConfig;
+        d_serializationConfig       = other.d_serializationConfig;
     }
 
     return *this;
@@ -298,6 +305,18 @@ void StreamSocketOptions::setLoadBalancingOptions(
     d_loadBalancingOptions = value;
 }
 
+void StreamSocketOptions::setCompressionConfig(
+    const ntca::CompressionConfig& value)
+{
+    d_compressionConfig = value;
+}
+
+void StreamSocketOptions::setSerializationConfig(
+    const ntca::SerializationConfig& value)
+{
+    d_serializationConfig = value;
+}
+
 ntsa::Transport::Value StreamSocketOptions::transport() const
 {
     return d_transport;
@@ -449,12 +468,6 @@ const bdlb::NullableValue<bool>& StreamSocketOptions::metrics() const
     return d_metrics;
 }
 
-const ntca::LoadBalancingOptions& StreamSocketOptions::loadBalancingOptions()
-    const
-{
-    return d_loadBalancingOptions;
-}
-
 const bdlb::NullableValue<bool>& StreamSocketOptions::timestampOutgoingData()
     const
 {
@@ -471,6 +484,24 @@ const bdlb::NullableValue<bsl::size_t>& StreamSocketOptions::
     zeroCopyThreshold() const
 {
     return d_zeroCopyThreshold;
+}
+
+const ntca::LoadBalancingOptions& StreamSocketOptions::loadBalancingOptions()
+    const
+{
+    return d_loadBalancingOptions;
+}
+
+const bdlb::NullableValue<ntca::CompressionConfig>& 
+StreamSocketOptions::compressionConfig() const
+{
+    return d_compressionConfig;
+}
+
+const bdlb::NullableValue<ntca::SerializationConfig>& 
+StreamSocketOptions::serializationConfig() const
+{
+    return d_serializationConfig;
 }
 
 bool StreamSocketOptions::abortiveClose() const
@@ -517,6 +548,17 @@ bsl::ostream& StreamSocketOptions::print(bsl::ostream& stream,
     printer.printAttribute("timestampIncomingData", d_timestampIncomingData);
     printer.printAttribute("zeroCopyThreshold", d_zeroCopyThreshold);
     printer.printAttribute("loadBalancingOptions", d_loadBalancingOptions);
+
+    if (d_compressionConfig.has_value()) {
+        printer.printAttribute("compressionConfig", 
+                               d_compressionConfig.value());
+    }
+
+    if (d_serializationConfig.has_value()) {
+        printer.printAttribute("serializationConfig", 
+                               d_serializationConfig.value());
+    }
+
     printer.end();
     return stream;
 }
@@ -552,7 +594,9 @@ bool operator==(const StreamSocketOptions& lhs, const StreamSocketOptions& rhs)
            lhs.timestampOutgoingData() == rhs.timestampOutgoingData() &&
            lhs.timestampIncomingData() == rhs.timestampIncomingData() &&
            lhs.zeroCopyThreshold() == rhs.zeroCopyThreshold() &&
-           lhs.loadBalancingOptions() == rhs.loadBalancingOptions();
+           lhs.loadBalancingOptions() == rhs.loadBalancingOptions() &&
+           lhs.compressionConfig() == rhs.compressionConfig() &&
+           lhs.serializationConfig() == rhs.serializationConfig();
 }
 
 bool operator!=(const StreamSocketOptions& lhs, const StreamSocketOptions& rhs)

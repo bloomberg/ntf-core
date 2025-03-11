@@ -41,6 +41,11 @@
 #include <ntca_bindeventtype.cpp>
 #include <ntca_bindoptions.cpp>
 #include <ntca_bindtoken.cpp>
+#include <ntca_checksum.cpp>
+#include <ntca_checksumtype.cpp>
+#include <ntca_compressionconfig.cpp>
+#include <ntca_compressiongoal.cpp>
+#include <ntca_compressiontype.cpp>
 #include <ntca_connectcontext.cpp>
 #include <ntca_connectevent.cpp>
 #include <ntca_connecteventtype.cpp>
@@ -49,6 +54,8 @@
 #include <ntca_datagramsocketevent.cpp>
 #include <ntca_datagramsocketeventtype.cpp>
 #include <ntca_datagramsocketoptions.cpp>
+#include <ntca_deflatecontext.cpp>
+#include <ntca_deflateoptions.cpp>
 #include <ntca_downgradecontext.cpp>
 #include <ntca_downgradeevent.cpp>
 #include <ntca_downgradeeventtype.cpp>
@@ -97,6 +104,8 @@
 #include <ntca_getservicenameeventtype.cpp>
 #include <ntca_getservicenameoptions.cpp>
 #include <ntca_interfaceconfig.cpp>
+#include <ntca_inflatecontext.cpp>
+#include <ntca_inflateoptions.cpp>
 #include <ntca_listenersocketevent.cpp>
 #include <ntca_listenersocketeventtype.cpp>
 #include <ntca_listenersocketoptions.cpp>
@@ -127,6 +136,8 @@
 #include <ntca_sendeventtype.cpp>
 #include <ntca_sendoptions.cpp>
 #include <ntca_sendtoken.cpp>
+#include <ntca_serializationconfig.cpp>
+#include <ntca_serializationtype.cpp>
 #include <ntca_shutdowncontext.cpp>
 #include <ntca_shutdownevent.cpp>
 #include <ntca_shutdowneventtype.cpp>
@@ -170,6 +181,8 @@
 #include <ntci_closecallbackfactory.cpp>
 #include <ntci_closefuture.cpp>
 #include <ntci_closeresult.cpp>
+#include <ntci_compression.cpp>
+#include <ntci_compressiondriver.cpp>
 #include <ntci_connectcallback.cpp>
 #include <ntci_connectcallbackfactory.cpp>
 #include <ntci_connectfuture.cpp>
@@ -244,6 +257,7 @@
 #include <ntci_sender.cpp>
 #include <ntci_sendfuture.cpp>
 #include <ntci_sendresult.cpp>
+#include <ntci_serialization.cpp>
 #include <ntci_strand.cpp>
 #include <ntci_strandfactory.cpp>
 #include <ntci_streamsocket.cpp>
@@ -263,6 +277,8 @@
 #include <ntci_upgradable.cpp>
 #include <ntci_upgradecallback.cpp>
 #include <ntci_upgradecallbackfactory.cpp>
+#include <ntci_upgradefuture.cpp>
+#include <ntci_upgraderesult.cpp>
 #include <ntci_user.cpp>
 #include <ntci_waiter.cpp>
 
@@ -326,6 +342,7 @@
 // ntcd
 
 #include <ntcd_blobbufferfactory.cpp>
+#include <ntcd_compression.cpp>
 #include <ntcd_datagramsocket.cpp>
 #include <ntcd_datapool.cpp>
 #include <ntcd_datautil.cpp>
@@ -352,6 +369,10 @@
 #include <ntcdns_system.cpp>
 #include <ntcdns_utility.cpp>
 #include <ntcdns_vocabulary.cpp>
+
+// ntctlc
+
+#include <ntctlc_plugin.cpp>
 
 // ntctls
 

@@ -77,6 +77,8 @@ InterfaceConfig::InterfaceConfig(bslma::Allocator* basicAllocator)
 , d_socketMetricsPerHandle()
 , d_resolverEnabled()
 , d_resolverConfig(basicAllocator)
+, d_compressionConfig()
+, d_serializationConfig(basicAllocator)
 {
 }
 
@@ -134,6 +136,8 @@ InterfaceConfig::InterfaceConfig(const InterfaceConfig& other,
 , d_socketMetricsPerHandle(other.d_socketMetricsPerHandle)
 , d_resolverEnabled(other.d_resolverEnabled)
 , d_resolverConfig(other.d_resolverConfig, basicAllocator)
+, d_compressionConfig(other.d_compressionConfig)
+, d_serializationConfig(other.d_serializationConfig, basicAllocator)
 {
 }
 
@@ -198,6 +202,8 @@ InterfaceConfig& InterfaceConfig::operator=(const InterfaceConfig& other)
         d_socketMetricsPerHandle    = other.d_socketMetricsPerHandle;
         d_resolverEnabled           = other.d_resolverEnabled;
         d_resolverConfig            = other.d_resolverConfig;
+        d_compressionConfig         = other.d_compressionConfig;
+        d_serializationConfig       = other.d_serializationConfig;
     }
 
     return *this;
@@ -461,6 +467,18 @@ void InterfaceConfig::setResolverEnabled(bool value)
 void InterfaceConfig::setResolverConfig(const ntca::ResolverConfig& value)
 {
     d_resolverConfig = value;
+}
+
+void InterfaceConfig::setCompressionConfig(
+    const ntca::CompressionConfig& value)
+{
+    d_compressionConfig = value;
+}
+
+void InterfaceConfig::setSerializationConfig(
+    const ntca::SerializationConfig& value)
+{
+    d_serializationConfig = value;
 }
 
 const bsl::string& InterfaceConfig::driverName() const
@@ -745,6 +763,18 @@ const bdlb::NullableValue<ntca::ResolverConfig>& InterfaceConfig::
     return d_resolverConfig;
 }
 
+const bdlb::NullableValue<ntca::CompressionConfig>& 
+InterfaceConfig::compressionConfig() const
+{
+    return d_compressionConfig;
+}
+
+const bdlb::NullableValue<ntca::SerializationConfig>& 
+InterfaceConfig::serializationConfig() const
+{
+    return d_serializationConfig;
+}
+
 bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
                                      int           level,
                                      int           spacesPerLevel) const
@@ -962,6 +992,16 @@ bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
 
     if (!d_resolverConfig.isNull()) {
         printer.printAttribute("resolverConfig", d_resolverConfig);
+    }
+
+    if (d_compressionConfig.has_value()) {
+        printer.printAttribute("compressionConfig", 
+                               d_compressionConfig.value());
+    }
+
+    if (d_serializationConfig.has_value()) {
+        printer.printAttribute("serializationConfig", 
+                               d_serializationConfig.value());
     }
 
     printer.end();

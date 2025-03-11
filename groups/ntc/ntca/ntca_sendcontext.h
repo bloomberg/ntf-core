@@ -19,9 +19,12 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_compressiontype.h>
+#include <ntca_sendtoken.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_error.h>
+#include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
 #include <bsl_iosfwd.h>
 
@@ -33,6 +36,23 @@ namespace ntca {
 /// @par Attributes
 /// This class is composed of the following attributes.
 ///
+/// @li @b token:
+/// The token used to cancel the operation. This token matches the token
+/// specified in the corresponding send options, if any.
+///
+/// @li @b compressionType:
+/// The compression algorithm used to deflate the user's data before
+/// transmission, if any. If unspecified, no compression was performed.
+///
+/// @li @b compressionRatio:
+/// The ratio of deflated size of the data actually transmitted to the size of
+/// the original data desired to be sent. Note that value may be greater than
+/// one in the case of poorly-compressible data. If unspecified, no compression
+/// was performed.
+///
+/// @li @b error:
+/// The error detected when performing the operation.
+///
 /// @li @b error:
 /// The error detected when performing the operation.
 ///
@@ -42,7 +62,10 @@ namespace ntca {
 /// @ingroup module_ntci_operation_send
 class SendContext
 {
-    ntsa::Error d_error;
+    bdlb::NullableValue<ntca::SendToken>              d_token;
+    bdlb::NullableValue<ntca::CompressionType::Value> d_compressionType;
+    bdlb::NullableValue<double>                       d_compressionRatio;
+    ntsa::Error                                       d_error;
 
   public:
     /// Create a new send context having the default value.
@@ -55,40 +78,61 @@ class SendContext
     /// Destroy this object.
     ~SendContext();
 
-    /// Assign the value of the specified 'other' object to this object.
-    /// Return a reference to this modifiable object.
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object.
     SendContext& operator=(const SendContext& other);
 
-    /// Reset the value of this object to its value upon default
-    /// construction.
+    /// Reset the value of this object to its value upon default construction.
     void reset();
 
-    /// Set the error detected when performing the operation to the
-    /// specified 'value'.
+    /// Set the token used to cancel the operation to the specified 'value'.
+    void setToken(const ntca::SendToken& value);
+
+    /// Set the compression algorithm compression algorithm used to deflate the
+    /// user's data before transmission to the specified 'value'.
+    void setCompressionType(ntca::CompressionType::Value value);
+
+    /// Set the ratio of deflated size of the data actually transmitted to the
+    /// size of the original data desired to be sent to the specified 'value'.
+    void setCompressionRatio(double value);
+
+    /// Set the error detected when performing the operation to the specified
+    /// 'value'.
     void setError(const ntsa::Error& value);
+
+    /// Return the token used to cancel the operation.
+    const bdlb::NullableValue<ntca::SendToken>& token() const;
+
+    /// Return the compression algorithm compression algorithm used to deflate
+    /// the user's data before transmission.
+    const bdlb::NullableValue<ntca::CompressionType::Value>& 
+    compressionType() const;
+
+    /// Return the ratio of deflated size of the data actually transmitted to
+    /// the size of the original data desired to be sent.
+    const bdlb::NullableValue<double>& compressionRatio() const;
 
     /// Return the error detected when performing the operation.
     const ntsa::Error& error() const;
 
-    /// Return true if this object has the same value as the specified
-    /// 'other' object, otherwise return false.
+    /// Return true if this object has the same value as the specified 'other'
+    /// object, otherwise return false.
     bool equals(const SendContext& other) const;
 
-    /// Return true if the value of this object is less than the value of
-    /// the specified 'other' object, otherwise return false.
+    /// Return true if the value of this object is less than the value of the
+    /// specified 'other' object, otherwise return false.
     bool less(const SendContext& other) const;
 
-    /// Format this object to the specified output 'stream' at the
-    /// optionally specified indentation 'level' and return a reference to
-    /// the modifiable 'stream'.  If 'level' is specified, optionally
-    /// specify 'spacesPerLevel', the number of spaces per indentation level
-    /// for this and all of its nested objects.  Each line is indented by
-    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
-    /// negative, suppress indentation of the first line.  If
-    /// 'spacesPerLevel' is negative, suppress line breaks and format the
-    /// entire output on one line.  If 'stream' is initially invalid, this
-    /// operation has no effect.  Note that a trailing newline is provided
-    /// in multiline mode only.
+    /// Format this object to the specified output 'stream' at the optionally
+    /// specified indentation 'level' and return a reference to the modifiable
+    /// 'stream'.  If 'level' is specified, optionally specify
+    /// 'spacesPerLevel', the number of spaces per indentation level for this
+    /// and all of its nested objects.  Each line is indented by the absolute
+    /// value of 'level * spacesPerLevel'.  If 'level' is negative, suppress
+    /// indentation of the first line.  If 'spacesPerLevel' is negative,
+    /// suppress line breaks and format the entire output on one line.  If
+    /// 'stream' is initially invalid, this operation has no effect.  Note that
+    /// a trailing newline is provided in multiline mode only.
     bsl::ostream& print(bsl::ostream& stream,
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
@@ -137,13 +181,19 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SendContext& value);
 
 NTCCFG_INLINE
 SendContext::SendContext()
-: d_error()
+: d_token()
+, d_compressionType()
+, d_compressionRatio()
+, d_error()
 {
 }
 
 NTCCFG_INLINE
 SendContext::SendContext(const SendContext& original)
-: d_error(original.d_error)
+: d_token(original.d_token)
+, d_compressionType(original.d_compressionType)
+, d_compressionRatio(original.d_compressionRatio)
+, d_error(original.d_error)
 {
 }
 
@@ -155,20 +205,66 @@ SendContext::~SendContext()
 NTCCFG_INLINE
 SendContext& SendContext::operator=(const SendContext& other)
 {
-    d_error = other.d_error;
+    if (this != &other) {
+        d_token            = other.d_token;
+        d_compressionType  = other.d_compressionType;
+        d_compressionRatio = other.d_compressionRatio;
+        d_error            = other.d_error;
+    }
+
     return *this;
 }
 
 NTCCFG_INLINE
 void SendContext::reset()
 {
+    d_token.reset();
+    d_compressionType.reset();
+    d_compressionRatio.reset();
     d_error = ntsa::Error();
+}
+
+NTCCFG_INLINE
+void SendContext::setToken(const ntca::SendToken& value)
+{
+    d_token = value;
+}
+
+NTCCFG_INLINE
+void SendContext::setCompressionType(ntca::CompressionType::Value value)
+{
+    d_compressionType = value;
+}
+
+NTCCFG_INLINE
+void SendContext::setCompressionRatio(double value)
+{
+    d_compressionRatio = value;
 }
 
 NTCCFG_INLINE
 void SendContext::setError(const ntsa::Error& value)
 {
     d_error = value;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntca::SendToken>& SendContext::token() const
+{
+    return d_token;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntca::CompressionType::Value>& 
+SendContext::compressionType() const
+{
+    return d_compressionType;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<double>& SendContext::compressionRatio() const
+{
+    return d_compressionRatio;
 }
 
 NTCCFG_INLINE
@@ -206,6 +302,9 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SendContext& value)
 {
     using bslh::hashAppend;
 
+    hashAppend(algorithm, value.token());
+    hashAppend(algorithm, value.compressionType());
+    hashAppend(algorithm, value.compressionRatio());
     hashAppend(algorithm, value.error());
 }
 

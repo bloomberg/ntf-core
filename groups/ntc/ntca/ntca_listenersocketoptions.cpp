@@ -25,7 +25,7 @@ namespace ntca {
 
 const bool ListenerSocketOptions::k_DEFAULT_REUSE_ADDRESS = true;
 
-ListenerSocketOptions::ListenerSocketOptions()
+ListenerSocketOptions::ListenerSocketOptions(bslma::Allocator* basicAllocator)
 : d_transport(ntsa::Transport::e_UNDEFINED)
 , d_sourceEndpoint()
 , d_reuseAddress(k_DEFAULT_REUSE_ADDRESS)
@@ -61,11 +61,14 @@ ListenerSocketOptions::ListenerSocketOptions()
 , d_timestampIncomingData()
 , d_zeroCopyThreshold()
 , d_loadBalancingOptions()
+, d_compressionConfig()
+, d_serializationConfig(basicAllocator)
 {
 }
 
 ListenerSocketOptions::ListenerSocketOptions(
-    const ListenerSocketOptions& other)
+    const ListenerSocketOptions& other,
+    bslma::Allocator* basicAllocator)
 : d_transport(other.d_transport)
 , d_sourceEndpoint(other.d_sourceEndpoint)
 , d_reuseAddress(other.d_reuseAddress)
@@ -101,6 +104,8 @@ ListenerSocketOptions::ListenerSocketOptions(
 , d_timestampIncomingData(other.d_timestampIncomingData)
 , d_zeroCopyThreshold(other.d_zeroCopyThreshold)
 , d_loadBalancingOptions(other.d_loadBalancingOptions)
+, d_compressionConfig(other.d_compressionConfig)
+, d_serializationConfig(other.d_serializationConfig, basicAllocator)
 {
 }
 
@@ -149,6 +154,8 @@ ListenerSocketOptions& ListenerSocketOptions::operator=(
         d_timestampIncomingData     = other.d_timestampIncomingData;
         d_zeroCopyThreshold         = other.d_zeroCopyThreshold;
         d_loadBalancingOptions      = other.d_loadBalancingOptions;
+        d_compressionConfig         = other.d_compressionConfig;
+        d_serializationConfig       = other.d_serializationConfig;
     }
 
     return *this;
@@ -331,6 +338,18 @@ void ListenerSocketOptions::setLoadBalancingOptions(
     const ntca::LoadBalancingOptions& value)
 {
     d_loadBalancingOptions = value;
+}
+
+void ListenerSocketOptions::setCompressionConfig(
+    const ntca::CompressionConfig& value)
+{
+    d_compressionConfig = value;
+}
+
+void ListenerSocketOptions::setSerializationConfig(
+    const ntca::SerializationConfig& value)
+{
+    d_serializationConfig = value;
 }
 
 ntsa::Transport::Value ListenerSocketOptions::transport() const
@@ -531,6 +550,18 @@ const ntca::LoadBalancingOptions& ListenerSocketOptions::loadBalancingOptions()
     return d_loadBalancingOptions;
 }
 
+const bdlb::NullableValue<ntca::CompressionConfig>& 
+ListenerSocketOptions::compressionConfig() const
+{
+    return d_compressionConfig;
+}
+
+const bdlb::NullableValue<ntca::SerializationConfig>& 
+ListenerSocketOptions::serializationConfig() const
+{
+    return d_serializationConfig;
+}
+
 bsl::ostream& ListenerSocketOptions::print(bsl::ostream& stream,
                                            int           level,
                                            int           spacesPerLevel) const
@@ -575,6 +606,17 @@ bsl::ostream& ListenerSocketOptions::print(bsl::ostream& stream,
     printer.printAttribute("timestampIncomingData", d_timestampIncomingData);
     printer.printAttribute("zeroCopyThreshold", d_zeroCopyThreshold);
     printer.printAttribute("loadBalancingOptions", d_loadBalancingOptions);
+
+    if (d_compressionConfig.has_value()) {
+        printer.printAttribute("compressionConfig", 
+                               d_compressionConfig.value());
+    }
+
+    if (d_serializationConfig.has_value()) {
+        printer.printAttribute("serializationConfig", 
+                               d_serializationConfig.value());
+    }
+
     printer.end();
     return stream;
 }
@@ -615,7 +657,9 @@ bool operator==(const ListenerSocketOptions& lhs,
            lhs.timestampOutgoingData() == rhs.timestampOutgoingData() &&
            lhs.timestampIncomingData() == rhs.timestampIncomingData() &&
            lhs.zeroCopyThreshold() == rhs.zeroCopyThreshold() &&
-           lhs.loadBalancingOptions() == rhs.loadBalancingOptions();
+           lhs.loadBalancingOptions() == rhs.loadBalancingOptions() &&
+           lhs.compressionConfig() == rhs.compressionConfig() &&
+           lhs.serializationConfig() == rhs.serializationConfig();
 }
 
 bool operator!=(const ListenerSocketOptions& lhs,

@@ -71,6 +71,18 @@ if (${NTF_BUILD_WITH_NTS})
         ntf_group_requires(NAME nts DEPENDENCY bsl)
     endif()
 
+    if (${NTF_BUILD_WITH_LZ4})
+        ntf_group_requires(NAME nts DEPENDENCY liblz4)
+    endif()
+
+    if (${NTF_BUILD_WITH_ZSTD})
+        ntf_group_requires(NAME nts DEPENDENCY libzstd)
+    endif()
+
+    if (${NTF_BUILD_WITH_ZLIB})
+        ntf_group_requires(NAME nts DEPENDENCY zlib)
+    endif()
+
     if (${NTF_BUILD_WITH_OPENSSL})
         ntf_group_requires(NAME nts DEPENDENCY openssl)
     endif()
@@ -337,6 +349,18 @@ if (${NTF_BUILD_WITH_NTC})
         ntf_group_requires(NAME ntc DEPENDENCY bsl)
     endif()
 
+    if (${NTF_BUILD_WITH_LZ4})
+        ntf_group_requires(NAME ntc DEPENDENCY liblz4)
+    endif()
+
+    if (${NTF_BUILD_WITH_ZSTD})
+        ntf_group_requires(NAME ntc DEPENDENCY libzstd)
+    endif()
+
+    if (${NTF_BUILD_WITH_ZLIB})
+        ntf_group_requires(NAME ntc DEPENDENCY zlib)
+    endif()
+
     if (${NTF_BUILD_WITH_OPENSSL})
         ntf_group_requires(NAME ntc DEPENDENCY openssl)
     endif()
@@ -405,6 +429,11 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntca_bindcontext)
     ntf_component(NAME ntca_bindevent)
     ntf_component(NAME ntca_bindeventtype)
+    ntf_component(NAME ntca_checksum)
+    ntf_component(NAME ntca_checksumtype)
+    ntf_component(NAME ntca_compressionconfig)
+    ntf_component(NAME ntca_compressiongoal)
+    ntf_component(NAME ntca_compressiontype)
     ntf_component(NAME ntca_connecttoken)
     ntf_component(NAME ntca_connectoptions)
     ntf_component(NAME ntca_connectcontext)
@@ -413,6 +442,8 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntca_datagramsocketevent)
     ntf_component(NAME ntca_datagramsocketeventtype)
     ntf_component(NAME ntca_datagramsocketoptions)
+    ntf_component(NAME ntca_deflatecontext)
+    ntf_component(NAME ntca_deflateoptions)
     ntf_component(NAME ntca_downgradecontext)
     ntf_component(NAME ntca_downgradeevent)
     ntf_component(NAME ntca_downgradeeventtype)
@@ -460,6 +491,8 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntca_getendpointoptions)
     ntf_component(NAME ntca_getendpointevent)
     ntf_component(NAME ntca_getendpointeventtype)
+    ntf_component(NAME ntca_inflatecontext)
+    ntf_component(NAME ntca_inflateoptions)
     ntf_component(NAME ntca_listenersocketevent)
     ntf_component(NAME ntca_listenersocketeventtype)
     ntf_component(NAME ntca_listenersocketoptions)
@@ -491,6 +524,8 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntca_sendcontext)
     ntf_component(NAME ntca_sendevent)
     ntf_component(NAME ntca_sendeventtype)
+    ntf_component(NAME ntca_serializationconfig)
+    ntf_component(NAME ntca_serializationtype)
     ntf_component(NAME ntca_shutdowncontext)
     ntf_component(NAME ntca_shutdownevent)
     ntf_component(NAME ntca_shutdowneventtype)
@@ -538,6 +573,8 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntci_cancellation)
     ntf_component(NAME ntci_chronology)
     ntf_component(NAME ntci_clock)
+    ntf_component(NAME ntci_compression)
+    ntf_component(NAME ntci_compressiondriver)
     ntf_component(NAME ntci_connector)
     ntf_component(NAME ntci_connectcallback)
     ntf_component(NAME ntci_connectcallbackfactory)
@@ -616,6 +653,7 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntci_sendcallbackfactory)
     ntf_component(NAME ntci_sendfuture)
     ntf_component(NAME ntci_sendresult)
+    ntf_component(NAME ntci_serialization)
     ntf_component(NAME ntci_strand)
     ntf_component(NAME ntci_strandfactory)
     ntf_component(NAME ntci_streamsocket)
@@ -636,6 +674,8 @@ if (${NTF_BUILD_WITH_NTC})
     ntf_component(NAME ntci_upgradable)
     ntf_component(NAME ntci_upgradecallback)
     ntf_component(NAME ntci_upgradecallbackfactory)
+    ntf_component(NAME ntci_upgradefuture)
+    ntf_component(NAME ntci_upgraderesult)
     ntf_component(NAME ntci_user)
     ntf_component(NAME ntci_waiter)
 
@@ -735,6 +775,7 @@ if (${NTF_BUILD_WITH_NTC})
     )
 
     ntf_component(NAME ntcd_blobbufferfactory)
+    ntf_component(NAME ntcd_compression)
     ntf_component(NAME ntcd_datagramsocket)
     ntf_component(NAME ntcd_datapool)
     ntf_component(NAME ntcd_datautil)
@@ -780,6 +821,25 @@ if (${NTF_BUILD_WITH_NTC})
 
     ntf_package(
         NAME
+            ntctlc
+        REQUIRES
+            ntcscm
+            ntccfg
+            ntca
+            ntci
+            ntcs
+            ntcq
+            ntcd
+            ntcdns
+        PRIVATE
+    )
+
+    ntf_component(NAME ntctlc_plugin)
+
+    ntf_package_end(NAME ntctlc)
+
+    ntf_package(
+        NAME
             ntctls
         REQUIRES
             ntcscm
@@ -790,6 +850,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
         PRIVATE
     )
 
@@ -809,6 +870,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
             ntctls
         PRIVATE
     )
@@ -838,6 +900,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
             ntctls
             ntcu
         PRIVATE
@@ -863,6 +926,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
             ntctls
             ntcu
         PRIVATE
@@ -888,6 +952,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
             ntctls
             ntcu
             ntcr
@@ -920,6 +985,7 @@ if (${NTF_BUILD_WITH_NTC})
             ntcq
             ntcd
             ntcdns
+            ntctlc
             ntctls
             ntcu
             ntcr

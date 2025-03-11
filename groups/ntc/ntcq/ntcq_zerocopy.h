@@ -19,6 +19,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_sendcontext.h>
 #include <ntci_datapool.h>
 #include <ntci_sendcallback.h>
 #include <ntcq_send.h>
@@ -180,6 +181,7 @@ class ZeroCopyEntry
     bool                        d_framed;
     bsl::shared_ptr<ntsa::Data> d_data_sp;
     ntsa::Error                 d_error;
+    ntca::SendContext           d_context;
     ntci::SendCallback          d_callback;
     bslma::Allocator*           d_allocator_p;
 
@@ -225,6 +227,9 @@ class ZeroCopyEntry
     /// Set the error encountered during transmission to the specified 'error'.
     void setError(const ntsa::Error& error);
 
+    /// Set the context to teh specified 'context'.
+    void setContext(const ntca::SendContext& context);
+
     /// Set the callback invoked when the data has been completely transmitted
     /// to the specified 'callback'.
     void setCallback(const ntci::SendCallback& callback);
@@ -255,6 +260,9 @@ class ZeroCopyEntry
 
     /// Return the error encountered during transmission, if any.
     ntsa::Error error() const;
+
+    /// Return the context.
+    const ntca::SendContext& context() const;
 
     /// Return the callback invoked when the data has been completely
     /// transmitted.
@@ -369,10 +377,11 @@ class ZeroCopyQueue
 
     /// Append a new zero-copy entry for the specified 'data' sent as part of
     /// the specified 'group'. When sending the 'data' is complete, the
-    /// specified 'callback' should be invoked. Return the first zero-copy
-    /// counter associated with this entry.
+    /// specified 'callback' should be invoked with the specified 'context. 
+    /// Return the first zero-copy counter associated with this entry.
     ntcq::ZeroCopyCounter push(ntcq::SendCounter         group,
                                const bdlbb::Blob&        data,
+                               const ntca::SendContext&  context,
                                const ntci::SendCallback& callback);
 
     /// Append a new zero-copy entry for the specified 'data' sent as part of
@@ -383,10 +392,11 @@ class ZeroCopyQueue
 
     /// Append a new zero-copy entry for the specified 'data' sent as part of
     /// the specified 'group'. When sending the 'data' is complete, the
-    /// specified 'callback' should be invoked. Return the first zero-copy
-    /// counter associated with this entry.
+    /// specified 'callback' should be invoked with the specified 'context'. 
+    /// Return the first zero-copy counter associated with this entry.
     ntcq::ZeroCopyCounter push(ntcq::SendCounter         group,
                                const ntsa::Data&         data,
+                               const ntca::SendContext&  context,
                                const ntci::SendCallback& callback);
 
     /// Append a new zero-copy entry for the specified 'data' sent as part of
@@ -397,10 +407,11 @@ class ZeroCopyQueue
 
     /// Append a new zero-copy entry the specified 'data' sent as part of the
     /// specified 'group'. When sending the 'data' is complete, the specified
-    /// 'callback' should be invoked. Return the first zero-copy counter
-    /// associated with this entry.
+    /// 'callback' should be invoked with the specified 'context'. Return the
+    /// first zero-copy counter associated with this entry.
     ntcq::ZeroCopyCounter push(ntcq::SendCounter                  group,
                                const bsl::shared_ptr<ntsa::Data>& data,
+                               const ntca::SendContext&           context,
                                const ntci::SendCallback&          callback);
 
     /// Extend the last zero-copy entry sent as part of the specified 'group'.
@@ -415,15 +426,10 @@ class ZeroCopyQueue
     /// Return the error.
     ntsa::Error update(const ntsa::ZeroCopy& zeroCopy);
 
-    /// Pop the oldest, completed entry and load its callback, if any, into the
-    /// specified 'result'. Return true if such and entry and callback exists,
-    /// otherwise return false.
-    bool pop(ntci::SendCallback* result);
-
-    /// Pop each completed entry and append its callback, if any, into the
-    /// specified 'result'. Return true if such and entry and callback exists,
-    /// otherwise return false.
-    bool pop(bsl::vector<ntci::SendCallback>* result);
+    /// Pop the oldest, completed entry and load its context and callback, if
+    /// any, into the specified 'context' and 'callback'. Return true if such
+    /// and entry and callback exists, otherwise return false.
+    bool pop(ntca::SendContext* context, ntci::SendCallback* callback);
 
     /// Remove all entries from the queue.
     void clear();
@@ -432,14 +438,18 @@ class ZeroCopyQueue
     /// each entry into the specified 'result'.
     void clear(bsl::vector<ntci::SendCallback>* result);
 
+    /// Remove all entries from the queue and load into the specified 'result'
+    /// each entry with a callback defined.
+    void clear(bsl::vector<ntcq::ZeroCopyEntry>* result);
+
     /// Return the allocator used to supply memory.
     bslma::Allocator* allocator() const;
 
     /// Load each entry into the specified 'result'.
     void load(bsl::vector<ntcq::ZeroCopyEntry>* result) const;
 
-    /// Return true if the queue a completed entry with a callback, otherwise
-    /// return false.
+    /// Return true if the queue has a completed entry with a callback,
+    /// otherwise return false.
     bool ready() const;
 
     /// This type accepts an allocator argument to its constructors and may
@@ -615,6 +625,7 @@ ZeroCopyEntry::ZeroCopyEntry(bslma::Allocator* basicAllocator)
 , d_framed(false)
 , d_data_sp()
 , d_error()
+, d_context()
 , d_callback(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -629,6 +640,7 @@ ZeroCopyEntry::ZeroCopyEntry(const ZeroCopyEntry& original,
 , d_framed(original.d_framed)
 , d_data_sp(original.d_data_sp)
 , d_error(original.d_error)
+, d_context(original.d_context)
 , d_callback(original.d_callback, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -649,6 +661,7 @@ ZeroCopyEntry& ZeroCopyEntry::operator=(const ZeroCopyEntry& other)
         d_framed   = other.d_framed;
         d_data_sp  = other.d_data_sp;
         d_error    = other.d_error;
+        d_context  = other.d_context;
         d_callback = other.d_callback;
     }
 
@@ -702,6 +715,12 @@ void ZeroCopyEntry::setError(const ntsa::Error& error)
 }
 
 NTCCFG_INLINE
+void ZeroCopyEntry::setContext(const ntca::SendContext& context)
+{
+    d_context = context;
+}
+
+NTCCFG_INLINE
 void ZeroCopyEntry::setCallback(const ntci::SendCallback& callback)
 {
     d_callback = callback;
@@ -745,6 +764,12 @@ NTCCFG_INLINE
 ntsa::Error ZeroCopyEntry::error() const
 {
     return d_error;
+}
+
+NTCCFG_INLINE
+const ntca::SendContext& ZeroCopyEntry::context() const
+{
+    return d_context;
 }
 
 NTCCFG_INLINE

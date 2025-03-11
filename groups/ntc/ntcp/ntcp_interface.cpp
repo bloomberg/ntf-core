@@ -509,6 +509,7 @@ Interface::Interface(
 , d_threadMap(basicAllocator)
 , d_threadSemaphore()
 , d_threadWatermark(0)
+, d_runState(k_RUN_STATE_STOPPED)
 , d_config(configuration, basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -608,6 +609,12 @@ ntsa::Error Interface::start()
 
     bsl::shared_ptr<ntci::Resolver> resolver;
 
+    if (d_runState.testAndSwap(k_RUN_STATE_STOPPED, k_RUN_STATE_STARTED) != 
+        k_RUN_STATE_STOPPED)
+    {
+        return ntsa::Error();
+    }
+
     {
         LockGuard lock(&d_mutex);
 
@@ -658,6 +665,12 @@ void Interface::shutdown()
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
+
+    if (d_runState.testAndSwap(k_RUN_STATE_STARTED, k_RUN_STATE_STOPPING) != 
+        k_RUN_STATE_STARTED)
+    {
+        return;
+    }
 
     NTCP_INTERFACE_LOG_STOPPING(d_config);
 
@@ -733,7 +746,9 @@ void Interface::linger()
         d_threadMap.clear();
     }
 
-    NTCP_INTERFACE_LOG_STOPPED(d_config);
+    if (d_runState.swap(k_RUN_STATE_STOPPED) != k_RUN_STATE_STOPPED) {
+        NTCP_INTERFACE_LOG_STOPPED(d_config);
+    }
 }
 
 ntsa::Error Interface::closeAll()

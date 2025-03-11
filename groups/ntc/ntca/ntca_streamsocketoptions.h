@@ -19,6 +19,8 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_compressionconfig.h>
+#include <ntca_serializationconfig.h>
 #include <ntca_loadbalancingoptions.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
@@ -186,8 +188,17 @@ namespace ntca {
 /// attempt a zero-copy send.
 ///
 /// @li @b loadBalancingOptions:
-/// The configurable parameters used select a
-///   reactor or proactor that drives the I/O for the socket.
+/// The configurable parameters used select a reactor or proactor that drives 
+/// the I/O for the socket.
+///
+/// @li @b compressionConfig:
+/// The configurable parameters used to automatically apply compression to 
+/// all outgoing and incoming traffic. If not specified, no compression is 
+/// used.
+///
+/// @li @b serializationConfig:
+/// The configurable parameters of the serialization mechanism used by this
+/// socket.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -226,14 +237,21 @@ class StreamSocketOptions
     bdlb::NullableValue<bool>           d_timestampIncomingData;
     bdlb::NullableValue<bsl::size_t>    d_zeroCopyThreshold;
     ntca::LoadBalancingOptions          d_loadBalancingOptions;
+    bdlb::NullableValue<ntca::CompressionConfig> d_compressionConfig;
+    bdlb::NullableValue<ntca::SerializationConfig> d_serializationConfig;
 
   public:
-    /// Create new stream socket options.
-    StreamSocketOptions();
+    /// Create new stream socket options. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the
+    /// currently installed default allocator is used.
+    explicit StreamSocketOptions(bslma::Allocator* basicAllocator = 0);
 
-    /// Create new stream socket options having the same value as the
-    /// specified 'other' object.
-    StreamSocketOptions(const StreamSocketOptions& other);
+    /// Create new stream socket options having the same value as the specified
+    /// 'other' object. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    StreamSocketOptions(const StreamSocketOptions& other,
+                        bslma::Allocator*          basicAllocator = 0);
 
     /// Destroy this object.
     ~StreamSocketOptions();
@@ -350,6 +368,12 @@ class StreamSocketOptions
     /// Set the load balancing options to the specified 'value'.
     void setLoadBalancingOptions(const ntca::LoadBalancingOptions& value);
 
+    /// Set the compression configuration to the specified 'value'.
+    void setCompressionConfig(const ntca::CompressionConfig& value);
+
+    /// Set the serialization configuration to the specified 'value'.
+    void setSerializationConfig(const ntca::SerializationConfig& value);
+
     /// Return the transport.
     ntsa::Transport::Value transport() const;
 
@@ -452,6 +476,14 @@ class StreamSocketOptions
 
     /// Return the load balancing options.
     const ntca::LoadBalancingOptions& loadBalancingOptions() const;
+
+    /// Return the compression configuration.
+    const bdlb::NullableValue<ntca::CompressionConfig>& 
+    compressionConfig() const;
+
+    /// Return the serialization configuration.
+    const bdlb::NullableValue<ntca::SerializationConfig>& 
+    serializationConfig() const;
 
     /// Return true if the linger flag is true and the linger duration
     /// is zero, indicating an abortive closure should be performed rather

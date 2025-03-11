@@ -41,6 +41,7 @@
 // #include <ntca_bindeventtype.t.cpp>
 // #include <ntca_bindoptions.t.cpp>
 // #include <ntca_bindtoken.t.cpp>
+#include <ntca_checksum.t.cpp>
 // #include <ntca_connectcontext.t.cpp>
 // #include <ntca_connectevent.t.cpp>
 // #include <ntca_connecteventtype.t.cpp>
@@ -326,6 +327,7 @@
 // ntcd
 
 #include <ntcd_blobbufferfactory.t.cpp>
+#include <ntcd_compression.t.cpp>
 #include <ntcd_datagramsocket.t.cpp>
 #include <ntcd_datapool.t.cpp>
 #include <ntcd_datautil.t.cpp>
@@ -352,6 +354,10 @@
 #include <ntcdns_system.t.cpp>
 #include <ntcdns_utility.t.cpp>
 #include <ntcdns_vocabulary.t.cpp>
+
+// ntctlc
+
+#include <ntctlc_plugin.t.cpp>
 
 // ntctls
 

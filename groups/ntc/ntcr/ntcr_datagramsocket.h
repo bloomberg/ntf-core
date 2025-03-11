@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_datagramsocketoptions.h>
 #include <ntccfg_platform.h>
+#include <ntci_compression.h>
 #include <ntci_datagramsocket.h>
 #include <ntci_datagramsocketmanager.h>
 #include <ntci_datagramsocketsession.h>
@@ -104,6 +105,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntcq::ZeroCopyQueue                          d_zeroCopyQueue;
     bsl::size_t                                  d_zeroCopyThreshold;
     ntcq::SendQueue                              d_sendQueue;
+    bsl::shared_ptr<ntci::Compression>           d_sendDeflater_sp;
     bsl::shared_ptr<ntci::RateLimiter>           d_sendRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>                 d_sendRateTimer_sp;
     bool                                         d_sendGreedily;
@@ -111,10 +113,10 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntcq::SendCounter                            d_sendCounter;
     ntsa::ReceiveOptions                         d_receiveOptions;
     ntcq::ReceiveQueue                           d_receiveQueue;
+    bsl::shared_ptr<ntci::Compression>           d_receiveInflater_sp;
     bsl::shared_ptr<ntci::RateLimiter>           d_receiveRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>                 d_receiveRateTimer_sp;
     bool                                         d_receiveGreedily;
-    bsl::shared_ptr<bdlbb::Blob>                 d_receiveBlob_sp;
     bool                                         d_timestampOutgoingData;
     bool                                         d_timestampIncomingData;
     ntcu::TimestampCorrelator                    d_timestampCorrelator;
@@ -293,6 +295,28 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntsa::Error privateThrottleReceiveBuffer(
         const bsl::shared_ptr<DatagramSocket>& self);
 
+    /// Send the specified raw or already encrypted 'data' according to the
+    /// specified 'options'. When the 'data' is entirely copied to the
+    /// send buffer, invoke the specified 'callback' on the callback's
+    /// strand, if any.  Return the error.
+    ntsa::Error privateSend(const bsl::shared_ptr<DatagramSocket>& self,
+                            const bdlbb::Blob&                     data,
+                            const ntcq::SendState&                 state,
+                            const ntca::SendOptions&               options,
+                            const ntca::SendContext&               context,
+                            const ntci::SendCallback&              callback);
+
+    /// Send the specified raw or already encrypted 'data' according to the
+    /// specified 'options'. When the 'data' is entirely copied to the
+    /// send buffer, invoke the specified 'callback' on the callback's
+    /// strand, if any. Return the error.
+    ntsa::Error privateSend(const bsl::shared_ptr<DatagramSocket>& self,
+                            const ntsa::Data&                      data,
+                            const ntcq::SendState&                 state,
+                            const ntca::SendOptions&               options,
+                            const ntca::SendContext&               context,
+                            const ntci::SendCallback&              callback);
+
     /// Enqueue a message to the specified 'endpoint' having the specified
     /// 'data' to the socket send buffer. Return the error. The behavior is
     /// undefined unless 'd_mutex' is locked.
@@ -318,12 +342,21 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntsa::Error privateDequeueReceiveBuffer(
         const bsl::shared_ptr<DatagramSocket>& self,
         bdlb::NullableValue<ntsa::Endpoint>*   endpoint,
-        bdlbb::Blob*                           data);
+        bsl::shared_ptr<bdlbb::Blob>*          data);
+
+    /// Dequeue a raw or deflated message from from the socket receive buffer.
+    /// Append to the specified 'data' the data dequeued . Return the error.
+    ntsa::Error privateDequeueReceiveBufferRaw(
+        const bsl::shared_ptr<DatagramSocket>& self,
+        bdlb::NullableValue<ntsa::Endpoint>*   endpoint,
+        bsl::shared_ptr<bdlbb::Blob>*          data);
 
     /// Allocate a new blob assigned to 'd_receiveBlob_sp', if necessary
     /// and allocate sufficient capacity buffers to store the maximum
     /// datagram size. The behavior is undefined unless 'd_mutex' is locked.
-    void privateAllocateReceiveBlob();
+    void privateAllocateReceiveBlob(
+            const bsl::shared_ptr<DatagramSocket>& self,
+            bsl::shared_ptr<bdlbb::Blob>*          data);
 
     /// Rearm the interest in the writability of the socket in the reactor,
     /// if necessary. The behavior is undefined unless 'd_mutex' is locked.
@@ -895,6 +928,12 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntsa::Error setWriteRateLimiter(const bsl::shared_ptr<ntci::RateLimiter>&
                                         rateLimiter) BSLS_KEYWORD_OVERRIDE;
 
+    /// Set the write deflater to the specified 'compression' technique. Return
+    /// the error.
+    ntsa::Error setWriteDeflater(
+        const bsl::shared_ptr<ntci::Compression>& compression) 
+        BSLS_KEYWORD_OVERRIDE;
+
     /// Set the write queue low watermark to the specified 'lowWatermark'.
     /// Return the error.
     ntsa::Error setWriteQueueLowWatermark(bsl::size_t lowWatermark)
@@ -915,6 +954,12 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// the error.
     ntsa::Error setReadRateLimiter(const bsl::shared_ptr<ntci::RateLimiter>&
                                        rateLimiter) BSLS_KEYWORD_OVERRIDE;
+
+    /// Set the read inflater to the specified 'compression' technique. Return
+    /// the error.
+    ntsa::Error setReadInflater(
+        const bsl::shared_ptr<ntci::Compression>& compression)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Set the read queue low watermark to the specified 'lowWatermark'.
     /// Return the error.

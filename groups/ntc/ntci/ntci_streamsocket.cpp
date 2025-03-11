@@ -27,6 +27,22 @@ StreamSocket::~StreamSocket()
 {
 }
 
+ntsa::Error StreamSocket::setWriteDeflater(
+        const bsl::shared_ptr<ntci::Compression>& compression)
+{
+    NTCCFG_WARNING_UNUSED(compression);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error StreamSocket::setReadInflater(
+        const bsl::shared_ptr<ntci::Compression>& compression)
+{
+    NTCCFG_WARNING_UNUSED(compression);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error StreamSocket::setZeroCopyThreshold(bsl::size_t value)
 {
     NTCCFG_WARNING_UNUSED(value);

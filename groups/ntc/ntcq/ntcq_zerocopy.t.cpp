@@ -223,7 +223,8 @@ void ZeroCopyTest::Transfer::submit(ntcq::ZeroCopyQueue* zeroCopyQueue)
 
     for (bsl::size_t i = 0; i < d_numOperations; ++i) {
         if (i == 0) {
-            zeroCopyQueue->push(d_group, d_data_sp, callback);
+            ntca::SendContext context;
+            zeroCopyQueue->push(d_group, d_data_sp, context, callback);
         }
         else {
             zeroCopyQueue->push(d_group);
@@ -287,8 +288,10 @@ void ZeroCopyTest::invoke(ntcq::ZeroCopyQueue*                 zeroCopyQueue,
                           const bsl::shared_ptr<ntci::Sender>& sender,
                           bool                                 expected)
 {
+    ntca::SendContext  context;
     ntci::SendCallback callback;
-    bool               found = zeroCopyQueue->pop(&callback);
+
+    bool found = zeroCopyQueue->pop(&context, &callback);
     NTSCFG_TEST_EQ(found, expected);
 
     if (found) {
@@ -296,6 +299,7 @@ void ZeroCopyTest::invoke(ntcq::ZeroCopyQueue*                 zeroCopyQueue,
 
         ntca::SendEvent event;
         event.setType(ntca::SendEventType::e_COMPLETE);
+        event.setContext(context);
 
         callback(sender, event, ntci::Strand::unknown());
     }

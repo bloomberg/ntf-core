@@ -150,6 +150,8 @@ bsl::ostream& ZeroCopyEntry::print(bsl::ostream& stream,
         printer.printAttribute("range", d_rangeSet);
     }
 
+    printer.printAttribute("context", d_context);
+
     if (this->complete()) {
         printer.printAttribute("state", "COMPLETE");
     }
@@ -200,6 +202,7 @@ ntcq::ZeroCopyCounter ZeroCopyQueue::push(ntcq::SendCounter  group,
 
 ntcq::ZeroCopyCounter ZeroCopyQueue::push(ntcq::SendCounter         group,
                                           const bdlbb::Blob&        data,
+                                          const ntca::SendContext&  context,
                                           const ntci::SendCallback& callback)
 {
     BSLS_ASSERT(d_waitList.empty() || d_waitList.front().group() < group);
@@ -220,6 +223,7 @@ ntcq::ZeroCopyCounter ZeroCopyQueue::push(ntcq::SendCounter         group,
     entry.setData(dataContainer);
 
     if (callback) {
+        entry.setContext(context);
         entry.setCallback(callback);
     }
 
@@ -251,6 +255,7 @@ ntcq::ZeroCopyCounter ZeroCopyQueue::push(ntcq::SendCounter group,
 
 ntcq::ZeroCopyCounter ZeroCopyQueue::push(ntcq::SendCounter         group,
                                           const ntsa::Data&         data,
+                                          const ntca::SendContext&  context,
                                           const ntci::SendCallback& callback)
 {
     BSLS_ASSERT(d_waitList.empty() || d_waitList.front().group() < group);
@@ -271,6 +276,7 @@ ntcq::ZeroCopyCounter ZeroCopyQueue::push(ntcq::SendCounter         group,
     entry.setData(dataContainer);
 
     if (callback) {
+        entry.setContext(context);
         entry.setCallback(callback);
     }
 
@@ -299,6 +305,7 @@ ntcq::ZeroCopyCounter ZeroCopyQueue::push(
 ntcq::ZeroCopyCounter ZeroCopyQueue::push(
     ntcq::SendCounter                  group,
     const bsl::shared_ptr<ntsa::Data>& data,
+    const ntca::SendContext&           context,
     const ntci::SendCallback&          callback)
 {
     BSLS_ASSERT(d_waitList.empty() || d_waitList.front().group() < group);
@@ -314,6 +321,7 @@ ntcq::ZeroCopyCounter ZeroCopyQueue::push(
     entry.setData(data);
 
     if (callback) {
+        entry.setContext(context);
         entry.setCallback(callback);
     }
 
@@ -387,11 +395,13 @@ ntsa::Error ZeroCopyQueue::update(const ntsa::ZeroCopy& zeroCopy)
     return ntsa::Error();
 }
 
-bool ZeroCopyQueue::pop(ntci::SendCallback* result)
+bool ZeroCopyQueue::pop(ntca::SendContext*  context, 
+                        ntci::SendCallback* callback)
 {
     while (!d_doneList.empty()) {
         if (d_doneList.front().callback()) {
-            *result = d_doneList.front().callback();
+            *context  = d_doneList.front().context();
+            *callback = d_doneList.front().callback();
             d_doneList.pop_front();
             return true;
         }
@@ -401,24 +411,6 @@ bool ZeroCopyQueue::pop(ntci::SendCallback* result)
     }
 
     return false;
-}
-
-bool ZeroCopyQueue::pop(bsl::vector<ntci::SendCallback>* result)
-{
-    bool found = false;
-
-    while (!d_doneList.empty()) {
-        if (d_doneList.front().callback()) {
-            result->push_back(d_doneList.front().callback());
-            d_doneList.pop_front();
-            found = true;
-        }
-        else {
-            d_doneList.pop_front();
-        }
-    }
-
-    return found;
 }
 
 void ZeroCopyQueue::clear()
@@ -449,6 +441,36 @@ void ZeroCopyQueue::clear(bsl::vector<ntci::SendCallback>* result)
             const ZeroCopyEntry& entry = *it;
             if (entry.callback()) {
                 result->push_back(entry.callback());
+            }
+        }
+    }
+
+    d_doneList.clear();
+    d_waitList.clear();
+}
+
+void ZeroCopyQueue::clear(bsl::vector<ntcq::ZeroCopyEntry>* result)
+{
+    if (!d_doneList.empty()) {
+        EntryList::iterator it = d_doneList.begin();
+        EntryList::iterator et = d_doneList.end();
+
+        for (; it != et; ++it) {
+            const ZeroCopyEntry& entry = *it;
+            if (entry.callback()) {
+                result->push_back(entry);
+            }
+        }
+    }
+
+    if (!d_waitList.empty()) {
+        EntryList::iterator it = d_waitList.begin();
+        EntryList::iterator et = d_waitList.end();
+
+        for (; it != et; ++it) {
+            const ZeroCopyEntry& entry = *it;
+            if (entry.callback()) {
+                result->push_back(entry);
             }
         }
     }

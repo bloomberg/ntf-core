@@ -109,13 +109,13 @@ class SendState
 class SendQueueEntry
 {
     bsl::uint64_t                           d_id;
-    bdlb::NullableValue<ntca::SendToken>    d_token;
     bdlb::NullableValue<ntsa::Endpoint>     d_endpoint;
     bsl::shared_ptr<ntsa::Data>             d_data_sp;
     bsl::size_t                             d_length;
     bsl::int64_t                            d_timestamp;
     bdlb::NullableValue<bsls::TimeInterval> d_deadline;
     bsl::shared_ptr<ntci::Timer>            d_timer_sp;
+    ntca::SendContext                       d_context;
     ntci::SendCallback                      d_callback;
     bool                                    d_inProgress;
     bool                                    d_zeroCopy;
@@ -213,14 +213,6 @@ class SendQueueEntry
     /// the specified 'id'.
     void setId(bsl::uint64_t id);
 
-    /// Set the token used to cancel the queue entry to the specified
-    /// 'token'.
-    void setToken(const ntca::SendToken& token);
-
-    /// Set the token used to cancel the queue entry to the specified
-    /// 'token'.
-    void setToken(const bdlb::NullableValue<ntca::SendToken>& token);
-
     /// Set the endpoint to the specified 'endpoint'.
     void setEndpoint(const ntsa::Endpoint& endpoint);
 
@@ -246,6 +238,9 @@ class SendQueueEntry
 
     /// Set the timer to the specified 'timer'.
     void setTimer(const bsl::shared_ptr<ntci::Timer>& timer);
+
+    /// Set the context to the specified 'context'.
+    void setContext(const ntca::SendContext& context);
 
     /// Set the callback to the specified 'callback'.
     void setCallback(const ntci::SendCallback& callback);
@@ -297,6 +292,9 @@ class SendQueueEntry
 
     /// Return the duration from the timestamp until now.
     bsls::TimeInterval delay() const;
+
+    /// Return the context.
+    const ntca::SendContext& context() const;
 
     /// Return the callback entry.
     const ntci::SendCallback& callback() const;
@@ -383,6 +381,16 @@ class SendQueue
     /// false.
     bool removeEntryId(ntci::SendCallback* result, bsl::uint64_t id);
 
+    /// Remove the entry having the specified 'id' and load its callback into
+    /// the specified 'result' and its context into the specified 'context', if
+    /// an entry with such an 'id' and defined callback and defined deadline
+    /// exists and has not already had any portion of its data copied to the
+    /// socket send buffer. Return true if queue becomes empty as a result of
+    /// this operation, otherwise return false.
+    bool removeEntryId(ntci::SendCallback* result, 
+                       ntca::SendContext*  context,
+                       bsl::uint64_t       id);
+
     /// Remove the entry having the specified 'token' and load its callback
     /// entry into the specified 'result', if an entry with such a 'token'
     /// and defined callback exists and has not already had any portion of
@@ -391,10 +399,25 @@ class SendQueue
     bool removeEntryToken(ntci::SendCallback*    result,
                           const ntca::SendToken& token);
 
+    /// Remove the entry having the specified 'token' and load its callback
+    /// entry into the specified 'result' and its context into the specified
+    /// 'context', if an entry with such a 'token' and defined callback exists
+    /// and has not already had any portion of its data copied to the socket
+    /// send buffer. Return true if queue becomes empty as a result of this
+    /// operation, otherwise return false.
+    bool removeEntryToken(ntci::SendCallback*    result,
+                          ntca::SendContext*     context,
+                          const ntca::SendToken& token);
+
     /// Load into the specified 'result' any pending callback entries and
     /// clear the queue. Return true if the queue was non-empty, and false
     /// otherwise.
     bool removeAll(bsl::vector<ntci::SendCallback>* result);
+
+    /// Load into the specified 'result' each pending entry with a defined
+    /// callback and clear the queue. Return true if the queue was non-empty,
+    /// and false otherwise.
+    bool removeAll(bsl::vector<ntcq::SendQueueEntry>* result);
 
     /// Set the data stored in the queue to the specified 'data'.
     void setData(const bsl::shared_ptr<bdlbb::Blob>& data);
@@ -506,13 +529,13 @@ ntcq::SendCounter SendState::counter() const
 NTCCFG_INLINE
 SendQueueEntry::SendQueueEntry(bslma::Allocator* basicAllocator)
 : d_id(0)
-, d_token()
 , d_endpoint()
 , d_data_sp()
 , d_length(0)
 , d_timestamp(0)
 , d_deadline()
 , d_timer_sp()
+, d_context()
 , d_callback(basicAllocator)
 , d_inProgress(false)
 , d_zeroCopy(false)
@@ -523,13 +546,13 @@ NTCCFG_INLINE
 SendQueueEntry::SendQueueEntry(const SendQueueEntry& original,
                                bslma::Allocator*     basicAllocator)
 : d_id(original.d_id)
-, d_token(original.d_token)
 , d_endpoint(original.d_endpoint)
 , d_data_sp(original.d_data_sp)
 , d_length(original.d_length)
 , d_timestamp(original.d_timestamp)
 , d_deadline(original.d_deadline)
 , d_timer_sp(original.d_timer_sp)
+, d_context(original.d_context)
 , d_callback(original.d_callback, basicAllocator)
 , d_inProgress(original.d_inProgress)
 , d_zeroCopy(original.d_zeroCopy)
@@ -545,19 +568,6 @@ NTCCFG_INLINE
 void SendQueueEntry::setId(bsl::uint64_t id)
 {
     d_id = id;
-}
-
-NTCCFG_INLINE
-void SendQueueEntry::setToken(const ntca::SendToken& token)
-{
-    d_token = token;
-}
-
-NTCCFG_INLINE
-void SendQueueEntry::setToken(
-    const bdlb::NullableValue<ntca::SendToken>& token)
-{
-    d_token = token;
 }
 
 NTCCFG_INLINE
@@ -611,6 +621,12 @@ void SendQueueEntry::setTimer(const bsl::shared_ptr<ntci::Timer>& timer)
 }
 
 NTCCFG_INLINE
+void SendQueueEntry::setContext(const ntca::SendContext& context)
+{
+    d_context = context;
+}
+
+NTCCFG_INLINE
 void SendQueueEntry::setCallback(const ntci::SendCallback& callback)
 {
     d_callback = callback;
@@ -652,7 +668,7 @@ bsl::uint64_t SendQueueEntry::id() const
 NTCCFG_INLINE
 const bdlb::NullableValue<ntca::SendToken>& SendQueueEntry::token() const
 {
-    return d_token;
+    return d_context.token();
 }
 
 NTCCFG_INLINE
@@ -698,6 +714,12 @@ bsls::TimeInterval SendQueueEntry::delay() const
     delay.setTotalNanoseconds(delayInNanoseconds);
 
     return delay;
+}
+
+NTCCFG_INLINE
+const ntca::SendContext& SendQueueEntry::context() const
+{
+    return d_context;
 }
 
 NTCCFG_INLINE
@@ -840,6 +862,47 @@ bool SendQueue::removeEntryId(ntci::SendCallback* result, bsl::uint64_t id)
 }
 
 NTCCFG_INLINE
+bool SendQueue::removeEntryId(ntci::SendCallback* result, 
+                              ntca::SendContext*  context,
+                              bsl::uint64_t       id)
+{
+    result->reset();
+    context->reset();
+
+    for (EntryList::iterator it = d_entryList.begin(); it != d_entryList.end();
+         ++it)
+    {
+        ntcq::SendQueueEntry& entry = *it;
+
+        if (entry.id() == id) {
+            if (!entry.deadline().isNull()) {
+                if (!entry.inProgress()) {
+                    if (entry.data()) {
+                        BSLS_ASSERT(entry.length() > 0);
+                        BSLS_ASSERT(entry.length() == entry.data()->size());
+                        BSLS_ASSERT(d_size >= entry.length());
+                        d_size -= entry.length();
+                    }
+
+                    entry.closeTimer();
+
+                    if (entry.callback()) {
+                        *result = entry.callback();
+                    }
+
+                    *context = entry.context();
+
+                    d_entryList.erase(it);
+                }
+            }
+            break;
+        }
+    }
+
+    return d_entryList.empty();
+}
+
+NTCCFG_INLINE
 bool SendQueue::removeEntryToken(ntci::SendCallback*    result,
                                  const ntca::SendToken& token)
 {
@@ -877,6 +940,46 @@ bool SendQueue::removeEntryToken(ntci::SendCallback*    result,
 }
 
 NTCCFG_INLINE
+bool SendQueue::removeEntryToken(ntci::SendCallback*    result,
+                                 ntca::SendContext*     context,
+                                 const ntca::SendToken& token)
+{
+    result->reset();
+
+    for (EntryList::iterator it = d_entryList.begin(); it != d_entryList.end();
+         ++it)
+    {
+        ntcq::SendQueueEntry& entry = *it;
+
+        if (!entry.token().isNull()) {
+            if (entry.token().value() == token) {
+                if (!entry.inProgress()) {
+                    if (entry.data()) {
+                        BSLS_ASSERT(entry.length() > 0);
+                        BSLS_ASSERT(entry.length() == entry.data()->size());
+                        BSLS_ASSERT(d_size >= entry.length());
+                        d_size -= entry.length();
+                    }
+
+                    entry.closeTimer();
+
+                    if (entry.callback()) {
+                        *result = entry.callback();
+                    }
+
+                    *context = entry.context();
+
+                    d_entryList.erase(it);
+                }
+                break;
+            }
+        }
+    }
+
+    return d_entryList.empty();
+}
+
+NTCCFG_INLINE
 bool SendQueue::removeAll(bsl::vector<ntci::SendCallback>* result)
 {
     bool nonEmpty = !d_entryList.empty();
@@ -890,6 +993,29 @@ bool SendQueue::removeAll(bsl::vector<ntci::SendCallback>* result)
 
         if (entry.callback()) {
             result->push_back(entry.callback());
+        }
+    }
+
+    d_entryList.clear();
+    d_size = 0;
+
+    return nonEmpty;
+}
+
+NTCCFG_INLINE
+bool SendQueue::removeAll(bsl::vector<ntcq::SendQueueEntry>* result)
+{
+    bool nonEmpty = !d_entryList.empty();
+
+    for (EntryList::iterator it = d_entryList.begin(); it != d_entryList.end();
+         ++it)
+    {
+        ntcq::SendQueueEntry& entry = *it;
+
+        entry.closeTimer();
+
+        if (entry.callback()) {
+            result->push_back(entry);
         }
     }
 

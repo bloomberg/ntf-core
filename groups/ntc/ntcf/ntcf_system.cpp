@@ -20,14 +20,15 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 
 #include <ntccfg_limits.h>
 #include <ntccfg_tune.h>
+#include <ntcd_compression.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcs_monitorable.h>
 #include <ntcs_authorization.h>
 #include <ntcs_compat.h>
 #include <ntcs_datapool.h>
 #include <ntcs_global.h>
 #include <ntcs_metrics.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_plugin.h>
 #include <ntcs_proactormetrics.h>
 #include <ntcs_processmetrics.h>
@@ -59,6 +60,7 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 #include <ntco_pollset.h>
 #include <ntco_select.h>
 
+#include <ntctlc_plugin.h>
 #include <ntctls_plugin.h>
 
 #include <bdlbb_pooledblobbufferfactory.h>
@@ -307,6 +309,7 @@ ntsa::Error System::initialize()
         ntcs::MonitorableUtil::initialize();
         ntcs::Plugin::initialize();
         ntcs::Global::initialize();
+        ntctlc::Plugin::initialize();
 
         // We use a new delete allocator instead of the global allocator here
         // because we want prevent a visible "memory leak" if the global
@@ -1370,6 +1373,49 @@ bsl::shared_ptr<ntci::Authorization> System::createAuthorization(
     authorization.createInplace(allocator);
 
     return authorization;
+}
+
+ntsa::Error System::createSerialization(
+    bsl::shared_ptr<ntci::Serialization>* result,
+    const ntca::SerializationConfig&      configuration,
+    bslma::Allocator*                     basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
+
+    bsl::shared_ptr<ntci::Serialization> serialization;
+    serialization.createInplace(allocator, configuration, allocator);
+
+    *result = serialization;
+
+    return ntsa::Error();
+}
+
+ntsa::Error System::createCompression(
+    bsl::shared_ptr<ntci::Compression>*    result,
+    const ntca::CompressionConfig&         configuration,
+    const bsl::shared_ptr<ntci::DataPool>& dataPool,
+    bslma::Allocator*                      basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    bsl::shared_ptr<ntci::CompressionDriver> compressionDriver;
+    error = ntcs::Plugin::lookupCompressionDriver(&compressionDriver);
+    if (error) {
+        return error;
+    }
+
+    return compressionDriver->createCompression(result,
+                                                configuration,
+                                                dataPool,
+                                                basicAllocator);
 }
 
 ntsa::Error System::createEncryptionClient(

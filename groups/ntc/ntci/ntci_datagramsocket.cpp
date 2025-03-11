@@ -27,6 +27,22 @@ DatagramSocket::~DatagramSocket()
 {
 }
 
+ntsa::Error DatagramSocket::setWriteDeflater(
+        const bsl::shared_ptr<ntci::Compression>& compression)
+{
+    NTCCFG_WARNING_UNUSED(compression);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error DatagramSocket::setReadInflater(
+        const bsl::shared_ptr<ntci::Compression>& compression)
+{
+    NTCCFG_WARNING_UNUSED(compression);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error DatagramSocket::setZeroCopyThreshold(bsl::size_t value)
 {
     NTCCFG_WARNING_UNUSED(value);

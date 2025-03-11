@@ -11,6 +11,11 @@ ntca_bindoptions
 ntca_bindcontext
 ntca_bindevent
 ntca_bindeventtype
+ntca_checksum
+ntca_checksumtype
+ntca_compressionconfig
+ntca_compressiongoal
+ntca_compressiontype
 ntca_connecttoken
 ntca_connectoptions
 ntca_connectcontext
@@ -19,6 +24,8 @@ ntca_connecteventtype
 ntca_datagramsocketevent
 ntca_datagramsocketeventtype
 ntca_datagramsocketoptions
+ntca_deflatecontext
+ntca_deflateoptions
 ntca_downgradecontext
 ntca_downgradeevent
 ntca_downgradeeventtype
@@ -66,6 +73,8 @@ ntca_getendpointcontext
 ntca_getendpointoptions
 ntca_getendpointevent
 ntca_getendpointeventtype
+ntca_inflatecontext
+ntca_inflateoptions
 ntca_listenersocketevent
 ntca_listenersocketeventtype
 ntca_listenersocketoptions
@@ -97,6 +106,8 @@ ntca_sendoptions
 ntca_sendcontext
 ntca_sendevent
 ntca_sendeventtype
+ntca_serializationconfig
+ntca_serializationtype
 ntca_shutdowncontext
 ntca_shutdownevent
 ntca_shutdowneventtype

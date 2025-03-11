@@ -11,6 +11,8 @@ RUN apt-get update && \
     ninja-build \
     pkg-config \
     libssl-dev \
+    liblz4-dev \
+    libzstd-dev \
     libz-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
