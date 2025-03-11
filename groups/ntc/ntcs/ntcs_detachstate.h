@@ -26,50 +26,120 @@ namespace BloombergLP {
 namespace ntcs {
 
 /// @internal @brief
+/// Provide a enumeration that indicates the detachment status of a socket from
+/// its reactor or proactor.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntcs
+class DetachMode
+{
+public:
+    /// Provide a enumeration that indicates the detachment status of a socket
+    /// from its reactor or proactor.
+    enum Value {
+        /// The socket is attached.
+        e_IDLE, 
+
+        /// The socket detachment has been initiated.
+        e_INITIATED
+    };
+};
+
+/// @internal @brief
+/// Provide a enumeration that indicates why a socket is being detached from
+/// its reactor or proactor.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntcs
+class DetachGoal
+{
+public:
+    /// Provide a enumeration that indicates why a socket is being detached
+    /// from its reactor or proactor.
+    enum Value {
+        /// The socket is being detached to be shutdown and closed.
+        e_CLOSE = 0,
+
+        /// The socket is being detached to be exported.
+        e_EXPORT = 1
+    };
+};
+
+/// @internal @brief
 /// Provide a enumeration that indicates state of a socket detachment process.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntcs
-
 class DetachState
 {
-  public:
-    enum Value { e_DETACH_IDLE, e_DETACH_INITIATED };
-
-    /// Create a new detachment state initially in idle state.
-    DetachState();
-
-    /// Create a new detachment state initially in the specified 'state'.
-    explicit DetachState(Value state);
-
-    /// Returns current value of socket detachment state
-    Value get() const
-    {
-        return d_state;
-    }
-
-    /// Sets socket detachment state to the specified 'state'
-    void set(Value state)
-    {
-        d_state = state;
-    }
+    ntcs::DetachMode::Value d_mode;
+    ntcs::DetachGoal::Value d_goal;
 
   private:
-    Value d_state;
+    DetachState(const DetachState&) BSLS_KEYWORD_DELETED;
+    DetachState& operator=(const DetachState&) BSLS_KEYWORD_DELETED;
+
+  public:
+    /// Create a new detachment state initially in idle state with the goal
+    /// to close the socket.
+    DetachState();
+
+    /// Destroy this object.
+    ~DetachState();
+
+    /// Set the mode to the specified 'mode'.
+    void setMode(ntcs::DetachMode::Value mode);
+
+    /// Set the goal to the specified 'goal'.
+    void setGoal(ntcs::DetachGoal::Value goal);
+
+    /// Return the mode.
+    ntcs::DetachMode::Value mode() const;
+
+    /// Return the goal.
+    ntcs::DetachGoal::Value goal() const;
 };
 
 NTCCFG_INLINE
 DetachState::DetachState()
-: d_state(e_DETACH_IDLE)
+: d_mode(ntcs::DetachMode::e_IDLE)
+, d_goal(ntcs::DetachGoal::e_CLOSE)
 {
 }
 
 NTCCFG_INLINE
-DetachState::DetachState(DetachState::Value state)
-: d_state(state)
+DetachState::~DetachState()
 {
+}
+
+NTCCFG_INLINE
+void DetachState::setMode(ntcs::DetachMode::Value mode)
+{
+    d_mode = mode;
+}
+
+NTCCFG_INLINE
+void DetachState::setGoal(ntcs::DetachGoal::Value goal)
+{
+    d_goal = goal;
+}
+
+NTCCFG_INLINE
+ntcs::DetachMode::Value DetachState::mode() const
+{
+    return d_mode;
+}
+
+NTCCFG_INLINE
+ntcs::DetachGoal::Value DetachState::goal() const
+{
+    return d_goal;
 }
 
 }  // end namespace ntcs

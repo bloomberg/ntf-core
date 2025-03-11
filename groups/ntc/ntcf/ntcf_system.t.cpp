@@ -363,6 +363,14 @@ class SystemTest
         const bsl::shared_ptr<ntci::Scheduler>& scheduler,
         bslma::Allocator*                       allocator);
 
+    static void concernStreamSocketRelease(
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
+
+    static void concernDatagramSocketRelease(
+            const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+            bslma::Allocator*                       allocator);
+
     static void concernInterfaceFunctionAndTimerDistribution(
         const bsl::shared_ptr<ntci::Scheduler>& scheduler,
         bslma::Allocator*                       allocator);
@@ -448,6 +456,8 @@ class SystemTest
     static void verifyStreamSocketSendDeadlineClose();
 
     static void verifyListenerSocketAcceptClose();
+    static void verifyStreamSocketRelease();
+    static void verifyDatagramSocketRelease();
 
     static void verifyInterfaceFunctionAndTimerDistribution();
 
@@ -10950,6 +10960,180 @@ void SystemTest::concernListenerSocketAcceptClose(
     NTCI_LOG_DEBUG("Listener socket accept cancellation test complete");
 }
 
+void SystemTest::concernStreamSocketRelease(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: Established stream and listener sockets may have their
+    // underlying socket handles "released" to remain open and valid even after
+    // closing an ntci::StreamSocket and ntci::ListenerSocket object.
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    ntsa::Error error;
+
+    // Create a listener socket.
+
+    ntca::ListenerSocketOptions listenerSocketOptions;
+    listenerSocketOptions.setTransport(transport);
+    listenerSocketOptions.setSourceEndpoint(SystemTest::any(transport));
+    listenerSocketOptions.setBacklog(1);
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+        scheduler->createListenerSocket(listenerSocketOptions, allocator);
+
+    error = listenerSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    error = listenerSocket->listen();
+    NTSCFG_TEST_OK(error);
+
+    // Initiate an asynchronous accept to accept a stream socket to act as the
+    // server.
+
+    ntca::AcceptOptions acceptOptions;
+    ntci::AcceptFuture  acceptFuture;
+
+    error = listenerSocket->accept(acceptOptions, acceptFuture);
+    NTSCFG_TEST_OK(error);
+
+    // Create a stream socket to act as the client.
+
+    ntca::StreamSocketOptions streamSocketOptions;
+    streamSocketOptions.setTransport(transport);
+
+    bsl::shared_ptr<ntci::StreamSocket> clientSocket =
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
+
+    // Connect the client socket to the listening socket's address.
+
+    ntca::ConnectOptions connectOptions;
+    ntci::ConnectFuture  connectFuture;
+
+    error = clientSocket->connect(listenerSocket->sourceEndpoint(),
+                                  connectOptions,
+                                  connectFuture);
+    NTSCFG_TEST_OK(error);
+
+    // Wait until the client socket is connected.
+
+    ntci::ConnectResult connectResult;
+    error = connectFuture.wait(&connectResult);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(connectResult.event().context().error());
+    connectResult.reset();
+
+    // Wait until the server socket is accepted.
+
+    ntci::AcceptResult acceptResult;
+    error = acceptFuture.wait(&acceptResult);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(acceptResult.event().context().error());
+
+    bsl::shared_ptr<ntci::StreamSocket> serverSocket = 
+        acceptResult.streamSocket();
+    NTSCFG_TEST_TRUE(serverSocket);
+    acceptResult.reset();
+
+    // We now have a connected client and server stream socket pair.
+
+    ntsa::Handle   clientHandle0         = clientSocket->handle();
+    ntsa::Endpoint clientSourceEndpoint0 = clientSocket->sourceEndpoint();
+    ntsa::Endpoint clientRemoteEndpoint0 = clientSocket->remoteEndpoint();
+
+    ntsa::Handle   serverHandle0         = serverSocket->handle();
+    ntsa::Endpoint serverSourceEndpoint0 = serverSocket->sourceEndpoint();
+    ntsa::Endpoint serverRemoteEndpoint0 = serverSocket->remoteEndpoint();
+
+    NTSCFG_TEST_NE(clientHandle0, ntsa::k_INVALID_HANDLE);
+    NTSCFG_TEST_NE(serverHandle0, ntsa::k_INVALID_HANDLE);
+
+    NTSCFG_TEST_EQ(clientRemoteEndpoint0, serverSourceEndpoint0);
+    NTSCFG_TEST_EQ(serverRemoteEndpoint0, clientSourceEndpoint0);
+
+    // Release the handle underneath the client socket into our control.
+
+    ntci::CloseFuture clientCloseFuture;
+
+    ntsa::Handle clientHandle1 = ntsa::k_INVALID_HANDLE;
+    error = clientSocket->release(&clientHandle1, clientCloseFuture);
+    NTSCFG_TEST_OK(error);
+
+    ntci::CloseResult clientCloseResult;
+    error = clientCloseFuture.wait(&clientCloseResult);
+    NTSCFG_TEST_OK(error);
+
+    // Release the handle underneath the server socket into our control.
+
+    ntci::CloseFuture serverCloseFuture;
+
+    ntsa::Handle serverHandle1 = ntsa::k_INVALID_HANDLE;
+    error = serverSocket->release(&serverHandle1, serverCloseFuture);
+    NTSCFG_TEST_OK(error);
+
+    ntci::CloseResult serverCloseResult;
+    error = serverCloseFuture.wait(&serverCloseResult);
+    NTSCFG_TEST_OK(error);
+
+    // Ensure the client socket handle is still valid.
+
+    NTSCFG_TEST_EQ(clientHandle1, clientHandle0);
+
+    ntsa::Endpoint clientSourceEndpoint1;
+    error = ntsf::System::getSourceEndpoint(&clientSourceEndpoint1, 
+                                            clientHandle1);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(clientSourceEndpoint1, clientSourceEndpoint0);
+
+    ntsa::Endpoint clientRemoteEndpoint1;
+    error = ntsf::System::getRemoteEndpoint(&clientRemoteEndpoint1, 
+                                            clientHandle1);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(clientRemoteEndpoint1, clientRemoteEndpoint0);
+
+    // Ensure the server socket handle is still valid.
+
+    NTSCFG_TEST_EQ(serverHandle1, serverHandle0);
+
+    ntsa::Endpoint serverSourceEndpoint1;
+    error = ntsf::System::getSourceEndpoint(&serverSourceEndpoint1, 
+                                            serverHandle1);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(serverSourceEndpoint1, serverSourceEndpoint0);
+
+    ntsa::Endpoint serverRemoteEndpoint1;
+    error = ntsf::System::getRemoteEndpoint(&serverRemoteEndpoint1, 
+                                            serverHandle1);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(serverRemoteEndpoint1, serverRemoteEndpoint0);
+
+    // Close the client and server socket handles.
+
+    ntsf::System::close(clientHandle1);
+    ntsf::System::close(serverHandle1);
+
+    // Close the listening socket.
+
+    ntci::CloseFuture listenerCloseFuture;
+    listenerSocket->close(listenerCloseFuture);
+
+    ntci::CloseResult listenerCloseResult;
+    error = listenerCloseFuture.wait(&listenerCloseResult);
+    NTSCFG_TEST_OK(error);
+}
+
+void SystemTest::concernDatagramSocketRelease(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: Established datagram sockets may have their underlying socket
+    // handles "released" to remain open and valid even after closing an
+    // ntci::DatagramSocket object.
+
+    // KKKK
+}
+
 void SystemTest::concernInterfaceFunctionAndTimerDistribution(
     const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
@@ -12421,6 +12605,18 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketSendDeadlineClose)
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyListenerSocketAcceptClose)
 {
     test::concern(&test::concernListenerSocketAcceptClose,
+                  NTSCFG_TEST_ALLOCATOR);
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketRelease)
+{
+    test::concern(&test::concernStreamSocketRelease,
+                  NTSCFG_TEST_ALLOCATOR);
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyDatagramSocketRelease)
+{
+    test::concern(&test::concernDatagramSocketRelease,
                   NTSCFG_TEST_ALLOCATOR);
 }
 
