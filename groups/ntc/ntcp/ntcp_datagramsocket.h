@@ -355,6 +355,11 @@ class DatagramSocket : public ntci::DatagramSocket,
         const ntca::ConnectOptions&            connectOptions,
         const ntci::ConnectCallback&           connectCallback);
 
+    /// Close the socket and invoke the specified 'callback' when the socket
+    /// is closed.
+    void privateClose(const bsl::shared_ptr<DatagramSocket>& self,
+                      const ntci::CloseCallback&             callback);
+
   public:
     /// Create a new, initially uninitialized datagram socket. Optionally
     /// specify a 'basicAllocator' used to supply memory. If
@@ -940,6 +945,39 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// to the specified 'mode' of shutdown. Return the error.
     ntsa::Error shutdown(ntsa::ShutdownType::Value direction,
                          ntsa::ShutdownMode::Value mode) BSLS_KEYWORD_OVERRIDE;
+
+    /// Release the underlying socket from ownership by this object, load the
+    /// socket handle into the specified 'result', and close this object.
+    /// Return the result. Note that the caller has the responsibility for
+    /// closing '*result'. Also note that this function automatically closes
+    /// this object, but neither shuts down nor closes '*result'. 
+    ntsa::Error release(ntsa::Handle* result) BSLS_KEYWORD_OVERRIDE;
+
+    /// Release the underlying socket from ownership by this object, load the
+    /// socket handle into the specified 'result', close this object, and
+    /// invoke the specified 'callback' on the callback's strand, if any, when
+    /// this object is closed. Return the result. Note that the caller has the
+    /// responsibility for closing '*result'. Also note that this function
+    /// automatically closes this object, but neither shuts down nor closes
+    /// '*result'. Also tote that callbacks created by this object will
+    /// automatically be invoked on this object's strand unless an explicit
+    /// strand is specified at the time the callback is created.
+    ntsa::Error release(ntsa::Handle*              result, 
+                        const ntci::CloseFunction& callback) 
+                        BSLS_KEYWORD_OVERRIDE;
+
+    /// Release the underlying socket from ownership by this object, load the
+    /// socket handle into the specified 'result', close this object, and
+    /// invoke the specified 'callback' on the callback's strand, if any, when
+    /// this object is closed. Return the result. Note that the caller has the
+    /// responsibility for closing '*result'. Also note that this function
+    /// automatically closes this object, but neither shuts down nor closes
+    /// '*result'. Also note that callbacks created by this object will
+    /// automatically be invoked on this object's strand unless an explicit
+    /// strand is specified at the time the callback is created.
+    ntsa::Error release(ntsa::Handle*              result,
+                        const ntci::CloseCallback& callback) 
+                        BSLS_KEYWORD_OVERRIDE;
 
     /// Close the datagram socket.
     void close() BSLS_KEYWORD_OVERRIDE;

@@ -30,25 +30,20 @@ class DetachStateTest
 {
   public:
     // TODO
-    static void verifyCase1();
-
-    // TODO
-    static void verifyCase2();
+    static void verify();
 };
 
-NTSCFG_TEST_FUNCTION(ntcs::DetachStateTest::verifyCase1)
+NTSCFG_TEST_FUNCTION(ntcs::DetachStateTest::verify)
 {
     ntcs::DetachState state;
-    NTSCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_IDLE);
+    NTSCFG_TEST_EQ(state.mode(), ntcs::DetachMode::e_IDLE);
+    NTSCFG_TEST_EQ(state.goal(), ntcs::DetachGoal::e_CLOSE);
 
-    state.set(ntcs::DetachState::e_DETACH_INITIATED);
-    NTSCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_INITIATED);
-}
+    state.setMode(ntcs::DetachMode::e_INITIATED);
+    NTSCFG_TEST_EQ(state.mode(), ntcs::DetachMode::e_INITIATED);
 
-NTSCFG_TEST_FUNCTION(ntcs::DetachStateTest::verifyCase2)
-{
-    ntcs::DetachState state(ntcs::DetachState::e_DETACH_INITIATED);
-    NTSCFG_TEST_EQ(state.get(), ntcs::DetachState::e_DETACH_INITIATED);
+    state.setGoal(ntcs::DetachGoal::e_EXPORT);
+    NTSCFG_TEST_EQ(state.goal(), ntcs::DetachGoal::e_EXPORT);
 }
 
 }  // close namespace ntcs

@@ -64,6 +64,30 @@ ntsa::Error DatagramSocket::timestampIncomingData(bool enable)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error DatagramSocket::release(ntsa::Handle* result)
+{
+    *result = ntsa::k_INVALID_HANDLE;
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error DatagramSocket::release(ntsa::Handle*              result, 
+                                    const ntci::CloseFunction& callback)
+{
+    NTCCFG_WARNING_UNUSED(callback);
+
+    *result = ntsa::k_INVALID_HANDLE;
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error DatagramSocket::release(ntsa::Handle*              result,
+                                    const ntci::CloseCallback& callback)
+{
+    NTCCFG_WARNING_UNUSED(callback);
+
+    *result = ntsa::k_INVALID_HANDLE;
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 void DatagramSocketCloseGuard::complete(bslmt::Semaphore* semaphore)
 {
     semaphore->post();

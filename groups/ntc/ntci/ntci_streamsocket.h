@@ -1588,6 +1588,37 @@ class StreamSocket : public ntsi::Descriptor,
     virtual ntsa::Error shutdown(ntsa::ShutdownType::Value direction,
                                  ntsa::ShutdownMode::Value mode) = 0;
 
+    /// Release the underlying socket from ownership by this object, load the
+    /// socket handle into the specified 'result', and close this object.
+    /// Return the result. Note that the caller has the responsibility for
+    /// closing '*result'. Also note that this function automatically closes
+    /// this object, but neither shuts down nor closes '*result'. 
+    virtual ntsa::Error release(ntsa::Handle* result);
+
+    /// Release the underlying socket from ownership by this object, load the
+    /// socket handle into the specified 'result', close this object, and
+    /// invoke the specified 'callback' on the callback's strand, if any, when
+    /// this object is closed. Return the result. Note that the caller has the
+    /// responsibility for closing '*result'. Also note that this function
+    /// automatically closes this object, but neither shuts down nor closes
+    /// '*result'. Also tote that callbacks created by this object will
+    /// automatically be invoked on this object's strand unless an explicit
+    /// strand is specified at the time the callback is created.
+    virtual ntsa::Error release(ntsa::Handle*              result, 
+                                const ntci::CloseFunction& callback);
+
+    /// Release the underlying socket from ownership by this object, load the
+    /// socket handle into the specified 'result', close this object, and
+    /// invoke the specified 'callback' on the callback's strand, if any, when
+    /// this object is closed. Return the result. Note that the caller has the
+    /// responsibility for closing '*result'. Also note that this function
+    /// automatically closes this object, but neither shuts down nor closes
+    /// '*result'. Also note that callbacks created by this object will
+    /// automatically be invoked on this object's strand unless an explicit
+    /// strand is specified at the time the callback is created.
+    virtual ntsa::Error release(ntsa::Handle*              result,
+                                const ntci::CloseCallback& callback);
+
     /// Close the stream socket.
     virtual void close() = 0;
 

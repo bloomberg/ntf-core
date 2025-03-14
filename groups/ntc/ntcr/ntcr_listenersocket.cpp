@@ -162,8 +162,8 @@ void ListenerSocket::processSocketReadable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
-    if (NTCCFG_UNLIKELY(d_detachState.get() ==
-                        ntcs::DetachState::e_DETACH_INITIATED))
+    if (NTCCFG_UNLIKELY(d_detachState.mode() ==
+                        ntcs::DetachMode::e_INITIATED))
     {
         return;
     }
@@ -222,7 +222,7 @@ void ListenerSocket::processSocketError(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
 
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
+    if (d_detachState.mode() == ntcs::DetachMode::e_INITIATED) {
         return;
     }
 
@@ -640,26 +640,30 @@ void ListenerSocket::privateShutdownSequenceComplete(
 
     if (lock) {
         d_mutex.lock();
-        BSLS_ASSERT(d_detachState.get() ==
-                    ntcs::DetachState::e_DETACH_INITIATED);
-        d_detachState.set(ntcs::DetachState::e_DETACH_IDLE);
+        BSLS_ASSERT(d_detachState.mode() ==
+                    ntcs::DetachMode::e_INITIATED);
+        d_detachState.setMode(ntcs::DetachMode::e_IDLE);
     }
     else {
-        BSLS_ASSERT(d_detachState.get() !=
-                    ntcs::DetachState::e_DETACH_INITIATED);
+        BSLS_ASSERT(d_detachState.mode() !=
+                    ntcs::DetachMode::e_INITIATED);
     }
 
     // Second, handle socket shutdown.
 
     if (context.shutdownSend()) {
-        if (d_socket_sp) {
-            d_socket_sp->shutdown(ntsa::ShutdownType::e_SEND);
+        if (d_detachState.goal() == ntcs::DetachGoal::e_CLOSE) {
+            if (d_socket_sp) {
+                d_socket_sp->shutdown(ntsa::ShutdownType::e_SEND);
+            }
         }
     }
 
     if (context.shutdownReceive()) {
-        if (d_socket_sp) {
-            d_socket_sp->shutdown(ntsa::ShutdownType::e_RECEIVE);
+        if (d_detachState.goal() == ntcs::DetachGoal::e_CLOSE) {
+            if (d_socket_sp) {
+                d_socket_sp->shutdown(ntsa::ShutdownType::e_RECEIVE);
+            }
         }
     }
 
@@ -811,7 +815,13 @@ void ListenerSocket::privateShutdownSequenceComplete(
             }
         }
 
-        d_socket_sp.reset();
+        if (d_detachState.goal() == ntcs::DetachGoal::e_CLOSE) {
+            d_socket_sp->close();
+        }
+        else {
+            d_socket_sp->release();
+        }
+
         d_systemHandle = ntsa::k_INVALID_HANDLE;
 
         NTCI_LOG_TRACE("Listener socket closed descriptor %d",
@@ -1005,14 +1015,14 @@ bool ListenerSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
-            BSLS_ASSERT(d_detachState.get() !=
-                        ntcs::DetachState::e_DETACH_INITIATED);
+            BSLS_ASSERT(d_detachState.mode() !=
+                        ntcs::DetachMode::e_INITIATED);
             ntsa::Error error = reactorRef->detachSocket(self, detachCallback);
             if (error) {
                 return false;
             }
             else {
-                d_detachState.set(ntcs::DetachState::e_DETACH_INITIATED);
+                d_detachState.setMode(ntcs::DetachMode::e_INITIATED);
                 return true;
             }
         }
@@ -1558,6 +1568,61 @@ void ListenerSocket::processSourceEndpointResolution(
     }
 }
 
+void ListenerSocket::privateClose(
+    const bsl::shared_ptr<ListenerSocket>& self,
+    const ntci::CloseCallback&             callback)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+
+    if (d_detachState.mode() == ntcs::DetachMode::e_INITIATED) {
+        d_deferredCalls.push_back(NTCCFG_BIND(
+            static_cast<void (ListenerSocket::*)(
+                const ntci::CloseCallback& callback)>(&ListenerSocket::close),
+            self,
+            callback));
+
+        return;
+    }
+
+    if (NTCCFG_UNLIKELY(d_acceptQueue.hasEntry())) {
+        ntca::AcceptQueueEvent event;
+        event.setType(ntca::AcceptQueueEventType::e_DISCARDED);
+        event.setContext(d_acceptQueue.context());
+
+        while (NTCCFG_LIKELY(d_acceptQueue.hasEntry())) {
+            bsl::shared_ptr<ntci::StreamSocket> streamSocket;
+            {
+                ntcq::AcceptQueueEntry& entry = d_acceptQueue.frontEntry();
+                streamSocket                  = entry.streamSocket();
+                d_acceptQueue.popEntry();
+            }
+
+            streamSocket->close();
+        }
+
+        if (d_session_sp) {
+            ntcs::Dispatch::announceAcceptQueueDiscarded(d_session_sp,
+                                                         self,
+                                                         event,
+                                                         d_sessionStrand_sp,
+                                                         d_reactorStrand_sp,
+                                                         self,
+                                                         true,
+                                                         &d_mutex);
+        }
+    }
+
+    BSLS_ASSERT(!d_closeCallback);
+    d_closeCallback = callback;
+    this->privateShutdown(self,
+                          ntsa::ShutdownType::e_BOTH,
+                          ntsa::ShutdownMode::e_IMMEDIATE,
+                          true);
+}
+
 ListenerSocket::ListenerSocket(
     const ntca::ListenerSocketOptions&        options,
     const bsl::shared_ptr<ntci::Resolver>&    resolver,
@@ -1599,7 +1664,7 @@ ListenerSocket::ListenerSocket(
 , d_acceptGreedily(NTCCFG_DEFAULT_LISTENER_SOCKET_ACCEPT_GREEDILY)
 , d_oneShot(reactor->oneShot())
 , d_options(options)
-, d_detachState(ntcs::DetachState::e_DETACH_IDLE)
+, d_detachState()
 , d_closeCallback(bslma::Default::allocator(basicAllocator))
 , d_deferredCalls(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -2501,6 +2566,41 @@ ntsa::Error ListenerSocket::shutdown()
     return ntsa::Error();
 }
 
+ntsa::Error ListenerSocket::release(ntsa::Handle* result)
+{
+    return this->release(result, ntci::CloseCallback());
+}
+
+ntsa::Error ListenerSocket::release(ntsa::Handle*              result, 
+                                    const ntci::CloseFunction& callback)
+{
+    return this->release(
+        result, this->createCloseCallback(callback, d_allocator_p));
+}
+
+ntsa::Error ListenerSocket::release(ntsa::Handle*              result,
+                                  const ntci::CloseCallback& callback)
+{
+    bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
+    
+    LockGuard lock(&d_mutex);
+
+    *result = ntsa::k_INVALID_HANDLE;
+
+    if (d_socket_sp) {
+        *result = d_socket_sp->handle();
+    }
+
+    if (*result == ntsa::k_INVALID_HANDLE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    d_detachState.setGoal(ntcs::DetachGoal::e_EXPORT);
+    this->privateClose(self, callback);
+
+    return ntsa::Error();
+}
+
 void ListenerSocket::close()
 {
     this->close(ntci::CloseCallback());
@@ -2517,55 +2617,7 @@ void ListenerSocket::close(const ntci::CloseCallback& callback)
 
     LockGuard lock(&d_mutex);
 
-    NTCI_LOG_CONTEXT();
-
-    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-
-    if (d_detachState.get() == ntcs::DetachState::e_DETACH_INITIATED) {
-        d_deferredCalls.push_back(NTCCFG_BIND(
-            static_cast<void (ListenerSocket::*)(
-                const ntci::CloseCallback& callback)>(&ListenerSocket::close),
-            self,
-            callback));
-
-        return;
-    }
-
-    if (NTCCFG_UNLIKELY(d_acceptQueue.hasEntry())) {
-        ntca::AcceptQueueEvent event;
-        event.setType(ntca::AcceptQueueEventType::e_DISCARDED);
-        event.setContext(d_acceptQueue.context());
-
-        while (NTCCFG_LIKELY(d_acceptQueue.hasEntry())) {
-            bsl::shared_ptr<ntci::StreamSocket> streamSocket;
-            {
-                ntcq::AcceptQueueEntry& entry = d_acceptQueue.frontEntry();
-                streamSocket                  = entry.streamSocket();
-                d_acceptQueue.popEntry();
-            }
-
-            streamSocket->close();
-        }
-
-        if (d_session_sp) {
-            ntcs::Dispatch::announceAcceptQueueDiscarded(d_session_sp,
-                                                         self,
-                                                         event,
-                                                         d_sessionStrand_sp,
-                                                         d_reactorStrand_sp,
-                                                         self,
-                                                         true,
-                                                         &d_mutex);
-        }
-    }
-
-    BSLS_ASSERT(!d_closeCallback);
-    d_closeCallback = callback;
-    this->privateShutdown(self,
-                          ntsa::ShutdownType::e_BOTH,
-                          ntsa::ShutdownMode::e_IMMEDIATE,
-                          true);
+    this->privateClose(self, callback);
 }
 
 void ListenerSocket::execute(const Functor& functor)
