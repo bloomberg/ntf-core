@@ -52,7 +52,7 @@ BSLS_IDENT_RCSID(ntctlc_plugin_cpp, "$Id$ $CSID$")
 #include <zlib.h>
 #endif
 
-// Uncomment and set to 1 to log the hex dump of all deflated and inflated 
+// Uncomment and set to 1 to log the hex dump of all deflated and inflated
 // data.
 #define NTCTLC_PLUGIN_LOG_HEX_DUMP 0
 
@@ -193,7 +193,7 @@ class Lz4 : public ntci::Compression
     /// Feed the input bytes available to the deflate algorithm and write
     /// any output bytes to the output buffer. Return the error.
     LZ4F_errorCode_t deflateCycle(bsl::size_t* numBytesRead,
-                                  bsl::size_t* numBytesWritten);    
+                                  bsl::size_t* numBytesWritten);
 
     /// Reset the deflater to prepare for a new frame. Return the error.
     ntsa::Error deflateReset();
@@ -410,7 +410,7 @@ class Zstd : public ntci::Compression
 
     /// Return the error associated with the specified zstd 'error' code
     /// detected when performing the specified 'operation'.
-    static ntsa::Error translateError(bsl::size_t error, 
+    static ntsa::Error translateError(bsl::size_t error,
                                       const char* operation);
 
   public:
@@ -860,7 +860,7 @@ ntsa::Error Lz4::deflateCreate()
         NTCI_LOG_ERROR("Failed to create compression context");
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
-    
+
 #else
 
     errorCode =
@@ -892,16 +892,16 @@ ntsa::Error Lz4::deflateCreate()
             LZ4F_contentChecksumEnabled;
     }
     else {
-        d_preferences.frameInfo.contentChecksumFlag = 
+        d_preferences.frameInfo.contentChecksumFlag =
             LZ4F_noContentChecksum;
     }
 
     d_preferences.frameInfo.frameType   = LZ4F_frame;
     d_preferences.frameInfo.contentSize = 0;
     d_preferences.frameInfo.dictID      = 0;
-    
+
     if (k_CHECKSUM_BLOCK) {
-        d_preferences.frameInfo.blockChecksumFlag = 
+        d_preferences.frameInfo.blockChecksumFlag =
             LZ4F_blockChecksumEnabled;
     }
     else {
@@ -976,7 +976,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
     while (source < sourceEnd) {
         void* destination = d_deflaterBuffer.data() + d_deflaterBufferSize;
 
-        bsl::size_t destinationCapacity = 
+        bsl::size_t destinationCapacity =
             d_deflaterBuffer.size() - d_deflaterBufferSize;
 
         if (destinationCapacity == 0) {
@@ -990,7 +990,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
                 // Slow path: We cannot reduce the amount we feed into the
                 // compressor enough to guarantee its worst-case deflated size
                 // is less than the available blob buffer capacity. Fall back
-                // to deflating into a contiguous buffer on the stack then 
+                // to deflating into a contiguous buffer on the stack then
                 // copy that buffer into the output blob.
 
                 this->deflateOverflow(result);
@@ -1002,7 +1002,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
 
                 if (d_deflaterArena == 0) {
                     d_deflaterArenaCapacity = (1024 * 64) + k_OVERHEAD;
-                    d_deflaterArena = 
+                    d_deflaterArena =
                         reinterpret_cast<bsl::uint8_t*>(
                             d_allocator_p->allocate(d_deflaterArenaCapacity));
                 }
@@ -1011,7 +1011,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
                     sourceSize = d_deflaterArenaCapacity - k_OVERHEAD;
                 }
 
-                NTCI_LOG_WARN("Deflating %d bytes in the slow path", 
+                NTCI_LOG_WARN("Deflating %d bytes in the slow path",
                               (int)(sourceSize));
 
                 errorCode = LZ4F_compressUpdate(d_deflaterContext_p,
@@ -1022,10 +1022,10 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
                     &d_deflaterOptions);
 
                 if (LZ4F_isError(errorCode)) {
-                    if (LZ4F_getErrorCode(errorCode) == 
-                        LZ4F_ERROR_dstMaxSize_tooSmall) 
+                    if (LZ4F_getErrorCode(errorCode) ==
+                        LZ4F_ERROR_dstMaxSize_tooSmall)
                     {
-                        const bsl::size_t destinationCapacityRequired = 
+                        const bsl::size_t destinationCapacityRequired =
                             LZ4F_compressBound(sourceSize, &d_preferences);
                         NTCCFG_WARNING_UNUSED(destinationCapacityRequired);
 
@@ -1046,7 +1046,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
                 }
 
                 const bsl::size_t numBytesRead    = sourceSize;
-                const bsl::size_t numBytesWritten = 
+                const bsl::size_t numBytesWritten =
                     static_cast<bsl::size_t>(errorCode);
 
                 BSLS_ASSERT_OPT(numBytesRead > 0);
@@ -1091,7 +1091,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
         }
 
         const bsl::size_t numBytesRead    = sourceSize;
-        const bsl::size_t numBytesWritten = 
+        const bsl::size_t numBytesWritten =
             static_cast<bsl::size_t>(errorCode);
 
         BSLS_ASSERT_OPT(numBytesRead > 0);
@@ -1256,7 +1256,7 @@ ntsa::Error Lz4::inflateCreate()
 
 #if NTCTLC_PLUGIN_LZ4_VERSION_NUMBER >= \
     NTCTLC_PLUGIN_LZ4_VERSION_MAKE(1, 10, 0)
-        d_inflaterOptions.skipChecksums = 
+        d_inflaterOptions.skipChecksums =
             static_cast<unsigned>(!k_CHECKSUM_VERIFY);
 #endif
 
@@ -1293,20 +1293,20 @@ ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
     const bsl::uint8_t* sourceEnd     = data + size;
 
     while (sourceCurrent < sourceEnd) {
-        if (d_inflaterBufferSize == 
-            static_cast<bsl::size_t>(d_inflaterBuffer.size())) 
+        if (d_inflaterBufferSize ==
+            static_cast<bsl::size_t>(d_inflaterBuffer.size()))
         {
             this->inflateOverflow(result);
         }
 
-        char* destination = 
+        char* destination =
             d_inflaterBuffer.data() + d_inflaterBufferSize;
 
-        bsl::size_t destinationSize = 
+        bsl::size_t destinationSize =
             static_cast<bsl::size_t>(
                 d_inflaterBuffer.size() - d_inflaterBufferSize);
 
-        bsl::size_t sourceSize = 
+        bsl::size_t sourceSize =
             static_cast<bsl::size_t>(sourceEnd - sourceCurrent);
 
         errorCode = LZ4F_decompress(d_inflaterContext_p,
@@ -1538,8 +1538,8 @@ ntsa::Error Zstd::deflateCreate()
 
 #endif
 
-    rc = ZSTD_CCtx_setParameter(d_deflaterContext_p, 
-                                ZSTD_c_compressionLevel, 
+    rc = ZSTD_CCtx_setParameter(d_deflaterContext_p,
+                                ZSTD_c_compressionLevel,
                                 d_level);
     if (ZSTD_isError(rc)) {
         return Zstd::translateError(rc, "set compression level");
@@ -1607,8 +1607,8 @@ ntsa::Error Zstd::deflateNext(ntca::DeflateContext*       context,
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
-        rc = this->deflateCycle(&numBytesRead, 
-                                &numBytesWritten, 
+        rc = this->deflateCycle(&numBytesRead,
+                                &numBytesWritten,
                                 ZSTD_e_continue);
 
         totalBytesRead    += numBytesRead;
@@ -1722,8 +1722,8 @@ bsl::size_t Zstd::deflateCycle(bsl::size_t*      numBytesRead,
     bsl::size_t posIn0  = d_deflaterInput.pos;
     bsl::size_t posOut0 = d_deflaterOutput.pos;
 
-    rc = ZSTD_compressStream2(d_deflaterContext_p, 
-                              &d_deflaterOutput, 
+    rc = ZSTD_compressStream2(d_deflaterContext_p,
+                              &d_deflaterOutput,
                               &d_deflaterInput,
                               mode);
 
@@ -1761,7 +1761,7 @@ NTCCFG_INLINE
 ntsa::Error Zstd::deflateDestroy()
 {
     bsl::size_t rc = 0;
-    
+
     rc = ZSTD_freeCCtx(d_deflaterContext_p);
     if (ZSTD_isError(rc)) {
         Zstd::translateError(rc, "destroy deflater");
@@ -1939,8 +1939,8 @@ bsl::size_t Zstd::inflateCycle(bsl::size_t* numBytesRead,
     bsl::size_t posIn0  = d_inflaterInput.pos;
     bsl::size_t posOut0 = d_inflaterOutput.pos;
 
-    rc = ZSTD_decompressStream(d_inflaterContext_p, 
-                               &d_inflaterOutput, 
+    rc = ZSTD_decompressStream(d_inflaterContext_p,
+                               &d_inflaterOutput,
                                &d_inflaterInput);
 
     bsl::size_t posIn1  = d_inflaterInput.pos;
@@ -1977,7 +1977,7 @@ NTCCFG_INLINE
 ntsa::Error Zstd::inflateDestroy()
 {
     bsl::size_t rc = 0;
-    
+
     rc = ZSTD_freeDCtx(d_inflaterContext_p);
     if (ZSTD_isError(rc)) {
         Zstd::translateError(rc, "destroy inflater");
@@ -2015,14 +2015,14 @@ ntsa::Error Zstd::translateError(bsl::size_t error, const char* operation)
 
     if (ZSTD_isError(error)) {
         ZSTD_ErrorCode errorCode = ZSTD_getErrorCode(error);
-        if ( 
+        if (
 #if NTCTLC_PLUGIN_ZSTD_VERSION_NUMBER >= \
     NTCTLC_PLUGIN_ZSTD_VERSION_MAKE(1, 5, 7)
             errorCode == ZSTD_error_noForwardProgress_destFull ||
             errorCode == ZSTD_error_noForwardProgress_inputEmpty ||
 #endif
             errorCode == ZSTD_error_dstBuffer_null ||
-            errorCode == ZSTD_error_dstSize_tooSmall) 
+            errorCode == ZSTD_error_dstSize_tooSmall)
         {
             return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
         }
@@ -3125,19 +3125,19 @@ ntsa::Error Gzip::deflateReset()
     bsl::strcpy(reinterpret_cast<char*>(d_deflaterEntityName), "NTF");
 
     char* deflaterEntityCommentLast = bslalg::NumericFormatterUtil::toChars(
-        d_deflaterEntityComment, 
-        d_deflaterEntityComment + sizeof(d_deflaterEntityComment), 
+        d_deflaterEntityComment,
+        d_deflaterEntityComment + sizeof(d_deflaterEntityComment),
         id);
     *deflaterEntityCommentLast = 0;
 
     d_deflaterHeader.name =
         reinterpret_cast<unsigned char*>(d_deflaterEntityName);
-    d_deflaterHeader.name_max = 
+    d_deflaterHeader.name_max =
         static_cast<uInt>(bsl::strlen(d_deflaterEntityName));
 
     d_deflaterHeader.comment =
         reinterpret_cast<unsigned char*>(d_deflaterEntityComment);
-    d_deflaterHeader.comm_max = 
+    d_deflaterHeader.comm_max =
         static_cast<uInt>(bsl::strlen(d_deflaterEntityComment));
 
     rc = ::deflateSetHeader(&d_deflaterStream, &d_deflaterHeader);
@@ -3650,8 +3650,12 @@ ntsa::Error CompressionDriver::createCompression(
 {
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
-    bsl::shared_ptr<ntcs::DataPool> dataPool;
-    dataPool.createInplace(allocator, allocator);
+    bsl::shared_ptr<ntci::DataPool> dataPool;
+    {
+        bsl::shared_ptr<ntcs::DataPool> concreteDataPool;
+        concreteDataPool.createInplace(allocator, allocator);
+        dataPool = concreteDataPool;
+    }
 
     return this->createCompression(result, configuration, dataPool, allocator);
 }
