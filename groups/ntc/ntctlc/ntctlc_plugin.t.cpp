@@ -803,6 +803,8 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyAll)
 
 NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyUsage)
 {
+#if NTC_BUILD_WITH_ZLIB
+
     ntsa::Error error;
 
     bsl::shared_ptr<ntci::CompressionDriver> driver;
@@ -845,6 +847,8 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyUsage)
     NTSCFG_TEST_OK(error);
 
     NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(inflated, initial), 0);
+
+#endif
 }
 
 }  // close namespace ntctlc
