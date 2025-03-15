@@ -7841,7 +7841,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase19)
     // Concern: Datagram socket transmission with control data: single buffer.
     // Plan:
 
-#if defined(BSLS_PLATFORM_UNIX)
+#if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeDatagramSocketTest(
         &SocketUtilTest::
@@ -7855,7 +7855,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase20)
     // Concern: Datagram socket transmission with control data: blob.
     // Plan:
 
-#if defined(BSLS_PLATFORM_UNIX)
+#if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeDatagramSocketTest(
         &SocketUtilTest::testDatagramSocketTransmissionBlobWithControlMsg);
@@ -7868,7 +7868,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase21)
     // Concern: Datagram socket transmission with control data: dropped.
     // Plan:
 
-#if defined(BSLS_PLATFORM_UNIX)
+#if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeDatagramSocketTest(
         &SocketUtilTest::testDatagramSocketTransmissionWithControlMsgDropped);
@@ -7881,7 +7881,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase22)
     // Concern: Stream socket transmission with control data: single buffer.
     // Plan:
 
-#if defined(BSLS_PLATFORM_UNIX)
+#if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeStreamSocketTest(
         &SocketUtilTest::
@@ -7895,7 +7895,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase23)
     // Concern: Stream socket transmission with control data: blob.
     // Plan:
 
-#if defined(BSLS_PLATFORM_UNIX)
+#if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeStreamSocketTest(
         &SocketUtilTest::testStreamSocketTransmissionBlobWithControlMsg);
@@ -7908,7 +7908,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24)
     // Concern: Stream socket transmission with control data: dropped
     // Plan:
 
-#if defined(BSLS_PLATFORM_UNIX)
+#if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeStreamSocketTest(
         &SocketUtilTest::testStreamSocketTransmissionWithControlMsgDropped);
