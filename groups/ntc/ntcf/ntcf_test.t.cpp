@@ -139,6 +139,8 @@ NTSCFG_TEST_FUNCTION(ntcf::TestTest::verify)
 }  // close namespace ntcf
 }  // close namespace BloombergLP
 
+#if !defined(BSLS_PLATFORM_OS_SOLARIS)
+
 #include <ntcf_testvocabulary.h>
 #include <ntcf_testvocabulary.cpp>
 
@@ -157,3 +159,5 @@ NTSCFG_TEST_FUNCTION(ntcf::TestTest::verify)
 #include <ntcf_testfixture.h>
 #include <ntcf_testfixture.cpp>
 #include <ntcf_testfixture.t.cpp>
+
+#endif
