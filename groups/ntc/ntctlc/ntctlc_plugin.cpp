@@ -3668,11 +3668,15 @@ ntsa::Error CompressionDriver::createCompression(
 {
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
-    bsl::shared_ptr<ntcs::DataPool> dataPool;
-    dataPool.createInplace(allocator,
-                           blobBufferFactory,
-                           blobBufferFactory,
-                           allocator);
+    bsl::shared_ptr<ntci::DataPool> dataPool;
+    {
+        bsl::shared_ptr<ntcs::DataPool> concreteDataPool;
+        concreteDataPool.createInplace(allocator,
+                                       blobBufferFactory,
+                                       blobBufferFactory,
+                                       allocator);
+        dataPool = concreteDataPool;
+    }
 
     return this->createCompression(result, configuration, dataPool, allocator);
 }
