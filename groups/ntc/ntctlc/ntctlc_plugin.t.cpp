@@ -520,11 +520,15 @@ void PluginTest::verifyParameters(const Parameters& parameters)
     compressionConfig.setType(parameters.type());
     compressionConfig.setGoal(parameters.goal());
 
-    bsl::shared_ptr<ntcs::DataPool> dataPool;
-    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
-                           parameters.blobBufferSize(),
-                           parameters.blobBufferSize(),
-                           NTSCFG_TEST_ALLOCATOR);
+    bsl::shared_ptr<ntci::DataPool> dataPool;
+    {
+        bsl::shared_ptr<ntcs::DataPool> concreteDataPool;
+        concreteDataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                       parameters.blobBufferSize(),
+                                       parameters.blobBufferSize(),
+                                       NTSCFG_TEST_ALLOCATOR);
+        dataPool = concreteDataPool;
+    }
 
     bsl::shared_ptr<ntci::Compression> compression;
     error = driver->createCompression(&compression,
@@ -757,8 +761,8 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyAll)
                     for (bsl::size_t m = 0; m < ioSizeVector.size(); ++m) {
 
 #if defined(NTCTLC_PLUGIN_TEST_COMPRESSION_TYPE)
-                        if (algorithmVector[i] != 
-                            NTCTLC_PLUGIN_TEST_COMPRESSION_TYPE) 
+                        if (algorithmVector[i] !=
+                            NTCTLC_PLUGIN_TEST_COMPRESSION_TYPE)
                         {
                             continue;
                         }
