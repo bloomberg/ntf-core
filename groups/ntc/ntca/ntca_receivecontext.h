@@ -19,10 +19,12 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_compressiontype.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
+#include <ntsa_handle.h>
 #include <ntsa_transport.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
@@ -43,6 +45,19 @@ namespace ntca {
 /// @li @b transport:
 /// The transport the receiver.
 ///
+/// @li @b compressionType:
+/// The compression algorithm used to inflate the user's data after reception,
+/// if any. If unspecified, no compression was performed.
+///
+/// @li @b compressionRatio:
+/// The ratio of inflated size of the data to the size of the original data
+/// actually received. Note that value may be greater than one in the case of
+/// poorly-compressible data. If unspecified, no compression was performed.
+///
+/// @li @b foreignHandle:
+/// The foreign handle sent by the peer, if any. If a foreign handle is
+/// defined, it is the receivers responsibility to close it.
+///
 /// @li @b error:
 /// The error detected when performing the operation.
 ///
@@ -52,9 +67,12 @@ namespace ntca {
 /// @ingroup module_ntci_operation_receive
 class ReceiveContext
 {
-    bdlb::NullableValue<ntsa::Endpoint> d_endpoint;
-    ntsa::Transport::Value              d_transport;
-    ntsa::Error                         d_error;
+    bdlb::NullableValue<ntsa::Endpoint>               d_endpoint;
+    ntsa::Transport::Value                            d_transport;
+    bdlb::NullableValue<ntca::CompressionType::Value> d_compressionType;
+    bdlb::NullableValue<double>                       d_compressionRatio;
+    bdlb::NullableValue<ntsa::Handle>                 d_foreignHandle;
+    ntsa::Error                                       d_error;
 
   public:
     /// Create a new receive context having the default value.
@@ -82,6 +100,17 @@ class ReceiveContext
     /// Set the transport of the receiver to the specified 'value'.
     void setTransport(ntsa::Transport::Value value);
 
+    /// Set the compression algorithm used to inflate the user's data after
+    /// reception to the specified 'value'.
+    void setCompressionType(ntca::CompressionType::Value value);
+
+    /// Set the ratio of inflated size of the data to the size of the original
+    /// data actually received to the specified 'value'.
+    void setCompressionRatio(double value);
+
+    /// Set the foreign handle sent by the peer to the specified 'value'.
+    void setForeignHandle(ntsa::Handle value);
+
     /// Set the error detected when performing the operation to the
     /// specified 'value'.
     void setError(const ntsa::Error& value);
@@ -107,6 +136,18 @@ class ReceiveContext
     /// provided for convenience; the resulting value is interpreted from
     /// the transport of the receiver.
     ntsa::TransportProtocol::Value transportProtocol() const;
+
+    /// Return the compression algorithm used to inflate the user's data after
+    /// reception.
+    const bdlb::NullableValue<ntca::CompressionType::Value>& 
+    compressionType() const;
+
+    /// Return the ratio of inflated size of the data to the size of the
+    /// original data actually received.
+    const bdlb::NullableValue<double>& compressionRatio() const;
+
+    /// Return the foreign handle sent by the peer, if any.
+    const bdlb::NullableValue<ntsa::Handle>& foreignHandle() const;
 
     /// Return the error detected when performing the operation.
     const ntsa::Error& error() const;
@@ -180,6 +221,9 @@ NTCCFG_INLINE
 ReceiveContext::ReceiveContext()
 : d_endpoint()
 , d_transport(ntsa::Transport::e_UNDEFINED)
+, d_compressionType()
+, d_compressionRatio()
+, d_foreignHandle()
 , d_error()
 {
 }
@@ -188,6 +232,9 @@ NTCCFG_INLINE
 ReceiveContext::ReceiveContext(const ReceiveContext& original)
 : d_endpoint(original.d_endpoint)
 , d_transport(original.d_transport)
+, d_compressionType(original.d_compressionType)
+, d_compressionRatio(original.d_compressionRatio)
+, d_foreignHandle(original.d_foreignHandle)
 , d_error(original.d_error)
 {
 }
@@ -200,9 +247,12 @@ ReceiveContext::~ReceiveContext()
 NTCCFG_INLINE
 ReceiveContext& ReceiveContext::operator=(const ReceiveContext& other)
 {
-    d_endpoint  = other.d_endpoint;
-    d_transport = other.d_transport;
-    d_error     = other.d_error;
+    d_endpoint         = other.d_endpoint;
+    d_transport        = other.d_transport;
+    d_compressionType  = other.d_compressionType;
+    d_compressionRatio = other.d_compressionRatio;
+    d_foreignHandle    = other.d_foreignHandle;
+    d_error            = other.d_error;
     return *this;
 }
 
@@ -211,7 +261,10 @@ void ReceiveContext::reset()
 {
     d_endpoint.reset();
     d_transport = ntsa::Transport::e_UNDEFINED;
-    d_error     = ntsa::Error();
+    d_compressionType.reset();
+    d_compressionRatio.reset();
+    d_foreignHandle.reset();
+    d_error = ntsa::Error();
 }
 
 NTCCFG_INLINE
@@ -224,6 +277,24 @@ NTCCFG_INLINE
 void ReceiveContext::setTransport(ntsa::Transport::Value value)
 {
     d_transport = value;
+}
+
+NTCCFG_INLINE
+void ReceiveContext::setCompressionType(ntca::CompressionType::Value value)
+{
+    d_compressionType = value;
+}
+
+NTCCFG_INLINE
+void ReceiveContext::setCompressionRatio(double value)
+{
+    d_compressionRatio = value;
+}
+
+NTCCFG_INLINE
+void ReceiveContext::setForeignHandle(ntsa::Handle value)
+{
+    d_foreignHandle = value;
 }
 
 NTCCFG_INLINE
@@ -263,6 +334,25 @@ ntsa::TransportProtocol::Value ReceiveContext::transportProtocol() const
 }
 
 NTCCFG_INLINE
+const bdlb::NullableValue<ntca::CompressionType::Value>& 
+ReceiveContext::compressionType() const
+{
+    return d_compressionType;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<double>& ReceiveContext::compressionRatio() const
+{
+    return d_compressionRatio;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntsa::Handle>& ReceiveContext::foreignHandle() const
+{
+    return d_foreignHandle;
+}
+
+NTCCFG_INLINE
 const ntsa::Error& ReceiveContext::error() const
 {
     return d_error;
@@ -299,6 +389,9 @@ void hashAppend(HASH_ALGORITHM& algorithm, const ReceiveContext& value)
 
     hashAppend(algorithm, value.endpoint());
     hashAppend(algorithm, value.transport());
+    hashAppend(algorithm, value.compressionType());
+    hashAppend(algorithm, value.compressionRatio());
+    hashAppend(algorithm, value.foreignHandle());
     hashAppend(algorithm, value.error());
 }
 

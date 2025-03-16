@@ -124,8 +124,8 @@ class SendOptions
     /// specified 'value'.
     void setEndpoint(const ntsa::Endpoint& value);
 
-    // Set the handle to the open socket to send to the peer to the specified
-    // 'value'.
+    /// Set the handle to the open socket to send to the peer to the specified
+    /// 'value'.
     void setForeignHandle(ntsa::Handle value);
 
     /// Set the maximum number of bytes to send to the specified 'value'.

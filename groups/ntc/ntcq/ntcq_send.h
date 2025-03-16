@@ -114,6 +114,7 @@ class SendQueueEntry
     bsl::size_t                             d_length;
     bsl::int64_t                            d_timestamp;
     bdlb::NullableValue<bsls::TimeInterval> d_deadline;
+    bdlb::NullableValue<ntsa::Handle>       d_foreignHandle;
     bsl::shared_ptr<ntci::Timer>            d_timer_sp;
     ntca::SendContext                       d_context;
     ntci::SendCallback                      d_callback;
@@ -236,6 +237,10 @@ class SendQueueEntry
     /// specified 'value'.
     void setDeadline(const bdlb::NullableValue<bsls::TimeInterval>& value);
 
+    /// Set the handle to the open socket to send to the peer to the specified
+    /// 'value'.
+    void setForeignHandle(ntsa::Handle value);
+
     /// Set the timer to the specified 'timer'.
     void setTimer(const bsl::shared_ptr<ntci::Timer>& timer);
 
@@ -289,6 +294,9 @@ class SendQueueEntry
 
     /// Return the deadline within which the data must be sent.
     const bdlb::NullableValue<bsls::TimeInterval>& deadline() const;
+
+    /// Return the handle to the open socket to send to the peer.
+    const bdlb::NullableValue<ntsa::Handle>& foreignHandle() const;
 
     /// Return the duration from the timestamp until now.
     bsls::TimeInterval delay() const;
@@ -534,6 +542,7 @@ SendQueueEntry::SendQueueEntry(bslma::Allocator* basicAllocator)
 , d_length(0)
 , d_timestamp(0)
 , d_deadline()
+, d_foreignHandle()
 , d_timer_sp()
 , d_context()
 , d_callback(basicAllocator)
@@ -551,6 +560,7 @@ SendQueueEntry::SendQueueEntry(const SendQueueEntry& original,
 , d_length(original.d_length)
 , d_timestamp(original.d_timestamp)
 , d_deadline(original.d_deadline)
+, d_foreignHandle(original.d_foreignHandle)
 , d_timer_sp(original.d_timer_sp)
 , d_context(original.d_context)
 , d_callback(original.d_callback, basicAllocator)
@@ -612,6 +622,12 @@ void SendQueueEntry::setDeadline(
     const bdlb::NullableValue<bsls::TimeInterval>& value)
 {
     d_deadline = value;
+}
+
+NTCCFG_INLINE
+void SendQueueEntry::setForeignHandle(ntsa::Handle value)
+{
+    d_foreignHandle = value;
 }
 
 NTCCFG_INLINE
@@ -702,6 +718,12 @@ const bdlb::NullableValue<bsls::TimeInterval>& SendQueueEntry::deadline() const
 }
 
 NTCCFG_INLINE
+const bdlb::NullableValue<ntsa::Handle>& SendQueueEntry::foreignHandle() const
+{
+    return d_foreignHandle;
+}
+
+NTCCFG_INLINE
 bsls::TimeInterval SendQueueEntry::delay() const
 {
     bsl::int64_t delayInNanoseconds = bsls::TimeUtil::getTimer() - d_timestamp;
@@ -748,6 +770,10 @@ bool SendQueueEntry::isBatchable() const
     }
 
     if (NTCCFG_UNLIKELY(d_data_sp->isFile())) {
+        return false;
+    }
+
+    if (d_foreignHandle.has_value()) {
         return false;
     }
 

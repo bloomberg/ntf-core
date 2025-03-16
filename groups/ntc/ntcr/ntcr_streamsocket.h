@@ -386,14 +386,16 @@ class StreamSocket : public ntci::StreamSocket,
     ntsa::Error privateEnqueueSendBuffer(
         const bsl::shared_ptr<StreamSocket>& self,
         ntsa::SendContext*                   context,
-        const bdlbb::Blob&                   data);
+        const bdlbb::Blob&                   data,
+        ntsa::Handle                         foreignHandle);
 
     /// Enqueue the specified 'data' to the socket send buffer. Return the
     /// error.
     ntsa::Error privateEnqueueSendBuffer(
         const bsl::shared_ptr<StreamSocket>& self,
         ntsa::SendContext*                   context,
-        const ntsa::Data&                    data);
+        const ntsa::Data&                    data,
+        ntsa::Handle                         foreignHandle);
 
     /// Dequeue data from the socket receive buffer. Append to the
     /// specified 'data' the data dequeued. Return the error.
