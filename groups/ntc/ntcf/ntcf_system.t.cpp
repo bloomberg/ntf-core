@@ -11370,26 +11370,11 @@ void SystemTest::concernStreamSocketHandleTransfer(
     NTSCFG_TEST_TRUE(serverSocket);
     acceptResult.reset();
 
-    // We now have a connected client and server stream socket pair.
-
-    ntsa::Handle   clientHandle0         = clientSocket->handle();
-    ntsa::Endpoint clientSourceEndpoint0 = clientSocket->sourceEndpoint();
-    ntsa::Endpoint clientRemoteEndpoint0 = clientSocket->remoteEndpoint();
-
-    ntsa::Handle   serverHandle0         = serverSocket->handle();
-    ntsa::Endpoint serverSourceEndpoint0 = serverSocket->sourceEndpoint();
-    ntsa::Endpoint serverRemoteEndpoint0 = serverSocket->remoteEndpoint();
-
-    NTSCFG_TEST_NE(clientHandle0, ntsa::k_INVALID_HANDLE);
-    NTSCFG_TEST_NE(serverHandle0, ntsa::k_INVALID_HANDLE);
-
-    NTSCFG_TEST_EQ(clientRemoteEndpoint0, serverSourceEndpoint0);
-    NTSCFG_TEST_EQ(serverRemoteEndpoint0, clientSourceEndpoint0);
-
     // Send the domestic socket from the client to the server.
 
     ntca::SendOptions sendOptions;
-    sendOptions.setForeignHandle(domesticSocket);
+    sendOptions.setForeignHandle
+    (domesticSocket);
 
     bdlbb::Blob sendData(clientSocket->outgoingBlobBufferFactory().get());
     bdlbb::BlobUtil::append(&sendData, "Hello, world!", 13);
@@ -11489,7 +11474,7 @@ void SystemTest::concernDatagramSocketHandleTransfer(
     // Create a "domestic" socket to be exported.
 
     ntsa::Handle domesticSocket;
-    error = ntsf::System::createStreamSocket(&domesticSocket, transport);
+    error = ntsf::System::createDatagramSocket(&domesticSocket, transport);
     NTSCFG_TEST_ASSERT(!error);
 
     error = ntsf::System::bind(
@@ -11527,53 +11512,10 @@ void SystemTest::concernDatagramSocketHandleTransfer(
     error = clientSocket->open();
     NTSCFG_TEST_OK(error);
 
-    // Connect the client datagram socket to the server.
-
-    ntci::ConnectFuture clientConnectFuture;
-    error = clientSocket->connect(
-        serverSocket->sourceEndpoint(),
-        ntca::ConnectOptions(),
-        clientConnectFuture);
-    NTSCFG_TEST_OK(error);
-
-    ntci::ConnectResult clientConnectResult;
-    error = clientConnectFuture.wait(&clientConnectResult);
-    NTSCFG_TEST_OK(error);
-    NTSCFG_TEST_OK(clientConnectResult.event().context().error());
-
-    // Connect the server datagram socket to the client.
-
-    ntci::ConnectFuture serverConnectFuture;
-    error = serverSocket->connect(
-        clientSocket->sourceEndpoint(),
-        ntca::ConnectOptions(),
-        serverConnectFuture);
-    NTSCFG_TEST_OK(error);
-
-    ntci::ConnectResult serverConnectResult;
-    error = serverConnectFuture.wait(&serverConnectResult);
-    NTSCFG_TEST_OK(error);
-    NTSCFG_TEST_OK(serverConnectResult.event().context().error());
-
-    // We now have a connected client and server stream socket pair.
-
-    ntsa::Handle   clientHandle0         = clientSocket->handle();
-    ntsa::Endpoint clientSourceEndpoint0 = clientSocket->sourceEndpoint();
-    ntsa::Endpoint clientRemoteEndpoint0 = clientSocket->remoteEndpoint();
-
-    ntsa::Handle   serverHandle0         = serverSocket->handle();
-    ntsa::Endpoint serverSourceEndpoint0 = serverSocket->sourceEndpoint();
-    ntsa::Endpoint serverRemoteEndpoint0 = serverSocket->remoteEndpoint();
-
-    NTSCFG_TEST_NE(clientHandle0, ntsa::k_INVALID_HANDLE);
-    NTSCFG_TEST_NE(serverHandle0, ntsa::k_INVALID_HANDLE);
-
-    NTSCFG_TEST_EQ(clientRemoteEndpoint0, serverSourceEndpoint0);
-    NTSCFG_TEST_EQ(serverRemoteEndpoint0, clientSourceEndpoint0);
-
     // Send the domestic socket from the client to the server.
 
     ntca::SendOptions sendOptions;
+    sendOptions.setEndpoint(serverSocket->sourceEndpoint());
     sendOptions.setForeignHandle(domesticSocket);
 
     bdlbb::Blob sendData(clientSocket->outgoingBlobBufferFactory().get());
@@ -11604,6 +11546,10 @@ void SystemTest::concernDatagramSocketHandleTransfer(
     NTSCFG_TEST_EQ(receiveResult.data()->length(), sendData.length());
     NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*receiveResult.data(), sendData), 
                    0);
+
+    NTSCFG_TEST_TRUE(receiveResult.event().context().endpoint().has_value());
+    NTSCFG_TEST_EQ(receiveResult.event().context().endpoint().value(), 
+                   clientSocket->sourceEndpoint());
 
     NTSCFG_TEST_TRUE(
         receiveResult.event().context().foreignHandle().has_value());

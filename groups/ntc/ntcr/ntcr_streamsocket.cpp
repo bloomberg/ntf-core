@@ -1354,10 +1354,10 @@ ntsa::Error StreamSocket::privateSocketWritableIterationFront(
 
     ntcq::SendQueueEntry& entry = d_sendQueue.frontEntry();
 
-    ntsa::Handle foreignHandle = 
-        entry.foreignHandle().value_or(ntsa::k_INVALID_HANDLE);
-
     if (NTCCFG_LIKELY(entry.data())) {
+        ntsa::Handle foreignHandle = 
+            entry.foreignHandle().value_or(ntsa::k_INVALID_HANDLE);
+
         error = this->privateEnqueueSendBuffer(self, 
                                                &context, 
                                                *entry.data(), 
@@ -3971,9 +3971,11 @@ ntsa::Error StreamSocket::privateOpen(
     d_sendOptions.setMaxBuffers(streamSocket->maxBuffersPerSend());
     d_receiveOptions.setMaxBuffers(streamSocket->maxBuffersPerReceive());
 
+#if defined(BSLS_PLATFORM_OS_UNIX)
     if (transport == ntsa::Transport::e_LOCAL_STREAM) {
         d_receiveOptions.showForeignHandles();
     }
+#endif
 
     {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);

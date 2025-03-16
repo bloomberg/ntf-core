@@ -324,7 +324,8 @@ class DatagramSocket : public ntci::DatagramSocket,
         const bsl::shared_ptr<DatagramSocket>&     self,
         ntsa::SendContext*                         context,
         const bdlb::NullableValue<ntsa::Endpoint>& endpoint,
-        const bdlbb::Blob&                         data);
+        const bdlbb::Blob&                         data,
+        ntsa::Handle                               foreignHandle);
 
     /// Enqueue a message to the specified 'endpoint' having the specified
     /// 'data' to the socket send buffer. Return the error. The behavior is
@@ -333,7 +334,8 @@ class DatagramSocket : public ntci::DatagramSocket,
         const bsl::shared_ptr<DatagramSocket>&     self,
         ntsa::SendContext*                         context,
         const bdlb::NullableValue<ntsa::Endpoint>& endpoint,
-        const ntsa::Data&                          data);
+        const ntsa::Data&                          data,
+        ntsa::Handle                               foreignHandle);
 
     /// Dequeue a message from the socket receive buffer. Append to the
     /// specified 'data' the data dequeued and load into the specified
@@ -341,14 +343,14 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// The behavior is undefined unless 'd_mutex' is locked.
     ntsa::Error privateDequeueReceiveBuffer(
         const bsl::shared_ptr<DatagramSocket>& self,
-        bdlb::NullableValue<ntsa::Endpoint>*   endpoint,
+        ntsa::ReceiveContext*                  context,
         bsl::shared_ptr<bdlbb::Blob>*          data);
 
     /// Dequeue a raw or deflated message from from the socket receive buffer.
     /// Append to the specified 'data' the data dequeued . Return the error.
     ntsa::Error privateDequeueReceiveBufferRaw(
         const bsl::shared_ptr<DatagramSocket>& self,
-        bdlb::NullableValue<ntsa::Endpoint>*   endpoint,
+        ntsa::ReceiveContext*                  context,
         bsl::shared_ptr<bdlbb::Blob>*          data);
 
     /// Allocate a new blob assigned to 'd_receiveBlob_sp', if necessary
