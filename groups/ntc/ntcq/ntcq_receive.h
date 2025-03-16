@@ -258,6 +258,7 @@ class ReceiveQueueEntry
     bsl::shared_ptr<bdlbb::Blob>        d_data_sp;
     bsl::size_t                         d_length;
     bsl::int64_t                        d_timestamp;
+    bdlb::NullableValue<ntsa::Handle>   d_foreignHandle;
 
   public:
     /// Create a new receive from message queue entry.
@@ -278,6 +279,9 @@ class ReceiveQueueEntry
     /// Set the timestamp to the specified 'timestamp'.
     void setTimestamp(bsl::int64_t timestamp);
 
+    /// Set the foreign handle sent by the peer to the specified 'value'.
+    void setForeignHandle(ntsa::Handle value);
+
     /// Return the endpoint.
     const bdlb::NullableValue<ntsa::Endpoint>& endpoint() const;
 
@@ -293,6 +297,9 @@ class ReceiveQueueEntry
 
     /// Return the duration from the timestamp until now.
     bsls::TimeInterval delay() const;
+
+    /// Return the foreign handle sent by the peer, if any.
+    const bdlb::NullableValue<ntsa::Handle>& foreignHandle() const;
 };
 
 /// @internal @brief
@@ -695,6 +702,7 @@ ReceiveQueueEntry::ReceiveQueueEntry()
 , d_data_sp()
 , d_length(0)
 , d_timestamp(0)
+, d_foreignHandle()
 {
 }
 
@@ -727,6 +735,12 @@ NTCCFG_INLINE
 void ReceiveQueueEntry::setTimestamp(bsl::int64_t timestamp)
 {
     d_timestamp = timestamp;
+}
+
+NTCCFG_INLINE
+void ReceiveQueueEntry::setForeignHandle(ntsa::Handle value)
+{
+    d_foreignHandle = value;
 }
 
 NTCCFG_INLINE
@@ -766,6 +780,13 @@ bsls::TimeInterval ReceiveQueueEntry::delay() const
     delay.setTotalNanoseconds(delayInNanoseconds);
 
     return delay;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntsa::Handle>& 
+ReceiveQueueEntry::foreignHandle() const
+{
+    return d_foreignHandle;
 }
 
 NTCCFG_INLINE

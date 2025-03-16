@@ -371,6 +371,14 @@ class SystemTest
             const bsl::shared_ptr<ntci::Scheduler>& scheduler,
             bslma::Allocator*                       allocator);
 
+    static void concernStreamSocketHandleTransfer(
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
+
+    static void concernDatagramSocketHandleTransfer(
+            const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+            bslma::Allocator*                       allocator);
+
     static void concernInterfaceFunctionAndTimerDistribution(
         const bsl::shared_ptr<ntci::Scheduler>& scheduler,
         bslma::Allocator*                       allocator);
@@ -458,6 +466,8 @@ class SystemTest
     static void verifyListenerSocketAcceptClose();
     static void verifyStreamSocketRelease();
     static void verifyDatagramSocketRelease();
+    static void verifyStreamSocketHandleTransfer();
+    static void verifyDatagramSocketHandleTransfer();
 
     static void verifyInterfaceFunctionAndTimerDistribution();
 
@@ -11266,6 +11276,323 @@ void SystemTest::concernDatagramSocketRelease(
     ntsf::System::close(serverHandle1);
 }
 
+void SystemTest::concernStreamSocketHandleTransfer(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+    // Concern: Export an open socket handle through a Unix domain stream
+    // socket.
+
+    ntsa::Error error;
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_LOCAL_STREAM;
+
+    // Create a "domestic" socket to be exported.
+
+    ntsa::Handle domesticSocket;
+    error = ntsf::System::createStreamSocket(&domesticSocket, transport);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsf::System::bind(
+        domesticSocket,
+        ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+        false);
+    NTSCFG_TEST_ASSERT(!error);
+
+    ntsa::Endpoint domesticSourceEndpoint;
+    error = ntsf::System::getSourceEndpoint(&domesticSourceEndpoint,
+                                             domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Create a listener socket.
+
+    ntca::ListenerSocketOptions listenerSocketOptions;
+    listenerSocketOptions.setTransport(transport);
+    listenerSocketOptions.setSourceEndpoint(SystemTest::any(transport));
+    listenerSocketOptions.setBacklog(1);
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+        scheduler->createListenerSocket(listenerSocketOptions, allocator);
+
+    error = listenerSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    error = listenerSocket->listen();
+    NTSCFG_TEST_OK(error);
+
+    // Initiate an asynchronous accept to accept a stream socket to act as the
+    // server.
+
+    ntca::AcceptOptions acceptOptions;
+    ntci::AcceptFuture  acceptFuture;
+
+    error = listenerSocket->accept(acceptOptions, acceptFuture);
+    NTSCFG_TEST_OK(error);
+
+    // Create a stream socket to act as the client.
+
+    ntca::StreamSocketOptions streamSocketOptions;
+    streamSocketOptions.setTransport(transport);
+
+    bsl::shared_ptr<ntci::StreamSocket> clientSocket =
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
+
+    // Connect the client socket to the listening socket's address.
+
+    ntca::ConnectOptions connectOptions;
+    ntci::ConnectFuture  connectFuture;
+
+    error = clientSocket->connect(listenerSocket->sourceEndpoint(),
+                                  connectOptions,
+                                  connectFuture);
+    NTSCFG_TEST_OK(error);
+
+    // Wait until the client socket is connected.
+
+    ntci::ConnectResult connectResult;
+    error = connectFuture.wait(&connectResult);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(connectResult.event().context().error());
+    connectResult.reset();
+
+    // Wait until the server socket is accepted.
+
+    ntci::AcceptResult acceptResult;
+    error = acceptFuture.wait(&acceptResult);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(acceptResult.event().context().error());
+
+    bsl::shared_ptr<ntci::StreamSocket> serverSocket =
+        acceptResult.streamSocket();
+    NTSCFG_TEST_TRUE(serverSocket);
+    acceptResult.reset();
+
+    // Send the domestic socket from the client to the server.
+
+    ntca::SendOptions sendOptions;
+    sendOptions.setForeignHandle
+    (domesticSocket);
+
+    bdlbb::Blob sendData(clientSocket->outgoingBlobBufferFactory().get());
+    bdlbb::BlobUtil::append(&sendData, "Hello, world!", 13);
+
+    ntci::SendFuture sendFuture;
+    error = clientSocket->send(sendData, sendOptions, sendFuture);
+    NTSCFG_TEST_OK(error);
+
+    ntci::SendResult sendResult;
+    error = sendFuture.wait(&sendResult);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(sendResult.event().context().error());
+
+    // Receive the foreign socket from the client at the server.
+
+    ntca::ReceiveOptions receiveOptions;
+    receiveOptions.setSize(13);
+
+    ntci::ReceiveFuture receiveFuture;
+    error = serverSocket->receive(receiveOptions, receiveFuture);
+    NTSCFG_TEST_OK(error);
+
+    ntci::ReceiveResult receiveResult;
+    error = receiveFuture.wait(&receiveResult);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(receiveResult.event().context().error());
+
+    NTSCFG_TEST_EQ(receiveResult.data()->length(), sendData.length());
+    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*receiveResult.data(), sendData), 
+                   0);
+
+    NTSCFG_TEST_TRUE(
+        receiveResult.event().context().foreignHandle().has_value());
+
+    ntsa::Handle foreignSocket = 
+        receiveResult.event().context().foreignHandle().value();
+
+    ntsa::Endpoint foreignSourceEndpoint;
+    error = ntsf::System::getSourceEndpoint(&foreignSourceEndpoint,
+                                            foreignSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Ensure the foreign socket handle has a different value than the domestic
+    // socket handle, but the two sockets have the same source endpoints.
+
+    NTSCFG_TEST_NE(foreignSocket, domesticSocket);
+    NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
+
+    // Close the foreign socket.
+
+    ntsf::System::close(foreignSocket);
+
+    // Close the client socket.
+
+    ntci::CloseFuture clientCloseFuture;
+    clientSocket->close(clientCloseFuture);
+
+    ntci::CloseResult clientCloseResult;
+    error = clientCloseFuture.wait(&clientCloseResult);
+    NTSCFG_TEST_OK(error);
+
+    // Close the server socket.
+
+    ntci::CloseFuture serverCloseFuture;
+    serverSocket->close(serverCloseFuture);
+
+    ntci::CloseResult serverCloseResult;
+    error = serverCloseFuture.wait(&serverCloseResult);
+    NTSCFG_TEST_OK(error);
+
+    // Close the listening socket.
+
+    ntci::CloseFuture listenerCloseFuture;
+    listenerSocket->close(listenerCloseFuture);
+
+    ntci::CloseResult listenerCloseResult;
+    error = listenerCloseFuture.wait(&listenerCloseResult);
+    NTSCFG_TEST_OK(error);
+
+#endif
+}
+
+void SystemTest::concernDatagramSocketHandleTransfer(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+    // Concern: Export an open socket handle through a Unix domain datagram
+    // socket.
+
+    ntsa::Error error;
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_LOCAL_DATAGRAM;
+
+    // Create a "domestic" socket to be exported.
+
+    ntsa::Handle domesticSocket;
+    error = ntsf::System::createDatagramSocket(&domesticSocket, transport);
+    NTSCFG_TEST_ASSERT(!error);
+
+    error = ntsf::System::bind(
+        domesticSocket,
+        ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+        false);
+    NTSCFG_TEST_ASSERT(!error);
+
+    ntsa::Endpoint domesticSourceEndpoint;
+    error = ntsf::System::getSourceEndpoint(&domesticSourceEndpoint,
+                                             domesticSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Create a datagram socket to act as a server.
+
+    ntca::DatagramSocketOptions serverSocketOptions;
+    serverSocketOptions.setTransport(transport);
+    serverSocketOptions.setSourceEndpoint(SystemTest::any(transport));
+
+    bsl::shared_ptr<ntci::DatagramSocket> serverSocket = 
+        scheduler->createDatagramSocket(serverSocketOptions, allocator);
+
+    error = serverSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    // Create a datagram socket to act as a client.
+
+    ntca::DatagramSocketOptions clientSocketOptions;
+    clientSocketOptions.setTransport(transport);
+    clientSocketOptions.setSourceEndpoint(SystemTest::any(transport));
+
+    bsl::shared_ptr<ntci::DatagramSocket> clientSocket = 
+        scheduler->createDatagramSocket(clientSocketOptions, allocator);
+
+    error = clientSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    // Send the domestic socket from the client to the server.
+
+    ntca::SendOptions sendOptions;
+    sendOptions.setEndpoint(serverSocket->sourceEndpoint());
+    sendOptions.setForeignHandle(domesticSocket);
+
+    bdlbb::Blob sendData(clientSocket->outgoingBlobBufferFactory().get());
+    bdlbb::BlobUtil::append(&sendData, "Hello, world!", 13);
+
+    ntci::SendFuture sendFuture;
+    error = clientSocket->send(sendData, sendOptions, sendFuture);
+    NTSCFG_TEST_OK(error);
+
+    ntci::SendResult sendResult;
+    error = sendFuture.wait(&sendResult);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(sendResult.event().context().error());
+
+    // Receive the foreign socket from the client at the server.
+
+    ntca::ReceiveOptions receiveOptions;
+
+    ntci::ReceiveFuture receiveFuture;
+    error = serverSocket->receive(receiveOptions, receiveFuture);
+    NTSCFG_TEST_OK(error);
+
+    ntci::ReceiveResult receiveResult;
+    error = receiveFuture.wait(&receiveResult);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(receiveResult.event().context().error());
+
+    NTSCFG_TEST_EQ(receiveResult.data()->length(), sendData.length());
+    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*receiveResult.data(), sendData), 
+                   0);
+
+    NTSCFG_TEST_TRUE(receiveResult.event().context().endpoint().has_value());
+    NTSCFG_TEST_EQ(receiveResult.event().context().endpoint().value(), 
+                   clientSocket->sourceEndpoint());
+
+    NTSCFG_TEST_TRUE(
+        receiveResult.event().context().foreignHandle().has_value());
+
+    ntsa::Handle foreignSocket = 
+        receiveResult.event().context().foreignHandle().value();
+
+    ntsa::Endpoint foreignSourceEndpoint;
+    error = ntsf::System::getSourceEndpoint(&foreignSourceEndpoint,
+                                            foreignSocket);
+    NTSCFG_TEST_ASSERT(!error);
+
+    // Ensure the foreign socket handle has a different value than the domestic
+    // socket handle, but the two sockets have the same source endpoints.
+
+    NTSCFG_TEST_NE(foreignSocket, domesticSocket);
+    NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
+
+    // Close the foreign socket.
+
+    ntsf::System::close(foreignSocket);
+
+    // Close the client socket.
+
+    ntci::CloseFuture clientCloseFuture;
+    clientSocket->close(clientCloseFuture);
+
+    ntci::CloseResult clientCloseResult;
+    error = clientCloseFuture.wait(&clientCloseResult);
+    NTSCFG_TEST_OK(error);
+
+    // Close the server socket.
+
+    ntci::CloseFuture serverCloseFuture;
+    serverSocket->close(serverCloseFuture);
+
+    ntci::CloseResult serverCloseResult;
+    error = serverCloseFuture.wait(&serverCloseResult);
+    NTSCFG_TEST_OK(error);
+
+#endif
+}
+
 void SystemTest::concernInterfaceFunctionAndTimerDistribution(
     const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
@@ -12749,6 +13076,18 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketRelease)
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyDatagramSocketRelease)
 {
     test::concern(&test::concernDatagramSocketRelease,
+                  NTSCFG_TEST_ALLOCATOR);
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketHandleTransfer)
+{
+    test::concern(&test::concernStreamSocketHandleTransfer,
+                  NTSCFG_TEST_ALLOCATOR);
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyDatagramSocketHandleTransfer)
+{
+    test::concern(&test::concernDatagramSocketHandleTransfer,
                   NTSCFG_TEST_ALLOCATOR);
 }
 

@@ -28,7 +28,9 @@ bool SendOptions::equals(const SendOptions& other) const
     return (d_token == other.d_token && d_endpoint == other.d_endpoint &&
             d_priority == other.d_priority &&
             d_highWatermark == other.d_highWatermark &&
-            d_deadline == other.d_deadline && d_recurse == other.d_recurse);
+            d_deadline == other.d_deadline && 
+            d_foreignHandle == other.d_foreignHandle &&
+            d_recurse == other.d_recurse);
 }
 
 bool SendOptions::less(const SendOptions& other) const
@@ -73,6 +75,14 @@ bool SendOptions::less(const SendOptions& other) const
         return false;
     }
 
+    if (d_foreignHandle < other.d_foreignHandle) {
+        return true;
+    }
+
+    if (other.d_foreignHandle < d_foreignHandle) {
+        return false;
+    }
+
     return d_recurse < other.d_recurse;
 }
 
@@ -101,6 +111,10 @@ bsl::ostream& SendOptions::print(bsl::ostream& stream,
 
     if (!d_deadline.isNull()) {
         printer.printAttribute("deadline", d_deadline);
+    }
+
+    if (!d_deadline.isNull()) {
+        printer.printAttribute("foreignHandle", d_foreignHandle);
     }
 
     printer.printAttribute("recurse", d_recurse);

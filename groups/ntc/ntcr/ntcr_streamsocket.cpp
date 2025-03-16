@@ -37,6 +37,7 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 #include <ntsa_error.h>
 #include <ntsf_system.h>
 #include <ntsi_streamsocket.h>
+#include <ntsu_socketutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_timestamputil.h>
 #include <bdlbb_blob.h>
@@ -831,6 +832,10 @@ ntsa::Error StreamSocket::privateSocketReadableIteration(
         entry.setLength(context.bytesReceived());
         entry.setTimestamp(bsls::TimeUtil::getTimer());
 
+        if (NTCCFG_UNLIKELY(context.foreignHandle().has_value())) {
+            entry.setForeignHandle(context.foreignHandle().value());
+        }
+
         d_receiveQueue.pushEntry(entry);
     }
 
@@ -855,6 +860,10 @@ ntsa::Error StreamSocket::privateSocketReadableIteration(
         bsl::size_t numBytesRemaining = callbackEntry->options().maxSize();
         bsl::size_t numBytesDequeued  = 0;
 
+        ntca::ReceiveContext receiveContext;
+        receiveContext.setTransport(d_transport);
+        receiveContext.setEndpoint(d_remoteEndpoint);
+
         while (true) {
             ntcq::ReceiveQueueEntry& entry = d_receiveQueue.frontEntry();
 
@@ -867,6 +876,18 @@ ntsa::Error StreamSocket::privateSocketReadableIteration(
 
             BSLS_ASSERT(numBytesRemaining >= numBytesToDequeue);
             numBytesRemaining -= numBytesToDequeue;
+
+            if (entry.foreignHandle().has_value()) {
+                if (receiveContext.foreignHandle().has_value()) {
+                    NTCI_LOG_WARN("Dropping foreign handle: "
+                                  "insufficient internal queue capacity");
+                    ntsu::SocketUtil::close(entry.foreignHandle().value());
+                }
+                else {
+                    receiveContext.setForeignHandle(
+                        entry.foreignHandle().value());
+                }
+            }
 
             if (numBytesToDequeue == entry.length()) {
                 NTCS_METRICS_UPDATE_READ_QUEUE_DELAY(entry.delay());
@@ -902,10 +923,6 @@ ntsa::Error StreamSocket::privateSocketReadableIteration(
         NTCR_STREAMSOCKET_LOG_READ_QUEUE_DRAINED(d_receiveQueue.size());
 
         NTCS_METRICS_UPDATE_READ_QUEUE_SIZE(d_receiveQueue.size());
-
-        ntca::ReceiveContext receiveContext;
-        receiveContext.setTransport(d_transport);
-        receiveContext.setEndpoint(d_remoteEndpoint);
 
         ntca::ReceiveEvent receiveEvent;
         receiveEvent.setType(ntca::ReceiveEventType::e_COMPLETE);
@@ -1180,7 +1197,10 @@ ntsa::Error StreamSocket::privateSocketWritableIterationBatch(
     ntsa::Error       error;
     ntsa::SendContext context;
 
-    error = this->privateEnqueueSendBuffer(self, &context, *d_sendData_sp);
+    error = this->privateEnqueueSendBuffer(self, 
+                                           &context, 
+                                           *d_sendData_sp, 
+                                           ntsa::k_INVALID_HANDLE);
     if (NTCCFG_UNLIKELY(error)) {
         return error;
     }
@@ -1335,7 +1355,13 @@ ntsa::Error StreamSocket::privateSocketWritableIterationFront(
     ntcq::SendQueueEntry& entry = d_sendQueue.frontEntry();
 
     if (NTCCFG_LIKELY(entry.data())) {
-        error = this->privateEnqueueSendBuffer(self, &context, *entry.data());
+        ntsa::Handle foreignHandle = 
+            entry.foreignHandle().value_or(ntsa::k_INVALID_HANDLE);
+
+        error = this->privateEnqueueSendBuffer(self, 
+                                               &context, 
+                                               *entry.data(), 
+                                               foreignHandle);
         if (NTCCFG_UNLIKELY(error)) {
             return error;
         }
@@ -2721,7 +2747,8 @@ ntsa::Error StreamSocket::privateThrottleReceiveBuffer(
 ntsa::Error StreamSocket::privateEnqueueSendBuffer(
     const bsl::shared_ptr<StreamSocket>& self,
     ntsa::SendContext*                   context,
-    const bdlbb::Blob&                   data)
+    const bdlbb::Blob&                   data,
+    ntsa::Handle                         foreignHandle)
 {
     NTCI_LOG_CONTEXT();
 
@@ -2770,6 +2797,10 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
         options.setZeroCopy(true);
     }
 
+    if (NTCCFG_UNLIKELY(foreignHandle != ntsa::k_INVALID_HANDLE)) {
+        options.setForeignHandle(foreignHandle);
+    }
+
     bsls::TimeInterval timestamp;
     if (d_timestampOutgoingData) {
         timestamp = this->currentTime();
@@ -2795,8 +2826,10 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
     }
 
     if (NTCCFG_UNLIKELY(context->bytesSent() == 0)) {
-        NTCR_STREAMSOCKET_LOG_SEND_BUFFER_OVERFLOW();
-        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        if (data.length() > 0) {
+            NTCR_STREAMSOCKET_LOG_SEND_BUFFER_OVERFLOW();
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
     }
 
     if (d_timestampOutgoingData) {
@@ -2809,6 +2842,12 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
         d_sendRateLimiter_sp->submit(context->bytesSent());
     }
 
+    // TOOD: Allow the user to indicate the exported socket handle should be
+    // automatically closed.
+    // if (NTCCFG_UNLIKELY(foreignHandle != ntsa::k_INVALID_HANDLE)) {
+    //     ntsu::SocketUtil::close(foreignHandle);
+    // }
+
     NTCR_STREAMSOCKET_LOG_SEND_RESULT(*context);
     NTCS_METRICS_UPDATE_SEND_COMPLETE(*context);
 
@@ -2820,7 +2859,8 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
 ntsa::Error StreamSocket::privateEnqueueSendBuffer(
     const bsl::shared_ptr<StreamSocket>& self,
     ntsa::SendContext*                   context,
-    const ntsa::Data&                    data)
+    const ntsa::Data&                    data,
+    ntsa::Handle                         foreignHandle)
 {
     NTCI_LOG_CONTEXT();
 
@@ -2869,6 +2909,10 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
         options.setZeroCopy(true);
     }
 
+    if (NTCCFG_UNLIKELY(foreignHandle != ntsa::k_INVALID_HANDLE)) {
+        options.setForeignHandle(foreignHandle);
+    }
+
     bsls::TimeInterval timestamp;
     if (d_timestampOutgoingData) {
         timestamp = this->currentTime();
@@ -2894,8 +2938,10 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
     }
 
     if (NTCCFG_UNLIKELY(context->bytesSent() == 0)) {
-        NTCR_STREAMSOCKET_LOG_SEND_BUFFER_OVERFLOW();
-        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        if (data.size() > 0) {
+            NTCR_STREAMSOCKET_LOG_SEND_BUFFER_OVERFLOW();
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
     }
 
     if (d_timestampOutgoingData) {
@@ -2907,6 +2953,12 @@ ntsa::Error StreamSocket::privateEnqueueSendBuffer(
     if (NTCCFG_UNLIKELY(d_sendRateLimiter_sp)) {
         d_sendRateLimiter_sp->submit(context->bytesSent());
     }
+
+    // TOOD: Allow the user to indicate the exported socket handle should be
+    // automatically closed.
+    // if (NTCCFG_UNLIKELY(foreignHandle != ntsa::k_INVALID_HANDLE)) {
+    //     ntsu::SocketUtil::close(foreignHandle);
+    // }
 
     NTCR_STREAMSOCKET_LOG_SEND_RESULT(*context);
     NTCS_METRICS_UPDATE_SEND_COMPLETE(*context);
@@ -3317,8 +3369,14 @@ ntsa::Error StreamSocket::privateSendRaw(
     ntsa::Error       error;
     ntsa::SendContext context;
 
+    ntsa::Handle foreignHandle = 
+        options.foreignHandle().value_or(ntsa::k_INVALID_HANDLE);
+
     if (NTCCFG_LIKELY(!d_sendQueue.hasEntry())) {
-        error = this->privateEnqueueSendBuffer(self, &context, data);
+        error = this->privateEnqueueSendBuffer(self, 
+                                               &context, 
+                                               data, 
+                                               foreignHandle);
         if (NTCCFG_UNLIKELY(error)) {
             if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)) {
                 return error;
@@ -3383,6 +3441,10 @@ ntsa::Error StreamSocket::privateSendRaw(
     entry.setTimestamp(bsls::TimeUtil::getTimer());
     entry.setZeroCopy(context.zeroCopy());
 
+    if (options.foreignHandle().has_value() && context.bytesSent() == 0) {
+        entry.setForeignHandle(options.foreignHandle().value());
+    }
+
     if (callback && !context.zeroCopy()) {
         entry.setCallback(callback);
     }
@@ -3443,8 +3505,14 @@ ntsa::Error StreamSocket::privateSendRaw(
     ntsa::Error       error;
     ntsa::SendContext context;
 
+    ntsa::Handle foreignHandle = 
+        options.foreignHandle().value_or(ntsa::k_INVALID_HANDLE);
+
     if (NTCCFG_LIKELY(!d_sendQueue.hasEntry())) {
-        error = this->privateEnqueueSendBuffer(self, &context, data);
+        error = this->privateEnqueueSendBuffer(self, 
+                                               &context, 
+                                               data,
+                                               foreignHandle);
         if (NTCCFG_UNLIKELY(error)) {
             if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)) {
                 return error;
@@ -3511,6 +3579,10 @@ ntsa::Error StreamSocket::privateSendRaw(
     entry.setLength(dataContainer->size());
     entry.setTimestamp(bsls::TimeUtil::getTimer());
     entry.setZeroCopy(context.zeroCopy());
+
+    if (options.foreignHandle().has_value() && context.bytesSent() == 0) {
+        entry.setForeignHandle(options.foreignHandle().value());
+    }
 
     if (callback) {
         entry.setCallback(callback);
@@ -3898,6 +3970,12 @@ ntsa::Error StreamSocket::privateOpen(
 
     d_sendOptions.setMaxBuffers(streamSocket->maxBuffersPerSend());
     d_receiveOptions.setMaxBuffers(streamSocket->maxBuffersPerReceive());
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    if (transport == ntsa::Transport::e_LOCAL_STREAM) {
+        d_receiveOptions.showForeignHandles();
+    }
+#endif
 
     {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
@@ -5797,6 +5875,8 @@ ntsa::Error StreamSocket::receive(ntca::ReceiveContext*       context,
 
     ntsa::Error error;
 
+    context->reset();
+
     if (NTCCFG_UNLIKELY(!d_openState.canReceive())) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
@@ -5819,6 +5899,9 @@ ntsa::Error StreamSocket::receive(ntca::ReceiveContext*       context,
         bsl::size_t numBytesRemaining = options.maxSize();
         bsl::size_t numBytesDequeued  = 0;
 
+        context->setTransport(d_transport);
+        context->setEndpoint(d_remoteEndpoint);
+
         while (NTCCFG_LIKELY(d_receiveQueue.hasEntry())) {
             ntcq::ReceiveQueueEntry& entry = d_receiveQueue.frontEntry();
 
@@ -5830,6 +5913,18 @@ ntsa::Error StreamSocket::receive(ntca::ReceiveContext*       context,
 
             BSLS_ASSERT(numBytesRemaining >= numBytesToDequeue);
             numBytesRemaining -= numBytesToDequeue;
+
+            if (entry.foreignHandle().has_value()) {
+                if (context->foreignHandle().has_value()) {
+                    NTCI_LOG_WARN("Dropping foreign handle: "
+                                  "insufficient internal queue capacity");
+                    ntsu::SocketUtil::close(entry.foreignHandle().value());
+                }
+                else {
+                    context->setForeignHandle(
+                        entry.foreignHandle().value());
+                }
+            }
 
             if (numBytesToDequeue == entry.length()) {
                 NTCS_METRICS_UPDATE_READ_QUEUE_DELAY(entry.delay());
@@ -5850,9 +5945,6 @@ ntsa::Error StreamSocket::receive(ntca::ReceiveContext*       context,
 
         BSLS_ASSERT(numBytesDequeued >= options.minSize());
         BSLS_ASSERT(numBytesDequeued <= options.maxSize());
-
-        context->setTransport(d_transport);
-        context->setEndpoint(d_remoteEndpoint);
 
         ntcs::BlobUtil::append(data, d_receiveQueue.data(), numBytesDequeued);
 
@@ -5947,6 +6039,10 @@ ntsa::Error StreamSocket::receive(const ntca::ReceiveOptions&  options,
         bsl::size_t numBytesRemaining = options.maxSize();
         bsl::size_t numBytesDequeued  = 0;
 
+        ntca::ReceiveContext receiveContext;
+        receiveContext.setTransport(d_transport);
+        receiveContext.setEndpoint(d_remoteEndpoint);
+
         while (NTCCFG_LIKELY(d_receiveQueue.hasEntry())) {
             ntcq::ReceiveQueueEntry& entry = d_receiveQueue.frontEntry();
 
@@ -5958,6 +6054,18 @@ ntsa::Error StreamSocket::receive(const ntca::ReceiveOptions&  options,
 
             BSLS_ASSERT(numBytesRemaining >= numBytesToDequeue);
             numBytesRemaining -= numBytesToDequeue;
+
+            if (entry.foreignHandle().has_value()) {
+                if (receiveContext.foreignHandle().has_value()) {
+                    NTCI_LOG_WARN("Dropping foreign handle: "
+                                  "insufficient internal queue capacity");
+                    ntsu::SocketUtil::close(entry.foreignHandle().value());
+                }
+                else {
+                    receiveContext.setForeignHandle(
+                        entry.foreignHandle().value());
+                }
+            }
 
             if (numBytesToDequeue == entry.length()) {
                 NTCS_METRICS_UPDATE_READ_QUEUE_DELAY(entry.delay());
@@ -5993,10 +6101,6 @@ ntsa::Error StreamSocket::receive(const ntca::ReceiveOptions&  options,
         NTCR_STREAMSOCKET_LOG_READ_QUEUE_DRAINED(d_receiveQueue.size());
 
         NTCS_METRICS_UPDATE_READ_QUEUE_SIZE(d_receiveQueue.size());
-
-        ntca::ReceiveContext receiveContext;
-        receiveContext.setTransport(d_transport);
-        receiveContext.setEndpoint(d_remoteEndpoint);
 
         ntca::ReceiveEvent receiveEvent;
         receiveEvent.setType(ntca::ReceiveEventType::e_COMPLETE);

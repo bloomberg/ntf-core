@@ -26,7 +26,11 @@ namespace ntca {
 bool ReceiveContext::equals(const ReceiveContext& other) const
 {
     return (d_endpoint == other.d_endpoint &&
-            d_transport == other.d_transport && d_error == other.d_error);
+            d_transport == other.d_transport && 
+            d_compressionType == other.d_compressionType &&
+            d_compressionRatio == other.d_compressionRatio &&
+            d_foreignHandle == other.d_foreignHandle &&
+            d_error == other.d_error);
 }
 
 bool ReceiveContext::less(const ReceiveContext& other) const
@@ -47,6 +51,30 @@ bool ReceiveContext::less(const ReceiveContext& other) const
         return false;
     }
 
+    if (d_compressionType < other.d_compressionType) {
+        return true;
+    }
+
+    if (other.d_compressionType < d_compressionType) {
+        return false;
+    }
+
+    if (d_compressionRatio < other.d_compressionRatio) {
+        return true;
+    }
+
+    if (other.d_compressionRatio < d_compressionRatio) {
+        return false;
+    }
+
+    if (d_foreignHandle < other.d_foreignHandle) {
+        return true;
+    }
+
+    if (other.d_foreignHandle < d_foreignHandle) {
+        return false;
+    }
+
     return d_error < other.d_error;
 }
 
@@ -62,7 +90,29 @@ bsl::ostream& ReceiveContext::print(bsl::ostream& stream,
     }
 
     printer.printAttribute("transport", d_transport);
-    printer.printAttribute("error", d_error);
+
+    if (d_compressionType.has_value()) {
+        printer.printAttribute("compressionType", d_compressionType.value());
+    }
+
+    if (d_compressionRatio.has_value()) {
+
+        bsl::ostringstream ss;
+        ss << bsl::setprecision(2);
+        ss << bsl::fixed;
+        ss << d_compressionRatio.value() * 100;
+
+        printer.printAttribute("compressionRatio", ss.str());
+    }
+
+    if (d_foreignHandle.has_value()) {
+        printer.printAttribute("foreignHandle", d_foreignHandle.value());
+    }
+
+    if (d_error) {
+        printer.printAttribute("error", d_error);
+    }
+
     printer.end();
     return stream;
 }

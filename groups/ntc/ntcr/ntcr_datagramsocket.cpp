@@ -889,24 +889,28 @@ ntsa::Error DatagramSocket::privateSocketReadableIteration(
         return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
     }
 
-    bdlb::NullableValue<ntsa::Endpoint> endpoint;
-    bsl::shared_ptr<bdlbb::Blob>        temp;
-
-    error = this->privateDequeueReceiveBuffer(self,
-                                              &endpoint,
-                                              &temp);
-    if (NTCCFG_UNLIKELY(error)) {
-        return error;
-    }
-
     {
-        ntcq::ReceiveQueueEntry entry;
-        entry.setEndpoint(endpoint);
-        entry.setData(temp);
-        entry.setLength(temp->length());
-        entry.setTimestamp(bsls::TimeUtil::getTimer());
+        ntsa::ReceiveContext         context;
+        bsl::shared_ptr<bdlbb::Blob> data;
 
-        d_receiveQueue.pushEntry(entry);
+        error = this->privateDequeueReceiveBuffer(self, &context, &data);
+        if (NTCCFG_UNLIKELY(error)) {
+            return error;
+        }
+
+        {
+            ntcq::ReceiveQueueEntry entry;
+            entry.setEndpoint(context.endpoint());
+            entry.setData(data);
+            entry.setLength(data->length());
+            entry.setTimestamp(bsls::TimeUtil::getTimer());
+
+            if (context.foreignHandle().has_value()) {
+                entry.setForeignHandle(context.foreignHandle().value());
+            }
+
+            d_receiveQueue.pushEntry(entry);
+        }
     }
 
     NTCR_DATAGRAMSOCKET_LOG_READ_QUEUE_FILLED(d_receiveQueue.size());
@@ -922,24 +926,35 @@ ntsa::Error DatagramSocket::privateSocketReadableIteration(
 
         BSLS_ASSERT(d_receiveQueue.hasEntry());
 
-        ntcq::ReceiveQueueEntry& entry = d_receiveQueue.frontEntry();
+        ntca::ReceiveContext receiveContext;
+        receiveContext.setTransport(d_transport);
 
-        bdlb::NullableValue<ntsa::Endpoint> endpoint = entry.endpoint();
-        bsl::shared_ptr<bdlbb::Blob>        data     = entry.data();
+        bsl::shared_ptr<bdlbb::Blob> data;
+        
+        {
+            ntcq::ReceiveQueueEntry& entry = d_receiveQueue.frontEntry();
 
-        NTCS_METRICS_UPDATE_READ_QUEUE_DELAY(entry.delay());
+            if (entry.endpoint().has_value()) {
+                receiveContext.setEndpoint(entry.endpoint().value());
+            }
+            else {
+                receiveContext.setEndpoint(d_remoteEndpoint);
+            }
 
-        d_receiveQueue.popEntry();
+            if (entry.foreignHandle().has_value()) {
+                receiveContext.setForeignHandle(entry.foreignHandle().value());
+            }
+
+            data = entry.data();
+
+            NTCS_METRICS_UPDATE_READ_QUEUE_DELAY(entry.delay());
+
+            d_receiveQueue.popEntry();
+        }
 
         NTCR_DATAGRAMSOCKET_LOG_READ_QUEUE_DRAINED(d_receiveQueue.size());
 
         NTCS_METRICS_UPDATE_READ_QUEUE_SIZE(d_receiveQueue.size());
-
-        ntca::ReceiveContext receiveContext;
-        receiveContext.setTransport(d_transport);
-        if (!endpoint.isNull()) {
-            receiveContext.setEndpoint(endpoint.value());
-        }
 
         ntca::ReceiveEvent receiveEvent;
         receiveEvent.setType(ntca::ReceiveEventType::e_COMPLETE);
@@ -1020,11 +1035,15 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
     ntcq::SendQueueEntry& entry = d_sendQueue.frontEntry();
 
     if (NTCCFG_LIKELY(entry.data())) {
+        ntsa::Handle foreignHandle = 
+            entry.foreignHandle().value_or(ntsa::k_INVALID_HANDLE);
+
         ntsa::SendContext sendContext;
         error = this->privateEnqueueSendBuffer(self,
                                                &sendContext,
                                                entry.endpoint(),
-                                               *entry.data());
+                                               *entry.data(),
+                                               foreignHandle);
         if (NTCCFG_UNLIKELY(error)) {
             return error;
         }
@@ -2009,12 +2028,16 @@ ntsa::Error DatagramSocket::privateSend(
 
     ntsa::Error error;
 
+    ntsa::Handle foreignHandle = 
+        options.foreignHandle().value_or(ntsa::k_INVALID_HANDLE);
+
     if (NTCCFG_LIKELY(!d_sendQueue.hasEntry())) {
         ntsa::SendContext sendContext;
         error = this->privateEnqueueSendBuffer(self,
                                                &sendContext,
                                                options.endpoint(),
-                                               data);
+                                               data,
+                                               foreignHandle);
         if (NTCCFG_UNLIKELY(error)) {
             if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)) {
                 return error;
@@ -2064,6 +2087,10 @@ ntsa::Error DatagramSocket::privateSend(
     entry.setData(dataContainer);
     entry.setLength(data.length());
     entry.setTimestamp(bsls::TimeUtil::getTimer());
+
+    if (options.foreignHandle().has_value()) {
+        entry.setForeignHandle(options.foreignHandle().value());
+    }
 
     if (callback) {
         entry.setCallback(callback);
@@ -2143,12 +2170,16 @@ ntsa::Error DatagramSocket::privateSend(
 
     ntsa::Error error;
 
+    ntsa::Handle foreignHandle = 
+        options.foreignHandle().value_or(ntsa::k_INVALID_HANDLE);
+
     if (NTCCFG_LIKELY(!d_sendQueue.hasEntry())) {
         ntsa::SendContext sendContext;
         error = this->privateEnqueueSendBuffer(self,
                                                &sendContext,
                                                options.endpoint(),
-                                               data);
+                                               data,
+                                               foreignHandle);
         if (NTCCFG_UNLIKELY(error)) {
             if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)) {
                 return error;
@@ -2198,6 +2229,10 @@ ntsa::Error DatagramSocket::privateSend(
     entry.setData(dataContainer);
     entry.setLength(dataContainer->size());
     entry.setTimestamp(bsls::TimeUtil::getTimer());
+
+    if (options.foreignHandle().has_value()) {
+        entry.setForeignHandle(options.foreignHandle().value());
+    }
 
     if (callback) {
         entry.setCallback(callback);
@@ -2269,7 +2304,8 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
     const bsl::shared_ptr<DatagramSocket>&     self,
     ntsa::SendContext*                         context,
     const bdlb::NullableValue<ntsa::Endpoint>& endpoint,
-    const bdlbb::Blob&                         data)
+    const bdlbb::Blob&                         data,
+    ntsa::Handle                               foreignHandle)
 {
     NTCI_LOG_CONTEXT();
 
@@ -2302,6 +2338,10 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
         options.setZeroCopy(true);
     }
 
+    if (NTCCFG_UNLIKELY(foreignHandle != ntsa::k_INVALID_HANDLE)) {
+        options.setForeignHandle(foreignHandle);
+    }
+
     bsls::TimeInterval timestamp;
     if (d_timestampOutgoingData) {
         timestamp = this->currentTime();
@@ -2343,6 +2383,12 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
         d_sendRateLimiter_sp->submit(context->bytesSent());
     }
 
+    // TOOD: Allow the user to indicate the exported socket handle should be
+    // automatically closed.
+    // if (NTCCFG_UNLIKELY(foreignHandle != ntsa::k_INVALID_HANDLE)) {
+    //     ntsu::SocketUtil::close(foreignHandle);
+    // }
+
     NTCR_DATAGRAMSOCKET_LOG_SEND_RESULT(*context);
     NTCS_METRICS_UPDATE_SEND_COMPLETE(*context);
 
@@ -2355,7 +2401,8 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
     const bsl::shared_ptr<DatagramSocket>&     self,
     ntsa::SendContext*                         context,
     const bdlb::NullableValue<ntsa::Endpoint>& endpoint,
-    const ntsa::Data&                          data)
+    const ntsa::Data&                          data,
+    ntsa::Handle                               foreignHandle)
 {
     NTCI_LOG_CONTEXT();
 
@@ -2388,6 +2435,10 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
         options.setZeroCopy(true);
     }
 
+    if (NTCCFG_UNLIKELY(foreignHandle != ntsa::k_INVALID_HANDLE)) {
+        options.setForeignHandle(foreignHandle);
+    }
+
     bsls::TimeInterval timestamp;
     if (d_timestampOutgoingData) {
         timestamp = this->currentTime();
@@ -2429,6 +2480,12 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
         d_sendRateLimiter_sp->submit(context->bytesSent());
     }
 
+    // TOOD: Allow the user to indicate the exported socket handle should be
+    // automatically closed.
+    // if (NTCCFG_UNLIKELY(foreignHandle != ntsa::k_INVALID_HANDLE)) {
+    //     ntsu::SocketUtil::close(foreignHandle);
+    // }
+
     NTCR_DATAGRAMSOCKET_LOG_SEND_RESULT(*context);
     NTCS_METRICS_UPDATE_SEND_COMPLETE(*context);
 
@@ -2439,18 +2496,18 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
 
 ntsa::Error DatagramSocket::privateDequeueReceiveBuffer(
     const bsl::shared_ptr<DatagramSocket>& self,
-    bdlb::NullableValue<ntsa::Endpoint>*   endpoint,
+    ntsa::ReceiveContext*                  context,
     bsl::shared_ptr<bdlbb::Blob>*          data)
 {
     ntsa::Error error;
 
     if (NTCCFG_LIKELY(!d_receiveInflater_sp)) {
-        return this->privateDequeueReceiveBufferRaw(self, endpoint, data);
+        return this->privateDequeueReceiveBufferRaw(self, context, data);
     }
     else {
         bsl::shared_ptr<bdlbb::Blob> deflatedData;
         error = this->privateDequeueReceiveBufferRaw(self, 
-                                                     endpoint, 
+                                                     context, 
                                                      &deflatedData);
         if (error) {
             return error;
@@ -2477,7 +2534,7 @@ ntsa::Error DatagramSocket::privateDequeueReceiveBuffer(
 
 ntsa::Error DatagramSocket::privateDequeueReceiveBufferRaw(
         const bsl::shared_ptr<DatagramSocket>& self,
-        bdlb::NullableValue<ntsa::Endpoint>*   endpoint,
+        ntsa::ReceiveContext*                  context,
         bsl::shared_ptr<bdlbb::Blob>*          data)
 {
     NTCI_LOG_CONTEXT();
@@ -2500,8 +2557,7 @@ ntsa::Error DatagramSocket::privateDequeueReceiveBufferRaw(
     BSLS_ASSERT(NTCCFG_WARNING_PROMOTE(bsl::size_t, (*data)->totalSize()) ==
                 d_maxDatagramSize);
 
-    ntsa::ReceiveContext context;
-    error = d_socket_sp->receive(&context, data->get(), d_receiveOptions);
+    error = d_socket_sp->receive(context, data->get(), d_receiveOptions);
     if (NTCCFG_UNLIKELY(error)) {
         if (NTCCFG_LIKELY(error == ntsa::Error::e_WOULD_BLOCK)) {
             NTCR_DATAGRAMSOCKET_LOG_RECEIVE_BUFFER_UNDERFLOW();
@@ -2515,9 +2571,9 @@ ntsa::Error DatagramSocket::privateDequeueReceiveBufferRaw(
 
     if (d_receiveOptions.wantTimestamp()) {
         const bdlb::NullableValue<bsls::TimeInterval>& softwareTs =
-            context.softwareTimestamp();
+            context->softwareTimestamp();
         const bdlb::NullableValue<bsls::TimeInterval>& hardwareTs =
-            context.hardwareTimestamp();
+            context->hardwareTimestamp();
         if (softwareTs.has_value() && hardwareTs.has_value()) {
             const bsls::TimeInterval pureHwDelay =
                 softwareTs.value() - hardwareTs.value();
@@ -2547,24 +2603,21 @@ ntsa::Error DatagramSocket::privateDequeueReceiveBufferRaw(
         }
     }
 
-    if (context.endpoint().has_value()) {
-        *endpoint = context.endpoint().value();
-    }
-    else {
-        *endpoint = d_remoteEndpoint;
+    if (context->endpoint().isNull()) {
+        context->setEndpoint(d_remoteEndpoint);
     }
 
     if (NTCCFG_UNLIKELY(d_receiveRateLimiter_sp)) {
-        d_receiveRateLimiter_sp->submit(context.bytesReceived());
+        d_receiveRateLimiter_sp->submit(context->bytesReceived());
     }
 
-    NTCR_DATAGRAMSOCKET_LOG_RECEIVE_RESULT(context);
-    NTCS_METRICS_UPDATE_RECEIVE_COMPLETE(context);
+    NTCR_DATAGRAMSOCKET_LOG_RECEIVE_RESULT(*context);
+    NTCS_METRICS_UPDATE_RECEIVE_COMPLETE(*context);
 
     BSLS_ASSERT(NTCCFG_WARNING_PROMOTE(bsl::size_t, (*data)->length()) ==
-                context.bytesReceived());
+                context->bytesReceived());
 
-    d_totalBytesReceived += context.bytesReceived();
+    d_totalBytesReceived += context->bytesReceived();
 
     return ntsa::Error();
 }
@@ -2795,6 +2848,12 @@ ntsa::Error DatagramSocket::privateOpen(
             d_receiveInflater_sp = compression;
         }
     }
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
+        d_receiveOptions.showForeignHandles();
+    }
+#endif
 
     error = datagramSocket->setBlocking(false);
     if (error) {
@@ -3774,12 +3833,12 @@ ntsa::Error DatagramSocket::receive(ntca::ReceiveContext*       context,
         error = ntsa::Error::e_OK;
     }
     else if (d_receiveGreedily) {
-        bdlb::NullableValue<ntsa::Endpoint> endpoint;
-        bsl::shared_ptr<bdlbb::Blob>        temp;
+        ntsa::ReceiveContext         receiveContext;
+        bsl::shared_ptr<bdlbb::Blob> receiveData;
 
         error = this->privateDequeueReceiveBuffer(self,
-                                                  &endpoint,
-                                                  &temp);
+                                                  &receiveContext,
+                                                  &receiveData);
         if (NTCCFG_UNLIKELY(error)) {
             if (NTCCFG_UNLIKELY(error != ntsa::Error::e_WOULD_BLOCK)) {
                 return error;
@@ -3787,13 +3846,20 @@ ntsa::Error DatagramSocket::receive(ntca::ReceiveContext*       context,
         }
         else {
             context->setTransport(d_transport);
-            if (!endpoint.isNull()) {
-                context->setEndpoint(endpoint.value());
+
+            if (receiveContext.endpoint().has_value()) {
+                context->setEndpoint(receiveContext.endpoint().value());
             }
             else {
                 context->setEndpoint(d_remoteEndpoint);
             }
-            data->moveBuffers(temp.get());
+
+            if (receiveContext.foreignHandle().has_value()) {
+                context->setForeignHandle(
+                    receiveContext.foreignHandle().value());
+            }
+
+            data->moveDataBuffers(receiveData.get());
         }
     }
     else {
@@ -3903,12 +3969,12 @@ ntsa::Error DatagramSocket::receive(const ntca::ReceiveOptions&  options,
         error = ntsa::Error::e_OK;
     }
     else if (d_receiveGreedily) {
-        bdlb::NullableValue<ntsa::Endpoint> endpoint;
-        bsl::shared_ptr<bdlbb::Blob>        temp;
+        ntsa::ReceiveContext         receiveContext;
+        bsl::shared_ptr<bdlbb::Blob> receiveData;
 
         error = this->privateDequeueReceiveBuffer(self,
-                                                  &endpoint,
-                                                  &temp);
+                                                  &receiveContext,
+                                                  &receiveData);
         if (NTCCFG_UNLIKELY(error)) {
             if (NTCCFG_LIKELY(error == ntsa::Error::e_WOULD_BLOCK)) {
                 if (!options.deadline().isNull()) {
@@ -3945,24 +4011,30 @@ ntsa::Error DatagramSocket::receive(const ntca::ReceiveOptions&  options,
             }
         }
         else {
-            ntca::ReceiveContext receiveContext;
-            receiveContext.setTransport(d_transport);
-            if (!endpoint.isNull()) {
-                receiveContext.setEndpoint(endpoint.value());
+            ntca::ReceiveContext context;
+            context.setTransport(d_transport);
+
+            if (receiveContext.endpoint().has_value()) {
+                receiveContext.setEndpoint(receiveContext.endpoint().value());
             }
             else {
                 receiveContext.setEndpoint(d_remoteEndpoint);
             }
 
+            if (receiveContext.foreignHandle().has_value()) {
+                context.setForeignHandle(
+                    receiveContext.foreignHandle().value());
+            }
+
             ntca::ReceiveEvent receiveEvent;
             receiveEvent.setType(ntca::ReceiveEventType::e_COMPLETE);
-            receiveEvent.setContext(receiveContext);
+            receiveEvent.setContext(context);
 
             const bool defer = !options.recurse();
 
             ntcq::ReceiveCallbackQueueEntry::dispatch(callbackEntry,
                                                       self,
-                                                      temp,
+                                                      receiveData,
                                                       receiveEvent,
                                                       ntci::Strand::unknown(),
                                                       self,

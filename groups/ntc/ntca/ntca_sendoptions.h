@@ -23,6 +23,7 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_endpoint.h>
+#include <ntsa_handle.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
 #include <bsls_timeinterval.h>
@@ -53,6 +54,12 @@ namespace ntca {
 /// The deadline within which the message must be sent, in absolute time since
 /// the Unix epoch.
 ///
+/// @li @b foreignHandle:
+/// The handle to the open socket to send to the peer. If successfully received
+/// the handle is effectively duplicated in the receiving process, but note
+/// that the sender is still responsible for closing the socket handle even if
+/// it has been sent successfully.
+///
 /// @li @b recurse:
 /// Allow callbacks to be invoked immediately and recursively if their
 /// constraints are already satisfied at the time the asynchronous operation
@@ -69,6 +76,7 @@ class SendOptions
     bdlb::NullableValue<bsl::size_t>        d_priority;
     bdlb::NullableValue<bsl::size_t>        d_highWatermark;
     bdlb::NullableValue<bsls::TimeInterval> d_deadline;
+    bdlb::NullableValue<ntsa::Handle>       d_foreignHandle;
     bool                                    d_recurse;
 
   public:
@@ -109,6 +117,10 @@ class SendOptions
     /// specified 'value'.
     void setDeadline(const bsls::TimeInterval& value);
 
+    // Set the handle to the open socket to send to the peer to the specified
+    // 'value'.
+    void setForeignHandle(ntsa::Handle value);
+
     /// Set the flag that allows callbacks to be invoked immediately and
     /// recursively if their constraints are already satisfied at the time
     /// the asynchronous operation is initiated.
@@ -129,6 +141,9 @@ class SendOptions
 
     /// Return the deadline within which the data must be sent.
     const bdlb::NullableValue<bsls::TimeInterval>& deadline() const;
+
+    /// Return the handle to the open socket to send to the peer.
+    const bdlb::NullableValue<ntsa::Handle>& foreignHandle() const;
 
     /// Return true if callbacks are allowed to be invoked immediately and
     /// recursively if their constraints are already satisfied at the time
@@ -207,6 +222,7 @@ SendOptions::SendOptions()
 , d_priority()
 , d_highWatermark()
 , d_deadline()
+, d_foreignHandle()
 , d_recurse(false)
 {
 }
@@ -218,6 +234,7 @@ SendOptions::SendOptions(const SendOptions& original)
 , d_priority(original.d_priority)
 , d_highWatermark(original.d_highWatermark)
 , d_deadline(original.d_deadline)
+, d_foreignHandle(original.d_foreignHandle)
 , d_recurse(original.d_recurse)
 {
 }
@@ -235,6 +252,7 @@ SendOptions& SendOptions::operator=(const SendOptions& other)
     d_priority      = other.d_priority;
     d_highWatermark = other.d_highWatermark;
     d_deadline      = other.d_deadline;
+    d_foreignHandle = other.d_foreignHandle;
     d_recurse       = other.d_recurse;
     return *this;
 }
@@ -247,6 +265,7 @@ void SendOptions::reset()
     d_priority.reset();
     d_highWatermark.reset();
     d_deadline.reset();
+    d_foreignHandle.reset();
     d_recurse = false;
 }
 
@@ -278,6 +297,12 @@ NTCCFG_INLINE
 void SendOptions::setDeadline(const bsls::TimeInterval& value)
 {
     d_deadline = value;
+}
+
+NTCCFG_INLINE
+void SendOptions::setForeignHandle(ntsa::Handle value)
+{
+    d_foreignHandle = value;
 }
 
 NTCCFG_INLINE
@@ -314,6 +339,12 @@ NTCCFG_INLINE
 const bdlb::NullableValue<bsls::TimeInterval>& SendOptions::deadline() const
 {
     return d_deadline;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntsa::Handle>& SendOptions::foreignHandle() const
+{
+    return d_foreignHandle;
 }
 
 NTCCFG_INLINE
@@ -356,6 +387,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SendOptions& value)
     hashAppend(algorithm, value.priority());
     hashAppend(algorithm, value.highWatermark());
     hashAppend(algorithm, value.deadline());
+    hashAppend(algorithm, value.foreignHandle());
     hashAppend(algorithm, value.recurse());
 }
 
