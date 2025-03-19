@@ -171,6 +171,18 @@ class SocketUtilTest
         ntsa::Handle           client,
         bslma::Allocator*      allocator);
 
+    static void testStreamSocketTransmissionWithControlMsgCoalesced(
+            ntsa::Transport::Value transport,
+            ntsa::Handle           server,
+            ntsa::Handle           client,
+            bslma::Allocator*      allocator);
+
+    static void testStreamSocketTransmissionWithControlMsgChunked(
+            ntsa::Transport::Value transport,
+            ntsa::Handle           server,
+            ntsa::Handle           client,
+            bslma::Allocator*      allocator);
+
     static void testStreamSocketTransmissionFile(
         ntsa::Transport::Value transport,
         ntsa::Handle           server,
@@ -359,6 +371,12 @@ class SocketUtilTest
 
     // TODO
     static void verifyCase24();
+
+    // TODO
+    static void verifyCase24b();
+
+    // TODO
+    static void verifyCase24c();
 
     // TODO
     static void verifyCase25();
@@ -1295,6 +1313,319 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgDropped(
             }
         }
     }
+}
+
+void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+    // Concern: Verify that control messages with SCM_RIGHTS "auto-frame" each
+    // send, so that the data and meta-data of multiple sends are not coalesced
+    // into a single receive.
+
+    if (transport != ntsa::Transport::e_LOCAL_STREAM) {
+        return;
+    }
+
+    ntsa::Error error;
+
+    enum { 
+        k_NUM_TRANSMISSIONS = 4,
+        k_TRANSMISSION_SIZE = 10
+    };
+
+    BSLMF_ASSERT(k_NUM_TRANSMISSIONS % 2 == 0);
+
+    for (bsl::size_t variation = 0; variation < 2; ++variation) {
+        const bool exportHandles = (variation % 2 == 0);
+
+        NTSCFG_TEST_LOG_DEBUG << "Testing " 
+                              << transport
+                              << ": writev/readv (blob) "
+                              << "with ancillary data potentially coalesced "
+                              << "(export sockets: " << exportHandles << ")" 
+                              << NTSCFG_TEST_LOG_END;
+
+        bsl::vector<ntsa::Handle> domesticSocketVector;
+        domesticSocketVector.reserve(k_NUM_TRANSMISSIONS);
+
+        bsl::vector<ntsa::Endpoint> domesticSourceEndpointVector;
+        domesticSourceEndpointVector.reserve(k_NUM_TRANSMISSIONS);
+
+        char sendBuffer[k_TRANSMISSION_SIZE * k_NUM_TRANSMISSIONS];
+        bsl::memset(sendBuffer, 0, sizeof sendBuffer);
+
+        for (bsl::size_t i = 0; i < k_NUM_TRANSMISSIONS; ++i) {
+            if (exportHandles) {
+                ntsa::Handle domesticSocket;
+                error = ntsu::SocketUtil::create(&domesticSocket, transport);
+                NTSCFG_TEST_OK(error);
+
+                domesticSocketVector.push_back(domesticSocket);
+
+                error = ntsu::SocketUtil::bind(
+                    ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+                    false,
+                    domesticSocket);
+                NTSCFG_TEST_OK(error);
+
+                ntsa::Endpoint domesticSourceEndpoint;
+                error = ntsu::SocketUtil::sourceEndpoint(
+                    &domesticSourceEndpoint,
+                    domesticSocket);
+                NTSCFG_TEST_OK(error);
+
+                domesticSourceEndpointVector.push_back(domesticSourceEndpoint);
+            }
+
+            bsl::string s;
+            s.append(k_TRANSMISSION_SIZE, '0' + (i % 10));
+            NTSCFG_TEST_EQ(s.size(), k_TRANSMISSION_SIZE);
+
+            bsl::memcpy(sendBuffer + (k_TRANSMISSION_SIZE * i), 
+                        s.c_str(), 
+                        s.size());
+        }
+
+        for (bsl::size_t i = 0; i < k_NUM_TRANSMISSIONS; ++i) {
+            ntsa::SendContext context;
+            ntsa::SendOptions options;
+
+            if (exportHandles) {
+                options.setForeignHandle(domesticSocketVector[i]);
+            }
+
+            error = ntsu::SocketUtil::send(
+                &context, 
+                sendBuffer + (k_TRANSMISSION_SIZE * i),
+                k_TRANSMISSION_SIZE,
+                options,
+                client);
+            NTSCFG_TEST_OK(error);
+
+            NTSCFG_TEST_EQ(context.bytesSendable(), 10);
+            NTSCFG_TEST_EQ(context.bytesSent(), 10);
+        }
+
+        bslmt::ThreadUtil::sleep(bsls::TimeInterval(3));
+
+        const bsl::size_t numReceives = exportHandles ? 
+            (k_NUM_TRANSMISSIONS) : (k_NUM_TRANSMISSIONS / 2);
+
+        bsl::size_t totalBytesReceived = 0;
+
+        for (bsl::size_t i = 0; i < numReceives; ++i) {
+            ntsa::ReceiveContext context;
+            ntsa::ReceiveOptions options;
+
+            if (exportHandles) {
+                options.showForeignHandles();
+            }
+
+            char receiveBuffer[k_TRANSMISSION_SIZE * 2];
+            bsl::memset(receiveBuffer, 0, sizeof receiveBuffer);
+
+            error = ntsu::SocketUtil::receive(&context,
+                                            receiveBuffer,
+                                            sizeof receiveBuffer,
+                                            options,
+                                            server);
+            NTSCFG_TEST_OK(error);
+
+            if (exportHandles) {
+                NTSCFG_TEST_EQ(context.bytesReceived(), k_TRANSMISSION_SIZE);
+                NTSCFG_TEST_EQ(
+                    bsl::memcmp(
+                        receiveBuffer, 
+                        sendBuffer + (k_TRANSMISSION_SIZE * i), 
+                        k_TRANSMISSION_SIZE), 
+                    0);
+            }
+            else {
+                NTSCFG_TEST_EQ(context.bytesReceived(), sizeof receiveBuffer);
+                NTSCFG_TEST_EQ(
+                    bsl::memcmp(
+                        receiveBuffer, 
+                        sendBuffer + (sizeof receiveBuffer * i), 
+                        sizeof receiveBuffer), 
+                    0);
+            }
+
+            totalBytesReceived += context.bytesReceived();
+
+            if (exportHandles) {
+                NTSCFG_TEST_TRUE(context.foreignHandle().has_value());
+
+                ntsa::Handle foreignSocket = context.foreignHandle().value();
+
+                ntsa::Endpoint foreignSourceEndpoint;
+                error = ntsu::SocketUtil::sourceEndpoint(&foreignSourceEndpoint,
+                                                        foreignSocket);
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_EQ(foreignSourceEndpoint, 
+                            domesticSourceEndpointVector[i]);
+            }
+        }
+
+        NTSCFG_TEST_EQ(totalBytesReceived, sizeof sendBuffer);
+
+        if (exportHandles) {
+            for (bsl::size_t i = 0; i < k_NUM_TRANSMISSIONS; ++i) {
+                ntsu::SocketUtil::close(domesticSocketVector[i]);
+            }
+        }
+    }
+
+#endif
+}
+
+void SocketUtilTest::testStreamSocketTransmissionWithControlMsgChunked(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+    // Concern: Verify that control messages with SCM_RIGHTS "auto-frame" each
+    // send, so that the data and meta-data of multiple sends do not become
+    // incoherent even when it requires multiple receives to read each frame.
+
+    if (transport != ntsa::Transport::e_LOCAL_STREAM) {
+        return;
+    }
+
+    ntsa::Error error;
+
+    enum { 
+        k_NUM_TRANSMISSIONS = 4,
+        k_TRANSMISSION_SIZE = 10
+    };
+
+    BSLMF_ASSERT(k_NUM_TRANSMISSIONS % 2 == 0);
+
+    NTSCFG_TEST_LOG_DEBUG << "Testing " 
+                            << transport
+                            << ": writev/readv (blob) "
+                            << "with ancillary data potentially chunked "
+                            << "(export sockets: 1)" 
+                            << NTSCFG_TEST_LOG_END;
+
+    bsl::vector<ntsa::Handle> domesticSocketVector;
+    domesticSocketVector.reserve(k_NUM_TRANSMISSIONS);
+
+    bsl::vector<ntsa::Endpoint> domesticSourceEndpointVector;
+    domesticSourceEndpointVector.reserve(k_NUM_TRANSMISSIONS);
+
+    char sendBuffer[k_TRANSMISSION_SIZE * k_NUM_TRANSMISSIONS];
+    bsl::memset(sendBuffer, 0, sizeof sendBuffer);
+
+    for (bsl::size_t i = 0; i < k_NUM_TRANSMISSIONS; ++i) {
+        ntsa::Handle domesticSocket;
+        error = ntsu::SocketUtil::create(&domesticSocket, transport);
+        NTSCFG_TEST_OK(error);
+
+        domesticSocketVector.push_back(domesticSocket);
+
+        error = ntsu::SocketUtil::bind(
+            ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+            false,
+            domesticSocket);
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint domesticSourceEndpoint;
+        error = ntsu::SocketUtil::sourceEndpoint(
+            &domesticSourceEndpoint,
+            domesticSocket);
+        NTSCFG_TEST_OK(error);
+
+        domesticSourceEndpointVector.push_back(domesticSourceEndpoint);
+
+        bsl::string s;
+        s.append(k_TRANSMISSION_SIZE, '0' + (i % 10));
+        NTSCFG_TEST_EQ(s.size(), k_TRANSMISSION_SIZE);
+
+        bsl::memcpy(sendBuffer + (k_TRANSMISSION_SIZE * i), 
+                    s.c_str(), 
+                    s.size());
+    }
+
+    for (bsl::size_t i = 0; i < k_NUM_TRANSMISSIONS; ++i) {
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setForeignHandle(domesticSocketVector[i]);
+
+        error = ntsu::SocketUtil::send(
+            &context, 
+            sendBuffer + (k_TRANSMISSION_SIZE * i),
+            k_TRANSMISSION_SIZE,
+            options,
+            client);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 10);
+        NTSCFG_TEST_EQ(context.bytesSent(), 10);
+    }
+
+    bslmt::ThreadUtil::sleep(bsls::TimeInterval(3));
+
+    bsl::size_t totalBytesReceived = 0;
+
+    for (bsl::size_t i = 0; i < k_NUM_TRANSMISSIONS * 2; ++i) {
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        options.showForeignHandles();
+
+        char receiveBuffer[k_TRANSMISSION_SIZE / 2];
+        bsl::memset(receiveBuffer, 0, sizeof receiveBuffer);
+
+        error = ntsu::SocketUtil::receive(&context,
+                                          receiveBuffer,
+                                          sizeof receiveBuffer,
+                                          options,
+                                          server);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceived(), k_TRANSMISSION_SIZE / 2);
+        NTSCFG_TEST_EQ(
+            bsl::memcmp(
+                receiveBuffer, 
+                sendBuffer + ((k_TRANSMISSION_SIZE / 2) * i), 
+                k_TRANSMISSION_SIZE / 2), 
+            0);
+
+        totalBytesReceived += context.bytesReceived();
+
+        if (i % 2 == 0) {
+            NTSCFG_TEST_TRUE(context.foreignHandle().has_value());
+
+            ntsa::Handle foreignSocket = context.foreignHandle().value();
+
+            ntsa::Endpoint foreignSourceEndpoint;
+            error = ntsu::SocketUtil::sourceEndpoint(&foreignSourceEndpoint,
+                                                     foreignSocket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_EQ(foreignSourceEndpoint, 
+                           domesticSourceEndpointVector[i / 2]);
+        }
+        else {
+            NTSCFG_TEST_FALSE(context.foreignHandle().has_value());
+        }
+    }
+
+    NTSCFG_TEST_EQ(totalBytesReceived, sizeof sendBuffer);
+
+    for (bsl::size_t i = 0; i < k_NUM_TRANSMISSIONS; ++i) {
+        ntsu::SocketUtil::close(domesticSocketVector[i]);
+    }
+
+#endif
 }
 
 void SocketUtilTest::testStreamSocketTransmissionFile(
@@ -7912,6 +8243,32 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24)
 
     SocketUtilTest::executeStreamSocketTest(
         &SocketUtilTest::testStreamSocketTransmissionWithControlMsgDropped);
+
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24b)
+{
+    // Concern: Stream socket transmission with control data: dropped
+    // Plan:
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced);
+
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24c)
+{
+    // Concern: Stream socket transmission with control data: dropped
+    // Plan:
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketTransmissionWithControlMsgChunked);
 
 #endif
 }
