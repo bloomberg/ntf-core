@@ -1,0 +1,2 @@
+# UndefinedBehaviorSanitizer suppressions file for NTF.
+# See details https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#runtime-suppressions.
