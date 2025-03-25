@@ -7042,6 +7042,10 @@ ntsa::Error StreamSocket::release(ntsa::Handle*              result,
     }
 
     d_detachState.setGoal(ntcs::DetachGoal::e_EXPORT);
+
+    d_manager_sp.reset();
+    d_session_sp.reset();
+
     this->privateClose(self, callback);
 
     return ntsa::Error();
