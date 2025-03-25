@@ -1595,10 +1595,10 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
-                           "no delay: %s",
-                           error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
+                BSLS_LOG_DEBUG("Failed to set socket option: "
+                               "no delay: %s",
+                               error.text().c_str());
                 return error;
             }
         }
@@ -1857,10 +1857,10 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
-                           "no delay: %s",
-                           error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
+                BSLS_LOG_DEBUG("Failed to set socket option: "
+                               "no delay: %s",
+                               error.text().c_str());
                 return error;
             }
         }
