@@ -4032,8 +4032,10 @@ ntsa::Error StreamSocket::connect(const ntsa::Endpoint&        endpoint,
         d_connectOptions.setRetryCount(1);
     }
     else {
-        d_connectOptions.setRetryCount(d_connectOptions.retryCount().value() +
-                                       1);
+        const bsl::size_t retryCount = d_connectOptions.retryCount().value();
+        if (retryCount != bsl::numeric_limits<bsl::size_t>::max()) {
+            d_connectOptions.setRetryCount(retryCount + 1);
+        }
     }
 
     if (d_connectOptions.retryCount().value() > 1) {
