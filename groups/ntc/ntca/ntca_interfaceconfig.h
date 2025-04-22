@@ -418,7 +418,7 @@ class InterfaceConfig
     void setMinThreads(bsl::size_t minThreads);
 
     /// Set the maximum number of threads to the specified 'maxThreads'.
-    void setMaxThreads(bsl::size_t minThreads);
+    void setMaxThreads(bsl::size_t maxThreads);
 
     /// Set the stack size of the thread to the specified 'threadStackSize'.
     void setThreadStackSize(bsl::size_t threadStackSize);
