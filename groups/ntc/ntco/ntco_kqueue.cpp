@@ -207,6 +207,9 @@ class Kqueue : public ntci::Reactor,
     typedef ntci::LockGuard LockGuard;
     // This typedef defines a mutex lock guard.
 
+    // The maximum number of seconds to wait.
+    static const bsls::Types::Int64 k_MAX_SECONDS = 2147483647LL;
+
     ntccfg::Object                           d_object;
     int                                      d_kqueue;
     ntcs::RegistryEntryCatalog::EntryFunctor d_detachFunctor;
@@ -1981,7 +1984,16 @@ void Kqueue::run(ntci::Waiter waiter)
         struct ::timespec  ts;
 
         if (!timeoutInterval.isNull()) {
+            const bsls::TimeInterval timeoutIntervalMax(k_MAX_SECONDS, 0);
+
+            if (timeoutInterval.value() > timeoutIntervalMax) {
+                timeoutInterval.value() = timeoutIntervalMax;
+            }
+
             NTCO_KQUEUE_LOG_WAIT_TIMED_HIGH_PRECISION(timeoutInterval.value());
+
+            BSLMF_ASSERT(sizeof ts.tv_sec == 8);
+            BSLMF_ASSERT(sizeof ts.tv_nsec == 8);
 
             ts.tv_sec  = timeoutInterval.value().seconds();
             ts.tv_nsec = timeoutInterval.value().nanoseconds();
@@ -2184,7 +2196,16 @@ void Kqueue::poll(ntci::Waiter waiter)
     struct ::timespec  ts;
 
     if (!timeoutInterval.isNull()) {
+        const bsls::TimeInterval timeoutIntervalMax(k_MAX_SECONDS, 0);
+
+        if (timeoutInterval.value() > timeoutIntervalMax) {
+            timeoutInterval.value() = timeoutIntervalMax;
+        }
+
         NTCO_KQUEUE_LOG_WAIT_TIMED_HIGH_PRECISION(timeoutInterval.value());
+
+        BSLMF_ASSERT(sizeof ts.tv_sec == 8);
+        BSLMF_ASSERT(sizeof ts.tv_nsec == 8);
 
         ts.tv_sec  = timeoutInterval.value().seconds();
         ts.tv_nsec = timeoutInterval.value().nanoseconds();
