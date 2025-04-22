@@ -209,6 +209,64 @@ InterfaceConfig& InterfaceConfig::operator=(const InterfaceConfig& other)
     return *this;
 }
 
+void InterfaceConfig::reset()
+{
+    d_driverName.clear();
+    d_metricName.clear();
+    d_threadName.clear();
+    d_minThreads       = 1;
+    d_maxThreads       = NTCCFG_DEFAULT_MAX_THREADS;
+    d_threadStackSize  = NTCCFG_DEFAULT_STACK_SIZE;
+    d_threadLoadFactor = NTCCFG_DEFAULT_MAX_DESIRED_SOCKETS_PER_THREAD;
+    d_maxEventsPerWait.reset();
+    d_maxTimersPerWait.reset();
+    d_maxCyclesPerWait.reset();
+    d_maxConnections.reset();
+    d_backlog.reset();
+    d_acceptQueueLowWatermark.reset();
+    d_acceptQueueHighWatermark.reset();
+    d_readQueueLowWatermark.reset();
+    d_readQueueHighWatermark.reset();
+    d_writeQueueLowWatermark.reset();
+    d_writeQueueHighWatermark.reset();
+    d_minIncomingStreamTransferSize.reset();
+    d_maxIncomingStreamTransferSize.reset();
+    d_acceptGreedily.reset();
+    d_sendGreedily.reset();
+    d_receiveGreedily.reset();
+    d_sendBufferSize.reset();
+    d_receiveBufferSize.reset();
+    d_sendBufferLowWatermark.reset();
+    d_receiveBufferLowWatermark.reset();
+    d_sendTimeout.reset();
+    d_receiveTimeout.reset();
+    d_timestampOutgoingData.reset();
+    d_timestampIncomingData.reset();
+    d_zeroCopyThreshold.reset();
+    d_keepAlive.reset();
+    d_noDelay.reset();
+    d_debugFlag.reset();
+    d_allowBroadcasting.reset();
+    d_bypassNormalRouting.reset();
+    d_leaveOutOfBandDataInline.reset();
+    d_lingerFlag.reset();
+    d_lingerTimeout.reset();
+    d_keepHalfOpen.reset();
+    d_maxDatagramSize.reset();
+    d_multicastLoopback.reset();
+    d_multicastTimeToLive.reset();
+    d_multicastInterface.reset();
+    d_dynamicLoadBalancing.reset();
+    d_driverMetrics.reset();
+    d_driverMetricsPerWaiter.reset();
+    d_socketMetrics.reset();
+    d_socketMetricsPerHandle.reset();
+    d_resolverEnabled.reset();
+    d_resolverConfig.reset();
+    d_compressionConfig.reset();
+    d_serializationConfig.reset();
+}
+
 void InterfaceConfig::setDriverName(const bslstl::StringRef& driverName)
 {
     d_driverName = driverName;
@@ -763,16 +821,75 @@ const bdlb::NullableValue<ntca::ResolverConfig>& InterfaceConfig::
     return d_resolverConfig;
 }
 
-const bdlb::NullableValue<ntca::CompressionConfig>& 
-InterfaceConfig::compressionConfig() const
+const bdlb::NullableValue<ntca::CompressionConfig>& InterfaceConfig::
+    compressionConfig() const
 {
     return d_compressionConfig;
 }
 
-const bdlb::NullableValue<ntca::SerializationConfig>& 
-InterfaceConfig::serializationConfig() const
+const bdlb::NullableValue<ntca::SerializationConfig>& InterfaceConfig::
+    serializationConfig() const
 {
     return d_serializationConfig;
+}
+
+bool InterfaceConfig::equals(const InterfaceConfig& other) const
+{
+    return d_driverName == other.d_driverName &&
+           d_metricName == other.d_metricName &&
+           d_threadName == other.d_threadName &&
+           d_minThreads == other.d_minThreads &&
+           d_maxThreads == other.d_maxThreads &&
+           d_threadStackSize == other.d_threadStackSize &&
+           d_threadLoadFactor == other.d_threadLoadFactor &&
+           d_maxEventsPerWait == other.d_maxEventsPerWait &&
+           d_maxTimersPerWait == other.d_maxTimersPerWait &&
+           d_maxCyclesPerWait == other.d_maxCyclesPerWait &&
+           d_maxConnections == other.d_maxConnections &&
+           d_backlog == other.d_backlog &&
+           d_acceptQueueLowWatermark == other.d_acceptQueueLowWatermark &&
+           d_acceptQueueHighWatermark == other.d_acceptQueueHighWatermark &&
+           d_readQueueLowWatermark == other.d_readQueueLowWatermark &&
+           d_readQueueHighWatermark == other.d_readQueueHighWatermark &&
+           d_writeQueueLowWatermark == other.d_writeQueueLowWatermark &&
+           d_writeQueueHighWatermark == other.d_writeQueueHighWatermark &&
+           d_minIncomingStreamTransferSize ==
+               other.d_minIncomingStreamTransferSize &&
+           d_maxIncomingStreamTransferSize ==
+               other.d_maxIncomingStreamTransferSize &&
+           d_acceptGreedily == other.d_acceptGreedily &&
+           d_sendGreedily == other.d_sendGreedily &&
+           d_receiveGreedily == other.d_receiveGreedily &&
+           d_sendBufferSize == other.d_sendBufferSize &&
+           d_receiveBufferSize == other.d_receiveBufferSize &&
+           d_sendBufferLowWatermark == other.d_sendBufferLowWatermark &&
+           d_receiveBufferLowWatermark == other.d_receiveBufferLowWatermark &&
+           d_sendTimeout == other.d_sendTimeout &&
+           d_receiveTimeout == other.d_receiveTimeout &&
+           d_timestampOutgoingData == other.d_timestampOutgoingData &&
+           d_timestampIncomingData == other.d_timestampIncomingData &&
+           d_zeroCopyThreshold == other.d_zeroCopyThreshold &&
+           d_keepAlive == other.d_keepAlive && d_noDelay == other.d_noDelay &&
+           d_debugFlag == other.d_debugFlag &&
+           d_allowBroadcasting == other.d_allowBroadcasting &&
+           d_bypassNormalRouting == other.d_bypassNormalRouting &&
+           d_leaveOutOfBandDataInline == other.d_leaveOutOfBandDataInline &&
+           d_lingerFlag == other.d_lingerFlag &&
+           d_lingerTimeout == other.d_lingerTimeout &&
+           d_keepHalfOpen == other.d_keepHalfOpen &&
+           d_maxDatagramSize == other.d_maxDatagramSize &&
+           d_multicastLoopback == other.d_multicastLoopback &&
+           d_multicastTimeToLive == other.d_multicastTimeToLive &&
+           d_multicastInterface == other.d_multicastInterface &&
+           d_dynamicLoadBalancing == other.d_dynamicLoadBalancing &&
+           d_driverMetrics == other.d_driverMetrics &&
+           d_driverMetricsPerWaiter == other.d_driverMetricsPerWaiter &&
+           d_socketMetrics == other.d_socketMetrics &&
+           d_socketMetricsPerHandle == other.d_socketMetricsPerHandle &&
+           d_resolverEnabled == other.d_resolverEnabled &&
+           d_resolverConfig == other.d_resolverConfig &&
+           d_compressionConfig == other.d_compressionConfig &&
+           d_serializationConfig == other.d_serializationConfig;
 }
 
 bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
@@ -995,17 +1112,27 @@ bsl::ostream& InterfaceConfig::print(bsl::ostream& stream,
     }
 
     if (d_compressionConfig.has_value()) {
-        printer.printAttribute("compressionConfig", 
+        printer.printAttribute("compressionConfig",
                                d_compressionConfig.value());
     }
 
     if (d_serializationConfig.has_value()) {
-        printer.printAttribute("serializationConfig", 
+        printer.printAttribute("serializationConfig",
                                d_serializationConfig.value());
     }
 
     printer.end();
     return stream;
+}
+
+bool operator==(const InterfaceConfig& lhs, const InterfaceConfig& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const InterfaceConfig& lhs, const InterfaceConfig& rhs)
+{
+    return !operator==(lhs, rhs);
 }
 
 bsl::ostream& operator<<(bsl::ostream& stream, const InterfaceConfig& object)
