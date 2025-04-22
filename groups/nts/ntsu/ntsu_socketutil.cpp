@@ -19,6 +19,12 @@
 #define _GNU_SOURCE 1
 #endif
 
+// Include non-POSIX extensions on Darwin, most notably MSG_NOSIGNAL.
+
+#ifndef _DARWIN_C_SOURCE
+#define _DARWIN_C_SOURCE 1
+#endif
+
 // Solaris 11.3 and earlier require that _XOPEN_SOURCE be defined to 500 or
 // later for its sys/socket.h to declare a POSIX-compliant 'msghdr'. Solaris
 // 11.4 always declares a POSIX-compliant 'msghdr' unless __USE_SUNOS_SOCKETS__
@@ -171,6 +177,12 @@ struct sockaddr_un_win32 {
 #endif
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
+// Define the default flags to 'sendmsg'.
+#define NTSU_SOCKETUTIL_SENDMSG_FLAGS MSG_NOSIGNAL
+#elif defined(BSLS_PLATFORM_OS_DARWIN)
+#if __DARWIN_C_LEVEL < 200809L
+#error Compile without -D_ANSI_SOURCE
+#endif
 // Define the default flags to 'sendmsg'.
 #define NTSU_SOCKETUTIL_SENDMSG_FLAGS MSG_NOSIGNAL
 #else
