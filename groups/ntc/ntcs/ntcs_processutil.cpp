@@ -44,7 +44,9 @@ BSLS_IDENT_RCSID(ntcs_processutil_cpp, "$Id$ $CSID$")
 #include <dirent.h>
 #include <sys/procfs.h>
 #elif defined(BSLS_PLATFORM_OS_SOLARIS)
+#if BSLS_PLATFORM_CPU_64_BIT
 #include <procfs.h>
+#endif
 #endif
 
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -204,6 +206,8 @@ void ProcessUtil::getResourceUsage(ntcs::ProcessStatistics* result)
 
     result->setMemoryResident(static_cast<bsl::size_t>(rusage.ru_maxrss));
 
+    // Avoid "Cannot use procfs in the large file compilation environment".
+#if BSLS_PLATFORM_CPU_64_BIT
     char path[PATH_MAX];
     bsl::sprintf(path, "/proc/%d/status", static_cast<int>(::getpid()));
 
@@ -218,6 +222,7 @@ void ProcessUtil::getResourceUsage(ntcs::ProcessStatistics* result)
 
         ::close(fd);
     }
+#endif
 
 #else
 #error Not implemented
