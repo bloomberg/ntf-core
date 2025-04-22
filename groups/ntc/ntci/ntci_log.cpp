@@ -98,7 +98,8 @@ class LogState
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
     // The memory for the main thread's log context.
-    alignas(16) char d_mainThreadContext[sizeof(ntci::LogContext)];
+    char d_mainThreadContext[sizeof(ntci::LogContext)] 
+    __attribute__((aligned(16)));
 #endif
 
     /// The process-wide log state.
