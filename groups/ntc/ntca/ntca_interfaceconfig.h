@@ -20,8 +20,8 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntca_compressionconfig.h>
-#include <ntca_serializationconfig.h>
 #include <ntca_resolverconfig.h>
+#include <ntca_serializationconfig.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_ipaddress.h>
@@ -299,8 +299,8 @@ namespace ntca {
 /// with the default configuration.
 ///
 /// @li @b compressionConfig:
-/// The configurable parameters used to automatically apply compression to 
-/// all outgoing and incoming traffic. If not specified, no compression is 
+/// The configurable parameters used to automatically apply compression to
+/// all outgoing and incoming traffic. If not specified, no compression is
 /// used.
 ///
 /// @li @b serializationConfig:
@@ -313,74 +313,81 @@ namespace ntca {
 /// @ingroup module_ntci_runtime
 class InterfaceConfig
 {
-    bsl::string d_driverName;
-    bsl::string d_metricName;
+    /// Defines a type alias for a nullable size type.
+    typedef bdlb::NullableValue<bsl::size_t> NullableSize;
 
-    bsl::string d_threadName;
-    bsl::size_t d_minThreads;
-    bsl::size_t d_maxThreads;
-    bsl::size_t d_threadStackSize;
-    bsl::size_t d_threadLoadFactor;
+    /// Defines a type alias for a nullable boolean type.
+    typedef bdlb::NullableValue<bool> NullableBool;
 
-    bdlb::NullableValue<bsl::size_t> d_maxEventsPerWait;
-    bdlb::NullableValue<bsl::size_t> d_maxTimersPerWait;
-    bdlb::NullableValue<bsl::size_t> d_maxCyclesPerWait;
+    /// Defines a type alias for a nullable IP address.
+    typedef bdlb::NullableValue<ntsa::IpAddress> NullableIpAddress;
 
-    bdlb::NullableValue<bsl::size_t> d_maxConnections;
+    /// Defines a type alias for a nullable resolver configuration.
+    typedef bdlb::NullableValue<ntca::ResolverConfig> NullableResolverConfig;
 
-    bdlb::NullableValue<bsl::size_t> d_backlog;
+    /// Defines a type alias for a nullable compression configuration.
+    typedef bdlb::NullableValue<ntca::CompressionConfig>
+        NullableCompressionConfig;
 
-    bdlb::NullableValue<bsl::size_t> d_acceptQueueLowWatermark;
-    bdlb::NullableValue<bsl::size_t> d_acceptQueueHighWatermark;
-    bdlb::NullableValue<bsl::size_t> d_readQueueLowWatermark;
-    bdlb::NullableValue<bsl::size_t> d_readQueueHighWatermark;
-    bdlb::NullableValue<bsl::size_t> d_writeQueueLowWatermark;
-    bdlb::NullableValue<bsl::size_t> d_writeQueueHighWatermark;
-    bdlb::NullableValue<bsl::size_t> d_minIncomingStreamTransferSize;
-    bdlb::NullableValue<bsl::size_t> d_maxIncomingStreamTransferSize;
+    /// Defines a type alias for a nullable serialization configuration.
+    typedef bdlb::NullableValue<ntca::SerializationConfig>
+        NullableSerializationConfig;
 
-    bdlb::NullableValue<bool> d_acceptGreedily;
-    bdlb::NullableValue<bool> d_sendGreedily;
-    bdlb::NullableValue<bool> d_receiveGreedily;
-
-    bdlb::NullableValue<bsl::size_t> d_sendBufferSize;
-    bdlb::NullableValue<bsl::size_t> d_receiveBufferSize;
-    bdlb::NullableValue<bsl::size_t> d_sendBufferLowWatermark;
-    bdlb::NullableValue<bsl::size_t> d_receiveBufferLowWatermark;
-    bdlb::NullableValue<bsl::size_t> d_sendTimeout;
-    bdlb::NullableValue<bsl::size_t> d_receiveTimeout;
-
-    bdlb::NullableValue<bool>        d_timestampOutgoingData;
-    bdlb::NullableValue<bool>        d_timestampIncomingData;
-    bdlb::NullableValue<bsl::size_t> d_zeroCopyThreshold;
-
-    bdlb::NullableValue<bool>        d_keepAlive;
-    bdlb::NullableValue<bool>        d_noDelay;
-    bdlb::NullableValue<bool>        d_debugFlag;
-    bdlb::NullableValue<bool>        d_allowBroadcasting;
-    bdlb::NullableValue<bool>        d_bypassNormalRouting;
-    bdlb::NullableValue<bool>        d_leaveOutOfBandDataInline;
-    bdlb::NullableValue<bool>        d_lingerFlag;
-    bdlb::NullableValue<bsl::size_t> d_lingerTimeout;
-    bdlb::NullableValue<bool>        d_keepHalfOpen;
-
-    bdlb::NullableValue<bsl::size_t>     d_maxDatagramSize;
-    bdlb::NullableValue<bool>            d_multicastLoopback;
-    bdlb::NullableValue<bsl::size_t>     d_multicastTimeToLive;
-    bdlb::NullableValue<ntsa::IpAddress> d_multicastInterface;
-
-    bdlb::NullableValue<bool> d_dynamicLoadBalancing;
-
-    bdlb::NullableValue<bool> d_driverMetrics;
-    bdlb::NullableValue<bool> d_driverMetricsPerWaiter;
-    bdlb::NullableValue<bool> d_socketMetrics;
-    bdlb::NullableValue<bool> d_socketMetricsPerHandle;
-
-    bdlb::NullableValue<bool>                 d_resolverEnabled;
-    bdlb::NullableValue<ntca::ResolverConfig> d_resolverConfig;
-
-    bdlb::NullableValue<ntca::CompressionConfig> d_compressionConfig;
-    bdlb::NullableValue<ntca::SerializationConfig> d_serializationConfig;
+private:
+    bsl::string                 d_driverName;
+    bsl::string                 d_metricName;
+    bsl::string                 d_threadName;
+    bsl::size_t                 d_minThreads;
+    bsl::size_t                 d_maxThreads;
+    bsl::size_t                 d_threadStackSize;
+    bsl::size_t                 d_threadLoadFactor;
+    NullableSize                d_maxEventsPerWait;
+    NullableSize                d_maxTimersPerWait;
+    NullableSize                d_maxCyclesPerWait;
+    NullableSize                d_maxConnections;
+    NullableSize                d_backlog;
+    NullableSize                d_acceptQueueLowWatermark;
+    NullableSize                d_acceptQueueHighWatermark;
+    NullableSize                d_readQueueLowWatermark;
+    NullableSize                d_readQueueHighWatermark;
+    NullableSize                d_writeQueueLowWatermark;
+    NullableSize                d_writeQueueHighWatermark;
+    NullableSize                d_minIncomingStreamTransferSize;
+    NullableSize                d_maxIncomingStreamTransferSize;
+    NullableBool                d_acceptGreedily;
+    NullableBool                d_sendGreedily;
+    NullableBool                d_receiveGreedily;
+    NullableSize                d_sendBufferSize;
+    NullableSize                d_receiveBufferSize;
+    NullableSize                d_sendBufferLowWatermark;
+    NullableSize                d_receiveBufferLowWatermark;
+    NullableSize                d_sendTimeout;
+    NullableSize                d_receiveTimeout;
+    NullableBool                d_timestampOutgoingData;
+    NullableBool                d_timestampIncomingData;
+    NullableSize                d_zeroCopyThreshold;
+    NullableBool                d_keepAlive;
+    NullableBool                d_noDelay;
+    NullableBool                d_debugFlag;
+    NullableBool                d_allowBroadcasting;
+    NullableBool                d_bypassNormalRouting;
+    NullableBool                d_leaveOutOfBandDataInline;
+    NullableBool                d_lingerFlag;
+    NullableSize                d_lingerTimeout;
+    NullableBool                d_keepHalfOpen;
+    NullableSize                d_maxDatagramSize;
+    NullableBool                d_multicastLoopback;
+    NullableSize                d_multicastTimeToLive;
+    NullableIpAddress           d_multicastInterface;
+    NullableBool                d_dynamicLoadBalancing;
+    NullableBool                d_driverMetrics;
+    NullableBool                d_driverMetricsPerWaiter;
+    NullableBool                d_socketMetrics;
+    NullableBool                d_socketMetricsPerHandle;
+    NullableBool                d_resolverEnabled;
+    NullableResolverConfig      d_resolverConfig;
+    NullableCompressionConfig   d_compressionConfig;
+    NullableSerializationConfig d_serializationConfig;
 
   public:
     /// Create a new thread configuration having a default value. Optionally
@@ -402,6 +409,9 @@ class InterfaceConfig
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
     InterfaceConfig& operator=(const InterfaceConfig& other);
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
 
     /// Set the name of the driver used to implement the interface to the
     /// specified 'driverName'.
@@ -788,24 +798,27 @@ class InterfaceConfig
     const bdlb::NullableValue<ntca::ResolverConfig>& resolverConfig() const;
 
     /// Return the compression configuration.
-    const bdlb::NullableValue<ntca::CompressionConfig>& 
-    compressionConfig() const;
+    const bdlb::NullableValue<ntca::CompressionConfig>& compressionConfig()
+        const;
 
     /// Return the serialization configuration.
-    const bdlb::NullableValue<ntca::SerializationConfig>& 
-    serializationConfig() const;
+    const bdlb::NullableValue<ntca::SerializationConfig>& serializationConfig()
+        const;
 
-    /// Format this object to the specified output 'stream' at the
-    /// optionally specified indentation 'level' and return a reference to
-    /// the modifiable 'stream'.  If 'level' is specified, optionally
-    /// specify 'spacesPerLevel', the number of spaces per indentation level
-    /// for this and all of its nested objects.  Each line is indented by
-    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
-    /// negative, suppress indentation of the first line.  If
-    /// 'spacesPerLevel' is negative, suppress line breaks and format the
-    /// entire output on one line.  If 'stream' is initially invalid, this
-    /// operation has no effect.  Note that a trailing newline is provided
-    /// in multiline mode only.
+    /// Return true if this object has the same value as the specified 'other'
+    /// object, otherwise return false.
+    bool equals(const InterfaceConfig& other) const;
+
+    /// Format this object to the specified output 'stream' at the optionally
+    /// specified indentation 'level' and return a reference to the modifiable
+    /// 'stream'.  If 'level' is specified, optionally specify
+    /// 'spacesPerLevel', the number of spaces per indentation level for this
+    /// and all of its nested objects.  Each line is indented by the absolute
+    /// value of 'level * spacesPerLevel'.  If 'level' is negative, suppress
+    /// indentation of the first line.  If 'spacesPerLevel' is negative,
+    /// suppress line breaks and format the entire output on one line.  If
+    /// 'stream' is initially invalid, this operation has no effect.  Note that
+    /// a trailing newline is provided in multiline mode only.
     bsl::ostream& print(bsl::ostream& stream,
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
@@ -814,6 +827,18 @@ class InterfaceConfig
     /// dynamically allocate memory during its operation.
     NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(InterfaceConfig);
 };
+
+/// Return true if the specified 'lhs' has the same value as the specified
+/// 'rhs', otherwise return false.
+///
+/// @related ntca::InterfaceConfig
+bool operator==(const InterfaceConfig& lhs, const InterfaceConfig& rhs);
+
+/// Return true if the specified 'lhs' does not have the same value as the
+/// specified 'rhs', otherwise return false.
+///
+/// @related ntca::InterfaceConfig
+bool operator!=(const InterfaceConfig& lhs, const InterfaceConfig& rhs);
 
 /// Format the specified 'object' to the specified output 'stream' and
 /// return a reference to the modifiable 'stream'.
