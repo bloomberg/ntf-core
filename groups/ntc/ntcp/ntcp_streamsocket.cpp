@@ -64,7 +64,7 @@ BSLS_IDENT_RCSID(ntcp_streamsocket_cpp, "$Id$ $CSID$")
 #define NTCP_STREAMSOCKET_SEND_BUFFER_REFRESH_SIZE_THRESHOLD (1024 * 16)
 
 #define NTCP_STREAMSOCKET_LOG_ENCRYPTION_UPGRADE_STARTING()                   \
-    NTCI_LOG_DEBUG("Encryption upgrade starting")
+    NTCI_LOG_TRACE("Encryption upgrade starting")
 
 #define NTCP_STREAMSOCKET_LOG_ENCRYPTION_UPGRADE_COMPLETE(certificate)        \
     do {                                                                      \
@@ -73,18 +73,18 @@ BSLS_IDENT_RCSID(ntcp_streamsocket_cpp, "$Id$ $CSID$")
             certificate->subject().generate(&subject);                        \
             bsl::string issuer;                                               \
             certificate->issuer().generate(&issuer);                          \
-            NTCI_LOG_DEBUG("Encryption upgrade complete to "                  \
+            NTCI_LOG_TRACE("Encryption upgrade complete to "                  \
                            "peer '%s' issued by '%s'",                        \
                            subject.c_str(),                                   \
                            issuer.c_str());                                   \
         }                                                                     \
         else {                                                                \
-            NTCI_LOG_DEBUG("Encryption upgrade complete");                    \
+            NTCI_LOG_TRACE("Encryption upgrade complete");                    \
         }                                                                     \
     } while (false)
 
 #define NTCP_STREAMSOCKET_LOG_ENCRYPTION_UPGRADE_FAILED(details)              \
-    NTCI_LOG_DEBUG("Encryption upgrade failed: %s", details.c_str())
+    NTCI_LOG_TRACE("Encryption upgrade failed: %s", details.c_str())
 
 #define NTCP_STREAMSOCKET_LOG_RECEIVE_BUFFER_THROTTLE_APPLIED(timeToSubmit)   \
     NTCI_LOG_TRACE("Stream socket receive buffer throttle applied for %d "    \
@@ -176,7 +176,7 @@ BSLS_IDENT_RCSID(ntcp_streamsocket_cpp, "$Id$ $CSID$")
                    size)
 
 #define NTCP_STREAMSOCKET_LOG_WRITE_QUEUE_DRAINED(size)                       \
-    NTCI_LOG_DEBUG("Stream socket "                                           \
+    NTCI_LOG_TRACE("Stream socket "                                           \
                    "has drained the write queue down to %zu bytes",           \
                    size)
 
@@ -833,7 +833,7 @@ void StreamSocket::privateCompleteConnect(
         d_connectRetryTimer_sp.reset();
     }
 
-    NTCI_LOG_DEBUG("Connection attempt succeeded");
+    NTCI_LOG_TRACE("Connection attempt succeeded");
 
     if (connectCallback) {
         connectCallback.dispatch(self,
@@ -876,7 +876,7 @@ void StreamSocket::privateFailConnect(
     }
 
     if (!d_connectContext.error() || close) {
-        NTCI_LOG_DEBUG("Connection attempt has failed: %s",
+        NTCI_LOG_TRACE("Connection attempt has failed: %s",
                        error.text().c_str());
 
         NTCS_METRICS_UPDATE_CONNECT_FAILURE();

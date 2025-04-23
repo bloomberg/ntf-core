@@ -67,25 +67,25 @@ void ntccfg::MutexTest::thread(bslmt::Barrier*   barrier,
                                int*              value,
                                int               index)
 {
-    BSLS_LOG_DEBUG("Thread %d: started", index);
+    BSLS_LOG_TRACE("Thread %d: started", index);
     
     barrier->wait();
 
     callee->wait();
-    BSLS_LOG_DEBUG("Thread %d: locking", index);
+    BSLS_LOG_TRACE("Thread %d: locking", index);
     mutex->lock();
     *value = index;
-    BSLS_LOG_DEBUG("Thread %d: locked", index);
+    BSLS_LOG_TRACE("Thread %d: locked", index);
     caller->post();
 
     callee->wait();
-    BSLS_LOG_DEBUG("Thread %d: unlocking", index);
+    BSLS_LOG_TRACE("Thread %d: unlocking", index);
     *value = -1;
     mutex->unlock();
-    BSLS_LOG_DEBUG("Thread %d: unlocked", index);
+    BSLS_LOG_TRACE("Thread %d: unlocked", index);
     caller->post();
 
-    BSLS_LOG_DEBUG("Thread %d: complete", index);
+    BSLS_LOG_TRACE("Thread %d: complete", index);
 }
 
 void ntccfg::MutexTest::execute(bsl::size_t numThreads)
@@ -167,7 +167,7 @@ void ntccfg::MutexTest::execute(bsl::size_t numThreads)
     // All threads have started and are blocked waiting to execute the
     // next operation.
 
-    BSLS_LOG_DEBUG("Ready");
+    BSLS_LOG_TRACE("Ready");
 
     // Unblock the driver thread and wait until it acquires the mutex.
 
@@ -199,7 +199,7 @@ void ntccfg::MutexTest::execute(bsl::size_t numThreads)
         waiterCaller[1]->wait();
 
         // int chosen = value;
-        // BSLS_LOG_INFO("Detected locker: %d", chosen);
+        // BSLS_LOG_TRACE("Detected locker: %d", chosen);
 
         waiterCallee[1]->post();
     }

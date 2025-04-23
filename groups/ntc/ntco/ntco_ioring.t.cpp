@@ -34,7 +34,7 @@ using namespace BloombergLP;
 #define NTCO_IORING_TEST_LOG_OPERATION(test, operationDescription, id)        \
     do {                                                                      \
         if (NTSCFG_TEST_VERBOSITY >= 3) {                                     \
-            BSLS_LOG_INFO("%s: ID %zu"                                        \
+            BSLS_LOG_TRACE("%s: ID %zu"                                        \
                           "\n    Submission queue head: %zu"                  \
                           "\n    Submission queue tail: %zu"                  \
                           "\n    Completion queue head: %zu"                  \

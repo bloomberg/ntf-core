@@ -1153,7 +1153,7 @@ ntsa::Error Compat::configure(
 
     error = socket->setBlocking(false);
     if (error) {
-        BSLS_LOG_DEBUG("Failed to set non-blocking mode: %s",
+        BSLS_LOG_TRACE("Failed to set non-blocking mode: %s",
                        error.text().c_str());
         return error;
     }
@@ -1164,7 +1164,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "reuse address: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1177,7 +1177,7 @@ ntsa::Error Compat::configure(
         error =
             socket->setMulticastLoopback(options.multicastLoopback().value());
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "multicast loopback: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1190,7 +1190,7 @@ ntsa::Error Compat::configure(
         error = socket->setMulticastTimeToLive(
             options.multicastTimeToLive().value());
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "multicast time to live: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1203,7 +1203,7 @@ ntsa::Error Compat::configure(
         error = socket->setMulticastInterface(
             options.multicastInterface().value());
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "multicast interface: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1218,7 +1218,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "send buffer size: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1233,7 +1233,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "receive buffer size: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1249,7 +1249,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "send buffer low watermark: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1265,7 +1265,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "receive buffer low watermark: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1281,7 +1281,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "send timeout: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1298,7 +1298,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "receive timeout: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1314,7 +1314,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "keep alive: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1329,7 +1329,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "no delay: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1344,7 +1344,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "debug flag: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1359,7 +1359,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "broadcast: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1374,7 +1374,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "bypass routing: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1390,7 +1390,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "inline out-of-band data: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1414,7 +1414,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "linger: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1440,7 +1440,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error && error != ntsa::Error::e_NOT_IMPLEMENTED) {
-            BSLS_LOG_DEBUG("Failed to set socket option: zero-copy: %s",
+            BSLS_LOG_TRACE("Failed to set socket option: zero-copy: %s",
                            error.text().c_str());
         }
     }
@@ -1458,7 +1458,7 @@ ntsa::Error Compat::configure(
 
     error = socket->setBlocking(false);
     if (error) {
-        BSLS_LOG_DEBUG("Failed to set non-blocking mode: %s",
+        BSLS_LOG_TRACE("Failed to set non-blocking mode: %s",
                        error.text().c_str());
         return error;
     }
@@ -1469,7 +1469,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "reuse address: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1484,7 +1484,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "send buffer size: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1499,7 +1499,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "receive buffer size: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1515,7 +1515,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "send buffer low watermark: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1531,7 +1531,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "receive buffer low watermark: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1547,7 +1547,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "send timeout: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1564,7 +1564,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "receive timeout: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1580,7 +1580,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "keep alive: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1596,7 +1596,7 @@ ntsa::Error Compat::configure(
         error = socket->setOption(option);
         if (error) {
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
-                BSLS_LOG_DEBUG("Failed to set socket option: "
+                BSLS_LOG_TRACE("Failed to set socket option: "
                                "no delay: %s",
                                error.text().c_str());
                 return error;
@@ -1610,7 +1610,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "debug flag: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1625,7 +1625,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "broadcast: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1640,7 +1640,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "bypass routing: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1656,7 +1656,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "inline out-of-band data: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1680,7 +1680,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "linger: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1702,7 +1702,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error && error != ntsa::Error::e_NOT_IMPLEMENTED) {
-            BSLS_LOG_DEBUG("Failed to set socket option: zero-copy: %s",
+            BSLS_LOG_TRACE("Failed to set socket option: zero-copy: %s",
                            error.text().c_str());
         }
     }
@@ -1720,7 +1720,7 @@ ntsa::Error Compat::configure(
 
     error = socket->setBlocking(false);
     if (error) {
-        BSLS_LOG_DEBUG("Failed to set non-blocking mode: %s",
+        BSLS_LOG_TRACE("Failed to set non-blocking mode: %s",
                        error.text().c_str());
         return error;
     }
@@ -1731,7 +1731,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "reuse address: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1746,7 +1746,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "send buffer size: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1761,7 +1761,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "receive buffer size: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1777,7 +1777,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "send buffer low watermark: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1793,7 +1793,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "receive buffer low watermark: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1809,7 +1809,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "send timeout: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1826,7 +1826,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "receive timeout: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1842,7 +1842,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "keep alive: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1858,7 +1858,7 @@ ntsa::Error Compat::configure(
         error = socket->setOption(option);
         if (error) {
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
-                BSLS_LOG_DEBUG("Failed to set socket option: "
+                BSLS_LOG_TRACE("Failed to set socket option: "
                                "no delay: %s",
                                error.text().c_str());
                 return error;
@@ -1872,7 +1872,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "debug flag: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1887,7 +1887,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "broadcast: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1902,7 +1902,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "bypass routing: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1918,7 +1918,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "inline out-of-band data: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1942,7 +1942,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error) {
-            BSLS_LOG_DEBUG("Failed to set socket option: "
+            BSLS_LOG_TRACE("Failed to set socket option: "
                            "linger: %s",
                            error.text().c_str());
             if (error != ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
@@ -1968,7 +1968,7 @@ ntsa::Error Compat::configure(
 
         error = socket->setOption(option);
         if (error && error != ntsa::Error::e_NOT_IMPLEMENTED) {
-            BSLS_LOG_DEBUG("Failed to set socket option: zero-copy: %s",
+            BSLS_LOG_TRACE("Failed to set socket option: zero-copy: %s",
                            error.text().c_str());
         }
     }

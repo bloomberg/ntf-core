@@ -6353,7 +6353,7 @@ void SystemTest::concern(const ConcernCallback& concernCallback,
                 }
 #endif
 
-                BSLS_LOG_WARN("Testing driver %s (%s), zero-copy: %s",
+                BSLS_LOG_INFO("Testing driver %s (%s), zero-copy: %s",
                               driverType.c_str(),
                               (dynamicLoadBalancing ? "dynamic" : "static"),
                               (forceZeroCopy ? "enabled" : "disabled"));
@@ -6457,7 +6457,7 @@ void SystemTest::concernDataExchange(
                        0,
                        addressFamilyList.size())
         {
-            BSLS_LOG_WARN("Testing encryption %d address family %d",
+            BSLS_LOG_INFO("Testing encryption %d address family %d",
                           (int)(encryption),
                           (int)(addressFamilyList[addressFamilyIndex]));
 
@@ -6729,7 +6729,7 @@ void SystemTest::concernConnectEndpoint1(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ECONNREFUSED/ETIMEDOUT (x4), connection up");
+    BSLS_LOG_INFO("ECONNREFUSED/ETIMEDOUT (x4), connection up");
 
     ntsa::Error error;
 
@@ -6903,7 +6903,7 @@ void SystemTest::concernConnectEndpoint2(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ECONNREFUSED/ETIMEDOUT (x5)");
+    BSLS_LOG_INFO("ECONNREFUSED/ETIMEDOUT (x5)");
 
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 5;
 
@@ -7025,7 +7025,7 @@ void SystemTest::concernConnectEndpoint3(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("e_CONNECTION_TIMEOUT || e_UNREACHABLE (x5)");
+    BSLS_LOG_INFO("e_CONNECTION_TIMEOUT || e_UNREACHABLE (x5)");
 
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 5;
 
@@ -7126,7 +7126,7 @@ void SystemTest::concernConnectEndpoint4(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ECONNREFUSED (x4), ECANCELED");
+    BSLS_LOG_INFO("ECONNREFUSED (x4), ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -7288,7 +7288,7 @@ void SystemTest::concernConnectEndpoint5(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ETIMEDOUT (x4), ECANCELED");
+    BSLS_LOG_INFO("ETIMEDOUT (x4), ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -7453,7 +7453,7 @@ void SystemTest::concernConnectEndpoint6(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
+    BSLS_LOG_INFO("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -7584,7 +7584,7 @@ void SystemTest::concernConnectEndpoint7(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
+    BSLS_LOG_INFO("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -7718,7 +7718,7 @@ void SystemTest::concernConnectEndpoint8(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN(
+    BSLS_LOG_INFO(
         "ETIMEDOUT/ECONNREFUSED/ECONNABORTED (x100) (instantaneous)");
 
 #if NTC_BUILD_WITH_VALGRIND
@@ -7838,7 +7838,7 @@ void SystemTest::concernConnectName1(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ECONNREFUSED/ETIMEDOUT (x4), connection up");
+    BSLS_LOG_INFO("ECONNREFUSED/ETIMEDOUT (x4), connection up");
 
     ntsa::Error error;
 
@@ -8017,7 +8017,7 @@ void SystemTest::concernConnectName2(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ECONNREFUSED/ETIMEDOUT (x5)");
+    BSLS_LOG_INFO("ECONNREFUSED/ETIMEDOUT (x5)");
 
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 5;
 
@@ -8141,7 +8141,7 @@ void SystemTest::concernConnectName3(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ETIMEDOUT (x5)");
+    BSLS_LOG_INFO("ETIMEDOUT (x5)");
 
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 5;
 
@@ -8248,7 +8248,7 @@ void SystemTest::concernConnectName4(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ECONNREFUSED (x4), ECANCELED");
+    BSLS_LOG_INFO("ECONNREFUSED (x4), ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -8410,7 +8410,7 @@ void SystemTest::concernConnectName5(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ETIMEDOUT (x4), ECANCELED");
+    BSLS_LOG_INFO("ETIMEDOUT (x4), ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -8587,7 +8587,7 @@ void SystemTest::concernConnectName6(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
+    BSLS_LOG_INFO("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -8717,7 +8717,7 @@ void SystemTest::concernConnectName7(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
+    BSLS_LOG_INFO("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -8865,7 +8865,7 @@ void SystemTest::concernConnectName8(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_WARN(
+    BSLS_LOG_INFO(
         "ETIMEDOUT/ECONNREFUSED/ECONNABORTED (x100) (instantaneous)");
 
 #if NTC_BUILD_WITH_VALGRIND
@@ -8936,7 +8936,7 @@ void SystemTest::concernConnectName8(
             connectResult.event().context().error() !=
                 ntsa::Error(ntsa::Error::e_CONNECTION_DEAD))
         {
-            BSLS_LOG_WARN(
+            BSLS_LOG_DEBUG(
                 "Expected CONNECTION_TIMEOUT, CONNECTION_REFUSED, "
                 "or CONNECTION_DEAD, but found: %s (%d)",
                 connectResult.event().context().error().text().c_str(),
@@ -9186,7 +9186,7 @@ void SystemTest::concernConnectLimitPassive(bslma::Allocator* allocator)
     // connection succeeds.
 
     error = streamSocketA->connect(endpoint);
-    BSLS_LOG_INFO("Stream socket A connect: %s", error.text().c_str());
+    BSLS_LOG_TRACE("Stream socket A connect: %s", error.text().c_str());
     NTSCFG_TEST_OK(error);
 
     // Connect the second stream socket to the listener and ensure either
@@ -9198,7 +9198,7 @@ void SystemTest::concernConnectLimitPassive(bslma::Allocator* allocator)
     // operating system.
 
     error = streamSocketB->connect(endpoint);
-    BSLS_LOG_INFO("Stream socket B connect: %s", error.text().c_str());
+    BSLS_LOG_TRACE("Stream socket B connect: %s", error.text().c_str());
 
     if (error) {
         if (error == ntsa::Error::e_CONNECTION_RESET ||
@@ -9223,7 +9223,7 @@ void SystemTest::concernConnectLimitPassive(bslma::Allocator* allocator)
 
             error = streamSocketB->send(&sendContext, sendData, sendOptions);
 
-            BSLS_LOG_INFO("Stream socket B send: %s", error.text().c_str());
+            BSLS_LOG_TRACE("Stream socket B send: %s", error.text().c_str());
 
             if (error) {
                 if (error == ntsa::Error::e_CONNECTION_RESET ||
@@ -14364,7 +14364,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
 
 #endif
         
-        BSLS_LOG_INFO("Using server resource:\n%s",
+        BSLS_LOG_TRACE("Using server resource:\n%s",
                       serverFileContent.c_str());
     }
 

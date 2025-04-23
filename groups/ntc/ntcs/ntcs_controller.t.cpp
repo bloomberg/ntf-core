@@ -72,7 +72,7 @@ void ControllerTest::pollAndTest(const bsl::shared_ptr<ntsi::Reactor>& reactor,
 #if defined(BSLS_PLATFORM_OS_SOLARIS)
         if (!error) {
             while (eventSet.isReadable(controller->handle())) {
-                BSLS_LOG_INFO("Spurious wakeup detected");
+                BSLS_LOG_TRACE("Spurious wakeup detected");
                 eventSet.clear();
                 error = reactor->wait(&eventSet, deadline);
                 if (error) {

@@ -150,7 +150,7 @@ void AdapterUtilTest::log(const bsl::vector<ntsa::Adapter>& adapterList)
 
     bsl::string adapterListReport = ss.str();
 
-    BSLS_LOG_DEBUG("\nAdapter list:\n%s", adapterListReport.c_str());
+    BSLS_LOG_TRACE("\nAdapter list:\n%s", adapterListReport.c_str());
 }
 
 }  // close namespace ntsu

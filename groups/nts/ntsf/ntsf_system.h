@@ -757,7 +757,7 @@ namespace ntsf {
 ///             ipv6Address = it->ipv6Address().value().text();
 ///         }
 ///
-///         BSLS_LOG_INFO("Discovered adapter"
+///         BSLS_LOG_TRACE("Discovered adapter"
 ///                       "\nName:     %s"
 ///                       "\nIndex:    %d"
 ///                       "\nEthernet: %s"

@@ -614,7 +614,7 @@ void StrandTest::executeCaseOneThreadGroups(bsl::size_t numEnqueueThreads,
         enqueueCount.print(ss);
         dequeueCount.print(ss);
 
-        BSLS_LOG_INFO("%s", ss.str().c_str());
+        BSLS_LOG_TRACE("%s", ss.str().c_str());
     }
 
     // Print wall time and CPU time.
@@ -638,7 +638,7 @@ void StrandTest::executeCaseOneThreadGroups(bsl::size_t numEnqueueThreads,
            << "Throughput: " << bsl::fixed << bsl::setprecision(2)
            << throughput << " functors/sec\n";
 
-        BSLS_LOG_WARN("%s", ss.str().c_str());
+        BSLS_LOG_INFO("%s", ss.str().c_str());
     }
 }
 
@@ -857,7 +857,7 @@ NTSCFG_TEST_FUNCTION(ntcs::StrandTest::verifyCase1)
     bdlma::ConcurrentMultipoolAllocator d_memoryPools(8);
 
     for (bsl::size_t iteration = 0; iteration < NUM_DATA; ++iteration) {
-        BSLS_LOG_WARN("Testing %d enqueue threads, %d dequeue threads",
+        BSLS_LOG_INFO("Testing %d enqueue threads, %d dequeue threads",
                       (int)(DATA[iteration].d_numEnqueueThreads),
                       (int)(DATA[iteration].d_numDequeueThreads));
 

@@ -448,7 +448,7 @@ bsl::uint32_t SocketUtilTest::timestampingSupport(ntsa::Handle socket)
     rc = ::ioctl(socket, SIOCETHTOOL, &ifr);
     if (rc != 0) {
         error = ntsa::Error(errno);
-        BSLS_LOG_DEBUG("I/O control SIOCETHTOOL failed: %s",
+        BSLS_LOG_TRACE("I/O control SIOCETHTOOL failed: %s",
                        error.text().c_str());
         return 0;
     }
@@ -7448,7 +7448,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase16)
     error = ntsu::SocketUtil::listen(1, listener);
     NTSCFG_TEST_ASSERT(!error);
 
-    BSLS_LOG_INFO("Listening at %s", listenerEndpoint.text().c_str());
+    BSLS_LOG_TRACE("Listening at %s", listenerEndpoint.text().c_str());
 
     {
         ntsa::SocketInfoFilter filter;
@@ -7458,7 +7458,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase16)
         bsl::stringstream ss;
         ntsu::SocketUtil::reportInfo(ss, filter);
 
-        BSLS_LOG_INFO("Dump status:\n%s", ss.str().c_str());
+        BSLS_LOG_TRACE("Dump status:\n%s", ss.str().c_str());
     }
 
     error = ntsu::SocketUtil::close(listener);
@@ -7472,7 +7472,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase16)
         bsl::stringstream ss;
         ntsu::SocketUtil::reportInfo(ss, filter);
 
-        BSLS_LOG_INFO("Dump status:\n%s", ss.str().c_str());
+        BSLS_LOG_TRACE("Dump status:\n%s", ss.str().c_str());
     }
 }
 
@@ -7687,7 +7687,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
                         NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
                     }
                     else {
-                        BSLS_LOG_DEBUG("Detected RX timestamp");
+                        BSLS_LOG_TRACE("Detected RX timestamp");
                         NTSCFG_TEST_TRUE(
                             context.softwareTimestamp().has_value());
                         NTSCFG_TEST_LE(sysTimeBeforeSending,
@@ -8084,7 +8084,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
                         NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
                     }
                     else {
-                        BSLS_LOG_DEBUG("Detected RX timestamp");
+                        BSLS_LOG_TRACE("Detected RX timestamp");
                         NTSCFG_TEST_FALSE(
                             context.softwareTimestamp().isNull());
                         NTSCFG_TEST_LE(sysTimeBeforeSending,

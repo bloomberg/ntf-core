@@ -91,7 +91,7 @@ NTSCFG_TEST_FUNCTION(ntcr::ThreadTest::verifyCase1)
     for (bsl::size_t restartIteration = 0; restartIteration < NUM_RESTARTS;
          ++restartIteration)
     {
-        BSLS_LOG_INFO("Testing restart iteration %d", (int)(restartIteration));
+        BSLS_LOG_TRACE("Testing restart iteration %d", (int)(restartIteration));
 
         error = thread->start();
         NTSCFG_TEST_FALSE(error);
@@ -170,7 +170,7 @@ NTSCFG_TEST_FUNCTION(ntcr::ThreadTest::verifyCase2)
     for (bsl::size_t restartIteration = 0; restartIteration < NUM_RESTARTS;
          ++restartIteration)
     {
-        BSLS_LOG_INFO("Testing restart iteration %d", (int)(restartIteration));
+        BSLS_LOG_TRACE("Testing restart iteration %d", (int)(restartIteration));
 
         error = thread->start();
         NTSCFG_TEST_FALSE(error);

@@ -70,7 +70,7 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
 #define NTCR_STREAMSOCKET_SEND_BUFFER_REFRESH_SIZE_THRESHOLD (1024 * 16)
 
 #define NTCR_STREAMSOCKET_LOG_ENCRYPTION_UPGRADE_STARTING()                   \
-    NTCI_LOG_DEBUG("Encryption upgrade starting")
+    NTCI_LOG_TRACE("Encryption upgrade starting")
 
 #define NTCR_STREAMSOCKET_LOG_ENCRYPTION_UPGRADE_COMPLETE(certificate)        \
     do {                                                                      \
@@ -79,18 +79,18 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
             certificate->subject().generate(&subject);                        \
             bsl::string issuer;                                               \
             certificate->issuer().generate(&issuer);                          \
-            NTCI_LOG_DEBUG("Encryption upgrade complete to "                  \
+            NTCI_LOG_TRACE("Encryption upgrade complete to "                  \
                            "peer '%s' issued by '%s'",                        \
                            subject.c_str(),                                   \
                            issuer.c_str());                                   \
         }                                                                     \
         else {                                                                \
-            NTCI_LOG_DEBUG("Encryption upgrade complete");                    \
+            NTCI_LOG_TRACE("Encryption upgrade complete");                    \
         }                                                                     \
     } while (false)
 
 #define NTCR_STREAMSOCKET_LOG_ENCRYPTION_UPGRADE_FAILED(details)              \
-    NTCI_LOG_DEBUG("Encryption upgrade failed: %s", details.c_str())
+    NTCI_LOG_TRACE("Encryption upgrade failed: %s", details.c_str())
 
 #define NTCR_STREAMSOCKET_LOG_RECEIVE_BUFFER_THROTTLE_APPLIED(timeToSubmit)   \
     NTCI_LOG_TRACE("Stream socket receive buffer throttle applied for %d "    \
@@ -188,7 +188,7 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_cpp, "$Id$ $CSID$")
     } while (false)
 
 #define NTCR_STREAMSOCKET_LOG_ZERO_COPY_DISABLED()                            \
-    NTCI_LOG_DEBUG("Stream socket zero copy is disabled")
+    NTCI_LOG_TRACE("Stream socket zero copy is disabled")
 
 #define NTCR_STREAMSOCKET_LOG_SEND_RESULT(context)                            \
     NTCI_LOG_TRACE("Stream socket "                                           \
@@ -1146,7 +1146,7 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
         }
     }
 
-    NTCI_LOG_DEBUG("Connection attempt succeeded");
+    NTCI_LOG_TRACE("Connection attempt succeeded");
 
     if (connectCallback) {
         connectCallback.dispatch(self,
@@ -1494,7 +1494,7 @@ void StreamSocket::privateFailConnect(
     }
 
     if (!d_connectContext.error() || close) {
-        NTCI_LOG_DEBUG("Connection attempt has failed: %s",
+        NTCI_LOG_TRACE("Connection attempt has failed: %s",
                        error.text().c_str());
 
         NTCS_METRICS_UPDATE_CONNECT_FAILURE();
@@ -4623,7 +4623,7 @@ ntsa::Error StreamSocket::privateTimestampIncomingData(
         error = d_socket_sp->setOption(option);
         if (error) {
             if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
-                NTCI_LOG_DEBUG("Failed to set socket option: "
+                NTCI_LOG_TRACE("Failed to set socket option: "
                                "timestamp incoming data: %s",
                                error.text().c_str());
             }

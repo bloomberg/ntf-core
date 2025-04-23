@@ -64,31 +64,6 @@ BSLS_IDENT_RCSID(ntcs_controller_cpp, "$Id$ $CSID$")
 #include <unistd.h>
 #endif
 
-#define NTCS_CONTROLLER_LOG_DEFAULT 1
-
-#ifndef NTCS_CONTROLLER_LOG
-#ifndef NTCS_LOG
-#define NTCS_CONTROLLER_LOG NTCS_CONTROLLER_LOG_DEFAULT
-#else
-#define NTCS_CONTROLLER_LOG NTCS_LOG
-#endif
-#endif
-
-#if NTCS_CONTROLLER_LOG == 0
-#undef NTCI_LOG_FATAL
-#define NTCI_LOG_FATAL(...)
-#undef NTCI_LOG_ERROR
-#define NTCI_LOG_ERROR(...)
-#undef NTCI_LOG_WARN
-#define NTCI_LOG_WARN(...)
-#undef NTCI_LOG_INFO
-#define NTCI_LOG_INFO(...)
-#undef NTCI_LOG_DEBUG
-#define NTCI_LOG_DEBUG(...)
-#undef NTCI_LOG_TRACE
-#define NTCI_LOG_TRACE(...)
-#endif
-
 #define NTCS_CONTROLLER_LOG_ENQUEUE(amount, total)                            \
     NTCI_LOG_TRACE("Controller signaled %d more wakeup(s) with %d total "     \
                    "wakeups now pending",                                     \

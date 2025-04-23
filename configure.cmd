@@ -138,7 +138,7 @@ IF NOT DEFINED NTF_CONFIGURE_WITH_DEPRECATED_FEATURES (
 )
 
 IF NOT DEFINED NTF_CONFIGURE_WITH_LOGGING (
-    set NTF_CONFIGURE_WITH_LOGGING=0
+    set NTF_CONFIGURE_WITH_LOGGING=1
 )
 
 IF NOT DEFINED NTF_CONFIGURE_WITH_METRICS (
@@ -272,7 +272,6 @@ if not "%1"=="" (
 
     if "%1"=="--debug" (
         set NTF_CONFIGURE_UFID=dbg_exc_mt_64
-        set NTF_CONFIGURE_WITH_LOGGING=1
     )
     if "%1"=="--release" (
         set NTF_CONFIGURE_UFID=opt_dbg_exc_mt_64

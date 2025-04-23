@@ -2479,7 +2479,7 @@ class Resource : public ntci::EncryptionResource
     do {                                                                      \
         bsl::string description;                                              \
         ntctls::Internal::drainErrorQueue(&description);                      \
-        BSLS_LOG_DEBUG("%s: %s", reason, description.c_str());                \
+        BSLS_LOG_TRACE("%s: %s", reason, description.c_str());                \
     } while (false)
 
 #define NTCTLS_KEY_LOG_ENCODE_ERROR()                                         \
@@ -2532,14 +2532,14 @@ class Resource : public ntci::EncryptionResource
     do {                                                                      \
         bsl::string description;                                              \
         ntctls::Internal::drainErrorQueue(&description);                      \
-        BSLS_LOG_DEBUG("%s: %s", reason, description.c_str());                \
+        BSLS_LOG_TRACE("%s: %s", reason, description.c_str());                \
     } while (false)
 
 #define NTCTLS_CERTIFICATE_LOG_X509_EXTENSION_ERROR(nid, text)                \
     do {                                                                      \
         bsl::string description;                                              \
         ntctls::Internal::drainErrorQueue(&description);                      \
-        BSLS_LOG_DEBUG("Failed to set extension '%s': %s",                    \
+        BSLS_LOG_TRACE("Failed to set extension '%s': %s",                    \
                        bsl::string(text).c_str(),                             \
                        description.c_str());                                  \
     } while (false)
@@ -2599,7 +2599,7 @@ class Resource : public ntci::EncryptionResource
     do {                                                                      \
         bsl::string errorDescription = (diagnostics).text();                  \
         if (!errorDescription.empty()) {                                      \
-            BSLS_LOG_DEBUG("Failed to encode resource: %s",                   \
+            BSLS_LOG_TRACE("Failed to encode resource: %s",                   \
                            errorDescription.c_str());                         \
         }                                                                     \
     } while (false)
@@ -2608,13 +2608,13 @@ class Resource : public ntci::EncryptionResource
     do {                                                                      \
         bsl::string errorDescription = (diagnostics).text();                  \
         if (!errorDescription.empty()) {                                      \
-            BSLS_LOG_DEBUG("Failed to decode resource: %s",                   \
+            BSLS_LOG_TRACE("Failed to decode resource: %s",                   \
                            errorDescription.c_str());                         \
         }                                                                     \
     } while (false)
 
 #define NTCTLS_RESOURCE_LOG_SECRET_UNAVAILABLE()                              \
-    BSLS_LOG_DEBUG("The resource requires a passphrase but no passphrase "    \
+    BSLS_LOG_TRACE("The resource requires a passphrase but no passphrase "    \
                    "resolution is available")
 
 #define NTCTLS_RESOURCE_LOG_ALREADY_HAVE_KEY()                                \
@@ -7694,10 +7694,10 @@ class SessionServer : public ntci::EncryptionServer
         bsl::string description;                                              \
         ntctls::Internal::drainErrorQueue(&description);                      \
         if (!description.empty()) {                                           \
-            NTCI_LOG_DEBUG("%s: %s", phrase, description.c_str());            \
+            NTCI_LOG_TRACE("%s: %s", phrase, description.c_str());            \
         }                                                                     \
         else {                                                                \
-            NTCI_LOG_DEBUG("%s", phrase);                                     \
+            NTCI_LOG_TRACE("%s", phrase);                                     \
         }                                                                     \
     } while (false)
 
@@ -7933,7 +7933,7 @@ void BlobBufferUtil::reserveCapacity(
 }
 
 #if NTCTLS_SESSION_LOG_CHECK_ERROR_VERBOSE
-#define NTCTLS_SESSION_LOG_CHECK_ERROR(message) NTCI_LOG_DEBUG(message)
+#define NTCTLS_SESSION_LOG_CHECK_ERROR(message) NTCI_LOG_TRACE(message)
 #else
 #define NTCTLS_SESSION_LOG_CHECK_ERROR(message)
 #endif
@@ -8086,7 +8086,7 @@ ntsa::Error Session::init()
             bsl::string description;
             Internal::drainErrorQueue(&description);
 
-            NTCI_LOG_DEBUG("Failed to allocate SSL session: %s",
+            NTCI_LOG_TRACE("Failed to allocate SSL session: %s",
                            description.c_str());
 
             return ntsa::Error(ntsa::Error::e_INVALID);
@@ -8097,7 +8097,7 @@ ntsa::Error Session::init()
             bsl::string description;
             Internal::drainErrorQueue(&description);
 
-            NTCI_LOG_DEBUG("Failed to set SSL session user data: %s",
+            NTCI_LOG_TRACE("Failed to set SSL session user data: %s",
                            description.c_str());
 
             return ntsa::Error(ntsa::Error::e_INVALID);
@@ -8113,7 +8113,7 @@ ntsa::Error Session::init()
                 bsl::string description;
                 Internal::drainErrorQueue(&description);
 
-                NTCI_LOG_DEBUG(
+                NTCI_LOG_TRACE(
                     "Failed to set server name indication to '%s': %s",
                     serverNameIndication.value().c_str(),
                     description.c_str());
@@ -8139,7 +8139,7 @@ ntsa::Error Session::init()
             bsl::string description;
             Internal::drainErrorQueue(&description);
 
-            NTCI_LOG_DEBUG("Failed to allocate SSL session: %s",
+            NTCI_LOG_TRACE("Failed to allocate SSL session: %s",
                            description.c_str());
 
             return ntsa::Error(ntsa::Error::e_INVALID);
@@ -8150,7 +8150,7 @@ ntsa::Error Session::init()
             bsl::string description;
             Internal::drainErrorQueue(&description);
 
-            NTCI_LOG_DEBUG("Failed to set SSL session user data: %s",
+            NTCI_LOG_TRACE("Failed to set SSL session user data: %s",
                            description.c_str());
 
             return ntsa::Error(ntsa::Error::e_INVALID);
@@ -8168,7 +8168,7 @@ ntsa::Error Session::init()
         bsl::string description;
         Internal::drainErrorQueue(&description);
 
-        NTCI_LOG_DEBUG("Failed to allocate incoming stream BIO: %s",
+        NTCI_LOG_TRACE("Failed to allocate incoming stream BIO: %s",
                        description.c_str());
 
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -8181,7 +8181,7 @@ ntsa::Error Session::init()
         bsl::string description;
         Internal::drainErrorQueue(&description);
 
-        NTCI_LOG_DEBUG("Failed to allocate outgoing stream BIO: %s",
+        NTCI_LOG_TRACE("Failed to allocate outgoing stream BIO: %s",
                        description.c_str());
 
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -8220,7 +8220,7 @@ ntsa::Error Session::process(LockGuard* lock)
             bsl::string description;
             Internal::drainErrorQueue(&description);
 
-            NTCI_LOG_DEBUG("Failed to complete TLS handshake: %s",
+            NTCI_LOG_TRACE("Failed to complete TLS handshake: %s",
                            description.c_str());
 
             ntci::Encryption::HandshakeCallback handshakeCallback =
@@ -8297,7 +8297,7 @@ ntsa::Error Session::process(LockGuard* lock)
                 bsl::string description;
                 Internal::drainErrorQueue(&description);
 
-                NTCI_LOG_DEBUG("Failed to write outgoing data: %s",
+                NTCI_LOG_TRACE("Failed to write outgoing data: %s",
                                description.c_str());
 
                 return ntsa::Error(ntsa::Error::e_INVALID);
@@ -8377,7 +8377,7 @@ ntsa::Error Session::process(LockGuard* lock)
             bsl::string description;
             Internal::drainErrorQueue(&description);
 
-            NTCI_LOG_DEBUG("Failed to read incoming data: %s",
+            NTCI_LOG_TRACE("Failed to read incoming data: %s",
                            description.c_str());
 
             return ntsa::Error(ntsa::Error::e_INVALID);
@@ -8455,7 +8455,7 @@ ntsa::Error Session::activate(bool* found, const bsl::string& serverName)
     if (error) {
         error = d_sessionManager_sp->lookup(&context);
         if (error) {
-            NTCI_LOG_DEBUG("Failed to find server name '%s'",
+            NTCI_LOG_TRACE("Failed to find server name '%s'",
                            serverName.c_str());
             return error;
         }
@@ -8546,7 +8546,7 @@ ntsa::Error Session::authenticate(X509_STORE_CTX* x509StoreCtx)
         bsl::string description;
         ntctls::Internal::drainErrorQueue(&description);
 
-        NTCI_LOG_DEBUG("Failed to verify certificate: %s: %s",
+        NTCI_LOG_TRACE("Failed to verify certificate: %s: %s",
                        X509_verify_cert_error_string(errorCode),
                        description.c_str());
 
@@ -8633,7 +8633,7 @@ ntsa::Error Session::authenticate(X509_STORE_CTX* x509StoreCtx, X509* x509)
                 ss << "Failed to verify the authenticity of "
                    << certificate;
 
-                NTCI_LOG_DEBUG("%s", ss.str().c_str());
+                NTCI_LOG_TRACE("%s", ss.str().c_str());
 
                 return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
             }
@@ -8673,7 +8673,7 @@ ntsa::Error Session::initiateHandshake(
             bsl::string description;
             Internal::drainErrorQueue(&description);
 
-            NTCI_LOG_DEBUG("Failed to reset the TLS session for reuse: %s",
+            NTCI_LOG_TRACE("Failed to reset the TLS session for reuse: %s",
                            description.c_str());
 
             return ntsa::Error(ntsa::Error::e_INVALID);
@@ -8702,7 +8702,7 @@ ntsa::Error Session::initiateHandshake(
         bsl::string description;
         Internal::drainErrorQueue(&description);
 
-        NTCI_LOG_DEBUG("Failed to initiate TLS handshake: %s",
+        NTCI_LOG_TRACE("Failed to initiate TLS handshake: %s",
                        description.c_str());
 
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -8848,7 +8848,7 @@ ntsa::Error Session::shutdown()
         bsl::string description;
         Internal::drainErrorQueue(&description);
 
-        NTCI_LOG_DEBUG("Failed to initiate TLS shutdown: %s",
+        NTCI_LOG_TRACE("Failed to initiate TLS shutdown: %s",
                        description.c_str());
 
         return ntsa::Error(ntsa::Error::e_INVALID);

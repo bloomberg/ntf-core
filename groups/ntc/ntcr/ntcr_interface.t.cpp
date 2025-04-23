@@ -59,7 +59,7 @@ void InterfaceTest::run(const bsl::shared_ptr<ntcr::Interface>& interface,
                         bool        dynamicLoadBalancing,
                         bool        dynamicThreadCount)
 {
-    BSLS_LOG_INFO("Testing restart iteration %d", (int)(restartIteration));
+    BSLS_LOG_TRACE("Testing restart iteration %d", (int)(restartIteration));
 
     if (restartIteration == 0) {
         NTSCFG_TEST_EQ(interface->numReactors(), 0);
@@ -324,7 +324,7 @@ NTSCFG_TEST_FUNCTION(ntcr::InterfaceTest::verifyCase2)
             }
 #endif
 
-            BSLS_LOG_WARN("Testing driver (%s) (%s)",
+            BSLS_LOG_INFO("Testing driver (%s) (%s)",
                           (dynamicLoadBalancing ? "dynamic" : "static"),
                           (dynamicThreadCount ? "resizable" : "fixed"));
 
@@ -332,7 +332,7 @@ NTSCFG_TEST_FUNCTION(ntcr::InterfaceTest::verifyCase2)
                  numThreads <= MAX_THREADS;
                  ++numThreads)
             {
-                BSLS_LOG_INFO("Testing %d threads", (int)(numThreads));
+                BSLS_LOG_TRACE("Testing %d threads", (int)(numThreads));
 
                 ntca::InterfaceConfig interfaceConfig;
                 interfaceConfig.setMetricName("test");

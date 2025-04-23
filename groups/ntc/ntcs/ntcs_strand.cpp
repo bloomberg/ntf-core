@@ -35,32 +35,32 @@ BSLS_IDENT_RCSID(ntcs_strand_cpp, "$Id$ $CSID$")
 #if NTCS_STRAND_LOG
 
 #define NTCS_STRAND_LOG_QUEUE_PUSHED(strandAddress, functorQueue, pending)    \
-    BSLS_LOG_INFO(                                                            \
+    BSLS_LOG_TRACE(                                                            \
         "Strand %p pushed function onto queue, size = %d, pending = %d",      \
         (strandAddress),                                                      \
         (int)((functorQueue).size()),                                         \
         (int)(pending));
 
 #define NTCS_STRAND_LOG_QUEUE_POPPED(strandAddress, functorQueue)             \
-    BSLS_LOG_INFO("Strand %p popped %d functions from queue",                 \
+    BSLS_LOG_TRACE("Strand %p popped %d functions from queue",                 \
                   (strandAddress),                                            \
                   (int)((functorQueue).size()));
 
 #define NTCS_STRAND_LOG_QUEUE_EMPTY(strandAddress)                            \
-    BSLS_LOG_INFO("Strand %p is now empty", (strandAddress));
+    BSLS_LOG_TRACE("Strand %p is now empty", (strandAddress));
 
 #define NTCS_STRAND_LOG_EXECUTION_STARTING(strandAddress, functorQueue)       \
-    BSLS_LOG_INFO("Strand %p execution starting for %d functions",            \
+    BSLS_LOG_TRACE("Strand %p execution starting for %d functions",            \
                   (strandAddress),                                            \
                   (int)((functorQueue).size()));
 
 #define NTCS_STRAND_LOG_EXECUTION_COMPLETE(strandAddress, functorQueue)       \
-    BSLS_LOG_INFO("Strand %p execution complete for %d functions",            \
+    BSLS_LOG_TRACE("Strand %p execution complete for %d functions",            \
                   (strandAddress),                                            \
                   (int)((functorQueue).size()));
 
 #define NTCS_STRAND_LOG_ACTIVATION(strandAddress)                             \
-    BSLS_LOG_INFO("Strand %p activating itself in its reactor",               \
+    BSLS_LOG_TRACE("Strand %p activating itself in its reactor",               \
                   (strandAddress));
 
 #else

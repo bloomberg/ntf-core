@@ -305,8 +305,8 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv4AddressTest::verifyParsing)
     enum { NUM_DATA = sizeof(DATA) / sizeof(DATA[0]) };
 
     for (bsl::size_t i = 0; i < NUM_DATA; ++i) {
-        BSLS_LOG_DEBUG("-------");
-        BSLS_LOG_DEBUG("Parsing  = %s", DATA[i].text);
+        BSLS_LOG_TRACE("-------");
+        BSLS_LOG_TRACE("Parsing  = %s", DATA[i].text);
 
         bsl::string text = DATA[i].text;
 
@@ -317,7 +317,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv4AddressTest::verifyParsing)
             bsl::stringstream ss;
             ss << address1;
 
-            BSLS_LOG_DEBUG("Address1 = %s", ss.str().c_str());
+            BSLS_LOG_TRACE("Address1 = %s", ss.str().c_str());
         }
 
         ntsa::Ipv4Address address2;
@@ -327,7 +327,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv4AddressTest::verifyParsing)
             bsl::stringstream ss;
             ss << address2;
 
-            BSLS_LOG_DEBUG("Address2 = %s", ss.str().c_str());
+            BSLS_LOG_TRACE("Address2 = %s", ss.str().c_str());
         }
 
         NTSCFG_TEST_ASSERT(success == DATA[i].success);
@@ -362,8 +362,8 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv4AddressTest::verifyGeneration)
         ntsa::Ipv4Address address1;
         address1.copyFrom(DATA[i].data, sizeof DATA[i].data);
 
-        BSLS_LOG_DEBUG("-------");
-        BSLS_LOG_DEBUG("Generating  = %s", DATA[i].text);
+        BSLS_LOG_TRACE("-------");
+        BSLS_LOG_TRACE("Generating  = %s", DATA[i].text);
 
         char buffer[ntsa::Ipv4Address::MAX_TEXT_LENGTH + 1];
         bsl::memset(buffer, static_cast<int>(0xFF), sizeof buffer);

@@ -1647,7 +1647,7 @@ bsl::size_t Test::TimerSession::count(
 void Test::processFunction(bslmt::Latch* latch)
 {
     NTCI_LOG_CONTEXT();
-    NTCI_LOG_DEBUG("Executed function");
+    NTCI_LOG_TRACE("Executed function");
 
     latch->arrive();
 }

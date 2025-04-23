@@ -1070,7 +1070,7 @@ ntsa::Error Encryption::processIncomingFrameHeader()
 
     d_incomingHeader = header;
 
-    NTCI_LOG_DEBUG(
+    NTCI_LOG_TRACE(
         "Encryption parsed incoming frame header type %s length %d",
         ntcd::EncryptionFrameType::toString(d_incomingHeader.value().type()),
         (int)(d_incomingHeader.value().length()));

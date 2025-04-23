@@ -46,7 +46,7 @@ NTSCFG_TEST_FUNCTION(ntsa::TemporaryTest::verifyCase1)
         ntsa::TemporaryDirectory tempDirectory;
         directoryPath = tempDirectory.path();
 
-        BSLS_LOG_DEBUG("Create temporary directory: %s",
+        BSLS_LOG_TRACE("Create temporary directory: %s",
                        directoryPath.c_str());
 
         bsl::string filePath = tempDirectory.path();
@@ -71,7 +71,7 @@ NTSCFG_TEST_FUNCTION(ntsa::TemporaryTest::verifyCase2)
         ntsa::TemporaryFile tempFile;
         filePath = tempFile.path();
 
-        BSLS_LOG_DEBUG("Create temporary file: %s", filePath.c_str());
+        BSLS_LOG_TRACE("Create temporary file: %s", filePath.c_str());
 
         bsl::ofstream ofs(filePath.c_str());
         BSLS_ASSERT(ofs);
