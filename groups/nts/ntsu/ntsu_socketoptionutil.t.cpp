@@ -1219,7 +1219,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
             continue;
         }
 
-        BSLS_LOG_WARN("Testing adapter '%s'", adapter.name().c_str());
+        BSLS_LOG_INFO("Testing adapter '%s'", adapter.name().c_str());
 
         for (bsl::size_t socketTypeIndex = 0;
              socketTypeIndex < sizeof(SOCKET_TYPES) / sizeof(SOCKET_TYPES[0]);
@@ -1248,7 +1248,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
             {
                 bsl::stringstream ss;
                 ss << transport;
-                BSLS_LOG_WARN("Testing %s", ss.str().c_str());
+                BSLS_LOG_INFO("Testing %s", ss.str().c_str());
             }
 
             ntsa::Error error;
@@ -1286,7 +1286,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
                         ntsu::SocketOptionUtil::setMulticastLoopback(socket,
                                                                      INPUT[i]);
 
-                    BSLS_LOG_INFO("setMulticastLoopback: %s",
+                    BSLS_LOG_TRACE("setMulticastLoopback: %s",
                                   error.text().c_str());
 
                     if (error) {
@@ -1309,7 +1309,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
                         socket,
                         INPUT[i]);
 
-                    BSLS_LOG_INFO("setMulticastTimeToLive: %s",
+                    BSLS_LOG_TRACE("setMulticastTimeToLive: %s",
                                   error.text().c_str());
 
                     if (error) {
@@ -1334,7 +1334,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
                         ntsa::IpAddress(adapter.ipv6Address().value()));
                 }
 
-                BSLS_LOG_INFO("setMulticastInterface: %s",
+                BSLS_LOG_TRACE("setMulticastInterface: %s",
                               error.text().c_str());
 
                 if (error) {
@@ -1360,7 +1360,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
                             "ff00:0000:0000:0000:0000:0000:0000:0000"));
                 }
 
-                BSLS_LOG_INFO("joinMulticastGroup: %s", error.text().c_str());
+                BSLS_LOG_TRACE("joinMulticastGroup: %s", error.text().c_str());
 
                 if (error) {
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -1394,7 +1394,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
                             "ff00:0000:0000:0000:0000:0000:0000:0000"));
                 }
 
-                BSLS_LOG_INFO("leaveMulticastGroup: %s", error.text().c_str());
+                BSLS_LOG_TRACE("leaveMulticastGroup: %s", error.text().c_str());
 
                 if (error) {
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -1430,7 +1430,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
                         ntsa::IpAddress(ntsa::Ipv6Address::loopback()));
                 }
 
-                BSLS_LOG_INFO("joinMulticastGroupSource: %s",
+                BSLS_LOG_TRACE("joinMulticastGroupSource: %s",
                               error.text().c_str());
 
                 if (error) {
@@ -1467,7 +1467,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
                         ntsa::IpAddress(ntsa::Ipv6Address::loopback()));
                 }
 
-                BSLS_LOG_INFO("leaveMulticastGroupSource: %s",
+                BSLS_LOG_TRACE("leaveMulticastGroupSource: %s",
                               error.text().c_str());
 
                 if (error) {

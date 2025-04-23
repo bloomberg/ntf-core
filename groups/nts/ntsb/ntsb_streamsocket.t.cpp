@@ -259,7 +259,7 @@ void StreamSocketTest::testBufferIO(
             serverSourceEndpointDescription = ss.str();
         }
 
-        BSLS_LOG_DEBUG(
+        BSLS_LOG_TRACE(
             "Test buffer I/O complete using stream socket pair %s / %s",
             clientSourceEndpointDescription.c_str(),
             serverSourceEndpointDescription.c_str());
@@ -323,7 +323,7 @@ void StreamSocketTest::testVectorIO(
             serverSourceEndpointDescription = ss.str();
         }
 
-        BSLS_LOG_DEBUG(
+        BSLS_LOG_TRACE(
             "Test vector I/O complete using stream socket pair %s / %s",
             clientSourceEndpointDescription.c_str(),
             serverSourceEndpointDescription.c_str());
@@ -358,7 +358,7 @@ ntsa::Error StreamSocketTest::sendAll(const void*  data,
             return error;
         }
 
-        BSLS_LOG_DEBUG("[+]"
+        BSLS_LOG_TRACE("[+]"
                        "\nnumBytesSendable:   %d"
                        "\nnumBytesSent:       %d",
                        context.bytesSendable(),
@@ -404,7 +404,7 @@ ntsa::Error StreamSocketTest::receiveAll(void*        data,
             return error;
         }
 
-        BSLS_LOG_DEBUG("[-]"
+        BSLS_LOG_TRACE("[-]"
                        "\nnumBytesReceivable: %d"
                        "\nnumBytesReceived:   %d",
                        context.bytesReceivable(),
@@ -440,7 +440,7 @@ ntsa::Error StreamSocketTest::sendAll(const bdlbb::Blob& data,
             return error;
         }
 
-        BSLS_LOG_DEBUG("[+]"
+        BSLS_LOG_TRACE("[+]"
                        "\nnumBytesSendable:   %d"
                        "\nnumBytesSent:       %d",
                        context.bytesSendable(),
@@ -468,7 +468,7 @@ ntsa::Error StreamSocketTest::receiveAll(bdlbb::Blob* data,
             return error;
         }
 
-        BSLS_LOG_DEBUG("[-]"
+        BSLS_LOG_TRACE("[-]"
                        "\nnumBytesReceivable: %d"
                        "\nnumBytesReceived:   %d",
                        context.bytesReceivable(),

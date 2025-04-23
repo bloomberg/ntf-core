@@ -264,7 +264,7 @@ void DatagramSocketTest::testBufferIO(
             serverSourceEndpointDescription = ss.str();
         }
 
-        BSLS_LOG_INFO(
+        BSLS_LOG_TRACE(
             "Test buffer I/O %d/%d (%d%%) complete "
             "using datagram socket pair %s / %s",
             numMessagesReceived.load(),
@@ -338,7 +338,7 @@ void DatagramSocketTest::testVectorIO(
             serverSourceEndpointDescription = ss.str();
         }
 
-        BSLS_LOG_INFO(
+        BSLS_LOG_TRACE(
             "Test buffer I/O %d/%d (%d%%) complete "
             "using datagram socket pair %s / %s",
             numMessagesReceived.load(),
@@ -371,7 +371,7 @@ void DatagramSocketTest::sendString(
         ntsa::Error error = client->send(&context, data, options);
 
         if (error) {
-            BSLS_LOG_INFO("Sender error %s", error.text().c_str());
+            BSLS_LOG_TRACE("Sender error %s", error.text().c_str());
             if (error == ntsa::Error::e_LIMIT) {
                 continue;
             }
@@ -380,7 +380,7 @@ void DatagramSocketTest::sendString(
         NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
         NTSCFG_TEST_EQ(context.bytesSent(), clientData->size());
 
-        BSLS_LOG_DEBUG("[+]"
+        BSLS_LOG_TRACE("[+]"
                        "\nnumBytesSendable:   %d"
                        "\nnumBytesSent:       %d",
                        context.bytesSendable(),
@@ -397,7 +397,7 @@ void DatagramSocketTest::sendString(
         ntsa::Error error = client->send(&context, data, options);
 
         if (error) {
-            BSLS_LOG_INFO("Sender error %s, dataSize = %zu", 
+            BSLS_LOG_TRACE("Sender error %s, dataSize = %zu", 
                           error.text().c_str(),
                           (bsl::size_t)(data.size()));
             if (error == ntsa::Error::e_LIMIT) {
@@ -408,7 +408,7 @@ void DatagramSocketTest::sendString(
         NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
         NTSCFG_TEST_EQ(context.bytesSent(), clientData->size());
 
-        BSLS_LOG_DEBUG("[+]"
+        BSLS_LOG_TRACE("[+]"
                        "\nnumBytesSendable:   %d"
                        "\nnumBytesSent:       %d",
                        context.bytesSendable(),
@@ -469,7 +469,7 @@ void DatagramSocketTest::receiveString(
 
         ++(*numMessagesReceived);
 
-        BSLS_LOG_DEBUG("[-]"
+        BSLS_LOG_TRACE("[-]"
                        "\nnumBytesReceivable: %d"
                        "\nnumBytesReceived:   %d",
                        context.bytesReceivable(),
@@ -496,7 +496,7 @@ void DatagramSocketTest::sendBlob(
         ntsa::Error error = client->send(&context, *clientData, options);
 
         if (error) {
-            BSLS_LOG_INFO("Sender error %s", error.text().c_str());
+            BSLS_LOG_TRACE("Sender error %s", error.text().c_str());
             if (error == ntsa::Error::e_LIMIT) {
                 continue;
             }
@@ -506,7 +506,7 @@ void DatagramSocketTest::sendBlob(
         NTSCFG_TEST_EQ(context.bytesSent(),
                        static_cast<bsl::size_t>(clientData->length()));
 
-        BSLS_LOG_DEBUG("[+]"
+        BSLS_LOG_TRACE("[+]"
                        "\nnumBytesSendable:   %d"
                        "\nnumBytesSent:       %d",
                        context.bytesSendable(),
@@ -520,7 +520,7 @@ void DatagramSocketTest::sendBlob(
         ntsa::Error error = client->send(&context, *clientData, options);
 
         if (error) {
-            BSLS_LOG_INFO("Sender error %s, dataSize = %zu", 
+            BSLS_LOG_TRACE("Sender error %s, dataSize = %zu", 
                           error.text().c_str(), 
                           (bsl::size_t)(clientData->length()));
             if (error == ntsa::Error::e_LIMIT) {
@@ -532,7 +532,7 @@ void DatagramSocketTest::sendBlob(
         NTSCFG_TEST_EQ(context.bytesSent(),
                        static_cast<bsl::size_t>(clientData->length()));
 
-        BSLS_LOG_DEBUG("[+]"
+        BSLS_LOG_TRACE("[+]"
                        "\nnumBytesSendable:   %d"
                        "\nnumBytesSent:       %d",
                        context.bytesSendable(),
@@ -592,7 +592,7 @@ void DatagramSocketTest::receiveBlob(
 
         ++(*numMessagesReceived);
 
-        BSLS_LOG_DEBUG("[-]"
+        BSLS_LOG_TRACE("[-]"
                        "\nnumBytesReceivable: %d"
                        "\nnumBytesReceived:   %d",
                        context.bytesReceivable(),

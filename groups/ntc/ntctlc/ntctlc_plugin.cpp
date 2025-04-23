@@ -2098,14 +2098,14 @@ ntca::CompressionType::Value Zstd::type() const
 
 #define NTCTLC_ZLIB_DEFLATER_LOG_FRAME(checksum)                              \
     do {                                                                      \
-        NTCI_LOG_DEBUG("Deflated frame "                                      \
+        NTCI_LOG_TRACE("Deflated frame "                                      \
                        "[ checksum = %u ]",                                   \
                        static_cast<bsl::uint32_t>((checksum)));               \
     } while (false)
 
 #define NTCTLC_ZLIB_INFLATER_LOG_FRAME(checksum)                              \
     do {                                                                      \
-        NTCI_LOG_DEBUG("Inflated frame "                                      \
+        NTCI_LOG_TRACE("Inflated frame "                                      \
                        "[ checksum = %u ]",                                   \
                        static_cast<bsl::uint32_t>((checksum)));               \
     } while (false)
@@ -2831,7 +2831,7 @@ ntca::CompressionType::Value Zlib::type() const
 
 #define NTCTLC_GZIP_DEFLATER_LOG_FRAME(checksum, header)                      \
     do {                                                                      \
-        NTCI_LOG_DEBUG(                                                       \
+        NTCI_LOG_TRACE(                                                       \
             "Deflated frame "                                                 \
             "[ name = %s comment = %s time = %llu checksum = %u ]",           \
             (header).name,                                                    \
@@ -2842,7 +2842,7 @@ ntca::CompressionType::Value Zlib::type() const
 
 #define NTCTLC_GZIP_INFLATER_LOG_FRAME(checksum, header)                      \
     do {                                                                      \
-        NTCI_LOG_DEBUG(                                                       \
+        NTCI_LOG_TRACE(                                                       \
             "Inflated frame "                                                 \
             "[ name = %s comment = %s time = %llu checksum = %u ]",           \
             (header).name,                                                    \

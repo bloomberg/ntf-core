@@ -1309,8 +1309,8 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsing)
     enum { NUM_DATA = sizeof(DATA) / sizeof(DATA[0]) };
 
     for (bsl::size_t i = 0; i < NUM_DATA; ++i) {
-        BSLS_LOG_DEBUG("-------");
-        BSLS_LOG_DEBUG("Parsing  = %s", DATA[i].text);
+        BSLS_LOG_TRACE("-------");
+        BSLS_LOG_TRACE("Parsing  = %s", DATA[i].text);
 
         bsl::string text = DATA[i].text;
 
@@ -1321,7 +1321,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsing)
             bsl::stringstream ss;
             ss << address1;
 
-            BSLS_LOG_DEBUG("Address1 = %s", ss.str().c_str());
+            BSLS_LOG_TRACE("Address1 = %s", ss.str().c_str());
         }
 
         ntsa::Ipv6Address address2;
@@ -1331,7 +1331,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsing)
             bsl::stringstream ss;
             ss << address2;
 
-            BSLS_LOG_DEBUG("Address2 = %s", ss.str().c_str());
+            BSLS_LOG_TRACE("Address2 = %s", ss.str().c_str());
         }
 
         NTSCFG_TEST_ASSERT(success == DATA[i].success);
@@ -1354,7 +1354,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsingScopeId)
             bsl::stringstream ss;
             ss << address;
 
-            BSLS_LOG_DEBUG("Address = %s", ss.str().c_str());
+            BSLS_LOG_TRACE("Address = %s", ss.str().c_str());
         }
 
         NTSCFG_TEST_ASSERT(address.scopeId() == 1);
@@ -1370,7 +1370,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsingScopeId)
             bsl::stringstream ss;
             ss << address;
 
-            BSLS_LOG_DEBUG("Address = %s", ss.str().c_str());
+            BSLS_LOG_TRACE("Address = %s", ss.str().c_str());
         }
 
         NTSCFG_TEST_ASSERT(address.scopeId() == 4);
@@ -1389,7 +1389,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsingAbbreviation)
         char buffer[ntsa::Ipv6Address::MAX_TEXT_LENGTH + 1];
         address.format(buffer, sizeof buffer, false);
 
-        BSLS_LOG_DEBUG("Output = %s", buffer);
+        BSLS_LOG_TRACE("Output = %s", buffer);
     }
 
     // Collapse 1
@@ -1404,7 +1404,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsingAbbreviation)
         char buffer[ntsa::Ipv6Address::MAX_TEXT_LENGTH + 1];
         address.format(buffer, sizeof buffer, false);
 
-        BSLS_LOG_DEBUG("Output = %s", buffer);
+        BSLS_LOG_TRACE("Output = %s", buffer);
     }
 
     {
@@ -1417,7 +1417,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsingAbbreviation)
         char buffer[ntsa::Ipv6Address::MAX_TEXT_LENGTH + 1];
         address.format(buffer, sizeof buffer, false);
 
-        BSLS_LOG_DEBUG("Output = %s", buffer);
+        BSLS_LOG_TRACE("Output = %s", buffer);
     }
 
     // Collapse 2
@@ -1432,7 +1432,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsingAbbreviation)
         char buffer[ntsa::Ipv6Address::MAX_TEXT_LENGTH + 1];
         address.format(buffer, sizeof buffer, false);
 
-        BSLS_LOG_DEBUG("Output = %s", buffer);
+        BSLS_LOG_TRACE("Output = %s", buffer);
     }
 
     {
@@ -1445,7 +1445,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsingAbbreviation)
         char buffer[ntsa::Ipv6Address::MAX_TEXT_LENGTH + 1];
         address.format(buffer, sizeof buffer, false);
 
-        BSLS_LOG_DEBUG("Output = %s", buffer);
+        BSLS_LOG_TRACE("Output = %s", buffer);
     }
 
     {
@@ -1458,7 +1458,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsingAbbreviation)
         char buffer[ntsa::Ipv6Address::MAX_TEXT_LENGTH + 1];
         address.format(buffer, sizeof buffer, false);
 
-        BSLS_LOG_DEBUG("Output = %s", buffer);
+        BSLS_LOG_TRACE("Output = %s", buffer);
     }
 
     {
@@ -1471,7 +1471,7 @@ NTSCFG_TEST_FUNCTION(ntsa::Ipv6AddressTest::verifyParsingAbbreviation)
         char buffer[ntsa::Ipv6Address::MAX_TEXT_LENGTH + 1];
         address.format(buffer, sizeof buffer, false);
 
-        BSLS_LOG_DEBUG("Output = %s", buffer);
+        BSLS_LOG_TRACE("Output = %s", buffer);
     }
 }
 

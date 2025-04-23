@@ -51,11 +51,11 @@ NTSCFG_TEST_FUNCTION(ntcf::TestTest::verify)
 
     ntcf::TestGuard guard(interface, clientStreamSocket, serverStreamSocket);
 
-    BSLS_LOG_DEBUG("Client stream socket at %s to %s",
+    BSLS_LOG_TRACE("Client stream socket at %s to %s",
                    clientStreamSocket->sourceEndpoint().text().c_str(),
                    clientStreamSocket->remoteEndpoint().text().c_str());
 
-    BSLS_LOG_DEBUG("Server stream socket at %s to %s",
+    BSLS_LOG_TRACE("Server stream socket at %s to %s",
                    serverStreamSocket->sourceEndpoint().text().c_str(),
                    serverStreamSocket->remoteEndpoint().text().c_str());
 

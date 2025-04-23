@@ -194,7 +194,7 @@ void TestFramework::verifyReactor(const ReactorTestCallback& callback)
         }
 #endif
 
-        BSLS_LOG_INFO("Testing numThreads %d", (int)(numThreads));
+        BSLS_LOG_TRACE("Testing numThreads %d", (int)(numThreads));
 
         bsl::shared_ptr<ntcd::Simulation> simulation;
         simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
@@ -282,7 +282,7 @@ void TestFramework::verifyProactor(const ProactorTestCallback& callback)
         }
 #endif
 
-        BSLS_LOG_INFO("Testing numThreads %d", (int)(numThreads));
+        BSLS_LOG_TRACE("Testing numThreads %d", (int)(numThreads));
 
         bsl::shared_ptr<ntcd::Simulation> simulation;
         simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);

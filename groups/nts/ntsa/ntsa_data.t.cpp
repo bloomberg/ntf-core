@@ -191,7 +191,7 @@ bool DataTest::equals(const bdlbb::Blob& blob, const bsl::string& string)
         blobAsString = oss.str();
     }
 
-    BSLS_LOG_DEBUG("Comparing: %s", blobAsString.c_str());
+    BSLS_LOG_TRACE("Comparing: %s", blobAsString.c_str());
 
     if (blobAsString != string) {
         BSLS_LOG_ERROR("Blob does not match:\nExpected:\n%s\nFound:\n%s\n",

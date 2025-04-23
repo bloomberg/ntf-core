@@ -41,7 +41,7 @@ BSLS_IDENT_RCSID(ntcr_interface_cpp, "$Id$ $CSID$")
 #include <bsls_assert.h>
 
 #define NTCR_INTERFACE_LOG_STARTING(config, numThreads)                       \
-    NTCI_LOG_DEBUG(                                                           \
+    NTCI_LOG_TRACE(                                                           \
         "Scheduler '%s' is starting %d/%d thread(s) "                         \
         "with %s load balancing",                                             \
         config.metricName().c_str(),                                          \
@@ -50,23 +50,23 @@ BSLS_IDENT_RCSID(ntcr_interface_cpp, "$Id$ $CSID$")
         (config.dynamicLoadBalancing().value() ? "dynamic" : "static"))
 
 #define NTCR_INTERFACE_LOG_STARTED(config)                                    \
-    NTCI_LOG_DEBUG("Scheduler '%s' has started", config.metricName().c_str())
+    NTCI_LOG_TRACE("Scheduler '%s' has started", config.metricName().c_str())
 
 #define NTCR_INTERFACE_LOG_STOPPING(config)                                   \
-    NTCI_LOG_DEBUG("Scheduler '%s' is stopping", config.metricName().c_str())
+    NTCI_LOG_TRACE("Scheduler '%s' is stopping", config.metricName().c_str())
 
 #define NTCR_INTERFACE_LOG_STOPPED(config)                                    \
-    NTCI_LOG_DEBUG("Scheduler '%s' has stopped", config.metricName().c_str())
+    NTCI_LOG_TRACE("Scheduler '%s' has stopped", config.metricName().c_str())
 
 #define NTCR_INTERFACE_LOG_LOAD_FACTOR_EXCEEDED(config, load)                 \
-    NTCI_LOG_DEBUG("Scheduler '%s' least used thread has a load of %d, "      \
+    NTCI_LOG_TRACE("Scheduler '%s' least used thread has a load of %d, "      \
                    "greater than the maximum desired load of %d",             \
                    config.metricName().c_str(),                               \
                    (int)(load),                                               \
                    (int)(config.threadLoadFactor()))
 
 #define NTCR_INTERFACE_LOG_EXPANDING(config, numThreads)                      \
-    NTCI_LOG_DEBUG("Scheduler '%s' is expanding to %d/%d threads",            \
+    NTCI_LOG_TRACE("Scheduler '%s' is expanding to %d/%d threads",            \
                    config.metricName().c_str(),                               \
                    (int)(numThreads),                                         \
                    (int)(config.maxThreads()))

@@ -561,7 +561,7 @@ void StreamSocketTest::Framework::execute(
 {
     ntsa::Error error;
 
-    BSLS_LOG_INFO("Testing transport %s numThreads %d",
+    BSLS_LOG_TRACE("Testing transport %s numThreads %d",
                   ntsa::Transport::toString(transport),
                   (int)(numThreads));
 

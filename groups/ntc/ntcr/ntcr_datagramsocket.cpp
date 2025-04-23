@@ -140,7 +140,7 @@ BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
     } while (false)
 
 #define NTCR_DATAGRAMSOCKET_LOG_ZERO_COPY_DISABLED()                          \
-    NTCI_LOG_DEBUG("Datagram socket zero copy is disabled")
+    NTCI_LOG_TRACE("Datagram socket zero copy is disabled")
 
 #define NTCR_DATAGRAMSOCKET_LOG_SEND_RESULT(context)                          \
     NTCI_LOG_TRACE("Datagram socket "                                         \
@@ -160,7 +160,7 @@ BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
                    size)
 
 #define NTCR_DATAGRAMSOCKET_LOG_WRITE_QUEUE_DRAINED(size)                     \
-    NTCI_LOG_DEBUG("Datagram socket "                                         \
+    NTCI_LOG_TRACE("Datagram socket "                                         \
                    "has drained the write queue down to %zu bytes",           \
                    size)
 
@@ -517,7 +517,7 @@ ntsa::Error DatagramSocket::privateTimestampIncomingData(
         error = d_socket_sp->setOption(option);
         if (error) {
             if (error != ntsa::Error::e_NOT_IMPLEMENTED) {
-                NTCI_LOG_DEBUG("Failed to set socket option: "
+                NTCI_LOG_TRACE("Failed to set socket option: "
                                "timestamp incoming data: %s",
                                error.text().c_str());
             }

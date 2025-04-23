@@ -332,7 +332,7 @@ if [[ -z "${NTF_CONFIGURE_WITH_DEPRECATED_FEATURES}" ]]; then
 fi
 
 if [[ -z "${NTF_CONFIGURE_WITH_LOGGING}" ]]; then
-    NTF_CONFIGURE_WITH_LOGGING=0
+    NTF_CONFIGURE_WITH_LOGGING=1
 fi
 
 if [[ -z "${NTF_CONFIGURE_WITH_METRICS}" ]]; then
@@ -587,13 +587,6 @@ while true ; do
 
         --ufid)
             NTF_CONFIGURE_UFID=$2
-
-            if [[ "${NTF_CONFIGURE_UFID}" == *"opt"* ]]; then
-                NTF_CONFIGURE_WITH_LOGGING=0
-            else
-                NTF_CONFIGURE_WITH_LOGGING=1
-            fi
-
             shift 2 ;;
 
         --unity)
@@ -609,7 +602,6 @@ while true ; do
 
         --debug)
             NTF_CONFIGURE_UFID="dbg_exc_mt_64"
-            NTF_CONFIGURE_WITH_LOGGING=1
             shift ;;
 
         --release)

@@ -60,7 +60,7 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase1)
             bsl::stringstream ss;
             ss << host;
 
-            BSLS_LOG_DEBUG("Host = %s", ss.str().c_str());
+            BSLS_LOG_TRACE("Host = %s", ss.str().c_str());
         }
     }
 
@@ -75,7 +75,7 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase1)
             bsl::stringstream ss;
             ss << host;
 
-            BSLS_LOG_DEBUG("Host = %s", ss.str().c_str());
+            BSLS_LOG_TRACE("Host = %s", ss.str().c_str());
         }
     }
 
@@ -89,7 +89,7 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase1)
             bsl::stringstream ss;
             ss << host;
 
-            BSLS_LOG_DEBUG("Host = %s", ss.str().c_str());
+            BSLS_LOG_TRACE("Host = %s", ss.str().c_str());
         }
     }
 
@@ -103,7 +103,7 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase1)
             bsl::stringstream ss;
             ss << host;
 
-            BSLS_LOG_DEBUG("Host = %s", ss.str().c_str());
+            BSLS_LOG_TRACE("Host = %s", ss.str().c_str());
         }
     }
 }

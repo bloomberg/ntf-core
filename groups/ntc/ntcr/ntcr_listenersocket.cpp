@@ -46,13 +46,13 @@ BSLS_IDENT_RCSID(ntcr_listenersocket_cpp, "$Id$ $CSID$")
 #define NTCR_LISTENERSOCKET_OBSERVE_BY_WEAK_PTR 0
 
 #define NTCR_LISTENERSOCKET_LOG_BIND_ATTEMPT(sourceEndpoint, reuseAddress)    \
-    NTCI_LOG_DEBUG("Listener socket binding to source endpoint '%s'"          \
+    NTCI_LOG_TRACE("Listener socket binding to source endpoint '%s'"          \
                    ": reuseAddress = %d",                                     \
                    (sourceEndpoint).text().c_str(),                           \
                    (int)(reuseAddress))
 
 #define NTCR_LISTENERSOCKET_LOG_BIND_FAILURE(sourceEndpoint, error)           \
-    NTCI_LOG_DEBUG("Listener socket failed to bind to source endpoint '%s'"   \
+    NTCI_LOG_TRACE("Listener socket failed to bind to source endpoint '%s'"   \
                    ": %s",                                                    \
                    (sourceEndpoint).text().c_str(),                           \
                    error.text().c_str())
@@ -73,37 +73,37 @@ BSLS_IDENT_RCSID(ntcr_listenersocket_cpp, "$Id$ $CSID$")
                    (remoteEndpoint).text().c_str())
 
 #define NTCR_LISTENERSOCKET_LOG_ACCEPT_LIMIT(error)                           \
-    NTCI_LOG_DEBUG("Listener socket failed to accept socket because a "       \
+    NTCI_LOG_TRACE("Listener socket failed to accept socket because a "       \
                    "resource limit was violated, trying again in 1 "          \
                    "second: %s",                                              \
                    error.text().c_str())
 
 #define NTCR_LISTENERSOCKET_LOG_ACCEPT_FAILURE(error)                         \
-    NTCI_LOG_DEBUG("Listener socket failed to accept socket: %s",             \
+    NTCI_LOG_TRACE("Listener socket failed to accept socket: %s",             \
                    error.text().c_str())
 
 #define NTCR_LISTENERSOCKET_LOG_ACCEPTED_SOURCE_ENDPOINT_FAILED(handle,       \
                                                                 error)        \
-    NTCI_LOG_DEBUG("Listener socket failed to get source endpoint for "       \
+    NTCI_LOG_TRACE("Listener socket failed to get source endpoint for "       \
                    "accepted socket %d: %s",                                  \
                    handle,                                                    \
                    error.text().c_str())
 
 #define NTCR_LISTENERSOCKET_LOG_ACCEPTED_REMOTE_ENDPOINT_FAILED(handle,       \
                                                                 error)        \
-    NTCI_LOG_DEBUG("Listener socket failed to get remote endpoint for "       \
+    NTCI_LOG_TRACE("Listener socket failed to get remote endpoint for "       \
                    "accepted socket %d: %s",                                  \
                    handle,                                                    \
                    error.text().c_str())
 
 #define NTCR_LISTENERSOCKET_LOG_ACCEPTED_SOCKET_OPTIONS_FAILED(handle, error) \
-    NTCI_LOG_DEBUG("Listener socket failed to set socket options for "        \
+    NTCI_LOG_TRACE("Listener socket failed to set socket options for "        \
                    "accepted socket %d: %s",                                  \
                    handle,                                                    \
                    error.text().c_str())
 
 #define NTCR_LISTENERSOCKET_LOG_ACCEPTED_SOCKET_IMPORT_FAILED(handle, error)  \
-    NTCI_LOG_DEBUG("Listener socket failed to import accepted socket %d: %s", \
+    NTCI_LOG_TRACE("Listener socket failed to import accepted socket %d: %s", \
                    handle,                                                    \
                    error.text().c_str())
 

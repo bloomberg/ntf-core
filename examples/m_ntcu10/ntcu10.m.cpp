@@ -1775,7 +1775,7 @@ void execute()
     responseLatch.wait();
     BSLS_ASSERT_OPT(response == "HELLO, WORLD!");
 
-    BSLS_LOG_INFO("Received '%s'", response.c_str());
+    BSLS_LOG_TRACE("Received '%s'", response.c_str());
 
     // Shutdown and wait for the client to stop.
 
@@ -2015,7 +2015,7 @@ void execute()
         responseLatch.wait();
         BSLS_ASSERT_OPT(response == "HELLO, UNSECURE WORLD!");
 
-        BSLS_LOG_INFO("Received '%s'", response.c_str());
+        BSLS_LOG_TRACE("Received '%s'", response.c_str());
     }
 
     // Begin waiting for the client to requst and upgrade to a secure channel.
@@ -2062,7 +2062,7 @@ void execute()
         bsl::stringstream ss;
         peerCertificate->print(ss);
 
-        BSLS_LOG_INFO("Secure channel established with:\n%s",
+        BSLS_LOG_TRACE("Secure channel established with:\n%s",
                       ss.str().c_str());
     }
 
@@ -2085,7 +2085,7 @@ void execute()
         responseLatch.wait();
         BSLS_ASSERT_OPT(response == "HELLO, SECURE WORLD!");
 
-        BSLS_LOG_INFO("Received '%s'", response.c_str());
+        BSLS_LOG_TRACE("Received '%s'", response.c_str());
     }
 
     // Begin downgrading the secure channel back to cleartext. In our example
@@ -2121,7 +2121,7 @@ void execute()
         responseLatch.wait();
         BSLS_ASSERT_OPT(response == "HELLO, UNSECURE WORLD AGAIN!");
 
-        BSLS_LOG_INFO("Received '%s'", response.c_str());
+        BSLS_LOG_TRACE("Received '%s'", response.c_str());
     }
 
     // Shutdown and wait for the client to stop.

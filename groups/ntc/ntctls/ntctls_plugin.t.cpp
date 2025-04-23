@@ -172,7 +172,7 @@ void KeyTestUtil::logHexDump(const bdlsb::MemOutStreamBuf& osb)
     ss << bdlb::PrintStringHexDumper(osb.data(),
                                      static_cast<int>(osb.length()));
 
-    BSLS_LOG_DEBUG("Key:\n%s", ss.str().c_str());
+    BSLS_LOG_TRACE("Key:\n%s", ss.str().c_str());
 }
 
 void KeyTestUtil::logHexDump(const bdlbb::Blob& ob)
@@ -180,7 +180,7 @@ void KeyTestUtil::logHexDump(const bdlbb::Blob& ob)
     bsl::stringstream ss;
     ss << bdlbb::BlobUtilHexDumper(&ob);
 
-    BSLS_LOG_DEBUG("Key:\n%s", ss.str().c_str());
+    BSLS_LOG_TRACE("Key:\n%s", ss.str().c_str());
 }
 
 void KeyTestUtil::verifyKeyGeneration(
@@ -478,7 +478,7 @@ void CertificateTestUtil::logCertificate(
     bsl::stringstream ss;
     certificate->print(ss);
 
-    BSLS_LOG_DEBUG("%s = \n%s", label, ss.str().c_str());
+    BSLS_LOG_TRACE("%s = \n%s", label, ss.str().c_str());
 }
 
 void CertificateTestUtil::verifyKeyGeneration(
@@ -1928,7 +1928,7 @@ void ResourceTestParametersUtil::logKey(
     bsl::stringstream ss;
     key->print(ss);
 
-    BSLS_LOG_DEBUG("%s = \n%s", label, ss.str().c_str());
+    BSLS_LOG_TRACE("%s = \n%s", label, ss.str().c_str());
 }
 
 void ResourceTestParametersUtil::logCertificate(
@@ -1938,7 +1938,7 @@ void ResourceTestParametersUtil::logCertificate(
     bsl::stringstream ss;
     certificate->print(ss);
 
-    BSLS_LOG_DEBUG("%s = \n%s", label, ss.str().c_str());
+    BSLS_LOG_TRACE("%s = \n%s", label, ss.str().c_str());
 }
 
 void ResourceTestParametersUtil::verifyLoadResult(

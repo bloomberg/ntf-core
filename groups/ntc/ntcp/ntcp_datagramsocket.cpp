@@ -133,7 +133,7 @@ BSLS_IDENT_RCSID(ntcp_datagramsocket_cpp, "$Id$ $CSID$")
                    size)
 
 #define NTCP_DATAGRAMSOCKET_LOG_WRITE_QUEUE_DRAINED(size)                     \
-    NTCI_LOG_DEBUG("Datagram socket "                                         \
+    NTCI_LOG_TRACE("Datagram socket "                                         \
                    "has drained the write queue down to %zu bytes",           \
                    size)
 

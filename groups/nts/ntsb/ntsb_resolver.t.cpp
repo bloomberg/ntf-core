@@ -3001,7 +3001,7 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase11)
             portNumber = static_cast<bsl::size_t>(portList[0]);
         }
 
-        BSLS_LOG_DEBUG("Service name '%s' => port %zu: error = %s",
+        BSLS_LOG_TRACE("Service name '%s' => port %zu: error = %s",
                        DATA[i].d_serviceName,
                        portNumber,
                        error.text().c_str());

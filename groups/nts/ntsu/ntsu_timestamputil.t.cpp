@@ -41,70 +41,70 @@ NTSCFG_TEST_FUNCTION(ntsu::TimestampUtilTest::verify)
         bsls::TimeInterval delay;
         delay.setTotalNanoseconds(0);
         result = ntsu::TimestampUtil::describeDelay(delay);
-        BSLS_LOG_DEBUG("  0ns: %s", result.c_str());
+        BSLS_LOG_TRACE("  0ns: %s", result.c_str());
     }
 
     {
         bsls::TimeInterval delay;
         delay.setTotalNanoseconds(4);
         result = ntsu::TimestampUtil::describeDelay(delay);
-        BSLS_LOG_DEBUG("  4ns: %s", result.c_str());
+        BSLS_LOG_TRACE("  4ns: %s", result.c_str());
     }
 
     {
         bsls::TimeInterval delay;
         delay.setTotalNanoseconds(999);
         result = ntsu::TimestampUtil::describeDelay(delay);
-        BSLS_LOG_DEBUG("999ns: %s", result.c_str());
+        BSLS_LOG_TRACE("999ns: %s", result.c_str());
     }
 
     {
         bsls::TimeInterval delay;
         delay.setTotalMicroseconds(1);
         result = ntsu::TimestampUtil::describeDelay(delay);
-        BSLS_LOG_DEBUG("  1us: %s", result.c_str());
+        BSLS_LOG_TRACE("  1us: %s", result.c_str());
     }
 
     {
         bsls::TimeInterval delay;
         delay.setTotalMicroseconds(4);
         result = ntsu::TimestampUtil::describeDelay(delay);
-        BSLS_LOG_DEBUG("  4us: %s", result.c_str());
+        BSLS_LOG_TRACE("  4us: %s", result.c_str());
     }
 
     {
         bsls::TimeInterval delay;
         delay.setTotalMicroseconds(999);
         result = ntsu::TimestampUtil::describeDelay(delay);
-        BSLS_LOG_DEBUG("999us: %s", result.c_str());
+        BSLS_LOG_TRACE("999us: %s", result.c_str());
     }
 
     {
         bsls::TimeInterval delay;
         delay.setTotalMilliseconds(1);
         result = ntsu::TimestampUtil::describeDelay(delay);
-        BSLS_LOG_DEBUG("  1ms: %s", result.c_str());
+        BSLS_LOG_TRACE("  1ms: %s", result.c_str());
     }
 
     {
         bsls::TimeInterval delay;
         delay.setTotalMilliseconds(1);
         result = ntsu::TimestampUtil::describeDelay(delay);
-        BSLS_LOG_DEBUG("  4ms: %s", result.c_str());
+        BSLS_LOG_TRACE("  4ms: %s", result.c_str());
     }
 
     {
         bsls::TimeInterval delay;
         delay.setTotalMilliseconds(999);
         result = ntsu::TimestampUtil::describeDelay(delay);
-        BSLS_LOG_DEBUG("999ms: %s", result.c_str());
+        BSLS_LOG_TRACE("999ms: %s", result.c_str());
     }
 
     {
         bsls::TimeInterval delay;
         delay.setTotalMilliseconds(1500);
         result = ntsu::TimestampUtil::describeDelay(delay);
-        BSLS_LOG_DEBUG(" 1.5s: %s", result.c_str());
+        BSLS_LOG_TRACE(" 1.5s: %s", result.c_str());
     }
 }
 

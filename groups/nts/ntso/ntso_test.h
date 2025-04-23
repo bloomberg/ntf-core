@@ -295,7 +295,7 @@ inline void Test::usage(const ReactorVector& reactors,
 
         // Shutdown writing by the client.
 
-        BSLS_LOG_DEBUG("Descriptor %d shutting down writing",
+        BSLS_LOG_TRACE("Descriptor %d shutting down writing",
                        (int)(client->handle()));
 
         error = client->shutdown(ntsa::ShutdownType::e_SEND);
@@ -351,7 +351,7 @@ inline void Test::usage(const ReactorVector& reactors,
 
         // Shutdown writing by the server.
 
-        BSLS_LOG_DEBUG("Descriptor %d shutting down writing",
+        BSLS_LOG_TRACE("Descriptor %d shutting down writing",
                        (int)(server->handle()));
 
         error = server->shutdown(ntsa::ShutdownType::e_SEND);
@@ -619,7 +619,7 @@ inline void Test::pollingAfterFullShutdown(const ReactorVector& reactors,
 
         // Shutdown writing by the client.
 
-        BSLS_LOG_DEBUG("Descriptor %d shutting down writing",
+        BSLS_LOG_TRACE("Descriptor %d shutting down writing",
                        (int)(client->handle()));
 
         error = client->shutdown(ntsa::ShutdownType::e_SEND);
@@ -675,7 +675,7 @@ inline void Test::pollingAfterFullShutdown(const ReactorVector& reactors,
 
         // Shutdown writing by the server.
 
-        BSLS_LOG_DEBUG("Descriptor %d shutting down writing",
+        BSLS_LOG_TRACE("Descriptor %d shutting down writing",
                        (int)(server->handle()));
 
         error = server->shutdown(ntsa::ShutdownType::e_SEND);
@@ -729,7 +729,7 @@ inline void Test::pollingAfterFullShutdown(const ReactorVector& reactors,
         error = reactor->detachSocket(client);
         NTSCFG_TEST_OK(error);
 
-        BSLS_LOG_INFO("Polling server after shutdown complete");
+        BSLS_LOG_TRACE("Polling server after shutdown complete");
 
         // Shutdown reading by the server.
 
@@ -762,7 +762,7 @@ inline void Test::pollingAfterFullShutdown(const ReactorVector& reactors,
         error = reactor->detachSocket(server);
         NTSCFG_TEST_OK(error);
 
-        BSLS_LOG_INFO("Polling client after shutdown complete");
+        BSLS_LOG_TRACE("Polling client after shutdown complete");
 
         // Shutdown reading by the client.
 
@@ -1015,7 +1015,7 @@ inline void Test::pollingAfterClose(const ReactorVector& reactors,
         error = reactor->showReadable(server);
         NTSCFG_TEST_OK(error);
 
-        BSLS_LOG_DEBUG("Descriptor %d closing", (int)(server->handle()));
+        BSLS_LOG_TRACE("Descriptor %d closing", (int)(server->handle()));
         ntsa::Handle serverHandle = server->handle();
         server->close();
 
@@ -1050,7 +1050,7 @@ inline void Test::log(const bsl::vector<ntsa::Event>& eventSet)
         bsl::stringstream ss;
         ss << eventSet[i];
 
-        BSLS_LOG_DEBUG("Polled event %s", ss.str().c_str());
+        BSLS_LOG_TRACE("Polled event %s", ss.str().c_str());
     }
 }
 
@@ -1094,7 +1094,7 @@ inline void Test::log(const ntsa::EventSet& eventSet)
         bsl::stringstream ss;
         ss << event;
 
-        BSLS_LOG_DEBUG("Polled event %s", ss.str().c_str());
+        BSLS_LOG_TRACE("Polled event %s", ss.str().c_str());
     }
 }
 
