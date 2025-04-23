@@ -100,6 +100,14 @@ namespace ntscfg {
 // a reactor. This driver is available on Darwin and FreeBSD.
 #define NTS_BUILD_WITH_KQUEUE @NTF_BUILD_WITH_KQUEUE@
 
+// Build with support for packet timestamping, if supported by the network
+// device.
+#define NTS_BUILD_WITH_TIMESTAMPING @NTF_BUILD_WITH_TIMESTAMPING@
+
+// Build with support for zero-copy send system calls, if supported by the
+// operating system kernel.
+#define NTS_BUILD_WITH_ZERO_COPY @NTF_BUILD_WITH_ZERO_COPY@
+
 // Build with logging.
 #define NTS_BUILD_WITH_LOGGING @NTF_BUILD_WITH_LOGGING@
 

@@ -506,7 +506,7 @@ ntsa::Error SocketOptionUtil::setReuseAddress(ntsa::Handle socket,
 ntsa::Error SocketOptionUtil::setTimestampIncomingData(ntsa::Handle socket,
                                                        bool timestampFlag)
 {
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING
 
     ntsa::Error error;
     int         rc;
@@ -577,7 +577,7 @@ ntsa::Error SocketOptionUtil::setTimestampIncomingData(ntsa::Handle socket,
 ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
                                                        bool timestampFlag)
 {
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING
 
     ntsa::Error error;
     int         rc;
@@ -794,7 +794,7 @@ ntsa::Error SocketOptionUtil::setInlineOutOfBandData(ntsa::Handle socket,
 
 ntsa::Error SocketOptionUtil::setZeroCopy(ntsa::Handle socket, bool zeroCopy)
 {
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_ZERO_COPY
 
     ntsa::Error error;
     int         rc;
@@ -1194,7 +1194,7 @@ ntsa::Error SocketOptionUtil::getTimestampIncomingData(bool* timestampFlag,
 {
     *timestampFlag = false;
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING
 
     ntsa::Error error;
     int         rc;
@@ -1241,7 +1241,7 @@ ntsa::Error SocketOptionUtil::getTimestampOutgoingData(bool* timestampFlag,
 {
     *timestampFlag = false;
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING
 
     ntsa::Error error;
     int         rc;
@@ -1288,7 +1288,7 @@ ntsa::Error SocketOptionUtil::getZeroCopy(bool*        zeroCopyFlag,
 {
     *zeroCopyFlag = false;
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_ZERO_COPY
 
     ntsa::Error error;
     int         rc;
@@ -2240,7 +2240,7 @@ bool SocketOptionUtil::supportsNotifications(ntsa::Handle socket)
 
 bool SocketOptionUtil::supportsTimestamping(ntsa::Handle socket)
 {
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING
 
     ntsa::Error error;
     int         rc;
@@ -2286,7 +2286,7 @@ bool SocketOptionUtil::supportsTimestamping(ntsa::Handle socket)
 
 bool SocketOptionUtil::supportsZeroCopy(ntsa::Handle socket)
 {
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_ZERO_COPY
 
     ntsa::Error error;
     int         rc;
