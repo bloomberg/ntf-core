@@ -121,6 +121,14 @@ namespace ntccfg {
 // Build with support for OpenSSL as the driver for TLS.
 #define NTC_BUILD_WITH_OPENSSL @NTF_BUILD_WITH_OPENSSL@
 
+// Build with support for packet timestamping, if supported by the network
+// device.
+#define NTC_BUILD_WITH_TIMESTAMPING @NTF_BUILD_WITH_TIMESTAMPING@
+
+// Build with support for zero-copy send system calls, if supported by the
+// operating system kernel.
+#define NTC_BUILD_WITH_ZERO_COPY @NTF_BUILD_WITH_ZERO_COPY@
+
 // Build with support for being able to configure a processing model where
 // any thread can process I/O for a socket, rather than just a particular
 // thread chosen at the time the socket was created.
