@@ -3729,6 +3729,10 @@ StreamSocket::StreamSocket(
         d_sendGreedily = d_options.sendGreedily().value();
     }
 
+    if (proactor->maxThreads() > 1) {
+        d_receiveQueue.setTrigger(ntca::ReactorEventTrigger::e_EDGE);
+    }
+
     if (!d_options.readQueueLowWatermark().isNull()) {
         d_receiveQueue.setLowWatermark(
             d_options.readQueueLowWatermark().value());
@@ -4969,6 +4973,13 @@ ntsa::Error StreamSocket::registerSession(
         if (!d_sessionStrand_sp) {
             d_sessionStrand_sp = d_proactorStrand_sp;
         }
+
+        if (d_sessionStrand_sp) {
+            d_receiveQueue.setTrigger(ntca::ReactorEventTrigger::e_EDGE);
+        }
+        else {
+            d_receiveQueue.setTrigger(ntca::ReactorEventTrigger::e_LEVEL);
+        }
     }
     else {
         d_session_sp.reset();
@@ -4998,6 +5009,13 @@ ntsa::Error StreamSocket::registerSessionCallback(
         if (!d_sessionStrand_sp) {
             d_sessionStrand_sp = d_proactorStrand_sp;
         }
+
+        if (d_sessionStrand_sp) {
+            d_receiveQueue.setTrigger(ntca::ReactorEventTrigger::e_EDGE);
+        }
+        else {
+            d_receiveQueue.setTrigger(ntca::ReactorEventTrigger::e_LEVEL);
+        }
     }
     else {
         d_session_sp.reset();
@@ -5024,6 +5042,13 @@ ntsa::Error StreamSocket::registerSessionCallback(
 
         if (!d_sessionStrand_sp) {
             d_sessionStrand_sp = d_proactorStrand_sp;
+        }
+
+        if (d_sessionStrand_sp) {
+            d_receiveQueue.setTrigger(ntca::ReactorEventTrigger::e_EDGE);
+        }
+        else {
+            d_receiveQueue.setTrigger(ntca::ReactorEventTrigger::e_LEVEL);
         }
     }
     else {

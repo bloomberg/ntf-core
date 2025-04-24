@@ -130,6 +130,7 @@ AcceptQueue::AcceptQueue(bslma::Allocator* basicAllocator)
 , d_watermarkLowWanted(true)
 , d_watermarkHigh(NTCCFG_DEFAULT_LISTENER_SOCKET_ACCEPT_QUEUE_HIGH_WATERMARK)
 , d_watermarkHighWanted(true)
+, d_trigger(ntca::ReactorEventTrigger::e_LEVEL)
 , d_callbackQueue(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {

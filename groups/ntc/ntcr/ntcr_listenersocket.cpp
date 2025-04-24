@@ -1675,6 +1675,10 @@ ListenerSocket::ListenerSocket(
         }
     }
 
+    if (reactor->maxThreads() > 1) {
+        d_acceptQueue.setTrigger(ntca::ReactorEventTrigger::e_EDGE);
+    }
+
     if (!d_options.acceptQueueLowWatermark().isNull()) {
         d_acceptQueue.setLowWatermark(
             d_options.acceptQueueLowWatermark().value());
@@ -2260,6 +2264,13 @@ ntsa::Error ListenerSocket::registerSession(
         if (!d_sessionStrand_sp) {
             d_sessionStrand_sp = d_reactorStrand_sp;
         }
+
+        if (d_sessionStrand_sp) {
+            d_acceptQueue.setTrigger(ntca::ReactorEventTrigger::e_EDGE);
+        }
+        else {
+            d_acceptQueue.setTrigger(ntca::ReactorEventTrigger::e_LEVEL);
+        }
     }
     else {
         d_session_sp.reset();
@@ -2289,6 +2300,13 @@ ntsa::Error ListenerSocket::registerSessionCallback(
         if (!d_sessionStrand_sp) {
             d_sessionStrand_sp = d_reactorStrand_sp;
         }
+
+        if (d_sessionStrand_sp) {
+            d_acceptQueue.setTrigger(ntca::ReactorEventTrigger::e_EDGE);
+        }
+        else {
+            d_acceptQueue.setTrigger(ntca::ReactorEventTrigger::e_LEVEL);
+        }
     }
     else {
         d_session_sp.reset();
@@ -2315,6 +2333,13 @@ ntsa::Error ListenerSocket::registerSessionCallback(
 
         if (!d_sessionStrand_sp) {
             d_sessionStrand_sp = d_reactorStrand_sp;
+        }
+
+        if (d_sessionStrand_sp) {
+            d_acceptQueue.setTrigger(ntca::ReactorEventTrigger::e_EDGE);
+        }
+        else {
+            d_acceptQueue.setTrigger(ntca::ReactorEventTrigger::e_LEVEL);
         }
     }
     else {
