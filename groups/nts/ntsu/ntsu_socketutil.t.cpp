@@ -8591,7 +8591,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase28)
 NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase29)
 {
     // Concern: Test TX timestamping functionality for DATAGRAM sockets
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING
     // Linux kernels versions < 5.0.0 do not support MSG_ZEROCOPY for DGRAM
     // sockets
     {
@@ -8614,7 +8614,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase29)
 NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase30)
 {
     // Concern: Test TX timestamping functionality for STREAM sockets
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING
     // Linux kernels versions < 4.14.0 do not support MSG_ZEROCOPY for STREAM
     // sockets
     {
@@ -8638,7 +8638,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase31)
 {
     // Concern: Test TX timestamping an MSG_ZEROCOPY functionality for
     // DATAGRAM sockets
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && \
+    NTS_BUILD_WITH_TIMESTAMPING && NTS_BUILD_WITH_ZERO_COPY
 
     // Linux kernels versions < 5.0.0 do not support MSG_ZEROCOPY for DGRAM
     // sockets
@@ -8663,7 +8664,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase32)
 {
     // Concern: Test TX timestamping an MSG_ZEROCOPY functionality for
     // STREAM sockets
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && \
+    NTS_BUILD_WITH_TIMESTAMPING && NTS_BUILD_WITH_ZERO_COPY
     // Linux kernels versions < 4.14.0 do not support MSG_ZEROCOPY for STREAM
     // sockets
     {
