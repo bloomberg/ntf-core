@@ -8568,7 +8568,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase28)
     // if data is sent with MSG_ZEROCOPY flag then related notifications will
     // appear on a socket error queue.
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_ZERO_COPY
     // Linux kernels versions < 4.14.0 do not support MSG_ZEROCOPY for STREAM
     // sockets
     {
@@ -8662,7 +8662,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase31)
 
 NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase32)
 {
-    // Concern: Test TX timestamping an MSG_ZEROCOPY functionality for
+    // Concern: Test TX timestamping and MSG_ZEROCOPY functionality for
     // STREAM sockets
 #if defined(BSLS_PLATFORM_OS_LINUX) && \
     NTS_BUILD_WITH_TIMESTAMPING && NTS_BUILD_WITH_ZERO_COPY

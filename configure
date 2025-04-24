@@ -338,7 +338,11 @@ fi
 
 if [[ -z "${NTF_CONFIGURE_WITH_ZERO_COPY}" ]]; then
     if [[ "${NTF_CONFIGURE_UNAME}" == "Linux" ]]; then
-        NTF_CONFIGURE_WITH_ZERO_COPY=1
+        if [ ${NTF_CONFIGURE_FROM_CONTINUOUS_INTEGRATION} -eq 1 ]; then
+            NTF_CONFIGURE_WITH_ZERO_COPY=0
+        else
+            NTF_CONFIGURE_WITH_ZERO_COPY=1
+        fi
     else
         NTF_CONFIGURE_WITH_ZERO_COPY=0
     fi
@@ -884,6 +888,7 @@ while true ; do
         --from-continuous-integration)
             NTF_CONFIGURE_FROM_CONTINUOUS_INTEGRATION=1
             NTF_CONFIGURE_WITH_TIMESTAMPING=0
+            NTF_CONFIGURE_WITH_ZERO_COPY=0
             shift ;;
         --from-packaging)
             NTF_CONFIGURE_FROM_PACKAGING=1 ; shift ;;
