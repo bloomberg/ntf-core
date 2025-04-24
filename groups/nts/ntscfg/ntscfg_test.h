@@ -199,7 +199,7 @@ inline void TestCaseContext::setFunction(const bsl::function<void()>& value)
 
 inline void TestCaseContext::execute()
 {
-    BSLS_LOG_TRACE("Testing: %s", d_name.c_str());
+    BSLS_LOG_INFO("Testing: %s", d_name.c_str());
     d_function();
 }
 

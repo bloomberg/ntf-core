@@ -3397,7 +3397,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
             ntsu::SocketUtil::remoteEndpoint(&serverRemoteEndpoint, server);
         NTSCFG_TEST_ASSERT(!error);
 
-        if (NTSCFG_TEST_VERBOSITY) {
+        if (NTSCFG_TEST_VERBOSITY > 3) {
             bsl::cout << "Listener at " << listenerEndpoint << bsl::endl;
 
             bsl::cout << "Client at " << clientSourceEndpoint << " to "
@@ -3843,7 +3843,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase12)
 
     const bsl::size_t systemSoMaxConn = ntsu::SocketUtil::maxBacklog();
 
-    if (NTSCFG_TEST_VERBOSITY > 0) {
+    if (NTSCFG_TEST_VERBOSITY > 3) {
         bsl::cout << "SOMAXCONN = " << systemSoMaxConn << bsl::endl;
     }
 
@@ -3902,7 +3902,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase12)
                 ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
             NTSCFG_TEST_ASSERT(!error);
 
-            if (NTSCFG_TEST_VERBOSITY > 0) {
+            if (NTSCFG_TEST_VERBOSITY > 3) {
                 bsl::cout << "Testing backlog = " << backlog << bsl::endl;
             }
 
@@ -7537,7 +7537,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
             ntsu::SocketUtil::remoteEndpoint(&serverRemoteEndpoint, server);
         NTSCFG_TEST_ASSERT(!error);
 
-        if (NTSCFG_TEST_VERBOSITY) {
+        if (NTSCFG_TEST_VERBOSITY > 3) {
             bsl::cout << "Client at " << clientSourceEndpoint << " to "
                       << clientRemoteEndpoint << bsl::endl;
 
@@ -8435,7 +8435,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
     // used it is possible to use some random (but reachable) IPv4/6 addresses.
     // See related code section below.
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_ZERO_COPY
     // Linux kernels versions < 5.0.0 do not support MSG_ZEROCOPY for DGRAM
     // sockets
     {
