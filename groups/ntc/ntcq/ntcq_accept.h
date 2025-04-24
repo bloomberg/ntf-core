@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_acceptoptions.h>
 #include <ntca_acceptqueuecontext.h>
+#include <ntca_reactoreventtrigger.h>
 #include <ntccfg_platform.h>
 #include <ntci_acceptcallback.h>
 #include <ntci_acceptor.h>
@@ -253,9 +254,6 @@ class AcceptQueueEntry
     /// Set the timestamp to the specified 'timestamp'.
     void setTimestamp(bsl::int64_t timestamp);
 
-    /// Return the endpoint.
-    const ntsa::Endpoint& endpoint() const;
-
     /// Return the data.
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket() const;
 
@@ -280,14 +278,15 @@ class AcceptQueue
     /// the read queue.
     typedef bsl::list<AcceptQueueEntry> EntryList;
 
-    EntryList           d_entryList;
-    bsl::size_t         d_size;
-    bsl::size_t         d_watermarkLow;
-    bool                d_watermarkLowWanted;
-    bsl::size_t         d_watermarkHigh;
-    bool                d_watermarkHighWanted;
-    AcceptCallbackQueue d_callbackQueue;
-    bslma::Allocator*   d_allocator_p;
+    EntryList                        d_entryList;
+    bsl::size_t                      d_size;
+    bsl::size_t                      d_watermarkLow;
+    bool                             d_watermarkLowWanted;
+    bsl::size_t                      d_watermarkHigh;
+    bool                             d_watermarkHighWanted;
+    ntca::ReactorEventTrigger::Value d_trigger;
+    AcceptCallbackQueue              d_callbackQueue;
+    bslma::Allocator*                d_allocator_p;
 
   private:
     AcceptQueue(const AcceptQueue&) BSLS_KEYWORD_DELETED;
@@ -344,6 +343,9 @@ class AcceptQueue
     ntsa::Error removeCallbackEntry(
         bsl::shared_ptr<ntcq::AcceptCallbackQueueEntry>* result,
         const ntca::AcceptToken&                         token);
+
+    /// Set the trigger to the specified 'trigger'.
+    void setTrigger(ntca::ReactorEventTrigger::Value trigger);
 
     /// Set the low watermark to the specified 'lowWatermark'.
     void setLowWatermark(bsl::size_t lowWatermark);
@@ -583,9 +585,11 @@ bool AcceptQueue::popEntry()
         d_size -= 1;
     }
 
-    if (d_size < d_watermarkLow) {
-        d_watermarkLowWanted  = true;
-        d_watermarkHighWanted = true;
+    if (d_trigger == ntca::ReactorEventTrigger::e_EDGE) {
+        if (d_size < d_watermarkLow) {
+            d_watermarkLowWanted  = true;
+            d_watermarkHighWanted = true;
+        }
     }
 
     d_entryList.pop_front();
@@ -640,6 +644,13 @@ ntsa::Error AcceptQueue::removeCallbackEntry(
 }
 
 NTCCFG_INLINE
+void AcceptQueue::setTrigger(ntca::ReactorEventTrigger::Value trigger)
+{
+    d_trigger            = trigger;
+    d_watermarkLowWanted = true;
+}
+
+NTCCFG_INLINE
 void AcceptQueue::setLowWatermark(bsl::size_t lowWatermark)
 {
     d_watermarkLow       = lowWatermark;
@@ -652,7 +663,8 @@ void AcceptQueue::setLowWatermark(bsl::size_t lowWatermark)
 NTCCFG_INLINE
 void AcceptQueue::setHighWatermark(bsl::size_t highWatermark)
 {
-    d_watermarkHigh = highWatermark;
+    d_watermarkHigh       = highWatermark;
+    d_watermarkHighWanted = true;
 
     ntcs::WatermarkUtil::sanitizeIncomingQueueWatermarks(&d_watermarkLow,
                                                          &d_watermarkHigh);
@@ -665,8 +677,13 @@ bool AcceptQueue::authorizeLowWatermarkEvent()
             d_size,
             d_watermarkLow))
     {
-        if (d_watermarkLowWanted) {
-            d_watermarkLowWanted = false;
+        if (d_trigger == ntca::ReactorEventTrigger::e_EDGE) {
+            if (d_watermarkLowWanted) {
+                d_watermarkLowWanted = false;
+                return true;
+            }
+        }
+        else {
             return true;
         }
     }
@@ -681,8 +698,13 @@ bool AcceptQueue::authorizeHighWatermarkEvent()
             d_size,
             d_watermarkHigh))
     {
-        if (d_watermarkHighWanted) {
-            d_watermarkHighWanted = false;
+        if (d_trigger == ntca::ReactorEventTrigger::e_EDGE) {
+            if (d_watermarkHighWanted) {
+                d_watermarkHighWanted = false;
+                return true;
+            }
+        }
+        else {
             return true;
         }
     }

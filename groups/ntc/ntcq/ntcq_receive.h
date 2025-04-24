@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_readqueuecontext.h>
 #include <ntca_receiveoptions.h>
+#include <ntca_reactoreventtrigger.h>
 #include <ntccfg_limits.h>
 #include <ntccfg_platform.h>
 #include <ntci_log.h>
@@ -431,15 +432,16 @@ class ReceiveQueue
     /// the read queue.
     typedef bsl::list<ReceiveQueueEntry> EntryList;
 
-    EntryList                    d_entryList;
-    bsl::shared_ptr<bdlbb::Blob> d_data_sp;
-    bsl::size_t                  d_size;
-    bsl::size_t                  d_watermarkLow;
-    bool                         d_watermarkLowWanted;
-    bsl::size_t                  d_watermarkHigh;
-    bool                         d_watermarkHighWanted;
-    ReceiveCallbackQueue         d_callbackQueue;
-    bslma::Allocator*            d_allocator_p;
+    EntryList                        d_entryList;
+    bsl::shared_ptr<bdlbb::Blob>     d_data_sp;
+    bsl::size_t                      d_size;
+    bsl::size_t                      d_watermarkLow;
+    bool                             d_watermarkLowWanted;
+    bsl::size_t                      d_watermarkHigh;
+    bool                             d_watermarkHighWanted;
+    ntca::ReactorEventTrigger::Value d_trigger;
+    ReceiveCallbackQueue             d_callbackQueue;
+    bslma::Allocator*                d_allocator_p;
 
   private:
     ReceiveQueue(const ReceiveQueue&) BSLS_KEYWORD_DELETED;
@@ -504,6 +506,9 @@ class ReceiveQueue
 
     /// Set the data stored in the queue to the specified 'data'.
     void setData(const bsl::shared_ptr<bdlbb::Blob>& data);
+
+    /// Set the trigger to the specified 'trigger'.
+    void setTrigger(ntca::ReactorEventTrigger::Value trigger);
 
     /// Set the low watermark to the specified 'lowWatermark'.
     void setLowWatermark(bsl::size_t lowWatermark);
@@ -942,9 +947,11 @@ bool ReceiveQueue::popEntry()
         d_size -= entry.length();
     }
 
-    if (d_size < d_watermarkLow) {
-        d_watermarkLowWanted  = true;
-        d_watermarkHighWanted = true;
+    if (d_trigger == ntca::ReactorEventTrigger::e_EDGE) {
+        if (d_size < d_watermarkLow) {
+            d_watermarkLowWanted  = true;
+            d_watermarkHighWanted = true;
+        }
     }
 
     d_entryList.pop_front();
@@ -964,9 +971,11 @@ void ReceiveQueue::popSize(bsl::size_t numBytes)
     BSLS_ASSERT(d_size >= numBytes);
     d_size -= numBytes;
 
-    if (d_size < d_watermarkLow) {
-        d_watermarkLowWanted  = true;
-        d_watermarkHighWanted = true;
+    if (d_trigger == ntca::ReactorEventTrigger::e_EDGE) {
+        if (d_size < d_watermarkLow) {
+            d_watermarkLowWanted  = true;
+            d_watermarkHighWanted = true;
+        }
     }
 }
 
@@ -1024,6 +1033,13 @@ void ReceiveQueue::setData(const bsl::shared_ptr<bdlbb::Blob>& data)
 }
 
 NTCCFG_INLINE
+void ReceiveQueue::setTrigger(ntca::ReactorEventTrigger::Value trigger)
+{
+    d_trigger            = trigger;
+    d_watermarkLowWanted = true;
+}
+
+NTCCFG_INLINE
 void ReceiveQueue::setLowWatermark(bsl::size_t lowWatermark)
 {
     d_watermarkLow       = lowWatermark;
@@ -1036,7 +1052,8 @@ void ReceiveQueue::setLowWatermark(bsl::size_t lowWatermark)
 NTCCFG_INLINE
 void ReceiveQueue::setHighWatermark(bsl::size_t highWatermark)
 {
-    d_watermarkHigh = highWatermark;
+    d_watermarkHigh       = highWatermark;
+    d_watermarkHighWanted = true;
 
     ntcs::WatermarkUtil::sanitizeIncomingQueueWatermarks(&d_watermarkLow,
                                                          &d_watermarkHigh);
@@ -1049,8 +1066,13 @@ bool ReceiveQueue::authorizeLowWatermarkEvent()
             d_size,
             d_watermarkLow))
     {
-        if (d_watermarkLowWanted) {
-            d_watermarkLowWanted = false;
+        if (d_trigger == ntca::ReactorEventTrigger::e_EDGE) {
+            if (d_watermarkLowWanted) {
+                d_watermarkLowWanted = false;
+                return true;
+            }
+        }
+        else {
             return true;
         }
     }
@@ -1065,8 +1087,13 @@ bool ReceiveQueue::authorizeHighWatermarkEvent()
             d_size,
             d_watermarkHigh))
     {
-        if (d_watermarkHighWanted) {
-            d_watermarkHighWanted = false;
+        if (d_trigger == ntca::ReactorEventTrigger::e_EDGE) {
+            if (d_watermarkHighWanted) {
+                d_watermarkHighWanted = false;
+                return true;
+            }
+        }
+        else {
             return true;
         }
     }
