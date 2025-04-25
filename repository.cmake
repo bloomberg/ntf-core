@@ -3910,11 +3910,18 @@ function (ntf_group_end)
             ntf_repository_library_output_path_get(OUTPUT library_output_path)
             ntf_repository_runtime_output_path_get(OUTPUT runtime_output_path)
 
-            add_executable(
-                ${component_test_build_target}
-                EXCLUDE_FROM_ALL
-                ${component_driver_path}
-            )
+            if (${NTF_BUILD_FROM_CONTINUOUS_INTEGRATION})
+                add_executable(
+                    ${component_test_build_target}
+                    ${component_driver_path}
+                )
+            else()
+                add_executable(
+                    ${component_test_build_target}
+                    EXCLUDE_FROM_ALL
+                    ${component_driver_path}
+                )
+            endif()
 
             # Set the C standard.
 
@@ -5208,11 +5215,18 @@ function (ntf_component)
         ntf_repository_library_output_path_get(OUTPUT library_output_path)
         ntf_repository_runtime_output_path_get(OUTPUT runtime_output_path)
 
-        add_executable(
-            ${component_test_build_target}
-            EXCLUDE_FROM_ALL
-            ${component_driver_path}
-        )
+        if (${NTF_BUILD_FROM_CONTINUOUS_INTEGRATION})
+            add_executable(
+                ${component_test_build_target}
+                ${component_driver_path}
+            )
+        else()
+            add_executable(
+                ${component_test_build_target}
+                EXCLUDE_FROM_ALL
+                ${component_driver_path}
+            )
+        endif()
 
         # Set the C standard.
 
