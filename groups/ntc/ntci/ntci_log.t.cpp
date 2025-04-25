@@ -80,7 +80,6 @@ NTSCFG_TEST_FUNCTION(ntci::LogTest::verifyCase2)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(sourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(remoteEndpoint);
 
-    NTCI_LOG_INFO("Log function at INFO");
     NTCI_LOG_DEBUG("Log function at DEBUG");
     NTCI_LOG_TRACE("Log function at TRACE");
 
@@ -88,8 +87,6 @@ NTSCFG_TEST_FUNCTION(ntci::LogTest::verifyCase2)
     options.setMaxBytes(123);
     options.setMaxBuffers(456);
 
-    NTCI_LOG_STREAM_INFO << "Log stream at INFO object = " << options
-                         << NTCI_LOG_STREAM_END;
     NTCI_LOG_STREAM_DEBUG << "Log stream at DEBUG object = " << options
                           << NTCI_LOG_STREAM_END;
     NTCI_LOG_STREAM_TRACE << "Log stream at TRACE object = " << options

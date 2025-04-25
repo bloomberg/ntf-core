@@ -83,14 +83,14 @@ void SystemTest::processGetIpAddressResult(
         if (ipAddressList.size() > 0) {
             for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
                 const ntsa::IpAddress& ipAddress = ipAddressList[i];
-                NTCI_LOG_STREAM_INFO << "The domain name '"
+                NTCI_LOG_STREAM_DEBUG << "The domain name '"
                                      << event.context().domainName()
                                      << "' has resolved to " << ipAddress
                                      << NTCI_LOG_STREAM_END;
             }
         }
         else {
-            NTCI_LOG_STREAM_INFO
+            NTCI_LOG_STREAM_DEBUG
                 << "The domain name '" << event.context().domainName()
                 << "' has no IP addresses assigned" << NTCI_LOG_STREAM_END;
         }
@@ -112,13 +112,13 @@ void SystemTest::processGetDomainNameResult(
 
     if (event.type() == ntca::GetDomainNameEventType::e_COMPLETE) {
         if (!domainName.empty()) {
-            NTCI_LOG_STREAM_INFO
+            NTCI_LOG_STREAM_DEBUG
                 << "The IP address " << event.context().ipAddress()
                 << " has resolved to the domain name '" << domainName << "'"
                 << NTCI_LOG_STREAM_END;
         }
         else {
-            NTCI_LOG_STREAM_INFO << "The IP address '"
+            NTCI_LOG_STREAM_DEBUG << "The IP address '"
                                  << event.context().ipAddress()
                                  << "' is not assigned to any domain name"
                                  << NTCI_LOG_STREAM_END;
@@ -143,14 +143,14 @@ void SystemTest::processGetPortResult(
         if (portList.size() > 0) {
             for (bsl::size_t i = 0; i < portList.size(); ++i) {
                 ntsa::Port port = portList[i];
-                NTCI_LOG_STREAM_INFO << "The service name '"
+                NTCI_LOG_STREAM_DEBUG << "The service name '"
                                      << event.context().serviceName()
                                      << "' has resolved to port " << port
                                      << NTCI_LOG_STREAM_END;
             }
         }
         else {
-            NTCI_LOG_STREAM_INFO
+            NTCI_LOG_STREAM_DEBUG
                 << "The service name '" << event.context().serviceName()
                 << "' has no ports assigned" << NTCI_LOG_STREAM_END;
         }
@@ -172,12 +172,12 @@ void SystemTest::processGetServiceNameResult(
 
     if (event.type() == ntca::GetServiceNameEventType::e_COMPLETE) {
         if (!serviceName.empty()) {
-            NTCI_LOG_STREAM_INFO << "The port " << event.context().port()
+            NTCI_LOG_STREAM_DEBUG << "The port " << event.context().port()
                                  << " has resolved to the service name '"
                                  << serviceName << "'" << NTCI_LOG_STREAM_END;
         }
         else {
-            NTCI_LOG_STREAM_INFO << "The port '" << event.context().port()
+            NTCI_LOG_STREAM_DEBUG << "The port '" << event.context().port()
                                  << "' is not assigned to any service name"
                                  << NTCI_LOG_STREAM_END;
         }

@@ -3229,10 +3229,10 @@ NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase35)
         ts.d_numTimersToProduce        = iterations;
         ts.d_numExpectedCloseEvents    = numPeriodicTimers;
 
-        NTCI_LOG_INFO("Starting consumer threads");
+        NTCI_LOG_DEBUG("Starting consumer threads");
         ts.createAndLaunchConsumers(numConsumers);
 
-        NTCI_LOG_INFO("Creating periodic timers");
+        NTCI_LOG_DEBUG("Creating periodic timers");
         for (int i = 0; i < numPeriodicTimers; ++i) {
             ntca::TimerOptions timerOptions;
             timerOptions.setOneShot(false);
@@ -3255,12 +3255,12 @@ NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase35)
             timer->schedule(timer->currentTime(), period);
         }
 
-        NTCI_LOG_INFO("Starting producing threads");
+        NTCI_LOG_DEBUG("Starting producing threads");
         ts.createAndLaunchProducers(numProducers);
         ts.waitProducers();
         ts.waitAllOneShotTimersConsumed();
 
-        NTCI_LOG_INFO("Cancelling periodic timers");
+        NTCI_LOG_DEBUG("Cancelling periodic timers");
         {
             ntcs::Chronology::TimerVector v(&ts.d_ta);
             ts.d_driver->chronology().load(&v);
@@ -3271,7 +3271,7 @@ NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase35)
             }
         }
 
-        NTCI_LOG_INFO("Waiting for consumer threads to finish");
+        NTCI_LOG_DEBUG("Waiting for consumer threads to finish");
         ts.waitConsumers();
         NTSCFG_TEST_TRUE(ts.d_numPeriodicTimersShot >= numPeriodicTimers);
         ts.d_numPeriodicTimersShot = 0;

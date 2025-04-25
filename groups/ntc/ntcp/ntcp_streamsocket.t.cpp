@@ -1631,12 +1631,12 @@ void StreamSocketTest::verifySendDeadlineVariation(
         NTSCFG_TEST_TRUE(!error);
     }
 
-    NTCI_LOG_INFO("Waiting for message B to time out");
+    NTCI_LOG_DEBUG("Waiting for message B to time out");
 
     sendSemaphore.wait();
 
-    NTCI_LOG_INFO("Message B has timed out");
-    NTCI_LOG_INFO("Receiving message A and C");
+    NTCI_LOG_DEBUG("Message B has timed out");
+    NTCI_LOG_DEBUG("Receiving message A and C");
 
     {
         ntca::ReceiveOptions receiveOptions;
@@ -1851,12 +1851,12 @@ void StreamSocketTest::verifySendCancellationVariation(
         NTSCFG_TEST_TRUE(!error);
     }
 
-    NTCI_LOG_INFO("Waiting for message B to be canceled");
+    NTCI_LOG_DEBUG("Waiting for message B to be canceled");
 
     sendSemaphore.wait();
 
-    NTCI_LOG_INFO("Message B has been canceled");
-    NTCI_LOG_INFO("Receiving message A and C");
+    NTCI_LOG_DEBUG("Message B has been canceled");
+    NTCI_LOG_DEBUG("Receiving message A and C");
 
     {
         ntca::ReceiveOptions receiveOptions;
@@ -2140,12 +2140,12 @@ void StreamSocketTest::processSendTimeout(
                    event.context().error().text().c_str());
 
     if (error) {
-        NTCI_LOG_INFO("Message %s has timed out", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has timed out", name.c_str());
         NTSCFG_TEST_EQ(event.type(), ntca::SendEventType::e_ERROR);
         NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_WOULD_BLOCK);
     }
     else {
-        NTCI_LOG_INFO("Message %s has been sent", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been sent", name.c_str());
     }
 
     semaphore->post();
@@ -2165,12 +2165,12 @@ void StreamSocketTest::processSendCancellation(
                    event.context().error().text().c_str());
 
     if (error) {
-        NTCI_LOG_INFO("Message %s has been canceled", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been canceled", name.c_str());
         NTSCFG_TEST_EQ(event.type(), ntca::SendEventType::e_ERROR);
         NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
     }
     else {
-        NTCI_LOG_INFO("Message %s has been sent", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been sent", name.c_str());
     }
 
     semaphore->post();
@@ -2209,12 +2209,12 @@ void StreamSocketTest::processReceiveTimeoutOrSuccess(
                    event.context().error().text().c_str());
 
     if (error) {
-        NTCI_LOG_INFO("Message %s has timed out", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has timed out", name.c_str());
         NTSCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
         NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_WOULD_BLOCK);
     }
     else {
-        NTCI_LOG_INFO("Message %s has been received", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been received", name.c_str());
 
         NTCI_LOG_DEBUG("Comparing message %s", name.c_str());
 
@@ -2295,12 +2295,12 @@ void StreamSocketTest::processReceiveCancellationOrSuccess(
                    event.context().error().text().c_str());
 
     if (error) {
-        NTCI_LOG_INFO("Message %s has been canceled", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been canceled", name.c_str());
         NTSCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
         NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
     }
     else {
-        NTCI_LOG_INFO("Message %s has been received", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been received", name.c_str());
 
         NTCI_LOG_DEBUG("Comparing message %s", name.c_str());
 

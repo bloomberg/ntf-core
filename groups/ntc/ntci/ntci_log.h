@@ -657,7 +657,7 @@ class LogJournal
 ///     {
 ///         NTCI_LOG_CONTEXT();
 ///
-///         NTCI_LOG_INFO("Hello, world!");
+///         NTCI_LOG_DEBUG("Hello, world!");
 ///     }
 ///
 /// Now, let's define a function, 'foo()', that loads the current thread's log

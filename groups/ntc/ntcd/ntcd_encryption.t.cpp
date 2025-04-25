@@ -146,7 +146,7 @@ void EncryptionTest::logParameters(const char*       label,
 {
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_INFO("%s = [ "
+    NTCI_LOG_DEBUG("%s = [ "
                   "BS = %d "
                   "numReuses = %d "
                   "rc = %d ]",
@@ -212,11 +212,11 @@ void EncryptionTest::processClientHandshakeComplete(
         bool        found = clientSession->getCipher(&cipher);
         NTSCFG_TEST_TRUE(found);
 
-        NTCI_LOG_INFO("Client handshake complete: %s", cipher.c_str());
+        NTCI_LOG_DEBUG("Client handshake complete: %s", cipher.c_str());
     }
     else {
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED));
-        NTCI_LOG_INFO("Client handshake failed: %s", details.c_str());
+        NTCI_LOG_DEBUG("Client handshake failed: %s", details.c_str());
     }
 
     *clientCompleteFlag = true;
@@ -240,11 +240,11 @@ void EncryptionTest::processServerHandshakeComplete(
         bool        found = serverSession->getCipher(&cipher);
         NTSCFG_TEST_TRUE(found);
 
-        NTCI_LOG_INFO("Server handshake complete: %s", cipher.c_str());
+        NTCI_LOG_DEBUG("Server handshake complete: %s", cipher.c_str());
     }
     else {
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED));
-        NTCI_LOG_INFO("Server handshake failed: %s", details.c_str());
+        NTCI_LOG_DEBUG("Server handshake failed: %s", details.c_str());
     }
 
     *serverCompleteFlag = true;
@@ -585,7 +585,7 @@ void EncryptionTest::execute(
          usageIteration < parameters.d_numReuses + 1;
          ++usageIteration)
     {
-        NTCI_LOG_INFO("Iteration %d/%d starting",
+        NTCI_LOG_DEBUG("Iteration %d/%d starting",
                       usageIteration + 1,
                       parameters.d_numReuses + 1);
 
@@ -604,7 +604,7 @@ void EncryptionTest::execute(
         {
             NTCI_LOG_CONTEXT_GUARD_OWNER("client");
 
-            NTCI_LOG_INFO("Client handshake initiating");
+            NTCI_LOG_DEBUG("Client handshake initiating");
 
             error = clientSession->initiateHandshake(
                 NTCCFG_BIND(&processClientHandshakeComplete,
@@ -622,7 +622,7 @@ void EncryptionTest::execute(
         {
             NTCI_LOG_CONTEXT_GUARD_OWNER("server");
 
-            NTCI_LOG_INFO("Server handshake initiating");
+            NTCI_LOG_DEBUG("Server handshake initiating");
 
             error = serverSession->initiateHandshake(
                 NTCCFG_BIND(&processServerHandshakeComplete,
@@ -688,7 +688,7 @@ void EncryptionTest::execute(
         {
             NTCI_LOG_CONTEXT_GUARD_OWNER("client");
 
-            NTCI_LOG_INFO("Client shutdown initiating");
+            NTCI_LOG_DEBUG("Client shutdown initiating");
 
             error = clientSession->shutdown();
             NTSCFG_TEST_FALSE(error);
@@ -699,7 +699,7 @@ void EncryptionTest::execute(
         {
             NTCI_LOG_CONTEXT_GUARD_OWNER("server");
 
-            NTCI_LOG_INFO("Server shutdown initiating");
+            NTCI_LOG_DEBUG("Server shutdown initiating");
 
             error = serverSession->shutdown();
             NTSCFG_TEST_FALSE(error);
@@ -728,12 +728,12 @@ void EncryptionTest::execute(
                                                 expectedServerPlaintextRead),
                        0);
 
-        NTCI_LOG_INFO("Iteration %d/%d complete",
+        NTCI_LOG_DEBUG("Iteration %d/%d complete",
                       usageIteration + 1,
                       parameters.d_numReuses + 1);
     }
 
-    NTCI_LOG_INFO("Test complete");
+    NTCI_LOG_DEBUG("Test complete");
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::EncryptionTest::verifyCase1)

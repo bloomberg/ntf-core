@@ -415,7 +415,7 @@ inline TestLog::TestLog(int verbosity, bslma::Allocator* basicAllocator)
 
     switch (verbosity) {
     case 0:
-        d_severityLevel = BloombergLP::ball::Severity::e_OFF;
+        d_severityLevel = BloombergLP::ball::Severity::e_FATAL;
         bsls::Log::setSeverityThreshold(bsls::LogSeverity::e_FATAL);
         break;
     case 1:

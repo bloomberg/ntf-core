@@ -271,7 +271,7 @@ void KeyTestUtil::verifyKeyConfig(
 {
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_STREAM_INFO << "Testing " << keyConfig << " storage "
+    NTCI_LOG_STREAM_DEBUG << "Testing " << keyConfig << " storage "
                          << keyStorageOptions << NTCI_LOG_STREAM_END;
 
     // Generate a key.
@@ -733,7 +733,7 @@ void CertificateTest::verifyAuthorityOptions(
 
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_STREAM_INFO << "Testing authority key type " << authorityKeyType
+    NTCI_LOG_STREAM_DEBUG << "Testing authority key type " << authorityKeyType
                          << " key storage " << keyStorageOptions
                          << " certificate storage "
                          << certificateStorageOptions << NTCI_LOG_STREAM_END;
@@ -810,7 +810,7 @@ void CertificateTest::verifyUserSignedBySelfOptions(
 
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_STREAM_INFO << "Testing user key type " << userKeyType
+    NTCI_LOG_STREAM_DEBUG << "Testing user key type " << userKeyType
                          << " key storage " << keyStorageOptions
                          << " certificate storage "
                          << certificateStorageOptions << NTCI_LOG_STREAM_END;
@@ -891,7 +891,7 @@ void CertificateTest::verifyUserSignedByAuthorityOptions(
 
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_STREAM_INFO << "Testing user key type " << userKeyType
+    NTCI_LOG_STREAM_DEBUG << "Testing user key type " << userKeyType
                          << " authority key type " << authorityKeyType
                          << " key storage " << keyStorageOptions
                          << " certificate storage "
@@ -3487,7 +3487,7 @@ void EncryptionTestUtil::logParameters(
 {
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_STREAM_INFO << label << " = " << parameters
+    NTCI_LOG_STREAM_DEBUG << label << " = " << parameters
                          << NTCI_LOG_STREAM_END;
 }
 

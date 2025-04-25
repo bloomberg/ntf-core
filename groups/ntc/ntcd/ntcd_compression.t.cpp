@@ -468,7 +468,7 @@ void CompressionTest::verifyParameters(const Parameters& parameters)
 
     ntsa::Error error;
 
-    NTCI_LOG_STREAM_INFO << "Testing " << parameters << NTCI_LOG_STREAM_END;
+    NTCI_LOG_STREAM_DEBUG << "Testing " << parameters << NTCI_LOG_STREAM_END;
 
     ntca::CompressionConfig compressionConfig;
     compressionConfig.setType(parameters.type());

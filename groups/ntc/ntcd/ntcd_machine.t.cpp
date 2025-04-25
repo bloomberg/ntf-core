@@ -4132,7 +4132,7 @@ NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifySendBufferOverflow)
                     NTSCFG_TEST_EQ(error,
                                    ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 
-                    NTCI_LOG_STREAM_INFO << "Client would block"
+                    NTCI_LOG_STREAM_DEBUG << "Client would block"
                                          << NTCI_LOG_STREAM_END;
                 }
                 else {
@@ -4143,7 +4143,7 @@ NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifySendBufferOverflow)
 
                     NTSCFG_TEST_GT(context.bytesSent(), 0);
 
-                    NTCI_LOG_STREAM_INFO << "Client sent "
+                    NTCI_LOG_STREAM_DEBUG << "Client sent "
                                          << context.bytesSent() << " bytes"
                                          << NTCI_LOG_STREAM_END;
 
@@ -4153,7 +4153,7 @@ NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifySendBufferOverflow)
                         NTCCFG_WARNING_NARROW(int, context.bytesSent()));
 
                     if (clientDataRemaining.length() == 0) {
-                        NTCI_LOG_STREAM_INFO << "Client is done"
+                        NTCI_LOG_STREAM_DEBUG << "Client is done"
                                              << NTCI_LOG_STREAM_END;
 
                         error =
@@ -4187,7 +4187,7 @@ NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifySendBufferOverflow)
                     NTSCFG_TEST_EQ(error,
                                    ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
 
-                    NTCI_LOG_STREAM_INFO << "Server would block"
+                    NTCI_LOG_STREAM_DEBUG << "Server would block"
                                          << NTCI_LOG_STREAM_END;
                 }
                 else {
@@ -4195,12 +4195,12 @@ NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifySendBufferOverflow)
                     NTSCFG_TEST_GT(context.bytesReceivable(), 0);
                     NTSCFG_TEST_GT(context.bytesReceived(), 0);
 
-                    NTCI_LOG_STREAM_INFO << "Server received "
+                    NTCI_LOG_STREAM_DEBUG << "Server received "
                                          << context.bytesReceived() << " bytes"
                                          << NTCI_LOG_STREAM_END;
 
                     if (serverData.length() == DATA_SIZE) {
-                        NTCI_LOG_STREAM_INFO << "Server is done"
+                        NTCI_LOG_STREAM_DEBUG << "Server is done"
                                              << NTCI_LOG_STREAM_END;
 
                         error =
