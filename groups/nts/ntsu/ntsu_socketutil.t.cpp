@@ -567,19 +567,20 @@ void SocketUtilTest::executeStreamSocketTest(
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV4_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV6_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(ntsa::Transport::e_LOCAL_STREAM))
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
+        ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
@@ -723,19 +724,19 @@ void SocketUtilTest::executeDatagramSocketTest(
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV4_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV6_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_LOCAL_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_DATAGRAM);
@@ -3294,19 +3295,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV4_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV6_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(ntsa::Transport::e_LOCAL_STREAM))
+    if (ntsu::AdapterUtil::supportsTransportLoopback(ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
@@ -3547,19 +3548,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV4_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV6_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_LOCAL_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_DATAGRAM);
@@ -3824,19 +3825,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase12)
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV4_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV6_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(ntsa::Transport::e_LOCAL_STREAM))
+    if (ntsu::AdapterUtil::supportsTransportLoopback(ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
@@ -4992,7 +4993,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
 
     // Test IPv6.
 
-    if (ntsu::AdapterUtil::supportsIpv6()) {
+    if (ntsu::AdapterUtil::supportsIpv6Loopback()) {
         // Concern 1: The source endpoint of a socket initially after
         // creation is "[:0]:0".
 
@@ -6650,7 +6651,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
 
     // Test IPv6.
 
-    if (ntsu::AdapterUtil::supportsIpv6()) {
+    if (ntsu::AdapterUtil::supportsIpv6Loopback()) {
         // Concern 1: The source endpoint of a socket initially after
         // creation is "[:0]:0".
 
@@ -7486,19 +7487,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV4_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV6_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(ntsa::Transport::e_LOCAL_STREAM))
+    if (ntsu::AdapterUtil::supportsTransportLoopback(ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
@@ -7834,19 +7835,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV4_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV6_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_LOCAL_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_DATAGRAM);
@@ -8280,7 +8281,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase25)
 
     const ntsa::Transport::Value transport = ntsa::Transport::e_LOCAL_DATAGRAM;
 
-    if (!ntsu::AdapterUtil::supportsTransport(transport)) {
+    if (!ntsu::AdapterUtil::supportsTransportLoopback(transport)) {
         return;
     }
 
@@ -8450,12 +8451,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
     }
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV4_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
     }
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV6_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV6_DATAGRAM);

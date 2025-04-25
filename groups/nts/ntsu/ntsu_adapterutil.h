@@ -114,27 +114,53 @@ struct AdapterUtil {
     /// IPv4 address, otherwise return false.
     static bool supportsIpv4();
 
+    /// Return true if the current machine has its loopback adapter assigned an
+    /// IPv4 address, otherwise return false.
+    static bool supportsIpv4Loopback();
+
     /// Return true if the current machine has any adapter assigned an
     /// IPv4 address that supports multicast, otherwise return false.
     static bool supportsIpv4Multicast();
+
+    /// Return true if the current machine has its loopback adapter assigned an
+    /// IPv4 address that supports multicast, otherwise return false.
+    static bool supportsIpv4MulticastLoopback();
 
     /// Return true if the current machine has any adapter assigned an
     /// IPv6 address, otherwise return false.
     static bool supportsIpv6();
 
+    /// Return true if the current machine has its loopback adapter assigned an
+    /// IPv6 address, otherwise return false.
+    static bool supportsIpv6Loopback();
+
     /// Return true if the current machine has any adapter assigned an
     /// IPv6 address that supports multicast, otherwise return false.
     static bool supportsIpv6Multicast();
+
+    /// Return true if the current machine has its loopback adapter assigned an
+    /// IPv6 address that supports multicast, otherwise return false.
+    static bool supportsIpv6MulticastLoopback();
 
     /// Return true if the current machine has any adapter assigned to
     /// either an IPv4 or IPv6 address that supports the Transport Control
     /// Protocol (TCP), otherwise return false.
     static bool supportsTcp();
 
+    /// Return true if the current machine has its loopback adapter assigned to
+    /// either an IPv4 or IPv6 address that supports the Transport Control
+    /// Protocol (TCP), otherwise return false.
+    static bool supportsTcpLoopback();
+
     /// Return true if the current machine has any adapter assigned to
     /// either an IPv4 or IPv6 address that supports the User Datagram
     /// Protocol (UDP), otherwise return false.
     static bool supportsUdp();
+
+    /// Return true if the current machine has its loopback adapter assigned to
+    /// either an IPv4 or IPv6 address that supports the User Datagram
+    /// Protocol (UDP), otherwise return false.
+    static bool supportsUdpLoopback();
 
     /// Return true if the current machine supports local (a.k.a Unix)
     /// domain stream sockets, otherwise return false.
@@ -144,9 +170,13 @@ struct AdapterUtil {
     /// domain datagram sockets, otherwise return false.
     static bool supportsLocalDatagram();
 
-    /// Return true if the current machine supports the specified
-    /// 'transport', otherwise return false.
+    /// Return true if the current machine has any adapter that supports the
+    /// specified 'transport', otherwise return false.
     static bool supportsTransport(ntsa::Transport::Value transport);
+
+    /// Return true if the current machine has a loopback adapter that supports
+    /// the specified 'transport', otherwise return false.
+    static bool supportsTransportLoopback(ntsa::Transport::Value transport);
 
   public:
     /// Provide a private implementation.

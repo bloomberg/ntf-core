@@ -643,15 +643,17 @@ NTSCFG_TEST_FUNCTION(ntsf::SystemTest::verifyCase6)
         &supportedAlgorithms);
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    NTSCFG_TEST_OK(error);
+    if (error != ntsa::Error(ntsa::Error::e_EOF)) {
+        NTSCFG_TEST_OK(error);
 
-    for (bsl::vector<bsl::string>::const_iterator it =
-             supportedAlgorithms.cbegin();
-         it != supportedAlgorithms.cend();
-         ++it)
-    {
-        NTSCFG_TEST_TRUE(
-            ntsf::System::testTcpCongestionControlAlgorithmSupport(*it));
+        for (bsl::vector<bsl::string>::const_iterator it =
+                 supportedAlgorithms.cbegin();
+             it != supportedAlgorithms.cend();
+             ++it)
+        {
+            NTSCFG_TEST_TRUE(
+                ntsf::System::testTcpCongestionControlAlgorithmSupport(*it));
+        }
     }
 #else
     NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);

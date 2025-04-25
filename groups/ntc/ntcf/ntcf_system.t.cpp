@@ -6440,7 +6440,7 @@ void SystemTest::concernDataExchange(
 #else
         addressFamilyList.push_back(test::TransferParameters::e_IPV4);
         {
-            if (ntsu::AdapterUtil::supportsIpv6()) {
+            if (ntsu::AdapterUtil::supportsIpv6Loopback()) {
                 addressFamilyList.push_back(test::TransferParameters::e_IPV6);
             }
         }

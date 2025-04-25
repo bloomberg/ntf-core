@@ -110,7 +110,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase1)
         if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv4()) {
+            if (!ntsu::AdapterUtil::supportsIpv4Loopback()) {
                 continue;
             }
         }
@@ -118,7 +118,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase1)
         if (transport == ntsa::Transport::e_TCP_IPV6_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv6()) {
+            if (!ntsu::AdapterUtil::supportsIpv6Loopback()) {
                 continue;
             }
         }
@@ -637,7 +637,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase2)
         if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv4()) {
+            if (!ntsu::AdapterUtil::supportsIpv4Loopback()) {
                 continue;
             }
         }
@@ -645,7 +645,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase2)
         if (transport == ntsa::Transport::e_TCP_IPV6_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv6()) {
+            if (!ntsu::AdapterUtil::supportsIpv6Loopback()) {
                 continue;
             }
         }
@@ -1547,7 +1547,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase5)
         if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv4()) {
+            if (!ntsu::AdapterUtil::supportsIpv4Loopback()) {
                 continue;
             }
         }
@@ -1555,7 +1555,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase5)
         if (transport == ntsa::Transport::e_TCP_IPV6_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv6()) {
+            if (!ntsu::AdapterUtil::supportsIpv6Loopback()) {
                 continue;
             }
         }
@@ -1876,7 +1876,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase6)
         if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv4()) {
+            if (!ntsu::AdapterUtil::supportsIpv4Loopback()) {
                 continue;
             }
         }
@@ -1884,7 +1884,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase6)
         if (transport == ntsa::Transport::e_TCP_IPV6_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv6()) {
+            if (!ntsu::AdapterUtil::supportsIpv6Loopback()) {
                 continue;
             }
         }
@@ -1972,7 +1972,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase7)
         if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv4()) {
+            if (!ntsu::AdapterUtil::supportsIpv4Loopback()) {
                 continue;
             }
         }
@@ -1980,7 +1980,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase7)
         if (transport == ntsa::Transport::e_TCP_IPV6_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv6()) {
+            if (!ntsu::AdapterUtil::supportsIpv6Loopback()) {
                 continue;
             }
         }
@@ -2037,7 +2037,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase8)
         if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv4()) {
+            if (!ntsu::AdapterUtil::supportsIpv4Loopback()) {
                 continue;
             }
         }
@@ -2045,7 +2045,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase8)
         if (transport == ntsa::Transport::e_TCP_IPV6_STREAM ||
             transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM)
         {
-            if (!ntsu::AdapterUtil::supportsIpv6()) {
+            if (!ntsu::AdapterUtil::supportsIpv6Loopback()) {
                 continue;
             }
         }
@@ -2125,13 +2125,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase9)
             const ntsa::Transport::Value transport = SOCKET_TYPES[tIndex];
 
             if (transport == ntsa::Transport::e_TCP_IPV4_STREAM &&
-                !ntsu::AdapterUtil::supportsIpv4())
+                !ntsu::AdapterUtil::supportsIpv4Loopback())
             {
                 continue;
             }
 
             if (transport == ntsa::Transport::e_TCP_IPV6_STREAM &&
-                !ntsu::AdapterUtil::supportsIpv6())
+                !ntsu::AdapterUtil::supportsIpv6Loopback())
             {
                 continue;
             }
