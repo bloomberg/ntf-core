@@ -110,19 +110,19 @@ NTSCFG_TEST_FUNCTION(ntsb::DatagramSocketTest::verifyCase1)
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV4_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV6_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_LOCAL_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_DATAGRAM);
@@ -161,19 +161,19 @@ NTSCFG_TEST_FUNCTION(ntsb::DatagramSocketTest::verifyCase2)
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV4_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_UDP_IPV6_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_LOCAL_DATAGRAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_DATAGRAM);
