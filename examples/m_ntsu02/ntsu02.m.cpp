@@ -29,7 +29,7 @@ int main()
 
     // Only run this example on machines assigned an IPv6 address.
 
-    if (!ntsf::System::supportsIpv6()) {
+    if (!ntsf::System::supportsIpv6Loopback()) {
         return 0;
     }
 

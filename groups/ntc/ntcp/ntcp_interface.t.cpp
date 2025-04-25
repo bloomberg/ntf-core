@@ -326,7 +326,7 @@ NTSCFG_TEST_FUNCTION(ntcp::InterfaceTest::verifyCase2)
             }
 #endif
 
-            BSLS_LOG_INFO("Testing driver (%s) (%s)",
+            BSLS_LOG_DEBUG("Testing driver (%s) (%s)",
                           (dynamicLoadBalancing ? "dynamic" : "static"),
                           (dynamicThreadCount ? "resizable" : "fixed"));
 

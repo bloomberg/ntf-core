@@ -1311,6 +1311,16 @@ bool System::supportsIpv4()
     return ntsu::AdapterUtil::supportsIpv4();
 }
 
+bool System::supportsIpv4Loopback()
+{
+    ntsa::Error error;
+
+    error = ntsf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    return ntsu::AdapterUtil::supportsIpv4Loopback();
+}
+
 bool System::supportsIpv4Multicast()
 {
     ntsa::Error error;
@@ -1319,6 +1329,16 @@ bool System::supportsIpv4Multicast()
     BSLS_ASSERT_OPT(!error);
 
     return ntsu::AdapterUtil::supportsIpv4Multicast();
+}
+
+bool System::supportsIpv4MulticastLoopback()
+{
+    ntsa::Error error;
+
+    error = ntsf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    return ntsu::AdapterUtil::supportsIpv4MulticastLoopback();
 }
 
 bool System::supportsIpv6()
@@ -1331,6 +1351,16 @@ bool System::supportsIpv6()
     return ntsu::AdapterUtil::supportsIpv6();
 }
 
+bool System::supportsIpv6Loopback()
+{
+    ntsa::Error error;
+
+    error = ntsf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    return ntsu::AdapterUtil::supportsIpv6Loopback();
+}
+
 bool System::supportsIpv6Multicast()
 {
     ntsa::Error error;
@@ -1339,6 +1369,16 @@ bool System::supportsIpv6Multicast()
     BSLS_ASSERT_OPT(!error);
 
     return ntsu::AdapterUtil::supportsIpv6Multicast();
+}
+
+bool System::supportsIpv6MulticastLoopback()
+{
+    ntsa::Error error;
+
+    error = ntsf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    return ntsu::AdapterUtil::supportsIpv6MulticastLoopback();
 }
 
 bool System::supportsTcp()
@@ -1351,6 +1391,16 @@ bool System::supportsTcp()
     return ntsu::AdapterUtil::supportsTcp();
 }
 
+bool System::supportsTcpLoopback()
+{
+    ntsa::Error error;
+
+    error = ntsf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    return ntsu::AdapterUtil::supportsTcpLoopback();
+}
+
 bool System::supportsUdp()
 {
     ntsa::Error error;
@@ -1359,6 +1409,16 @@ bool System::supportsUdp()
     BSLS_ASSERT_OPT(!error);
 
     return ntsu::AdapterUtil::supportsUdp();
+}
+
+bool System::supportsUdpLoopback()
+{
+    ntsa::Error error;
+
+    error = ntsf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    return ntsu::AdapterUtil::supportsUdpLoopback();
 }
 
 bool System::supportsLocalStream()
@@ -1389,6 +1449,16 @@ bool System::supportsTransport(ntsa::Transport::Value transport)
     BSLS_ASSERT_OPT(!error);
 
     return ntsu::AdapterUtil::supportsTransport(transport);
+}
+
+bool System::supportsTransportLoopback(ntsa::Transport::Value transport)
+{
+    ntsa::Error error;
+
+    error = ntsf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    return ntsu::AdapterUtil::supportsTransportLoopback(transport);
 }
 
 ntsa::Error System::loadTcpCongestionControlAlgorithmSupport(

@@ -49,7 +49,7 @@ NTSCFG_TEST_FUNCTION(ntsu::AdapterUtilTest::verifyCase1)
 
 NTSCFG_TEST_FUNCTION(ntsu::AdapterUtilTest::verifyCase2)
 {
-    const bool supportsIpv4 = ntsu::AdapterUtil::supportsIpv4();
+    const bool supportsIpv4 = ntsu::AdapterUtil::supportsIpv4Loopback();
     NTSCFG_TEST_TRUE(supportsIpv4);
 
 #if defined(BSLS_PLATFORM_OS_UNIX)

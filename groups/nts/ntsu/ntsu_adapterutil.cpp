@@ -986,6 +986,34 @@ bool AdapterUtil::supportsIpv4()
 #endif
 }
 
+bool AdapterUtil::supportsIpv4Loopback()
+{
+#if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV4
+
+    bsl::vector<ntsa::Adapter> adapterList;
+    ntsu::AdapterUtil::discoverAdapterList(&adapterList);
+    for (bsl::vector<ntsa::Adapter>::const_iterator it = adapterList.begin();
+         it != adapterList.end();
+         ++it)
+    {
+        const ntsa::Adapter& candidateAdapter = *it;
+
+        if (!candidateAdapter.ipv4Address().isNull() && 
+            candidateAdapter.ipv4Address().value().isLoopback()) 
+        {
+            return true;
+        }
+    }
+
+    return false;
+
+#else
+
+    return false;
+
+#endif
+}
+
 bool AdapterUtil::supportsIpv4Multicast()
 {
 #if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV4
@@ -1014,6 +1042,35 @@ bool AdapterUtil::supportsIpv4Multicast()
 #endif
 }
 
+bool AdapterUtil::supportsIpv4MulticastLoopback()
+{
+#if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV4
+
+    bsl::vector<ntsa::Adapter> adapterList;
+    ntsu::AdapterUtil::discoverAdapterList(&adapterList);
+    for (bsl::vector<ntsa::Adapter>::const_iterator it = adapterList.begin();
+         it != adapterList.end();
+         ++it)
+    {
+        const ntsa::Adapter& candidateAdapter = *it;
+
+        if (!candidateAdapter.ipv4Address().isNull() &&
+            candidateAdapter.ipv4Address().value().isLoopback() &&
+            candidateAdapter.multicast())
+        {
+            return true;
+        }
+    }
+
+    return false;
+
+#else
+
+    return false;
+
+#endif
+}
+
 bool AdapterUtil::supportsIpv6()
 {
 #if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV6
@@ -1024,7 +1081,37 @@ bool AdapterUtil::supportsIpv6()
          it != adapterList.end();
          ++it)
     {
-        if (!it->ipv6Address().isNull()) {
+        const ntsa::Adapter& candidateAdapter = *it;
+
+        if (!candidateAdapter.ipv6Address().isNull()) {
+            return true;
+        }
+    }
+
+    return false;
+
+#else
+
+    return false;
+
+#endif
+}
+
+bool AdapterUtil::supportsIpv6Loopback()
+{
+#if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV6
+
+    bsl::vector<ntsa::Adapter> adapterList;
+    ntsu::AdapterUtil::discoverAdapterList(&adapterList);
+    for (bsl::vector<ntsa::Adapter>::const_iterator it = adapterList.begin();
+         it != adapterList.end();
+         ++it)
+    {
+        const ntsa::Adapter& candidateAdapter = *it;
+
+        if (!candidateAdapter.ipv6Address().isNull() &&
+            candidateAdapter.ipv6Address().value().isLoopback()) 
+        {
             return true;
         }
     }
@@ -1066,6 +1153,35 @@ bool AdapterUtil::supportsIpv6Multicast()
 #endif
 }
 
+bool AdapterUtil::supportsIpv6MulticastLoopback()
+{
+#if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV6
+
+    bsl::vector<ntsa::Adapter> adapterList;
+    ntsu::AdapterUtil::discoverAdapterList(&adapterList);
+    for (bsl::vector<ntsa::Adapter>::const_iterator it = adapterList.begin();
+         it != adapterList.end();
+         ++it)
+    {
+        const ntsa::Adapter& candidateAdapter = *it;
+
+        if (!candidateAdapter.ipv6Address().isNull() &&
+            candidateAdapter.ipv6Address().value().isLoopback() &&
+            candidateAdapter.multicast())
+        {
+            return true;
+        }
+    }
+
+    return false;
+
+#else
+
+    return false;
+
+#endif
+}
+
 bool AdapterUtil::supportsTcp()
 {
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_TCP
@@ -1078,14 +1194,63 @@ bool AdapterUtil::supportsTcp()
          it != adapterList.end();
          ++it)
     {
+        const ntsa::Adapter& candidateAdapter = *it;
+        NTSCFG_WARNING_UNUSED(candidateAdapter);
+
 #if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV4
-        if (!it->ipv4Address().isNull()) {
+        if (!candidateAdapter.ipv4Address().isNull()) {
             return true;
         }
 #endif
 
 #if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV6
-        if (!it->ipv6Address().isNull()) {
+        if (!candidateAdapter.ipv6Address().isNull()) {
+            return true;
+        }
+#endif
+    }
+
+    return false;
+
+#else
+
+    return false;
+
+#endif
+#else
+
+    return false;
+
+#endif
+}
+
+bool AdapterUtil::supportsTcpLoopback()
+{
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_TCP
+#if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV4 ||                                  \
+    NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV6
+
+    bsl::vector<ntsa::Adapter> adapterList;
+    ntsu::AdapterUtil::discoverAdapterList(&adapterList);
+    for (bsl::vector<ntsa::Adapter>::const_iterator it = adapterList.begin();
+         it != adapterList.end();
+         ++it)
+    {
+        const ntsa::Adapter& candidateAdapter = *it;
+        NTSCFG_WARNING_UNUSED(candidateAdapter);
+
+#if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV4
+        if (!candidateAdapter.ipv4Address().isNull() &&
+            candidateAdapter.ipv4Address().value().isLoopback()) 
+        {
+            return true;
+        }
+#endif
+
+#if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV6
+        if (!candidateAdapter.ipv6Address().isNull() &&
+            candidateAdapter.ipv6Address().value().isLoopback()) 
+        {
             return true;
         }
 #endif
@@ -1117,14 +1282,63 @@ bool AdapterUtil::supportsUdp()
          it != adapterList.end();
          ++it)
     {
+        const ntsa::Adapter& candidateAdapter = *it;
+        NTSCFG_WARNING_UNUSED(candidateAdapter);
+
 #if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV4
-        if (!it->ipv4Address().isNull()) {
+        if (!candidateAdapter.ipv4Address().isNull()) {
             return true;
         }
 #endif
 
 #if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV6
-        if (!it->ipv6Address().isNull()) {
+        if (!candidateAdapter.ipv6Address().isNull()) {
+            return true;
+        }
+#endif
+    }
+
+    return false;
+
+#else
+
+    return false;
+
+#endif
+#else
+
+    return false;
+
+#endif
+}
+
+bool AdapterUtil::supportsUdpLoopback()
+{
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_UDP
+#if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV4 ||                                  \
+    NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV6
+
+    bsl::vector<ntsa::Adapter> adapterList;
+    ntsu::AdapterUtil::discoverAdapterList(&adapterList);
+    for (bsl::vector<ntsa::Adapter>::const_iterator it = adapterList.begin();
+         it != adapterList.end();
+         ++it)
+    {
+        const ntsa::Adapter& candidateAdapter = *it;
+        NTSCFG_WARNING_UNUSED(candidateAdapter);
+
+#if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV4
+        if (!candidateAdapter.ipv4Address().isNull() &&
+            candidateAdapter.ipv4Address().value().isLoopback()) 
+        {
+            return true;
+        }
+#endif
+
+#if NTSCFG_BUILD_WITH_ADDRESS_FAMILY_IPV6
+        if (!candidateAdapter.ipv6Address().isNull() && 
+            candidateAdapter.ipv6Address().value().isLoopback()) 
+        {
             return true;
         }
 #endif
@@ -1220,6 +1434,47 @@ bool AdapterUtil::supportsTransport(ntsa::Transport::Value transport)
     else if (transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM) {
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_UDP
         return AdapterUtil::supportsIpv6();
+#else
+        return false;
+#endif
+    }
+    else if (transport == ntsa::Transport::e_LOCAL_STREAM) {
+        return AdapterUtil::supportsLocalStream();
+    }
+    else if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
+        return AdapterUtil::supportsLocalDatagram();
+    }
+    else {
+        return false;
+    }
+}
+
+bool AdapterUtil::supportsTransportLoopback(ntsa::Transport::Value transport)
+{
+    if (transport == ntsa::Transport::e_TCP_IPV4_STREAM) {
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_TCP
+        return AdapterUtil::supportsIpv4Loopback();
+#else
+        return false;
+#endif
+    }
+    else if (transport == ntsa::Transport::e_TCP_IPV6_STREAM) {
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_TCP
+        return AdapterUtil::supportsIpv6Loopback();
+#else
+        return false;
+#endif
+    }
+    else if (transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_UDP
+        return AdapterUtil::supportsIpv4Loopback();
+#else
+        return false;
+#endif
+    }
+    else if (transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM) {
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_UDP
+        return AdapterUtil::supportsIpv6Loopback();
 #else
         return false;
 #endif
