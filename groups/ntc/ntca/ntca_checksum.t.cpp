@@ -407,8 +407,9 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyCopyConstructor)
 
     // Copy-construct a value from the other value.
 
-    char            buffer[sizeof(ntca::Checksum)];
-    ntca::Checksum* checksum = new (buffer) ntca::Checksum(otherChecksum);
+    bsls::ObjectBuffer<ntca::Checksum> checksumStorage;
+    ntca::Checksum* checksum = 
+        new (checksumStorage.buffer()) ntca::Checksum(otherChecksum);
 
     // Ensure the copy-constructed value has the expected value.
 
@@ -453,8 +454,8 @@ NTSCFG_TEST_FUNCTION(ntca::ChecksumTest::verifyMoveConstructor)
 
     // Move-construct a value from the other value.
 
-    char            buffer[sizeof(ntca::Checksum)];
-    ntca::Checksum* checksum = new (buffer)
+    bsls::ObjectBuffer<ntca::Checksum> checksumStorage;
+    ntca::Checksum* checksum = new (checksumStorage.buffer())
         ntca::Checksum(bslmf::MovableRefUtil::move(otherChecksum));
 
     // Ensure the move-constructed value has the expected value.

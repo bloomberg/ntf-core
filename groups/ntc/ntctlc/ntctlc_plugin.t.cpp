@@ -186,10 +186,10 @@ class PluginTest::Parameters
     NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(Parameters);
 
   private:
-    ntca::CompressionType::Value d_type;
-    ntca::CompressionGoal::Value d_goal;
     bsl::size_t                  d_variationIndex;
     bsl::size_t                  d_variationCount;
+    ntca::CompressionType::Value d_type;
+    ntca::CompressionGoal::Value d_goal;
     bsl::size_t                  d_blobBufferSize;
     bsl::size_t                  d_messageCount;
     bsl::size_t                  d_writeSize;

@@ -308,7 +308,7 @@ namespace ntscfg {
 ///
 /// @ingroup module_ntscfg
 #define NTSCFG_TYPE_CHECK_ALLOCATOR_AWARE(Type)                               \
-    bslalg::HasTrait<Type, bslalg::TypeTraitUsesBslmaAllocator>::VALUE
+    bslalg::HasTrait<Type, bslalg::TypeTraitUsesBslmaAllocator>::value
 
 /// @internal @brief
 /// Throw an exception having the specified string 'description'.
