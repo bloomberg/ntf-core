@@ -106,19 +106,19 @@ NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyCase1)
 {
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV4_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV6_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(ntsa::Transport::e_LOCAL_STREAM))
+    if (ntsu::AdapterUtil::supportsTransportLoopback(ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
@@ -158,19 +158,19 @@ NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyCase2)
 {
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV4_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_TCP_IPV6_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransport(ntsa::Transport::e_LOCAL_STREAM))
+    if (ntsu::AdapterUtil::supportsTransportLoopback(ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
