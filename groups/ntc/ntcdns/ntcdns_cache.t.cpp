@@ -91,14 +91,14 @@ void CacheTest::processGetIpAddressResult(
         if (ipAddressList.size() > 0) {
             for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
                 const ntsa::IpAddress& ipAddress = ipAddressList[i];
-                NTCI_LOG_STREAM_INFO << "The domain name '"
+                NTCI_LOG_STREAM_DEBUG << "The domain name '"
                                      << context.domainName()
                                      << "' has resolved to " << ipAddress
                                      << NTCI_LOG_STREAM_END;
             }
         }
         else {
-            NTCI_LOG_STREAM_INFO << "The domain name '" << context.domainName()
+            NTCI_LOG_STREAM_DEBUG << "The domain name '" << context.domainName()
                                  << "' has no IP addresses assigned"
                                  << NTCI_LOG_STREAM_END;
         }
@@ -116,12 +116,12 @@ void CacheTest::processGetDomainNameResult(
 
     if (!context.error()) {
         if (domainName.size() > 0) {
-            NTCI_LOG_STREAM_INFO << "The IP address " << context.ipAddress()
+            NTCI_LOG_STREAM_DEBUG << "The IP address " << context.ipAddress()
                                  << " has resolved to '" << domainName << "'"
                                  << NTCI_LOG_STREAM_END;
         }
         else {
-            NTCI_LOG_STREAM_INFO << "The IP address " << context.ipAddress()
+            NTCI_LOG_STREAM_DEBUG << "The IP address " << context.ipAddress()
                                  << " is not assigned to any domain name"
                                  << NTCI_LOG_STREAM_END;
         }

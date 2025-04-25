@@ -5443,14 +5443,14 @@ void SystemTest::ResolverUtil::processGetIpAddressResult(
         if (ipAddressList.size() > 0) {
             for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
                 const ntsa::IpAddress& ipAddress = ipAddressList[i];
-                NTCI_LOG_STREAM_INFO << "The domain name '"
+                NTCI_LOG_STREAM_DEBUG << "The domain name '"
                                      << event.context().domainName()
                                      << "' has resolved to " << ipAddress
                                      << NTCI_LOG_STREAM_END;
             }
         }
         else {
-            NTCI_LOG_STREAM_INFO
+            NTCI_LOG_STREAM_DEBUG
                 << "The domain name '" << event.context().domainName()
                 << "' has no IP addresses assigned" << NTCI_LOG_STREAM_END;
         }
@@ -5472,13 +5472,13 @@ void SystemTest::ResolverUtil::processGetDomainNameResult(
 
     if (event.type() == ntca::GetDomainNameEventType::e_COMPLETE) {
         if (!domainName.empty()) {
-            NTCI_LOG_STREAM_INFO
+            NTCI_LOG_STREAM_DEBUG
                 << "The IP address " << event.context().ipAddress()
                 << " has resolved to the domain name '" << domainName << "'"
                 << NTCI_LOG_STREAM_END;
         }
         else {
-            NTCI_LOG_STREAM_INFO << "The IP address '"
+            NTCI_LOG_STREAM_DEBUG << "The IP address '"
                                  << event.context().ipAddress()
                                  << "' is not assigned to any domain name"
                                  << NTCI_LOG_STREAM_END;
@@ -5503,14 +5503,14 @@ void SystemTest::ResolverUtil::processGetPortResult(
         if (portList.size() > 0) {
             for (bsl::size_t i = 0; i < portList.size(); ++i) {
                 ntsa::Port port = portList[i];
-                NTCI_LOG_STREAM_INFO << "The service name '"
+                NTCI_LOG_STREAM_DEBUG << "The service name '"
                                      << event.context().serviceName()
                                      << "' has resolved to port " << port
                                      << NTCI_LOG_STREAM_END;
             }
         }
         else {
-            NTCI_LOG_STREAM_INFO
+            NTCI_LOG_STREAM_DEBUG
                 << "The service name '" << event.context().serviceName()
                 << "' has no ports assigned" << NTCI_LOG_STREAM_END;
         }
@@ -5532,12 +5532,12 @@ void SystemTest::ResolverUtil::processGetServiceNameResult(
 
     if (event.type() == ntca::GetServiceNameEventType::e_COMPLETE) {
         if (!serviceName.empty()) {
-            NTCI_LOG_STREAM_INFO << "The port " << event.context().port()
+            NTCI_LOG_STREAM_DEBUG << "The port " << event.context().port()
                                  << " has resolved to the service name '"
                                  << serviceName << "'" << NTCI_LOG_STREAM_END;
         }
         else {
-            NTCI_LOG_STREAM_INFO << "The port '" << event.context().port()
+            NTCI_LOG_STREAM_DEBUG << "The port '" << event.context().port()
                                  << "' is not assigned to any service name"
                                  << NTCI_LOG_STREAM_END;
         }
@@ -5558,7 +5558,7 @@ void SystemTest::ResolverUtil::processGetEndpointResult(
                           << NTCI_LOG_STREAM_END;
 
     if (event.type() == ntca::GetEndpointEventType::e_COMPLETE) {
-        NTCI_LOG_STREAM_INFO
+        NTCI_LOG_STREAM_DEBUG
             << "The authority '" << event.context().authority()
             << "' has resolved to " << endpoint << NTCI_LOG_STREAM_END;
     }
@@ -5641,7 +5641,7 @@ void SystemTest::CloseUtil::processConnect(
 {
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_STREAM_INFO << "Processing connect event = " << event
+    NTCI_LOG_STREAM_DEBUG << "Processing connect event = " << event
                          << NTCI_LOG_STREAM_END;
 
     // BSLS_ASSERT(event.type() == ntca::ConnectEventType::e_COMPLETE);
@@ -5802,7 +5802,7 @@ void SystemTest::StreamSocketUtil::processSendAborted(
                    ntca::SendEventType::toString(event.type()),
                    event.context().error().text().c_str());
 
-    NTCI_LOG_INFO("Message %s send was aborted", name.c_str());
+    NTCI_LOG_DEBUG("Message %s send was aborted", name.c_str());
     NTSCFG_TEST_EQ(event.type(), ntca::SendEventType::e_ERROR);
     NTSCFG_TEST_TRUE(
         (event.context().error() ==
@@ -5826,12 +5826,12 @@ void SystemTest::StreamSocketUtil::processSendSuccessOrTimeout(
                    event.context().error().text().c_str());
 
     if (error) {
-        NTCI_LOG_INFO("Message %s has timed out", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has timed out", name.c_str());
         NTSCFG_TEST_EQ(event.type(), ntca::SendEventType::e_ERROR);
         NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_WOULD_BLOCK);
     }
     else {
-        NTCI_LOG_INFO("Message %s has been sent", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been sent", name.c_str());
     }
 
     semaphore->post();
@@ -5851,12 +5851,12 @@ void SystemTest::StreamSocketUtil::processSendSuccessOrCancelled(
                    event.context().error().text().c_str());
 
     if (error) {
-        NTCI_LOG_INFO("Message %s has been canceled", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been canceled", name.c_str());
         NTSCFG_TEST_EQ(event.type(), ntca::SendEventType::e_ERROR);
         NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
     }
     else {
-        NTCI_LOG_INFO("Message %s has been sent", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been sent", name.c_str());
     }
 
     semaphore->post();
@@ -5877,12 +5877,12 @@ void SystemTest::StreamSocketUtil::processReceiveSuccessOrTimeout(
                    event.context().error().text().c_str());
 
     if (error) {
-        NTCI_LOG_INFO("Message %s has timed out", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has timed out", name.c_str());
         NTSCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
         NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_WOULD_BLOCK);
     }
     else {
-        NTCI_LOG_INFO("Message %s has been received", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been received", name.c_str());
 
         NTCI_LOG_DEBUG("Comparing message %s", name.c_str());
 
@@ -5945,12 +5945,12 @@ void SystemTest::StreamSocketUtil::processReceiveSuccessOrCancelled(
                    event.context().error().text().c_str());
 
     if (error) {
-        NTCI_LOG_INFO("Message %s has been canceled", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been canceled", name.c_str());
         NTSCFG_TEST_EQ(event.type(), ntca::ReceiveEventType::e_ERROR);
         NTSCFG_TEST_EQ(event.context().error(), ntsa::Error::e_CANCELLED);
     }
     else {
-        NTCI_LOG_INFO("Message %s has been received", name.c_str());
+        NTCI_LOG_DEBUG("Message %s has been received", name.c_str());
 
         NTCI_LOG_DEBUG("Comparing message %s", name.c_str());
 
@@ -6025,11 +6025,11 @@ void SystemTest::ChronologyUtil::distributedFunction(
 
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_INFO("Thread %zu enter", threadIndex);
+    NTCI_LOG_DEBUG("Thread %zu enter", threadIndex);
 
     suspendBarrier->wait();
 
-    NTCI_LOG_INFO("Thread %zu leave", threadIndex);
+    NTCI_LOG_DEBUG("Thread %zu leave", threadIndex);
 
     releaseBarrier->wait();
 }
@@ -6353,7 +6353,7 @@ void SystemTest::concern(const ConcernCallback& concernCallback,
                 }
 #endif
 
-                BSLS_LOG_INFO("Testing driver %s (%s), zero-copy: %s",
+                BSLS_LOG_DEBUG("Testing driver %s (%s), zero-copy: %s",
                               driverType.c_str(),
                               (dynamicLoadBalancing ? "dynamic" : "static"),
                               (forceZeroCopy ? "enabled" : "disabled"));
@@ -6457,7 +6457,7 @@ void SystemTest::concernDataExchange(
                        0,
                        addressFamilyList.size())
         {
-            BSLS_LOG_INFO("Testing encryption %d address family %d",
+            BSLS_LOG_DEBUG("Testing encryption %d address family %d",
                           (int)(encryption),
                           (int)(addressFamilyList[addressFamilyIndex]));
 
@@ -6481,7 +6481,7 @@ void SystemTest::concernDataExchange(
                 authorityIdentity["CN"] = "Certificate Authority";
                 authorityIdentity["O"]  = "Bloomberg LP";
 
-                NTCI_LOG_INFO("Generating authority key");
+                NTCI_LOG_DEBUG("Generating authority key");
                 error = scheduler->generateKey(
                     &parameters.d_authorityPrivateKey_sp,
                     ntca::EncryptionKeyOptions(),
@@ -6492,7 +6492,7 @@ void SystemTest::concernDataExchange(
 
                 authorityCertificateOptions.setAuthority(true);
 
-                NTCI_LOG_INFO("Generating authority certificate");
+                NTCI_LOG_DEBUG("Generating authority certificate");
                 error = scheduler->generateCertificate(
                     &parameters.d_authorityCertificate_sp,
                     authorityIdentity,
@@ -6505,14 +6505,14 @@ void SystemTest::concernDataExchange(
                 clientIdentity["CN"] = "TransferClient User";
                 clientIdentity["O"]  = "Bloomberg LP";
 
-                NTCI_LOG_INFO("Generating client key");
+                NTCI_LOG_DEBUG("Generating client key");
                 error =
                     scheduler->generateKey(&parameters.d_clientPrivateKey_sp,
                                            ntca::EncryptionKeyOptions(),
                                            allocator);
                 NTSCFG_TEST_OK(error);
 
-                NTCI_LOG_INFO("Generating client certificate");
+                NTCI_LOG_DEBUG("Generating client certificate");
                 error = scheduler->generateCertificate(
                     &parameters.d_clientCertificate_sp,
                     clientIdentity,
@@ -6527,14 +6527,14 @@ void SystemTest::concernDataExchange(
                 serverIdentity["CN"] = "TransferServer User";
                 serverIdentity["O"]  = "Bloomberg LP";
 
-                NTCI_LOG_INFO("Generating server key");
+                NTCI_LOG_DEBUG("Generating server key");
                 error =
                     scheduler->generateKey(&parameters.d_serverPrivateKey_sp,
                                            ntca::EncryptionKeyOptions(),
                                            allocator);
                 NTSCFG_TEST_OK(error);
 
-                NTCI_LOG_INFO("Generating server certificate");
+                NTCI_LOG_DEBUG("Generating server certificate");
                 error = scheduler->generateCertificate(
                     &parameters.d_serverCertificate_sp,
                     serverIdentity,
@@ -6601,7 +6601,7 @@ void SystemTest::concernClose(
     // Test closing a stream socket immediately after creating it, without
     // either opening or connecting it.
 
-    NTCI_LOG_INFO("Testing close immediately after creation");
+    NTCI_LOG_DEBUG("Testing close immediately after creation");
 
     {
         bsl::shared_ptr<ntci::StreamSocket> clientSocket =
@@ -6613,7 +6613,7 @@ void SystemTest::concernClose(
     // Test closing a stream socket after opening it, without connecting
     // it.
 
-    NTCI_LOG_INFO("Testing close without connect");
+    NTCI_LOG_DEBUG("Testing close without connect");
 
     {
         bsl::shared_ptr<ntci::StreamSocket> clientSocket =
@@ -6627,7 +6627,7 @@ void SystemTest::concernClose(
 
     // Test closing a stream socket during the connection in progress.
 
-    NTCI_LOG_INFO("Testing close during connect");
+    NTCI_LOG_DEBUG("Testing close during connect");
 
     {
         bsl::shared_ptr<ntci::StreamSocket> clientSocket =
@@ -6729,7 +6729,7 @@ void SystemTest::concernConnectEndpoint1(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ECONNREFUSED/ETIMEDOUT (x4), connection up");
+    BSLS_LOG_DEBUG("ECONNREFUSED/ETIMEDOUT (x4), connection up");
 
     ntsa::Error error;
 
@@ -6903,7 +6903,7 @@ void SystemTest::concernConnectEndpoint2(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ECONNREFUSED/ETIMEDOUT (x5)");
+    BSLS_LOG_DEBUG("ECONNREFUSED/ETIMEDOUT (x5)");
 
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 5;
 
@@ -7025,7 +7025,7 @@ void SystemTest::concernConnectEndpoint3(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("e_CONNECTION_TIMEOUT || e_UNREACHABLE (x5)");
+    BSLS_LOG_DEBUG("e_CONNECTION_TIMEOUT || e_UNREACHABLE (x5)");
 
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 5;
 
@@ -7126,7 +7126,7 @@ void SystemTest::concernConnectEndpoint4(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ECONNREFUSED (x4), ECANCELED");
+    BSLS_LOG_DEBUG("ECONNREFUSED (x4), ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -7288,7 +7288,7 @@ void SystemTest::concernConnectEndpoint5(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ETIMEDOUT (x4), ECANCELED");
+    BSLS_LOG_DEBUG("ETIMEDOUT (x4), ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -7453,7 +7453,7 @@ void SystemTest::concernConnectEndpoint6(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
+    BSLS_LOG_DEBUG("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -7584,7 +7584,7 @@ void SystemTest::concernConnectEndpoint7(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
+    BSLS_LOG_DEBUG("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -7718,7 +7718,7 @@ void SystemTest::concernConnectEndpoint8(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO(
+    BSLS_LOG_DEBUG(
         "ETIMEDOUT/ECONNREFUSED/ECONNABORTED (x100) (instantaneous)");
 
 #if NTC_BUILD_WITH_VALGRIND
@@ -7838,7 +7838,7 @@ void SystemTest::concernConnectName1(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ECONNREFUSED/ETIMEDOUT (x4), connection up");
+    BSLS_LOG_DEBUG("ECONNREFUSED/ETIMEDOUT (x4), connection up");
 
     ntsa::Error error;
 
@@ -8017,7 +8017,7 @@ void SystemTest::concernConnectName2(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ECONNREFUSED/ETIMEDOUT (x5)");
+    BSLS_LOG_DEBUG("ECONNREFUSED/ETIMEDOUT (x5)");
 
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 5;
 
@@ -8141,7 +8141,7 @@ void SystemTest::concernConnectName3(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ETIMEDOUT (x5)");
+    BSLS_LOG_DEBUG("ETIMEDOUT (x5)");
 
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 5;
 
@@ -8248,7 +8248,7 @@ void SystemTest::concernConnectName4(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ECONNREFUSED (x4), ECANCELED");
+    BSLS_LOG_DEBUG("ECONNREFUSED (x4), ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -8410,7 +8410,7 @@ void SystemTest::concernConnectName5(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ETIMEDOUT (x4), ECANCELED");
+    BSLS_LOG_DEBUG("ETIMEDOUT (x4), ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -8587,7 +8587,7 @@ void SystemTest::concernConnectName6(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
+    BSLS_LOG_DEBUG("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -8717,7 +8717,7 @@ void SystemTest::concernConnectName7(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
+    BSLS_LOG_DEBUG("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
 
 #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -8865,7 +8865,7 @@ void SystemTest::concernConnectName8(
 
     NTCI_LOG_CONTEXT();
 
-    BSLS_LOG_INFO(
+    BSLS_LOG_DEBUG(
         "ETIMEDOUT/ECONNREFUSED/ECONNABORTED (x100) (instantaneous)");
 
 #if NTC_BUILD_WITH_VALGRIND
@@ -10517,12 +10517,12 @@ void SystemTest::concernStreamSocketSendDeadline(
         NTSCFG_TEST_TRUE(!error);
     }
 
-    NTCI_LOG_INFO("Waiting for message B to time out");
+    NTCI_LOG_DEBUG("Waiting for message B to time out");
 
     sendSemaphore.wait();
 
-    NTCI_LOG_INFO("Message B has timed out");
-    NTCI_LOG_INFO("Receiving message A and C");
+    NTCI_LOG_DEBUG("Message B has timed out");
+    NTCI_LOG_DEBUG("Receiving message A and C");
 
     {
         ntca::ReceiveOptions receiveOptions;
@@ -10725,12 +10725,12 @@ void SystemTest::concernStreamSocketSendCancellation(
         NTSCFG_TEST_TRUE(!error);
     }
 
-    NTCI_LOG_INFO("Waiting for message B to be canceled");
+    NTCI_LOG_DEBUG("Waiting for message B to be canceled");
 
     sendSemaphore.wait();
 
-    NTCI_LOG_INFO("Message B has been canceled");
-    NTCI_LOG_INFO("Receiving message A and C");
+    NTCI_LOG_DEBUG("Message B has been canceled");
+    NTCI_LOG_DEBUG("Receiving message A and C");
 
     {
         ntca::ReceiveOptions receiveOptions;
@@ -16595,7 +16595,7 @@ void StreamSocketSession::processShutdownInitiated(
     const ntca::ShutdownEvent&                 event)
 {
     NTCI_LOG_CONTEXT();
-    NTCI_LOG_INFO("%s shutdown initiated", d_name.c_str());
+    NTCI_LOG_DEBUG("%s shutdown initiated", d_name.c_str());
 }
 
 void StreamSocketSession::processShutdownComplete(
@@ -16603,7 +16603,7 @@ void StreamSocketSession::processShutdownComplete(
     const ntca::ShutdownEvent&                 event)
 {
     NTCI_LOG_CONTEXT();
-    NTCI_LOG_INFO("%s shutdown complete", d_name.c_str());
+    NTCI_LOG_DEBUG("%s shutdown complete", d_name.c_str());
 
     NTSCFG_TEST_EQ(event.type(), ntca::ShutdownEventType::e_COMPLETE);
 
@@ -16656,7 +16656,7 @@ void ListenerSocketSession::processShutdownInitiated(
     const ntca::ShutdownEvent&                   event)
 {
     NTCI_LOG_CONTEXT();
-    NTCI_LOG_INFO("%s shutdown initiated", d_name.c_str());
+    NTCI_LOG_DEBUG("%s shutdown initiated", d_name.c_str());
 }
 
 void ListenerSocketSession::processShutdownComplete(
@@ -16664,7 +16664,7 @@ void ListenerSocketSession::processShutdownComplete(
     const ntca::ShutdownEvent&                   event)
 {
     NTCI_LOG_CONTEXT();
-    NTCI_LOG_INFO("%s shutdown complete", d_name.c_str());
+    NTCI_LOG_DEBUG("%s shutdown complete", d_name.c_str());
 
     NTSCFG_TEST_EQ(event.type(), ntca::ShutdownEventType::e_COMPLETE);
 
@@ -16676,7 +16676,7 @@ void processClosed(bslmt::Semaphore* semaphore, const char* msg)
 {
     NTCI_LOG_CONTEXT();
     if (msg) {
-        NTCI_LOG_INFO("%s", msg);
+        NTCI_LOG_DEBUG("%s", msg);
     }
     semaphore->post();
 }
@@ -16685,11 +16685,11 @@ void processBarrier(bslmt::Barrier* barrier)
 {
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_INFO("I/O thread suspended");
+    NTCI_LOG_DEBUG("I/O thread suspended");
 
     barrier->wait();
 
-    NTCI_LOG_INFO("I/O thread released");
+    NTCI_LOG_DEBUG("I/O thread released");
 }
 
 }  // close namespace case64
@@ -16876,17 +16876,17 @@ NTSCFG_TEST_CASE(64)
         bslmt::Barrier barrier(2);
         scheduler->execute(NTCCFG_BIND(&case64::processBarrier, &barrier));
 
-        NTCI_LOG_INFO("Closing client");
+        NTCI_LOG_DEBUG("Closing client");
 
         clientStreamSocket->close(clientExternalCloseCallback);
         clientStreamSocket->close(clientExternalCloseCallback);
 
-        NTCI_LOG_INFO("Closing server");
+        NTCI_LOG_DEBUG("Closing server");
 
         serverStreamSocket->close(serverExternalCloseCallback);
         serverStreamSocket->close(serverExternalCloseCallback);
 
-        NTCI_LOG_INFO("Closing server (listener)");
+        NTCI_LOG_DEBUG("Closing server (listener)");
 
         listenerSocket->close(listenerExternalCloseCallback);
         listenerSocket->close(listenerExternalCloseCallback);
@@ -16961,7 +16961,7 @@ void DatagramSocketSession::processShutdownInitiated(
     const ntca::ShutdownEvent&                   event)
 {
     NTCI_LOG_CONTEXT();
-    NTCI_LOG_INFO("%s shutdown initiated", d_name.c_str());
+    NTCI_LOG_DEBUG("%s shutdown initiated", d_name.c_str());
 }
 
 void DatagramSocketSession::processShutdownComplete(
@@ -16969,7 +16969,7 @@ void DatagramSocketSession::processShutdownComplete(
     const ntca::ShutdownEvent&                   event)
 {
     NTCI_LOG_CONTEXT();
-    NTCI_LOG_INFO("%s shutdown complete", d_name.c_str());
+    NTCI_LOG_DEBUG("%s shutdown complete", d_name.c_str());
 
     NTSCFG_TEST_EQ(event.type(), ntca::ShutdownEventType::e_COMPLETE);
 

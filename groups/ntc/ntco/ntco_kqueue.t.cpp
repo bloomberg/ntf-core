@@ -58,7 +58,7 @@ void KqueueTest::processReactorEvent(
 {
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_STREAM_INFO << "Reactor event " << event << NTCI_LOG_STREAM_END;
+    NTCI_LOG_STREAM_DEBUG << "Reactor event " << event << NTCI_LOG_STREAM_END;
 
     eventCount->add(1);
 }

@@ -59,14 +59,14 @@ void ClientTest::processGetIpAddressResult(
         if (ipAddressList.size() > 0) {
             for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
                 const ntsa::IpAddress& ipAddress = ipAddressList[i];
-                NTCI_LOG_STREAM_INFO << "The domain name '"
+                NTCI_LOG_STREAM_DEBUG << "The domain name '"
                                      << event.context().domainName()
                                      << "' has resolved to " << ipAddress
                                      << NTCI_LOG_STREAM_END;
             }
         }
         else {
-            NTCI_LOG_STREAM_INFO
+            NTCI_LOG_STREAM_DEBUG
                 << "The domain name '" << event.context().domainName()
                 << "' has no IP addresses assigned" << NTCI_LOG_STREAM_END;
         }

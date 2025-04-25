@@ -638,7 +638,7 @@ void StrandTest::executeCaseOneThreadGroups(bsl::size_t numEnqueueThreads,
            << "Throughput: " << bsl::fixed << bsl::setprecision(2)
            << throughput << " functors/sec\n";
 
-        BSLS_LOG_INFO("%s", ss.str().c_str());
+        BSLS_LOG_DEBUG("%s", ss.str().c_str());
     }
 }
 
@@ -660,7 +660,7 @@ void StrandTest::verifyCurrentStrandOne(
 
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_INFO("Strand one job %d/%d complete",
+    NTCI_LOG_DEBUG("Strand one job %d/%d complete",
                   strandOneJobsComplete->load() + 1,
                   strandOneJobsTotal);
 
@@ -740,7 +740,7 @@ void StrandTest::verifyCurrentStrandTwo(
 
     NTCI_LOG_CONTEXT();
 
-    NTCI_LOG_INFO("Strand two job %d/%d complete",
+    NTCI_LOG_DEBUG("Strand two job %d/%d complete",
                   strandTwoJobsComplete->load() + 1,
                   strandTwoJobsTotal);
 
@@ -857,7 +857,7 @@ NTSCFG_TEST_FUNCTION(ntcs::StrandTest::verifyCase1)
     bdlma::ConcurrentMultipoolAllocator d_memoryPools(8);
 
     for (bsl::size_t iteration = 0; iteration < NUM_DATA; ++iteration) {
-        BSLS_LOG_INFO("Testing %d enqueue threads, %d dequeue threads",
+        BSLS_LOG_DEBUG("Testing %d enqueue threads, %d dequeue threads",
                       (int)(DATA[iteration].d_numEnqueueThreads),
                       (int)(DATA[iteration].d_numDequeueThreads));
 

@@ -3910,11 +3910,18 @@ function (ntf_group_end)
             ntf_repository_library_output_path_get(OUTPUT library_output_path)
             ntf_repository_runtime_output_path_get(OUTPUT runtime_output_path)
 
-            add_executable(
-                ${component_test_build_target}
-                EXCLUDE_FROM_ALL
-                ${component_driver_path}
-            )
+            if (${NTF_BUILD_FROM_CONTINUOUS_INTEGRATION})
+                add_executable(
+                    ${component_test_build_target}
+                    ${component_driver_path}
+                )
+            else()
+                add_executable(
+                    ${component_test_build_target}
+                    EXCLUDE_FROM_ALL
+                    ${component_driver_path}
+                )
+            endif()
 
             # Set the C standard.
 
@@ -5208,11 +5215,18 @@ function (ntf_component)
         ntf_repository_library_output_path_get(OUTPUT library_output_path)
         ntf_repository_runtime_output_path_get(OUTPUT runtime_output_path)
 
-        add_executable(
-            ${component_test_build_target}
-            EXCLUDE_FROM_ALL
-            ${component_driver_path}
-        )
+        if (${NTF_BUILD_FROM_CONTINUOUS_INTEGRATION})
+            add_executable(
+                ${component_test_build_target}
+                ${component_driver_path}
+            )
+        else()
+            add_executable(
+                ${component_test_build_target}
+                EXCLUDE_FROM_ALL
+                ${component_driver_path}
+            )
+        endif()
 
         # Set the C standard.
 
@@ -8159,18 +8173,20 @@ function (ntf_file_metadata)
 
     set(items "")
 
-    file(STRINGS ${ARG_PATH} lines)
+    if (EXISTS ${ARG_PATH})
+        file(STRINGS ${ARG_PATH} lines)
 
-    foreach (line IN LISTS lines)
-        if (line)
-            string(REGEX REPLACE " *#.*$" "" line "${line}")
-            string(STRIP "${line}" line)
-        endif()
-        if (line)
-            string(REGEX REPLACE " +" ";" line_list "${line}")
-            list(APPEND items ${line_list})
-        endif()
-    endforeach()
+        foreach (line IN LISTS lines)
+            if (line)
+                string(REGEX REPLACE " *#.*$" "" line "${line}")
+                string(STRIP "${line}" line)
+            endif()
+            if (line)
+                string(REGEX REPLACE " +" ";" line_list "${line}")
+                list(APPEND items ${line_list})
+            endif()
+        endforeach()
+    endif()
 
     set(${ARG_OUTPUT} ${items} PARENT_SCOPE)
 
