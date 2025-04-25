@@ -135,9 +135,9 @@ NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyCopyConstructor)
 
     // Copy-construct a timer options from the other timer options.
 
-    char                buffer[sizeof(ntca::TimerOptions)];
+    bsls::ObjectBuffer<ntca::TimerOptions> timerOptionsStorage;
     ntca::TimerOptions* timerOptions =
-        new (buffer) ntca::TimerOptions(otherTimerOptions);
+        new (timerOptionsStorage.buffer()) ntca::TimerOptions(otherTimerOptions);
 
     // Ensure the copy-constructed timer options has the expected value.
 
@@ -202,8 +202,8 @@ NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyMoveConstructor)
 
     // Move-construct a timer options from the other timer options.
 
-    char                buffer[sizeof(ntca::TimerOptions)];
-    ntca::TimerOptions* timerOptions = new (buffer)
+    bsls::ObjectBuffer<ntca::TimerOptions> timerOptionsStorage;
+    ntca::TimerOptions* timerOptions = new (timerOptionsStorage.buffer())
         ntca::TimerOptions(bslmf::MovableRefUtil::move(otherTimerOptions));
 
     // Ensure the move-constructed timer options has the expected value.

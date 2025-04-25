@@ -396,6 +396,7 @@ NTSCFG_TEST_FUNCTION(ntca::EncryptionCertificateTest::verifyFields)
 
     bool matchesSubjectDomainName =
         certificate.matchesSubjectDomainName("ntf.bloomberg.com");
+    NTSCFG_TEST_TRUE(matchesSubjectDomainName);
 
     bool isEllipticCurve = certificate.usesSubjectPublicKeyAlgorithm(
         ntca::EncryptionKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE);
