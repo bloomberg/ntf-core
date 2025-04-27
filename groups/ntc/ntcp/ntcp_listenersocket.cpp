@@ -154,7 +154,7 @@ void ListenerSocket::processSocketAccepted(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (NTCCFG_UNLIKELY(d_detachState.mode() ==
                         ntcs::DetachMode::e_INITIATED))
@@ -194,7 +194,7 @@ void ListenerSocket::processSocketError(const ntsa::Error& error)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     this->privateFail(self, error);
 }
@@ -207,7 +207,7 @@ void ListenerSocket::processSocketDetached()
 
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     BSLS_ASSERT(d_detachState.mode() == ntcs::DetachMode::e_INITIATED);
     d_detachState.setMode(ntcs::DetachMode::e_IDLE);
@@ -234,7 +234,7 @@ void ListenerSocket::processAcceptRateTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         NTCP_LISTENERSOCKET_LOG_BACKLOG_THROTTLE_RELAXED();
@@ -277,7 +277,7 @@ void ListenerSocket::processAcceptBackoffTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         this->privateRelaxFlowControl(self,
@@ -306,7 +306,7 @@ void ListenerSocket::processAcceptDeadlineTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         ntsa::Error error = d_acceptQueue.removeCallbackEntry(entry);
@@ -1420,13 +1420,14 @@ ntsa::Error ListenerSocket::privateOpen(
         sourceEndpoint.reset();
     }
 
-    d_systemHandle   = handle;
-    d_publicHandle   = handle;
-    d_transport      = transport;
-    d_sourceEndpoint = sourceEndpoint;
-    d_socket_sp      = listenerSocket;
+    d_transport            = transport;
+    d_systemHandle         = handle;
+    d_systemSourceEndpoint = sourceEndpoint;
+    d_publicHandle         = handle;
+    d_publicSourceEndpoint = sourceEndpoint;
+    d_socket_sp            = listenerSocket;
 
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     NTCI_LOG_TRACE("Listener socket opened descriptor %d",
                    (int)(d_publicHandle));
@@ -1491,13 +1492,14 @@ void ListenerSocket::processSourceEndpointResolution(
     }
 
     if (!error) {
-        error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+        error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
+        d_publicSourceEndpoint = d_systemSourceEndpoint;
     }
 
     ntca::BindEvent bindEvent;
     if (!error) {
         bindEvent.setType(ntca::BindEventType::e_COMPLETE);
-        bindContext.setEndpoint(d_sourceEndpoint);
+        bindContext.setEndpoint(d_systemSourceEndpoint);
     }
     else {
         bindEvent.setType(ntca::BindEventType::e_ERROR);
@@ -1525,7 +1527,7 @@ void ListenerSocket::privateClose(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (d_detachState.mode() == ntcs::DetachMode::e_INITIATED) {
         d_deferredCalls.push_back(NTCCFG_BIND(
@@ -1582,10 +1584,11 @@ ListenerSocket::ListenerSocket(
     bslma::Allocator*                          basicAllocator)
 : d_object("ntcp::ListenerSocket")
 , d_mutex()
-, d_systemHandle(ntsa::k_INVALID_HANDLE)
-, d_publicHandle(ntsa::k_INVALID_HANDLE)
 , d_transport(ntsa::Transport::e_UNDEFINED)
-, d_sourceEndpoint()
+, d_systemHandle(ntsa::k_INVALID_HANDLE)
+, d_systemSourceEndpoint()
+, d_publicHandle(ntsa::k_INVALID_HANDLE)
+, d_publicSourceEndpoint()
 #if NTCP_LISTENERSOCKET_OBSERVE_BY_WEAK_PTR
 , d_resolver(bsl::weak_ptr<ntci::Resolver>(resolver))
 , d_proactor(bsl::weak_ptr<ntci::Proactor>(proactor))
@@ -1748,14 +1751,16 @@ ntsa::Error ListenerSocket::bind(const ntsa::Endpoint&     endpoint,
         return error;
     }
 
-    error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+    error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
     if (error) {
         return error;
     }
 
+    d_publicSourceEndpoint = d_systemSourceEndpoint;
+
     if (callback) {
         ntca::BindContext bindContext;
-        bindContext.setEndpoint(d_sourceEndpoint);
+        bindContext.setEndpoint(d_systemSourceEndpoint);
 
         ntca::BindEvent bindEvent;
         bindEvent.setType(ntca::BindEventType::e_COMPLETE);
@@ -1853,10 +1858,12 @@ ntsa::Error ListenerSocket::listen(bsl::size_t backlog)
         return error;
     }
 
-    error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+    error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
     if (error) {
         return error;
     }
+
+    d_publicSourceEndpoint = d_systemSourceEndpoint;
 
     if (!this->getProactorContext()) {
         ntcs::ObserverRef<ntci::Proactor> proactorRef(&d_proactor);
@@ -1898,7 +1905,7 @@ ntsa::Error ListenerSocket::accept(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     ntsa::Error error;
 
@@ -1972,7 +1979,7 @@ ntsa::Error ListenerSocket::accept(const ntca::AcceptOptions&  options,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     ntsa::Error error;
 
@@ -2247,7 +2254,7 @@ ntsa::Error ListenerSocket::setAcceptRateLimiter(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_acceptRateLimiter_sp = rateLimiter;
 
@@ -2276,7 +2283,7 @@ ntsa::Error ListenerSocket::setAcceptQueueLowWatermark(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_acceptQueue.setLowWatermark(lowWatermark);
 
@@ -2317,7 +2324,7 @@ ntsa::Error ListenerSocket::setAcceptQueueHighWatermark(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_acceptQueue.setHighWatermark(highWatermark);
 
@@ -2342,7 +2349,7 @@ ntsa::Error ListenerSocket::setAcceptQueueWatermarks(bsl::size_t lowWatermark,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_acceptQueue.setLowWatermark(lowWatermark);
     d_acceptQueue.setHighWatermark(highWatermark);
@@ -2375,7 +2382,7 @@ ntsa::Error ListenerSocket::relaxFlowControl(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     return this->privateRelaxFlowControl(self, direction, true, true);
 }
@@ -2391,7 +2398,7 @@ ntsa::Error ListenerSocket::applyFlowControl(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (direction == ntca::FlowControlType::e_RECEIVE ||
         direction == ntca::FlowControlType::e_BOTH)
@@ -2421,7 +2428,7 @@ ntsa::Error ListenerSocket::cancel(const ntca::AcceptToken& token)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     bsl::shared_ptr<ntcq::AcceptCallbackQueueEntry> callbackEntry;
     ntsa::Error                                     error =
@@ -2459,7 +2466,7 @@ ntsa::Error ListenerSocket::shutdown()
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     this->privateShutdown(self,
                           ntsa::ShutdownType::e_BOTH,
@@ -2639,7 +2646,7 @@ ntsa::Transport::Value ListenerSocket::transport() const
 ntsa::Endpoint ListenerSocket::sourceEndpoint() const
 {
     LockGuard lock(&d_mutex);
-    return d_sourceEndpoint;
+    return d_systemSourceEndpoint;
 }
 
 const bsl::shared_ptr<ntci::Strand>& ListenerSocket::strand() const

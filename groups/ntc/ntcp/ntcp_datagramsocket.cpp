@@ -186,7 +186,7 @@ void DatagramSocket::processSocketReceived(const ntsa::Error&          error,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_receivePending = false;
 
@@ -213,7 +213,7 @@ void DatagramSocket::processSocketReceived(const ntsa::Error&          error,
                                          data);
         }
         else {
-            this->privateCompleteReceive(self, d_remoteEndpoint, data);
+            this->privateCompleteReceive(self, d_systemRemoteEndpoint, data);
         }
     }
 
@@ -240,7 +240,7 @@ void DatagramSocket::processSocketSent(const ntsa::Error&       error,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_sendPending = false;
 
@@ -276,7 +276,7 @@ void DatagramSocket::processSocketError(const ntsa::Error& error)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     this->privateFail(self, error);
 }
@@ -289,7 +289,7 @@ void DatagramSocket::processSocketDetached()
 
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     BSLS_ASSERT(d_detachState.mode() == ntcs::DetachMode::e_INITIATED);
     d_detachState.setMode(ntcs::DetachMode::e_IDLE);
@@ -316,7 +316,7 @@ void DatagramSocket::processSendRateTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         NTCP_DATAGRAMSOCKET_LOG_SEND_BUFFER_THROTTLE_RELAXED();
@@ -360,8 +360,8 @@ void DatagramSocket::processSendDeadlineTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         ntci::SendCallback callback;
@@ -410,7 +410,7 @@ void DatagramSocket::processReceiveRateTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         NTCP_DATAGRAMSOCKET_LOG_RECEIVE_BUFFER_THROTTLE_RELAXED();
@@ -454,7 +454,7 @@ void DatagramSocket::processReceiveDeadlineTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         ntsa::Error error = d_receiveQueue.removeCallbackEntry(entry);
@@ -551,7 +551,7 @@ void DatagramSocket::privateCompleteReceive(
             entry.setEndpoint(endpoint);
         }
         else {
-            entry.setEndpoint(d_remoteEndpoint);
+            entry.setEndpoint(d_systemRemoteEndpoint);
         }
 
         if (!d_receiveInflater_sp) {
@@ -719,7 +719,7 @@ void DatagramSocket::privateInitiateSend(
         if (NTCCFG_LIKELY(entry.data())) {
             const bool hasDeadline = !entry.deadline().isNull();
 
-            if (NTCCFG_LIKELY(d_remoteEndpoint.isUndefined())) {
+            if (NTCCFG_LIKELY(d_systemRemoteEndpoint.isUndefined())) {
                 if (entry.endpoint().isNull()) {
                     this->privateFailSend(self, ntsa::Error::invalid());
                     continue;
@@ -732,7 +732,7 @@ void DatagramSocket::privateInitiateSend(
             }
             else {
                 if (!entry.endpoint().isNull() &&
-                    entry.endpoint() != d_remoteEndpoint)
+                    entry.endpoint() != d_systemRemoteEndpoint)
                 {
                     this->privateFailSend(self, ntsa::Error::invalid());
                     continue;
@@ -1912,15 +1912,17 @@ ntsa::Error DatagramSocket::privateOpen(
         remoteEndpoint.reset();
     }
 
-    d_systemHandle   = handle;
-    d_publicHandle   = handle;
-    d_transport      = transport;
-    d_sourceEndpoint = sourceEndpoint;
-    d_remoteEndpoint = remoteEndpoint;
-    d_socket_sp      = datagramSocket;
+    d_transport            = transport;
+    d_systemHandle         = handle;
+    d_systemSourceEndpoint = sourceEndpoint;
+    d_systemRemoteEndpoint = remoteEndpoint;
+    d_publicHandle         = handle;
+    d_publicSourceEndpoint = sourceEndpoint;
+    d_publicRemoteEndpoint = remoteEndpoint;
+    d_socket_sp            = datagramSocket;
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     NTCI_LOG_TRACE("Datagram socket opened descriptor %d",
                    (int)(d_publicHandle));
@@ -1990,13 +1992,14 @@ void DatagramSocket::processSourceEndpointResolution(
     }
 
     if (!error) {
-        error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+        error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
+        d_publicSourceEndpoint = d_systemSourceEndpoint;
     }
 
     ntca::BindEvent bindEvent;
     if (!error) {
         bindEvent.setType(ntca::BindEventType::e_COMPLETE);
-        bindContext.setEndpoint(d_sourceEndpoint);
+        bindContext.setEndpoint(d_systemSourceEndpoint);
     }
     else {
         bindEvent.setType(ntca::BindEventType::e_ERROR);
@@ -2061,12 +2064,14 @@ void DatagramSocket::processRemoteEndpointResolution(
 
     if (!error) {
         if (d_transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
-            if (d_sourceEndpoint.isImplicit()) {
+            if (d_systemSourceEndpoint.isImplicit()) {
                 error = d_socket_sp->bindAny(d_transport,
                                              d_options.reuseAddress());
 
                 if (!error) {
-                    error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+                    error = d_socket_sp->sourceEndpoint(
+                        &d_systemSourceEndpoint);
+                    d_publicSourceEndpoint = d_systemSourceEndpoint;
                 }
             }
         }
@@ -2077,17 +2082,20 @@ void DatagramSocket::processRemoteEndpointResolution(
     }
 
     if (!error) {
-        error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+        error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
+        d_publicSourceEndpoint = d_systemSourceEndpoint;
     }
 
     if (!error) {
-        error = d_socket_sp->remoteEndpoint(&d_remoteEndpoint);
+        error = d_socket_sp->remoteEndpoint(&d_systemRemoteEndpoint);
     }
+
+    d_publicRemoteEndpoint = d_systemRemoteEndpoint;
 
     ntca::ConnectEvent connectEvent;
     if (!error) {
         connectEvent.setType(ntca::ConnectEventType::e_COMPLETE);
-        connectContext.setEndpoint(d_sourceEndpoint);
+        connectContext.setEndpoint(d_systemSourceEndpoint);
     }
     else {
         connectEvent.setType(ntca::ConnectEventType::e_ERROR);
@@ -2115,7 +2123,7 @@ void DatagramSocket::privateClose(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (d_detachState.mode() == ntcs::DetachMode::e_INITIATED) {
         d_deferredCalls.push_back(NTCCFG_BIND(
@@ -2144,11 +2152,13 @@ DatagramSocket::DatagramSocket(
     bslma::Allocator*                          basicAllocator)
 : d_object("ntcp::DatagramSocket")
 , d_mutex()
-, d_systemHandle(ntsa::k_INVALID_HANDLE)
-, d_publicHandle(ntsa::k_INVALID_HANDLE)
 , d_transport(ntsa::Transport::e_UNDEFINED)
-, d_sourceEndpoint()
-, d_remoteEndpoint()
+, d_systemHandle(ntsa::k_INVALID_HANDLE)
+, d_systemSourceEndpoint()
+, d_systemRemoteEndpoint()
+, d_publicHandle(ntsa::k_INVALID_HANDLE)
+, d_publicSourceEndpoint()
+, d_publicRemoteEndpoint()
 , d_socket_sp()
 #if NTCP_DATAGRAMSOCKET_OBSERVE_BY_WEAK_PTR
 , d_resolver(bsl::weak_ptr<ntci::Resolver>(resolver))
@@ -2339,14 +2349,16 @@ ntsa::Error DatagramSocket::bind(const ntsa::Endpoint&     endpoint,
         return error;
     }
 
-    error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+    error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
     if (error) {
         return error;
     }
 
+    d_publicSourceEndpoint = d_systemSourceEndpoint;
+
     if (callback) {
         ntca::BindContext bindContext;
-        bindContext.setEndpoint(d_sourceEndpoint);
+        bindContext.setEndpoint(d_systemSourceEndpoint);
 
         ntca::BindEvent bindEvent;
         bindEvent.setType(ntca::BindEventType::e_COMPLETE);
@@ -2458,17 +2470,19 @@ ntsa::Error DatagramSocket::connect(const ntsa::Endpoint&        endpoint,
     }
 
     if (d_transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
-        if (d_sourceEndpoint.isImplicit()) {
+        if (d_systemSourceEndpoint.isImplicit()) {
             error =
                 d_socket_sp->bindAny(d_transport, d_options.reuseAddress());
             if (error) {
                 return error;
             }
 
-            error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+            error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
             if (error) {
                 return error;
             }
+
+            d_publicSourceEndpoint = d_systemSourceEndpoint;
         }
     }
 
@@ -2477,19 +2491,23 @@ ntsa::Error DatagramSocket::connect(const ntsa::Endpoint&        endpoint,
         return error;
     }
 
-    error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+    error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
     if (error) {
         return error;
     }
 
-    error = d_socket_sp->remoteEndpoint(&d_remoteEndpoint);
+    d_publicSourceEndpoint = d_systemSourceEndpoint;
+
+    error = d_socket_sp->remoteEndpoint(&d_systemRemoteEndpoint);
     if (error) {
         return error;
     }
+
+    d_publicRemoteEndpoint = d_systemRemoteEndpoint;
 
     if (callback) {
         ntca::ConnectContext connectContext;
-        connectContext.setEndpoint(d_remoteEndpoint);
+        connectContext.setEndpoint(d_systemRemoteEndpoint);
 
         ntca::ConnectEvent connectEvent;
         connectEvent.setType(ntca::ConnectEventType::e_COMPLETE);
@@ -2591,7 +2609,7 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (NTCCFG_UNLIKELY(NTCCFG_WARNING_PROMOTE(bsl::size_t, data.length()) >
                         d_maxDatagramSize))
@@ -2765,7 +2783,7 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (NTCCFG_UNLIKELY(data.size() > d_maxDatagramSize)) {
         return ntsa::Error::invalid();
@@ -2931,7 +2949,7 @@ ntsa::Error DatagramSocket::receive(ntca::ReceiveContext*       context,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     ntsa::Error error;
 
@@ -3009,7 +3027,7 @@ ntsa::Error DatagramSocket::receive(const ntca::ReceiveOptions&  options,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     ntsa::Error error;
 
@@ -3298,7 +3316,7 @@ ntsa::Error DatagramSocket::setWriteRateLimiter(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_sendRateLimiter_sp = rateLimiter;
 
@@ -3326,7 +3344,7 @@ ntsa::Error DatagramSocket::setWriteQueueLowWatermark(bsl::size_t lowWatermark)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_sendQueue.setLowWatermark(lowWatermark);
 
@@ -3361,7 +3379,7 @@ ntsa::Error DatagramSocket::setWriteQueueHighWatermark(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_sendQueue.setHighWatermark(highWatermark);
 
@@ -3396,7 +3414,7 @@ ntsa::Error DatagramSocket::setWriteQueueWatermarks(bsl::size_t lowWatermark,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_sendQueue.setLowWatermark(lowWatermark);
     d_sendQueue.setHighWatermark(highWatermark);
@@ -3460,7 +3478,7 @@ ntsa::Error DatagramSocket::setReadRateLimiter(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_receiveRateLimiter_sp = rateLimiter;
 
@@ -3488,7 +3506,7 @@ ntsa::Error DatagramSocket::setReadQueueLowWatermark(bsl::size_t lowWatermark)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_receiveQueue.setLowWatermark(lowWatermark);
 
@@ -3529,7 +3547,7 @@ ntsa::Error DatagramSocket::setReadQueueHighWatermark(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_receiveQueue.setHighWatermark(highWatermark);
 
@@ -3554,7 +3572,7 @@ ntsa::Error DatagramSocket::setReadQueueWatermarks(bsl::size_t lowWatermark,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     d_receiveQueue.setLowWatermark(lowWatermark);
     d_receiveQueue.setHighWatermark(highWatermark);
@@ -3651,7 +3669,7 @@ ntsa::Error DatagramSocket::relaxFlowControl(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     return this->privateRelaxFlowControl(self, direction, true, true);
 }
@@ -3667,7 +3685,7 @@ ntsa::Error DatagramSocket::applyFlowControl(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     if (direction == ntca::FlowControlType::e_SEND ||
         direction == ntca::FlowControlType::e_BOTH)
@@ -3713,8 +3731,8 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     ntci::SendCallback callback;
     ntca::SendContext  context;
@@ -3760,8 +3778,8 @@ ntsa::Error DatagramSocket::cancel(const ntca::ReceiveToken& token)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     bsl::shared_ptr<ntcq::ReceiveCallbackQueueEntry> callbackEntry;
     ntsa::Error                                      error =
@@ -3801,7 +3819,7 @@ ntsa::Error DatagramSocket::shutdown(ntsa::ShutdownType::Value direction,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     this->privateShutdown(self, direction, mode, true);
     return ntsa::Error();
@@ -3981,14 +3999,16 @@ ntsa::Transport::Value DatagramSocket::transport() const
 
 ntsa::Endpoint DatagramSocket::sourceEndpoint() const
 {
-    LockGuard lock(&d_mutex);
-    return d_sourceEndpoint;
+    ntsa::Endpoint result;
+    d_publicSourceEndpoint.load(&result);
+    return result;
 }
 
 ntsa::Endpoint DatagramSocket::remoteEndpoint() const
 {
-    LockGuard lock(&d_mutex);
-    return d_remoteEndpoint;
+    ntsa::Endpoint result;
+    d_publicRemoteEndpoint.load(&result);
+    return result;
 }
 
 const bsl::shared_ptr<ntci::Strand>& DatagramSocket::strand() const

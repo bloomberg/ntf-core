@@ -30,10 +30,64 @@ class PlatformTest
 {
   public:
     // TODO
-    static void verify();
+    static void verifySafeInt();
+
+    // TODO
+    static void verifySafeString();
 };
 
-NTSCFG_TEST_FUNCTION(ntccfg::PlatformTest::verify)
+NTSCFG_TEST_FUNCTION(ntccfg::PlatformTest::verifySafeInt)
+{
+    // Default constructor.
+
+    {
+        ntccfg::Safe<int> s1(NTSCFG_TEST_ALLOCATOR);
+
+        int v1 = 1;
+        s1.load(&v1);
+        NTSCFG_TEST_EQ(v1, 0);
+    }
+
+    // Value constructor.
+
+    {
+        ntccfg::Safe<int> s1(1, NTSCFG_TEST_ALLOCATOR);
+        ntccfg::Safe<int> s2(2, NTSCFG_TEST_ALLOCATOR);
+
+        {
+            int v1 = 0;
+            s1.load(&v1);
+            NTSCFG_TEST_EQ(v1, 1);
+        }
+
+        {
+            int v2 = 0;
+            s2.load(&v2);
+            NTSCFG_TEST_EQ(v2, 2);
+        }
+    }
+
+    // Copy constructor.
+
+    {
+        ntccfg::Safe<int> s1(1, NTSCFG_TEST_ALLOCATOR);
+        ntccfg::Safe<int> s2(s1, NTSCFG_TEST_ALLOCATOR);
+
+        {
+            int v1 = 0;
+            s1.load(&v1);
+            NTSCFG_TEST_EQ(v1, 1);
+        }
+
+        {
+            int v2 = 0;
+            s2.load(&v2);
+            NTSCFG_TEST_EQ(v2, 1);
+        }
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntccfg::PlatformTest::verifySafeString)
 {
 }
 

@@ -76,11 +76,13 @@ class DatagramSocket : public ntci::DatagramSocket,
 
     ntccfg::Object                               d_object;
     mutable Mutex                                d_mutex;
-    ntsa::Handle                                 d_systemHandle;
-    ntsa::Handle                                 d_publicHandle;
     ntsa::Transport::Value                       d_transport;
-    ntsa::Endpoint                               d_sourceEndpoint;
-    ntsa::Endpoint                               d_remoteEndpoint;
+    ntsa::Handle                                 d_systemHandle;
+    ntsa::Endpoint                               d_systemSourceEndpoint;
+    ntsa::Endpoint                               d_systemRemoteEndpoint;
+    ntsa::Handle                                 d_publicHandle;
+    ntccfg::Safe<ntsa::Endpoint>                 d_publicSourceEndpoint;
+    ntccfg::Safe<ntsa::Endpoint>                 d_publicRemoteEndpoint;
     bsl::shared_ptr<ntsi::DatagramSocket>        d_socket_sp;
     ntcs::Observer<ntci::Resolver>               d_resolver;
     ntcs::Observer<ntci::Proactor>               d_proactor;
