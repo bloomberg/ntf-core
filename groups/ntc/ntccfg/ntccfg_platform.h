@@ -225,6 +225,142 @@ NTCCFG_INLINE bsl::shared_ptr<TYPE> Shared<TYPE>::getSelf(TYPE* self)
     return sharedSelf;
 }
 
+/// Provide thread-safe storage of a modifiable value of a parameterized type.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntccfg
+template <typename TYPE>
+class Safe 
+{
+    mutable ntccfg::Mutex          d_mutex;
+    bslalg::ConstructorProxy<TYPE> d_proxy;
+
+public:
+    /// Create new safe storage for the parameterized 'TYPE' initially having
+    /// the value of a the default-constructed 'TYPE'. Optionally specify a 
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    /// currently installed default allocator is used.
+    explicit Safe(bslma::Allocator* basicAllocator = 0);
+
+    /// Create new safe storage for the parameterized 'TYPE' initially having
+    /// the specified 'value'. Optionally specify a 'basicAllocator' used to
+    /// supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used.
+    explicit Safe(const TYPE& value, bslma::Allocator* basicAllocator = 0);
+
+    /// Create new safe storage for the parameterized 'TYPE' having the same
+    /// value as the specified 'original' object. Optionally specify a 
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is 0, the 
+    /// currently installed default allocator is used.
+    Safe(const Safe& original, bslma::Allocator* basicAllocator = 0);
+
+    /// Destroy this object.
+    ~Safe();
+
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object.
+    Safe& operator=(const Safe& other);
+
+    /// Assign the specified 'value' to this object. Return a reference to this
+    /// modifiable object.
+    Safe& operator=(const TYPE& value);
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
+
+    /// Assign the value of the specified 'other' object to this object.
+    void store(const Safe& other);
+
+    /// Assign the specified 'value' to this object.
+    void store(const TYPE& value);
+
+    /// Load the value of this object into the specified 'result'.
+    void load(TYPE* result) const;
+};
+
+template <typename TYPE>
+Safe<TYPE>::Safe(bslma::Allocator* basicAllocator)
+: d_mutex()
+, d_proxy(basicAllocator)
+{
+}
+
+template <typename TYPE>
+Safe<TYPE>::Safe(const TYPE& value, bslma::Allocator* basicAllocator)
+: d_mutex()
+, d_proxy(basicAllocator)
+{
+    this->store(value);
+}
+
+template <typename TYPE>
+Safe<TYPE>::Safe(const Safe& original, bslma::Allocator* basicAllocator)
+: d_mutex()
+, d_proxy(basicAllocator)
+{
+    this->store(original);
+}
+
+template <typename TYPE>
+Safe<TYPE>::~Safe()
+{
+}
+
+template <typename TYPE>
+Safe<TYPE>& Safe<TYPE>::operator=(const Safe& other)
+{
+    if (this != &other) {
+        this->store(other);
+    }
+
+    return *this;
+}
+
+template <typename TYPE>
+Safe<TYPE>& Safe<TYPE>::operator=(const TYPE& value)
+{
+    this->store(value);
+    return *this;
+}
+
+template <typename TYPE>
+void Safe<TYPE>::reset()
+{
+    ntccfg::LockGuard lock(&d_mutex);
+    d_proxy.object() = TYPE();
+}
+
+template <typename TYPE>
+void Safe<TYPE>::store(const Safe& other)
+{
+    if (&d_mutex < &other.d_mutex) {
+        ntccfg::LockGuard lock1(&d_mutex);
+        ntccfg::LockGuard lock2(&other.d_mutex);
+        d_proxy.object() = other.d_proxy.object();
+    }
+    else {
+        ntccfg::LockGuard lock1(&other.d_mutex);
+        ntccfg::LockGuard lock2(&d_mutex);
+        d_proxy.object() = other.d_proxy.object();
+    }
+}
+
+template <typename TYPE>
+void Safe<TYPE>::store(const TYPE& value)
+{
+    ntccfg::LockGuard lock(&d_mutex);
+    d_proxy.object() = value;
+}
+
+template <typename TYPE>
+void Safe<TYPE>::load(TYPE* result) const
+{
+    ntccfg::LockGuard lock(&d_mutex);
+    *result = d_proxy.object();
+}
+
 }  // close package namespace
 }  // close enterprise namespace
 #endif

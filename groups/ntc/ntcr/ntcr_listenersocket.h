@@ -75,10 +75,11 @@ class ListenerSocket : public ntci::ListenerSocket,
 
     ntccfg::Object                               d_object;
     mutable Mutex                                d_mutex;
-    ntsa::Handle                                 d_systemHandle;
-    ntsa::Handle                                 d_publicHandle;
     ntsa::Transport::Value                       d_transport;
-    ntsa::Endpoint                               d_sourceEndpoint;
+    ntsa::Handle                                 d_systemHandle;
+    ntsa::Endpoint                               d_systemSourceEndpoint;
+    ntsa::Handle                                 d_publicHandle;
+    ntccfg::Safe<ntsa::Endpoint>                 d_publicSourceEndpoint;
     bsl::shared_ptr<ntsi::ListenerSocket>        d_socket_sp;
     ntcs::Observer<ntci::Resolver>               d_resolver;
     ntcs::Observer<ntci::Reactor>                d_reactor;

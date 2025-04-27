@@ -293,8 +293,8 @@ void StreamSocket::processSocketReadable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (NTCCFG_UNLIKELY(d_detachState.mode() ==
                         ntcs::DetachMode::e_INITIATED))
@@ -351,8 +351,8 @@ void StreamSocket::processSocketWritable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (NTCCFG_UNLIKELY(d_detachState.mode() ==
                         ntcs::DetachMode::e_INITIATED))
@@ -412,8 +412,8 @@ void StreamSocket::processSocketError(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (NTCCFG_UNLIKELY(d_detachState.mode() ==
                         ntcs::DetachMode::e_INITIATED))
@@ -444,7 +444,7 @@ void StreamSocket::processNotifications(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
     typedef bsl::vector<ntsa::Notification>::const_iterator
         NotificationIterator;
@@ -483,8 +483,8 @@ void StreamSocket::processConnectDeadlineTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         if (NTCCFG_UNLIKELY(d_detachState.mode() ==
@@ -525,8 +525,8 @@ void StreamSocket::processConnectRetryTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         if (d_connectInProgress) {
@@ -566,8 +566,8 @@ void StreamSocket::processUpgradeTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         if (d_upgradeInProgress) {
@@ -593,8 +593,8 @@ void StreamSocket::processSendRateTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         NTCR_STREAMSOCKET_LOG_SEND_BUFFER_THROTTLE_RELAXED();
@@ -638,8 +638,8 @@ void StreamSocket::processSendDeadlineTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         ntci::SendCallback callback;
@@ -688,8 +688,8 @@ void StreamSocket::processReceiveRateTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         NTCR_STREAMSOCKET_LOG_RECEIVE_BUFFER_THROTTLE_RELAXED();
@@ -733,8 +733,8 @@ void StreamSocket::processReceiveDeadlineTimer(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         ntsa::Error error = d_receiveQueue.removeCallbackEntry(entry);
@@ -742,7 +742,7 @@ void StreamSocket::processReceiveDeadlineTimer(
             ntca::ReceiveContext receiveContext;
             receiveContext.setError(ntsa::Error(ntsa::Error::e_WOULD_BLOCK));
             receiveContext.setTransport(d_transport);
-            receiveContext.setEndpoint(d_remoteEndpoint);
+            receiveContext.setEndpoint(d_systemRemoteEndpoint);
 
             ntca::ReceiveEvent receiveEvent;
             receiveEvent.setType(ntca::ReceiveEventType::e_ERROR);
@@ -862,7 +862,7 @@ ntsa::Error StreamSocket::privateSocketReadableIteration(
 
         ntca::ReceiveContext receiveContext;
         receiveContext.setTransport(d_transport);
-        receiveContext.setEndpoint(d_remoteEndpoint);
+        receiveContext.setEndpoint(d_systemRemoteEndpoint);
 
         while (true) {
             ntcq::ReceiveQueueEntry& entry = d_receiveQueue.frontEntry();
@@ -1006,7 +1006,7 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
         lastError = ntsa::Error::invalid();
     }
 
-    error = d_socket_sp->remoteEndpoint(&d_remoteEndpoint);
+    error = d_socket_sp->remoteEndpoint(&d_systemRemoteEndpoint);
     if (NTCCFG_UNLIKELY(error)) {
         if (lastError == ntsa::Error::invalid()) {
             lastError = error;
@@ -1016,7 +1016,9 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
         return lastError;
     }
 
-    error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+    d_publicRemoteEndpoint = d_systemRemoteEndpoint;
+
+    error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
     if (NTCCFG_UNLIKELY(error)) {
         NTCS_METRICS_UPDATE_CONNECT_FAILURE();
 
@@ -1027,6 +1029,8 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
         this->privateFailConnect(self, lastError, false, false);
         return lastError;
     }
+
+    d_publicSourceEndpoint = d_systemSourceEndpoint;
 
     {
         bsl::size_t sendBufferSize;
@@ -1071,8 +1075,8 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
 
     NTCS_METRICS_UPDATE_CONNECT_COMPLETE();
 
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     bsls::TimeInterval now = this->currentTime();
 
@@ -2226,7 +2230,7 @@ void StreamSocket::privateShutdownSequenceComplete(
             ntca::ReceiveContext receiveContext;
             receiveContext.setError(ntsa::Error(ntsa::Error::e_EOF));
             receiveContext.setTransport(d_transport);
-            receiveContext.setEndpoint(d_remoteEndpoint);
+            receiveContext.setEndpoint(d_systemRemoteEndpoint);
 
             ntca::ReceiveEvent receiveEvent;
             receiveEvent.setType(ntca::ReceiveEventType::e_ERROR);
@@ -3988,22 +3992,24 @@ ntsa::Error StreamSocket::privateOpen(
         }
     }
 
-    d_systemHandle   = handle;
-    d_publicHandle   = handle;
-    d_transport      = transport;
-    d_sourceEndpoint = sourceEndpoint;
-    d_remoteEndpoint = remoteEndpoint;
-    d_socket_sp      = streamSocket;
-    d_acceptor_sp    = acceptor;
+    d_transport            = transport;
+    d_systemHandle         = handle;
+    d_systemSourceEndpoint = sourceEndpoint;
+    d_systemRemoteEndpoint = remoteEndpoint;
+    d_publicHandle         = handle;
+    d_publicSourceEndpoint = sourceEndpoint;
+    d_publicRemoteEndpoint = remoteEndpoint;
+    d_socket_sp            = streamSocket;
+    d_acceptor_sp          = acceptor;
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     NTCI_LOG_TRACE("Stream socket opened descriptor %d",
                    (int)(d_publicHandle));
 
-    if (!d_remoteEndpoint.isUndefined()) {
+    if (!d_systemRemoteEndpoint.isUndefined()) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (!reactorRef) {
             return ntsa::Error(ntsa::Error::e_INVALID);
@@ -4085,13 +4091,15 @@ void StreamSocket::processSourceEndpointResolution(
     }
 
     if (!error) {
-        error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+        error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
     }
+
+    d_publicSourceEndpoint = d_systemSourceEndpoint;
 
     ntca::BindEvent bindEvent;
     if (!error) {
         bindEvent.setType(ntca::BindEventType::e_COMPLETE);
-        bindContext.setEndpoint(d_sourceEndpoint);
+        bindContext.setEndpoint(d_systemSourceEndpoint);
     }
     else {
         bindEvent.setType(ntca::BindEventType::e_ERROR);
@@ -4182,12 +4190,13 @@ void StreamSocket::processRemoteEndpointResolution(
 
     if (!error) {
         if (d_transport == ntsa::Transport::e_LOCAL_STREAM) {
-            if (d_sourceEndpoint.isImplicit()) {
+            if (d_systemSourceEndpoint.isImplicit()) {
                 error = d_socket_sp->bindAny(d_transport,
                                              d_options.reuseAddress());
 
                 if (!error) {
-                    error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+                    error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
+                    d_publicSourceEndpoint = d_systemSourceEndpoint;
                 }
             }
         }
@@ -4203,7 +4212,8 @@ void StreamSocket::processRemoteEndpointResolution(
     }
 
     if (!error) {
-        error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+        error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
+        d_publicSourceEndpoint = d_systemSourceEndpoint;
     }
 
     if (!error) {
@@ -4370,8 +4380,10 @@ void StreamSocket::privateRetryConnect(
         return;
     }
 
-    d_sourceEndpoint.reset();
-    d_remoteEndpoint.reset();
+    d_systemSourceEndpoint.reset();
+    d_systemRemoteEndpoint.reset();
+    d_publicSourceEndpoint.reset();
+    d_publicRemoteEndpoint.reset();
 
     d_flowControlState.reset();
     d_shutdownState.reset();
@@ -4456,17 +4468,19 @@ ntsa::Error StreamSocket::privateRetryConnectToEndpoint(
     }
 
     if (d_transport == ntsa::Transport::e_LOCAL_STREAM) {
-        if (d_sourceEndpoint.isImplicit()) {
+        if (d_systemSourceEndpoint.isImplicit()) {
             error =
                 d_socket_sp->bindAny(d_transport, d_options.reuseAddress());
             if (error) {
                 return error;
             }
 
-            error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+            error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
             if (error) {
                 return error;
             }
+
+            d_publicSourceEndpoint = d_systemSourceEndpoint;
         }
     }
 
@@ -4479,10 +4493,12 @@ ntsa::Error StreamSocket::privateRetryConnectToEndpoint(
         }
     }
 
-    error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+    error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
     if (error) {
         return error;
     }
+
+    d_publicSourceEndpoint = d_systemSourceEndpoint;
 
     ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
     if (!reactorRef) {
@@ -4511,8 +4527,8 @@ ntsa::Error StreamSocket::privateTimestampOutgoingData(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     ntsa::Error error;
 
@@ -4603,8 +4619,8 @@ ntsa::Error StreamSocket::privateTimestampIncomingData(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     ntsa::Error error;
 
@@ -4719,8 +4735,8 @@ ntsa::Error StreamSocket::privateZeroCopyEngage(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     ntsa::Error error;
 
@@ -4813,8 +4829,8 @@ void StreamSocket::privateClose(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (d_detachState.mode() == ntcs::DetachMode::e_INITIATED) {
         d_deferredCalls.push_back(NTCCFG_BIND(
@@ -4854,11 +4870,13 @@ StreamSocket::StreamSocket(
     bslma::Allocator*                         basicAllocator)
 : d_object("ntcr::StreamSocket")
 , d_mutex()
-, d_systemHandle(ntsa::k_INVALID_HANDLE)
-, d_publicHandle(ntsa::k_INVALID_HANDLE)
 , d_transport(ntsa::Transport::e_UNDEFINED)
-, d_sourceEndpoint()
-, d_remoteEndpoint()
+, d_systemHandle(ntsa::k_INVALID_HANDLE)
+, d_systemSourceEndpoint()
+, d_systemRemoteEndpoint()
+, d_publicHandle(ntsa::k_INVALID_HANDLE)
+, d_publicSourceEndpoint()
+, d_publicRemoteEndpoint()
 , d_socket_sp()
 , d_acceptor_sp()
 , d_encryption_sp()
@@ -5127,14 +5145,16 @@ ntsa::Error StreamSocket::bind(const ntsa::Endpoint&     endpoint,
         return error;
     }
 
-    error = d_socket_sp->sourceEndpoint(&d_sourceEndpoint);
+    error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
     if (error) {
         return error;
     }
 
+    d_publicSourceEndpoint = d_systemSourceEndpoint;
+
     if (callback) {
         ntca::BindContext bindContext;
-        bindContext.setEndpoint(d_sourceEndpoint);
+        bindContext.setEndpoint(d_systemSourceEndpoint);
 
         ntca::BindEvent bindEvent;
         bindEvent.setType(ntca::BindEventType::e_COMPLETE);
@@ -5235,7 +5255,7 @@ ntsa::Error StreamSocket::connect(const ntsa::Endpoint&        endpoint,
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (!d_remoteEndpoint.isUndefined()) {
+    if (!d_systemRemoteEndpoint.isUndefined()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -5372,7 +5392,7 @@ ntsa::Error StreamSocket::connect(const bsl::string&           name,
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (!d_remoteEndpoint.isUndefined()) {
+    if (!d_systemRemoteEndpoint.isUndefined()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -5482,8 +5502,8 @@ ntsa::Error StreamSocket::upgrade(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     ntsa::Error error;
 
@@ -5639,8 +5659,8 @@ ntsa::Error StreamSocket::send(const bdlbb::Blob&        data,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     ntsa::Error error;
 
@@ -5762,8 +5782,8 @@ ntsa::Error StreamSocket::send(const ntsa::Data&         data,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     ntsa::Error error;
 
@@ -5876,8 +5896,8 @@ ntsa::Error StreamSocket::receive(ntca::ReceiveContext*       context,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     ntsa::Error error;
 
@@ -5906,7 +5926,7 @@ ntsa::Error StreamSocket::receive(ntca::ReceiveContext*       context,
         bsl::size_t numBytesDequeued  = 0;
 
         context->setTransport(d_transport);
-        context->setEndpoint(d_remoteEndpoint);
+        context->setEndpoint(d_systemRemoteEndpoint);
 
         while (NTCCFG_LIKELY(d_receiveQueue.hasEntry())) {
             ntcq::ReceiveQueueEntry& entry = d_receiveQueue.frontEntry();
@@ -6012,8 +6032,8 @@ ntsa::Error StreamSocket::receive(const ntca::ReceiveOptions&  options,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     ntsa::Error error;
 
@@ -6047,7 +6067,7 @@ ntsa::Error StreamSocket::receive(const ntca::ReceiveOptions&  options,
 
         ntca::ReceiveContext receiveContext;
         receiveContext.setTransport(d_transport);
-        receiveContext.setEndpoint(d_remoteEndpoint);
+        receiveContext.setEndpoint(d_systemRemoteEndpoint);
 
         while (NTCCFG_LIKELY(d_receiveQueue.hasEntry())) {
             ntcq::ReceiveQueueEntry& entry = d_receiveQueue.frontEntry();
@@ -6366,8 +6386,8 @@ ntsa::Error StreamSocket::setWriteRateLimiter(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     d_sendRateLimiter_sp = rateLimiter;
 
@@ -6395,8 +6415,8 @@ ntsa::Error StreamSocket::setWriteQueueLowWatermark(bsl::size_t lowWatermark)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     d_sendQueue.setLowWatermark(lowWatermark);
 
@@ -6434,8 +6454,8 @@ ntsa::Error StreamSocket::setWriteQueueHighWatermark(bsl::size_t highWatermark)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     d_sendQueue.setHighWatermark(highWatermark);
 
@@ -6474,8 +6494,8 @@ ntsa::Error StreamSocket::setWriteQueueWatermarks(bsl::size_t lowWatermark,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     d_sendQueue.setLowWatermark(lowWatermark);
     d_sendQueue.setHighWatermark(highWatermark);
@@ -6547,8 +6567,8 @@ ntsa::Error StreamSocket::setReadRateLimiter(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     d_receiveRateLimiter_sp = rateLimiter;
 
@@ -6576,8 +6596,8 @@ ntsa::Error StreamSocket::setReadQueueLowWatermark(bsl::size_t lowWatermark)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     d_receiveQueue.setLowWatermark(lowWatermark);
 
@@ -6617,8 +6637,8 @@ ntsa::Error StreamSocket::setReadQueueHighWatermark(bsl::size_t highWatermark)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     d_receiveQueue.setHighWatermark(highWatermark);
 
@@ -6643,8 +6663,8 @@ ntsa::Error StreamSocket::setReadQueueWatermarks(bsl::size_t lowWatermark,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     d_receiveQueue.setLowWatermark(lowWatermark);
     d_receiveQueue.setHighWatermark(highWatermark);
@@ -6695,8 +6715,8 @@ ntsa::Error StreamSocket::relaxFlowControl(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     return this->privateRelaxFlowControl(self, direction, true, true);
 }
@@ -6712,8 +6732,8 @@ ntsa::Error StreamSocket::applyFlowControl(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (direction == ntca::FlowControlType::e_SEND ||
         direction == ntca::FlowControlType::e_BOTH)
@@ -6754,8 +6774,8 @@ ntsa::Error StreamSocket::cancel(const ntca::ConnectToken& token)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (d_connectInProgress) {
         this->privateFailConnect(self,
@@ -6780,8 +6800,8 @@ ntsa::Error StreamSocket::cancel(const ntca::UpgradeToken& token)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (d_upgradeInProgress) {
         ntca::UpgradeContext upgradeContext;
@@ -6829,8 +6849,8 @@ ntsa::Error StreamSocket::cancel(const ntca::SendToken& token)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     ntci::SendCallback callback;
     ntca::SendContext  context;
@@ -6876,8 +6896,8 @@ ntsa::Error StreamSocket::cancel(const ntca::ReceiveToken& token)
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     bsl::shared_ptr<ntcq::ReceiveCallbackQueueEntry> callbackEntry;
     ntsa::Error                                      error =
@@ -6886,7 +6906,7 @@ ntsa::Error StreamSocket::cancel(const ntca::ReceiveToken& token)
         ntca::ReceiveContext receiveContext;
         receiveContext.setError(ntsa::Error(ntsa::Error::e_CANCELLED));
         receiveContext.setTransport(d_transport);
-        receiveContext.setEndpoint(d_remoteEndpoint);
+        receiveContext.setEndpoint(d_systemRemoteEndpoint);
 
         ntca::ReceiveEvent receiveEvent;
         receiveEvent.setType(ntca::ReceiveEventType::e_ERROR);
@@ -6917,8 +6937,8 @@ ntsa::Error StreamSocket::downgrade()
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (!d_encryption_sp) {
         return ntsa::Error::invalid();
@@ -7012,8 +7032,8 @@ ntsa::Error StreamSocket::shutdown(ntsa::ShutdownType::Value direction,
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_sourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_remoteEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (d_detachState.mode() == ntcs::DetachMode::e_INITIATED) {
         d_deferredCalls.push_back(
@@ -7213,14 +7233,16 @@ ntsa::Transport::Value StreamSocket::transport() const
 
 ntsa::Endpoint StreamSocket::sourceEndpoint() const
 {
-    LockGuard lock(&d_mutex);
-    return d_sourceEndpoint;
+    ntsa::Endpoint result;
+    d_publicSourceEndpoint.load(&result);
+    return result;
 }
 
 ntsa::Endpoint StreamSocket::remoteEndpoint() const
 {
-    LockGuard lock(&d_mutex);
-    return d_remoteEndpoint;
+    ntsa::Endpoint result;
+    d_publicRemoteEndpoint.load(&result);
+    return result;
 }
 
 bsl::shared_ptr<ntci::EncryptionCertificate> StreamSocket::sourceCertificate()
