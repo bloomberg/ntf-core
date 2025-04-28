@@ -36,7 +36,7 @@ BSLS_IDENT("$Id: $")
 /// NTS release patch version.
 ///
 /// @ingroup module_ntsscm
-#define NTS_VERSION_PATCH 5
+#define NTS_VERSION_PATCH 6
 
 /// Construct a composite version number in the range [ 0 .. 999900 ] from
 /// the specified 'NTS_VERSION_MAJOR' and 'NTS_VERSION_MINOR' numbers
