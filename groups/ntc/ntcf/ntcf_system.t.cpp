@@ -6595,65 +6595,370 @@ void SystemTest::concernClose(
     ntsa::Error      error;
     bslmt::Semaphore semaphore;
 
-    ntca::StreamSocketOptions streamSocketOptions;
-    streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    // Test closing a datagram socket immediately after creating it, without
+    // either opening or binding it.
+
+    {
+        ntca::DatagramSocketOptions datagramSocketOptions;
+        datagramSocketOptions.setTransport(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::shared_ptr<ntci::DatagramSocket> datagramSocket =
+            scheduler->createDatagramSocket(datagramSocketOptions, allocator);
+
+        ntci::DatagramSocketCloseGuard closeGuard(datagramSocket);
+    }
+
+    // Test closing a datagram socket after opening it, without binding it.
+
+    {
+        ntca::DatagramSocketOptions datagramSocketOptions;
+        datagramSocketOptions.setTransport(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+        bsl::shared_ptr<ntci::DatagramSocket> datagramSocket =
+            scheduler->createDatagramSocket(datagramSocketOptions, allocator);
+
+        error = datagramSocket->open();
+        NTSCFG_TEST_OK(error);
+
+        ntci::DatagramSocketCloseGuard closeGuard(datagramSocket);
+    }
+
+    // Test closing a datagram socket after opening it but failing to bind it,
+    // when implicitly binding the socket as its opened.
+
+    {
+        bsl::shared_ptr<ntsi::DatagramSocket> basicDatagramSocket = 
+            ntsf::System::createDatagramSocket(allocator);
+
+        error = basicDatagramSocket->open(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        NTSCFG_TEST_OK(error);
+
+        error = basicDatagramSocket->bindAny(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM, false);
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint basicDatagramSocketEndpoint;
+        error = basicDatagramSocket->sourceEndpoint(
+            &basicDatagramSocketEndpoint);
+        NTSCFG_TEST_OK(error);
+
+        ntca::DatagramSocketOptions datagramSocketOptions;
+        datagramSocketOptions.setTransport(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        datagramSocketOptions.setSourceEndpoint(basicDatagramSocketEndpoint);
+        datagramSocketOptions.setReuseAddress(false);
+
+        bsl::shared_ptr<ntci::DatagramSocket> datagramSocket =
+            scheduler->createDatagramSocket(datagramSocketOptions, allocator);
+
+        error = datagramSocket->open();
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
+
+        ntci::DatagramSocketCloseGuard closeGuard(datagramSocket);
+    }
+
+    // Test closing a datagram socket after opening it but failing to bind it,
+    // when explicitly binding the socket after it is opened.
+
+    {
+        bsl::shared_ptr<ntsi::DatagramSocket> basicDatagramSocket = 
+            ntsf::System::createDatagramSocket(allocator);
+
+        error = basicDatagramSocket->open(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        NTSCFG_TEST_OK(error);
+
+        error = basicDatagramSocket->bindAny(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM, false);
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint basicDatagramSocketEndpoint;
+        error = basicDatagramSocket->sourceEndpoint(
+            &basicDatagramSocketEndpoint);
+        NTSCFG_TEST_OK(error);
+
+        ntca::DatagramSocketOptions datagramSocketOptions;
+        datagramSocketOptions.setTransport(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        datagramSocketOptions.setReuseAddress(false);
+
+        bsl::shared_ptr<ntci::DatagramSocket> datagramSocket =
+            scheduler->createDatagramSocket(datagramSocketOptions, allocator);
+
+        error = datagramSocket->open();
+        NTSCFG_TEST_OK(error);
+
+        ntca::BindOptions bindOptions;
+        ntci::BindFuture  bindFuture;
+
+        error = datagramSocket->bind(
+            basicDatagramSocketEndpoint, bindOptions, bindFuture);
+        if (error) {
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
+        }
+        else {
+            ntci::BindResult bindResult;
+            error = bindFuture.wait(&bindResult);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_EQ(bindResult.event().context().error(), 
+                           ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
+        }
+
+        ntci::DatagramSocketCloseGuard closeGuard(datagramSocket);
+    }
 
     // Test closing a stream socket immediately after creating it, without
     // either opening or connecting it.
 
-    NTCI_LOG_DEBUG("Testing close immediately after creation");
-
     {
-        bsl::shared_ptr<ntci::StreamSocket> clientSocket =
+        ntca::StreamSocketOptions streamSocketOptions;
+        streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::shared_ptr<ntci::StreamSocket> streamSocket =
             scheduler->createStreamSocket(streamSocketOptions, allocator);
 
-        ntci::StreamSocketCloseGuard closeGuard(clientSocket);
+        ntci::StreamSocketCloseGuard closeGuard(streamSocket);
     }
 
     // Test closing a stream socket after opening it, without connecting
     // it.
 
-    NTCI_LOG_DEBUG("Testing close without connect");
-
     {
-        bsl::shared_ptr<ntci::StreamSocket> clientSocket =
+        ntca::StreamSocketOptions streamSocketOptions;
+        streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::shared_ptr<ntci::StreamSocket> streamSocket =
             scheduler->createStreamSocket(streamSocketOptions, allocator);
 
-        error = clientSocket->open();
+        error = streamSocket->open();
         NTSCFG_TEST_OK(error);
 
-        ntci::StreamSocketCloseGuard closeGuard(clientSocket);
+        ntci::StreamSocketCloseGuard closeGuard(streamSocket);
     }
 
     // Test closing a stream socket during the connection in progress.
 
-    NTCI_LOG_DEBUG("Testing close during connect");
-
     {
-        bsl::shared_ptr<ntci::StreamSocket> clientSocket =
+        ntca::StreamSocketOptions streamSocketOptions;
+        streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::shared_ptr<ntci::StreamSocket> streamSocket =
             scheduler->createStreamSocket(streamSocketOptions, allocator);
 
         ntca::ConnectOptions connectOptions;
 
         bslmt::Semaphore      semaphore;
         ntci::ConnectCallback connectCallback =
-            clientSocket->createConnectCallback(
+        streamSocket->createConnectCallback(
                 NTCCFG_BIND(&test::CloseUtil::processConnect,
                             NTCCFG_BIND_PLACEHOLDER_1,
                             NTCCFG_BIND_PLACEHOLDER_2,
                             &semaphore));
 
-        error = clientSocket->connect(ntsa::Endpoint("169.254.177.13:1024"),
+        error = streamSocket->connect(ntsa::Endpoint("169.254.177.13:1024"),
                                       connectOptions,
                                       connectCallback);
         NTSCFG_TEST_OK(error);
 
         {
-            clientSocket->close();
-            // ntci::StreamSocketCloseGuard closeGuard(clientSocket);
+            streamSocket->close();
+            // ntci::StreamSocketCloseGuard closeGuard(streamSocket);
         }
 
         semaphore.wait();
+    }
+
+    // Test closing a stream socket after opening it but failing to bind it,
+    // when implicitly binding the socket as its opened.
+
+    {
+        bsl::shared_ptr<ntsi::StreamSocket> basicStreamSocket = 
+            ntsf::System::createStreamSocket(allocator);
+
+        error = basicStreamSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+        NTSCFG_TEST_OK(error);
+
+        error = basicStreamSocket->bindAny(
+            ntsa::Transport::e_TCP_IPV4_STREAM, false);
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint basicStreamSocketEndpoint;
+        error = basicStreamSocket->sourceEndpoint(
+            &basicStreamSocketEndpoint);
+        NTSCFG_TEST_OK(error);
+
+        ntca::StreamSocketOptions streamSocketOptions;
+        streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+        streamSocketOptions.setSourceEndpoint(basicStreamSocketEndpoint);
+        streamSocketOptions.setReuseAddress(false);
+
+        bsl::shared_ptr<ntci::StreamSocket> streamSocket =
+            scheduler->createStreamSocket(streamSocketOptions, allocator);
+
+        error = streamSocket->open();
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
+
+        ntci::StreamSocketCloseGuard closeGuard(streamSocket);
+    }
+
+    // Test closing a stream socket after opening it but failing to bind it,
+    // when explicitly binding the socket after it is opened.
+
+    {
+        bsl::shared_ptr<ntsi::StreamSocket> basicStreamSocket = 
+            ntsf::System::createStreamSocket(allocator);
+
+        error = basicStreamSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+        NTSCFG_TEST_OK(error);
+
+        error = basicStreamSocket->bindAny(
+            ntsa::Transport::e_TCP_IPV4_STREAM, false);
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint basicStreamSocketEndpoint;
+        error = basicStreamSocket->sourceEndpoint(
+            &basicStreamSocketEndpoint);
+        NTSCFG_TEST_OK(error);
+
+        ntca::StreamSocketOptions streamSocketOptions;
+        streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+        streamSocketOptions.setReuseAddress(false);
+
+        bsl::shared_ptr<ntci::StreamSocket> streamSocket =
+            scheduler->createStreamSocket(streamSocketOptions, allocator);
+
+        error = streamSocket->open();
+        NTSCFG_TEST_OK(error);
+
+        ntca::BindOptions bindOptions;
+        ntci::BindFuture  bindFuture;
+
+        error = streamSocket->bind(
+            basicStreamSocketEndpoint, bindOptions, bindFuture);
+        if (error) {
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
+        }
+        else {
+            ntci::BindResult bindResult;
+            error = bindFuture.wait(&bindResult);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_EQ(bindResult.event().context().error(), 
+                           ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
+        }
+
+        ntci::StreamSocketCloseGuard closeGuard(streamSocket);
+    }
+    
+    // Test closing a listener socket immediately after creating it, without
+    // either opening or connecting it.
+
+    {
+        ntca::ListenerSocketOptions listenerSocketOptions;
+        listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+            scheduler->createListenerSocket(listenerSocketOptions, allocator);
+
+        ntci::ListenerSocketCloseGuard closeGuard(listenerSocket);
+    }
+
+    // Test closing a listener socket after opening it, without binding it.
+
+    {
+        ntca::ListenerSocketOptions listenerSocketOptions;
+        listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+            scheduler->createListenerSocket(listenerSocketOptions, allocator);
+
+        error = listenerSocket->open();
+        NTSCFG_TEST_OK(error);
+
+        ntci::ListenerSocketCloseGuard closeGuard(listenerSocket);
+    }
+
+    // Test closing a listener socket after opening it but failing to bind it,
+    // when implicitly binding the socket as its opened.
+
+    {
+        bsl::shared_ptr<ntsi::ListenerSocket> basicListenerSocket = 
+            ntsf::System::createListenerSocket(allocator);
+
+        error = basicListenerSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+        NTSCFG_TEST_OK(error);
+
+        error = basicListenerSocket->bindAny(
+            ntsa::Transport::e_TCP_IPV4_STREAM, false);
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint basicListenerSocketEndpoint;
+        error = basicListenerSocket->sourceEndpoint(
+            &basicListenerSocketEndpoint);
+        NTSCFG_TEST_OK(error);
+
+        ntca::ListenerSocketOptions listenerSocketOptions;
+        listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+        listenerSocketOptions.setSourceEndpoint(basicListenerSocketEndpoint);
+        listenerSocketOptions.setReuseAddress(false);
+
+        bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+            scheduler->createListenerSocket(listenerSocketOptions, allocator);
+
+        error = listenerSocket->open();
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
+
+        ntci::ListenerSocketCloseGuard closeGuard(listenerSocket);
+    }
+
+    // Test closing a listener socket after opening it but failing to bind it,
+    // when explicitly binding the socket after it is opened.
+
+    {
+        bsl::shared_ptr<ntsi::ListenerSocket> basicListenerSocket = 
+            ntsf::System::createListenerSocket(allocator);
+
+        error = basicListenerSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
+        NTSCFG_TEST_OK(error);
+
+        error = basicListenerSocket->bindAny(
+            ntsa::Transport::e_TCP_IPV4_STREAM, false);
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint basicListenerSocketEndpoint;
+        error = basicListenerSocket->sourceEndpoint(
+            &basicListenerSocketEndpoint);
+        NTSCFG_TEST_OK(error);
+
+        ntca::ListenerSocketOptions listenerSocketOptions;
+        listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+        listenerSocketOptions.setReuseAddress(false);
+
+        bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+            scheduler->createListenerSocket(listenerSocketOptions, allocator);
+
+        error = listenerSocket->open();
+        NTSCFG_TEST_OK(error);
+
+        ntca::BindOptions bindOptions;
+        ntci::BindFuture  bindFuture;
+
+        error = listenerSocket->bind(
+            basicListenerSocketEndpoint, bindOptions, bindFuture);
+        if (error) {
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
+        }
+        else {
+            ntci::BindResult bindResult;
+            error = bindFuture.wait(&bindResult);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_EQ(bindResult.event().context().error(), 
+                           ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
+        }
+
+        ntci::ListenerSocketCloseGuard closeGuard(listenerSocket);
     }
 }
 
@@ -12979,13 +13284,14 @@ NTSCFG_TEST_FUNCTION(
         NTSCFG_TEST_ALLOCATOR);
 }
 
+// clang-format off
 NTSCFG_TEST_FUNCTION(
-    ntcf::SystemTest::
-        verifyStreamSocketMinimalWriteQueueHighWatermarkProactive)
+   ntcf::SystemTest::verifyStreamSocketMinimalWriteQueueHighWatermarkProactive)
 {
     test::concernStreamSocketMinimalWriteQueueHighWatermarkProactive(
         NTSCFG_TEST_ALLOCATOR);
 }
+// clang-format on
 
 NTSCFG_TEST_FUNCTION(
     ntcf::SystemTest::verifyStreamSocketRateLimitReceiveBufferReactive)

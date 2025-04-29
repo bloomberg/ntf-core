@@ -1597,11 +1597,13 @@ void DatagramSocket::privateShutdownSequenceComplete(
             }
         }
 
-        if (d_detachState.goal() == ntcs::DetachGoal::e_CLOSE) {
-            d_socket_sp->close();
-        }
-        else {
-            d_socket_sp->release();
+        if (d_socket_sp) {
+            if (d_detachState.goal() == ntcs::DetachGoal::e_CLOSE) {
+                d_socket_sp->close();
+            }
+            else {
+                d_socket_sp->release();
+            }
         }
 
         d_systemHandle = ntsa::k_INVALID_HANDLE;
