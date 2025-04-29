@@ -797,12 +797,12 @@ void ListenerSocket::privateShutdownSequence(
     }
 
     if (!asyncDetachmentStarted) {
-        privateShutdownSequencePart2(self, context, defer);
+        privateShutdownSequenceComplete(self, context, defer);
     }
     else {
         BSLS_ASSERT(!d_deferredCall);
         d_deferredCall =
-            NTCCFG_BIND(&ListenerSocket::privateShutdownSequencePart2,
+            NTCCFG_BIND(&ListenerSocket::privateShutdownSequenceComplete,
                         this,
                         self,
                         context,
@@ -810,7 +810,7 @@ void ListenerSocket::privateShutdownSequence(
     }
 }
 
-void ListenerSocket::privateShutdownSequencePart2(
+void ListenerSocket::privateShutdownSequenceComplete(
     const bsl::shared_ptr<ListenerSocket>& self,
     const ntcs::ShutdownContext&           context,
     bool                                   defer)
@@ -989,11 +989,13 @@ void ListenerSocket::privateShutdownSequencePart2(
             }
         }
 
-        if (d_detachState.goal() == ntcs::DetachGoal::e_CLOSE) {
-            d_socket_sp->close();
-        }
-        else {
-            d_socket_sp->release();
+        if (d_socket_sp) {
+            if (d_detachState.goal() == ntcs::DetachGoal::e_CLOSE) {
+                d_socket_sp->close();
+            }
+            else {
+                d_socket_sp->release();
+            }
         }
 
         d_systemHandle = ntsa::k_INVALID_HANDLE;

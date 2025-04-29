@@ -281,6 +281,7 @@ public:
 };
 
 template <typename TYPE>
+NTCCFG_INLINE
 Safe<TYPE>::Safe(bslma::Allocator* basicAllocator)
 : d_mutex()
 , d_proxy(basicAllocator)
@@ -288,6 +289,7 @@ Safe<TYPE>::Safe(bslma::Allocator* basicAllocator)
 }
 
 template <typename TYPE>
+NTCCFG_INLINE
 Safe<TYPE>::Safe(const TYPE& value, bslma::Allocator* basicAllocator)
 : d_mutex()
 , d_proxy(basicAllocator)
@@ -296,6 +298,7 @@ Safe<TYPE>::Safe(const TYPE& value, bslma::Allocator* basicAllocator)
 }
 
 template <typename TYPE>
+NTCCFG_INLINE
 Safe<TYPE>::Safe(const Safe& original, bslma::Allocator* basicAllocator)
 : d_mutex()
 , d_proxy(basicAllocator)
@@ -304,11 +307,13 @@ Safe<TYPE>::Safe(const Safe& original, bslma::Allocator* basicAllocator)
 }
 
 template <typename TYPE>
+NTCCFG_INLINE
 Safe<TYPE>::~Safe()
 {
 }
 
 template <typename TYPE>
+NTCCFG_INLINE
 Safe<TYPE>& Safe<TYPE>::operator=(const Safe& other)
 {
     if (this != &other) {
@@ -319,6 +324,7 @@ Safe<TYPE>& Safe<TYPE>::operator=(const Safe& other)
 }
 
 template <typename TYPE>
+NTCCFG_INLINE
 Safe<TYPE>& Safe<TYPE>::operator=(const TYPE& value)
 {
     this->store(value);
@@ -326,6 +332,7 @@ Safe<TYPE>& Safe<TYPE>::operator=(const TYPE& value)
 }
 
 template <typename TYPE>
+NTCCFG_INLINE
 void Safe<TYPE>::reset()
 {
     ntccfg::LockGuard lock(&d_mutex);
@@ -333,6 +340,7 @@ void Safe<TYPE>::reset()
 }
 
 template <typename TYPE>
+NTCCFG_INLINE
 void Safe<TYPE>::store(const Safe& other)
 {
     if (&d_mutex < &other.d_mutex) {
@@ -348,6 +356,7 @@ void Safe<TYPE>::store(const Safe& other)
 }
 
 template <typename TYPE>
+NTCCFG_INLINE
 void Safe<TYPE>::store(const TYPE& value)
 {
     ntccfg::LockGuard lock(&d_mutex);
@@ -355,6 +364,7 @@ void Safe<TYPE>::store(const TYPE& value)
 }
 
 template <typename TYPE>
+NTCCFG_INLINE
 void Safe<TYPE>::load(TYPE* result) const
 {
     ntccfg::LockGuard lock(&d_mutex);

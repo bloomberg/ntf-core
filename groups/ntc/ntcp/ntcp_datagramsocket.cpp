@@ -1058,12 +1058,12 @@ void DatagramSocket::privateShutdownSequence(
     }
 
     if (!asyncDetachInitiated) {
-        privateShutdownSequencePart2(self, context, defer);
+        privateShutdownSequenceComplete(self, context, defer);
     }
     else {
         BSLS_ASSERT(!d_deferredCall);
         d_deferredCall =
-            NTCCFG_BIND(&DatagramSocket::privateShutdownSequencePart2,
+            NTCCFG_BIND(&DatagramSocket::privateShutdownSequenceComplete,
                         this,
                         self,
                         context,
@@ -1071,7 +1071,7 @@ void DatagramSocket::privateShutdownSequence(
     }
 }
 
-void DatagramSocket::privateShutdownSequencePart2(
+void DatagramSocket::privateShutdownSequenceComplete(
     const bsl::shared_ptr<DatagramSocket>& self,
     const ntcs::ShutdownContext&           context,
     bool                                   defer)
@@ -1307,11 +1307,13 @@ void DatagramSocket::privateShutdownSequencePart2(
             }
         }
 
-        if (d_detachState.goal() == ntcs::DetachGoal::e_CLOSE) {
-            d_socket_sp->close();
-        }
-        else {
-            d_socket_sp->release();
+        if (d_socket_sp) {
+            if (d_detachState.goal() == ntcs::DetachGoal::e_CLOSE) {
+                d_socket_sp->close();
+            }
+            else {
+                d_socket_sp->release();
+            }
         }
 
         d_systemHandle = ntsa::k_INVALID_HANDLE;

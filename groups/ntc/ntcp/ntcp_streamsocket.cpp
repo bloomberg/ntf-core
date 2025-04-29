@@ -421,7 +421,7 @@ void StreamSocket::processConnectRetryTimer(
         if (d_connectInProgress) {
             if (d_connectAttempts > 0) {
                 d_retryConnect =
-                    true;  // privateRetryConnect will be called in privateFailConnectPart2
+                    true;  // privateRetryConnect will be called in privateFailConnectComplete
                 if (d_detachState.mode() !=
                     ntcs::DetachMode::e_INITIATED)
                 {
@@ -938,7 +938,7 @@ void StreamSocket::privateFailConnect(
                             ntcs::DetachMode::e_INITIATED);
                         BSLS_ASSERT(!d_deferredCall);
                         d_deferredCall =
-                            NTCCFG_BIND(&StreamSocket::privateFailConnectPart2,
+                            NTCCFG_BIND(&StreamSocket::privateFailConnectComplete,
                                         this,
                                         self,
                                         connectCallback,
@@ -969,7 +969,7 @@ void StreamSocket::privateFailConnect(
                         d_detachState.setMode(
                             ntcs::DetachMode::e_INITIATED);
                         d_deferredCall =
-                            NTCCFG_BIND(&StreamSocket::privateFailConnectPart2,
+                            NTCCFG_BIND(&StreamSocket::privateFailConnectComplete,
                                         this,
                                         self,
                                         connectCallback,
@@ -985,7 +985,7 @@ void StreamSocket::privateFailConnect(
         if (NTCCFG_UNLIKELY(d_detachState.mode() !=
                             ntcs::DetachMode::e_INITIATED))
         {
-            privateFailConnectPart2(self,
+            privateFailConnectComplete(self,
                                     connectCallback,
                                     connectEvent,
                                     defer);
@@ -999,7 +999,7 @@ void StreamSocket::privateFailConnect(
     }
 }
 
-void StreamSocket::privateFailConnectPart2(
+void StreamSocket::privateFailConnectComplete(
     const bsl::shared_ptr<StreamSocket>& self,
     const ntci::ConnectCallback&         connectCallback,
     const ntca::ConnectEvent&            connectEvent,
@@ -1951,12 +1951,12 @@ void StreamSocket::privateShutdownSequence(
     }
 
     if (!asyncDetachmentStarted) {
-        privateShutdownSequencePart2(self, context, defer);
+        privateShutdownSequenceComplete(self, context, defer);
     }
     else {
         BSLS_ASSERT(!d_deferredCall);
         d_deferredCall =
-            NTCCFG_BIND(&StreamSocket::privateShutdownSequencePart2,
+            NTCCFG_BIND(&StreamSocket::privateShutdownSequenceComplete,
                         this,
                         self,
                         context,
@@ -1964,7 +1964,7 @@ void StreamSocket::privateShutdownSequence(
     }
 }
 
-void StreamSocket::privateShutdownSequencePart2(
+void StreamSocket::privateShutdownSequenceComplete(
     const bsl::shared_ptr<StreamSocket>& self,
     const ntcs::ShutdownContext&         context,
     bool                                 defer)

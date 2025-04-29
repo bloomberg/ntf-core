@@ -248,7 +248,7 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Execute the second part of connection failure processing when the
     /// socket is detached. See also "privateFailConnect"
-    void privateFailConnectPart2(const bsl::shared_ptr<StreamSocket>& self,
+    void privateFailConnectComplete(const bsl::shared_ptr<StreamSocket>& self,
                                  const ntci::ConnectCallback& connectCallback,
                                  const ntca::ConnectEvent&    connectEvent,
                                  bool                         defer);
@@ -342,7 +342,7 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Execute the second part of shutdown sequence when the socket is
     /// detached. See also "privateShutdownSequence"
-    void privateShutdownSequencePart2(
+    void privateShutdownSequenceComplete(
         const bsl::shared_ptr<StreamSocket>& self,
         const ntcs::ShutdownContext&         context,
         bool                                 defer);
