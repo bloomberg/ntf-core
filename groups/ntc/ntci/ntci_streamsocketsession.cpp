@@ -27,6 +27,22 @@ StreamSocketSession::~StreamSocketSession()
 {
 }
 
+void StreamSocketSession::processConnectInitiated(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ConnectEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void StreamSocketSession::processConnectComplete(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ConnectEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
 void StreamSocketSession::processReadQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::ReadQueueEvent&                event)
@@ -142,6 +158,23 @@ void StreamSocketSession::processWriteQueueRateLimitRelaxed(
 void StreamSocketSession::processDowngradeInitiated(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::DowngradeEvent&                event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+
+void StreamSocketSession::processDowngradeReceive(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::DowngradeEvent&                event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void StreamSocketSession::processDowngradeSend(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::DowngradeEvent&                event)
 {
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);

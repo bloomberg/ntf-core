@@ -35,11 +35,14 @@ struct UpgradeEventType {
   public:
     /// Enumerate the upgrade event types.
     enum Value {
-        /// The upgrade sequence is complete.
-        e_COMPLETE = 0,
+        /// The upgrade sequence has been initiated.
+        e_INITIATED = 0,
 
         /// An error has been detected during the upgrade sequence.
-        e_ERROR = 1
+        e_ERROR = 1,
+
+        /// The upgrade sequence is complete.
+        e_COMPLETE = 2
     };
 
     /// Return the string representation exactly matching the enumerator

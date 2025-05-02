@@ -57,6 +57,16 @@ class StreamSocketSession
     /// Destroy this object.
     virtual ~StreamSocketSession();
 
+    /// Process the condition that a connection is initiated.
+    virtual void processConnectInitiated(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ConnectEvent&                  event);
+
+    /// Process the condition that a connection is complete.
+    virtual void processConnectComplete(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ConnectEvent&                  event);
+
     /// Process the condition that read queue flow control has been relaxed:
     /// the socket receive buffer is being automatically copied to the read
     /// queue.
@@ -155,6 +165,17 @@ class StreamSocketSession
     /// Process the initiation of a downgrade from encrypted to unencrypted
     /// communication.
     virtual void processDowngradeInitiated(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::DowngradeEvent&                event);
+
+    /// Process the socket being shut down for reading encryption 
+    /// communication.
+    virtual void processDowngradeReceive(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::DowngradeEvent&                event);
+
+    /// Process the socket being shut down for writing encrypted communication.
+    virtual void processDowngradeSend(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
         const ntca::DowngradeEvent&                event);
 

@@ -59,7 +59,7 @@ class ConnectEvent
     /// Create a new connect event having the same value as the specified
     /// 'original' object. Optionally specify a 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is 0, the currently
-    /// installed default allocator is used.s
+    /// installed default allocator is used.
     ConnectEvent(const ConnectEvent& original,
                  bslma::Allocator*   basicAllocator = 0);
 
@@ -87,15 +87,19 @@ class ConnectEvent
     /// Return the state of the connect attempt at the time of the event.
     const ntca::ConnectContext& context() const;
 
-    /// Return true if 'type() == ntca::ConnectEventType::e_COMPLETE', i.e.,
-    /// the connect operation successfully completed without an error.
-    /// Otherwise, return false.
-    bool isComplete() const;
+    /// Return true if 'type() == ntca::ConnectEventType::e_INITIATED', i.e.,
+    /// the connect operation has been initiated. Otherwise, return false.
+    bool isInitiated() const;
 
     /// Return true if 'type() == ntca::ConnectEventType::e_ERROR', i.e.,
     /// the connect operation failed because of an error. Otherwise, return
     /// false. Note that the exact error is stored at 'context().error()'.
     bool isError() const;
+
+    /// Return true if 'type() == ntca::ConnectEventType::e_COMPLETE', i.e.,
+    /// the connect operation successfully completed without an error.
+    /// Otherwise, return false.
+    bool isComplete() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -216,15 +220,21 @@ const ntca::ConnectContext& ConnectEvent::context() const
 }
 
 NTCCFG_INLINE
-bool ConnectEvent::isComplete() const
+bool ConnectEvent::isInitiated() const
 {
-    return d_type == ntca::ConnectEventType::e_COMPLETE;
+    return d_type == ntca::ConnectEventType::e_INITIATED;
 }
 
 NTCCFG_INLINE
 bool ConnectEvent::isError() const
 {
     return d_type == ntca::ConnectEventType::e_ERROR;
+}
+
+NTCCFG_INLINE
+bool ConnectEvent::isComplete() const
+{
+    return d_type == ntca::ConnectEventType::e_COMPLETE;
 }
 
 NTCCFG_INLINE
