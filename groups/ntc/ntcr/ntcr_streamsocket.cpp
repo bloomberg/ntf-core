@@ -531,8 +531,7 @@ void StreamSocket::processConnectRetryTimer(
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
         if (d_connectInProgress) {
             if (d_connectAttempts > 0) {
-                d_retryConnect =
-                    true;  //indicates that privateRetryConnect will be executed in privateFailConnect
+                d_retryConnect = true;  
 
                 if (d_detachState.mode() !=
                     ntcs::DetachMode::e_INITIATED)
@@ -1152,6 +1151,22 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
 
     NTCI_LOG_TRACE("Connection attempt succeeded");
 
+    if (d_session_sp) {
+        ntcs::Dispatch::announceConnectComplete(
+            d_session_sp,
+            self,
+            connectEvent,
+            d_sessionStrand_sp,
+            ntci::Strand::unknown(),
+            self,
+            false,
+            &d_mutex);
+
+        if (d_openState.value() != ntcs::OpenState::e_CONNECTED) {
+            return ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
+        }
+    }
+
     if (connectCallback) {
         connectCallback.dispatch(self,
                                  connectEvent,
@@ -1159,10 +1174,10 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
                                  self,
                                  false,
                                  &d_mutex);
-    }
 
-    if (d_openState.value() != ntcs::OpenState::e_CONNECTED) {
-        return ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
+        if (d_openState.value() != ntcs::OpenState::e_CONNECTED) {
+            return ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
+        }
     }
 
     ntcs::Dispatch::announceEstablished(d_manager_sp,
@@ -1665,6 +1680,18 @@ void StreamSocket::privateFailConnectPart2(
             d_publicHandle = ntsa::k_INVALID_HANDLE;
             d_systemHandle = ntsa::k_INVALID_HANDLE;
         }
+    }
+
+    if (d_session_sp) {
+        ntcs::Dispatch::announceConnectComplete(
+            d_session_sp,
+            self,
+            connectEvent,
+            d_sessionStrand_sp,
+            ntci::Strand::unknown(),
+            self,
+            defer,
+            &d_mutex);
     }
 
     if (connectCallback) {
@@ -4217,6 +4244,27 @@ void StreamSocket::processRemoteEndpointResolution(
     }
 
     if (!error) {
+        d_systemRemoteEndpoint = endpoint;
+        d_publicRemoteEndpoint = endpoint;
+
+        if (d_session_sp) {
+            ntca::ConnectEvent event;
+            event.setType(ntca::ConnectEventType::e_INITIATED);
+            event.setContext(d_connectContext);
+
+            ntcs::Dispatch::announceConnectInitiated(
+                d_session_sp,
+                self,
+                event,
+                d_sessionStrand_sp,
+                ntci::Strand::unknown(),
+                self,
+                false,
+                &d_mutex);
+        }
+    }
+
+    if (!error) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (!reactorRef) {
             error = ntsa::Error(ntsa::Error::e_INVALID);
@@ -4425,6 +4473,7 @@ ntsa::Error StreamSocket::privateRetryConnectToName()
             }
         }
     };
+
     ntsa::Error error;
 
     ntcs::ObserverRef<ntci::Resolver> resolverRef(&d_resolver);
@@ -4499,6 +4548,25 @@ ntsa::Error StreamSocket::privateRetryConnectToEndpoint(
     }
 
     d_publicSourceEndpoint = d_systemSourceEndpoint;
+
+    d_systemRemoteEndpoint = d_connectEndpoint;
+    d_publicRemoteEndpoint = d_connectEndpoint;
+
+    if (d_session_sp) {
+        ntca::ConnectEvent event;
+        event.setType(ntca::ConnectEventType::e_INITIATED);
+        event.setContext(d_connectContext);
+
+        ntcs::Dispatch::announceConnectInitiated(
+            d_session_sp,
+            self,
+            event,
+            d_sessionStrand_sp,
+            ntci::Strand::unknown(),
+            self,
+            false,
+            &d_mutex);
+    }
 
     ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
     if (!reactorRef) {

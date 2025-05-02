@@ -28,8 +28,9 @@ namespace ntca {
 int UpgradeEventType::fromInt(UpgradeEventType::Value* result, int number)
 {
     switch (number) {
-    case UpgradeEventType::e_COMPLETE:
+    case UpgradeEventType::e_INITIATED:
     case UpgradeEventType::e_ERROR:
+    case UpgradeEventType::e_COMPLETE:
         *result = static_cast<UpgradeEventType::Value>(number);
         return 0;
     default:
@@ -40,12 +41,18 @@ int UpgradeEventType::fromInt(UpgradeEventType::Value* result, int number)
 int UpgradeEventType::fromString(UpgradeEventType::Value* result,
                                  const bslstl::StringRef& string)
 {
-    if (bdlb::String::areEqualCaseless(string, "COMPLETE")) {
-        *result = e_COMPLETE;
+    if (bdlb::String::areEqualCaseless(string, "INITIATED")) {
+        *result = e_INITIATED;
         return 0;
     }
+
     if (bdlb::String::areEqualCaseless(string, "ERROR")) {
         *result = e_ERROR;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "COMPLETE")) {
+        *result = e_COMPLETE;
         return 0;
     }
 
@@ -55,11 +62,14 @@ int UpgradeEventType::fromString(UpgradeEventType::Value* result,
 const char* UpgradeEventType::toString(UpgradeEventType::Value value)
 {
     switch (value) {
-    case e_COMPLETE: {
-        return "COMPLETE";
+    case e_INITIATED: {
+        return "INITIATED";
     } break;
     case e_ERROR: {
         return "ERROR";
+    } break;
+    case e_COMPLETE: {
+        return "COMPLETE";
     } break;
     }
 

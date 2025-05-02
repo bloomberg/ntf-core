@@ -28,8 +28,9 @@ namespace ntca {
 int ConnectEventType::fromInt(ConnectEventType::Value* result, int number)
 {
     switch (number) {
-    case ConnectEventType::e_COMPLETE:
+    case ConnectEventType::e_INITIATED:
     case ConnectEventType::e_ERROR:
+    case ConnectEventType::e_COMPLETE:
         *result = static_cast<ConnectEventType::Value>(number);
         return 0;
     default:
@@ -40,12 +41,18 @@ int ConnectEventType::fromInt(ConnectEventType::Value* result, int number)
 int ConnectEventType::fromString(ConnectEventType::Value* result,
                                  const bslstl::StringRef& string)
 {
-    if (bdlb::String::areEqualCaseless(string, "COMPLETE")) {
-        *result = e_COMPLETE;
+    if (bdlb::String::areEqualCaseless(string, "INITIATED")) {
+        *result = e_INITIATED;
         return 0;
     }
+
     if (bdlb::String::areEqualCaseless(string, "ERROR")) {
         *result = e_ERROR;
+        return 0;
+    }
+
+    if (bdlb::String::areEqualCaseless(string, "COMPLETE")) {
+        *result = e_COMPLETE;
         return 0;
     }
 
@@ -55,11 +62,14 @@ int ConnectEventType::fromString(ConnectEventType::Value* result,
 const char* ConnectEventType::toString(ConnectEventType::Value value)
 {
     switch (value) {
-    case e_COMPLETE: {
-        return "COMPLETE";
+    case e_INITIATED: {
+        return "INITIATED";
     } break;
     case e_ERROR: {
         return "ERROR";
+    } break;
+    case e_COMPLETE: {
+        return "COMPLETE";
     } break;
     }
 

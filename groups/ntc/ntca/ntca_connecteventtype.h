@@ -35,11 +35,14 @@ struct ConnectEventType {
   public:
     /// Enumerate the connect event types.
     enum Value {
-        // The connection sequence is complete.
-        e_COMPLETE = 0,
+        /// The connection sequence has been initiated.
+        e_INITIATED = 0,
 
         // An error has been detected during the connection sequence.
-        e_ERROR = 1
+        e_ERROR = 1,
+
+        // The connection sequence is complete.
+        e_COMPLETE = 2
     };
 
     /// Return the string representation exactly matching the enumerator

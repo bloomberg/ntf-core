@@ -1420,6 +1420,80 @@ void Dispatch::announceClosed(
     }
 }
 
+void Dispatch::announceConnectInitiated(
+    const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+    const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+    const ntca::ConnectEvent&                         event,
+    const bsl::shared_ptr<ntci::Strand>&              destination,
+    const bsl::shared_ptr<ntci::Strand>&              source,
+    const bsl::shared_ptr<ntci::Executor>&            executor,
+    bool                                              defer,
+    ntccfg::Mutex*                                    mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
+        ntccfg::UnLockGuard                        guard(mutex);
+        sessionGuard->processConnectInitiated(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processConnectInitiated,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processConnectInitiated,
+            session,
+            socket,
+            event));
+    }
+}
+
+void Dispatch::announceConnectComplete(
+    const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+    const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+    const ntca::ConnectEvent&                         event,
+    const bsl::shared_ptr<ntci::Strand>&              destination,
+    const bsl::shared_ptr<ntci::Strand>&              source,
+    const bsl::shared_ptr<ntci::Executor>&            executor,
+    bool                                              defer,
+    ntccfg::Mutex*                                    mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
+        ntccfg::UnLockGuard                        guard(mutex);
+        sessionGuard->processConnectComplete(socket, event);
+    }
+    else if (destination) {
+        destination->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processConnectComplete,
+            session,
+            socket,
+            event));
+    }
+    else {
+        executor->execute(NTCCFG_BIND(
+            &ntci::StreamSocketSession::processConnectComplete,
+            session,
+            socket,
+            event));
+    }
+}
+
 void Dispatch::announceReadQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::StreamSocketSession>& session,
     const bsl::shared_ptr<ntci::StreamSocket>&        socket,
@@ -1969,6 +2043,80 @@ void Dispatch::announceDowngradeInitiated(
     else {
         executor->execute(
             NTCCFG_BIND(&ntci::StreamSocketSession::processDowngradeInitiated,
+                        session,
+                        socket,
+                        event));
+    }
+}
+
+void Dispatch::announceDowngradeReceive(
+    const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+    const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+    const ntca::DowngradeEvent&                       event,
+    const bsl::shared_ptr<ntci::Strand>&              destination,
+    const bsl::shared_ptr<ntci::Strand>&              source,
+    const bsl::shared_ptr<ntci::Executor>&            executor,
+    bool                                              defer,
+    ntccfg::Mutex*                                    mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
+        ntccfg::UnLockGuard                        guard(mutex);
+        sessionGuard->processDowngradeReceive(socket, event);
+    }
+    else if (destination) {
+        destination->execute(
+            NTCCFG_BIND(&ntci::StreamSocketSession::processDowngradeReceive,
+                        session,
+                        socket,
+                        event));
+    }
+    else {
+        executor->execute(
+            NTCCFG_BIND(&ntci::StreamSocketSession::processDowngradeReceive,
+                        session,
+                        socket,
+                        event));
+    }
+}
+
+void Dispatch::announceDowngradeSend(
+    const bsl::shared_ptr<ntci::StreamSocketSession>& session,
+    const bsl::shared_ptr<ntci::StreamSocket>&        socket,
+    const ntca::DowngradeEvent&                       event,
+    const bsl::shared_ptr<ntci::Strand>&              destination,
+    const bsl::shared_ptr<ntci::Strand>&              source,
+    const bsl::shared_ptr<ntci::Executor>&            executor,
+    bool                                              defer,
+    ntccfg::Mutex*                                    mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::StreamSocketSession> sessionGuard = session;
+        ntccfg::UnLockGuard                        guard(mutex);
+        sessionGuard->processDowngradeSend(socket, event);
+    }
+    else if (destination) {
+        destination->execute(
+            NTCCFG_BIND(&ntci::StreamSocketSession::processDowngradeSend,
+                        session,
+                        socket,
+                        event));
+    }
+    else {
+        executor->execute(
+            NTCCFG_BIND(&ntci::StreamSocketSession::processDowngradeSend,
                         session,
                         socket,
                         event));
