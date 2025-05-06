@@ -87,6 +87,7 @@ BSLS_IDENT("$Id: $")
 #include <bsl_vector.h>
 #include <ball_log.h>
 #include <ball_loggermanager.h>
+#include <ball_recordstringformatter.h>
 #include <ball_severity.h>
 #include <ball_streamobserver.h>
 
@@ -447,6 +448,16 @@ inline TestLog::TestLog(int verbosity, bslma::Allocator* basicAllocator)
 
     bsl::shared_ptr<ball::StreamObserver> observer;
     observer.createInplace(d_allocator_p, &bsl::cout, d_allocator_p);
+
+    // clang-format off
+    observer->setRecordFormatFunctor(
+        ball::RecordStringFormatter(
+            //"----------------------------------------"
+            "\n"
+            "[ %O ][ %s ]"
+            "[ %T ][ %F:%l ][ %c ]"
+            ":\n%m %u\n"));
+    // clang-format on
 
     rc = d_manager_p->registerObserver(observer, "default");
     BSLS_ASSERT_OPT(rc == 0);

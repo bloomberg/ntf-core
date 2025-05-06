@@ -3393,6 +3393,20 @@ void StreamSocket::processRemoteEndpointResolution(
             self,
             false,
             &d_mutex);
+
+        if (NTCCFG_UNLIKELY(d_detachState.mode() == 
+                            ntcs::DetachMode::e_INITIATED))
+        {
+            return;
+        }
+
+        if (!d_connectInProgress) {
+            return;
+        }
+
+        if (connectAttempts != d_connectAttempts) {
+            return;
+        }
     }
 
     if (error) {
