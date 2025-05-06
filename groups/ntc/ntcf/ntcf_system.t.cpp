@@ -187,7 +187,11 @@ class SystemTest
     static void concernClose(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                              bslma::Allocator* allocator);
 
-    static void concernConnectAndShutdown(
+    static void concernConnectInitiateAndClose(
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
+
+    static void concernConnectEndpointAndShutdown(
         const bsl::shared_ptr<ntci::Scheduler>& scheduler,
         bslma::Allocator*                       allocator);
 
@@ -220,6 +224,10 @@ class SystemTest
         bslma::Allocator*                       allocator);
 
     static void concernConnectEndpoint8(
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
+
+    static void concernConnectNameAndShutdown(
         const bsl::shared_ptr<ntci::Scheduler>& scheduler,
         bslma::Allocator*                       allocator);
 
@@ -406,8 +414,9 @@ class SystemTest
     static void verifyDataExchange();
 
     static void verifyClose();
+    static void verifyConnectInitiateAndClose();
 
-    static void verifyConnectAndShutdown();
+    static void verifyConnectEndpointAndShutdown();
 
     static void verifyConnectEndpoint1();
     static void verifyConnectEndpoint2();
@@ -417,6 +426,8 @@ class SystemTest
     static void verifyConnectEndpoint6();
     static void verifyConnectEndpoint7();
     static void verifyConnectEndpoint8();
+
+    static void verifyConnectNameAndShutdown();
 
     static void verifyConnectName1();
     static void verifyConnectName2();
@@ -6962,7 +6973,81 @@ void SystemTest::concernClose(
     }
 }
 
-void SystemTest::concernConnectAndShutdown(
+class SystemTestResolutionSession : public ntci::StreamSocketSession
+{
+    bslmt::Barrier* d_barrier_p;
+
+public:
+    // Create a new stream socket session.
+    explicit SystemTestResolutionSession(bslmt::Barrier* barrier)
+    : d_barrier_p(barrier) 
+    {}
+
+    // Destroy this object.
+    ~SystemTestResolutionSession() BSLS_KEYWORD_OVERRIDE {}
+
+    // Process the condition that a connection is initiated.
+    void processConnectInitiated(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ConnectEvent&                  event)
+        BSLS_KEYWORD_OVERRIDE
+    {
+        NTCI_LOG_CONTEXT();
+
+        NTCI_LOG_STREAM_DEBUG << "Connect event " << event 
+                              << NTCI_LOG_STREAM_END;
+                              
+        d_barrier_p->wait();
+        d_barrier_p->wait();
+    }
+};
+
+void SystemTest::concernConnectInitiateAndClose(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: Closing sockets before, during, and after name resolution
+    // completes.
+
+    #if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
+
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    ntca::StreamSocketOptions streamSocketOptions;
+    streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket =
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
+
+    const ntci::StreamSocketCloseGuard closeGuard(streamSocket);
+
+    bslmt::Barrier barrier(2);
+
+    bsl::shared_ptr<SystemTestResolutionSession> session;
+    session.createInplace(NTSCFG_TEST_ALLOCATOR, &barrier);
+
+    streamSocket->registerSession(session);
+
+    ntca::ConnectOptions connectOptions;
+    connectOptions.setRetryCount(k_MAX_CONNECTION_ATTEMPTS - 1);
+
+    const ntci::ConnectCallback emptyCb;
+
+    error = streamSocket->connect("localhost:51", connectOptions, emptyCb);
+    NTSCFG_TEST_OK(error);
+
+    barrier.wait();
+    streamSocket->close();
+    barrier.wait();
+}
+
+void SystemTest::concernConnectEndpointAndShutdown(
     const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
@@ -6983,8 +7068,7 @@ void SystemTest::concernConnectAndShutdown(
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
 #endif
 
-    const int   k_TIMEOUT_MICROSEC = 100;
-    const char* address            = "127.0.0.1:51";
+    const int k_TIMEOUT_MICROSEC = 100;
 
     NTCI_LOG_CONTEXT();
 
@@ -7001,11 +7085,60 @@ void SystemTest::concernConnectAndShutdown(
     ntca::ConnectOptions connectOptions;
     connectOptions.setRetryCount(k_MAX_CONNECTION_ATTEMPTS - 1);
 
-    const ntsa::Endpoint endpoint(address);
+    const ntsa::Endpoint endpoint("127.0.0.1:51");
 
     const ntci::ConnectCallback emptyCb;
 
     error = streamSocket->connect(endpoint, connectOptions, emptyCb);
+    NTSCFG_TEST_OK(error);
+    bslmt::ThreadUtil::microSleep(k_TIMEOUT_MICROSEC, 0);
+
+    error = streamSocket->shutdown(ntsa::ShutdownType::e_BOTH,
+                                   ntsa::ShutdownMode::e_GRACEFUL);
+    NTSCFG_TEST_OK(error);
+}
+
+void SystemTest::concernConnectNameAndShutdown(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: test that shutdown works without assertions firing when it is
+    // called during socket detachment process. As it is impossible to ensure
+    // that socket is being detached at the moment timeout value in this test
+    // case was selected empirically. There is an assumption that port number
+    // for the remote enpoint is never listend by any service (port 51
+    // historically is used for Interface Message Processor logical address
+    // management).
+    // This test should not be unstable on other systems and it should work
+    // even if connection is not refused or shutdown is called not during
+    // socket detachment process
+
+#if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
+
+    const int k_TIMEOUT_MICROSEC = 100;
+
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    ntca::StreamSocketOptions streamSocketOptions;
+    streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket =
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
+
+    const ntci::StreamSocketCloseGuard closeGuard(streamSocket);
+
+    ntca::ConnectOptions connectOptions;
+    connectOptions.setRetryCount(k_MAX_CONNECTION_ATTEMPTS - 1);
+
+    const ntci::ConnectCallback emptyCb;
+
+    error = streamSocket->connect("127.0.0.1:51", connectOptions, emptyCb);
     NTSCFG_TEST_OK(error);
     bslmt::ThreadUtil::microSleep(k_TIMEOUT_MICROSEC, 0);
 
@@ -13101,9 +13234,15 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyClose)
     test::concern(&test::concernClose, NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectAndShutdown)
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectInitiateAndClose)
 {
-    test::concern(&test::concernConnectAndShutdown, NTSCFG_TEST_ALLOCATOR);
+    test::concern(
+        &test::concernConnectInitiateAndClose, NTSCFG_TEST_ALLOCATOR);
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectEndpointAndShutdown)
+{
+    test::concern(&test::concernConnectEndpointAndShutdown, NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectEndpoint1)
@@ -13144,6 +13283,11 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectEndpoint7)
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectEndpoint8)
 {
     test::concern(&test::concernConnectEndpoint8, NTSCFG_TEST_ALLOCATOR);
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectNameAndShutdown)
+{
+    test::concern(&test::concernConnectNameAndShutdown, NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectName1)
