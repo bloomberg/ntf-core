@@ -143,6 +143,7 @@ class StreamSocket : public ntci::StreamSocket,
     bsl::shared_ptr<ntci::Timer>               d_connectDeadlineTimer_sp;
     bsl::shared_ptr<ntci::Timer>               d_connectRetryTimer_sp;
     bool                                       d_connectInProgress;
+    ntca::UpgradeOptions                       d_upgradeOptions;
     ntci::UpgradeCallback                      d_upgradeCallback;
     bsl::shared_ptr<ntci::Timer>               d_upgradeTimer_sp;
     bool                                       d_upgradeInProgress;
@@ -506,6 +507,16 @@ class StreamSocket : public ntci::StreamSocket,
     /// Initiate the upgrade. Return the error.
     ntsa::Error privateUpgrade(const bsl::shared_ptr<StreamSocket>& self,
                                const ntca::UpgradeOptions& upgradeOptions);
+
+    /// Initiate the downgrade. Return the error.
+    ntsa::Error privateDowngrade(
+        const bsl::shared_ptr<StreamSocket>& self,
+        const ntca::DowngradeOptions&        downgradeOptions);
+
+    /// Initiate the downgrade abortively. Return the error.
+    ntsa::Error privateDowngradeAbortively(
+        const bsl::shared_ptr<StreamSocket>& self,
+        const ntca::DowngradeOptions&        downgradeOptions);
 
     /// Retry connecting to the remote peer.
     void privateRetryConnect(const bsl::shared_ptr<StreamSocket>& self);
@@ -1182,6 +1193,11 @@ class StreamSocket : public ntci::StreamSocket,
     /// Downgrade the stream socket from encrypted to unencrypted. Return
     /// the error.
     ntsa::Error downgrade() BSLS_KEYWORD_OVERRIDE;
+
+    /// Downgrade the stream socket from encrypted to unencrypted. Return
+    /// the error.
+    ntsa::Error downgrade(const ntca::DowngradeOptions& options) 
+                BSLS_KEYWORD_OVERRIDE;
 
     /// Shutdown the stream socket in the specified 'direction' according
     /// to the specified 'mode' of shutdown. Return the error.

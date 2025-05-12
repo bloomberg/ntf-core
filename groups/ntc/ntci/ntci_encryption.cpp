@@ -76,6 +76,18 @@ ntsa::Error Encryption::popOutgoingCipherText(bdlbb::Blob* output)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error Encryption::popIncomingLeftovers(bdlbb::Blob* output)
+{
+    NTCCFG_WARNING_UNUSED(output);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+ntsa::Error Encryption::popOutgoingLeftovers(bdlbb::Blob* output)
+{
+    NTCCFG_WARNING_UNUSED(output);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error Encryption::shutdown()
 {
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
@@ -87,6 +99,16 @@ bool Encryption::hasIncomingPlainText() const
 }
 
 bool Encryption::hasOutgoingCipherText() const
+{
+    return false;
+}
+
+bool Encryption::hasIncomingLeftovers() const
+{
+    return false;
+}
+
+bool Encryption::hasOutgoingLeftovers() const
 {
     return false;
 }

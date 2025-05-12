@@ -27,6 +27,8 @@ bool UpgradeOptions::equals(const UpgradeOptions& other) const
 {
     return (d_token == other.d_token && d_serverName == other.d_serverName &&
             d_validation == other.d_validation &&
+            d_keepOutgoingLeftovers == other.d_keepOutgoingLeftovers &&
+            d_keepIncomingLeftovers == other.d_keepIncomingLeftovers && 
             d_deadline == other.d_deadline && d_recurse == other.d_recurse);
 }
 
@@ -53,6 +55,22 @@ bool UpgradeOptions::less(const UpgradeOptions& other) const
     }
 
     if (other.d_validation < d_validation) {
+        return false;
+    }
+
+    if (d_keepOutgoingLeftovers < other.d_keepOutgoingLeftovers) {
+        return true;
+    }
+
+    if (other.d_keepOutgoingLeftovers < d_keepOutgoingLeftovers) {
+        return false;
+    }
+
+    if (d_keepIncomingLeftovers < other.d_keepIncomingLeftovers) {
+        return true;
+    }
+
+    if (other.d_keepIncomingLeftovers < d_keepIncomingLeftovers) {
         return false;
     }
 
@@ -84,6 +102,16 @@ bsl::ostream& UpgradeOptions::print(bsl::ostream& stream,
 
     if (!d_validation.isNull()) {
         printer.printAttribute("validation", d_validation);
+    }
+
+    if (!d_keepOutgoingLeftovers.isNull()) {
+        printer.printAttribute(
+            "keepOutgoingLeftovers", d_keepOutgoingLeftovers);
+    }
+
+    if (!d_keepIncomingLeftovers.isNull()) {
+        printer.printAttribute(
+            "keepIncomingLeftovers", d_keepIncomingLeftovers);
     }
 
     if (!d_deadline.isNull()) {

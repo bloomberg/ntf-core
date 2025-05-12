@@ -32,12 +32,14 @@ BSLS_IDENT_RCSID(ntcu_streamsocketeventqueue_cpp, "$Id$ $CSID$")
 #define NTCU_STREAMSOCKETEVENTQUEUE_TIMEOUT -1
 #endif
 
-#define NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event)            \
+#define NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, category, event)  \
     do {                                                                      \
         NTCI_LOG_STREAM_DEBUG                                                 \
-            << "Stream socket at " << streamSocket->sourceEndpoint()          \
-            << " to " << streamSocket->remoteEndpoint()                       \
-            << " announced event " << event << NTCI_LOG_STREAM_END;           \
+            << "Stream socket at " << (streamSocket)->sourceEndpoint()        \
+            << " to " << (streamSocket)->remoteEndpoint()                     \
+            << " announced "                                                  \
+            << (category)                                                     \
+            << " event " << (event) << NTCI_LOG_STREAM_END;                   \
     } while (false)
 
 namespace BloombergLP {
@@ -51,7 +53,7 @@ void StreamSocketEventQueue::processReadQueueFlowControlRelaxed(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "read queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -72,7 +74,7 @@ void StreamSocketEventQueue::processReadQueueFlowControlApplied(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "read queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -93,7 +95,7 @@ void StreamSocketEventQueue::processReadQueueLowWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "read queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -113,7 +115,7 @@ void StreamSocketEventQueue::processReadQueueHighWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "read queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -133,7 +135,7 @@ void StreamSocketEventQueue::processReadQueueDiscarded(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "read queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -153,7 +155,7 @@ void StreamSocketEventQueue::processWriteQueueFlowControlRelaxed(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "write queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -174,7 +176,7 @@ void StreamSocketEventQueue::processWriteQueueFlowControlApplied(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "write queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -195,7 +197,7 @@ void StreamSocketEventQueue::processWriteQueueLowWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "write queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -215,7 +217,7 @@ void StreamSocketEventQueue::processWriteQueueHighWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "write queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -235,7 +237,7 @@ void StreamSocketEventQueue::processWriteQueueDiscarded(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "write queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -255,7 +257,7 @@ void StreamSocketEventQueue::processDowngradeInitiated(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "downgrade", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -275,7 +277,7 @@ void StreamSocketEventQueue::processDowngradeComplete(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "downgrade", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -295,7 +297,7 @@ void StreamSocketEventQueue::processShutdownInitiated(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -315,7 +317,7 @@ void StreamSocketEventQueue::processShutdownReceive(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -335,7 +337,7 @@ void StreamSocketEventQueue::processShutdownSend(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -355,7 +357,7 @@ void StreamSocketEventQueue::processShutdownComplete(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -375,7 +377,7 @@ void StreamSocketEventQueue::processError(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, event);
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "error", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 

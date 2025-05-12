@@ -826,17 +826,9 @@ ntsa::Error StreamSocket::privateSocketReadableIteration(
         return error;
     }
 
-    {
-        ntcq::ReceiveQueueEntry entry;
-        entry.setLength(context.bytesReceived());
-        entry.setTimestamp(bsls::TimeUtil::getTimer());
-
-        if (NTCCFG_UNLIKELY(context.foreignHandle().has_value())) {
-            entry.setForeignHandle(context.foreignHandle().value());
-        }
-
-        d_receiveQueue.pushEntry(entry);
-    }
+    BSLS_ASSERT(d_receiveQueue.size() ==
+   	            NTCCFG_WARNING_PROMOTE(bsl::size_t,
+   	                                   d_receiveQueue.data()->length()));
 
     NTCR_STREAMSOCKET_LOG_READ_QUEUE_FILLED(d_receiveQueue.size());
 
@@ -3029,6 +3021,16 @@ ntsa::Error StreamSocket::privateDequeueReceiveBuffer(
             return error;
         }
 
+        ntcq::ReceiveQueueEntry entry;
+        entry.setLength(context->bytesReceived());
+        entry.setTimestamp(bsls::TimeUtil::getTimer());
+
+        if (NTCCFG_UNLIKELY(context->foreignHandle().has_value())) {
+            entry.setForeignHandle(context->foreignHandle().value());
+        }
+
+        d_receiveQueue.pushEntry(entry);
+
         return ntsa::Error();
     }
     else if (!d_encryption_sp && d_receiveInflater_sp) {
@@ -3080,6 +3082,18 @@ ntsa::Error StreamSocket::privateDequeueReceiveBuffer(
         numBytesReceived = receiveQueueLengthAfter - receiveQueueLengthBefore;
         context->setBytesReceived(numBytesReceived);
 
+        if (numBytesReceived > 0) {
+            ntcq::ReceiveQueueEntry entry;
+            entry.setLength(context->bytesReceived());
+            entry.setTimestamp(bsls::TimeUtil::getTimer());
+
+            if (NTCCFG_UNLIKELY(context->foreignHandle().has_value())) {
+                entry.setForeignHandle(context->foreignHandle().value());
+            }
+
+            d_receiveQueue.pushEntry(entry);
+        }
+
         return ntsa::Error();
     }
     else {
@@ -3116,7 +3130,8 @@ ntsa::Error StreamSocket::privateDequeueReceiveBuffer(
                                0,
                                d_receiveBlob_sp->length());
 
-        bsl::size_t numBytesReceived = 0;
+        bsl::size_t numBytesReceived    = 0;
+        bool        downgradeAbortively = false;
 
         const int receiveQueueLengthBefore = data->length();
 
@@ -3127,6 +3142,20 @@ ntsa::Error StreamSocket::privateDequeueReceiveBuffer(
                     return error;
                 }
             }
+
+            if (NTCCFG_UNLIKELY(
+                d_upgradeOptions.keepIncomingLeftovers().value_or(false))) 
+            {
+                while (NTCCFG_LIKELY(d_encryption_sp->hasIncomingLeftovers())) 
+                {
+                    downgradeAbortively = true;
+
+                    error = d_encryption_sp->popIncomingLeftovers(data);
+                    if (NTCCFG_UNLIKELY(error)) {
+                        return error;
+                    }
+                }
+            }
         }
         else {
             bdlbb::Blob plainText(d_incomingBufferFactory_sp.get());
@@ -3134,6 +3163,20 @@ ntsa::Error StreamSocket::privateDequeueReceiveBuffer(
                 error = d_encryption_sp->popIncomingPlainText(&plainText);
                 if (NTCCFG_UNLIKELY(error)) {
                     return error;
+                }
+            }
+
+            if (NTCCFG_UNLIKELY(
+                d_upgradeOptions.keepIncomingLeftovers().value_or(false))) 
+            {
+                while (NTCCFG_LIKELY(d_encryption_sp->hasIncomingLeftovers())) 
+                {
+                    downgradeAbortively = true;
+                    
+                    error = d_encryption_sp->popIncomingLeftovers(&plainText);
+                    if (NTCCFG_UNLIKELY(error)) {
+                        return error;
+                    }
                 }
             }
 
@@ -3158,13 +3201,20 @@ ntsa::Error StreamSocket::privateDequeueReceiveBuffer(
         numBytesReceived = receiveQueueLengthAfter - receiveQueueLengthBefore;
         context->setBytesReceived(numBytesReceived);
 
-        if (d_encryption_sp->isShutdownReceived()) {
-            if (!d_encryption_sp->isShutdownSent()) {
-                error = d_encryption_sp->shutdown();
-                if (error) {
-                    return error;
-                }
+        if (numBytesReceived > 0) {
+            ntcq::ReceiveQueueEntry entry;
+            entry.setLength(context->bytesReceived());
+            entry.setTimestamp(bsls::TimeUtil::getTimer());
 
+            if (NTCCFG_UNLIKELY(context->foreignHandle().has_value())) {
+                entry.setForeignHandle(context->foreignHandle().value());
+            }
+
+            d_receiveQueue.pushEntry(entry);
+        }
+
+        if (NTCCFG_UNLIKELY(downgradeAbortively)) {
+            if (!d_encryption_sp->isShutdownSent()) {
                 if (d_session_sp) {
                     ntca::DowngradeContext context;
 
@@ -3183,35 +3233,7 @@ ntsa::Error StreamSocket::privateDequeueReceiveBuffer(
                         &d_mutex);
                 }
             }
-        }
 
-        if (NTCCFG_UNLIKELY(d_encryption_sp->hasOutgoingCipherText())) {
-            bdlbb::Blob cipherData(d_outgoingBufferFactory_sp.get());
-
-            while (NTCCFG_UNLIKELY(d_encryption_sp->hasOutgoingCipherText())) {
-                error = d_encryption_sp->popOutgoingCipherText(&cipherData);
-                if (error) {
-                    return error;
-                }
-            }
-
-            if (NTCCFG_UNLIKELY(cipherData.length() > 0)) {
-                ntcq::SendState state;
-                state.setCounter(d_sendCounter++);
-
-                error = this->privateSendRaw(self,
-                                             cipherData,
-                                             state,
-                                             ntca::SendOptions(),
-                                             ntca::SendContext(),
-                                             d_sendComplete);
-                if (error) {
-                    return error;
-                }
-            }
-        }
-
-        if (d_encryption_sp->isShutdownFinished()) {
             d_encryption_sp.reset();
 
             if (d_session_sp) {
@@ -3221,19 +3243,95 @@ ntsa::Error StreamSocket::privateDequeueReceiveBuffer(
                 event.setType(ntca::DowngradeEventType::e_COMPLETE);
                 event.setContext(context);
 
-                ntcs::Dispatch::announceDowngradeComplete(d_session_sp,
-                                                          self,
-                                                          event,
-                                                          d_sessionStrand_sp,
-                                                          d_reactorStrand_sp,
-                                                          self,
-                                                          false,
-                                                          &d_mutex);
+                ntcs::Dispatch::announceDowngradeComplete(
+                    d_session_sp,
+                    self,
+                    event,
+                    d_sessionStrand_sp,
+                    d_reactorStrand_sp,
+                    self,
+                    false,
+                    &d_mutex);
             }
         }
+        else {
+            if (d_encryption_sp->isShutdownReceived()) {
+                if (!d_encryption_sp->isShutdownSent()) {
+                    error = d_encryption_sp->shutdown();
+                    if (error) {
+                        return error;
+                    }
 
-        if (numBytesReceived == 0) {
-            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+                    if (d_session_sp) {
+                        ntca::DowngradeContext context;
+
+                        ntca::DowngradeEvent event;
+                        event.setType(ntca::DowngradeEventType::e_INITIATED);
+                        event.setContext(context);
+
+                        ntcs::Dispatch::announceDowngradeInitiated(
+                            d_session_sp,
+                            self,
+                            event,
+                            d_sessionStrand_sp,
+                            d_reactorStrand_sp,
+                            self,
+                            false,
+                            &d_mutex);
+                    }
+                }
+            }
+
+            if (NTCCFG_UNLIKELY(d_encryption_sp->hasOutgoingCipherText())) {
+                bdlbb::Blob cipherData(d_outgoingBufferFactory_sp.get());
+
+                while (NTCCFG_UNLIKELY(
+                    d_encryption_sp->hasOutgoingCipherText())) 
+                {
+                    error = d_encryption_sp->popOutgoingCipherText(
+                        &cipherData);
+                    if (error) {
+                        return error;
+                    }
+                }
+
+                if (NTCCFG_UNLIKELY(cipherData.length() > 0)) {
+                    ntcq::SendState state;
+                    state.setCounter(d_sendCounter++);
+
+                    error = this->privateSendRaw(self,
+                                                 cipherData,
+                                                 state,
+                                                 ntca::SendOptions(),
+                                                 ntca::SendContext(),
+                                                 d_sendComplete);
+                    if (error) {
+                        return error;
+                    }
+                }
+            }
+
+            if (d_encryption_sp->isShutdownFinished()) {
+                d_encryption_sp.reset();
+
+                if (d_session_sp) {
+                    ntca::DowngradeContext context;
+
+                    ntca::DowngradeEvent event;
+                    event.setType(ntca::DowngradeEventType::e_COMPLETE);
+                    event.setContext(context);
+
+                    ntcs::Dispatch::announceDowngradeComplete(
+                        d_session_sp,
+                        self,
+                        event,
+                        d_sessionStrand_sp,
+                        d_reactorStrand_sp,
+                        self,
+                        false,
+                        &d_mutex);
+                }
+            }
         }
 
         return ntsa::Error();
@@ -4417,6 +4515,179 @@ ntsa::Error StreamSocket::privateUpgrade(
     return ntsa::Error();
 }
 
+ntsa::Error StreamSocket::privateDowngrade(
+    const bsl::shared_ptr<StreamSocket>& self,
+    const ntca::DowngradeOptions&        downgradeOptions)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
+
+    BSLS_ASSERT(downgradeOptions.abortive().isNull() || 
+                !downgradeOptions.abortive().value());
+
+    if (!d_encryption_sp) {
+        return ntsa::Error();
+    }
+
+    if (d_encryption_sp->isShutdownSent()) {
+        return ntsa::Error();
+    }
+
+    ntsa::Error error;
+
+    error = d_encryption_sp->shutdown();
+    if (error) {
+        return error;
+    }
+
+    if (!d_encryption_sp->isShutdownReceived()) {
+        if (d_session_sp) {
+            ntca::DowngradeContext context;
+
+            ntca::DowngradeEvent event;
+            event.setType(ntca::DowngradeEventType::e_INITIATED);
+            event.setContext(context);
+
+            ntcs::Dispatch::announceDowngradeInitiated(d_session_sp,
+                                                       self,
+                                                       event,
+                                                       d_sessionStrand_sp,
+                                                       ntci::Strand::unknown(),
+                                                       self,
+                                                       true,
+                                                       &d_mutex);
+        }
+    }
+
+    bdlbb::Blob cipherData(d_outgoingBufferFactory_sp.get());
+
+    while (d_encryption_sp->hasOutgoingCipherText()) {
+        error = d_encryption_sp->popOutgoingCipherText(&cipherData);
+        if (error) {
+            return error;
+        }
+    }
+
+    if (cipherData.length() > 0) {
+        ntcq::SendState state;
+        state.setCounter(d_sendCounter++);
+
+        error = this->privateSendRaw(self,
+                                     cipherData,
+                                     state,
+                                     ntca::SendOptions(),
+                                     ntca::SendContext(),
+                                     d_sendComplete);
+        if (error) {
+            return error;
+        }
+    }
+
+    if (d_encryption_sp->isShutdownFinished()) {
+        d_encryption_sp.reset();
+
+        if (d_session_sp) {
+            ntca::DowngradeContext context;
+
+            ntca::DowngradeEvent event;
+            event.setType(ntca::DowngradeEventType::e_COMPLETE);
+            event.setContext(context);
+
+            ntcs::Dispatch::announceDowngradeComplete(d_session_sp,
+                                                      self,
+                                                      event,
+                                                      d_sessionStrand_sp,
+                                                      ntci::Strand::unknown(),
+                                                      self,
+                                                      true,
+                                                      &d_mutex);
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error StreamSocket::privateDowngradeAbortively(
+    const bsl::shared_ptr<StreamSocket>& self,
+    const ntca::DowngradeOptions&        downgradeOptions)
+{
+    ntsa::Error error;
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
+    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
+
+    BSLS_ASSERT(downgradeOptions.abortive().has_value() && 
+                downgradeOptions.abortive().value());
+
+    if (!d_encryption_sp) {
+        return ntsa::Error();
+    }
+
+    if (d_encryption_sp->isShutdownSent()) {
+        return ntsa::Error::invalid();
+    }
+
+    if (d_encryption_sp->isShutdownReceived()) {
+        return ntsa::Error::invalid();
+    }
+
+    if (d_encryption_sp->hasOutgoingCipherText()) {
+        bdlbb::Blob data;
+        d_encryption_sp->popOutgoingCipherText(&data);
+
+        NTCI_LOG_STREAM_WARN << "Failed to downgrade abortively: "
+                             << "pending outgoing ciphertext:\n" 
+                             << bdlbb::BlobUtilHexDumper(&data, 4096) 
+                             << NTCI_LOG_STREAM_END;
+
+        return ntsa::Error::invalid();
+    }
+
+    if (d_session_sp) {
+        ntca::DowngradeContext context;
+
+        ntca::DowngradeEvent event;
+        event.setType(ntca::DowngradeEventType::e_INITIATED);
+        event.setContext(context);
+
+        ntcs::Dispatch::announceDowngradeInitiated(d_session_sp,
+                                                   self,
+                                                   event,
+                                                   d_sessionStrand_sp,
+                                                   ntci::Strand::unknown(),
+                                                   self,
+                                                   true,
+                                                   &d_mutex);
+    }
+
+    d_encryption_sp.reset();
+
+    if (d_session_sp) {
+        ntca::DowngradeContext context;
+
+        ntca::DowngradeEvent event;
+        event.setType(ntca::DowngradeEventType::e_COMPLETE);
+        event.setContext(context);
+
+        ntcs::Dispatch::announceDowngradeComplete(d_session_sp,
+                                                  self,
+                                                  event,
+                                                  d_sessionStrand_sp,
+                                                  ntci::Strand::unknown(),
+                                                  self,
+                                                  true,
+                                                  &d_mutex);
+    }
+
+    return ntsa::Error();
+}
+
 void StreamSocket::privateRetryConnect(
     const bsl::shared_ptr<StreamSocket>& self)
 {
@@ -5012,6 +5283,7 @@ StreamSocket::StreamSocket(
 , d_connectDeadlineTimer_sp()
 , d_connectRetryTimer_sp()
 , d_connectInProgress(false)
+, d_upgradeOptions(basicAllocator)
 , d_upgradeCallback(basicAllocator)
 , d_upgradeTimer_sp()
 , d_upgradeInProgress(false)
@@ -5610,8 +5882,8 @@ ntsa::Error StreamSocket::upgrade(
 
     // Set the encryption session used to encrypt and decrypt data.
 
-    d_encryption_sp = encryption;
-
+    d_encryption_sp     = encryption;
+    d_upgradeOptions    = options;
     d_upgradeCallback   = callback;
     d_upgradeInProgress = true;
 
@@ -5620,6 +5892,7 @@ ntsa::Error StreamSocket::upgrade(
     error = this->privateUpgrade(self, options);
     if (error) {
         d_encryption_sp.reset();
+        d_upgradeOptions.reset();
         d_upgradeCallback.reset();
         d_upgradeInProgress = false;
         this->privateShutdown(self,
@@ -7016,92 +7289,21 @@ ntsa::Error StreamSocket::downgrade()
 
     LockGuard lock(&d_mutex);
 
-    NTCI_LOG_CONTEXT();
+    return this->privateDowngrade(self, ntca::DowngradeOptions());
+}
 
-    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
+ntsa::Error StreamSocket::downgrade(const ntca::DowngradeOptions& options)
+{
+    bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    if (!d_encryption_sp) {
-        return ntsa::Error::invalid();
+    LockGuard lock(&d_mutex);
+
+    if (options.abortive().isNull() || !options.abortive().value()) {
+        return this->privateDowngrade(self, options);
     }
-
-    if (d_encryption_sp->isShutdownSent()) {
-        return ntsa::Error();
+    else {
+        return this->privateDowngradeAbortively(self, options);
     }
-
-    ntsa::Error error;
-
-    error = d_encryption_sp->shutdown();
-    if (error) {
-        return error;
-    }
-
-    if (!d_encryption_sp->isShutdownReceived()) {
-        if (d_session_sp) {
-            ntca::DowngradeContext context;
-
-            ntca::DowngradeEvent event;
-            event.setType(ntca::DowngradeEventType::e_INITIATED);
-            event.setContext(context);
-
-            ntcs::Dispatch::announceDowngradeInitiated(d_session_sp,
-                                                       self,
-                                                       event,
-                                                       d_sessionStrand_sp,
-                                                       ntci::Strand::unknown(),
-                                                       self,
-                                                       true,
-                                                       &d_mutex);
-        }
-    }
-
-    bdlbb::Blob cipherData(d_outgoingBufferFactory_sp.get());
-
-    while (d_encryption_sp->hasOutgoingCipherText()) {
-        error = d_encryption_sp->popOutgoingCipherText(&cipherData);
-        if (error) {
-            return error;
-        }
-    }
-
-    if (cipherData.length() > 0) {
-        ntcq::SendState state;
-        state.setCounter(d_sendCounter++);
-
-        error = this->privateSendRaw(self,
-                                     cipherData,
-                                     state,
-                                     ntca::SendOptions(),
-                                     ntca::SendContext(),
-                                     d_sendComplete);
-        if (error) {
-            return error;
-        }
-    }
-
-    if (d_encryption_sp->isShutdownFinished()) {
-        d_encryption_sp.reset();
-
-        if (d_session_sp) {
-            ntca::DowngradeContext context;
-
-            ntca::DowngradeEvent event;
-            event.setType(ntca::DowngradeEventType::e_COMPLETE);
-            event.setContext(context);
-
-            ntcs::Dispatch::announceDowngradeComplete(d_session_sp,
-                                                      self,
-                                                      event,
-                                                      d_sessionStrand_sp,
-                                                      ntci::Strand::unknown(),
-                                                      self,
-                                                      true,
-                                                      &d_mutex);
-        }
-    }
-
-    return ntsa::Error();
 }
 
 ntsa::Error StreamSocket::shutdown(ntsa::ShutdownType::Value direction,

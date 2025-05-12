@@ -79,28 +79,38 @@ class Encryption
         const HandshakeCallback&    callback);
 
     /// Add the specified 'input' containing ciphertext read from the peer.
-    /// Return 0 on success and a non-zero value otherwise.
+    /// Return the error.
     virtual ntsa::Error pushIncomingCipherText(const bdlbb::Blob& input);
 
     /// Add the specified 'input' containing ciphertext read from the peer.
-    /// Return 0 on success and a non-zero value otherwise.
+    /// Return the error.
     virtual ntsa::Error pushIncomingCipherText(const ntsa::Data& input);
 
     /// Add the specified 'input' containing plaintext to be sent to the
-    /// peer. Return 0 on success and a non-zero value otherwise.
+    /// peer. Return the error.
     virtual ntsa::Error pushOutgoingPlainText(const bdlbb::Blob& input);
 
     /// Add the specified 'input' containing plaintext to be sent to the
-    /// peer. Return 0 on success and a non-zero value otherwise.
+    /// peer. Return the error.
     virtual ntsa::Error pushOutgoingPlainText(const ntsa::Data& input);
 
     /// Pop plaintext read from the peer and append it to the specified
-    /// 'output'. Return 0 on success and a non-zero value otherwise.
+    /// 'output'. Return the error.
     virtual ntsa::Error popIncomingPlainText(bdlbb::Blob* output);
 
     /// Pop ciphertext to be read from the peer and append to the specified
-    /// 'output'.
+    /// 'output'. Return the error.
     virtual ntsa::Error popOutgoingCipherText(bdlbb::Blob* output);
+
+    /// Pop plaintext leftover after reading across a ciphertext/plaintext
+    /// boundary from the peer and append it to the specified 'output'. Return
+    /// the error.
+    virtual ntsa::Error popIncomingLeftovers(bdlbb::Blob* output);
+
+    /// Pop plaintext queue for transmission during the handshake but leftover
+    /// because the handshake has failed and append it to the specified 
+    /// 'output'. Return the error. 
+    virtual ntsa::Error popOutgoingLeftovers(bdlbb::Blob* output);
 
     /// Initiate the shutdown of the session.
     virtual ntsa::Error shutdown();
@@ -110,6 +120,15 @@ class Encryption
 
     /// Return true if ciphertext data is ready to be sent.
     virtual bool hasOutgoingCipherText() const;
+
+    /// Return true if plaintext data leftover after reading across a 
+    /// ciphertext/plaintext boundary is ready to be read, otherwise return
+    /// false.
+    virtual bool hasIncomingLeftovers() const;
+
+    /// Return true if plaintext data for transmission leftover after the
+    /// handshake fails is ready to be sent, otherwise return false.
+    virtual bool hasOutgoingLeftovers() const;
 
     /// Load into the specified 'result' the source certificate used by the
     /// encryption session. Return true if such a certificate is defined, and

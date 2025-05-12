@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntca_connectoptions.h>
 #include <ntca_connecttoken.h>
+#include <ntca_downgradeoptions.h>
 #include <ntca_flowcontrolmode.h>
 #include <ntca_flowcontroltype.h>
 #include <ntca_receiveoptions.h>
@@ -1582,6 +1583,10 @@ class StreamSocket : public ntsi::Descriptor,
     /// Downgrade the stream socket from encrypted to unencrypted. Return
     /// the error.
     virtual ntsa::Error downgrade() = 0;
+
+    /// Downgrade the stream socket from encrypted to unencrypted according to
+    /// the specified 'options'. Return the error.
+    virtual ntsa::Error downgrade(const ntca::DowngradeOptions& options);
 
     /// Shutdown the stream socket in the specified 'direction' according
     /// to the specified 'mode' of shutdown. Return the error.

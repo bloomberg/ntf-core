@@ -32,12 +32,15 @@ BSLS_IDENT_RCSID(ntcu_datagramsocketeventqueue_cpp, "$Id$ $CSID$")
 #define NTCU_DATAGRAMSOCKETEVENTQUEUE_TIMEOUT -1
 #endif
 
-#define NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event)        \
+#define NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(                              \
+        datagramSocket, category, event)                                      \
     do {                                                                      \
         NTCI_LOG_STREAM_DEBUG                                                 \
-            << "Datagram socket at " << datagramSocket->sourceEndpoint()      \
-            << " to " << datagramSocket->remoteEndpoint()                     \
-            << " announced event " << event << NTCI_LOG_STREAM_END;           \
+            << "Datagram socket at " << (datagramSocket)->sourceEndpoint()    \
+            << " to " << (datagramSocket)->remoteEndpoint()                   \
+            << " announced "                                                  \
+            << (category)                                                     \
+            << " event " << (event) << NTCI_LOG_STREAM_END;                   \
     } while (false)
 
 namespace BloombergLP {
@@ -51,7 +54,8 @@ void DatagramSocketEventQueue::processReadQueueFlowControlRelaxed(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
+        datagramSocket, "read queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -72,7 +76,8 @@ void DatagramSocketEventQueue::processReadQueueFlowControlApplied(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
+        datagramSocket, "read queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -93,7 +98,8 @@ void DatagramSocketEventQueue::processReadQueueLowWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
+        datagramSocket, "read queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -113,7 +119,8 @@ void DatagramSocketEventQueue::processReadQueueHighWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
+        datagramSocket, "read queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -133,7 +140,8 @@ void DatagramSocketEventQueue::processReadQueueDiscarded(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
+        datagramSocket, "read queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -153,7 +161,8 @@ void DatagramSocketEventQueue::processWriteQueueFlowControlRelaxed(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
+        datagramSocket, "write queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -174,7 +183,8 @@ void DatagramSocketEventQueue::processWriteQueueFlowControlApplied(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
+        datagramSocket, "write queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -195,7 +205,8 @@ void DatagramSocketEventQueue::processWriteQueueLowWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
+        datagramSocket, "write queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -215,7 +226,8 @@ void DatagramSocketEventQueue::processWriteQueueHighWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
+        datagramSocket, "write queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -235,7 +247,8 @@ void DatagramSocketEventQueue::processWriteQueueDiscarded(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
+        datagramSocket, "write queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -255,7 +268,7 @@ void DatagramSocketEventQueue::processShutdownInitiated(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -275,7 +288,7 @@ void DatagramSocketEventQueue::processShutdownReceive(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -295,7 +308,7 @@ void DatagramSocketEventQueue::processShutdownSend(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -315,7 +328,7 @@ void DatagramSocketEventQueue::processShutdownComplete(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -335,7 +348,7 @@ void DatagramSocketEventQueue::processError(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket, "error", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 

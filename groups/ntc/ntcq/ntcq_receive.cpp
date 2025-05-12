@@ -20,6 +20,7 @@ BSLS_IDENT_RCSID(ntcq_receive_cpp, "$Id$ $CSID$")
 
 #include <ntccfg_bind.h>
 #include <ntccfg_limits.h>
+#include <bdlbb_blobutil.h>
 #include <bdlf_bind.h>
 #include <bdlf_memfn.h>
 #include <bdlf_placeholder.h>

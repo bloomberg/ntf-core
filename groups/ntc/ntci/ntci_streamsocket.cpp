@@ -64,6 +64,13 @@ ntsa::Error StreamSocket::timestampIncomingData(bool enable)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error StreamSocket::downgrade(const ntca::DowngradeOptions& options)
+{
+    NTCCFG_WARNING_UNUSED(options);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error StreamSocket::release(ntsa::Handle* result)
 {
     *result = ntsa::k_INVALID_HANDLE;
