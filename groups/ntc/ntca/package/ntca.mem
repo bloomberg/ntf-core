@@ -27,6 +27,7 @@ ntca_datagramsocketoptions
 ntca_deflatecontext
 ntca_deflateoptions
 ntca_downgradecontext
+ntca_downgradeoptions
 ntca_downgradeevent
 ntca_downgradeeventtype
 ntca_driverconfig

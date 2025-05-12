@@ -57,6 +57,19 @@ namespace ntca {
 /// allowances configured for the encryption client or server that created the
 /// encryption session that is attempted to be established.
 ///
+/// @li @b keepOutgoingLeftovers:
+/// Cache outgoing plaintext data pushed into the session during the handshake
+/// phase so it can be later retrieved if the handshake fails. If not 
+/// specified, the effective value is false.
+///
+/// @li @b keepIncomingLeftovers:
+/// Automatically detect a protocol change from the encryption framing protocol
+/// back to any other protocol and treat it as an automatic downgrade when
+/// processing incoming data. If not specified, the effective value is false.
+/// Note that enabling this option is a security risk without proper defense
+/// established in higher-level application layers in cooperation with that
+/// application layer's protocol.
+///
 /// @li @b deadline:
 /// The deadline within which the connection must be upgraded, in absolute time
 /// since the Unix epoch.
@@ -78,6 +91,8 @@ class UpgradeOptions
     bdlb::NullableValue<ntca::UpgradeToken>         d_token;
     bdlb::NullableValue<bsl::string>                d_serverName;
     bdlb::NullableValue<ntca::EncryptionValidation> d_validation;
+    bdlb::NullableValue<bool>                       d_keepOutgoingLeftovers;
+    bdlb::NullableValue<bool>                       d_keepIncomingLeftovers;
     bdlb::NullableValue<bsls::TimeInterval>         d_deadline;
     bool                                            d_recurse;
 
@@ -141,6 +156,16 @@ class UpgradeOptions
     /// specified 'validation'.
     void setValidation(const ntca::EncryptionValidation& validation);
 
+    /// Set the flag to cache outgoing plaintext data pushed into the session
+    /// during the handshake phase so it can be later retrieved if the
+    /// handshake fails to the specified 'value'.
+    void setKeepOutgoingLeftovers(bool value);
+
+    /// Set the flag to automatically detect a protocol change from the
+    /// encryption framing protocol back to any other protocol and treat it as
+    /// an automatic downgrade according to the specified 'value'.
+    void setKeepIncomingLeftovers(bool value);
+
     /// Set the deadline within which the connection must be upgraded to the
     /// specified 'value'.
     void setDeadline(const bsls::TimeInterval& value);
@@ -158,6 +183,16 @@ class UpgradeOptions
 
     /// Return the peer certificate validation requirements and allowances.
     const bdlb::NullableValue<ntca::EncryptionValidation>& validation() const;
+
+    /// Return the flag to cache outgoing plaintext data pushed into the
+    /// session during the handshake phase so it can be later retrieved if the
+    /// handshake fails.
+    const bdlb::NullableValue<bool>& keepOutgoingLeftovers() const;
+
+    /// Return the flag to automatically detect a protocol change from the
+    /// encryption framing protocol back to any other protocol and treat it as
+    /// an automatic downgrade.
+    const bdlb::NullableValue<bool>& keepIncomingLeftovers() const;
 
     /// Return the deadline within which the connection must be upgraded.
     const bdlb::NullableValue<bsls::TimeInterval>& deadline() const;
@@ -231,6 +266,8 @@ UpgradeOptions::UpgradeOptions(bslma::Allocator* basicAllocator)
 : d_token()
 , d_serverName(basicAllocator)
 , d_validation(basicAllocator)
+, d_keepOutgoingLeftovers()
+, d_keepIncomingLeftovers()
 , d_deadline()
 , d_recurse(false)
 {
@@ -242,6 +279,8 @@ UpgradeOptions::UpgradeOptions(const UpgradeOptions& original,
 : d_token(original.d_token)
 , d_serverName(original.d_serverName, basicAllocator)
 , d_validation(original.d_validation, basicAllocator)
+, d_keepOutgoingLeftovers(original.d_keepOutgoingLeftovers)
+, d_keepIncomingLeftovers(original.d_keepIncomingLeftovers)
 , d_deadline(original.d_deadline)
 , d_recurse(original.d_recurse)
 {
@@ -256,11 +295,13 @@ NTCCFG_INLINE
 UpgradeOptions& UpgradeOptions::operator=(const UpgradeOptions& other)
 {
     if (this != &other) {
-        d_token      = other.d_token;
-        d_serverName = other.d_serverName;
-        d_validation = other.d_validation;
-        d_deadline   = other.d_deadline;
-        d_recurse    = other.d_recurse;
+        d_token                 = other.d_token;
+        d_serverName            = other.d_serverName;
+        d_validation            = other.d_validation;
+        d_keepOutgoingLeftovers = other.d_keepOutgoingLeftovers;
+        d_keepIncomingLeftovers = other.d_keepIncomingLeftovers;
+        d_deadline              = other.d_deadline;
+        d_recurse               = other.d_recurse;
     }
 
     return *this;
@@ -272,6 +313,8 @@ void UpgradeOptions::reset()
     d_token.reset();
     d_serverName.reset();
     d_validation.reset();
+    d_keepOutgoingLeftovers.reset();
+    d_keepIncomingLeftovers.reset();
     d_deadline.reset();
     d_recurse = false;
 }
@@ -377,6 +420,18 @@ void UpgradeOptions::setValidation(
 }
 
 NTCCFG_INLINE
+void UpgradeOptions::setKeepOutgoingLeftovers(bool value)
+{
+    d_keepOutgoingLeftovers = value;
+}
+
+NTCCFG_INLINE
+void UpgradeOptions::setKeepIncomingLeftovers(bool value)
+{
+    d_keepIncomingLeftovers = value;
+}
+
+NTCCFG_INLINE
 void UpgradeOptions::setDeadline(const bsls::TimeInterval& value)
 {
     d_deadline = value;
@@ -405,6 +460,18 @@ const bdlb::NullableValue<ntca::EncryptionValidation>& UpgradeOptions::
     validation() const
 {
     return d_validation;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<bool>& UpgradeOptions::keepOutgoingLeftovers() const
+{
+    return d_keepOutgoingLeftovers;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<bool>& UpgradeOptions::keepIncomingLeftovers() const
+{
+    return d_keepIncomingLeftovers;
 }
 
 NTCCFG_INLINE
@@ -450,6 +517,8 @@ void hashAppend(HASH_ALGORITHM& algorithm, const UpgradeOptions& value)
 
     hashAppend(algorithm, value.token());
     hashAppend(algorithm, value.serverName());
+    hashAppend(algorithm, value.keepOutgoingLeftovers());
+    hashAppend(algorithm, value.keepIncomingLeftovers());
     hashAppend(algorithm, value.deadline());
     hashAppend(algorithm, value.recurse());
 }

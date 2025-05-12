@@ -320,20 +320,20 @@ class ReceiveQueueEntry
 class ReceiveFeedback
 {
     enum {
-        k_INCREASE_FACTOR = 8192,
         // The additive increase factor when "congestion" is detected,
         // e.g., when the amount of data received is approximately equal to
         // the amount of data receivable, within some threshold.
+        k_INCREASE_FACTOR = 8192,
 
-        k_DECREASE_FACTOR = 2,
         // The multiplicative decrease factor when "congestion" is *not*
         // detected, e.g., when the amount of data received is less than
         // the amount of data receivable, beyond some threshold.
+        k_DECREASE_FACTOR = 2,
 
-        k_THRESHOLD = 90
         // The percentage of the amount of data receivable, when compared
         // with amount of data received, above which the receiver is
         // considered to be "congesting" the network.
+        k_THRESHOLD = 90
     };
 
     bsl::size_t d_minimum;
@@ -933,6 +933,7 @@ bool ReceiveQueue::pushEntry(const ReceiveQueueEntry& entry)
 NTCCFG_INLINE
 ReceiveQueueEntry& ReceiveQueue::frontEntry()
 {
+    BSLS_ASSERT(!d_entryList.empty());
     return d_entryList.front();
 }
 

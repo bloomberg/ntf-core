@@ -32,11 +32,14 @@ BSLS_IDENT_RCSID(ntcu_listenersocketeventqueue_cpp, "$Id$ $CSID$")
 #define NTCU_LISTENERSOCKETEVENTQUEUE_TIMEOUT -1
 #endif
 
-#define NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event)        \
+#define NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(                              \
+        listenerSocket, category, event)                                      \
     do {                                                                      \
         NTCI_LOG_STREAM_DEBUG                                                 \
-            << "Listener socket at " << listenerSocket->sourceEndpoint()      \
-            << " announced event " << event << NTCI_LOG_STREAM_END;           \
+            << "Listener socket at " << (listenerSocket)->sourceEndpoint()    \
+            << " announced "                                                  \
+            << (category)                                                     \
+            << " event " << (event) << NTCI_LOG_STREAM_END;                   \
     } while (false)
 
 namespace BloombergLP {
@@ -50,7 +53,8 @@ void ListenerSocketEventQueue::processAcceptQueueFlowControlRelaxed(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(
+        listenerSocket, "accept queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -71,7 +75,8 @@ void ListenerSocketEventQueue::processAcceptQueueFlowControlApplied(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(
+        listenerSocket, "accept queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -92,7 +97,8 @@ void ListenerSocketEventQueue::processAcceptQueueLowWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(
+        listenerSocket, "accept queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -112,7 +118,8 @@ void ListenerSocketEventQueue::processAcceptQueueHighWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(
+        listenerSocket, "accept queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -132,7 +139,8 @@ void ListenerSocketEventQueue::processAcceptQueueDiscarded(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(
+        listenerSocket, "accept queue", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -152,7 +160,7 @@ void ListenerSocketEventQueue::processShutdownInitiated(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -172,7 +180,7 @@ void ListenerSocketEventQueue::processShutdownReceive(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -192,7 +200,7 @@ void ListenerSocketEventQueue::processShutdownSend(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -212,7 +220,7 @@ void ListenerSocketEventQueue::processShutdownComplete(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, "shutdown", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -232,7 +240,7 @@ void ListenerSocketEventQueue::processError(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, event);
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(listenerSocket, "error", event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 

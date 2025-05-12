@@ -52,8 +52,10 @@ BSLS_IDENT_RCSID(ntctls_plugin_cpp, "$Id$ $CSID$")
 #include <ntci_log.h>
 #include <ntci_mutex.h>
 #include <ntcs_plugin.h>
+#include <ntcs_blobutil.h>
 #include <ntsf_system.h>
 
+#include <bdlb_bigendian.h>
 #include <bdlb_chartype.h>
 #include <bdlb_print.h>
 #include <bdlb_string.h>
@@ -172,6 +174,1213 @@ BSLS_IDENT_RCSID(ntctls_plugin_cpp, "$Id$ $CSID$")
 #endif
 #pragma comment(lib, "crypt32")
 #endif
+
+namespace BloombergLP {
+namespace ntctls {
+
+/// Describes limits in the TLS protocol.
+///
+/// @ingroup module_ntctls
+class TlsLimit {
+public:
+    // The TLS v1.0 protocol version.
+    static const bsl::uint16_t k_PROTOCOL_VERSION_TLS_v10 = 0x0301;
+
+    // The TLS v1.1 protocol version.
+    static const bsl::uint16_t k_PROTOCOL_VERSION_TLS_v11 = 0x0302;
+
+    // The TLS v1.2 protocol version.
+    static const bsl::uint16_t k_PROTOCOL_VERSION_TLS_v12 = 0x0303;
+
+    // The TLS v1.3 protocol version.
+    static const bsl::uint16_t k_PROTOCOL_VERSION_TLS_v13 = 0x0304;
+
+    /// The record layer fragments information blocks into TLS plaintext
+    /// records carrying data in chunks of 2^14 bytes or less.
+    static const bsl::size_t k_RECORD_FRAGMENTATION_LIMIT = 16384;
+};
+
+/// Enumerates the TLS versions.
+///
+/// @ingroup module_ntctls
+class TlsVersion
+{
+public:
+    /// Enumerates the TLS versions.
+    enum Value {
+        // The TLS v1.0 protocol version.
+        e_TLS_v10 = 0x0301,
+
+        // The TLS v1.1 protocol version.
+        e_TLS_v11 = 0x0302,
+
+        // The TLS v1.2 protocol version.
+        e_TLS_v12 = 0x0303,
+
+        // The TLS v1.3 protocol version.
+        e_TLS_v13 = 0x0304
+    };
+
+    /// Return the string representation exactly matching the enumerator
+    /// name corresponding to the specified enumeration 'value'.
+    static const char* toString(Value value);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'number'.  Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'number' does not match any
+    /// enumerator).
+    static int fromInt(Value* result, int number);
+
+    /// Write to the specified 'stream' the string representation of the
+    /// specified enumeration 'value'.  Return a reference to the modifiable
+    /// 'stream'.
+    static bsl::ostream& print(bsl::ostream& stream, Value value);
+};
+
+/// Format the specified 'rhs' to the specified output 'stream' and return a
+/// reference to the modifiable 'stream'.
+///
+/// @related ntctls::TlsVersion
+bsl::ostream& operator<<(bsl::ostream& stream, TlsVersion::Value rhs);
+
+/// Enumerates the TLS alert levels.
+///
+/// @details
+/// When an error is detected, the detecting party sends a message to its peer.
+/// Upon transmission or receipt of a fatal alert message, both parties MUST
+/// immediately close the connection.
+///
+/// @ingroup module_ntctls
+class TlsRecordAlertLevel
+{
+public:
+    /// Enumerates the TLS alert levels.
+    enum Value {
+        /// The alert is a warning.
+        e_WARN = 1, 
+
+        /// The alert is fatal to continue processing the protocol.
+        e_FATAL = 2
+    };
+
+    /// Return the string representation exactly matching the enumerator
+    /// name corresponding to the specified enumeration 'value'.
+    static const char* toString(Value value);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'number'.  Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'number' does not match any
+    /// enumerator).
+    static int fromInt(Value* result, int number);
+
+    /// Write to the specified 'stream' the string representation of the
+    /// specified enumeration 'value'.  Return a reference to the modifiable
+    /// 'stream'.
+    static bsl::ostream& print(bsl::ostream& stream, Value value);
+};
+
+/// Format the specified 'rhs' to the specified output 'stream' and return a
+/// reference to the modifiable 'stream'.
+///
+/// @related ntctls::TlsRecordAlertLevel
+bsl::ostream& operator<<(bsl::ostream& stream, TlsRecordAlertLevel::Value rhs);
+
+/// Enumerates the TLS alert codes (i.e. descriptions.)
+///
+/// @ingroup module_ntctls
+class TlsRecordAlertCode
+{
+public:
+    /// Enumerates the TLS alert codes.
+    enum Value {
+        /// This alert notifies the recipient that the sender will not send any
+        /// more messages on this connection. Any data received after a closure
+        /// alert has been received MUST be ignored.
+        e_CLOSE_NOTIFY = 0,
+
+        /// An inappropriate message (e.g., the wrong handshake message,
+        /// premature Application Data, etc.) was received. This alert should
+        /// never be observed in communication between proper implementations.
+        e_UNEXPECTED_MESSAGE = 10,
+
+        /// This alert is returned if a record is received which cannot be
+        /// deprotected. Because AEAD algorithms combine decryption and
+        /// verification, and also to avoid side-channel attacks, this alert is
+        /// used for all deprotection failures. This alert should never be
+        /// observed in communication between proper implementations, except
+        /// when messages were corrupted in the network.
+        e_BAD_RECORD_MAC = 20,
+
+        /// A TLSCiphertext record was received that had a length more than
+        /// 2^14 + 256 bytes, or a record decrypted to a TLSPlaintext record
+        /// with more than 2^14 bytes (or some other negotiated limit).  This
+        /// alert should never be observed in communication between proper
+        /// implementations, except when messages were corrupted in the
+        /// network.
+        e_RECORD_OVERFLOW = 22,
+
+        /// Receipt of a "handshake_failure" alert message indicates that the
+        /// sender was unable to negotiate an acceptable set of security
+        /// parameters given the options available.
+        e_HANDSHAKE_FAILURE = 40,
+
+        /// A certificate was corrupt, contained signatures that did not verify
+        /// correctly, etc.
+        e_BAD_CERTIFICATE = 42,
+
+        /// A certificate was of an unsupported type.
+        e_UNSUPPORTED_CERTIFICATE = 43,
+
+        /// A certificate was revoked by its signer.
+        e_CERTIFICATE_REVOKED = 44,
+
+        /// A certificate has expired or is not currently valid.
+        e_CERTIFICATE_EXPIRED = 45,
+
+        /// Some other (unspecified) issue arose in processing the certificate,
+        /// rendering it unacceptable.
+        e_CERTIFICATE_UNKNOWN = 46,
+
+        /// A field in the handshake was incorrect or inconsistent with other
+        /// fields.  This alert is used for errors which conform to the formal
+        /// protocol syntax but are otherwise incorrect.
+        e_ILLEGAL_PARAMETER = 47,
+
+        /// A valid certificate chain or partial chain was received, but the
+        /// certificate was not accepted because the CA certificate could not
+        /// be located or could not be matched with a known trust anchor.
+        e_UNKNOWN_CA = 48,
+
+        /// A valid certificate or PSK was received, but when access control
+        /// was applied, the sender decided not to proceed with negotiation.
+        e_ACCESS_DENIED = 49,
+
+        /// A message could not be decoded because some field was out of the
+        /// specified range or the length of the message was incorrect.  This
+        /// alert is used for errors where the message does not conform to the
+        /// formal protocol syntax.  This alert should never be observed in
+        /// communication between proper implementations, except when messages
+        /// were corrupted in the network.
+        e_DECODE_ERROR = 50,
+
+        /// A handshake (not record layer) cryptographic operation failed,
+        /// including being unable to correctly verify a signature or validate
+        /// a Finished message or a PSK binder.
+        e_DECRYPT_ERROR = 51,
+
+        /// The protocol version the peer has attempted to negotiate is
+        /// recognized but not supported.
+        e_PROTOCOL_VERSION = 70,
+
+        /// Returned instead of "handshake_failure" when a negotiation has
+        /// failed specifically because the server requires parameters more
+        /// secure than those supported by the client.
+        e_INSUFFICIENT_SECURITY = 71,
+
+        /// An internal error unrelated to the peer or the correctness of the
+        /// protocol (such as a memory allocation failure) makes it impossible
+        /// to continue.
+        e_INTERNAL_ERROR = 80,
+
+        /// Sent by a server in response to an invalid connection retry attempt
+        /// from a client. 
+        e_INAPPROPRIATE_FALLBACK = 86,
+
+        /// This alert notifies the recipient that the sender is canceling the
+        /// handshake for some reason unrelated to a protocol failure. If a
+        /// user cancels an operation after the handshake is complete, just
+        /// closing the connection by sending a "close_notify" is more
+        /// appropriate. This alert SHOULD be followed by a "close_notify".
+        /// This alert generally has the warning alert level.
+        e_USER_CANCELED = 90,
+
+        /// Sent by endpoints that receive a handshake message not containing
+        /// an extension that is mandatory to send for the offered TLS version
+        /// or other negotiated parameters.
+        e_MISSING_EXTENSION = 109,
+
+        /// Sent by endpoints receiving any handshake message containing an
+        /// extension known to be prohibited for inclusion in the given
+        /// handshake message, or including any extensions in a ServerHello or
+        /// Certificate not first offered in the corresponding ClientHello or
+        /// CertificateRequest.
+        e_UNSUPPORTED_EXTENSION = 110,
+
+        /// Sent by servers when no server exists identified by the name
+        /// provided by the client via the "server_name" extension.
+        e_UNRECOGNIZED_NAME = 112,
+
+        /// Sent by clients when an invalid or unacceptable OCSP response is 
+        /// provided by the server via the "status_request" extension.
+        e_BAD_CERTIFICATE_STATUS_RESPONSE = 113,
+
+        /// Sent by servers when PSK key establishment is desired but no
+        /// acceptable PSK identity is provided by the client. Sending this
+        /// alert is OPTIONAL; servers MAY instead choose to send a
+        /// "decrypt_error" alert to merely indicate an invalid PSK identity.
+        e_UNKNOWN_PSK_IDENTITY = 115,
+
+        /// Sent by servers when a client certificate is desired but none was 
+        /// provided by the client.
+        e_CERTIFICATE_REQUIRED = 116,
+
+        /// Sent by servers when a client
+        /// "application_layer_protocol_negotiation" extension advertises only
+        /// protocols that the server does not support.
+        e_NO_APPLICATION_PROTOCOL = 120,
+    };
+
+    /// Return the string representation exactly matching the enumerator
+    /// name corresponding to the specified enumeration 'value'.
+    static const char* toString(Value value);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'number'.  Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'number' does not match any
+    /// enumerator).
+    static int fromInt(Value* result, int number);
+
+    /// Write to the specified 'stream' the string representation of the
+    /// specified enumeration 'value'.  Return a reference to the modifiable
+    /// 'stream'.
+    static bsl::ostream& print(bsl::ostream& stream, Value value);
+};
+
+/// Format the specified 'rhs' to the specified output 'stream' and return a
+/// reference to the modifiable 'stream'.
+///
+/// @related ntctls::TlsRecordAlertCode
+bsl::ostream& operator<<(bsl::ostream& stream, TlsRecordAlertCode::Value rhs);
+
+/// Describes a TLS alert.
+///
+/// @ingroup module_ntctls
+class TlsRecordAlert 
+{
+    /// The alert level.
+    ntctls::TlsRecordAlertLevel::Value d_level;
+
+    /// The alert code (i.e. description.)
+    ntctls::TlsRecordAlertCode::Value d_code;
+
+public:
+    TlsRecordAlert() : 
+    d_level(ntctls::TlsRecordAlertLevel::e_FATAL), 
+    d_code(ntctls::TlsRecordAlertCode::e_INTERNAL_ERROR) 
+    {
+        NTCCFG_WARNING_UNUSED(d_level);
+        NTCCFG_WARNING_UNUSED(d_code);
+    }
+};
+
+/// Enumerates the TLS record content types.
+///
+/// @ingroup module_ntctls
+class TlsRecordType
+{
+public:
+    /// Enumerates the TLS record content types.
+    enum Value {
+        e_INVALID = 0,
+        e_CHANGE_CIPHER_SPEC = 20,
+        e_ALERT = 21,
+        e_HANDSHAKE = 22,
+        e_APPLICATION_DATA = 23
+    };
+
+    /// Return the string representation exactly matching the enumerator
+    /// name corresponding to the specified enumeration 'value'.
+    static const char* toString(Value value);
+
+    /// Load into the specified 'result' the enumerator matching the
+    /// specified 'number'.  Return 0 on success, and a non-zero value with
+    /// no effect on 'result' otherwise (i.e., 'number' does not match any
+    /// enumerator).
+    static int fromInt(Value* result, int number);
+
+    /// Write to the specified 'stream' the string representation of the
+    /// specified enumeration 'value'.  Return a reference to the modifiable
+    /// 'stream'.
+    static bsl::ostream& print(bsl::ostream& stream, Value value);
+};
+
+/// Format the specified 'rhs' to the specified output 'stream' and return a
+/// reference to the modifiable 'stream'.
+///
+/// @related ntctls::TlsRecordType
+bsl::ostream& operator<<(bsl::ostream& stream, TlsRecordType::Value rhs);
+
+/// Describes a TLS record header.
+///
+/// @ingroup module_ntctls
+class TlsRecordHeader
+{
+    /// The record type. The higher-level protocol used to process the
+    /// enclosed fragment.
+    ntctls::TlsRecordType::Value d_type;
+
+    /// The legacy record version. MUST be set to 0x0303 for all records
+    /// generated by a TLS 1.3 implementation other than an initial ClientHello
+    /// (i.e., one not generated after a HelloRetryRequest), where it MAY also
+    /// be 0x0301 for compatibility purposes. This field is deprecated and
+    /// MUST be ignored for all purposes. Previous versions of TLS would use
+    /// other values in this field under some circumstances.
+    ntctls::TlsVersion::Value d_version;
+
+    /// The length (in bytes) of the following TLSPlaintext.fragment.  The
+    /// length MUST NOT exceed 'ntctls::TlsLimit::k_RECORD_FRAGMENTATION_LIMIT'
+    /// bytes. An endpoint that receives a record that exceeds this length MUST
+    /// terminate the connection with a "record_overflow" alert.
+    bsl::size_t d_length;
+
+    /// The data being transmitted.  This value is transparent and
+    /// is treated as an independent block to be dealt with by the higher-
+    /// level protocol specified by the type field.
+    /// 
+    /// opaque fragment[d_length];
+
+private:
+    /// Assign the value of this object from the specified 'type', 'version',
+    /// and 'length' encoded representation. Return the error.
+    ntsa::Error decodeRep(bsl::uint8_t          type,
+                          bdlb::BigEndianUint16 version,
+                          bdlb::BigEndianUint16 length);
+
+    /// Load the value of this object into the specified 'type', 'version', and
+    /// 'length' encoded representation. Return the error.
+    ntsa::Error encodeRep(bsl::uint8_t*          type,
+                          bdlb::BigEndianUint16* version,
+                          bdlb::BigEndianUint16* length) const;
+
+public:
+    /// Enumerates the constants used by this implementation.
+    enum Constants {
+        /// The record header size, in bytes.
+        k_SIZE = 5
+    };
+
+    /// Create a new TLS record header having the default value.
+    TlsRecordHeader();
+
+    /// Create a new TLS record header having the same value as the specified
+    /// 'original' object.
+    TlsRecordHeader(const TlsRecordHeader& original);
+
+    /// Destroy this object.
+    ~TlsRecordHeader();
+
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object.
+    TlsRecordHeader& operator=(const TlsRecordHeader& other);
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
+
+    /// Set the type of the record to the specified 'value'.
+    void setType(ntctls::TlsRecordType::Value value);
+
+    /// Set the TLS protocol version to the specified 'value'.
+    void setVersion(ntctls::TlsVersion::Value value);
+
+    /// Set the number of bytes in the content, not including the length of the
+    /// header, to the specified 'value'.
+    void setLength(bsl::size_t value);
+
+    /// Decode the object from the specified 'source' having the specified
+    /// 'size'. Increment the specified 'numBytesDecoded' with the number of
+    /// bytes read from the specified 'source'. Return the error.
+    ntsa::Error decode(bsl::size_t* numBytesDecoded,
+                       const void*  source,
+                       bsl::size_t  size);
+
+    /// Decode the object from the specified 'source'. Increment the specified
+    /// 'numBytesDecoded' with the number of bytes read from the specified
+    /// 'source'. Return the error.
+    ntsa::Error decode(bsl::size_t* numBytesDecoded, bsl::streambuf* source);
+
+    /// Decode the object from the specified 'source'. Increment the specified
+    /// 'numBytesDecoded' with the number of bytes read from the specified
+    /// 'source'. Return the error.
+    ntsa::Error decode(bsl::size_t*       numBytesDecoded,
+                       const bdlbb::Blob& source);
+
+    /// Encode the object to the specified 'destination'. Increment the
+    /// specified 'numBytesEncoded' with the number of bytes written to the
+    /// 'destination'. Return the error.
+    ntsa::Error encode(bsl::size_t* numBytesEncoded,
+                       bdlbb::Blob* destination) const;
+
+    /// Encode the object to the specified 'destination' at the specified
+    /// 'position'. Increment the specified 'numBytesEncoded' with the number
+    /// of bytes written to the 'destination'. Return the error.
+    ntsa::Error encode(bsl::size_t* numBytesEncoded,
+                       bdlbb::Blob* destination,
+                       std::size_t  position) const;
+
+    /// Return the type of the record.
+    ntctls::TlsRecordType::Value type() const;
+
+    /// Return the TLS protocol version.
+    ntctls::TlsVersion::Value version() const;
+
+    /// Return the number of bytes in the content, not including the length
+    /// of the header.
+    bsl::size_t length() const;
+
+    /// Return true if this object has the same value as the specified 'other'
+    /// object, otherwise return false.
+    bool equals(const TlsRecordHeader& other) const;
+
+    /// Return true if the value of this object is less than the value of the
+    /// specified 'other' object, otherwise return false.
+    bool less(const TlsRecordHeader& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm) const;
+
+    /// Format this object to the specified output 'stream' at the optionally
+    /// specified indentation 'level' and return a reference to the modifiable
+    /// 'stream'.  If 'level' is specified, optionally specify
+    /// 'spacesPerLevel', the number of spaces per indentation level for this
+    /// and all of its nested objects.  Each line is indented by the absolute
+    /// value of 'level * spacesPerLevel'.  If 'level' is negative, suppress
+    /// indentation of the first line.  If 'spacesPerLevel' is negative,
+    /// suppress line breaks and format the entire output on one line.  If
+    /// 'stream' is initially invalid, this operation has no effect.  Note that
+    /// a trailing newline is provided in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// This type's copy-constructor and copy-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(TlsRecordHeader);
+
+    /// This type's move-constructor and move-assignment operator is equivalent
+    /// to copying each byte of the source object's footprint to each
+    /// corresponding byte of the destination object's footprint.
+    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(TlsRecordHeader);
+};
+
+/// Write the specified 'object' to the specified 'stream'. Return
+/// a modifiable reference to the 'stream'.
+///
+/// @related ntctls::TlsRecordHeader
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         const TlsRecordHeader& object);
+
+/// Return true if the specified 'lhs' has the same value as the specified
+/// 'rhs', otherwise return false.
+///
+/// @related ntctls::TlsRecordHeader
+bool operator==(const TlsRecordHeader& lhs,
+                const TlsRecordHeader& rhs);
+
+/// Return true if the specified 'lhs' does not have the same value as the
+/// specified 'rhs', otherwise return false.
+///
+/// @related ntctls::TlsRecordHeader
+bool operator!=(const TlsRecordHeader& lhs,
+                const TlsRecordHeader& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value
+/// of the specified 'rhs', otherwise return false.
+///
+/// @related ntctls::TlsRecordHeader
+bool operator<(const TlsRecordHeader& lhs,
+               const TlsRecordHeader& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntctls::TlsRecordHeader
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const TlsRecordHeader& value);
+
+const char* TlsVersion::toString(Value value)
+{
+    switch (value) {
+    case TlsVersion::e_TLS_v10:
+        return "TLS_v10";
+    case TlsVersion::e_TLS_v11:
+        return "TLS_v11";
+    case TlsVersion::e_TLS_v12:
+        return "TLS_v12";
+    case TlsVersion::e_TLS_v13:
+        return "TLS_v13";
+    }
+
+    return "???";
+}
+
+int TlsVersion::fromInt(Value* result, int number)
+{
+    switch (number) {
+        case TlsVersion::e_TLS_v10:
+        case TlsVersion::e_TLS_v11:
+        case TlsVersion::e_TLS_v12:
+        case TlsVersion::e_TLS_v13:
+            *result = static_cast<TlsVersion::Value>(number);
+            return 0;
+        default:
+            return -1;
+        }
+}
+
+bsl::ostream& TlsVersion::print(bsl::ostream& stream, Value value)
+{
+    return stream << TlsVersion::toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, TlsVersion::Value rhs)
+{
+    return TlsVersion::print(stream, rhs);
+}
+
+const char* TlsRecordAlertLevel::toString(Value value)
+{
+    switch (value) {
+    case TlsRecordAlertLevel::e_WARN:
+        return "WARN";
+    case TlsRecordAlertLevel::e_FATAL:
+        return "FATAL";
+    }
+
+    return "???";
+}
+
+int TlsRecordAlertLevel::fromInt(Value* result, int number)
+{
+    switch (number) {
+        case TlsRecordAlertLevel::e_WARN:
+        case TlsRecordAlertLevel::e_FATAL:
+            *result = static_cast<TlsRecordAlertLevel::Value>(number);
+            return 0;
+        default:
+            return -1;
+        }
+}
+
+bsl::ostream& TlsRecordAlertLevel::print(bsl::ostream& stream, Value value)
+{
+    return stream << TlsRecordAlertLevel::toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, TlsRecordAlertLevel::Value rhs)
+{
+    return TlsRecordAlertLevel::print(stream, rhs);
+}
+
+const char* TlsRecordAlertCode::toString(Value value)
+{
+    switch (value) {
+    case TlsRecordAlertCode::e_CLOSE_NOTIFY:
+        return "CLOSE_NOTIFY";
+    case TlsRecordAlertCode::e_UNEXPECTED_MESSAGE:
+        return "UNEXPECTED_MESSAGE";
+    case TlsRecordAlertCode::e_BAD_RECORD_MAC:
+        return "BAD_RECORD_MAC";
+    case TlsRecordAlertCode::e_RECORD_OVERFLOW:
+        return "RECORD_OVERFLOW";
+    case TlsRecordAlertCode::e_HANDSHAKE_FAILURE:
+        return "HANDSHAKE_FAILURE";
+    case TlsRecordAlertCode::e_BAD_CERTIFICATE:
+        return "BAD_CERTIFICATE";
+    case TlsRecordAlertCode::e_UNSUPPORTED_CERTIFICATE:
+        return "UNSUPPORTED_CERTIFICATE";
+    case TlsRecordAlertCode::e_CERTIFICATE_REVOKED:
+        return "CERTIFICATE_REVOKED";
+    case TlsRecordAlertCode::e_CERTIFICATE_EXPIRED:
+        return "CERTIFICATE_EXPIRED";
+    case TlsRecordAlertCode::e_CERTIFICATE_UNKNOWN:
+        return "CERTIFICATE_UNKNOWN";
+    case TlsRecordAlertCode::e_ILLEGAL_PARAMETER:
+        return "ILLEGAL_PARAMETER";
+    case TlsRecordAlertCode::e_UNKNOWN_CA:
+        return "UNKNOWN_CA";
+    case TlsRecordAlertCode::e_ACCESS_DENIED:
+        return "ACCESS_DENIED";
+    case TlsRecordAlertCode::e_DECODE_ERROR:
+        return "DECODE_ERROR";
+    case TlsRecordAlertCode::e_DECRYPT_ERROR:
+        return "DECRYPT_ERROR";
+    case TlsRecordAlertCode::e_PROTOCOL_VERSION:
+        return "PROTOCOL_VERSION";
+    case TlsRecordAlertCode::e_INSUFFICIENT_SECURITY:
+        return "INSUFFICIENT_SECURITY";
+    case TlsRecordAlertCode::e_INTERNAL_ERROR:
+        return "INTERNAL_ERROR";
+    case TlsRecordAlertCode::e_INAPPROPRIATE_FALLBACK:
+        return "INAPPROPRIATE_FALLBACK";
+    case TlsRecordAlertCode::e_USER_CANCELED:
+        return "USER_CANCELED";
+    case TlsRecordAlertCode::e_MISSING_EXTENSION:
+        return "MISSING_EXTENSION";
+    case TlsRecordAlertCode::e_UNSUPPORTED_EXTENSION:
+        return "UNSUPPORTED_EXTENSION";
+    case TlsRecordAlertCode::e_UNRECOGNIZED_NAME:
+        return "UNRECOGNIZED_NAME";
+    case TlsRecordAlertCode::e_BAD_CERTIFICATE_STATUS_RESPONSE:
+        return "BAD_CERTIFICATE_STATUS_RESPONSE";
+    case TlsRecordAlertCode::e_UNKNOWN_PSK_IDENTITY:
+        return "UNKNOWN_PSK_IDENTITY";
+    case TlsRecordAlertCode::e_CERTIFICATE_REQUIRED:
+        return "CERTIFICATE_REQUIRED";
+    case TlsRecordAlertCode::e_NO_APPLICATION_PROTOCOL:
+        return "NO_APPLICATION_PROTOCOL";
+    }
+
+    return "???";
+}
+
+int TlsRecordAlertCode::fromInt(Value* result, int number)
+{
+    switch (number) {
+    case TlsRecordAlertCode::e_CLOSE_NOTIFY:
+    case TlsRecordAlertCode::e_UNEXPECTED_MESSAGE:
+    case TlsRecordAlertCode::e_BAD_RECORD_MAC:
+    case TlsRecordAlertCode::e_RECORD_OVERFLOW:
+    case TlsRecordAlertCode::e_HANDSHAKE_FAILURE:
+    case TlsRecordAlertCode::e_BAD_CERTIFICATE:
+    case TlsRecordAlertCode::e_UNSUPPORTED_CERTIFICATE:
+    case TlsRecordAlertCode::e_CERTIFICATE_REVOKED:
+    case TlsRecordAlertCode::e_CERTIFICATE_EXPIRED:
+    case TlsRecordAlertCode::e_CERTIFICATE_UNKNOWN:
+    case TlsRecordAlertCode::e_ILLEGAL_PARAMETER:
+    case TlsRecordAlertCode::e_UNKNOWN_CA:
+    case TlsRecordAlertCode::e_ACCESS_DENIED:
+    case TlsRecordAlertCode::e_DECODE_ERROR:
+    case TlsRecordAlertCode::e_DECRYPT_ERROR:
+    case TlsRecordAlertCode::e_PROTOCOL_VERSION:
+    case TlsRecordAlertCode::e_INSUFFICIENT_SECURITY:
+    case TlsRecordAlertCode::e_INTERNAL_ERROR:
+    case TlsRecordAlertCode::e_INAPPROPRIATE_FALLBACK:
+    case TlsRecordAlertCode::e_USER_CANCELED:
+    case TlsRecordAlertCode::e_MISSING_EXTENSION:
+    case TlsRecordAlertCode::e_UNSUPPORTED_EXTENSION:
+    case TlsRecordAlertCode::e_UNRECOGNIZED_NAME:
+    case TlsRecordAlertCode::e_BAD_CERTIFICATE_STATUS_RESPONSE:
+    case TlsRecordAlertCode::e_UNKNOWN_PSK_IDENTITY:
+    case TlsRecordAlertCode::e_CERTIFICATE_REQUIRED:
+    case TlsRecordAlertCode::e_NO_APPLICATION_PROTOCOL:
+        *result = static_cast<TlsRecordAlertCode::Value>(number);
+        return 0;
+    default:
+        return -1;
+    }
+}
+
+bsl::ostream& TlsRecordAlertCode::print(bsl::ostream& stream, Value value)
+{
+    return stream << TlsRecordAlertCode::toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, TlsRecordAlertCode::Value rhs)
+{
+    return TlsRecordAlertCode::print(stream, rhs);
+}
+
+const char* TlsRecordType::toString(Value value)
+{
+    switch (value) {
+    case TlsRecordType::e_INVALID:
+        return "INVALID";
+    case TlsRecordType::e_CHANGE_CIPHER_SPEC:
+        return "CHANGE_CIPHER_SPEC";
+    case TlsRecordType::e_ALERT:
+        return "ALERT";
+    case TlsRecordType::e_HANDSHAKE:
+        return "HANDSHAKE";
+    case TlsRecordType::e_APPLICATION_DATA:
+        return "APPLICATION_DATA";
+    }
+
+    return "???";
+}
+
+int TlsRecordType::fromInt(Value* result, int number)
+{
+    switch (number) {
+        case TlsRecordType::e_INVALID:
+        case TlsRecordType::e_CHANGE_CIPHER_SPEC:
+        case TlsRecordType::e_ALERT:
+        case TlsRecordType::e_HANDSHAKE:
+        case TlsRecordType::e_APPLICATION_DATA:
+            *result = static_cast<TlsRecordType::Value>(number);
+            return 0;
+        default:
+            return -1;
+        }
+}
+
+bsl::ostream& TlsRecordType::print(bsl::ostream& stream, Value value)
+{
+    return stream << TlsRecordType::toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, TlsRecordType::Value rhs)
+{
+    return TlsRecordType::print(stream, rhs);
+}
+
+NTSCFG_INLINE
+TlsRecordHeader::TlsRecordHeader()
+: d_type(ntctls::TlsRecordType::e_ALERT)
+, d_version(ntctls::TlsVersion::e_TLS_v10)
+, d_length(0)
+{
+}
+
+NTSCFG_INLINE
+TlsRecordHeader::TlsRecordHeader(
+    const TlsRecordHeader& original)
+: d_type(original.d_type)
+, d_version(original.d_version)
+, d_length(original.d_length)
+{
+}
+
+NTSCFG_INLINE
+TlsRecordHeader::~TlsRecordHeader()
+{
+}
+
+NTSCFG_INLINE
+TlsRecordHeader& TlsRecordHeader::operator=(const TlsRecordHeader& other)
+{
+    if (this != &other) {
+        d_type    = other.d_type;
+        d_version = other.d_version;
+        d_length  = other.d_length;
+    }
+
+    return *this;
+}
+
+NTSCFG_INLINE
+void TlsRecordHeader::reset()
+{
+    d_type    = ntctls::TlsRecordType::e_ALERT;
+    d_version = ntctls::TlsVersion::e_TLS_v10;
+    d_length  = 0;
+}
+
+NTSCFG_INLINE
+void TlsRecordHeader::setType(ntctls::TlsRecordType::Value value)
+{
+    d_type = value;
+}
+
+NTSCFG_INLINE
+void TlsRecordHeader::setVersion(ntctls::TlsVersion::Value value)
+{
+    d_version = value;
+}
+
+NTSCFG_INLINE
+void TlsRecordHeader::setLength(bsl::size_t value)
+{
+    BSLS_ASSERT(value <= ntctls::TlsLimit::k_RECORD_FRAGMENTATION_LIMIT);
+    d_length = value;
+}
+
+NTSCFG_INLINE
+ntctls::TlsRecordType::Value TlsRecordHeader::type() const
+{
+    return d_type;
+}
+
+NTSCFG_INLINE
+ntctls::TlsVersion::Value TlsRecordHeader::version() const
+{
+    return d_version;
+}
+
+NTSCFG_INLINE
+bsl::size_t TlsRecordHeader::length() const
+{
+    return d_length;
+}
+
+template <typename HASH_ALGORITHM>
+NTSCFG_INLINE void TlsRecordHeader::hash(HASH_ALGORITHM& algorithm) const
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, d_type);
+    hashAppend(algorithm, d_version);
+    hashAppend(algorithm, d_length);
+}
+
+NTSCFG_INLINE
+bsl::ostream& operator<<(bsl::ostream&                 stream,
+                         const TlsRecordHeader& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+NTSCFG_INLINE
+bool operator==(const TlsRecordHeader& lhs,
+                const TlsRecordHeader& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+NTSCFG_INLINE
+bool operator!=(const TlsRecordHeader& lhs,
+                const TlsRecordHeader& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+NTSCFG_INLINE
+bool operator<(const TlsRecordHeader& lhs,
+               const TlsRecordHeader& rhs)
+{
+    return lhs.less(rhs);
+}
+
+template <typename HASH_ALGORITHM>
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&        algorithm,
+                              const TlsRecordHeader& value)
+{
+    value.hash(algorithm);
+}
+
+ntsa::Error TlsRecordHeader::decodeRep(bsl::uint8_t          type,
+                                       bdlb::BigEndianUint16 version,
+                                       bdlb::BigEndianUint16 length)
+{
+    NTCI_LOG_CONTEXT();
+
+    if (0 != ntctls::TlsRecordType::fromInt(
+        &d_type,
+        static_cast<int>(type)))
+    {
+        NTCI_LOG_TRACE("Invalid TLS record type: %d", (int)(d_type));
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (0 != ntctls::TlsVersion::fromInt(
+        &d_version,
+        static_cast<int>(static_cast<bsl::uint16_t>(version))))
+    {
+        NTCI_LOG_TRACE("Invalid TLS record protocol version: %d", 
+                       (int)(d_version));
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (static_cast<bsl::uint16_t>(length) > 
+        ntctls::TlsLimit::k_RECORD_FRAGMENTATION_LIMIT)
+    {
+        NTCI_LOG_TRACE("Invalid TLS record content length: %d", 
+                       (int)(length));
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    d_length = static_cast<bsl::uint16_t>(length);
+
+    return ntsa::Error();
+}
+
+
+ntsa::Error TlsRecordHeader::encodeRep(bsl::uint8_t*          type,
+                                       bdlb::BigEndianUint16* version,
+                                       bdlb::BigEndianUint16* length) const
+{
+    NTCI_LOG_CONTEXT();
+
+    *type = static_cast<bsl::uint8_t>(d_type);
+    *version = static_cast<bsl::uint16_t>(d_version);
+
+    if (d_length > ntctls::TlsLimit::k_RECORD_FRAGMENTATION_LIMIT) {
+        NTCI_LOG_TRACE("Invalid TLS record content length: %d", 
+                       (int)(d_length));
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    *length = static_cast<bsl::uint16_t>(d_length);
+
+    return ntsa::Error();
+}
+
+ntsa::Error TlsRecordHeader::decode(bsl::size_t* numBytesDecoded,
+                                    const void*  source,
+                                    bsl::size_t  size)
+{
+    ntsa::Error error;
+
+    this->reset();
+
+    if (size < TlsRecordHeader::k_SIZE) {
+        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+    }
+
+    const bsl::uint8_t* reader = reinterpret_cast<const bsl::uint8_t*>(source);
+
+    bsl::uint8_t type = *reader;
+    ++reader;
+
+    bdlb::BigEndianUint16 version;
+    bsl::memcpy(&version, reader, sizeof version);
+    reader += sizeof version;
+
+    bdlb::BigEndianUint16 length;
+    bsl::memcpy(&length, reader, sizeof length);
+    reader += sizeof length;
+
+    error = this->decodeRep(type, version, length);
+    if (error) {
+        return error;
+    }
+
+    *numBytesDecoded += TlsRecordHeader::k_SIZE;
+
+    return ntsa::Error();
+}
+
+
+ntsa::Error TlsRecordHeader::decode(bsl::size_t*    numBytesDecoded,
+                                    bsl::streambuf* source)
+{
+    ntsa::Error error;
+
+    this->reset();
+
+    bsl::streampos p0 = 
+        source->pubseekoff(0, bsl::ios_base::cur, bsl::ios_base::in);
+
+    bsl::uint8_t type;
+    {
+        bsl::streambuf::int_type meta = source->sbumpc();
+        if (meta == EOF) {
+            source->pubseekpos(p0, bsl::ios_base::in);
+            this->reset();
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
+
+        type = static_cast<bsl::uint8_t>(meta);
+    }
+
+    bdlb::BigEndianUint16 version;
+    {
+        bsl::streamsize n =
+            source->sgetn(reinterpret_cast<char*>(&version), sizeof version);
+
+        if (static_cast<bsl::size_t>(n) != sizeof version) {
+            source->pubseekpos(p0, bsl::ios_base::in);
+            this->reset();
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
+    }
+
+    bdlb::BigEndianUint16 length;
+    {
+        bsl::streamsize n =
+            source->sgetn(reinterpret_cast<char*>(&length), sizeof length);
+
+        if (static_cast<bsl::size_t>(n) != sizeof length) {
+            source->pubseekpos(p0, bsl::ios_base::in);
+            this->reset();
+            return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+        }
+    }
+
+    bsl::streampos p1 = 
+        source->pubseekoff(0, bsl::ios_base::cur, bsl::ios_base::in);
+
+    bsl::size_t pd = static_cast<bsl::size_t>(p1 - p0);
+    if (pd != ntctls::TlsRecordHeader::k_SIZE) {
+        source->pubseekpos(p0, bsl::ios_base::in);
+        this->reset();
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    error = this->decodeRep(type, version, length);
+    if (error) {
+        return error;
+    }
+
+    *numBytesDecoded += ntctls::TlsRecordHeader::k_SIZE;
+
+    return ntsa::Error();
+}
+
+ntsa::Error TlsRecordHeader::decode(bsl::size_t*       numBytesDecoded,
+                                    const bdlbb::Blob& source)
+{
+    this->reset();
+
+    bsl::size_t numBytesAvailable = static_cast<bsl::size_t>(source.length());
+
+    if (numBytesAvailable >= ntctls::TlsRecordHeader::k_SIZE) {
+        const bdlbb::BlobBuffer& buffer = source.buffer(0);
+
+        const bsl::uint8_t* bufferData =
+            reinterpret_cast<const bsl::uint8_t*>(buffer.data());
+
+        bsl::size_t bufferSize;
+        if (source.numDataBuffers() == 1) {
+            bufferSize =
+                static_cast<bsl::size_t>(source.lastDataBufferLength());
+        }
+        else {
+            bufferSize = static_cast<bsl::size_t>(buffer.size());
+        }
+
+        if (bufferSize >= ntctls::TlsRecordHeader::k_SIZE) {
+            return this->decode(numBytesDecoded, bufferData, bufferSize);
+        }
+        else {
+            bdlbb::InBlobStreamBuf isb(&source);
+            return this->decode(numBytesDecoded, &isb);
+        }
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+    }
+}
+
+ntsa::Error TlsRecordHeader::encode(bsl::size_t* numBytesEncoded,
+                                    bdlbb::Blob* destination) const
+{
+    ntsa::Error error;
+
+    bsl::uint8_t          type;
+    bdlb::BigEndianUint16 version;
+    bdlb::BigEndianUint16 length;
+
+    error = this->encodeRep(&type, &version, &length);
+    if (error) {
+        return error;
+    }
+
+    bsl::size_t p0 = static_cast<bsl::size_t>(destination->length());
+
+    ntcs::BlobUtil::append(destination, &type, sizeof type);
+    ntcs::BlobUtil::append(destination, &version, sizeof version);
+    ntcs::BlobUtil::append(destination, &length, sizeof length);
+
+    bsl::size_t p1 = static_cast<bsl::size_t>(destination->length());
+
+    bsl::size_t pd = static_cast<bsl::size_t>(p1 - p0);
+    if (pd != ntctls::TlsRecordHeader::k_SIZE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    *numBytesEncoded += ntctls::TlsRecordHeader::k_SIZE;
+
+    return ntsa::Error();
+}
+
+ntsa::Error TlsRecordHeader::encode(bsl::size_t* numBytesEncoded,
+                                           bdlbb::Blob* destination,
+                                           std::size_t  position) const
+{
+    ntsa::Error error;
+
+    bsl::uint8_t          type;
+    bdlb::BigEndianUint16 version;
+    bdlb::BigEndianUint16 length;
+
+    error = this->encodeRep(&type, &version, &length);
+    if (error) {
+        return error;
+    }
+
+    bdlbb::OutBlobStreamBuf osb(destination);
+    std::streampos p = osb.pubseekpos(static_cast<bsl::streampos>(position),
+                                      bsl::ios_base::out);
+    if (static_cast<bsl::size_t>(p) != position) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bsl::size_t p0 = static_cast<bsl::size_t>(destination->length());
+
+    {
+        bsl::streambuf::int_type meta = osb.sputc(static_cast<char>(type));
+        if (meta == EOF) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    {
+        bsl::streamsize n = osb.sputn(
+            reinterpret_cast<const char*>(&version),
+            static_cast<bsl::streamsize>(sizeof version));
+
+        if (static_cast<bsl::size_t>(n) != sizeof version) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    {
+        bsl::streamsize n = osb.sputn(
+            reinterpret_cast<const char*>(&length),
+            static_cast<bsl::streamsize>(sizeof length));
+
+        if (static_cast<bsl::size_t>(n) != sizeof length) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    bsl::size_t p1 = static_cast<bsl::size_t>(destination->length());
+
+    bsl::size_t pd = static_cast<bsl::size_t>(p1 - p0);
+    if (pd != ntctls::TlsRecordHeader::k_SIZE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    *numBytesEncoded += ntctls::TlsRecordHeader::k_SIZE;
+
+    return ntsa::Error();
+}
+
+bool TlsRecordHeader::equals(const TlsRecordHeader& other) const
+{
+    return d_type == other.d_type && 
+           d_version == other.d_version &&
+           d_length == other.d_length;
+}
+
+bool TlsRecordHeader::less(const TlsRecordHeader& other) const
+{
+    if (d_type < other.d_type) {
+        return true;
+    }
+
+    if (other.d_type < d_type) {
+        return false;
+    }
+
+    if (d_version < other.d_version) {
+        return true;
+    }
+
+    if (other.d_version < d_version) {
+        return false;
+    }
+
+    return d_length < other.d_length;
+}
+
+bsl::ostream& TlsRecordHeader::print(bsl::ostream& stream,
+                                     int           level,
+                                     int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+    printer.printAttribute("type",    d_type);
+    printer.printAttribute("version", d_version);
+    printer.printAttribute("length",  d_length);
+    printer.end();
+    return stream;
+}
+
+} // close namespace ntctls
+} // close namespace BloombergLP
 
 namespace BloombergLP {
 namespace ntctls {
@@ -7097,6 +8306,8 @@ class Session : public ntci::Encryption
     bdlbb::Blob                               d_outgoingCipherText;
     bdlbb::Blob                               d_incomingPlainText;
     bdlbb::Blob                               d_outgoingPlainText;
+    bdlbb::Blob                               d_incomingLeftovers;
+    bdlbb::Blob                               d_outgoingLeftovers;
     ntca::UpgradeOptions                      d_upgradeOptions;
     ntci::Encryption::HandshakeCallback       d_handshakeCallback;
     bslma::Allocator*                         d_allocator_p;
@@ -7113,7 +8324,20 @@ class Session : public ntci::Encryption
     /// specified 'lock' guard. Return the error.
     ntsa::Error process(LockGuard* lock);
 
+    /// Analyze incoming ciphertext data, detect any non-TLS protocol data,
+    /// and if any is found, save it to 'd_incomingLeftovers'.
+    ntsa::Error analyzeIncoming();
+
+    /// Analyze outgoing data.
+    ntsa::Error analyzeOutgoing();
+
+    /// Process the information callback for the specified 'ssl' session from
+    /// the specified 'where' indication in the state machine according to the
+    /// specified 'ret' code.
     static void infoCallback(const SSL* ssl, int where, int ret);
+
+    /// Check the specified 'result' for the specified 'ssl' session. Return
+    /// true if there is an error, otherwise return false.
     static bool check(SSL* ssl, int result);
 
   public:
@@ -7156,33 +8380,45 @@ class Session : public ntci::Encryption
         BSLS_KEYWORD_OVERRIDE;
 
     /// Add the specified 'input' containing ciphertext read from the peer.
-    /// Return 0 on success and a non-zero value otherwise.
+    /// Return the error. 
     ntsa::Error pushIncomingCipherText(const bdlbb::Blob& input)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Add the specified 'input' containing ciphertext read from the peer.
-    /// Return 0 on success and a non-zero value otherwise.
+    /// Return the error. 
     ntsa::Error pushIncomingCipherText(const ntsa::Data& input)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Add the specified 'input' containing plaintext to be sent to the peer.
-    /// Return 0 on success and a non-zero value otherwise.
+    /// Return the error. 
     ntsa::Error pushOutgoingPlainText(const bdlbb::Blob& input)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Add the specified 'input' containing plaintext to be sent to the peer.
-    /// Return 0 on success and a non-zero value otherwise.
+    /// Return the error. 
     ntsa::Error pushOutgoingPlainText(const ntsa::Data& input)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Pop plaintext read from the peer and append it to the specified
-    /// 'output'. Return 0 on success and a non-zero value otherwise.
+    /// 'output'. Return the error. 
     ntsa::Error popIncomingPlainText(bdlbb::Blob* output)
         BSLS_KEYWORD_OVERRIDE;
 
     /// Pop ciphertext to be read from the peer and append to the specified
-    /// 'output'.
+    /// 'output'. Return the error. 
     ntsa::Error popOutgoingCipherText(bdlbb::Blob* output)
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Pop incoming plaintext leftover after reading across a
+    /// ciphertext/plaintext boundary from the peer and append it to the
+    /// specified 'output'. Return the error. 
+    ntsa::Error popIncomingLeftovers(bdlbb::Blob* output)
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Pop plaintext queue for transmission during the handshake but leftover
+    /// because the handshake has failed and append it to the specified 
+    /// 'output'. Return the error. 
+    ntsa::Error popOutgoingLeftovers(bdlbb::Blob* output) 
         BSLS_KEYWORD_OVERRIDE;
 
     /// Initiate the shutdown of the session.
@@ -7193,6 +8429,15 @@ class Session : public ntci::Encryption
 
     /// Return true if ciphertext data is ready to be sent.
     bool hasOutgoingCipherText() const BSLS_KEYWORD_OVERRIDE;
+
+    /// Return true if plaintext data leftover after reading across a 
+    /// ciphertext/plaintext boundary is ready to be read, otherwise return
+    /// false.
+    bool hasIncomingLeftovers() const BSLS_KEYWORD_OVERRIDE;
+
+    /// Return true if plaintext data for transmission leftover after the
+    /// handshake fails is ready to be sent, otherwise return false.
+    bool hasOutgoingLeftovers() const BSLS_KEYWORD_OVERRIDE;
 
     /// Load into the specified 'result' the source certificate used by the
     /// encryption session. Return true if such a certificate is defined, and
@@ -8260,6 +9505,11 @@ ntsa::Error Session::process(LockGuard* lock)
                                                  d_allocator_p);
         }
 
+        if (d_outgoingLeftovers.length() > 0) {
+            bdlbb::BlobUtil::append(&d_outgoingPlainText, d_outgoingLeftovers);
+            d_outgoingLeftovers.removeAll();
+        }
+
         ntci::Encryption::HandshakeCallback handshakeCallback =
             d_handshakeCallback;
 
@@ -8405,6 +9655,87 @@ ntsa::Error Session::process(LockGuard* lock)
     return ntsa::Error();
 }
 
+ntsa::Error Session::analyzeIncoming()
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    bsl::size_t numBytesDecoded = 0;
+    bsl::size_t numBytesLeftover = 0;
+    {
+        bdlbb::InBlobStreamBuf isb(&d_incomingCipherText);
+
+        bsl::size_t incomingCipherTextLength = 
+                    static_cast<bsl::size_t>(d_incomingCipherText.length());
+        
+        while (numBytesDecoded < incomingCipherTextLength) {
+            ntctls::TlsRecordHeader record;
+            error = record.decode(&numBytesDecoded, &isb);
+            if (error) {
+                bdlbb::Blob leftoverData = d_incomingCipherText;
+
+                if (incomingCipherTextLength > numBytesDecoded) {
+                    numBytesLeftover = 
+                        incomingCipherTextLength - numBytesDecoded;
+                }
+
+                bdlbb::BlobUtil::erase(
+                    &leftoverData, 
+                    static_cast<int>(0), 
+                    static_cast<int>(numBytesDecoded));
+
+                BSLS_ASSERT(static_cast<bsl::size_t>(leftoverData.length()) == 
+                            numBytesLeftover);
+
+                NTCI_LOG_STREAM_TRACE 
+                    << "Invalid TLS record (kept "
+                    << numBytesDecoded
+                    << " bytes, leftover " 
+                    << leftoverData.length() 
+                    << " bytes):\n" 
+                    << bdlbb::BlobUtilHexDumper(&leftoverData, 4096)
+                    << NTCI_LOG_STREAM_END;
+
+                if (d_upgradeOptions.keepIncomingLeftovers().value_or(false)) {
+                    bdlbb::BlobUtil::append(&d_incomingLeftovers, 
+                                            leftoverData);
+                }
+                
+                break;
+            }
+
+            NTCI_LOG_STREAM_TRACE << "Incoming TLS record " << record 
+                                  << NTCI_LOG_STREAM_END;
+
+            isb.pubseekoff(
+                static_cast<bsl::streamoff>(record.length()), 
+                bsl::ios_base::cur, 
+                bsl::ios_base::in);
+
+            numBytesDecoded += record.length();
+        }
+    }
+
+    if (numBytesLeftover > 0) {
+        BSLS_ASSERT(
+            numBytesDecoded + numBytesLeftover <= 
+            static_cast<bsl::size_t>(d_incomingCipherText.length()));
+
+        bdlbb::BlobUtil::erase(
+            &d_incomingCipherText, 
+            static_cast<int>(numBytesDecoded),
+            static_cast<int>(numBytesLeftover));
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error Session::analyzeOutgoing()
+{
+    return ntsa::Error();
+}
+
 Session::Session(
     const bsl::shared_ptr<ntctls::SessionManager>&   sessionManager,
     const bsl::shared_ptr<bdlbb::BlobBufferFactory>& blobBufferFactory,
@@ -8421,6 +9752,8 @@ Session::Session(
 , d_outgoingCipherText(blobBufferFactory.get(), basicAllocator)
 , d_incomingPlainText(blobBufferFactory.get(), basicAllocator)
 , d_outgoingPlainText(blobBufferFactory.get(), basicAllocator)
+, d_incomingLeftovers(blobBufferFactory.get(), basicAllocator)
+, d_outgoingLeftovers(blobBufferFactory.get(), basicAllocator)
 , d_upgradeOptions(basicAllocator)
 , d_handshakeCallback(NTCCFG_FUNCTION_INIT(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -8713,6 +10046,8 @@ ntsa::Error Session::initiateHandshake(
 
 ntsa::Error Session::pushIncomingCipherText(const bdlbb::Blob& input)
 {
+    ntsa::Error error;
+
     LockGuard lock(&d_mutex);
 
     if (!d_ssl_p) {
@@ -8721,15 +10056,34 @@ ntsa::Error Session::pushIncomingCipherText(const bdlbb::Blob& input)
 
     if ((SSL_get_shutdown(d_ssl_p) & k_TLS_SHUTDOWN_RECEIVED) != 0) {
         return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (d_incomingLeftovers.length() > 0) {
+        bdlbb::BlobUtil::append(&d_incomingLeftovers, input);
+        return ntsa::Error();
     }
 
     bdlbb::BlobUtil::append(&d_incomingCipherText, input);
 
-    return this->process(&lock);
+    if (d_upgradeOptions.keepIncomingLeftovers().value_or(false)) {
+        error = this->analyzeIncoming();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = this->process(&lock);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error Session::pushIncomingCipherText(const ntsa::Data& input)
 {
+    ntsa::Error error;
+
     LockGuard lock(&d_mutex);
 
     if (!d_ssl_p) {
@@ -8740,9 +10094,26 @@ ntsa::Error Session::pushIncomingCipherText(const ntsa::Data& input)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
+    if (d_incomingLeftovers.length() > 0) {
+        ntsa::DataUtil::append(&d_incomingLeftovers, input);
+        return ntsa::Error();
+    }
+
     ntsa::DataUtil::append(&d_incomingCipherText, input);
 
-    return this->process(&lock);
+    if (d_upgradeOptions.keepIncomingLeftovers().value_or(false)) {
+        error = this->analyzeIncoming();
+        if (error) {
+            return error;
+        }
+    }
+
+    error = this->process(&lock);
+    if (error) {
+        return error;
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error Session::pushOutgoingPlainText(const bdlbb::Blob& input)
@@ -8757,7 +10128,15 @@ ntsa::Error Session::pushOutgoingPlainText(const bdlbb::Blob& input)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    bdlbb::BlobUtil::append(&d_outgoingPlainText, input);
+    if (NTCCFG_UNLIKELY(
+            d_upgradeOptions.keepOutgoingLeftovers().value_or(false) &&
+            SSL_in_init(d_ssl_p)))
+    {
+        bdlbb::BlobUtil::append(&d_outgoingLeftovers, input);
+    }
+    else {
+        bdlbb::BlobUtil::append(&d_outgoingPlainText, input);
+    }
 
     return this->process(&lock);
 }
@@ -8774,16 +10153,34 @@ ntsa::Error Session::pushOutgoingPlainText(const ntsa::Data& input)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (input.isFile()) {
-        bsl::size_t inputSize = input.size();
-        bsl::size_t outputSize =
-            ntsa::DataUtil::append(&d_outgoingPlainText, input);
-        if (inputSize != outputSize) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
+    if (NTCCFG_UNLIKELY(
+            d_upgradeOptions.keepOutgoingLeftovers().value_or(false) &&
+            SSL_in_init(d_ssl_p)))
+    {
+        if (input.isFile()) {
+            bsl::size_t inputSize = input.size();
+            bsl::size_t outputSize =
+                ntsa::DataUtil::append(&d_outgoingLeftovers, input);
+            if (inputSize != outputSize) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+        else {
+            ntsa::DataUtil::append(&d_outgoingLeftovers, input);
         }
     }
     else {
-        ntsa::DataUtil::append(&d_outgoingPlainText, input);
+        if (input.isFile()) {
+            bsl::size_t inputSize = input.size();
+            bsl::size_t outputSize =
+                ntsa::DataUtil::append(&d_outgoingPlainText, input);
+            if (inputSize != outputSize) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+        else {
+            ntsa::DataUtil::append(&d_outgoingPlainText, input);
+        }
     }
 
     return this->process(&lock);
@@ -8823,6 +10220,34 @@ ntsa::Error Session::popOutgoingCipherText(bdlbb::Blob* output)
     }
 
     return this->process(&lock);
+}
+
+ntsa::Error Session::popIncomingLeftovers(bdlbb::Blob* output)
+{
+    LockGuard lock(&d_mutex);
+
+    if (d_incomingLeftovers.length() > 0) {
+        bdlbb::BlobUtil::append(output, d_incomingLeftovers);
+        bdlbb::BlobUtil::erase(&d_incomingLeftovers,
+                               0,
+                               d_incomingLeftovers.length());
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error Session::popOutgoingLeftovers(bdlbb::Blob* output)
+{
+    LockGuard lock(&d_mutex);
+
+    if (d_outgoingLeftovers.length() > 0) {
+        bdlbb::BlobUtil::append(output, d_outgoingLeftovers);
+        bdlbb::BlobUtil::erase(&d_outgoingLeftovers,
+                               0,
+                               d_outgoingLeftovers.length());
+    }
+
+    return ntsa::Error();
 }
 
 ntsa::Error Session::shutdown()
@@ -8869,6 +10294,20 @@ bool Session::hasOutgoingCipherText() const
     LockGuard lock(&d_mutex);
 
     return d_outgoingCipherText.length() > 0;
+}
+
+bool Session::hasIncomingLeftovers() const
+{
+    LockGuard lock(&d_mutex);
+
+    return d_incomingLeftovers.length() > 0;
+}
+
+bool Session::hasOutgoingLeftovers() const
+{
+    LockGuard lock(&d_mutex);
+
+    return d_outgoingLeftovers.length() > 0;
 }
 
 bool Session::getSourceCertificate(ntca::EncryptionCertificate* result) const
