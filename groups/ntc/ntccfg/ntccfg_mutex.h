@@ -35,12 +35,11 @@ BSLS_IDENT("$Id: $")
 #define NTCCFG_FUTEX_ENABLED 1
 #elif defined(BSLS_PLATFORM_OS_WINDOWS) && defined(BSLS_PLATFORM_CMP_MSVC)
 #define NTCCFG_FUTEX_ENABLED 1
+#include <intrin.h>
+#elif defined(BSLS_PLATFORM_OS_DARWIN)
+#define NTCCFG_FUTEX_ENABLED 1
 #else
 #define NTCCFG_FUTEX_ENABLED 0
-#endif
-
-#if NTCCFG_WUTEX_ENABLED
-#include <intrin.h>
 #endif
 
 namespace BloombergLP {
@@ -250,6 +249,114 @@ void Futex::unlock()
         this->unlockContention();
     }
 }
+
+#elif defined(BSLS_PLATFORM_OS_DARWIN)
+
+// Some versions of GCC issue a spurious warning that the 'current' parameter
+// is set but not used when 'Futex::compareAndSwap' is called.
+#if defined(BSLS_PLATFORM_CMP_GNU)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
+#endif
+
+/// @internal @brief
+/// Provide a synchronization primitive for mutually-exclusive access
+/// implemented by Darwin's XNU '__ulock_wait' and '__ulock_wake' functions.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntccfg
+class __attribute__((__aligned__(sizeof(int)))) Futex
+{
+    int d_value;
+
+  private:
+    Futex(const Futex&) BSLS_KEYWORD_DELETED;
+    Futex& operator=(const Futex&) BSLS_KEYWORD_DELETED;
+
+  private:
+    /// Wait until the lock may be acquired.
+    void wait();
+
+    /// Wake the next thread waiting to acquire the lock.
+    void wake();
+
+    /// Continue locking the mutex after discovering the mutex was probably
+    /// previously unlocked.
+    void lockContention(int c);
+
+    /// Continue unlocking the mutex after discovering the mutex probably
+    /// has other threads trying to lock the mutex.
+    void unlockContention();
+
+    /// Compare the specified '*current' value to the specified 'expected'
+    /// value, and if equal, set '*current' to 'desired'. Return the
+    /// previous value of 'current'.
+    static int compareAndSwap(int* current, int expected, int desired);
+
+  public:
+    /// Create a new mutex.
+    Futex();
+
+    /// Destroy this object.
+    ~Futex();
+
+    /// Lock the mutex.
+    void lock();
+
+    /// Unlock the mutex.
+    void unlock();
+};
+
+NTCCFG_INLINE
+int Futex::compareAndSwap(int* current, int expected, int desired)
+{
+    int* ep = &expected;
+    int* dp = &desired;
+
+    __atomic_compare_exchange(current,
+                              ep,
+                              dp,
+                              false,
+                              __ATOMIC_SEQ_CST,
+                              __ATOMIC_SEQ_CST);
+
+    return *ep;
+}
+
+NTCCFG_INLINE
+Futex::Futex()
+{
+    __atomic_store_n(&d_value, 0, __ATOMIC_RELAXED);
+}
+
+NTCCFG_INLINE
+Futex::~Futex()
+{
+}
+
+NTCCFG_INLINE
+void Futex::lock()
+{
+    int previous = compareAndSwap(&d_value, 0, 1);
+    if (previous != 0) {
+        this->lockContention(previous);
+    }
+}
+
+NTCCFG_INLINE
+void Futex::unlock()
+{
+    int previous = __atomic_fetch_sub(&d_value, 1, __ATOMIC_SEQ_CST);
+    if (previous != 1) {
+        this->unlockContention();
+    }
+}
+
+#if defined(BSLS_PLATFORM_CMP_GNU)
+#pragma GCC diagnostic pop
+#endif
 
 #else
 #error Not implemented
