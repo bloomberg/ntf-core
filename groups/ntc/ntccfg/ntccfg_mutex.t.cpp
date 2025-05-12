@@ -78,6 +78,8 @@ void ntccfg::MutexTest::thread(bslmt::Barrier*   barrier,
     BSLS_LOG_TRACE("Thread %d: locked", index);
     caller->post();
 
+    // bslmt::ThreadUtil::sleep(bsls::TimeInterval(3));
+
     callee->wait();
     BSLS_LOG_TRACE("Thread %d: unlocking", index);
     *value = -1;
