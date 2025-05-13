@@ -1292,6 +1292,10 @@ void StreamSocket::privateCompleteReceive(
                                0,
                                d_receiveBlob_sp->length());
 
+        if (!d_encryption_sp) {
+            return;
+        }
+
         if (!d_receiveInflater_sp) {
             while (NTCCFG_LIKELY(d_encryption_sp->hasIncomingPlainText())) {
                 error = d_encryption_sp->popIncomingPlainText(
