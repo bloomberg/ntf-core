@@ -9450,6 +9450,8 @@ ntsa::Error Session::process(LockGuard* lock)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
+    bool announceHandshakeComplete = false;
+
     if (SSL_in_init(d_ssl_p)) {
         int rc = SSL_do_handshake(d_ssl_p);
         if (rc != 1) {
@@ -9480,7 +9482,7 @@ ntsa::Error Session::process(LockGuard* lock)
                 bsl::shared_ptr<ntci::EncryptionCertificate>(),
                 description);
 
-            return ntsa::Error(ntsa::Error::e_INVALID);
+            return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
         }
 
         rc = SSL_is_init_finished(d_ssl_p);
@@ -9510,15 +9512,7 @@ ntsa::Error Session::process(LockGuard* lock)
             d_outgoingLeftovers.removeAll();
         }
 
-        ntci::Encryption::HandshakeCallback handshakeCallback =
-            d_handshakeCallback;
-
-        d_handshakeCallback = ntci::Encryption::HandshakeCallback();
-
-        {
-            UnLockGuard unlock(&d_mutex);
-            handshakeCallback(ntsa::Error(), d_remoteCertificate_sp, "");
-        }
+        announceHandshakeComplete = true;
     }
 
     if (d_outgoingPlainText.length() > 0) {
@@ -9650,6 +9644,18 @@ ntsa::Error Session::process(LockGuard* lock)
 #else
         d_incomingPlainText.setLength(d_incomingPlainText.length() + n);
 #endif
+    }
+
+    if (announceHandshakeComplete) {
+        ntci::Encryption::HandshakeCallback handshakeCallback =
+            d_handshakeCallback;
+
+        d_handshakeCallback = ntci::Encryption::HandshakeCallback();
+
+        if (handshakeCallback) {
+            UnLockGuard unlock(&d_mutex);
+            handshakeCallback(ntsa::Error(), d_remoteCertificate_sp, "");
+        }
     }
 
     return ntsa::Error();
@@ -10072,12 +10078,7 @@ ntsa::Error Session::pushIncomingCipherText(const bdlbb::Blob& input)
         }
     }
 
-    error = this->process(&lock);
-    if (error) {
-        return error;
-    }
-
-    return ntsa::Error();
+    return this->process(&lock);
 }
 
 ntsa::Error Session::pushIncomingCipherText(const ntsa::Data& input)
@@ -10108,12 +10109,7 @@ ntsa::Error Session::pushIncomingCipherText(const ntsa::Data& input)
         }
     }
 
-    error = this->process(&lock);
-    if (error) {
-        return error;
-    }
-
-    return ntsa::Error();
+    return this->process(&lock);
 }
 
 ntsa::Error Session::pushOutgoingPlainText(const bdlbb::Blob& input)
