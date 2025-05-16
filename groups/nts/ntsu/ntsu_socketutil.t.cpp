@@ -407,6 +407,9 @@ class SocketUtilTest
 
     // TODO
     static void verifyCase34();
+
+    // TODO
+    static void verifyCase35();
 };
 
 /// Provide a in-core storage of bytes.
@@ -8708,6 +8711,131 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase34)
 
     SocketUtilTest::executeDatagramSocketTest(
         &SocketUtilTest::testDatagramSocketReceiveNotifications);
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
+{
+    BALL_LOG_SET_CATEGORY("NTSU.SOCKETUTIL.TEST");
+
+    ntsa::Error error;
+
+    const bool abortiveClose   = false;
+    const bool shutdownSend    = true;
+    const bool shutdownReceive = true;
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    // Create a non-blocking socket for the listener.
+
+    ntsa::Handle listener = ntsa::k_INVALID_HANDLE;
+    error = ntsu::SocketUtil::create(&listener, transport);
+    NTSCFG_TEST_OK(error);
+
+    error = ntsu::SocketOptionUtil::setBlocking(listener, false);
+    NTSCFG_TEST_OK(error);
+
+    error = ntsu::SocketUtil::bind(
+        ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+        false,
+        listener);
+    NTSCFG_TEST_OK(error);
+
+    error = ntsu::SocketUtil::listen(1, listener);
+    NTSCFG_TEST_OK(error);
+
+    ntsa::Endpoint listenerEndpoint;
+    error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
+    NTSCFG_TEST_OK(error);
+
+    // Create a blocking socket for the client, then connect that socket to
+    // the listener socket's local endpoint.
+
+    ntsa::Handle client = ntsa::k_INVALID_HANDLE;
+    error = ntsu::SocketUtil::create(&client, transport);
+    NTSCFG_TEST_OK(error);
+
+    error = ntsu::SocketOptionUtil::setBlocking(client, true);
+    NTSCFG_TEST_OK(error);
+
+    if (abortiveClose) {
+        error = ntsu::SocketOptionUtil::setLinger(client, 
+                                                  true, 
+                                                  bsls::TimeInterval(0));
+        NTSCFG_TEST_OK(error);
+    }
+
+    error = ntsu::SocketUtil::connect(listenerEndpoint, client);
+    NTSCFG_TEST_OK(error);
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = ntsu::SocketUtil::sourceEndpoint(&clientSourceEndpoint, client);
+    NTSCFG_TEST_OK(error);
+
+    ntsa::Endpoint clientRemoteEndpoint;
+    error = ntsu::SocketUtil::remoteEndpoint(&clientRemoteEndpoint, client);
+    NTSCFG_TEST_OK(error);
+
+    BALL_LOG_DEBUG << "Client sourceEndpoint = "
+                   << clientSourceEndpoint
+                   << ", remoteEndpoint = "
+                   << clientRemoteEndpoint
+                   << BALL_LOG_END;
+
+    // Wait until the listener socket's backlog is non-empty.
+
+    error = ntsu::SocketUtil::waitUntilReadable(listener);
+    NTSCFG_TEST_OK(error);
+
+    if (shutdownSend) {
+        error = ntsu::SocketUtil::shutdown(
+            ntsa::ShutdownType::e_SEND, client);
+        NTSCFG_TEST_OK(error);
+    }
+
+    if (shutdownReceive) {
+        error = ntsu::SocketUtil::shutdown(
+            ntsa::ShutdownType::e_RECEIVE, client);
+        NTSCFG_TEST_OK(error);
+    }
+
+    // Close the client socket.
+
+    error = ntsu::SocketUtil::close(client);
+    NTSCFG_TEST_OK(error);
+
+    bslmt::ThreadUtil::sleep(bsls::TimeInterval(1));
+
+    ntsa::Handle server = ntsa::k_INVALID_HANDLE;
+    error = ntsu::SocketUtil::accept(&server, listener);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_NE(server, ntsa::k_INVALID_HANDLE);
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = ntsu::SocketUtil::sourceEndpoint(&serverSourceEndpoint, server);
+    NTSCFG_TEST_OK(error);
+
+    ntsa::Endpoint serverRemoteEndpoint;
+    error = ntsu::SocketUtil::remoteEndpoint(&serverRemoteEndpoint, server);
+    NTSCFG_TEST_OK(error);
+
+    BALL_LOG_DEBUG << "Server sourceEndpoint = "
+                   << serverSourceEndpoint
+                   << ", remoteEndpoint = "
+                   << serverRemoteEndpoint
+                   << BALL_LOG_END;
+
+    // Close the server socket.
+
+    if (server != ntsa::k_INVALID_HANDLE) {
+        error = ntsu::SocketUtil::close(server);
+        NTSCFG_TEST_OK(error);
+    }
+
+    // Close the listener socket.
+
+    error = ntsu::SocketUtil::close(listener);
+    NTSCFG_TEST_OK(error);
 }
 
 }  // close namespace ntsu
