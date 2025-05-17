@@ -8753,8 +8753,6 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
     //     Solaris  SO_LINGER=0   ?       ?
     //     Windows  SO_LINGER=0   OK      OK
 
-
-
     BALL_LOG_SET_CATEGORY("NTSU.SOCKETUTIL.TEST");
 
     ntsa::Error error;
