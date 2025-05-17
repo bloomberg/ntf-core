@@ -24,6 +24,7 @@ BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
 #include <ntsu_timestamputil.h>
+#include <ntsu_resolverutil.h>
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #ifdef NTDDI_VERSION
@@ -407,6 +408,9 @@ class SocketUtilTest
 
     // TODO
     static void verifyCase34();
+
+    // TODO
+    static void verifyCase35();
 };
 
 /// Provide a in-core storage of bytes.
@@ -1334,7 +1338,7 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
 
     ntsa::Error error;
 
-    enum { 
+    enum {
         k_NUM_TRANSMISSIONS = 4,
         k_TRANSMISSION_SIZE = 10
     };
@@ -1344,11 +1348,11 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
     for (bsl::size_t variation = 0; variation < 2; ++variation) {
         const bool exportHandles = (variation % 2 == 0);
 
-        NTSCFG_TEST_LOG_DEBUG << "Testing " 
+        NTSCFG_TEST_LOG_DEBUG << "Testing "
                               << transport
                               << ": writev/readv (blob) "
                               << "with ancillary data potentially coalesced "
-                              << "(export sockets: " << exportHandles << ")" 
+                              << "(export sockets: " << exportHandles << ")"
                               << NTSCFG_TEST_LOG_END;
 
         bsl::vector<ntsa::Handle> domesticSocketVector;
@@ -1387,8 +1391,8 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
             s.append(k_TRANSMISSION_SIZE, '0' + (i % 10));
             NTSCFG_TEST_EQ(s.size(), k_TRANSMISSION_SIZE);
 
-            bsl::memcpy(sendBuffer + (k_TRANSMISSION_SIZE * i), 
-                        s.c_str(), 
+            bsl::memcpy(sendBuffer + (k_TRANSMISSION_SIZE * i),
+                        s.c_str(),
                         s.size());
         }
 
@@ -1401,7 +1405,7 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
             }
 
             error = ntsu::SocketUtil::send(
-                &context, 
+                &context,
                 sendBuffer + (k_TRANSMISSION_SIZE * i),
                 k_TRANSMISSION_SIZE,
                 options,
@@ -1414,7 +1418,7 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
 
         bslmt::ThreadUtil::sleep(bsls::TimeInterval(3));
 
-        const bsl::size_t numReceives = exportHandles ? 
+        const bsl::size_t numReceives = exportHandles ?
             (k_NUM_TRANSMISSIONS) : (k_NUM_TRANSMISSIONS / 2);
 
         bsl::size_t totalBytesReceived = 0;
@@ -1441,18 +1445,18 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
                 NTSCFG_TEST_EQ(context.bytesReceived(), k_TRANSMISSION_SIZE);
                 NTSCFG_TEST_EQ(
                     bsl::memcmp(
-                        receiveBuffer, 
-                        sendBuffer + (k_TRANSMISSION_SIZE * i), 
-                        k_TRANSMISSION_SIZE), 
+                        receiveBuffer,
+                        sendBuffer + (k_TRANSMISSION_SIZE * i),
+                        k_TRANSMISSION_SIZE),
                     0);
             }
             else {
                 NTSCFG_TEST_EQ(context.bytesReceived(), sizeof receiveBuffer);
                 NTSCFG_TEST_EQ(
                     bsl::memcmp(
-                        receiveBuffer, 
-                        sendBuffer + (sizeof receiveBuffer * i), 
-                        sizeof receiveBuffer), 
+                        receiveBuffer,
+                        sendBuffer + (sizeof receiveBuffer * i),
+                        sizeof receiveBuffer),
                     0);
             }
 
@@ -1467,7 +1471,7 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
                 error = ntsu::SocketUtil::sourceEndpoint(&foreignSourceEndpoint,
                                                         foreignSocket);
                 NTSCFG_TEST_OK(error);
-                NTSCFG_TEST_EQ(foreignSourceEndpoint, 
+                NTSCFG_TEST_EQ(foreignSourceEndpoint,
                             domesticSourceEndpointVector[i]);
             }
         }
@@ -1502,18 +1506,18 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgChunked(
 
     ntsa::Error error;
 
-    enum { 
+    enum {
         k_NUM_TRANSMISSIONS = 4,
         k_TRANSMISSION_SIZE = 10
     };
 
     BSLMF_ASSERT(k_NUM_TRANSMISSIONS % 2 == 0);
 
-    NTSCFG_TEST_LOG_DEBUG << "Testing " 
+    NTSCFG_TEST_LOG_DEBUG << "Testing "
                             << transport
                             << ": writev/readv (blob) "
                             << "with ancillary data potentially chunked "
-                            << "(export sockets: 1)" 
+                            << "(export sockets: 1)"
                             << NTSCFG_TEST_LOG_END;
 
     bsl::vector<ntsa::Handle> domesticSocketVector;
@@ -1550,8 +1554,8 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgChunked(
         s.append(k_TRANSMISSION_SIZE, '0' + (i % 10));
         NTSCFG_TEST_EQ(s.size(), k_TRANSMISSION_SIZE);
 
-        bsl::memcpy(sendBuffer + (k_TRANSMISSION_SIZE * i), 
-                    s.c_str(), 
+        bsl::memcpy(sendBuffer + (k_TRANSMISSION_SIZE * i),
+                    s.c_str(),
                     s.size());
     }
 
@@ -1562,7 +1566,7 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgChunked(
         options.setForeignHandle(domesticSocketVector[i]);
 
         error = ntsu::SocketUtil::send(
-            &context, 
+            &context,
             sendBuffer + (k_TRANSMISSION_SIZE * i),
             k_TRANSMISSION_SIZE,
             options,
@@ -1596,9 +1600,9 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgChunked(
         NTSCFG_TEST_EQ(context.bytesReceived(), k_TRANSMISSION_SIZE / 2);
         NTSCFG_TEST_EQ(
             bsl::memcmp(
-                receiveBuffer, 
-                sendBuffer + ((k_TRANSMISSION_SIZE / 2) * i), 
-                k_TRANSMISSION_SIZE / 2), 
+                receiveBuffer,
+                sendBuffer + ((k_TRANSMISSION_SIZE / 2) * i),
+                k_TRANSMISSION_SIZE / 2),
             0);
 
         totalBytesReceived += context.bytesReceived();
@@ -1612,7 +1616,7 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgChunked(
             error = ntsu::SocketUtil::sourceEndpoint(&foreignSourceEndpoint,
                                                      foreignSocket);
             NTSCFG_TEST_OK(error);
-            NTSCFG_TEST_EQ(foreignSourceEndpoint, 
+            NTSCFG_TEST_EQ(foreignSourceEndpoint,
                            domesticSourceEndpointVector[i / 2]);
         }
         else {
@@ -8708,6 +8712,227 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase34)
 
     SocketUtilTest::executeDatagramSocketTest(
         &SocketUtilTest::testDatagramSocketReceiveNotifications);
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
+{
+    // Concern: If the peer shuts down or closes the socket after the
+    // connection is established but before the socket can be accepted from the
+    // listening socket's backlog, the '::accept()' function always succeeds
+    // and '::getpeername()' function succeeds unless the peer has performed an
+    // abortive close.
+
+    BALL_LOG_SET_CATEGORY("NTSU.SOCKETUTIL.TEST");
+
+    ntsa::Error error;
+
+    struct Data {
+        bool loopback;
+        bool shutdownSend;
+        bool shutdownReceive;
+        bool shutdownBoth;
+        bool abortiveClose;
+        bool success;
+    };
+
+    // clang-format off
+    const Data k_DATA[] = {
+        { true, false, false, false, false, true  },
+        { true, true,  false, false, false, true  },
+        { true, true,  true,  false, false, true  },
+        { true, false, false, true,  false, true  },
+        { true, false, false, false, true,  false }
+    };
+    // clang-format on
+
+    const bsl::size_t k_NUM_DATA =
+        sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    const ntsa::Transport::Value transport =
+        ntsa::Transport::e_TCP_IPV4_STREAM;
+
+    ntsa::Ipv4Address localIpv4Address;
+    {
+        bsl::string localHostname;
+        error = ntsu::ResolverUtil::getHostname(&localHostname);
+
+        BALL_LOG_DEBUG << "Local hostname = " << localHostname
+                       << BALL_LOG_END;
+
+        bsl::vector<ntsa::IpAddress> ipAddressList;
+        ntsa::IpAddressOptions       ipAddressOptions;
+
+        ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V4);
+
+        error = ntsu::ResolverUtil::getIpAddress(
+            &ipAddressList, localHostname, ipAddressOptions);
+        if (error) {
+            localIpv4Address = ntsa::Ipv4Address::loopback();
+        }
+        else {
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_GT(ipAddressList.size(), 0);
+
+            for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
+                BALL_LOG_DEBUG << "Found IPv4 address = "
+                               << ipAddressList[i]
+                               << BALL_LOG_END;
+            }
+
+            localIpv4Address = ipAddressList[0].v4();
+        }
+    }
+
+    BALL_LOG_DEBUG << "Local IPv4 address = " << localIpv4Address
+                   << BALL_LOG_END;
+
+    for (bsl::size_t variation = 0; variation < k_NUM_DATA; ++variation) {
+        // Create a non-blocking socket for the listener.
+
+        ntsa::Handle listener = ntsa::k_INVALID_HANDLE;
+        error = ntsu::SocketUtil::create(&listener, transport);
+        NTSCFG_TEST_OK(error);
+
+        error = ntsu::SocketOptionUtil::setBlocking(listener, false);
+        NTSCFG_TEST_OK(error);
+
+        if (k_DATA[variation].loopback) {
+            error = ntsu::SocketUtil::bind(
+                ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
+                false,
+                listener);
+            NTSCFG_TEST_OK(error);
+        }
+        else {
+            error = ntsu::SocketUtil::bind(
+                ntsa::Endpoint(localIpv4Address, 0),
+                false,
+                listener);
+            NTSCFG_TEST_OK(error);
+        }
+
+        error = ntsu::SocketUtil::listen(1, listener);
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint listenerEndpoint;
+        error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
+        NTSCFG_TEST_OK(error);
+
+        // Create a blocking socket for the client, then connect that socket to
+        // the listener socket's local endpoint.
+
+        ntsa::Handle client = ntsa::k_INVALID_HANDLE;
+        error = ntsu::SocketUtil::create(&client, transport);
+        NTSCFG_TEST_OK(error);
+
+        error = ntsu::SocketOptionUtil::setBlocking(client, true);
+        NTSCFG_TEST_OK(error);
+
+        if (k_DATA[variation].abortiveClose) {
+            error = ntsu::SocketOptionUtil::setLinger(client,
+                                                      true,
+                                                      bsls::TimeInterval(0));
+            NTSCFG_TEST_OK(error);
+        }
+
+        ntsa::Endpoint connectEndpoint;
+
+        if (k_DATA[variation].loopback) {
+            connectEndpoint =
+                ntsa::Endpoint(
+                    ntsa::IpEndpoint(
+                        ntsa::Ipv4Address::loopback(),
+                        listenerEndpoint.ip().port()));
+        }
+        else {
+            connectEndpoint =
+                ntsa::Endpoint(
+                    ntsa::IpEndpoint(
+                        localIpv4Address,
+                        listenerEndpoint.ip().port()));
+        }
+
+        error = ntsu::SocketUtil::connect(connectEndpoint, client);
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint clientSourceEndpoint;
+        error = ntsu::SocketUtil::sourceEndpoint(&clientSourceEndpoint, client);
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint clientRemoteEndpoint;
+        error = ntsu::SocketUtil::remoteEndpoint(&clientRemoteEndpoint, client);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG << "Client sourceEndpoint = "
+                       << clientSourceEndpoint
+                       << ", remoteEndpoint = "
+                       << clientRemoteEndpoint
+                       << BALL_LOG_END;
+
+        // Wait until the listener socket's backlog is non-empty.
+
+        error = ntsu::SocketUtil::waitUntilReadable(listener);
+        NTSCFG_TEST_OK(error);
+
+        if (k_DATA[variation].shutdownSend) {
+            error = ntsu::SocketUtil::shutdown(
+                ntsa::ShutdownType::e_SEND, client);
+            NTSCFG_TEST_OK(error);
+        }
+
+        if (k_DATA[variation].shutdownReceive) {
+            error = ntsu::SocketUtil::shutdown(
+                ntsa::ShutdownType::e_RECEIVE, client);
+            NTSCFG_TEST_OK(error);
+        }
+
+        if (k_DATA[variation].shutdownBoth) {
+            error = ntsu::SocketUtil::shutdown(
+                ntsa::ShutdownType::e_BOTH, client);
+            NTSCFG_TEST_OK(error);
+        }
+
+        // Close the client socket.
+
+        error = ntsu::SocketUtil::close(client);
+        NTSCFG_TEST_OK(error);
+
+        bslmt::ThreadUtil::sleep(bsls::TimeInterval(1));
+
+        ntsa::Handle server = ntsa::k_INVALID_HANDLE;
+        error = ntsu::SocketUtil::accept(&server, listener);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_NE(server, ntsa::k_INVALID_HANDLE);
+
+        ntsa::Endpoint serverSourceEndpoint;
+        error = ntsu::SocketUtil::sourceEndpoint(&serverSourceEndpoint, server);
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint serverRemoteEndpoint;
+        error = ntsu::SocketUtil::remoteEndpoint(&serverRemoteEndpoint, server);
+        if (k_DATA[variation].success) {
+            NTSCFG_TEST_OK(error);
+
+            BALL_LOG_DEBUG << "Server sourceEndpoint = "
+                           << serverSourceEndpoint
+                           << ", remoteEndpoint = "
+                           << serverRemoteEndpoint
+                           << BALL_LOG_END;
+        }
+        else {
+            BALL_LOG_ERROR << error << BALL_LOG_END;
+        }
+
+        // Close the server socket.
+
+        error = ntsu::SocketUtil::close(server);
+        NTSCFG_TEST_OK(error);
+
+        // Close the listener socket.
+
+        error = ntsu::SocketUtil::close(listener);
+        NTSCFG_TEST_OK(error);
+    }
 }
 
 }  // close namespace ntsu

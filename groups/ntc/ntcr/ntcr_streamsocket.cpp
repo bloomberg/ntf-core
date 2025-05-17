@@ -4054,12 +4054,20 @@ ntsa::Error StreamSocket::privateOpen(
     ntsa::Endpoint sourceEndpoint;
     error = streamSocket->sourceEndpoint(&sourceEndpoint);
     if (error) {
+        if (acceptor) {
+            return error;
+        }
+
         sourceEndpoint.reset();
     }
 
     ntsa::Endpoint remoteEndpoint;
     error = streamSocket->remoteEndpoint(&remoteEndpoint);
     if (error) {
+        if (acceptor) {
+            return error;
+        }
+
         remoteEndpoint.reset();
     }
 
