@@ -7873,7 +7873,7 @@ ntsa::Error SocketUtil::waitUntilReadable(ntsa::Handle socket)
     WSAPOLLFD pfd;
 
     pfd.fd      = socket;
-    pfd.events  = POLLIN | POLLHUP | POLLERR | POLLNVAL;
+    pfd.events  = POLLIN;
     pfd.revents = 0;
 
     int rc = WSAPoll(&pfd, 1, -1);
@@ -7898,7 +7898,7 @@ ntsa::Error SocketUtil::waitUntilReadable(ntsa::Handle              socket,
     WSAPOLLFD pfd;
 
     pfd.fd      = socket;
-    pfd.events  = POLLIN | POLLHUP | POLLERR | POLLNVAL;
+    pfd.events  = POLLIN;
     pfd.revents = 0;
 
     bsls::TimeInterval now = bdlt::CurrentTime::now();
@@ -7936,7 +7936,7 @@ ntsa::Error SocketUtil::waitUntilWritable(ntsa::Handle socket)
     WSAPOLLFD pfd;
 
     pfd.fd      = socket;
-    pfd.events  = POLLOUT | POLLERR | POLLNVAL;
+    pfd.events  = POLLOUT;
     pfd.revents = 0;
 
     int rc = WSAPoll(&pfd, 1, -1);
@@ -7961,7 +7961,7 @@ ntsa::Error SocketUtil::waitUntilWritable(ntsa::Handle              socket,
     WSAPOLLFD pfd;
 
     pfd.fd      = socket;
-    pfd.events  = POLLOUT | POLLERR | POLLNVAL;
+    pfd.events  = POLLOUT;
     pfd.revents = 0;
 
     bsls::TimeInterval now = bdlt::CurrentTime::now();

@@ -8751,7 +8751,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
     //       Linux  SO_LINGER=0   OK      ENOTSOCK
     //      Darwin  SO_LINGER=0   OK      EINVAL
     //     Solaris  SO_LINGER=0   ?       ?
-    //     Windows  SO_LINGER=0   ?       ?
+    //     Windows  SO_LINGER=0   OK      OK
 
 
 
@@ -8774,7 +8774,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
         { true, true,  false, false, false, true  },
         { true, true,  true,  false, false, true  },
         { true, false, false, true,  false, true  },
+#if defined(BSLS_PLATFORM_OS_UNIX)
         { true, false, false, false, true,  false }
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+        { true, false, false, false, true,  true }
+#endif
     };
     // clang-format on
 
@@ -8820,6 +8824,16 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
                    << BALL_LOG_END;
 
     for (bsl::size_t variation = 0; variation < k_NUM_DATA; ++variation) {
+        BALL_LOG_DEBUG << "Testing variation: shutdownSend = " 
+                       << k_DATA[variation].shutdownSend
+                       << ", shutdownReceive = "
+                       << k_DATA[variation].shutdownReceive
+                       << ", shutdownBoth = "
+                       << k_DATA[variation].shutdownBoth
+                       << ", abortiveClose = "
+                       << k_DATA[variation].abortiveClose
+                       << BALL_LOG_END;
+
         // Create a non-blocking socket for the listener.
 
         ntsa::Handle listener = ntsa::k_INVALID_HANDLE;
@@ -8954,6 +8968,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
         }
         else {
             BALL_LOG_ERROR << error << BALL_LOG_END;
+            NTSCFG_TEST_TRUE(error);
         }
 
         // Close the server socket.
