@@ -8721,6 +8721,39 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
     // listening socket's backlog, the '::accept()' function always succeeds
     // and '::getpeername()' function succeeds unless the peer has performed an
     // abortive close.
+    //
+    // The following table describes the behavior on each platform when the
+    // peer closes the connection in a variety of ways before the listening
+    // side accepts the socket from the listening socket's backlog.
+    // 
+    //          OS  Method        accept  getpeername 
+    //     -------  ------        ------  -----------
+    //       Linux  -             OK      OK
+    //      Darwin  -             OK      OK
+    //     Solaris  -             OK      OK
+    //     Windows  -             OK      OK
+    //
+    //       Linux  SD_SEND       OK      OK
+    //      Darwin  SD_SEND       OK      OK
+    //     Solaris  SD_SEND       OK      OK
+    //     Windows  SD_SEND       OK      OK
+    // 
+    //       Linux  SD_SEND+RECV  OK      OK
+    //      Darwin  SD_SEND+RECV  OK      OK
+    //     Solaris  SD_SEND+RECV  OK      OK
+    //     Windows  SD_SEND+RECV  OK      OK
+    //
+    //       Linux  SD_BOTH       OK      OK
+    //      Darwin  SD_BOTH       OK      OK
+    //     Solaris  SD_BOTH       OK      OK
+    //     Windows  SD_BOTH       OK      OK
+    //
+    //       Linux  SO_LINGER=0   OK      ENOTSOCK
+    //      Darwin  SO_LINGER=0   OK      EINVAL
+    //     Solaris  SO_LINGER=0   ?       ?
+    //     Windows  SO_LINGER=0   ?       ?
+
+
 
     BALL_LOG_SET_CATEGORY("NTSU.SOCKETUTIL.TEST");
 
