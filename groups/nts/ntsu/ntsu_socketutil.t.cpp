@@ -8718,9 +8718,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
 {
     // Concern: If the peer shuts down or closes the socket after the
     // connection is established but before the socket can be accepted from the
-    // listening socket's backlog, the '::accept()' function always succeeds
-    // and '::getpeername()' function succeeds unless the peer has performed an
-    // abortive close.
+    // listening socket's backlog, verify how the '::accept()' and
+    // '::getpeername()' behave.
     //
     // The following table describes the behavior on each platform when the
     // peer closes the connection in a variety of ways before the listening
