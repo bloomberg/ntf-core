@@ -8748,7 +8748,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
     //     Solaris  SD_BOTH       OK            OK
     //     Windows  SD_BOTH       OK            OK
     //
-    //       Linux  SO_LINGER=0   OK            ENOTSOCK
+    //       Linux  SO_LINGER=0   OK            ENOTCONN
     //      Darwin  SO_LINGER=0   OK            EINVAL
     //     Solaris  SO_LINGER=0   ECONNABORTED  -
     //     Windows  SO_LINGER=0   OK            OK
