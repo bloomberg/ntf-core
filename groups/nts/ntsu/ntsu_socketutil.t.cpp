@@ -8718,9 +8718,39 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
 {
     // Concern: If the peer shuts down or closes the socket after the
     // connection is established but before the socket can be accepted from the
-    // listening socket's backlog, the '::accept()' function always succeeds
-    // and '::getpeername()' function succeeds unless the peer has performed an
-    // abortive close.
+    // listening socket's backlog, verify how the '::accept()' and
+    // '::getpeername()' behave.
+    //
+    // The following table describes the behavior on each platform when the
+    // peer closes the connection in a variety of ways before the listening
+    // side accepts the socket from the listening socket's backlog.
+    //
+    //          OS  Action        accept        getpeername
+    //     -------  ------        ------        -----------
+    //       Linux  -             OK            OK
+    //      Darwin  -             OK            OK
+    //     Solaris  -             OK            OK
+    //     Windows  -             OK            OK
+    //
+    //       Linux  SD_SEND       OK            OK
+    //      Darwin  SD_SEND       OK            OK
+    //     Solaris  SD_SEND       OK            OK
+    //     Windows  SD_SEND       OK            OK
+    //
+    //       Linux  SD_SEND+RECV  OK            OK
+    //      Darwin  SD_SEND+RECV  OK            OK
+    //     Solaris  SD_SEND+RECV  OK            OK
+    //     Windows  SD_SEND+RECV  OK            OK
+    //
+    //       Linux  SD_BOTH       OK            OK
+    //      Darwin  SD_BOTH       OK            OK
+    //     Solaris  SD_BOTH       OK            OK
+    //     Windows  SD_BOTH       OK            OK
+    //
+    //       Linux  SO_LINGER=0   OK            ENOTCONN
+    //      Darwin  SO_LINGER=0   OK            EINVAL
+    //     Solaris  SO_LINGER=0   ECONNABORTED  -
+    //     Windows  SO_LINGER=0   OK            OK
 
     BALL_LOG_SET_CATEGORY("NTSU.SOCKETUTIL.TEST");
 
@@ -8732,16 +8762,23 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
         bool shutdownReceive;
         bool shutdownBoth;
         bool abortiveClose;
-        bool success;
+        bool acceptSuccess;
+        bool getpeernameSuccess;
     };
 
     // clang-format off
     const Data k_DATA[] = {
-        { true, false, false, false, false, true  },
-        { true, true,  false, false, false, true  },
-        { true, true,  true,  false, false, true  },
-        { true, false, false, true,  false, true  },
-        { true, false, false, false, true,  false }
+        { true, false, false, false, false, true,  true  },
+        { true, true,  false, false, false, true,  true  },
+        { true, true,  true,  false, false, true,  true  },
+        { true, false, false, true,  false, true,  true  },
+#if defined(BSLS_PLATFORM_OS_LINUX) || defined(BSLS_PLATFORM_OS_DARWIN)
+        { true, false, false, false, true,  true,  false }
+#elif defined(BSLS_PLATFORM_OS_SOLARIS)
+        { true, false, false, false, true,  false, false }
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+        { true, false, false, false, true,  true,  true  }
+#endif
     };
     // clang-format on
 
@@ -8787,6 +8824,16 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
                    << BALL_LOG_END;
 
     for (bsl::size_t variation = 0; variation < k_NUM_DATA; ++variation) {
+        BALL_LOG_DEBUG << "Testing variation: shutdownSend = "
+                       << k_DATA[variation].shutdownSend
+                       << ", shutdownReceive = "
+                       << k_DATA[variation].shutdownReceive
+                       << ", shutdownBoth = "
+                       << k_DATA[variation].shutdownBoth
+                       << ", abortiveClose = "
+                       << k_DATA[variation].abortiveClose
+                       << BALL_LOG_END;
+
         // Create a non-blocking socket for the listener.
 
         ntsa::Handle listener = ntsa::k_INVALID_HANDLE;
@@ -8901,32 +8948,47 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
 
         ntsa::Handle server = ntsa::k_INVALID_HANDLE;
         error = ntsu::SocketUtil::accept(&server, listener);
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_NE(server, ntsa::k_INVALID_HANDLE);
 
-        ntsa::Endpoint serverSourceEndpoint;
-        error = ntsu::SocketUtil::sourceEndpoint(&serverSourceEndpoint, server);
-        NTSCFG_TEST_OK(error);
+        if (k_DATA[variation].acceptSuccess) {
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_NE(server, ntsa::k_INVALID_HANDLE);
 
-        ntsa::Endpoint serverRemoteEndpoint;
-        error = ntsu::SocketUtil::remoteEndpoint(&serverRemoteEndpoint, server);
-        if (k_DATA[variation].success) {
+            ntsa::Endpoint serverSourceEndpoint;
+            error = ntsu::SocketUtil::sourceEndpoint(&serverSourceEndpoint,
+                                                     server);
             NTSCFG_TEST_OK(error);
 
-            BALL_LOG_DEBUG << "Server sourceEndpoint = "
-                           << serverSourceEndpoint
-                           << ", remoteEndpoint = "
-                           << serverRemoteEndpoint
-                           << BALL_LOG_END;
+            ntsa::Endpoint serverRemoteEndpoint;
+            error = ntsu::SocketUtil::remoteEndpoint(&serverRemoteEndpoint,
+                                                     server);
+
+            if (k_DATA[variation].getpeernameSuccess) {
+                NTSCFG_TEST_OK(error);
+
+                BALL_LOG_DEBUG << "Server sourceEndpoint = "
+                               << serverSourceEndpoint
+                               << ", remoteEndpoint = "
+                               << serverRemoteEndpoint
+                               << BALL_LOG_END;
+            }
+            else {
+                BALL_LOG_DEBUG << "getpeername failed: "
+                               << error
+                               << BALL_LOG_END;
+                NTSCFG_TEST_TRUE(error);
+            }
+
+            // Close the server socket.
+
+            error = ntsu::SocketUtil::close(server);
+            NTSCFG_TEST_OK(error);
         }
         else {
-            BALL_LOG_ERROR << error << BALL_LOG_END;
+            BALL_LOG_DEBUG << "getpeername failed: "
+                           << error
+                           << BALL_LOG_END;
+            NTSCFG_TEST_TRUE(error);
         }
-
-        // Close the server socket.
-
-        error = ntsu::SocketUtil::close(server);
-        NTSCFG_TEST_OK(error);
 
         // Close the listener socket.
 
