@@ -9650,11 +9650,14 @@ ntsa::Error Session::process(LockGuard* lock)
         ntci::Encryption::HandshakeCallback handshakeCallback =
             d_handshakeCallback;
 
+        bsl::shared_ptr<BloombergLP::ntctls::Certificate> remoteCertificate =
+            d_remoteCertificate_sp;
+
         d_handshakeCallback = ntci::Encryption::HandshakeCallback();
 
         if (handshakeCallback) {
-            UnLockGuard unlock(&d_mutex);
-            handshakeCallback(ntsa::Error(), d_remoteCertificate_sp, "");
+            lock->release()->unlock();
+            handshakeCallback(ntsa::Error(), remoteCertificate, "");
         }
     }
 
