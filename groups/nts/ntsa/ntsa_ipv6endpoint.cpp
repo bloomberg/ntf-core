@@ -66,19 +66,37 @@ Ipv6Endpoint::Ipv6Endpoint(const bslstl::StringRef& addressText,
 : d_host(addressText)
 , d_port(port)
 {
-    // Empty
+}
+
+Ipv6Endpoint::Ipv6Endpoint(bslmf::MovableRef<Ipv6Endpoint> other)
+    NTSCFG_NOEXCEPT
+: d_host(NTSCFG_MOVE_FROM(other, d_host))
+, d_port(NTSCFG_MOVE_FROM(other, d_port))
+{
+    NTSCFG_MOVE_RESET(other);
 }
 
 Ipv6Endpoint::Ipv6Endpoint(const Ipv6Endpoint& other)
 : d_host(other.d_host)
 , d_port(other.d_port)
 {
-    // Empty
 }
 
 Ipv6Endpoint::~Ipv6Endpoint()
 {
-    // Empty
+}
+
+Ipv6Endpoint& Ipv6Endpoint::operator=(bslmf::MovableRef<Ipv6Endpoint> other)
+    NTSCFG_NOEXCEPT
+{
+    if (this != &other) {
+        d_host = NTSCFG_MOVE_FROM(other, d_host);
+        d_port = NTSCFG_MOVE_FROM(other, d_port);
+
+        NTSCFG_MOVE_RESET(other);
+    }
+
+    return *this;
 }
 
 Ipv6Endpoint& Ipv6Endpoint::operator=(const Ipv6Endpoint& other)
@@ -250,11 +268,11 @@ bool Ipv6Endpoint::equals(const Ipv6Endpoint& other) const
 bool Ipv6Endpoint::less(const Ipv6Endpoint& other) const
 {
     if (d_host.less(other.d_host)) {
-        return false;
+        return true;
     }
 
     if (other.d_host.less(d_host)) {
-        return true;
+        return false;
     }
 
     return d_port < other.d_port;

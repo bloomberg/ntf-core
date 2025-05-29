@@ -68,6 +68,14 @@ Ipv4Endpoint::Ipv4Endpoint(const bslstl::StringRef& addressText,
 {
 }
 
+Ipv4Endpoint::Ipv4Endpoint(bslmf::MovableRef<Ipv4Endpoint> other)
+    NTSCFG_NOEXCEPT
+: d_host(NTSCFG_MOVE_FROM(other, d_host))
+, d_port(NTSCFG_MOVE_FROM(other, d_port))
+{
+    NTSCFG_MOVE_RESET(other);
+}
+
 Ipv4Endpoint::Ipv4Endpoint(const Ipv4Endpoint& other)
 : d_host(other.d_host)
 , d_port(other.d_port)
@@ -76,6 +84,19 @@ Ipv4Endpoint::Ipv4Endpoint(const Ipv4Endpoint& other)
 
 Ipv4Endpoint::~Ipv4Endpoint()
 {
+}
+
+Ipv4Endpoint& Ipv4Endpoint::operator=(bslmf::MovableRef<Ipv4Endpoint> other)
+    NTSCFG_NOEXCEPT
+{
+    if (this != &other) {
+        d_host = NTSCFG_MOVE_FROM(other, d_host);
+        d_port = NTSCFG_MOVE_FROM(other, d_port);
+
+        NTSCFG_MOVE_RESET(other);
+    }
+
+    return *this;
 }
 
 Ipv4Endpoint& Ipv4Endpoint::operator=(const Ipv4Endpoint& other)

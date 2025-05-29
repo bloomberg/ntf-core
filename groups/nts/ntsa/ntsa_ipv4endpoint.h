@@ -82,11 +82,22 @@ class Ipv4Endpoint
     Ipv4Endpoint(const bslstl::StringRef& addressText, ntsa::Port port);
 
     /// Create a new IPv4 endpoint having the same value as the specified
+    /// 'other' object. Assign an unspecified but valid value to the
+    /// 'other' object.
+    Ipv4Endpoint(bslmf::MovableRef<Ipv4Endpoint> other) NTSCFG_NOEXCEPT;
+
+    /// Create a new IPv4 endpoint having the same value as the specified
     /// 'other' object.
     Ipv4Endpoint(const Ipv4Endpoint& other);
 
     /// Destroy this object.
     ~Ipv4Endpoint();
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    Ipv4Endpoint& operator=(bslmf::MovableRef<Ipv4Endpoint> other)
+        NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' primitive representation
     /// to this primitive representation.

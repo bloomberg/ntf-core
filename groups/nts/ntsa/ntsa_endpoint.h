@@ -136,12 +136,21 @@ class Endpoint
     /// value of the specified 'address' and 'port'.
     Endpoint(const ntsa::Ipv6Address& address, ntsa::Port port);
 
+    /// Create a new endpoint having the same value as the specified 'other'
+    /// object. Assign an unspecified but valid value to the 'other' object.
+    Endpoint(bslmf::MovableRef<Endpoint> other) NTSCFG_NOEXCEPT;
+
     /// Create a new address having the same value as the specified 'other'
     /// object.
     Endpoint(const Endpoint& other);
 
     /// Destroy this object.
     ~Endpoint();
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    Endpoint& operator=(bslmf::MovableRef<Endpoint> other) NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
@@ -400,6 +409,26 @@ Endpoint::Endpoint(const ntsa::Ipv6Address& address, ntsa::Port port)
 }
 
 NTSCFG_INLINE
+Endpoint::Endpoint(bslmf::MovableRef<Endpoint> other) NTSCFG_NOEXCEPT
+: d_type(other.d_type)
+{
+    switch (d_type) {
+    case ntsa::EndpointType::e_IP:
+        new (d_ip.buffer()) ntsa::IpEndpoint(
+            NTSCFG_MOVE_FROM(other, d_ip.object()));
+        break;
+    case ntsa::EndpointType::e_LOCAL:
+        new (d_local.buffer()) ntsa::LocalName(
+            NTSCFG_MOVE_FROM(other, d_local.object()));
+        break;
+    default:
+        BSLS_ASSERT(d_type == ntsa::EndpointType::e_UNDEFINED);
+    }
+
+    NTSCFG_MOVE_RESET(other);
+}
+
+NTSCFG_INLINE
 Endpoint::Endpoint(const Endpoint& other)
 : d_type(other.d_type)
 {
@@ -418,6 +447,31 @@ Endpoint::Endpoint(const Endpoint& other)
 NTSCFG_INLINE
 Endpoint::~Endpoint()
 {
+}
+
+NTSCFG_INLINE
+Endpoint& Endpoint::operator=(bslmf::MovableRef<Endpoint> other) 
+    NTSCFG_NOEXCEPT
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    switch (other.d_type) {
+    case ntsa::EndpointType::e_IP:
+        this->makeIp(NTSCFG_MOVE_FROM(other, d_ip.object()));
+        break;
+    case ntsa::EndpointType::e_LOCAL:
+        this->makeLocal(NTSCFG_MOVE_FROM(other, d_local.object()));
+        break;
+    default:
+        BSLS_ASSERT(other.d_type == ntsa::EndpointType::e_UNDEFINED);
+        this->reset();
+    }
+
+    NTSCFG_MOVE_RESET(other);
+
+    return *this;
 }
 
 NTSCFG_INLINE

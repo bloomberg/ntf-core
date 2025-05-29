@@ -76,8 +76,17 @@ class LocalName
     /// 'other' local name.
     LocalName(const LocalName& other);
 
+    /// Create a new local name having the same value as the specified 'other'
+    /// object. Assign an unspecified but valid value to the 'other' object.
+    LocalName(bslmf::MovableRef<LocalName> original) NTSCFG_NOEXCEPT;
+
     /// Destroy this object.
     ~LocalName();
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    LocalName& operator=(bslmf::MovableRef<LocalName> other) NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.

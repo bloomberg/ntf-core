@@ -90,11 +90,21 @@ class IpAddress
     explicit IpAddress(const bslstl::StringRef& text);
 
     /// Create a new IP address having the same value as the specified
+    /// 'other' object. Assign an unspecified but valid value to the
     /// 'other' object.
-    IpAddress(const IpAddress& ip_other);
+    IpAddress(bslmf::MovableRef<IpAddress> other) NTSCFG_NOEXCEPT;
+
+    /// Create a new IP address having the same value as the specified
+    /// 'other' object.
+    IpAddress(const IpAddress& other);
 
     /// Destroy this object.
     ~IpAddress();
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    IpAddress& operator=(bslmf::MovableRef<IpAddress> other) NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' primitive representation
     /// to this primitive representation.
@@ -290,6 +300,26 @@ IpAddress::IpAddress(const ntsa::Ipv6Address& value)
 }
 
 NTSCFG_INLINE
+IpAddress::IpAddress(bslmf::MovableRef<IpAddress> other) NTSCFG_NOEXCEPT
+: d_type(other.d_type)
+{
+    switch (d_type) {
+    case ntsa::IpAddressType::e_V4:
+        new (d_v4.buffer()) ntsa::Ipv4Address(
+            NTSCFG_MOVE_FROM(other, d_v4.object()));
+        break;
+    case ntsa::IpAddressType::e_V6:
+        new (d_v6.buffer()) ntsa::Ipv6Address(
+            NTSCFG_MOVE_FROM(other, d_v6.object()));
+        break;
+    default:
+        BSLS_ASSERT(d_type == ntsa::IpAddressType::e_UNDEFINED);
+    }
+
+    NTSCFG_MOVE_RESET(other);
+}
+
+NTSCFG_INLINE
 IpAddress::IpAddress(const IpAddress& other)
 : d_type(other.d_type)
 {
@@ -308,6 +338,31 @@ IpAddress::IpAddress(const IpAddress& other)
 NTSCFG_INLINE
 IpAddress::~IpAddress()
 {
+}
+
+NTSCFG_INLINE
+IpAddress& IpAddress::operator=(bslmf::MovableRef<IpAddress> other)
+    NTSCFG_NOEXCEPT
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    switch (other.d_type) {
+    case ntsa::IpAddressType::e_V4:
+        this->makeV4(NTSCFG_MOVE_FROM(other, d_v4.object()));
+        break;
+    case ntsa::IpAddressType::e_V6:
+        this->makeV6(NTSCFG_MOVE_FROM(other, d_v6.object()));
+        break;
+    default:
+        BSLS_ASSERT(other.d_type == ntsa::IpAddressType::e_UNDEFINED);
+        this->reset();
+    }
+
+    NTSCFG_MOVE_RESET(other);
+
+    return *this;
 }
 
 NTSCFG_INLINE
