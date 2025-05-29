@@ -83,12 +83,23 @@ class Ipv6Endpoint
     explicit Ipv6Endpoint(const bslstl::StringRef& addressText,
                           ntsa::Port               port);
 
+    /// Create a new IPv6 endpoint having the same value as the specified
+    /// 'other' object. Assign an unspecified but valid value to the
+    /// 'other' object.
+    Ipv6Endpoint(bslmf::MovableRef<Ipv6Endpoint> other) NTSCFG_NOEXCEPT;
+
     /// Create a new IP endpoint having the same value as the specified
     /// 'other' object.
     Ipv6Endpoint(const Ipv6Endpoint& other);
 
     /// Destroy this object.
     ~Ipv6Endpoint();
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    Ipv6Endpoint& operator=(bslmf::MovableRef<Ipv6Endpoint> other)
+        NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' primitive representation
     /// to this primitive representation.

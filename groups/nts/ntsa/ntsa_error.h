@@ -179,12 +179,21 @@ class Error
     /// specified exact system error 'number'.
     Error(ntsa::Error::Code code, ntsa::Error::Number number);
 
-    /// Create a  new error having the same value as the specified other
-    /// 'error'.
+    /// Create a new error having the same value as the specified 'other'
+    /// error. Assign an unspecified but valid value to the 'other' object.
+    Error(bslmf::MovableRef<Error> other) NTSCFG_NOEXCEPT;
+
+    /// Create a  new error having the same value as the specified 'other'
+    /// error.
     Error(const Error& error);
 
     /// Destroy this object.
     ~Error();
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    Error& operator=(bslmf::MovableRef<Error> other) NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' error to this error.
     /// Return a reference to this modifiable object.
@@ -197,6 +206,9 @@ class Error
     /// Assign the specified system error 'code' to this error. Return
     /// a reference to this modifiable object.
     Error& operator=(ntsa::Error::Code code);
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
 
     /// Return the error number.
     ntsa::Error::Number number() const;
@@ -232,8 +244,6 @@ class Error
     bsl::ostream& print(bsl::ostream& stream,
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
-
-    // FRIENDS
 
     /// Write a formatted, human-readable description of the specified
     /// 'object' into the specified 'stream'. Return a reference to the
@@ -339,6 +349,14 @@ Error::Error(ntsa::Error::Code code, ntsa::Error::Number number)
 }
 
 NTSCFG_INLINE
+Error::Error(bslmf::MovableRef<Error> other)
+    NTSCFG_NOEXCEPT
+{
+    d_value.d_quad = NTSCFG_MOVE_FROM(other, d_value.d_quad);
+    NTSCFG_MOVE_RESET(other);
+}
+
+NTSCFG_INLINE
 Error::Error(const Error& other)
 {
     d_value.d_quad = other.d_value.d_quad;
@@ -347,6 +365,15 @@ Error::Error(const Error& other)
 NTSCFG_INLINE
 Error::~Error()
 {
+}
+
+NTSCFG_INLINE
+Error& Error::operator=(bslmf::MovableRef<Error> other) NTSCFG_NOEXCEPT
+{
+    d_value.d_quad = NTSCFG_MOVE_FROM(other, d_value.d_quad);
+    NTSCFG_MOVE_RESET(other);
+
+    return *this;
 }
 
 NTSCFG_INLINE
@@ -370,6 +397,12 @@ Error& Error::operator=(ntsa::Error::Code code)
     d_value.d_pair.d_code   = code;
     d_value.d_pair.d_number = ntsa::Error::translate(code);
     return *this;
+}
+
+NTSCFG_INLINE
+void Error::reset()
+{
+    d_value.d_quad = 0;
 }
 
 NTSCFG_INLINE

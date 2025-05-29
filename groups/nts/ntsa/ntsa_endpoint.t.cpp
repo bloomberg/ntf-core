@@ -34,23 +34,236 @@ namespace ntsa {
 class EndpointTest
 {
   public:
-    // TODO
-    static void verifyCase1();
+    // Test value semantics: type traits.
+    static void verifyTypeTraits();
 
-    // TODO
-    static void verifyCase2();
+    // Test value semantics:default constructor.
+    static void verifyDefaultConstructor();
 
-    // TODO
-    static void verifyCase3();
+    // Test value semantics: move constructor.
+    static void verifyMoveConstructor();
 
-    // TODO
-    static void verifyCase4();
+    // Test value semantics: copy constructor.
+    static void verifyCopyConstructor();
 
-    // TODO
-    static void verifyCase5();
+    // Test value semantics: overload constructor.
+    static void verifyOverloadConstructor();
+
+    // Test value semantics: copy assignment.
+    static void verifyCopyAssignment();
+
+    // Test value semantics: move assignment.
+    static void verifyMoveAssignment();
+
+    // Test value semantics: overload assignment.
+    static void verifyOverloadAssignment();
+
+    // Test value semantics: resetting.
+    static void verifyReset();
+
+    // Test parsing: IPv4 address.
+    static void verifyParsingIpv4();
+
+    // Test parsing: IPv6 address.
+    static void verifyParsingIpv6();
+
+    // Test parsing: local name.
+    static void verifyParsingLocalName();
+
+    // Test generation.
+    static void verifyGeneration();
+
+    // Test hashing.
+    static void verifyHashing();
+
+    // Test comparison. In particular, comparison must yield consistent results
+    // across different CPUs with different endianness.
+    static void verifyComparison();
+
+    // Verify encoding/decoding BER.
+    static void verifyCodecBer();
+
+    // Verify encoding/decoding JSON.
+    static void verifyCodecJson();
 };
 
-NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCase1)
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyTypeTraits)
+{
+    const bool isBitwiseInitializable =
+        NTSCFG_TYPE_CHECK_BITWISE_INITIALIZABLE(ntsa::Endpoint);
+
+    NTSCFG_TEST_FALSE(isBitwiseInitializable);
+
+    const bool isBitwiseMovable =
+        NTSCFG_TYPE_CHECK_BITWISE_MOVABLE(ntsa::Endpoint);
+
+    NTSCFG_TEST_TRUE(isBitwiseMovable);
+
+    const bool isBitwiseCopyable =
+        NTSCFG_TYPE_CHECK_BITWISE_COPYABLE(ntsa::Endpoint);
+
+    NTSCFG_TEST_TRUE(isBitwiseCopyable);
+
+    const bool isBitwiseComparable =
+        NTSCFG_TYPE_CHECK_BITWISE_COMPARABLE(ntsa::Endpoint);
+
+    NTSCFG_TEST_FALSE(isBitwiseComparable);
+
+    const bool isAllocatorAware =
+        NTSCFG_TYPE_CHECK_ALLOCATOR_AWARE(ntsa::Endpoint);
+
+    NTSCFG_TEST_FALSE(isAllocatorAware);
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyDefaultConstructor)
+{
+    ntsa::Endpoint u;
+
+    NTSCFG_TEST_TRUE(u.isUndefined());
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyMoveConstructor)
+{
+    ntsa::Endpoint u(ntsa::Ipv4Address::loopback(), 12345);
+
+    NTSCFG_TEST_TRUE(u.isIp());
+    NTSCFG_TEST_TRUE(u.ip().host().isV4());
+    NTSCFG_TEST_EQ(u.ip().host().v4(), ntsa::Ipv4Address::loopback());
+    NTSCFG_TEST_EQ(u.ip().port(), 12345);
+
+    ntsa::Endpoint v(NTSCFG_MOVE(u));
+
+    NTSCFG_TEST_TRUE(v.isIp());
+    NTSCFG_TEST_TRUE(v.ip().host().isV4());
+    NTSCFG_TEST_EQ(v.ip().host().v4(), ntsa::Ipv4Address::loopback());
+    NTSCFG_TEST_EQ(v.ip().port(), 12345);
+
+#if NTSCFG_MOVE_RESET_ENABLED
+    NTSCFG_TEST_TRUE(u.isUndefined());
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCopyConstructor)
+{
+    ntsa::Endpoint u(ntsa::Ipv4Address::loopback(), 12345);
+
+    NTSCFG_TEST_TRUE(u.isIp());
+    NTSCFG_TEST_TRUE(u.ip().host().isV4());
+    NTSCFG_TEST_EQ(u.ip().host().v4(), ntsa::Ipv4Address::loopback());
+    NTSCFG_TEST_EQ(u.ip().port(), 12345);
+
+    ntsa::Endpoint v(u);
+
+    NTSCFG_TEST_TRUE(v.isIp());
+    NTSCFG_TEST_TRUE(v.ip().host().isV4());
+    NTSCFG_TEST_EQ(v.ip().host().v4(), ntsa::Ipv4Address::loopback());
+    NTSCFG_TEST_EQ(v.ip().port(), 12345);
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyOverloadConstructor)
+{
+    {
+        ntsa::Endpoint u(ntsa::Ipv4Address::loopback(), 12345);
+
+        NTSCFG_TEST_TRUE(u.isIp());
+        NTSCFG_TEST_TRUE(u.ip().host().isV4());
+        NTSCFG_TEST_EQ(u.ip().host().v4(), ntsa::Ipv4Address::loopback());
+        NTSCFG_TEST_EQ(u.ip().port(), 12345);
+    }
+
+    {
+        ntsa::Endpoint u(ntsa::Ipv6Address::loopback(), 12345);
+
+        NTSCFG_TEST_TRUE(u.isIp());
+        NTSCFG_TEST_TRUE(u.ip().host().isV6());
+        NTSCFG_TEST_EQ(u.ip().host().v6(), ntsa::Ipv6Address::loopback());
+        NTSCFG_TEST_EQ(u.ip().port(), 12345);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCopyAssignment)
+{
+    ntsa::Endpoint u(ntsa::Ipv4Address::loopback(), 12345);
+
+    NTSCFG_TEST_TRUE(u.isIp());
+    NTSCFG_TEST_TRUE(u.ip().host().isV4());
+    NTSCFG_TEST_EQ(u.ip().host().v4(), ntsa::Ipv4Address::loopback());
+    NTSCFG_TEST_EQ(u.ip().port(), 12345);
+
+    ntsa::Endpoint v;
+
+    NTSCFG_TEST_TRUE(v.isUndefined());
+
+    v = u;
+
+    NTSCFG_TEST_TRUE(v.isIp());
+    NTSCFG_TEST_TRUE(v.ip().host().isV4());
+    NTSCFG_TEST_EQ(v.ip().host().v4(), ntsa::Ipv4Address::loopback());
+    NTSCFG_TEST_EQ(v.ip().port(), 12345);
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyMoveAssignment)
+{
+    ntsa::Endpoint u(ntsa::Ipv4Address::loopback(), 12345);
+
+    NTSCFG_TEST_TRUE(u.isIp());
+    NTSCFG_TEST_TRUE(u.ip().host().isV4());
+    NTSCFG_TEST_EQ(u.ip().host().v4(), ntsa::Ipv4Address::loopback());
+    NTSCFG_TEST_EQ(u.ip().port(), 12345);
+
+    ntsa::Endpoint v;
+
+    NTSCFG_TEST_TRUE(v.isUndefined());
+
+    v = NTSCFG_MOVE(u);
+
+    NTSCFG_TEST_TRUE(v.isIp());
+    NTSCFG_TEST_TRUE(v.ip().host().isV4());
+    NTSCFG_TEST_EQ(v.ip().host().v4(), ntsa::Ipv4Address::loopback());
+    NTSCFG_TEST_EQ(v.ip().port(), 12345);
+
+#if NTSCFG_MOVE_RESET_ENABLED
+    NTSCFG_TEST_TRUE(u.isUndefined());
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyOverloadAssignment)
+{
+    ntsa::Endpoint u;
+
+    NTSCFG_TEST_TRUE(u.isUndefined());
+
+    u = ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 12345);
+
+    NTSCFG_TEST_TRUE(u.isIp());
+    NTSCFG_TEST_TRUE(u.ip().host().isV4());
+    NTSCFG_TEST_EQ(u.ip().host().v4(), ntsa::Ipv4Address::loopback());
+    NTSCFG_TEST_EQ(u.ip().port(), 12345);
+
+    ntsa::LocalName localName;
+    localName.setValue("/tmp/test/ntf.uds");
+
+    u = localName;
+
+    NTSCFG_TEST_TRUE(u.isLocal());
+    NTSCFG_TEST_EQ(u.local().value(), "/tmp/test/ntf.uds");
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyReset)
+{
+    ntsa::Endpoint u(ntsa::Ipv4Address::loopback(), 12345);
+
+    NTSCFG_TEST_TRUE(u.isIp());
+    NTSCFG_TEST_TRUE(u.ip().host().isV4());
+    NTSCFG_TEST_EQ(u.ip().host().v4(), ntsa::Ipv4Address::loopback());
+    NTSCFG_TEST_EQ(u.ip().port(), 12345);
+
+    u.reset();
+
+    NTSCFG_TEST_TRUE(u.isUndefined());
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyParsingIpv4)
 {
     const bsl::string e = "127.0.0.1:12345";
 
@@ -100,7 +313,7 @@ NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCase1)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCase2)
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyParsingIpv6)
 {
     {
         const bsl::string e = "[::1]:12345";
@@ -185,7 +398,7 @@ NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCase2)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCase3)
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyParsingLocalName)
 {
     const bsl::string e = "/tmp/server";
 
@@ -207,7 +420,51 @@ NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCase3)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCase4)
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyGeneration)
+{
+    {
+        ntsa::Endpoint endpoint(ntsa::Ipv4Address::loopback(), 12345);
+        bsl::string text = endpoint.text();
+        NTSCFG_TEST_EQ(text, "127.0.0.1:12345");
+    }
+
+    {
+        ntsa::Endpoint endpoint(ntsa::Ipv6Address::loopback(), 12345);
+        bsl::string text = endpoint.text();
+        NTSCFG_TEST_EQ(text, "[::1]:12345");
+    }
+
+    {
+        ntsa::LocalName localName;
+        localName.setValue("/tmp/test/ntf.uds");
+
+        ntsa::Endpoint endpoint(localName);
+        bsl::string text = endpoint.text();
+        NTSCFG_TEST_EQ(text, localName.value());
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyHashing)
+{
+    ntsa::Endpoint endpoint1("127.0.0.1:12345");
+    ntsa::Endpoint endpoint2("196.168.0.1:12345");
+
+    bsl::unordered_set<ntsa::Endpoint> endpointSet;
+    endpointSet.insert(endpoint1);
+    endpointSet.insert(endpoint2);
+
+    NTSCFG_TEST_EQ(endpointSet.size(), 2);
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyComparison)
+{
+    ntsa::Endpoint endpoint1("10.0.0.11:12345");
+    ntsa::Endpoint endpoint2("11.0.0.10:12345");
+
+    NTSCFG_TEST_LT(endpoint1, endpoint2);
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCodecBer)
 {
     int rc;
 
@@ -251,7 +508,7 @@ NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCase4)
     NTSCFG_TEST_EQ(e2, e1);
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCase5)
+NTSCFG_TEST_FUNCTION(ntsa::EndpointTest::verifyCodecJson)
 {
     int rc;
 

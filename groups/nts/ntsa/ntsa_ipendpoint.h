@@ -107,12 +107,21 @@ class IpEndpoint
     /// representation and specified 'port' number.
     explicit IpEndpoint(const bslstl::StringRef& addressText, ntsa::Port port);
 
+    /// Create a new IP endpoint having the same value as the specified 'other'
+    /// object. Assign an unspecified but valid value to the 'other' object.
+    IpEndpoint(bslmf::MovableRef<IpEndpoint> other) NTSCFG_NOEXCEPT;
+
     /// Create a new IP endpoint having the same value as the specified
     /// 'other' object.
     IpEndpoint(const IpEndpoint& other);
 
     /// Destroy this object.
     ~IpEndpoint();
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    IpEndpoint& operator=(bslmf::MovableRef<IpEndpoint> other) NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' primitive representation
     /// to this primitive representation.
@@ -354,6 +363,14 @@ IpEndpoint::IpEndpoint(const ntsa::Ipv6Address& address, ntsa::Port port)
 }
 
 NTSCFG_INLINE
+IpEndpoint::IpEndpoint(bslmf::MovableRef<IpEndpoint> other) NTSCFG_NOEXCEPT
+: d_host(NTSCFG_MOVE_FROM(other, d_host))
+, d_port(NTSCFG_MOVE_FROM(other, d_port))
+{
+    NTSCFG_MOVE_RESET(other);
+}
+
+NTSCFG_INLINE
 IpEndpoint::IpEndpoint(const IpEndpoint& other)
 : d_host(other.d_host)
 , d_port(other.d_port)
@@ -363,6 +380,20 @@ IpEndpoint::IpEndpoint(const IpEndpoint& other)
 NTSCFG_INLINE
 IpEndpoint::~IpEndpoint()
 {
+}
+
+NTSCFG_INLINE
+IpEndpoint& IpEndpoint::operator=(bslmf::MovableRef<IpEndpoint> other)
+    NTSCFG_NOEXCEPT
+{
+    if (this != &other) {
+        d_host = NTSCFG_MOVE_FROM(other, d_host);
+        d_port = NTSCFG_MOVE_FROM(other, d_port);
+
+        NTSCFG_MOVE_RESET(other);
+    }
+
+    return *this;
 }
 
 NTSCFG_INLINE

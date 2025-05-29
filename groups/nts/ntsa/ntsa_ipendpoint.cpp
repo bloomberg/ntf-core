@@ -237,11 +237,11 @@ bool IpEndpoint::equals(const IpEndpoint& other) const
 bool IpEndpoint::less(const IpEndpoint& other) const
 {
     if (d_host.less(other.d_host)) {
-        return false;
+        return true;
     }
 
     if (other.d_host.less(d_host)) {
-        return true;
+        return false;
     }
 
     return d_port < other.d_port;

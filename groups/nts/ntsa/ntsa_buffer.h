@@ -84,11 +84,22 @@ class MutableBuffer
     MutableBuffer(void* data, bsl::size_t size) BSLS_KEYWORD_NOEXCEPT;
 
     /// Create a new buffer having the same value as the specified
+    /// 'original' object. Assign an unspecified but valid value to the
+    /// 'original' original.
+    MutableBuffer(bslmf::MovableRef<MutableBuffer> original) NTSCFG_NOEXCEPT;
+
+    /// Create a new buffer having the same value as the specified
     /// 'original' object.
     MutableBuffer(const MutableBuffer& original) BSLS_KEYWORD_NOEXCEPT;
 
     /// Destroy this object.
     ~MutableBuffer() BSLS_KEYWORD_NOEXCEPT;
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    MutableBuffer& operator=(bslmf::MovableRef<MutableBuffer> other)
+        NTSCFG_NOEXCEPT;
 
     /// Assign to this object the value of the specified 'other' object and
     /// return a reference to this modifiable object.
@@ -97,6 +108,9 @@ class MutableBuffer
     /// Increment the address of the data of the buffer by the specified 'n'
     /// number of bytes and decrement its size by the equivalent amount.
     MutableBuffer& operator+=(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT;
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset() BSLS_KEYWORD_NOEXCEPT;
 
     /// Set the buffer to describe the specified 'blobBuffer'.
     void setBuffer(const bdlbb::BlobBuffer& blobBuffer) BSLS_KEYWORD_NOEXCEPT;
@@ -225,9 +239,19 @@ class ConstBuffer
     /// specified 'size'.
     ConstBuffer(const void* data, bsl::size_t size) BSLS_KEYWORD_NOEXCEPT;
 
+    /// Create a new buffer having the same value as the specified 'original'
+    /// object. Assign an unspecified but valid value to the 'original'
+    /// original.
+    ConstBuffer(bslmf::MovableRef<MutableBuffer> other) NTSCFG_NOEXCEPT;
+
     /// Create a new buffer of non-modifiable data from the specified
     /// 'other' buffer of modifiable data.
     ConstBuffer(const MutableBuffer& other) BSLS_KEYWORD_NOEXCEPT;
+
+    /// Create a new buffer having the same value as the specified 'original'
+    /// object. Assign an unspecified but valid value to the 'original'
+    /// original.
+    ConstBuffer(bslmf::MovableRef<ConstBuffer> original) NTSCFG_NOEXCEPT;
 
     /// Create a new buffer having the same value as the specified
     /// 'original' object.
@@ -236,9 +260,21 @@ class ConstBuffer
     /// Destroy this object.
     ~ConstBuffer() BSLS_KEYWORD_NOEXCEPT;
 
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    ConstBuffer& operator=(bslmf::MovableRef<ConstBuffer> other)
+        NTSCFG_NOEXCEPT;
+
     /// Assign to this object the value of the specified 'other' object, and
     /// return a reference to this modifiable object.
     ConstBuffer& operator=(const ConstBuffer& other) BSLS_KEYWORD_NOEXCEPT;
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    ConstBuffer& operator=(bslmf::MovableRef<MutableBuffer> other)
+        NTSCFG_NOEXCEPT;
 
     /// Assign to this object the value of the specified 'other' object, and
     /// return a reference to this modifiable object.
@@ -247,6 +283,9 @@ class ConstBuffer
     /// Increment the address of the data of the buffer by the specified 'n'
     /// number of bytes and decrement its size by the equivalent amount.
     ConstBuffer& operator+=(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT;
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset() BSLS_KEYWORD_NOEXCEPT;
 
     /// Set the buffer to describe the specified 'blobBuffer'.
     void setBuffer(const bdlbb::BlobBuffer& blobBuffer) BSLS_KEYWORD_NOEXCEPT;
@@ -1297,6 +1336,22 @@ MutableBuffer::MutableBuffer(void*       data,
 }
 
 NTSCFG_INLINE
+MutableBuffer::MutableBuffer(bslmf::MovableRef<MutableBuffer> original) 
+    NTSCFG_NOEXCEPT
+#if defined(BSLS_PLATFORM_OS_UNIX)
+: d_data(NTSCFG_MOVE_FROM(original, d_data)),
+  d_size(NTSCFG_MOVE_FROM(original, d_size))
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+: d_size(NTSCFG_MOVE_FROM(original, d_size)),
+  d_data(NTSCFG_MOVE_FROM(original, d_data))
+#else
+#error Not implemented
+#endif
+{
+    NTSCFG_MOVE_RESET(original);
+}
+
+NTSCFG_INLINE
 MutableBuffer::MutableBuffer(const MutableBuffer& original)
     BSLS_KEYWORD_NOEXCEPT
 #if defined(BSLS_PLATFORM_OS_UNIX)
@@ -1317,6 +1372,19 @@ MutableBuffer::~MutableBuffer() BSLS_KEYWORD_NOEXCEPT
 }
 
 NTSCFG_INLINE
+MutableBuffer& MutableBuffer::operator=(bslmf::MovableRef<MutableBuffer> other)
+    NTSCFG_NOEXCEPT
+{
+    if (this != &other) {
+        d_data = NTSCFG_MOVE_FROM(other, d_data);
+        d_size = NTSCFG_MOVE_FROM(other, d_size);
+        NTSCFG_MOVE_RESET(other);
+    }
+
+    return *this;
+}
+
+NTSCFG_INLINE
 MutableBuffer& MutableBuffer::operator=(const MutableBuffer& other)
     BSLS_KEYWORD_NOEXCEPT
 {
@@ -1330,6 +1398,13 @@ MutableBuffer& MutableBuffer::operator+=(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT
 {
     this->advance(n);
     return *this;
+}
+
+NTSCFG_INLINE
+void MutableBuffer::reset() BSLS_KEYWORD_NOEXCEPT
+{
+    d_data = 0;
+    d_size = 0;
 }
 
 NTSCFG_INLINE
@@ -1450,6 +1525,22 @@ ConstBuffer::ConstBuffer(const void* data,
 }
 
 NTSCFG_INLINE
+ConstBuffer::ConstBuffer(bslmf::MovableRef<MutableBuffer> other)
+    NTSCFG_NOEXCEPT
+#if defined(BSLS_PLATFORM_OS_UNIX)
+: d_data((BufferType)(other.data())),
+  d_size((LengthType)(other.size()))
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+: d_size((LengthType)(other.size())),
+  d_data((BufferType)(other.data()))
+#else
+#error Not implemented
+#endif
+{
+    NTSCFG_MOVE_RESET(other);
+}
+
+NTSCFG_INLINE
 ConstBuffer::ConstBuffer(const MutableBuffer& other) BSLS_KEYWORD_NOEXCEPT
 #if defined(BSLS_PLATFORM_OS_UNIX)
 : d_data((BufferType)(other.data())),
@@ -1461,6 +1552,22 @@ ConstBuffer::ConstBuffer(const MutableBuffer& other) BSLS_KEYWORD_NOEXCEPT
 #error Not implemented
 #endif
 {
+}
+
+NTSCFG_INLINE
+ConstBuffer::ConstBuffer(bslmf::MovableRef<ConstBuffer> original) 
+    BSLS_KEYWORD_NOEXCEPT
+#if defined(BSLS_PLATFORM_OS_UNIX)
+: d_data(NTSCFG_MOVE_FROM(original, d_data)),
+  d_size(NTSCFG_MOVE_FROM(original, d_size))
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+: d_size(NTSCFG_MOVE_FROM(original, d_size)),
+  d_data(NTSCFG_MOVE_FROM(original, d_data))
+#else
+#error Not implemented
+#endif
+{
+    NTSCFG_MOVE_RESET(original);
 }
 
 NTSCFG_INLINE
@@ -1483,11 +1590,35 @@ ConstBuffer::~ConstBuffer() BSLS_KEYWORD_NOEXCEPT
 }
 
 NTSCFG_INLINE
+ConstBuffer& ConstBuffer::operator=(bslmf::MovableRef<ConstBuffer> other)
+    NTSCFG_NOEXCEPT
+{
+    if (this != &other) {
+        d_data = NTSCFG_MOVE_FROM(other, d_data);
+        d_size = NTSCFG_MOVE_FROM(other, d_size);
+        NTSCFG_MOVE_RESET(other);
+    }
+
+    return *this;
+}
+
+NTSCFG_INLINE
 ConstBuffer& ConstBuffer::operator=(const ConstBuffer& other)
     BSLS_KEYWORD_NOEXCEPT
 {
     d_data = other.d_data;
     d_size = other.d_size;
+    return *this;
+}
+
+NTSCFG_INLINE
+ConstBuffer& ConstBuffer::operator=(bslmf::MovableRef<MutableBuffer> other)
+    NTSCFG_NOEXCEPT
+{
+    d_data = other.data();
+    d_size = NTSCFG_WARNING_NARROW(LengthType, other.size());
+    NTSCFG_MOVE_RESET(other);
+
     return *this;
 }
 
@@ -1505,6 +1636,13 @@ ConstBuffer& ConstBuffer::operator+=(bsl::size_t n) BSLS_KEYWORD_NOEXCEPT
 {
     this->advance(n);
     return *this;
+}
+
+NTSCFG_INLINE
+void ConstBuffer::reset() BSLS_KEYWORD_NOEXCEPT
+{
+    d_data = 0;
+    d_size = 0;
 }
 
 NTSCFG_INLINE
