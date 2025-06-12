@@ -133,6 +133,10 @@ bool Ipv6Endpoint::parse(const bslstl::StringRef& text)
         return false;
     }
 
+    if (*begin != '[') {
+        return false;
+    }
+
     const char* mark = end - 1;
     while (mark > begin) {
         if (*mark == ']') {

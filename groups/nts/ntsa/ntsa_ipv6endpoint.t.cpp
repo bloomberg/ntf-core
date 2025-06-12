@@ -35,10 +35,36 @@ class Ipv6EndpointTest
 
 NTSCFG_TEST_FUNCTION(ntsa::Ipv6EndpointTest::verify)
 {
-    ntsa::Ipv6Endpoint ipv6Endpoint("[::1]:12345");
+    {
+        ntsa::Ipv6Endpoint ipv6Endpoint;
+        
+        bool valid = ipv6Endpoint.parse("[::1]:12345");
+        NTSCFG_TEST_TRUE(valid);
 
-    NTSCFG_TEST_EQ(ipv6Endpoint.host(), ntsa::Ipv6Address::loopback());
-    NTSCFG_TEST_EQ(ipv6Endpoint.port(), 12345);
+        NTSCFG_TEST_EQ(ipv6Endpoint.host(), ntsa::Ipv6Address::loopback());
+        NTSCFG_TEST_EQ(ipv6Endpoint.port(), 12345);
+    }
+
+    {
+        ntsa::Ipv6Endpoint ipv6Endpoint;
+    
+        bool valid = ipv6Endpoint.parse("::1:12345");
+        NTSCFG_TEST_FALSE(valid);
+    }
+
+    {
+        ntsa::Ipv6Endpoint ipv6Endpoint;
+
+        bool valid = ipv6Endpoint.parse("[::1:12345");
+        NTSCFG_TEST_FALSE(valid);
+    }
+
+    {
+        ntsa::Ipv6Endpoint ipv6Endpoint;
+
+        bool valid = ipv6Endpoint.parse("::1]:12345");
+        NTSCFG_TEST_FALSE(valid);
+    }
 }
 
 }  // close namespace ntsa

@@ -42,6 +42,8 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntsa {
 
+class Uri;
+
 /// Describe the authority portion a Uniform Resource Identifier (URI).
 ///
 /// @details
@@ -64,6 +66,8 @@ class UriAuthority
     bdlb::NullableValue<ntsa::Host>             d_host;
     bdlb::NullableValue<ntsa::Port>             d_port;
     bdlb::NullableValue<ntsa::Transport::Value> d_transport;
+
+    friend class Uri;
 
   public:
     /// Create a new URI authority. Optionally specify an 'basicAllocator'
@@ -285,6 +289,8 @@ class UriParameter
     bsl::string                      d_name;
     bdlb::NullableValue<bsl::string> d_value;
 
+    friend class Uri;
+
   public:
     /// Create a new URI parameter. Optionally specify an 'basicAllocator'
     /// used to supply memory. If 'basicAllocator' is null, the currently
@@ -471,6 +477,8 @@ class UriQuery
 
     bsl::vector<ntsa::UriParameter> d_parameterList;
 
+    friend class Uri;
+
   public:
     /// Create a new URI query. Optionally specify an 'basicAllocator' used
     /// to supply memory. If 'basicAllocator' is null, the currently
@@ -644,6 +652,251 @@ bool operator<(const UriQuery& lhs, const UriQuery& rhs);
 template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const UriQuery& value);
 
+/// Describe a URI profile entry.
+///
+/// @par Attributes
+/// This class is composed of the following attributes.
+///
+/// @li @b scheme:
+/// The scheme name.
+///
+/// @li @b canonicalScheme:
+/// The canonical scheme name.
+///
+/// @li @b transportSecurity:
+/// The transport security protocol (e.g., TLS or SSH).
+///
+/// @li @b transportProtocol:
+/// The transport security protocol (e.g., TCP or UDP or the intrinsic 
+/// transport of the local domain).
+///
+/// @li @b transportDomain:
+/// The transport domain (e.g., IPv4 or IPv6 or the local domain).
+///
+/// @li @b transportMode:
+/// The transport mode (e.g., stream or datagram).
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_system
+class UriProfileEntry
+{
+    bsl::string          d_scheme;
+    bsl::string          d_canonicalScheme;
+    ntsa::TransportSuite d_transportSuite;
+
+  public:
+    /// Create a new URI profile entry having the default value. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is 0, the currently installed default allocator is used.
+    explicit UriProfileEntry(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new URI profile entry having the same value as the specified
+    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is 0, the currently installed default
+    /// allocator is used.
+    UriProfileEntry(const UriProfileEntry& original,
+                    bslma::Allocator*      basicAllocator = 0);
+
+    /// Destroy this object.
+    ~UriProfileEntry();
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    UriProfileEntry& operator=(const UriProfileEntry& other);
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
+
+    /// Set scheme name to the specified 'value'.
+    void setScheme(const bslstl::StringRef& value);
+
+    /// Set canonical scheme name to the specified 'value'.
+    void setCanonicalScheme(const bslstl::StringRef& value);
+
+    /// Set the transport suite to the specified 'value'.
+    void setTransportSuite(const ntsa::TransportSuite& value);
+
+    /// Return the scheme name.
+    const bsl::string& scheme() const;
+
+    /// Return the canonical scheme name.
+    const bsl::string& canonicalScheme() const;
+
+    /// Return the transport suite.
+    const ntsa::TransportSuite& transportSuite() const;
+
+    /// Return the allocator used to supply memory.
+    bslma::Allocator* allocator() const;
+
+    /// Return true if this object has the same value as the specified 'other'
+    /// object, otherwise return false.
+    bool equals(const UriProfileEntry& other) const;
+
+    /// Return true if the value of this object is less than the value of the
+    /// specified 'other' object, otherwise return false.
+    bool less(const UriProfileEntry& other) const;
+
+    /// Contribute the values of the salient attributes of this object to the
+    /// specified hash 'algorithm'.
+    template <typename HASH_ALGORITHM>
+    void hash(HASH_ALGORITHM& algorithm) const;
+
+    /// Format this object to the specified output 'stream' at the
+    /// optionally specified indentation 'level' and return a reference to
+    /// the modifiable 'stream'.  If 'level' is specified, optionally
+    /// specify 'spacesPerLevel', the number of spaces per indentation level
+    /// for this and all of its nested objects.  Each line is indented by
+    /// the absolute value of 'level * spacesPerLevel'.  If 'level' is
+    /// negative, suppress indentation of the first line.  If
+    /// 'spacesPerLevel' is negative, suppress line breaks and format the
+    /// entire output on one line.  If 'stream' is initially invalid, this
+    /// operation has no effect.  Note that a trailing newline is provided
+    /// in multiline mode only.
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
+
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(UriProfileEntry);
+};
+
+/// Write the specified 'object' to the specified 'stream'. Return a modifiable
+/// reference to the 'stream'.
+///
+/// @related ntsa::UriProfileEntry
+bsl::ostream& operator<<(bsl::ostream& stream, const UriProfileEntry& object);
+
+/// Return true if the specified 'lhs' has the same value as the specified
+/// 'rhs', otherwise return false.
+///
+/// @related ntsa::UriProfileEntry
+bool operator==(const UriProfileEntry& lhs, const UriProfileEntry& rhs);
+
+/// Return true if the specified 'lhs' does not have the same value as the
+/// specified 'rhs', otherwise return false.
+///
+/// @related ntsa::UriProfileEntry
+bool operator!=(const UriProfileEntry& lhs, const UriProfileEntry& rhs);
+
+/// Return true if the value of the specified 'lhs' is less than the value of
+/// the specified 'rhs', otherwise return false.
+///
+/// @related ntsa::UriProfileEntry
+bool operator<(const UriProfileEntry& lhs, const UriProfileEntry& rhs);
+
+/// Contribute the values of the salient attributes of the specified 'value'
+/// to the specified hash 'algorithm'.
+///
+/// @related ntsa::UriProfileEntry
+template <typename HASH_ALGORITHM>
+void hashAppend(HASH_ALGORITHM& algorithm, const UriProfileEntry& value);
+
+template <typename HASH_ALGORITHM>
+NTSCFG_INLINE void UriProfileEntry::hash(HASH_ALGORITHM& algorithm) const
+{
+    using bslh::hashAppend;
+    hashAppend(algorithm, d_scheme);
+    hashAppend(algorithm, d_canonicalScheme);
+    hashAppend(algorithm, d_transportSuite);
+}
+
+template <typename HASH_ALGORITHM>
+NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&        algorithm,
+                              const UriProfileEntry& value)
+{
+    value.hash(algorithm);
+}
+
+/// Provide a Uniform Resource Identifier (URI) profile to aid a parser in
+/// disambiguating the form and components of a URI.
+class UriProfile
+{
+    typedef bsl::unordered_map<bsl::string, ntsa::UriProfileEntry> EntryMap;
+
+    EntryMap          d_entryMap;
+    bslma::Allocator* d_allocator_p;
+
+private:
+    UriProfile(const UriProfile&) BSLS_KEYWORD_DELETED;
+    UriProfile& operator=(const UriProfile&) BSLS_KEYWORD_DELETED;
+
+private:
+    // MRM
+    #if 0
+    /// Parse the specified 'scheme', load its canonical form into the
+    /// specified 'canonicalScheme', load its transport seucurity, protocol,
+    /// domain, and mode into the specified 'transportSecurity,
+    /// 'transportProtocol', 'transportDomain', and 'transportMode',
+    /// respectively. Return the result.
+    ntsa::Error parseSchemeDefault(
+        bsl::string*                    canonicalScheme,
+        ntsa::TransportSecurity::Value* transportSecurity,
+        ntsa::TransportProtocol::Value* transportProtocol,
+        ntsa::TransportDomain::Value*   transportDomain,
+        ntsa::TransportMode::Value*     transportMode,
+        const bslstl::StringRef&        scheme) const;
+    #endif
+
+public:
+    /// Create a new URI profile. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is 0, the currently installed
+    /// default allocator is used. 
+    explicit UriProfile(bslma::Allocator* basicAllocator = 0);
+
+    /// Destroy this object.
+    virtual ~UriProfile();
+
+    /// Register default schemes unafilliated with any application protocol.
+    /// Return the error.
+    ntsa::Error registerDefault();
+
+    /// Register the specified 'application' protocol, automatically generating
+    /// and registering all standard schemes and subordinate schemes. Return
+    /// the error.
+    ntsa::Error registerApplication(const bsl::string& application);
+
+    /// Register the specified 'entry'. Return the error.
+    ntsa::Error registerEntry(const ntsa::UriProfileEntry& entry);
+
+    /// Register the specified 'scheme' translated to the specified
+    /// 'canonicalScheme' for the specified 'application' protocl that uses the
+    /// specified 'transportSecurity', 'transportProtocol', 'transportDomain',
+    /// and 'transportMode'. Return the error.
+    ntsa::Error registerEntry(
+        const bslstl::StringRef&       scheme,
+        const bslstl::StringRef&       canonicalScheme,
+        const bslstl::StringRef&       application,
+        ntsa::TransportSecurity::Value transportSecurity,
+        ntsa::TransportProtocol::Value transportProtocol,
+        ntsa::TransportDomain::Value   transportDomain,
+        ntsa::TransportMode::Value     transportMode);
+
+    /// Parse the specified 'scheme' and load its canonical form into the
+    /// specified 'canonicalScheme'. Return the result.
+    virtual ntsa::Error parseScheme(
+        bsl::string*             canonicalScheme,
+        const bslstl::StringRef& scheme) const;
+
+    /// Parse the specified 'scheme', load its canonical form into the
+    /// specified 'canonicalScheme', and load its transport suite into the 
+    /// specified 'transportSuite'. Return the result.
+    virtual ntsa::Error parseScheme(
+        bsl::string*                    canonicalScheme,
+        ntsa::TransportSuite*           transportSuite,
+        const bslstl::StringRef&        scheme) const;
+
+    /// Parse the specified 'scheme', load its canonical form into the
+    /// specified 'canonicalScheme', and load its transport suite into the 
+    /// specified 'transportSuite'. Return the result.
+    virtual ntsa::Error parseScheme(
+        bsl::string*                               canonicalScheme,
+        bdlb::NullableValue<ntsa::TransportSuite>* transportSuite,
+        const bslstl::StringRef&                   scheme) const;
+};
+
 /// Provide a Uniform Resource Identifier (URI).
 ///
 /// @details
@@ -771,6 +1024,12 @@ class Uri
     /// representation. Return true if the 'text' is in a valid format and
     /// was parsed successfully, otherwise return false.
     bool parse(const bslstl::StringRef& text);
+
+    /// Set the value of this object from the value parsed from its textual
+    /// representation using the specified 'profile'. Return true if the 'text'
+    /// is in a valid format and was parsed successfully, otherwise return
+    /// false.
+    bool parse(const bslstl::StringRef& text, const ntsa::UriProfile& profile);
 
     /// Return the specification that identifies the meaning of the
     /// components of the URI.

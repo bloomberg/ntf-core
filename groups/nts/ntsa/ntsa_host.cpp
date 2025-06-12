@@ -161,6 +161,8 @@ Host& Host::operator=(const bslstl::StringRef& text)
 
 bool Host::parse(const bslstl::StringRef& text)
 {
+    ntsa::Error error;
+
     this->reset();
 
     if (text.empty()) {
@@ -169,6 +171,16 @@ bool Host::parse(const bslstl::StringRef& text)
 
     bool valid;
 
+    if (text[0] == '/') {
+        error = this->makeLocalName().setValue(text);
+        if (error) {
+            this->reset();
+            return false;
+        }
+
+        return true;
+    }
+
     valid = this->makeIp().parse(text);
     if (valid) {
         return true;
@@ -176,11 +188,6 @@ bool Host::parse(const bslstl::StringRef& text)
 
     valid = this->makeDomainName().parse(text);
     if (valid) {
-        return true;
-    }
-
-    if (text.size() > 0 && text[0] == '/') {
-        this->makeLocalName().setValue(text);
         return true;
     }
 

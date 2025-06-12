@@ -35,10 +35,29 @@ class Ipv4EndpointTest
 
 NTSCFG_TEST_FUNCTION(ntsa::Ipv4EndpointTest::verify)
 {
-    ntsa::Ipv4Endpoint ipv4Endpoint("127.0.0.1:12345");
+    {
+        ntsa::Ipv4Endpoint ipv4Endpoint;
+        
+        bool valid = ipv4Endpoint.parse("127.0.0.1:12345");
+        NTSCFG_TEST_TRUE(valid);
 
-    NTSCFG_TEST_EQ(ipv4Endpoint.host(), ntsa::Ipv4Address::loopback());
-    NTSCFG_TEST_EQ(ipv4Endpoint.port(), 12345);
+        NTSCFG_TEST_EQ(ipv4Endpoint.host(), ntsa::Ipv4Address::loopback());
+        NTSCFG_TEST_EQ(ipv4Endpoint.port(), 12345);
+    }
+
+    {
+        ntsa::Ipv4Endpoint ipv4Endpoint;
+        
+        bool valid = ipv4Endpoint.parse("127.0.0.256:12345");
+        NTSCFG_TEST_FALSE(valid);
+    }
+
+    {
+        ntsa::Ipv4Endpoint ipv4Endpoint;
+        
+        bool valid = ipv4Endpoint.parse("127.0.0.1:65536");
+        NTSCFG_TEST_FALSE(valid);
+    }
 }
 
 }  // close namespace ntsa

@@ -56,7 +56,6 @@ namespace ntsa {
 ///     NTSCFG_TEST_EQ(host.domainName().text() ==
 ///                    bsl::string("localhost.localdomain"));
 ///
-///
 /// @par Usage Example: Represent an IPv4 address
 /// The following example illustrates how to construct a 'ntsa::Host' to
 /// represent an IPv4 address.
@@ -75,6 +74,16 @@ namespace ntsa {
 ///     NTSCFG_TEST_TRUE(host.isIp());
 ///     NTSCFG_TEST_TRUE(host.ip().isV6());
 ///     NTSCFG_TEST_EQ(host.ip().v6() == ntsa::Ipv6Address::loopback());
+///
+/// @par Usage Example: Represent a Local (a.k.a. Unix Domain) Name
+/// The following example illustrates how to construct a 'ntsa::Host' to
+/// represent a Local Name.
+///
+///     ntsa::Host host("/path/to/file");
+///     NTSCFG_TEST_TRUE(host.isLocalName());
+///     NTSCFG_TEST_TRUE(host.localName().isPersistent());
+///     NTSCFG_TEST_EQ(host.localName().value() ==
+///                    bsl::string("/path/to/file"));
 ///
 /// @ingroup module_ntsa_identity
 class Host
