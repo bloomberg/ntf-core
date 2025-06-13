@@ -473,7 +473,7 @@ ntsa::Error UriUtil::parseScheme(
             break;
         }
 
-        if (!bdlb::CharType::isAlpha(at) && at != '+') {
+        if (!bdlb::CharType::isAlnum(at) && at != '+') {
             break;
         }
 
@@ -1990,7 +1990,7 @@ ntsa::Error UriProfile::registerExplicit(
 }
 
 ntsa::Error UriProfile::registerEntry(const ntsa::UriProfileEntry& entry)
-{
+{    
     EntryMap::iterator it = d_entryMap.find(entry.scheme());
     if (it != d_entryMap.end()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -3070,7 +3070,7 @@ bool Uri::parse(const bslstl::StringRef& text, const ntsa::UriProfile& profile)
             error = profile.parseScheme(
                 &d_scheme.makeValue(),
                 &transportSuite,
-                bslstl::StringRef());
+                defaultScheme);
             if (error) {
                 d_scheme.reset();
                 if (error != ntsa::Error(ntsa::Error::e_EOF)) {
