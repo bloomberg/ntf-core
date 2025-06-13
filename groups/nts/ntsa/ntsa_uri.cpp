@@ -2858,6 +2858,15 @@ bool Uri::parse(const bslstl::StringRef& text, const ntsa::UriProfile& profile)
         }
     }
 
+    if (d_authority.value().d_user.isNull() &&
+        d_authority.value().d_host.isNull() &&
+        d_authority.value().d_port.isNull() &&
+        d_authority.value().d_transport.isNull() &&
+        d_authority.value().d_transportSuite.isNull())
+    {
+        d_authority.reset();
+    }
+
     // Parse /<path>
 
     if (!input.empty()) {
@@ -2902,7 +2911,9 @@ bool Uri::parse(const bslstl::StringRef& text, const ntsa::UriProfile& profile)
 
     // Default scheme.
 
-    if (d_scheme.isNull() || d_scheme.value().empty()) {
+    if ((d_authority.has_value()) && 
+        (d_scheme.isNull() || d_scheme.value().empty())) 
+    {
         bsl::string defaultScheme = "";
         if (d_authority.has_value()) {
             if (d_authority.value().host().has_value()) {
@@ -2921,7 +2932,7 @@ bool Uri::parse(const bslstl::StringRef& text, const ntsa::UriProfile& profile)
                 d_scheme.reset();
                 if (error != ntsa::Error(ntsa::Error::e_EOF)) {
                     this->reset();
-                    return error;
+                    return false;
                 }
             }
         }
