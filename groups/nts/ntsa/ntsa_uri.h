@@ -43,6 +43,7 @@ namespace BloombergLP {
 namespace ntsa {
 
 class Uri;
+class UriProfile;
 
 /// Describe the authority portion a Uniform Resource Identifier (URI).
 ///
@@ -69,6 +70,7 @@ class UriAuthority
     bdlb::NullableValue<ntsa::TransportSuite>   d_transportSuite;
 
     friend class Uri;
+    friend class UriProfile;
 
   public:
     /// Create a new URI authority. Optionally specify an 'basicAllocator'
@@ -299,6 +301,7 @@ class UriParameter
     bdlb::NullableValue<bsl::string> d_value;
 
     friend class Uri;
+    friend class UriProfile;
 
   public:
     /// Create a new URI parameter. Optionally specify an 'basicAllocator'
@@ -487,6 +490,7 @@ class UriQuery
     bsl::vector<ntsa::UriParameter> d_parameterList;
 
     friend class Uri;
+    friend class UriProfile;
 
   public:
     /// Create a new URI query. Optionally specify an 'basicAllocator' used
@@ -823,10 +827,24 @@ NTSCFG_INLINE void hashAppend(HASH_ALGORITHM&        algorithm,
 /// disambiguating the form and components of a URI.
 class UriProfile
 {
+    typedef ntsa::TransportProtocol TP;
+    typedef ntsa::TransportDomain   TD;
+    typedef ntsa::TransportMode     TM;
+
     typedef bsl::unordered_map<bsl::string, ntsa::UriProfileEntry> EntryMap;
+
+    struct Data {
+        const char*                    scheme;
+        const char*                    canonicalScheme;
+        ntsa::TransportProtocol::Value transportProtocol;
+        ntsa::TransportDomain::Value   transportDomain;
+        ntsa::TransportMode::Value     transportMode;
+    };
 
     EntryMap          d_entryMap;
     bslma::Allocator* d_allocator_p;
+
+    static const Data k_DATA[13];
 
 private:
     UriProfile(const UriProfile&) BSLS_KEYWORD_DELETED;
@@ -839,7 +857,7 @@ public:
     explicit UriProfile(bslma::Allocator* basicAllocator = 0);
 
     /// Destroy this object.
-    virtual ~UriProfile();
+    ~UriProfile();
 
     /// Register default schemes unafilliated with any application protocol.
     /// Return the error.
@@ -879,14 +897,14 @@ public:
 
     /// Parse the specified 'scheme' and load its canonical form into the
     /// specified 'canonicalScheme'. Return the result.
-    virtual ntsa::Error parseScheme(
+    ntsa::Error parseScheme(
         bsl::string*             canonicalScheme,
         const bslstl::StringRef& scheme) const;
 
     /// Parse the specified 'scheme', load its canonical form into the
     /// specified 'canonicalScheme', and load its transport suite into the 
     /// specified 'transportSuite'. Return the result.
-    virtual ntsa::Error parseScheme(
+    ntsa::Error parseScheme(
         bsl::string*                    canonicalScheme,
         ntsa::TransportSuite*           transportSuite,
         const bslstl::StringRef&        scheme) const;
@@ -894,10 +912,13 @@ public:
     /// Parse the specified 'scheme', load its canonical form into the
     /// specified 'canonicalScheme', and load its transport suite into the 
     /// specified 'transportSuite'. Return the result.
-    virtual ntsa::Error parseScheme(
+    ntsa::Error parseScheme(
         bsl::string*                               canonicalScheme,
         bdlb::NullableValue<ntsa::TransportSuite>* transportSuite,
         const bslstl::StringRef&                   scheme) const;
+
+    /// Normalize the specified 'uri'. Return the error. 
+    ntsa::Error normalize(ntsa::Uri* uri);
 };
 
 /// Provide a Uniform Resource Identifier (URI).
@@ -924,6 +945,8 @@ class Uri
     bdlb::NullableValue<bsl::string>        d_path;
     bdlb::NullableValue<ntsa::UriQuery>     d_query;
     bdlb::NullableValue<bsl::string>        d_fragment;
+
+    friend class UriProfile;
 
   public:
     /// Create a new URI. Optionally specify an 'basicAllocator' used to
@@ -1082,7 +1105,7 @@ class Uri
 
     /// Write an explanation of the URI to the specified 'stream' for debugging
     /// purposes.
-    void dump(bsl::ostream& stream) const;
+    void dump(const bsl::string& input, bsl::ostream& stream) const;
 
     /// Invoke the specified 'manipulator' sequentially on the address of each
     /// (modifiable) attribute of this object, supplying 'manipulator' with
@@ -1201,6 +1224,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const UriAuthority& value)
     hashAppend(algorithm, value.host());
     hashAppend(algorithm, value.port());
     hashAppend(algorithm, value.transport());
+    hashAppend(algorithm, value.transportSuite());
 }
 
 template <typename HASH_ALGORITHM>
