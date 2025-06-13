@@ -2969,6 +2969,19 @@ bool Uri::parse(const bslstl::StringRef& text, const ntsa::UriProfile& profile)
         }
     }
 
+    if (d_authority.has_value()) {
+        if (transportSuite.has_value()) {
+            d_authority.value().d_transportSuite = transportSuite;
+
+            ntsa::Transport::Value transport = 
+                transportSuite.value().transport();
+
+            if (transport != ntsa::Transport::e_UNDEFINED) {
+                d_authority.value().d_transport.makeValue(transport);
+            }
+        }
+    }
+
     return true;
 }
 
