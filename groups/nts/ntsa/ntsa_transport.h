@@ -451,6 +451,9 @@ class TransportSuite
     /// Return the transport mode.
     ntsa::TransportMode::Value transportMode() const;
 
+    /// Return the transport.
+    ntsa::Transport::Value transport() const;
+
     /// Return the allocator used to supply memory.
     bslma::Allocator* allocator() const;
 

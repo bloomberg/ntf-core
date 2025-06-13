@@ -66,6 +66,7 @@ class UriAuthority
     bdlb::NullableValue<ntsa::Host>             d_host;
     bdlb::NullableValue<ntsa::Port>             d_port;
     bdlb::NullableValue<ntsa::Transport::Value> d_transport;
+    bdlb::NullableValue<ntsa::TransportSuite>   d_transportSuite;
 
     friend class Uri;
 
@@ -129,6 +130,10 @@ class UriAuthority
     /// specified 'value'. Return the error.
     ntsa::Error setTransport(ntsa::Transport::Value value);
 
+    /// Set the transport suite specified in the authority portion of the URI
+    /// to the specified 'value'. Return the error.
+    ntsa::Error setTransportSuite(const ntsa::TransportSuite& value);
+
     /// Return the user specified in the authority portion of the URI.
     const bdlb::NullableValue<bsl::string>& user() const;
 
@@ -140,6 +145,10 @@ class UriAuthority
 
     /// Return the transport specified in the authority portion of the URI.
     const bdlb::NullableValue<ntsa::Transport::Value>& transport() const;
+
+    /// Return the transport suite specified in the authority portion of the
+    /// URI.
+    const bdlb::NullableValue<ntsa::TransportSuite>& transportSuite() const;
 
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
@@ -823,23 +832,6 @@ private:
     UriProfile(const UriProfile&) BSLS_KEYWORD_DELETED;
     UriProfile& operator=(const UriProfile&) BSLS_KEYWORD_DELETED;
 
-private:
-    // MRM
-    #if 0
-    /// Parse the specified 'scheme', load its canonical form into the
-    /// specified 'canonicalScheme', load its transport seucurity, protocol,
-    /// domain, and mode into the specified 'transportSecurity,
-    /// 'transportProtocol', 'transportDomain', and 'transportMode',
-    /// respectively. Return the result.
-    ntsa::Error parseSchemeDefault(
-        bsl::string*                    canonicalScheme,
-        ntsa::TransportSecurity::Value* transportSecurity,
-        ntsa::TransportProtocol::Value* transportProtocol,
-        ntsa::TransportDomain::Value*   transportDomain,
-        ntsa::TransportMode::Value*     transportMode,
-        const bslstl::StringRef&        scheme) const;
-    #endif
-
 public:
     /// Create a new URI profile. Optionally specify a 'basicAllocator' used
     /// to supply memory. If 'basicAllocator' is 0, the currently installed
@@ -851,12 +843,23 @@ public:
 
     /// Register default schemes unafilliated with any application protocol.
     /// Return the error.
-    ntsa::Error registerDefault();
+    ntsa::Error registerImplicit();
 
+    /// Register default schemes affiliated with the specified 'application'
+    /// protocol. Return the error.
+    ntsa::Error registerImplicit(const bsl::string& application);
+                        
     /// Register the specified 'application' protocol, automatically generating
     /// and registering all standard schemes and subordinate schemes. Return
     /// the error.
-    ntsa::Error registerApplication(const bsl::string& application);
+    ntsa::Error registerExplicit(const bsl::string& application);
+
+    /// Register the specified 'application' protocol with the specified
+    /// 'transportSecurity', automatically generating and registering all
+    /// standard schemes and subordinate schemes. Return the error.
+    ntsa::Error registerExplicit(
+        const bsl::string&             application, 
+        ntsa::TransportSecurity::Value transportSecurity);
 
     /// Register the specified 'entry'. Return the error.
     ntsa::Error registerEntry(const ntsa::UriProfileEntry& entry);
@@ -989,6 +992,10 @@ class Uri
     /// specified 'value'. Return the error.
     ntsa::Error setTransport(ntsa::Transport::Value value);
 
+    /// Set the transport suite specified in the authority portion of the URI
+    /// to the specified 'value'. Return the error.
+    ntsa::Error setTransportSuite(const ntsa::TransportSuite& value);
+
     /// Set the path to the resource to the specified 'value'. Return the
     /// error.
     ntsa::Error setPath(const bslstl::StringRef& value);
@@ -1072,6 +1079,10 @@ class Uri
     bsl::ostream& print(bsl::ostream& stream,
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
+
+    /// Write an explanation of the URI to the specified 'stream' for debugging
+    /// purposes.
+    void dump(bsl::ostream& stream) const;
 
     /// Invoke the specified 'manipulator' sequentially on the address of each
     /// (modifiable) attribute of this object, supplying 'manipulator' with

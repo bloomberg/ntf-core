@@ -606,6 +606,77 @@ ntsa::TransportMode::Value TransportSuite::transportMode() const
     return d_transportMode;
 }
 
+ntsa::Transport::Value TransportSuite::transport() const
+{
+    if (d_transportProtocol == ntsa::TransportProtocol::e_TCP) {
+        if (d_transportDomain == ntsa::TransportDomain::e_IPV4) {
+            if (d_transportMode == ntsa::TransportMode::e_STREAM) {
+                return ntsa::Transport::e_TCP_IPV4_STREAM;
+            }
+            else {
+                return ntsa::Transport::e_UNDEFINED;
+            }
+        }
+        else if (d_transportDomain == ntsa::TransportDomain::e_IPV6) {
+            if (d_transportMode == ntsa::TransportMode::e_STREAM) {
+                return ntsa::Transport::e_TCP_IPV6_STREAM;
+            }
+            else {
+                return ntsa::Transport::e_UNDEFINED;
+            }
+        }
+        else {
+            return ntsa::Transport::e_UNDEFINED;
+        }
+    }
+    else if (d_transportProtocol == ntsa::TransportProtocol::e_UDP) {
+        if (d_transportDomain == ntsa::TransportDomain::e_IPV4) {
+            if (d_transportMode == ntsa::TransportMode::e_DATAGRAM) {
+                return ntsa::Transport::e_UDP_IPV4_DATAGRAM;
+            }
+            else {
+                return ntsa::Transport::e_UNDEFINED;
+            }
+        }
+        else if (d_transportDomain == ntsa::TransportDomain::e_IPV6) {
+            if (d_transportMode == ntsa::TransportMode::e_DATAGRAM) {
+                return ntsa::Transport::e_UDP_IPV6_DATAGRAM;
+            }
+            else {
+                return ntsa::Transport::e_UNDEFINED;
+            }
+        }
+        else {
+            return ntsa::Transport::e_UNDEFINED;
+        }
+    }
+    else if (d_transportProtocol == ntsa::TransportProtocol::e_LOCAL) {
+        if (d_transportMode == ntsa::TransportMode::e_STREAM) {
+            return ntsa::Transport::e_LOCAL_STREAM;
+        }
+        else if (d_transportMode == ntsa::TransportMode::e_DATAGRAM) {
+            return ntsa::Transport::e_LOCAL_DATAGRAM;
+        }
+        else {
+            return ntsa::Transport::e_UNDEFINED;
+        }
+    }
+    else if (d_transportDomain == ntsa::TransportDomain::e_LOCAL) {
+        if (d_transportMode == ntsa::TransportMode::e_STREAM) {
+            return ntsa::Transport::e_LOCAL_STREAM;
+        }
+        else if (d_transportMode == ntsa::TransportMode::e_DATAGRAM) {
+            return ntsa::Transport::e_LOCAL_DATAGRAM;
+        }
+        else {
+            return ntsa::Transport::e_UNDEFINED;
+        }
+    }
+    else {
+        return ntsa::Transport::e_UNDEFINED;
+    }
+}
+
 bslma::Allocator* TransportSuite::allocator() const
 {
     return d_application.get_allocator().mechanism();

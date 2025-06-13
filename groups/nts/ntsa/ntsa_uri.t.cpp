@@ -37,10 +37,17 @@ class UriTest
 
   public:
     // Verify a URI profile using default schemes.
-    static void verifyProfileDefault();
+    static void verifyProfileImplicit();
+
+    // Verify a URI profile using default schemes interpreted as application
+    //  schemes.
+    static void verifyProfileImplicitApplication();
 
     // Verify a URI profile using application schemes.
-    static void verifyProfileApplication();
+    static void verifyProfileExplicitApplication();
+
+    // Verify a URI profile using secure application schemes.
+    static void verifyProfileExplicitApplicationSecurity();
 
     // TODO
     static void verifyCase1();
@@ -49,7 +56,7 @@ class UriTest
     static void verifyCase2();
 
     // TODO
-    static void verifyLocalNameAbiguity();
+    static void verifyParseProfile();
 
     // TODO
     static void verifyCase3();
@@ -61,12 +68,12 @@ class UriTest
     static void verifyCase5();
 };
 
-NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileDefault)
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileImplicit)
 {
     ntsa::Error      error;
     ntsa::UriProfile profile;
 
-    error = profile.registerDefault();
+    error = profile.registerImplicit();
     NTSCFG_TEST_OK(error);
 
     typedef ntsa::TransportProtocol TP;
@@ -113,16 +120,89 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileDefault)
                        << transportSuite 
                        << BALL_LOG_END;
 
-        // NTSCFG_TEST_EQ(canonicalScheme, data.canonicalScheme);
+        NTSCFG_TEST_EQ(canonicalScheme, data.canonicalScheme);
+        NTSCFG_TEST_EQ(transportSuite.transportSecurity(), 
+                       ntsa::TransportSecurity::e_UNDEFINED);
+        NTSCFG_TEST_EQ(transportSuite.transportProtocol(), 
+                       data.transportProtocol);
+        NTSCFG_TEST_EQ(transportSuite.transportDomain(), 
+                       ntsa::TransportDomain::e_UNDEFINED);
+        NTSCFG_TEST_EQ(transportSuite.transportMode(), 
+                       data.transportMode);
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileApplication)
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileImplicitApplication)
 {
     ntsa::Error      error;
     ntsa::UriProfile profile;
 
-    error = profile.registerApplication("http");
+    error = profile.registerImplicit("http");
+    NTSCFG_TEST_OK(error);
+
+    typedef ntsa::TransportProtocol TP;
+    typedef ntsa::TransportMode     TM;
+
+    struct Data {
+        const char*                    scheme;
+        const char*                    canonicalScheme;
+        ntsa::TransportProtocol::Value transportProtocol;
+        ntsa::TransportMode::Value     transportMode;
+    };
+
+    // clang-format off
+    const Data k_DATA[] = {
+        { "",               "http",          TP::e_TCP,   TM::e_STREAM   },
+        { "tcp",            "http",          TP::e_TCP,   TM::e_STREAM   },
+        { "local",          "http",          TP::e_LOCAL, TM::e_STREAM   },
+        { "unix",           "http",          TP::e_LOCAL, TM::e_STREAM   },
+        { "udp",            "http",          TP::e_UDP,   TM::e_DATAGRAM },
+        { "local+dgram",    "http+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "local+datagram", "http+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "unix+dgram",     "http+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "unix+datagram",  "http+datagram", TP::e_LOCAL, TM::e_DATAGRAM }
+    };
+    // clang-format on
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string          canonicalScheme;
+        ntsa::TransportSuite transportSuite;
+
+        error = profile.parseScheme(&canonicalScheme, 
+                                    &transportSuite, 
+                                    data.scheme);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG << "Scheme = " 
+                       << data.scheme 
+                       << " canonicalScheme = " 
+                       << canonicalScheme 
+                       << " transportSuite = " 
+                       << transportSuite 
+                       << BALL_LOG_END;
+
+        NTSCFG_TEST_EQ(canonicalScheme, data.canonicalScheme);
+        NTSCFG_TEST_EQ(transportSuite.transportSecurity(), 
+                       ntsa::TransportSecurity::e_UNDEFINED);
+        NTSCFG_TEST_EQ(transportSuite.transportProtocol(), 
+                       data.transportProtocol);
+        NTSCFG_TEST_EQ(transportSuite.transportDomain(), 
+                       ntsa::TransportDomain::e_UNDEFINED);
+        NTSCFG_TEST_EQ(transportSuite.transportMode(), 
+                       data.transportMode);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileExplicitApplication)
+{
+    ntsa::Error      error;
+    ntsa::UriProfile profile;
+
+    error = profile.registerExplicit("http");
     NTSCFG_TEST_OK(error);
 
     typedef ntsa::TransportProtocol TP;
@@ -170,7 +250,81 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileApplication)
                        << transportSuite 
                        << BALL_LOG_END;
 
-        // NTSCFG_TEST_EQ(canonicalScheme, data.canonicalScheme);
+        NTSCFG_TEST_EQ(canonicalScheme, data.canonicalScheme);
+        NTSCFG_TEST_EQ(transportSuite.transportSecurity(), 
+                       ntsa::TransportSecurity::e_UNDEFINED);
+        NTSCFG_TEST_EQ(transportSuite.transportProtocol(), 
+                       data.transportProtocol);
+        NTSCFG_TEST_EQ(transportSuite.transportDomain(), 
+                       ntsa::TransportDomain::e_UNDEFINED);
+        NTSCFG_TEST_EQ(transportSuite.transportMode(), 
+                       data.transportMode);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileExplicitApplicationSecurity)
+{
+    ntsa::Error      error;
+    ntsa::UriProfile profile;
+
+    error = profile.registerExplicit("https", 
+                                     ntsa::TransportSecurity::e_TLS);
+    NTSCFG_TEST_OK(error);
+
+    typedef ntsa::TransportProtocol TP;
+    typedef ntsa::TransportMode     TM;
+
+    struct Data {
+        const char*                    scheme;
+        const char*                    canonicalScheme;
+        ntsa::TransportProtocol::Value transportProtocol;
+        ntsa::TransportMode::Value     transportMode;
+    };
+
+    // clang-format off
+    const Data k_DATA[] = {
+        { "https",                "https",          TP::e_TCP,   TM::e_STREAM   },
+        { "https+tcp",            "https",          TP::e_TCP,   TM::e_STREAM   },
+        { "https+local",          "https",          TP::e_LOCAL, TM::e_STREAM   },
+        { "https+unix",           "https",          TP::e_LOCAL, TM::e_STREAM   },
+        { "https+udp",            "https",          TP::e_UDP,   TM::e_DATAGRAM },
+        { "https+local+dgram",    "https+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "https+local+datagram", "https+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "https+unix+dgram",     "https+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "https+unix+datagram",  "https+datagram", TP::e_LOCAL, TM::e_DATAGRAM }
+    };
+    // clang-format on
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string          canonicalScheme;
+        ntsa::TransportSuite transportSuite;
+
+        error = profile.parseScheme(&canonicalScheme, 
+                                    &transportSuite, 
+                                    data.scheme);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG << "Scheme = " 
+                       << data.scheme 
+                       << " canonicalScheme = " 
+                       << canonicalScheme 
+                       << " transportSuite = " 
+                       << transportSuite 
+                       << BALL_LOG_END;
+
+        NTSCFG_TEST_EQ(canonicalScheme, data.canonicalScheme);
+        NTSCFG_TEST_EQ(transportSuite.transportSecurity(), 
+                       ntsa::TransportSecurity::e_TLS);
+        NTSCFG_TEST_EQ(transportSuite.transportProtocol(), 
+                       data.transportProtocol);
+        NTSCFG_TEST_EQ(transportSuite.transportDomain(), 
+                       ntsa::TransportDomain::e_UNDEFINED);
+        NTSCFG_TEST_EQ(transportSuite.transportMode(), 
+                       data.transportMode);
     }
 }
 
@@ -800,72 +954,51 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase2)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyLocalNameAbiguity)
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyParseProfile)
 {
-    // MRM
-    #if 0
-    {
-        const bsl::string text = "unix:///path/to/resource";
-
-        ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
-
-        bool parseResult = uri.parse(text);
-        NTSCFG_TEST_TRUE(parseResult);
-
-        NTSCFG_TEST_FALSE(uri.scheme().isNull());
-        NTSCFG_TEST_EQ(uri.scheme().value(), "unix");
-
-        NTSCFG_TEST_TRUE(uri.authority().isNull());
-
-        NTSCFG_TEST_FALSE(uri.path().isNull());
-        NTSCFG_TEST_EQ(uri.path().value(), "/path/to/resource");
-    }
-    #endif
-
-    #if 0
-    {
-        const bsl::string text = "unix://[/path/to/socket]/path/to/resource";
-
-        ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
-
-        bool parseResult = uri.parse(text);
-        NTSCFG_TEST_TRUE(parseResult);
-
-        NTSCFG_TEST_FALSE(uri.scheme().isNull());
-        NTSCFG_TEST_EQ(uri.scheme().value(), "unix");
-
-        NTSCFG_TEST_TRUE(uri.authority().has_value());
-        NTSCFG_TEST_TRUE(uri.authority().value().host().has_value());
-        NTSCFG_TEST_TRUE(uri.authority().value().host().value().isLocalName());
-        NTSCFG_TEST_EQ(uri.authority().value().host().value().localName().value(), "/path/to/socket");
-
-        NTSCFG_TEST_FALSE(uri.path().isNull());
-        NTSCFG_TEST_EQ(uri.path().value(), "/path/to/resource");
-    }
-    #endif
+    ntsa::Error error;
 
     ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
 
     ntsa::UriProfile profile;
+    error = profile.registerImplicit("http");
+    NTSCFG_TEST_OK(error);
 
     bool valid = false;
 
-    #if 0
-    uri.parse("tcp://127.0.0.1:12345", profile);
-    uri.parse("udp://127.0.0.1:12345", profile);
-    uri.parse("tcp://[::1]:12345", profile);
-    uri.parse("udp://[::1]:12345", profile);
-    uri.parse("unix://[/path/to/socket]", profile);
+    valid = uri.parse("tcp://127.0.0.1:12345", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("udp://127.0.0.1:12345", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("tcp://[::1]:12345", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("udp://[::1]:12345", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("unix://[/path/to/socket]", profile);
+    NTSCFG_TEST_TRUE(valid);
     
+    valid = uri.parse("unix+datagram://[/path/to/socket]", profile);
+    NTSCFG_TEST_TRUE(valid);
 
-    uri.parse("unix+datagram://[/path/to/socket]", profile);
-    uri.parse("unix+datagram://[/path/to/socket]/path/to/resource", profile);
+    valid = uri.parse("unix+datagram://[/path/to/socket]/path/to/resource", 
+                      profile);
+    NTSCFG_TEST_TRUE(valid);
 
-    uri.parse("tcp://127.0.0.1:12345?foo", profile);
-    uri.parse("tcp://127.0.0.1:12345?foo=bar", profile);
-    uri.parse("tcp://127.0.0.1:12345?foo=bar&baz", profile);
-    uri.parse("tcp://127.0.0.1:12345?foo=bar&baz=qux", profile);
-    #endif
+    valid = uri.parse("tcp://127.0.0.1:12345?foo", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("tcp://127.0.0.1:12345?foo=bar", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("tcp://127.0.0.1:12345?foo=bar&baz", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("tcp://127.0.0.1:12345?foo=bar&baz=qux", profile);
+    NTSCFG_TEST_TRUE(valid);
 
     valid = uri.parse("127.0.0.1:12345", profile);
     NTSCFG_TEST_TRUE(valid);
@@ -876,11 +1009,9 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyLocalNameAbiguity)
     valid = uri.parse("[/path/to/socket]", profile);
     NTSCFG_TEST_TRUE(valid);
 
-
     valid = uri.parse("/path/to/socket", profile);
     NTSCFG_TEST_TRUE(valid);
 }
-
 
 NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase3)
 {

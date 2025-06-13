@@ -905,6 +905,7 @@ UriAuthority::UriAuthority(bslma::Allocator* basicAllocator)
 , d_host()
 , d_port()
 , d_transport()
+, d_transportSuite(basicAllocator)
 {
 }
 
@@ -914,6 +915,7 @@ UriAuthority::UriAuthority(const UriAuthority& other,
 , d_host(other.d_host)
 , d_port(other.d_port)
 , d_transport(other.d_transport)
+, d_transportSuite(other.d_transportSuite)
 {
 }
 
@@ -924,10 +926,11 @@ UriAuthority::~UriAuthority()
 UriAuthority& UriAuthority::operator=(const UriAuthority& other)
 {
     if (this != &other) {
-        d_user      = other.d_user;
-        d_host      = other.d_host;
-        d_port      = other.d_port;
-        d_transport = other.d_transport;
+        d_user           = other.d_user;
+        d_host           = other.d_host;
+        d_port           = other.d_port;
+        d_transport      = other.d_transport;
+        d_transportSuite = other.d_transportSuite;
     }
 
     return *this;
@@ -939,6 +942,7 @@ void UriAuthority::reset()
     d_host.reset();
     d_port.reset();
     d_transport.reset();
+    d_transportSuite.reset();
 }
 
 ntsa::Error UriAuthority::setUser(const bslstl::StringRef& value)
@@ -1099,6 +1103,18 @@ ntsa::Error UriAuthority::setTransport(ntsa::Transport::Value value)
     return ntsa::Error();
 }
 
+ntsa::Error UriAuthority::setTransportSuite(const ntsa::TransportSuite& value)
+{
+    if (d_transportSuite.isNull()) {
+        d_transportSuite.makeValue(value);
+    }
+    else {
+        d_transportSuite.value() = value;
+    }
+
+    return ntsa::Error();
+}
+
 const bdlb::NullableValue<bsl::string>& UriAuthority::user() const
 {
     return d_user;
@@ -1120,10 +1136,17 @@ const bdlb::NullableValue<ntsa::Transport::Value>& UriAuthority::transport()
     return d_transport;
 }
 
+const bdlb::NullableValue<ntsa::TransportSuite>& UriAuthority::transportSuite()
+    const
+{
+    return d_transportSuite;
+}
+
 bool UriAuthority::equals(const UriAuthority& other) const
 {
     return d_user == other.d_user && d_host == other.d_host &&
-           d_port == other.d_port && d_transport == other.d_transport;
+           d_port == other.d_port && d_transport == other.d_transport &&
+           d_transportSuite == other.d_transportSuite;
 }
 
 bool UriAuthority::less(const UriAuthority& other) const
@@ -1152,7 +1175,15 @@ bool UriAuthority::less(const UriAuthority& other) const
         return false;
     }
 
-    return d_transport < other.d_transport;
+    if (d_transport < other.d_transport) {
+        return true;
+    }
+
+    if (other.d_transport < d_transport) {
+        return false;
+    }
+
+    return d_transportSuite < other.d_transportSuite;
 }
 
 bsl::ostream& UriAuthority::print(bsl::ostream& stream,
@@ -1176,6 +1207,10 @@ bsl::ostream& UriAuthority::print(bsl::ostream& stream,
 
     if (!d_transport.isNull()) {
         printer.printAttribute("transport", d_transport);
+    }
+
+    if (!d_transportSuite.isNull()) {
+        printer.printAttribute("transportSuite", d_transportSuite);
     }
 
     printer.end();
@@ -1742,156 +1777,6 @@ bool operator<(const UriProfileEntry& lhs, const UriProfileEntry& rhs)
     return lhs.less(rhs);
 }
 
-// MRM
-#if 0
-ntsa::Error UriProfile::parseSchemeDefault(
-        bsl::string*                    canonicalScheme,
-        ntsa::TransportSecurity::Value* transportSecurity,
-        ntsa::TransportProtocol::Value* transportProtocol,
-        ntsa::TransportDomain::Value*   transportDomain,
-        ntsa::TransportMode::Value*     transportMode,
-        const bslstl::StringRef&        scheme) const
-{
-    canonicalScheme->clear();
-
-    *transportSecurity = ntsa::TransportSecurity::e_UNDEFINED;
-    *transportProtocol = ntsa::TransportProtocol::e_UNDEFINED;
-    *transportDomain   = ntsa::TransportDomain::e_UNDEFINED;
-    *transportMode     = ntsa::TransportMode::e_UNDEFINED;
-
-    bsl::string_view applicationProtocol = this->applicationProtocol();
-    bsl::string_view adjustedScheme      = scheme;
-
-    if (!applicationProtocol.empty()) {
-        if (adjustedScheme.find(applicationProtocol, 0) == 0) {
-            if (adjustedScheme.find('+', applicationProtocol.size()) ==
-                applicationProtocol.size()) 
-            {
-                adjustedScheme.remove_prefix(applicationProtocol.size());
-                adjustedScheme.remove_prefix(1);
-            }
-        }
-    }
-
-    typedef ntsa::TransportProtocol TP;
-    typedef ntsa::TransportMode     TM;
-
-    struct Data {
-        const char*                    scheme;
-        const char*                    canonicalScheme;
-        ntsa::TransportProtocol::Value transportProtocol;
-        ntsa::TransportMode::Value     transportMode;
-    };
-
-    // clang-format off
-    const Data k_DATA[] = {
-        { "",               "",               TP::e_TCP,   TM::e_STREAM   },
-        { "tcp",            "",               TP::e_TCP,   TM::e_STREAM   },
-        { "local",          "local",          TP::e_LOCAL, TM::e_STREAM   },
-        { "unix",           "local",          TP::e_LOCAL, TM::e_STREAM   },
-        { "udp",            "udp",            TP::e_UDP,   TM::e_DATAGRAM },
-        { "local+dgram",    "local+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
-        { "local+datagram", "local+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
-        { "unix+dgram",     "local+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
-        { "unix+datagram",  "local+datagram", TP::e_LOCAL, TM::e_DATAGRAM }
-    };
-    // clang-format on
-
-    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
-
-    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
-        Data data = k_DATA[i];
-        if (adjustedScheme == data.scheme) {
-            if (!applicationProtocol.empty()) {
-                canonicalScheme->append(applicationProtocol);
-            }
-
-            if (!canonicalScheme->empty()) {
-                canonicalScheme->append(1, '+');
-            }
-            canonicalScheme->append(data.canonicalScheme);
-
-            *transportProtocol = data.transportProtocol;
-            *transportMode     = data.transportMode;
-
-            return ntsa::Error();
-        }
-    }
-
-    return ntsa::Error(ntsa::Error::e_INVALID);
-}
-#endif
-
-// MRM
-#if 0
-ntsa::Error UriProfile::load(bsl::string*                 canonicalScheme,
-                             ntsa::TransportSuite*        transportSuite,
-                             const ntsa::UriProfileEntry& entry)
-{
-    
-    bsl::string_view applicationProtocol = this->applicationProtocol();
-    bsl::string_view adjustedScheme      = scheme;
-
-    if (!applicationProtocol.empty()) {
-        if (adjustedScheme.find(applicationProtocol, 0) == 0) {
-            if (adjustedScheme.find('+', applicationProtocol.size()) ==
-                applicationProtocol.size()) 
-            {
-                adjustedScheme.remove_prefix(applicationProtocol.size());
-                adjustedScheme.remove_prefix(1);
-            }
-        }
-    }
-
-    typedef ntsa::TransportProtocol TP;
-    typedef ntsa::TransportMode     TM;
-
-    struct Data {
-        const char*                    scheme;
-        const char*                    canonicalScheme;
-        ntsa::TransportSecurity::Value transportSecurity;
-        ntsa::TransportProtocol::Value transportProtocol;
-        ntsa::TransportDomain::Value   transportDomain;
-        ntsa::TransportMode::Value     transportMode;
-    };
-
-    // clang-format off
-    const Data k_DATA[] = {
-        { "",               "",               TP::e_TCP,   TM::e_STREAM   },
-        { "tcp",            "",               TP::e_TCP,   TM::e_STREAM   },
-        { "local",          "local",          TP::e_LOCAL, TM::e_STREAM   },
-        { "unix",           "local",          TP::e_LOCAL, TM::e_STREAM   },
-        { "udp",            "udp",            TP::e_UDP,   TM::e_DATAGRAM },
-        { "local+dgram",    "local+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
-        { "local+datagram", "local+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
-        { "unix+dgram",     "local+datagram", TP::e_LOCAL, TM::e_DATAGRAM },
-        { "unix+datagram",  "local+datagram", TP::e_LOCAL, TM::e_DATAGRAM }
-    };
-    // clang-format on
-
-    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
-
-    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
-        Data data = k_DATA[i];
-        if (adjustedScheme == data.scheme) {
-            if (!applicationProtocol.empty()) {
-                canonicalScheme->append(applicationProtocol);
-            }
-
-            if (!canonicalScheme->empty()) {
-                canonicalScheme->append(1, '+');
-            }
-            canonicalScheme->append(data.canonicalScheme);
-
-            *transportProtocol = data.transportProtocol;
-            *transportMode     = data.transportMode;
-
-            return ntsa::Error();
-        }
-    }
-}
-#endif
-
 UriProfile::UriProfile(bslma::Allocator* basicAllocator)
 : d_entryMap(basicAllocator)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -1902,7 +1787,7 @@ UriProfile::~UriProfile()
 {
 }
 
-ntsa::Error UriProfile::registerDefault()
+ntsa::Error UriProfile::registerImplicit()
 {
     ntsa::Error error;
 
@@ -1949,7 +1834,127 @@ ntsa::Error UriProfile::registerDefault()
     return ntsa::Error();
 }
 
-ntsa::Error UriProfile::registerApplication(const bsl::string& application)
+ntsa::Error UriProfile::registerImplicit(const bsl::string& application)
+{
+    ntsa::Error error;
+
+    typedef ntsa::TransportProtocol TP;
+    typedef ntsa::TransportMode     TM;
+
+    struct Data {
+        const char*                    scheme;
+        const char*                    canonicalScheme;
+        ntsa::TransportProtocol::Value transportProtocol;
+        ntsa::TransportMode::Value     transportMode;
+    };
+
+    // clang-format off
+    const Data k_DATA[] = {
+        { "",               "",         TP::e_TCP,   TM::e_STREAM   },
+        { "tcp",            "",         TP::e_TCP,   TM::e_STREAM   },
+        { "local",          "",         TP::e_LOCAL, TM::e_STREAM   },
+        { "unix",           "",         TP::e_LOCAL, TM::e_STREAM   },
+        { "udp",            "",         TP::e_UDP,   TM::e_DATAGRAM },
+        { "local+dgram",    "datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "local+datagram", "datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "unix+dgram",     "datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "unix+datagram",  "datagram", TP::e_LOCAL, TM::e_DATAGRAM }
+    };
+    // clang-format on
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string_view canonicalSchemeSuffix = data.canonicalScheme;
+        
+        bsl::string canonicalScheme = application;
+        if (!canonicalSchemeSuffix.empty()) {
+            canonicalScheme.append(1, '+');
+            canonicalScheme.append(canonicalSchemeSuffix);
+        }
+
+        error = this->registerEntry(data.scheme, 
+                                    canonicalScheme, 
+                                    application, 
+                                    ntsa::TransportSecurity::e_UNDEFINED, 
+                                    data.transportProtocol, 
+                                    ntsa::TransportDomain::e_UNDEFINED, 
+                                    data.transportMode);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriProfile::registerExplicit(const bsl::string& application)
+{
+    ntsa::Error error;
+
+    typedef ntsa::TransportProtocol TP;
+    typedef ntsa::TransportMode     TM;
+
+    struct Data {
+        const char*                    scheme;
+        const char*                    canonicalScheme;
+        ntsa::TransportProtocol::Value transportProtocol;
+        ntsa::TransportMode::Value     transportMode;
+    };
+
+    // clang-format off
+    const Data k_DATA[] = {
+        { "tcp",            "",         TP::e_TCP,   TM::e_STREAM   },
+        { "local",          "",         TP::e_LOCAL, TM::e_STREAM   },
+        { "unix",           "",         TP::e_LOCAL, TM::e_STREAM   },
+        { "udp",            "",         TP::e_UDP,   TM::e_DATAGRAM },
+        { "local+dgram",    "datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "local+datagram", "datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "unix+dgram",     "datagram", TP::e_LOCAL, TM::e_DATAGRAM },
+        { "unix+datagram",  "datagram", TP::e_LOCAL, TM::e_DATAGRAM }
+    };
+    // clang-format on
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string_view schemeSuffix = data.scheme;
+        bsl::string_view canonicalSchemeSuffix = data.canonicalScheme;
+
+        bsl::string scheme = application;
+        if (!schemeSuffix.empty()) {
+            scheme.append(1, '+');
+            scheme.append(schemeSuffix);
+        }
+        
+        bsl::string canonicalScheme = application;
+        if (!canonicalSchemeSuffix.empty()) {
+            canonicalScheme.append(1, '+');
+            canonicalScheme.append(canonicalSchemeSuffix);
+        }
+
+        error = this->registerEntry(scheme, 
+                                    canonicalScheme, 
+                                    application, 
+                                    ntsa::TransportSecurity::e_UNDEFINED, 
+                                    data.transportProtocol, 
+                                    ntsa::TransportDomain::e_UNDEFINED, 
+                                    data.transportMode);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriProfile::registerExplicit(
+    const bsl::string&             application, 
+    ntsa::TransportSecurity::Value transportSecurity)
 {
     ntsa::Error error;
 
@@ -1985,44 +1990,13 @@ ntsa::Error UriProfile::registerApplication(const bsl::string& application)
         bsl::string_view schemeSuffix = data.scheme;
         bsl::string_view canonicalSchemeSuffix = data.canonicalScheme;
 
-        // Register unsecure schemes.
-
-        bsl::string scheme = application;
-        if (!schemeSuffix.empty()) {
-            scheme.append(1, '+');
-            scheme.append(schemeSuffix);
-        }
-        
-        bsl::string canonicalScheme = application;
-        if (!canonicalSchemeSuffix.empty()) {
-            canonicalScheme.append(1, '+');
-            canonicalScheme.append(canonicalSchemeSuffix);
-        }
-
-        error = this->registerEntry(scheme, 
-                                    canonicalScheme, 
-                                    application, 
-                                    ntsa::TransportSecurity::e_UNDEFINED, 
-                                    data.transportProtocol, 
-                                    ntsa::TransportDomain::e_UNDEFINED, 
-                                    data.transportMode);
-        if (error) {
-            return error;
-        }
-
-        // MRM
-        #if 0
-        // Register TLS schemes using the convention of an 's' suffix.
-
         bsl::string secureScheme = application;
-        secureScheme.append(1, 's');
         if (!schemeSuffix.empty()) {
             secureScheme.append(1, '+');
             secureScheme.append(schemeSuffix);
         }
         
         bsl::string secureCanonicalScheme = application;
-        secureCanonicalScheme.append(1, 's');
         if (!canonicalSchemeSuffix.empty()) {
             secureCanonicalScheme.append(1, '+');
             secureCanonicalScheme.append(canonicalSchemeSuffix);
@@ -2031,14 +2005,13 @@ ntsa::Error UriProfile::registerApplication(const bsl::string& application)
         error = this->registerEntry(secureScheme, 
                                     secureCanonicalScheme, 
                                     application, 
-                                    ntsa::TransportSecurity::e_TLS, 
+                                    transportSecurity, 
                                     data.transportProtocol, 
                                     ntsa::TransportDomain::e_UNDEFINED, 
                                     data.transportMode);
         if (error) {
             return error;
         }
-        #endif
     }
 
     return ntsa::Error();
@@ -2046,9 +2019,6 @@ ntsa::Error UriProfile::registerApplication(const bsl::string& application)
 
 ntsa::Error UriProfile::registerEntry(const ntsa::UriProfileEntry& entry)
 {
-    // MRM
-    bsl::cout << "Registering " << entry << bsl::endl;
-
     EntryMap::iterator it = d_entryMap.find(entry.scheme());
     if (it != d_entryMap.end()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -2389,6 +2359,26 @@ ntsa::Error Uri::setTransport(ntsa::Transport::Value value)
     }
     else {
         error = d_authority.value().setTransport(value);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error Uri::setTransportSuite(const ntsa::TransportSuite& value)
+{
+    ntsa::Error error;
+
+    if (d_authority.isNull()) {
+        error = d_authority.makeValue().setTransportSuite(value);
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        error = d_authority.value().setTransportSuite(value);
         if (error) {
             return error;
         }
@@ -2913,25 +2903,14 @@ bool Uri::parse(const bslstl::StringRef& text, const ntsa::UriProfile& profile)
     // Default scheme.
 
     if (d_scheme.isNull() || d_scheme.value().empty()) {
-
-        // MRM
-        #if 0
+        bsl::string defaultScheme = "";
         if (d_authority.has_value()) {
             if (d_authority.value().host().has_value()) {
                 if (d_authority.value().host().value().isLocalName()) {
-                    d_scheme.makeValue();
-                    if (!profile.applicationProtocol().empty()) {
-                        d_scheme.value().append(profile.applicationProtocol());
-                        d_scheme.value().append(1, '+');
-                    }
-                    d_scheme.value().append("local", 5);
-
-                    transportProtocol = ntsa::TransportProtocol::e_LOCAL;
-                    
+                    defaultScheme = "local";
                 }
             }
         }
-        #endif
 
         if (d_scheme.isNull() || d_scheme.value().empty()) {
             error = profile.parseScheme(
@@ -2948,52 +2927,36 @@ bool Uri::parse(const bslstl::StringRef& text, const ntsa::UriProfile& profile)
         }
     }
 
-    // Validate and set transport.
-
-
-    // MRM: Print decomposition.
-
-    // MRM
-    #if 0
-    bsl::cout << "--" << bsl::endl;
-    bsl::cout << "Input:        " << text << bsl::endl;
-    bsl::cout << "Scheme:       " << d_scheme << bsl::endl;
-    bsl::cout << "Protocol:     " << transportProtocol << bsl::endl;
-    bsl::cout << "Mode:         " << transportMode << bsl::endl;
-    bsl::cout << "User:         " << d_authority.value().d_user << bsl::endl;
+    // Validate and set transport. Override the transport protocol and/or
+    // transport domain based upon the host, if defined.
 
     if (d_authority.value().d_host.has_value()) {
-        if (d_authority.value().d_host.value().isDomainName()) {
-            bsl::cout << "Domain Name:  " 
-                      << d_authority.value().d_host.value().domainName()
-                      << bsl::endl;
-
-        }
-        else if (d_authority.value().d_host.value().isIp()) {
+        if (d_authority.value().d_host.value().isIp()) {
             if (d_authority.value().d_host.value().ip().isV4()) {
-                bsl::cout << "IPv4 Address: " 
-                          << d_authority.value().d_host.value().ip().v4()
-                          << bsl::endl;
+                if (transportSuite.isNull()) {
+                    transportSuite.makeValue();
+                }
+                transportSuite.value().setTransportDomain(
+                    ntsa::TransportDomain::e_IPV4);
             }
             else if (d_authority.value().d_host.value().ip().isV6()) {
-                bsl::cout << "IPv6 Address: " 
-                          << d_authority.value().d_host.value().ip().v6()
-                          << bsl::endl;
+                if (transportSuite.isNull()) {
+                    transportSuite.makeValue();
+                }
+                transportSuite.value().setTransportDomain(
+                    ntsa::TransportDomain::e_IPV6);
             }
         }
         else if (d_authority.value().d_host.value().isLocalName()) {
-            bsl::cout << "Local Name:   " 
-                      << d_authority.value().d_host.value().localName()
-                      << bsl::endl;
+            if (transportSuite.isNull()) {
+                transportSuite.makeValue();
+            }
+            transportSuite.value().setTransportProtocol(
+                ntsa::TransportProtocol::e_LOCAL);
+            transportSuite.value().setTransportDomain(
+                ntsa::TransportDomain::e_LOCAL);
         }
     }
-
-    bsl::cout << "Port:         " << d_authority.value().d_port << bsl::endl;
-    bsl::cout << "Path:         " << d_path << bsl::endl;
-    bsl::cout << "Query:        " << d_query << bsl::endl;
-    bsl::cout << "Fragment:     " << d_fragment << bsl::endl;
-    bsl::cout << "Text:         " << *this << bsl::endl;
-    #endif
 
     return true;
 }
@@ -3219,6 +3182,66 @@ bsl::ostream& Uri::print(bsl::ostream& stream,
     }
 
     return stream;
+}
+
+void Uri::dump(bsl::ostream& stream) const
+{
+    stream << "Scheme:       " << d_scheme << bsl::endl;
+
+    if (d_authority.has_value()) {
+
+        const ntsa::UriAuthority& authority = d_authority.value();
+
+        if (d_authority.value().transportSuite().has_value()) {
+            const ntsa::TransportSuite& transportSuite = 
+                authority.transportSuite().value();
+
+            stream << "Security:     "; 
+            stream << transportSuite.transportSecurity() << bsl::endl;
+            stream << "Protocol:     ";
+            stream << transportSuite.transportProtocol() << bsl::endl;
+            stream << "Domain:       ";
+            stream << transportSuite.transportDomain() << bsl::endl;
+            stream << "Mode:         ";
+            stream << transportSuite.transportMode() << bsl::endl;
+            stream << "Transport:         ";
+            stream << transportSuite.transport() << bsl::endl;
+        }
+
+        stream << "User:         " << d_authority.value().d_user << bsl::endl;
+
+        if (d_authority.value().d_host.has_value()) {
+            if (d_authority.value().d_host.value().isDomainName()) {
+                stream << "Domain Name:  " 
+                       << d_authority.value().d_host.value().domainName()
+                       << bsl::endl;
+
+            }
+            else if (d_authority.value().d_host.value().isIp()) {
+                if (d_authority.value().d_host.value().ip().isV4()) {
+                    stream << "IPv4 Address: " 
+                           << d_authority.value().d_host.value().ip().v4()
+                           << bsl::endl;
+                }
+                else if (d_authority.value().d_host.value().ip().isV6()) {
+                    stream << "IPv6 Address: " 
+                           << d_authority.value().d_host.value().ip().v6()
+                           << bsl::endl;
+                }
+            }
+            else if (d_authority.value().d_host.value().isLocalName()) {
+                stream << "Local Name:   " 
+                       << d_authority.value().d_host.value().localName()
+                       << bsl::endl;
+            }
+        }
+
+        stream << "Port:         " << d_authority.value().d_port << bsl::endl;
+    }
+    stream << "Path:         " << d_path << bsl::endl;
+    stream << "Query:        " << d_query << bsl::endl;
+    stream << "Fragment:     " << d_fragment << bsl::endl;
+    stream << "Text:         " << *this << bsl::endl;
 }
 
 const bdlat_AttributeInfo* Uri::lookupAttributeInfo(int id)
