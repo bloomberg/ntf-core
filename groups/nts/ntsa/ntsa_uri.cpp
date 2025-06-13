@@ -2093,7 +2093,7 @@ ntsa::Error UriProfile::parseScheme(
     return ntsa::Error();
 }
 
-ntsa::Error UriProfile::normalize(ntsa::Uri* uri)
+ntsa::Error UriProfile::normalize(ntsa::Uri* uri) const
 {
     ntsa::Error error;
 

@@ -918,7 +918,7 @@ public:
         const bslstl::StringRef&                   scheme) const;
 
     /// Normalize the specified 'uri'. Return the error. 
-    ntsa::Error normalize(ntsa::Uri* uri);
+    ntsa::Error normalize(ntsa::Uri* uri) const;
 };
 
 /// Provide a Uniform Resource Identifier (URI).
