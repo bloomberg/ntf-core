@@ -33,12 +33,33 @@ namespace ntsa {
 // Provide tests for 'ntsa::Uri'.
 class UriTest
 {
+    BALL_LOG_SET_CLASS_CATEGORY("NTSA.URI.TEST");
+
   public:
+    // Verify a URI profile using default schemes.
+    static void verifyProfileImplicit();
+
+    // Verify a URI profile using default schemes interpreted as application
+    //  schemes.
+    static void verifyProfileImplicitApplication();
+
+    // Verify a URI profile using application schemes.
+    static void verifyProfileExplicitApplication();
+
+    // Verify a URI profile using secure application schemes.
+    static void verifyProfileExplicitApplicationSecurity();
+
+    // Verify normalization of URIs using a profile.
+    static void verifyProfileNormalize();
+
     // TODO
     static void verifyCase1();
 
     // TODO
     static void verifyCase2();
+
+    // TODO
+    static void verifyParseProfile();
 
     // TODO
     static void verifyCase3();
@@ -48,7 +69,449 @@ class UriTest
 
     // TODO
     static void verifyCase5();
+
+    // TODO
+    static void verifyDump();
 };
+
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileImplicit)
+{
+    ntsa::Error error;
+
+    ntsa::UriProfile profile(NTSCFG_TEST_ALLOCATOR);
+
+    error = profile.registerImplicit();
+    NTSCFG_TEST_OK(error);
+
+    typedef ntsa::TransportProtocol TP;
+    typedef ntsa::TransportDomain   TD;
+    typedef ntsa::TransportMode     TM;
+
+    struct Data {
+        const char*                    scheme;
+        const char*                    canonicalScheme;
+        ntsa::TransportProtocol::Value transportProtocol;
+        ntsa::TransportDomain::Value   transportDomain;
+        ntsa::TransportMode::Value     transportMode;
+    };
+
+    // clang-format off
+    const Data k_DATA[] = {
+        { "",               "tcp",   TP::e_TCP,   TD::e_UNDEFINED, TM::e_STREAM   },
+        { "tcp",            "tcp",   TP::e_TCP,   TD::e_UNDEFINED, TM::e_STREAM   },
+        { "tcp+ipv4",       "tcp",   TP::e_TCP,   TD::e_IPV4,      TM::e_STREAM   },
+        { "tcp+ipv6",       "tcp",   TP::e_TCP,   TD::e_IPV6,      TM::e_STREAM   },
+        { "local",          "local", TP::e_LOCAL, TD::e_LOCAL,     TM::e_STREAM   },
+        { "unix",           "local", TP::e_LOCAL, TD::e_LOCAL,     TM::e_STREAM   },
+        { "udp",            "udp",   TP::e_UDP,   TD::e_UNDEFINED, TM::e_DATAGRAM },
+        { "udp+ipv4",       "udp",   TP::e_UDP,   TD::e_IPV4,      TM::e_DATAGRAM },
+        { "udp+ipv6",       "udp",   TP::e_UDP,   TD::e_IPV6,      TM::e_DATAGRAM },
+        { "local+dgram",    "local", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "local+datagram", "local", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "unix+dgram",     "local", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "unix+datagram",  "local", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM }
+    };
+    // clang-format on
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string          canonicalScheme;
+        ntsa::TransportSuite transportSuite;
+
+        error = profile.parseScheme(&canonicalScheme, 
+                                    &transportSuite, 
+                                    data.scheme);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG << "Scheme = " 
+                       << data.scheme 
+                       << " canonicalScheme = " 
+                       << canonicalScheme 
+                       << " transportSuite = " 
+                       << transportSuite 
+                       << BALL_LOG_END;
+
+        NTSCFG_TEST_EQ(canonicalScheme, data.canonicalScheme);
+        NTSCFG_TEST_EQ(transportSuite.transportSecurity(), 
+                       ntsa::TransportSecurity::e_UNDEFINED);
+        NTSCFG_TEST_EQ(transportSuite.transportProtocol(), 
+                       data.transportProtocol);
+        NTSCFG_TEST_EQ(transportSuite.transportDomain(), 
+                       data.transportDomain);
+        NTSCFG_TEST_EQ(transportSuite.transportMode(), 
+                       data.transportMode);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileImplicitApplication)
+{
+    ntsa::Error error;
+
+    ntsa::UriProfile profile(NTSCFG_TEST_ALLOCATOR);
+
+    error = profile.registerImplicit("http");
+    NTSCFG_TEST_OK(error);
+
+    typedef ntsa::TransportProtocol TP;
+    typedef ntsa::TransportDomain   TD;
+    typedef ntsa::TransportMode     TM;
+
+    struct Data {
+        const char*                    scheme;
+        const char*                    canonicalScheme;
+        ntsa::TransportProtocol::Value transportProtocol;
+        ntsa::TransportDomain::Value   transportDomain;
+        ntsa::TransportMode::Value     transportMode;
+    };
+
+    // clang-format off
+    const Data k_DATA[] = {
+        { "",               "http", TP::e_TCP,   TD::e_UNDEFINED, TM::e_STREAM   },
+        { "tcp",            "http", TP::e_TCP,   TD::e_UNDEFINED, TM::e_STREAM   },
+        { "tcp+ipv4",       "http", TP::e_TCP,   TD::e_IPV4,      TM::e_STREAM   },
+        { "tcp+ipv6",       "http", TP::e_TCP,   TD::e_IPV6,      TM::e_STREAM   },
+        { "local",          "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_STREAM   },
+        { "unix",           "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_STREAM   },
+        { "udp",            "http", TP::e_UDP,   TD::e_UNDEFINED, TM::e_DATAGRAM },
+        { "udp+ipv4",       "http", TP::e_UDP,   TD::e_IPV4,      TM::e_DATAGRAM },
+        { "udp+ipv6",       "http", TP::e_UDP,   TD::e_IPV6,      TM::e_DATAGRAM },
+        { "local+dgram",    "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "local+datagram", "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "unix+dgram",     "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "unix+datagram",  "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM }
+    };
+    // clang-format on
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string          canonicalScheme;
+        ntsa::TransportSuite transportSuite;
+
+        error = profile.parseScheme(&canonicalScheme, 
+                                    &transportSuite, 
+                                    data.scheme);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG << "Scheme = " 
+                       << data.scheme 
+                       << " canonicalScheme = " 
+                       << canonicalScheme 
+                       << " transportSuite = " 
+                       << transportSuite 
+                       << BALL_LOG_END;
+
+        NTSCFG_TEST_EQ(canonicalScheme, data.canonicalScheme);
+        NTSCFG_TEST_EQ(transportSuite.transportSecurity(), 
+                       ntsa::TransportSecurity::e_UNDEFINED);
+        NTSCFG_TEST_EQ(transportSuite.transportProtocol(), 
+                       data.transportProtocol);
+        NTSCFG_TEST_EQ(transportSuite.transportDomain(), 
+                       data.transportDomain);
+        NTSCFG_TEST_EQ(transportSuite.transportMode(), 
+                       data.transportMode);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileExplicitApplication)
+{
+    ntsa::Error error;
+
+    ntsa::UriProfile profile(NTSCFG_TEST_ALLOCATOR);
+
+    error = profile.registerExplicit("http");
+    NTSCFG_TEST_OK(error);
+
+    typedef ntsa::TransportProtocol TP;
+    typedef ntsa::TransportDomain   TD;
+    typedef ntsa::TransportMode     TM;
+
+    struct Data {
+        const char*                    scheme;
+        const char*                    canonicalScheme;
+        ntsa::TransportProtocol::Value transportProtocol;
+        ntsa::TransportDomain::Value   transportDomain;
+        ntsa::TransportMode::Value     transportMode;
+    };
+
+    // clang-format off
+    const Data k_DATA[] = {
+        { "http",                "http", TP::e_TCP,   TD::e_UNDEFINED, TM::e_STREAM   },
+        { "http+tcp",            "http", TP::e_TCP,   TD::e_UNDEFINED, TM::e_STREAM   },
+        { "http+tcp+ipv4",       "http", TP::e_TCP,   TD::e_IPV4,      TM::e_STREAM   },
+        { "http+tcp+ipv6",       "http", TP::e_TCP,   TD::e_IPV6,      TM::e_STREAM   },
+        { "http+local",          "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_STREAM   },
+        { "http+unix",           "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_STREAM   },
+        { "http+udp",            "http", TP::e_UDP,   TD::e_UNDEFINED, TM::e_DATAGRAM },
+        { "http+udp+ipv4",       "http", TP::e_UDP,   TD::e_IPV4,      TM::e_DATAGRAM },
+        { "http+udp+ipv6",       "http", TP::e_UDP,   TD::e_IPV6,      TM::e_DATAGRAM },
+        { "http+local+dgram",    "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "http+local+datagram", "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "http+unix+dgram",     "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "http+unix+datagram",  "http", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM }
+    };
+    // clang-format on
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string          canonicalScheme;
+        ntsa::TransportSuite transportSuite;
+
+        error = profile.parseScheme(&canonicalScheme, 
+                                    &transportSuite, 
+                                    data.scheme);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG << "Scheme = " 
+                       << data.scheme 
+                       << " canonicalScheme = " 
+                       << canonicalScheme 
+                       << " transportSuite = " 
+                       << transportSuite 
+                       << BALL_LOG_END;
+
+        NTSCFG_TEST_EQ(canonicalScheme, data.canonicalScheme);
+        NTSCFG_TEST_EQ(transportSuite.transportSecurity(), 
+                       ntsa::TransportSecurity::e_UNDEFINED);
+        NTSCFG_TEST_EQ(transportSuite.transportProtocol(), 
+                       data.transportProtocol);
+        NTSCFG_TEST_EQ(transportSuite.transportDomain(), 
+                       data.transportDomain);
+        NTSCFG_TEST_EQ(transportSuite.transportMode(), 
+                       data.transportMode);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileExplicitApplicationSecurity)
+{
+    ntsa::Error error;
+
+    ntsa::UriProfile profile(NTSCFG_TEST_ALLOCATOR);
+
+    error = profile.registerExplicit("https", 
+                                     ntsa::TransportSecurity::e_TLS);
+    NTSCFG_TEST_OK(error);
+
+    typedef ntsa::TransportProtocol TP;
+    typedef ntsa::TransportDomain   TD;
+    typedef ntsa::TransportMode     TM;
+
+    struct Data {
+        const char*                    scheme;
+        const char*                    canonicalScheme;
+        ntsa::TransportProtocol::Value transportProtocol;
+        ntsa::TransportDomain::Value   transportDomain;
+        ntsa::TransportMode::Value     transportMode;
+    };
+
+    // clang-format off
+    const Data k_DATA[] = {
+        { "https",                "https", TP::e_TCP,   TD::e_UNDEFINED, TM::e_STREAM   },
+        { "https+tcp",            "https", TP::e_TCP,   TD::e_UNDEFINED, TM::e_STREAM   },
+        { "https+tcp+ipv4",       "https", TP::e_TCP,   TD::e_IPV4,      TM::e_STREAM   },
+        { "https+tcp+ipv6",       "https", TP::e_TCP,   TD::e_IPV6,      TM::e_STREAM   },
+        { "https+local",          "https", TP::e_LOCAL, TD::e_LOCAL,     TM::e_STREAM   },
+        { "https+unix",           "https", TP::e_LOCAL, TD::e_LOCAL,     TM::e_STREAM   },
+        { "https+udp",            "https", TP::e_UDP,   TD::e_UNDEFINED, TM::e_DATAGRAM },
+        { "https+udp+ipv4",       "https", TP::e_UDP,   TD::e_IPV4,      TM::e_DATAGRAM },
+        { "https+udp+ipv6",       "https", TP::e_UDP,   TD::e_IPV6,      TM::e_DATAGRAM },
+        { "https+local+dgram",    "https", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "https+local+datagram", "https", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "https+unix+dgram",     "https", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+        { "https+unix+datagram",  "https", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM }
+    };
+    // clang-format on
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string          canonicalScheme;
+        ntsa::TransportSuite transportSuite;
+
+        error = profile.parseScheme(&canonicalScheme, 
+                                    &transportSuite, 
+                                    data.scheme);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG << "Scheme = " 
+                       << data.scheme 
+                       << " canonicalScheme = " 
+                       << canonicalScheme 
+                       << " transportSuite = " 
+                       << transportSuite 
+                       << BALL_LOG_END;
+
+        NTSCFG_TEST_EQ(canonicalScheme, data.canonicalScheme);
+        NTSCFG_TEST_EQ(transportSuite.transportSecurity(), 
+                       ntsa::TransportSecurity::e_TLS);
+        NTSCFG_TEST_EQ(transportSuite.transportProtocol(), 
+                       data.transportProtocol);
+        NTSCFG_TEST_EQ(transportSuite.transportDomain(), 
+                       data.transportDomain);
+        NTSCFG_TEST_EQ(transportSuite.transportMode(), 
+                       data.transportMode);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyProfileNormalize)
+{
+    ntsa::Error error;
+
+    ntsa::UriProfile profile(NTSCFG_TEST_ALLOCATOR);
+
+    error = profile.registerImplicit("http");
+    NTSCFG_TEST_OK(error);
+
+    error = profile.registerExplicit("http");
+    NTSCFG_TEST_OK(error);
+
+    {
+        ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
+
+        uri.setHost(ntsa::Ipv4Address::loopback());
+        uri.setPort(12345);
+
+        bsl::string text = uri.text();
+
+        error = profile.normalize(&uri);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG_BLOCK {
+            uri.dump(text, BALL_LOG_OUTPUT_STREAM);
+        }
+    }
+
+    {
+        ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
+
+        uri.setHost("example.com");
+        uri.setPort(12345);
+
+        bsl::string text = uri.text();
+
+        error = profile.normalize(&uri);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG_BLOCK {
+            uri.dump(text, BALL_LOG_OUTPUT_STREAM);
+        }
+    }
+
+    {
+        ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
+
+        ntsa::LocalName localName;
+        localName.setValue("/path/to/socket");
+
+        uri.setEndpoint(ntsa::Endpoint(localName));
+
+        bsl::string text = uri.text();
+
+        error = profile.normalize(&uri);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG_BLOCK {
+            uri.dump(text, BALL_LOG_OUTPUT_STREAM);
+        }
+    }
+
+    {
+        ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
+
+        uri.setScheme("tcp");
+        uri.setHost(ntsa::Ipv4Address::loopback());
+        uri.setPort(12345);
+
+        bsl::string text = uri.text();
+
+        error = profile.normalize(&uri);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG_BLOCK {
+            uri.dump(text, BALL_LOG_OUTPUT_STREAM);
+        }
+    }
+
+    {
+        ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
+
+        uri.setScheme("tcp");
+        uri.setHost("example.com");
+        uri.setPort(12345);
+
+        bsl::string text = uri.text();
+
+        error = profile.normalize(&uri);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG_BLOCK {
+            uri.dump(text, BALL_LOG_OUTPUT_STREAM);
+        }
+    }
+
+    {
+        ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
+
+        uri.setScheme("udp");
+        uri.setHost(ntsa::Ipv4Address::loopback());
+        uri.setPort(12345);
+
+        bsl::string text = uri.text();
+
+        error = profile.normalize(&uri);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG_BLOCK {
+            uri.dump(text, BALL_LOG_OUTPUT_STREAM);
+        }
+    }
+
+    {
+        ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
+
+        uri.setScheme("udp");
+        uri.setHost("example.com");
+        uri.setPort(12345);
+
+        bsl::string text = uri.text();
+
+        error = profile.normalize(&uri);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG_BLOCK {
+            uri.dump(text, BALL_LOG_OUTPUT_STREAM);
+        }
+    }
+
+    {
+        ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
+
+        ntsa::LocalName localName;
+        localName.setValue("/path/to/socket");
+
+        uri.setScheme("unix");
+        uri.setEndpoint(ntsa::Endpoint(localName));
+
+        bsl::string text = uri.text();
+
+        error = profile.normalize(&uri);
+        NTSCFG_TEST_OK(error);
+
+        BALL_LOG_DEBUG_BLOCK {
+            uri.dump(text, BALL_LOG_OUTPUT_STREAM);
+        }
+    }
+}
 
 NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase1)
 {
@@ -676,6 +1139,65 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase2)
     }
 }
 
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyParseProfile)
+{
+    ntsa::Error error;
+
+    ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
+
+    ntsa::UriProfile profile;
+    error = profile.registerImplicit("http");
+    NTSCFG_TEST_OK(error);
+
+    bool valid = false;
+
+    valid = uri.parse("tcp://127.0.0.1:12345", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("udp://127.0.0.1:12345", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("tcp://[::1]:12345", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("udp://[::1]:12345", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("unix://[/path/to/socket]", profile);
+    NTSCFG_TEST_TRUE(valid);
+    
+    valid = uri.parse("unix+datagram://[/path/to/socket]", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("unix+datagram://[/path/to/socket]/path/to/resource", 
+                      profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("tcp://127.0.0.1:12345?foo", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("tcp://127.0.0.1:12345?foo=bar", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("tcp://127.0.0.1:12345?foo=bar&baz", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("tcp://127.0.0.1:12345?foo=bar&baz=qux", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("127.0.0.1:12345", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("[::1]:12345", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("[/path/to/socket]", profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    valid = uri.parse("/path/to/socket", profile);
+    NTSCFG_TEST_TRUE(valid);
+}
+
 NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase3)
 {
     ntsa::Error error;
@@ -926,6 +1448,31 @@ NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyCase5)
 
     for (bsl::size_t i = 0; i < e1.size(); ++i) {
         NTSCFG_TEST_EQ(e2[i], e1[i]);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::UriTest::verifyDump)
+{
+    ntsa::Error error;
+    bool        valid = false;
+
+    ntsa::UriProfile profile(NTSCFG_TEST_ALLOCATOR);
+
+    error = profile.registerImplicit("rdp");
+    NTSCFG_TEST_OK(error);
+
+    error = profile.registerExplicit("rdp");
+    NTSCFG_TEST_OK(error);
+
+    bslstl::StringRef text = "udp://example.com?foo=bar#anchor";
+
+    ntsa::Uri uri(NTSCFG_TEST_ALLOCATOR);
+    valid = uri.parse(text, profile);
+    NTSCFG_TEST_TRUE(valid);
+
+    BALL_LOG_DEBUG_BLOCK
+    {
+        uri.dump(text, BALL_LOG_OUTPUT_STREAM);
     }
 }
 

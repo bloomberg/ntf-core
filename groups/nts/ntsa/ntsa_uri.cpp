@@ -96,21 +96,69 @@ class UriUtil
                          char         ch4,
                          char         ch5);
 
-    // Compare the content of the buffer, starting from the current position,
-    // with the specified string 'str'.  If matches, advance the current
-    // position by the length of 'str' and return 'true'; otherwise return
-    // 'false' and the current position is unmodified.
+    /// Compare the content of the buffer, starting from the current position,
+    /// with the specified string 'str'.  If matches, advance the current
+    /// position by the length of 'str' and return 'true'; otherwise return
+    /// 'false' and the current position is unmodified.
     static bool skipMatch(const char** current,
                           const char*  end,
                           const char*  match);
 
-    // Encode using the default URL encoding rules.
+    /// Pop 'input' containing a recognized scheme. 
+    static ntsa::Error parseScheme(
+        bsl::string_view*                          input,
+        bsl::string*                               canonicalScheme,
+        bdlb::NullableValue<ntsa::TransportSuite>* transportSuite,
+        const ntsa::UriProfile&                    profile);
+
+    /// Pop 'input' containing the user up to and including the '@'.
+    static ntsa::Error parseUser(
+        bsl::string_view*                 input,
+        bdlb::NullableValue<bsl::string>* user);
+
+    /// Pop 'input' containing the host up to, but not including, the first
+    /// character that is one of  the expected delimeters ':', '/', '?', 
+    /// or '#'.
+    static ntsa::Error parseHost(
+        bsl::string_view*                input,
+        bdlb::NullableValue<ntsa::Host>* host);
+
+    /// Pop 'input' containing the host up to and including the expected
+    /// delimeter ']'.
+    static ntsa::Error parseHostBracket(
+        bsl::string_view*                input,
+        bdlb::NullableValue<ntsa::Host>* host);
+
+    /// Pop 'input' including the port up to, but not including, the first
+    /// character that one of the expected delimeters '/', '?', or '#'.
+    static ntsa::Error parsePort(
+        bsl::string_view*                input,
+        bdlb::NullableValue<ntsa::Port>* port);
+
+    /// Pop 'input' containing the path up to, but not including, the first
+    /// character that is one of the expected delimeters '?' or '#'.
+    static ntsa::Error parsePath(
+        bsl::string_view*                 input,
+        bdlb::NullableValue<bsl::string>* path);
+
+    /// Pop 'input' containing the path up to, but not including, the first
+    /// character that is one of the expected delimeter '#'.
+    static ntsa::Error parseQuery(
+        bsl::string_view*                    input,
+        bdlb::NullableValue<ntsa::UriQuery>* query);
+
+    /// Pop 'input' containing the fragment up to the end of input..
+    static ntsa::Error parseFragment(
+        bsl::string_view*                 input,
+        bdlb::NullableValue<bsl::string>* fragment);
+
+    /// Encode using the default URL encoding rules.
     static const bsl::size_t k_ENCODE_DEFAULT;
 
-    // Encode for application/x-www-form-urlencoded.
+    /// Encode for application/x-www-form-urlencoded.
     static const bsl::size_t k_ENCODE_FORM_DATA;
 
-    // The hexadecimal conversion table.
+    /// The hexadecimal conversion table.
     static const char k_CHARACTER_TABLE[16];
 };
 
@@ -255,11 +303,23 @@ ntsa::Error UriUtil::decodeUrl(bsl::string*             destination,
 
 char UriUtil::scanChar(const char** current, const char* end, char ch)
 {
-    while (*current != end && **current != ch) {
-        ++*current;
-    }
+    const char* position = *current;
 
-    return **current;
+    while (true) {
+        if (position == end) {
+            *current = position;
+            return 0;
+        }
+
+        const char at = *position;
+
+        if (at == ch) {
+            *current = position;
+            return at;
+        }
+
+        ++position;
+    }
 }
 
 char UriUtil::scanChar(const char** current,
@@ -267,11 +327,23 @@ char UriUtil::scanChar(const char** current,
                        char         ch1,
                        char         ch2)
 {
-    while (*current != end && **current != ch1 && **current != ch2) {
-        ++*current;
-    }
+    const char* position = *current;
 
-    return **current;
+    while (true) {
+        if (position == end) {
+            *current = position;
+            return 0;
+        }
+
+        const char at = *position;
+
+        if (at == ch1 || at == ch2) {
+            *current = position;
+            return at;
+        }
+
+        ++position;
+    }
 }
 
 char UriUtil::scanChar(const char** current,
@@ -280,13 +352,23 @@ char UriUtil::scanChar(const char** current,
                        char         ch2,
                        char         ch3)
 {
-    while (*current != end && **current != ch1 && **current != ch2 &&
-           **current != ch3)
-    {
-        ++*current;
-    }
+    const char* position = *current;
 
-    return **current;
+    while (true) {
+        if (position == end) {
+            *current = position;
+            return 0;
+        }
+
+        const char at = *position;
+
+        if (at == ch1 || at == ch2 || at == ch3) {
+            *current = position;
+            return at;
+        }
+
+        ++position;
+    }
 }
 
 char UriUtil::scanChar(const char** current,
@@ -296,13 +378,23 @@ char UriUtil::scanChar(const char** current,
                        char         ch3,
                        char         ch4)
 {
-    while (*current != end && **current != ch1 && **current != ch2 &&
-           **current != ch3 && **current != ch4)
-    {
-        ++*current;
-    }
+    const char* position = *current;
 
-    return **current;
+    while (true) {
+        if (position == end) {
+            *current = position;
+            return 0;
+        }
+
+        const char at = *position;
+
+        if (at == ch1 || at == ch2 || at == ch3 || at == ch4) {
+            *current = position;
+            return at;
+        }
+
+        ++position;
+    }
 }
 
 char UriUtil::scanChar(const char** current,
@@ -313,13 +405,23 @@ char UriUtil::scanChar(const char** current,
                        char         ch4,
                        char         ch5)
 {
-    while (*current != end && **current != ch1 && **current != ch2 &&
-           **current != ch3 && **current != ch4 && **current != ch5)
-    {
-        ++*current;
-    }
+    const char* position = *current;
 
-    return **current;
+    while (true) {
+        if (position == end) {
+            *current = position;
+            return 0;
+        }
+
+        const char at = *position;
+
+        if (at == ch1 || at == ch2 || at == ch3 || at == ch4 || at == ch5) {
+            *current = position;
+            return at;
+        }
+
+        ++position;
+    }
 }
 
 bool UriUtil::skipMatch(const char** current,
@@ -342,11 +444,472 @@ bool UriUtil::skipMatch(const char** current,
     }
 }
 
+ntsa::Error UriUtil::parseScheme(
+        bsl::string_view*                          input,
+        bsl::string*                               canonicalScheme,
+        bdlb::NullableValue<ntsa::TransportSuite>* transportSuite,
+        const ntsa::UriProfile&                    profile)
+{
+    ntsa::Error error;
+
+    canonicalScheme->clear();
+    transportSuite->reset();
+
+    bool found = false;
+
+    const char* begin   = input->begin();
+    const char* end     = input->end();
+    const char* current = begin;
+
+    while (true) {
+        if (current == end) {
+            break;
+        }
+
+        const char at = *current;
+
+        if (at == ':') {
+            found = true;
+            break;
+        }
+
+        if (!bdlb::CharType::isAlnum(at) && at != '+') {
+            break;
+        }
+
+        ++current;
+    }
+
+    if (!found) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    bslstl::StringRef scheme = bslstl::StringRef(begin, current);
+
+    error = profile.parseScheme(canonicalScheme, 
+                                transportSuite,
+                                scheme);
+    if (error) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+    
+    if (current == end) {
+        *input = bsl::string_view();
+    }
+    else {
+        *input  = bsl::string_view(current + 1, end);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriUtil::parseUser(
+        bsl::string_view*                 input,
+        bdlb::NullableValue<bsl::string>* user)
+{
+    ntsa::Error error;
+
+    user->reset();
+
+    bool found = false;
+
+    const char* begin   = input->begin();
+    const char* end     = input->end();
+    const char* current = begin;
+
+    while (true) {
+        if (current == end) {
+            break;
+        }
+
+        const char at = *current;
+
+        if (at == '@') {
+            found = true;
+            break;
+        }
+
+        ++current;
+    }
+
+    if (!found) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    user->makeValue().assign(begin, current);
+
+    if (current == end) {
+        *input = bsl::string_view();
+    }
+    else {
+        *input  = bsl::string_view(current + 1, end);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriUtil::parseHost(
+        bsl::string_view*                input,
+        bdlb::NullableValue<ntsa::Host>* host)
+{
+    ntsa::Error error;
+
+    host->reset();
+
+    bool found = false;
+
+    const char* begin   = input->begin();
+    const char* end     = input->end();
+    const char* current = begin;
+
+    while (true) {
+        if (current == end) {
+            found = true;
+            break;
+        }
+
+        const char at = *current;
+
+        if (at == ':' || at == '/' || at == '?' || at == '#') {
+            found = true;
+            break;
+        }
+
+        ++current;
+    }
+
+    if (!found) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    bslstl::StringRef span = bslstl::StringRef(begin, current);
+
+    if (!host->makeValue().parse(span)) {
+        host->reset();
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    *input  = bsl::string_view(current, end);
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriUtil::parseHostBracket(
+        bsl::string_view*                input,
+        bdlb::NullableValue<ntsa::Host>* host)
+{
+    ntsa::Error error;
+
+    host->reset();
+
+    bool found = false;
+
+    const char* begin   = input->begin();
+    const char* end     = input->end();
+    const char* current = begin;
+
+    if (current == end) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    if (*current != '[') {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ++current;
+
+    while (true) {
+        if (current == end) {
+            break;
+        }
+
+        const char at = *current;
+
+        if (at == ']') {
+            found = true;
+            break;
+        }
+
+        ++current;
+    }
+
+    if (!found) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    bslstl::StringRef span = bslstl::StringRef(begin + 1, current);
+
+    if (!host->makeValue().parse(span)) {
+        host->reset();
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (current == end) {
+        *input = bsl::string_view();
+    }
+    else {
+        *input  = bsl::string_view(current + 1, end);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriUtil::parsePort(
+        bsl::string_view*                input,
+        bdlb::NullableValue<ntsa::Port>* port)
+{
+    ntsa::Error error;
+
+    port->reset();
+
+    bool found = false;
+
+    const char* begin   = input->begin();
+    const char* end     = input->end();
+    const char* current = begin;
+
+    while (true) {
+        if (current == end) {
+            found = true;
+            break;
+        }
+
+        const char at = *current;
+
+        if (at == '/' || at == '?' || at == '#') {
+            found = true;
+            break;
+        }
+
+        if (!bdlb::CharType::isDigit(at)) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        ++current;
+    }
+
+    if (!found) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    bslstl::StringRef span = bslstl::StringRef(begin, current);
+
+    if (span.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (!ntsa::PortUtil::parse(&port->makeValue(), span.data(), span.size())) {
+        port->reset();
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    *input  = bsl::string_view(current, end);
+
+    return ntsa::Error();
+}
+
+
+ntsa::Error UriUtil::parsePath(
+        bsl::string_view*                 input,
+        bdlb::NullableValue<bsl::string>* path)
+{
+    ntsa::Error error;
+
+    path->reset();
+
+    bool found = false;
+
+    const char* begin   = input->begin();
+    const char* end     = input->end();
+    const char* current = begin;
+
+    while (true) {
+        if (current == end) {
+            found = true;
+            break;
+        }
+
+        const char at = *current;
+
+        if (at == '?' || at == '#') {
+            found = true;
+            break;
+        }
+
+        ++current;
+    }
+
+    if (!found) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    path->makeValue().assign(begin, current);
+
+    *input  = bsl::string_view(current, end);
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriUtil::parseQuery(
+        bsl::string_view*                    input,
+        bdlb::NullableValue<ntsa::UriQuery>* query)
+{
+    ntsa::Error error;
+
+    query->reset();
+
+    const char* begin   = input->begin();
+    const char* end     = input->end();
+    const char* current = begin;
+    
+    if (current == end) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    if (*current != '?') {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ++current;
+
+    const char* mark = current;
+
+    bslstl::StringRef name;
+    bslstl::StringRef value;
+
+    while (true) {
+        const char at = (current == end) ? 0 : *current;
+
+        if (at == '=') {
+            if (!name.empty()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            name = bslstl::StringRef(mark, current);
+            if (name.empty()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+
+            mark = current + 1;
+        }
+        else if (at == '&' || at == '#' || at == 0) {
+            if (name.empty()) {
+                name = bslstl::StringRef(mark, current);
+                if (name.empty()) {
+                    return ntsa::Error(ntsa::Error::e_INVALID);
+                }
+            }
+            else {
+                if (!value.empty()) {
+                    return ntsa::Error(ntsa::Error::e_INVALID);
+                }
+
+                value = bslstl::StringRef(mark, current);
+                if (value.empty()) {
+                    return ntsa::Error(ntsa::Error::e_INVALID);
+                }
+            }
+
+            mark = (at == 0) ? end : current + 1;
+
+            if (query->isNull()) {
+                query->makeValue();
+            }
+
+            bsl::string decodedName;
+            error = UriUtil::decodeUrl(&decodedName, name);
+            if (error) {
+                query->reset();
+                return error;
+            }
+
+            name.reset();
+
+            if (value.empty()) {
+                error = query->value().addParameter(decodedName);
+                if (error) {
+                    query->reset();
+                    return error;
+                }
+            }
+            else {
+                bsl::string decodedValue;
+                error = UriUtil::decodeUrl(&decodedValue, value);
+                if (error) {
+                    query->reset();
+                    return error;
+                }
+
+                value.reset();
+
+                error = query->value().addParameter(decodedName, decodedValue);
+                if (error) {
+                    query->reset();
+                    return error;
+                }
+            }
+        }
+
+        if (at == '#' || at == 0) {
+            break;
+        }
+
+        ++current;
+    }
+
+    if (query->isNull()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    if (current == end) {
+        *input = bsl::string_view();
+    }
+    else {
+        *input  = bsl::string_view(current, end);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriUtil::parseFragment(
+        bsl::string_view*                 input,
+        bdlb::NullableValue<bsl::string>* fragment)
+{
+    ntsa::Error error;
+
+    fragment->reset();
+
+    const char* begin   = input->begin();
+    const char* end     = input->end();
+    const char* current = begin;
+
+    if (current == end) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    if (*current != '#') {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ++current;
+    
+    if (current == end) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    fragment->makeValue().assign(current, end);
+
+    *input  = bsl::string_view();
+
+    return ntsa::Error();
+}
+
 UriAuthority::UriAuthority(bslma::Allocator* basicAllocator)
 : d_user(basicAllocator)
 , d_host()
 , d_port()
 , d_transport()
+, d_transportSuite(basicAllocator)
 {
 }
 
@@ -356,6 +919,7 @@ UriAuthority::UriAuthority(const UriAuthority& other,
 , d_host(other.d_host)
 , d_port(other.d_port)
 , d_transport(other.d_transport)
+, d_transportSuite(other.d_transportSuite)
 {
 }
 
@@ -366,10 +930,11 @@ UriAuthority::~UriAuthority()
 UriAuthority& UriAuthority::operator=(const UriAuthority& other)
 {
     if (this != &other) {
-        d_user      = other.d_user;
-        d_host      = other.d_host;
-        d_port      = other.d_port;
-        d_transport = other.d_transport;
+        d_user           = other.d_user;
+        d_host           = other.d_host;
+        d_port           = other.d_port;
+        d_transport      = other.d_transport;
+        d_transportSuite = other.d_transportSuite;
     }
 
     return *this;
@@ -381,6 +946,7 @@ void UriAuthority::reset()
     d_host.reset();
     d_port.reset();
     d_transport.reset();
+    d_transportSuite.reset();
 }
 
 ntsa::Error UriAuthority::setUser(const bslstl::StringRef& value)
@@ -408,13 +974,38 @@ ntsa::Error UriAuthority::setHost(const ntsa::Host& value)
 
 ntsa::Error UriAuthority::setHost(const bslstl::StringRef& value)
 {
+    bslstl::StringRef input = value;
+
+    if (input.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (input[0] == '[') {
+        input.remove_prefix(1);
+
+        if (input.empty()) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (input[input.size() - 1] == ']') {
+            input.remove_suffix(1);
+
+            if (input.empty()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
     if (d_host.isNull()) {
-        if (!d_host.makeValue().parse(value)) {
+        if (!d_host.makeValue().parse(input)) {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
     }
     else {
-        if (!d_host.value().parse(value)) {
+        if (!d_host.value().parse(input)) {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
     }
@@ -513,6 +1104,48 @@ ntsa::Error UriAuthority::setTransport(ntsa::Transport::Value value)
         d_transport.value() = value;
     }
 
+    if (value != ntsa::Transport::e_UNDEFINED) {
+        const ntsa::TransportProtocol::Value transportProtocol = 
+            ntsa::Transport::getProtocol(value);
+
+        const ntsa::TransportDomain::Value transportDomain = 
+            ntsa::Transport::getDomain(value);
+
+        const ntsa::TransportMode::Value transportMode = 
+            ntsa::Transport::getMode(value);
+
+        if (d_transportSuite.isNull()) {
+            d_transportSuite.makeValue();
+        }
+
+        d_transportSuite.value().setTransportProtocol(transportProtocol);
+        d_transportSuite.value().setTransportDomain(transportDomain);
+        d_transportSuite.value().setTransportMode(transportMode);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriAuthority::setTransportSuite(const ntsa::TransportSuite& value)
+{
+    if (d_transportSuite.isNull()) {
+        d_transportSuite.makeValue(value);
+    }
+    else {
+        d_transportSuite.value() = value;
+    }
+
+    ntsa::Transport::Value transport = value.transport();
+
+    if (transport != ntsa::Transport::e_UNDEFINED) {
+        if (d_transport.isNull()) {
+            d_transport.makeValue(transport);
+        }
+        else {
+            d_transport.value() = transport;
+        }
+    }
+
     return ntsa::Error();
 }
 
@@ -537,10 +1170,17 @@ const bdlb::NullableValue<ntsa::Transport::Value>& UriAuthority::transport()
     return d_transport;
 }
 
+const bdlb::NullableValue<ntsa::TransportSuite>& UriAuthority::transportSuite()
+    const
+{
+    return d_transportSuite;
+}
+
 bool UriAuthority::equals(const UriAuthority& other) const
 {
     return d_user == other.d_user && d_host == other.d_host &&
-           d_port == other.d_port && d_transport == other.d_transport;
+           d_port == other.d_port && d_transport == other.d_transport &&
+           d_transportSuite == other.d_transportSuite;
 }
 
 bool UriAuthority::less(const UriAuthority& other) const
@@ -569,7 +1209,15 @@ bool UriAuthority::less(const UriAuthority& other) const
         return false;
     }
 
-    return d_transport < other.d_transport;
+    if (d_transport < other.d_transport) {
+        return true;
+    }
+
+    if (other.d_transport < d_transport) {
+        return false;
+    }
+
+    return d_transportSuite < other.d_transportSuite;
 }
 
 bsl::ostream& UriAuthority::print(bsl::ostream& stream,
@@ -593,6 +1241,10 @@ bsl::ostream& UriAuthority::print(bsl::ostream& stream,
 
     if (!d_transport.isNull()) {
         printer.printAttribute("transport", d_transport);
+    }
+
+    if (!d_transportSuite.isNull()) {
+        printer.printAttribute("transportSuite", d_transportSuite);
     }
 
     printer.end();
@@ -1024,6 +1676,588 @@ bool operator<(const UriQuery& lhs, const UriQuery& rhs)
     return lhs.less(rhs);
 }
 
+UriProfileEntry::UriProfileEntry(bslma::Allocator* basicAllocator)
+: d_scheme(basicAllocator)
+, d_canonicalScheme(basicAllocator)
+, d_transportSuite(basicAllocator)
+{
+}
+
+UriProfileEntry::UriProfileEntry(const UriProfileEntry& original,
+                                 bslma::Allocator*      basicAllocator)
+: d_scheme(original.d_scheme, basicAllocator)
+, d_canonicalScheme(original.d_canonicalScheme, basicAllocator)
+, d_transportSuite(original.d_transportSuite, basicAllocator)
+{
+}
+
+UriProfileEntry::~UriProfileEntry()
+{
+}
+
+UriProfileEntry& UriProfileEntry::operator=(const UriProfileEntry& other)
+{
+    if (this != &other) {
+        d_scheme            = other.d_scheme;
+        d_canonicalScheme   = other.d_canonicalScheme;
+        d_transportSuite    = other.d_transportSuite;
+    }
+
+    return *this;
+}
+
+void UriProfileEntry::reset()
+{
+    d_scheme.clear();
+    d_canonicalScheme.clear();
+    d_transportSuite.reset();
+}
+
+void UriProfileEntry::setScheme(const bslstl::StringRef& value)
+{
+    d_scheme = value;
+}
+
+void UriProfileEntry::setCanonicalScheme(const bslstl::StringRef& value)
+{
+    d_canonicalScheme = value;
+}
+
+void UriProfileEntry::setTransportSuite(const ntsa::TransportSuite& value)
+{
+    d_transportSuite = value;
+}
+
+const bsl::string& UriProfileEntry::scheme() const
+{
+    return d_scheme;
+}
+
+const bsl::string& UriProfileEntry::canonicalScheme() const
+{
+    return d_canonicalScheme;
+}
+
+const ntsa::TransportSuite& UriProfileEntry::transportSuite() const
+{
+    return d_transportSuite;
+}
+
+bslma::Allocator* UriProfileEntry::allocator() const
+{
+    return d_scheme.get_allocator().mechanism();
+}
+
+bool UriProfileEntry::equals(const UriProfileEntry& other) const
+{
+    return d_scheme          == other.d_scheme &&
+           d_canonicalScheme == other.d_canonicalScheme &&
+           d_transportSuite  == other.d_transportSuite;
+}
+
+bool UriProfileEntry::less(const UriProfileEntry& other) const
+{
+    if (d_scheme < other.d_scheme) {
+        return true;
+    }
+
+    if (other.d_scheme < d_scheme) {
+        return false;
+    }
+
+    if (d_canonicalScheme < other.d_canonicalScheme) {
+        return true;
+    }
+
+    if (other.d_canonicalScheme < d_canonicalScheme) {
+        return false;
+    }
+
+    return d_transportSuite < other.d_transportSuite;
+}
+
+bsl::ostream& UriProfileEntry::print(bsl::ostream& stream,
+                                     int           level,
+                                     int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+
+    printer.printAttribute("scheme", d_scheme);
+    printer.printAttribute("canonicalScheme", d_canonicalScheme);
+    printer.printAttribute("transportSuite", d_transportSuite);
+
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const UriProfileEntry& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const UriProfileEntry& lhs, const UriProfileEntry& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const UriProfileEntry& lhs, const UriProfileEntry& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const UriProfileEntry& lhs, const UriProfileEntry& rhs)
+{
+    return lhs.less(rhs);
+}
+
+// clang-format off
+const UriProfile::Data UriProfile::k_DATA[13] = {
+    { "",               "", TP::e_TCP,   TD::e_UNDEFINED, TM::e_STREAM   },
+    { "tcp",            "", TP::e_TCP,   TD::e_UNDEFINED, TM::e_STREAM   },
+    { "tcp+ipv4",       "", TP::e_TCP,   TD::e_IPV4,      TM::e_STREAM   },
+    { "tcp+ipv6",       "", TP::e_TCP,   TD::e_IPV6,      TM::e_STREAM   },
+    { "local",          "", TP::e_LOCAL, TD::e_LOCAL,     TM::e_STREAM   },
+    { "unix",           "", TP::e_LOCAL, TD::e_LOCAL,     TM::e_STREAM   },
+    { "udp",            "", TP::e_UDP,   TD::e_UNDEFINED, TM::e_DATAGRAM },
+    { "udp+ipv4",       "", TP::e_UDP,   TD::e_IPV4,      TM::e_DATAGRAM },
+    { "udp+ipv6",       "", TP::e_UDP,   TD::e_IPV6,      TM::e_DATAGRAM },
+    { "local+dgram",    "", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+    { "local+datagram", "", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+    { "unix+dgram",     "", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM },
+    { "unix+datagram",  "", TP::e_LOCAL, TD::e_LOCAL,     TM::e_DATAGRAM }
+};
+// clang-format on
+
+UriProfile::UriProfile(bslma::Allocator* basicAllocator)
+: d_entryMap(basicAllocator)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+}
+
+UriProfile::~UriProfile()
+{
+}
+
+ntsa::Error UriProfile::registerImplicit()
+{
+    ntsa::Error error;
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string canonicalScheme;
+        if (data.transportProtocol == ntsa::TransportProtocol::e_TCP) {
+            canonicalScheme = "tcp";
+        }
+        else if (data.transportProtocol == ntsa::TransportProtocol::e_UDP) {
+            canonicalScheme = "udp";
+        }
+        else if (data.transportProtocol == ntsa::TransportProtocol::e_LOCAL) {
+            canonicalScheme = "local";
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        error = this->registerEntry(data.scheme, 
+                                    canonicalScheme, 
+                                    bslstl::StringRef(), 
+                                    ntsa::TransportSecurity::e_UNDEFINED, 
+                                    data.transportProtocol, 
+                                    data.transportDomain, 
+                                    data.transportMode);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriProfile::registerImplicit(const bsl::string& application)
+{
+    ntsa::Error error;
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string_view canonicalSchemeSuffix = data.canonicalScheme;
+        
+        bsl::string canonicalScheme = application;
+        if (!canonicalSchemeSuffix.empty()) {
+            canonicalScheme.append(1, '+');
+            canonicalScheme.append(canonicalSchemeSuffix);
+        }
+
+        error = this->registerEntry(data.scheme, 
+                                    canonicalScheme, 
+                                    application, 
+                                    ntsa::TransportSecurity::e_UNDEFINED, 
+                                    data.transportProtocol, 
+                                    data.transportDomain, 
+                                    data.transportMode);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriProfile::registerExplicit(const bsl::string& application)
+{
+    ntsa::Error error;
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string_view schemeSuffix = data.scheme;
+        bsl::string_view canonicalSchemeSuffix = data.canonicalScheme;
+
+        bsl::string scheme = application;
+        if (!schemeSuffix.empty()) {
+            scheme.append(1, '+');
+            scheme.append(schemeSuffix);
+        }
+        
+        bsl::string canonicalScheme = application;
+        if (!canonicalSchemeSuffix.empty()) {
+            canonicalScheme.append(1, '+');
+            canonicalScheme.append(canonicalSchemeSuffix);
+        }
+
+        error = this->registerEntry(scheme, 
+                                    canonicalScheme, 
+                                    application, 
+                                    ntsa::TransportSecurity::e_UNDEFINED, 
+                                    data.transportProtocol, 
+                                    data.transportDomain, 
+                                    data.transportMode);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriProfile::registerExplicit(
+    const bsl::string&             application, 
+    ntsa::TransportSecurity::Value transportSecurity)
+{
+    ntsa::Error error;
+
+    const bsl::size_t k_DATA_COUNT = sizeof(k_DATA) / sizeof(k_DATA[0]);
+
+    for (bsl::size_t i = 0; i < k_DATA_COUNT; ++i) {
+        Data data = k_DATA[i];
+
+        bsl::string_view schemeSuffix = data.scheme;
+        bsl::string_view canonicalSchemeSuffix = data.canonicalScheme;
+
+        bsl::string secureScheme = application;
+        if (!schemeSuffix.empty()) {
+            secureScheme.append(1, '+');
+            secureScheme.append(schemeSuffix);
+        }
+        
+        bsl::string secureCanonicalScheme = application;
+        if (!canonicalSchemeSuffix.empty()) {
+            secureCanonicalScheme.append(1, '+');
+            secureCanonicalScheme.append(canonicalSchemeSuffix);
+        }
+
+        error = this->registerEntry(secureScheme, 
+                                    secureCanonicalScheme, 
+                                    application, 
+                                    transportSecurity, 
+                                    data.transportProtocol, 
+                                    data.transportDomain, 
+                                    data.transportMode);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriProfile::registerEntry(const ntsa::UriProfileEntry& entry)
+{    
+    EntryMap::iterator it = d_entryMap.find(entry.scheme());
+    if (it != d_entryMap.end()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    d_entryMap.emplace(entry.scheme(), entry);
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriProfile::registerEntry(
+        const bslstl::StringRef&       scheme,
+        const bslstl::StringRef&       canonicalScheme,
+        const bslstl::StringRef&       application,
+        ntsa::TransportSecurity::Value transportSecurity,
+        ntsa::TransportProtocol::Value transportProtocol,
+        ntsa::TransportDomain::Value   transportDomain,
+        ntsa::TransportMode::Value     transportMode)
+{
+    ntsa::TransportSuite transportSuite;
+
+    transportSuite.setApplication(application);
+    transportSuite.setTransportSecurity(transportSecurity);
+    transportSuite.setTransportProtocol(transportProtocol);
+    transportSuite.setTransportDomain(transportDomain);
+    transportSuite.setTransportMode(transportMode);
+
+    ntsa::UriProfileEntry entry;
+
+    entry.setScheme(scheme);
+    entry.setCanonicalScheme(canonicalScheme);
+    entry.setTransportSuite(transportSuite);
+
+    return this->registerEntry(entry);
+}
+
+ntsa::Error UriProfile::parseScheme(
+        bsl::string*             canonicalScheme,
+        const bslstl::StringRef& scheme) const
+{
+    canonicalScheme->clear();
+
+    bsl::string key = scheme;
+
+    EntryMap::const_iterator it = d_entryMap.find(key);
+    if (it == d_entryMap.end()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    const ntsa::UriProfileEntry& entry = it->second;
+
+    *canonicalScheme = entry.canonicalScheme();
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriProfile::parseScheme(
+        bsl::string*                    canonicalScheme,
+        ntsa::TransportSuite*           transportSuite,
+        const bslstl::StringRef&        scheme) const
+{
+    canonicalScheme->clear();
+    transportSuite->reset();
+
+    bsl::string key = scheme;
+
+    EntryMap::const_iterator it = d_entryMap.find(key);
+    if (it == d_entryMap.end()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    const ntsa::UriProfileEntry& entry = it->second;
+
+    *canonicalScheme = entry.canonicalScheme();
+    *transportSuite  = entry.transportSuite();
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriProfile::parseScheme(
+        bsl::string*                               canonicalScheme,
+        bdlb::NullableValue<ntsa::TransportSuite>* transportSuite,
+        const bslstl::StringRef&                   scheme) const
+{
+    canonicalScheme->clear();
+    transportSuite->reset();
+
+    bsl::string key = scheme;
+
+    EntryMap::const_iterator it = d_entryMap.find(key);
+    if (it == d_entryMap.end()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    const ntsa::UriProfileEntry& entry = it->second;
+
+    *canonicalScheme = entry.canonicalScheme();
+    transportSuite->makeValue(entry.transportSuite());
+
+    return ntsa::Error();
+}
+
+ntsa::Error UriProfile::normalize(ntsa::Uri* uri) const
+{
+    ntsa::Error error;
+
+    if (uri->d_authority.isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntsa::UriAuthority& authority = uri->d_authority.value();
+
+    if (authority.d_host.isNull()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    ntsa::Host& host = authority.d_host.value();
+
+    if (host.isLocalName()) {
+        if (authority.d_port.has_value()) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+    else if (host.isDomainName() || host.isIp()) {
+        if (authority.d_port.isNull()) {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+    else {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (authority.d_transport.has_value() && authority.d_transport.value() ==
+        ntsa::Transport::e_UNDEFINED) 
+    {
+        authority.d_transport.reset();
+    }
+
+    if (uri->d_scheme.isNull() || uri->d_scheme.value().empty()) {
+        bsl::string defaultScheme;
+        if (host.isLocalName()) {
+            defaultScheme = "local";
+        }
+
+        if (authority.d_transportSuite.has_value()) {
+            error = this->parseScheme(&uri->d_scheme.makeValue(), 
+                                      defaultScheme);
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            error = this->parseScheme(&uri->d_scheme.makeValue(), 
+                                      &authority.d_transportSuite.makeValue(), 
+                                      defaultScheme);
+            if (error) {
+                return error;
+            }
+
+            const ntsa::Transport::Value transport = 
+                authority.d_transportSuite.value().transport();
+
+            if (transport != ntsa::Transport::e_UNDEFINED) {
+                authority.d_transport.makeValue(transport);
+            }
+        }
+    }
+    else {
+        if (authority.d_transportSuite.isNull()) {
+            bsl::string canonicalScheme;
+            error = this->parseScheme(&canonicalScheme, 
+                                      &authority.d_transportSuite.makeValue(), 
+                                      uri->d_scheme.value());
+            if (error) {
+                return error;
+            }
+
+            uri->d_scheme.value() = canonicalScheme;
+
+            const ntsa::Transport::Value transport = 
+                authority.d_transportSuite.value().transport();
+
+            if (transport != ntsa::Transport::e_UNDEFINED) {
+                authority.d_transport.makeValue(transport);
+            }
+        }
+    }
+
+    BSLS_ASSERT(uri->d_scheme.has_value());
+    BSLS_ASSERT(uri->d_authority.has_value());
+    BSLS_ASSERT(uri->d_authority.value().d_host.has_value());
+    BSLS_ASSERT(uri->d_authority.value().d_transportSuite.has_value());
+
+    if (host.isIp()) {
+        if (host.ip().isV4()) {
+            if (authority.d_transportSuite.value().transportDomain() ==
+                ntsa::TransportDomain::e_UNDEFINED)
+            {
+                authority.d_transportSuite.value().setTransportDomain(
+                    ntsa::TransportDomain::e_IPV4);
+            }
+            else if (authority.d_transportSuite.value().transportDomain() !=
+                    ntsa::TransportDomain::e_IPV4)
+            {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+        else if (host.ip().isV6()) {
+            if (authority.d_transportSuite.value().transportDomain() ==
+                ntsa::TransportDomain::e_UNDEFINED)
+            {
+                authority.d_transportSuite.value().setTransportDomain(
+                    ntsa::TransportDomain::e_IPV6);
+            }
+            else if (authority.d_transportSuite.value().transportDomain() !=
+                    ntsa::TransportDomain::e_IPV6)
+            {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+    else if (host.isLocalName()) {
+        if (authority.d_transportSuite.value().transportProtocol() ==
+            ntsa::TransportProtocol::e_UNDEFINED)
+        {
+            authority.d_transportSuite.value().setTransportProtocol(
+                ntsa::TransportProtocol::e_LOCAL);
+        }
+        else if (authority.d_transportSuite.value().transportProtocol() !=
+            ntsa::TransportProtocol::e_LOCAL)
+        {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+
+        if (authority.d_transportSuite.value().transportDomain() ==
+            ntsa::TransportDomain::e_UNDEFINED)
+        {
+            authority.d_transportSuite.value().setTransportDomain(
+                ntsa::TransportDomain::e_LOCAL);
+        }
+        else if (authority.d_transportSuite.value().transportDomain() !=
+                 ntsa::TransportDomain::e_LOCAL)
+        {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (authority.d_transportSuite.value().transportMode() ==
+        ntsa::TransportMode::e_UNDEFINED)
+    {
+        authority.d_transportSuite.value().setTransportMode(
+            ntsa::TransportMode::e_STREAM);
+    }
+
+    const ntsa::Transport::Value transport = 
+        authority.d_transportSuite.value().transport();
+
+    if (transport != ntsa::Transport::e_UNDEFINED) {
+        authority.d_transport.makeValue(transport);
+    }
+
+    return ntsa::Error();
+}
+
 Uri::Uri(bslma::Allocator* basicAllocator)
 : d_scheme(basicAllocator)
 , d_authority(basicAllocator)
@@ -1268,6 +2502,26 @@ ntsa::Error Uri::setTransport(ntsa::Transport::Value value)
     }
     else {
         error = d_authority.value().setTransport(value);
+        if (error) {
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error Uri::setTransportSuite(const ntsa::TransportSuite& value)
+{
+    ntsa::Error error;
+
+    if (d_authority.isNull()) {
+        error = d_authority.makeValue().setTransportSuite(value);
+        if (error) {
+            return error;
+        }
+    }
+    else {
+        error = d_authority.value().setTransportSuite(value);
         if (error) {
             return error;
         }
@@ -1616,6 +2870,264 @@ bool Uri::parse(const bslstl::StringRef& text)
     return true;
 }
 
+bool Uri::parse(const bslstl::StringRef& text, const ntsa::UriProfile& profile)
+{
+    ntsa::Error error;
+
+    this->reset();
+
+    if (text.empty()) {
+        return false;
+    }
+
+    bsl::string_view input = text;
+
+    bool isHierarchical = false;
+    NTSCFG_WARNING_UNUSED(isHierarchical);
+
+    // Parse "<scheme>:"
+
+    bdlb::NullableValue<ntsa::TransportSuite> transportSuite;
+
+    error = ntsa::UriUtil::parseScheme(&input, 
+                                       &d_scheme.makeValue(), 
+                                       &transportSuite,
+                                       profile);
+    if (error) {
+        d_scheme.reset();
+        if (error != ntsa::Error(ntsa::Error::e_EOF)) {
+            this->reset();
+            return false;
+        }
+    }
+
+    // Parse "//"
+
+    if (input.size() >= 2 && input[0] == '/' && input[1] == '/') {
+        input.remove_prefix(2);
+        isHierarchical = true;
+    }
+
+    if (!input.empty()) {
+        d_authority.makeValue();
+
+        // Parse "[<host>]:<port>"
+
+        if (input[0] == '[') {
+            error = ntsa::UriUtil::parseHostBracket(
+                &input, 
+                &d_authority.value().d_host);
+            if (error) {
+                this->reset();
+                return false;
+            }
+
+            if (!input.empty()) {
+                if (input[0] == ':') {
+                    input.remove_prefix(1);
+
+                    error = ntsa::UriUtil::parsePort(
+                        &input, 
+                        &d_authority.value().d_port);
+                    if (error) {
+                        this->reset();
+                        return false;
+                    }
+                }
+            }
+        }
+        else {
+            // Parse "user@"
+
+            error = ntsa::UriUtil::parseUser(
+                &input, 
+                &d_authority.value().d_user);
+            if (error) {
+                if (error != ntsa::Error(ntsa::Error::e_EOF)) {
+                    this->reset();
+                    return false;
+                }
+            }
+
+            if (!input.empty()) {
+                if (input[0] == '[') {
+                    error = ntsa::UriUtil::parseHostBracket(
+                    &input, 
+                    &d_authority.value().d_host);
+                    if (error) {
+                        this->reset();
+                        return false;
+                    }
+
+                    if (!input.empty()) {
+                        if (input[0] == ':') {
+                            input.remove_prefix(1);
+
+                            error = ntsa::UriUtil::parsePort(
+                                &input, &d_authority.value().d_port);
+                            if (error) {
+                                this->reset();
+                                return false;
+                            }
+                        }
+                    }
+                }
+                else {
+                    error = ntsa::UriUtil::parseHost(
+                        &input, 
+                        &d_authority.value().d_host);
+                    if (error) {
+                        if (error != ntsa::Error(ntsa::Error::e_EOF)) {
+                            this->reset();
+                            return false;
+                        }
+                    }
+
+                    if (!input.empty()) {
+                        if (input[0] == ':') {
+                            input.remove_prefix(1);
+
+                            error = ntsa::UriUtil::parsePort(
+                                &input, 
+                                &d_authority.value().d_port);
+                            if (error) {
+                                this->reset();
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (d_authority.value().d_user.isNull() &&
+        d_authority.value().d_host.isNull() &&
+        d_authority.value().d_port.isNull() &&
+        d_authority.value().d_transport.isNull() &&
+        d_authority.value().d_transportSuite.isNull())
+    {
+        d_authority.reset();
+    }
+
+    // Parse /<path>
+
+    if (!input.empty()) {
+        if (input[0] == '/') {
+            error = ntsa::UriUtil::parsePath(&input, &d_path);
+            if (error) {
+                if (error != ntsa::Error(ntsa::Error::e_EOF)) {
+                    this->reset();
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Parse ?<query>.
+
+    if (!input.empty()) {
+        if (input[0] == '?') {
+            error = ntsa::UriUtil::parseQuery(&input, &d_query);
+            if (error) {
+                if (error != ntsa::Error(ntsa::Error::e_EOF)) {
+                    this->reset();
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Parse #<fragment>.
+
+    if (!input.empty()) {
+        if (input[0] == '#') {
+            error = ntsa::UriUtil::parseFragment(&input, &d_fragment);
+            if (error) {
+                if (error != ntsa::Error(ntsa::Error::e_EOF)) {
+                    this->reset();
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Default scheme.
+
+    if ((d_authority.has_value()) && 
+        (d_scheme.isNull() || d_scheme.value().empty())) 
+    {
+        bsl::string defaultScheme = "";
+        if (d_authority.has_value()) {
+            if (d_authority.value().host().has_value()) {
+                if (d_authority.value().host().value().isLocalName()) {
+                    defaultScheme = "local";
+                }
+            }
+        }
+
+        if (d_scheme.isNull() || d_scheme.value().empty()) {
+            error = profile.parseScheme(
+                &d_scheme.makeValue(),
+                &transportSuite,
+                defaultScheme);
+            if (error) {
+                d_scheme.reset();
+                if (error != ntsa::Error(ntsa::Error::e_EOF)) {
+                    this->reset();
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Validate and set transport. Override the transport protocol and/or
+    // transport domain based upon the host, if defined.
+
+    if (d_authority.value().d_host.has_value()) {
+        if (d_authority.value().d_host.value().isIp()) {
+            if (d_authority.value().d_host.value().ip().isV4()) {
+                if (transportSuite.isNull()) {
+                    transportSuite.makeValue();
+                }
+                transportSuite.value().setTransportDomain(
+                    ntsa::TransportDomain::e_IPV4);
+            }
+            else if (d_authority.value().d_host.value().ip().isV6()) {
+                if (transportSuite.isNull()) {
+                    transportSuite.makeValue();
+                }
+                transportSuite.value().setTransportDomain(
+                    ntsa::TransportDomain::e_IPV6);
+            }
+        }
+        else if (d_authority.value().d_host.value().isLocalName()) {
+            if (transportSuite.isNull()) {
+                transportSuite.makeValue();
+            }
+            transportSuite.value().setTransportProtocol(
+                ntsa::TransportProtocol::e_LOCAL);
+            transportSuite.value().setTransportDomain(
+                ntsa::TransportDomain::e_LOCAL);
+        }
+    }
+
+    if (d_authority.has_value()) {
+        if (transportSuite.has_value()) {
+            d_authority.value().d_transportSuite = transportSuite;
+
+            ntsa::Transport::Value transport = 
+                transportSuite.value().transport();
+
+            if (transport != ntsa::Transport::e_UNDEFINED) {
+                d_authority.value().d_transport.makeValue(transport);
+            }
+        }
+    }
+
+    return true;
+}
+
 const bdlb::NullableValue<bsl::string>& Uri::scheme() const
 {
     return d_scheme;
@@ -1737,14 +3249,15 @@ bsl::ostream& Uri::print(bsl::ostream& stream,
                     stream << d_authority.value().host().value().ip().v4();
                 }
                 else if (d_authority.value().host().value().ip().isV6()) {
-                    stream << '['
-                           << d_authority.value().host().value().ip().v6()
-                           << ']';
+                    stream << '[';
+                    stream << d_authority.value().host().value().ip().v6();
+                    stream << ']';
                 }
             }
             else if (d_authority.value().host().value().isLocalName()) {
-                stream << '@' << d_authority.value().host().value().localName()
-                       << '@';
+                stream << '[';
+                stream << d_authority.value().host().value().localName();
+                stream << ']';
             }
         }
 
@@ -1836,6 +3349,71 @@ bsl::ostream& Uri::print(bsl::ostream& stream,
     }
 
     return stream;
+}
+
+void Uri::dump(const bsl::string& input, bsl::ostream& stream) const
+{
+    stream << "Uri:";
+    stream << "\n";
+    stream << "    Input:        " << input << bsl::endl;
+    stream << "    Scheme:       " << d_scheme << bsl::endl;
+
+    if (d_authority.has_value()) {
+
+        const ntsa::UriAuthority& authority = d_authority.value();
+
+        if (d_authority.value().transportSuite().has_value()) {
+            const ntsa::TransportSuite& transportSuite = 
+                authority.transportSuite().value();
+
+            stream << "    Security:     "; 
+            stream << transportSuite.transportSecurity() << bsl::endl;
+            stream << "    Protocol:     ";
+            stream << transportSuite.transportProtocol() << bsl::endl;
+            stream << "    Domain:       ";
+            stream << transportSuite.transportDomain() << bsl::endl;
+            stream << "    Mode:         ";
+            stream << transportSuite.transportMode() << bsl::endl;
+            stream << "    Transport:    ";
+            stream << transportSuite.transport() << bsl::endl;
+        }
+
+        stream << "    User:         ";
+        stream << d_authority.value().d_user << bsl::endl;
+
+        if (d_authority.value().d_host.has_value()) {
+            if (d_authority.value().d_host.value().isDomainName()) {
+                stream << "    Domain Name:  " 
+                       << d_authority.value().d_host.value().domainName()
+                       << bsl::endl;
+
+            }
+            else if (d_authority.value().d_host.value().isIp()) {
+                if (d_authority.value().d_host.value().ip().isV4()) {
+                    stream << "    IPv4 Address: " 
+                           << d_authority.value().d_host.value().ip().v4()
+                           << bsl::endl;
+                }
+                else if (d_authority.value().d_host.value().ip().isV6()) {
+                    stream << "    IPv6 Address: " 
+                           << d_authority.value().d_host.value().ip().v6()
+                           << bsl::endl;
+                }
+            }
+            else if (d_authority.value().d_host.value().isLocalName()) {
+                stream << "    Local Name:   " 
+                       << d_authority.value().d_host.value().localName()
+                       << bsl::endl;
+            }
+        }
+
+        stream << "    Port:         ";
+        stream << d_authority.value().d_port << bsl::endl;
+    }
+    stream << "    Path:         " << d_path << bsl::endl;
+    stream << "    Query:        " << d_query << bsl::endl;
+    stream << "    Fragment:     " << d_fragment << bsl::endl;
+    stream << "    Text:         " << *this << bsl::endl;
 }
 
 const bdlat_AttributeInfo* Uri::lookupAttributeInfo(int id)

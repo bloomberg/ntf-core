@@ -19,9 +19,71 @@
 BSLS_IDENT_RCSID(ntsa_protocol_cpp, "$Id$ $CSID$")
 
 #include <bdlb_string.h>
+#include <bslim_printer.h>
 
 namespace BloombergLP {
 namespace ntsa {
+
+int TransportSecurity::fromInt(TransportSecurity::Value* result, int number)
+{
+    switch (number) {
+    case TransportSecurity::e_UNDEFINED:
+    case TransportSecurity::e_TLS:
+    case TransportSecurity::e_SSH:
+        *result = static_cast<TransportSecurity::Value>(number);
+        return 0;
+    default:
+        return -1;
+    }
+}
+
+int TransportSecurity::fromString(TransportSecurity::Value* result,
+                                  const bslstl::StringRef&  string)
+{
+    if (bdlb::String::areEqualCaseless(string, "UNDEFINED")) {
+        *result = e_UNDEFINED;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "TLS")) {
+        *result = e_TLS;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "SSH")) {
+        *result = e_SSH;
+        return 0;
+    }
+
+    return -1;
+}
+
+const char* TransportSecurity::toString(TransportSecurity::Value value)
+{
+    switch (value) {
+    case e_UNDEFINED: {
+        return "UNDEFINED";
+    } break;
+    case e_TLS: {
+        return "TLS";
+    } break;
+    case e_SSH: {
+        return "SSH";
+    } break;
+    }
+
+    BSLS_ASSERT(!"invalid enumerator");
+    return 0;
+}
+
+bsl::ostream& TransportSecurity::print(bsl::ostream&            stream,
+                                       TransportSecurity::Value value)
+{
+    return stream << toString(value);
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, TransportSecurity::Value rhs)
+{
+    return TransportSecurity::print(stream, rhs);
+}
 
 int TransportProtocol::fromInt(TransportProtocol::Value* result, int number)
 {
@@ -445,6 +507,276 @@ bsl::ostream& Transport::print(bsl::ostream& stream, Transport::Value value)
 bsl::ostream& operator<<(bsl::ostream& stream, Transport::Value rhs)
 {
     return Transport::print(stream, rhs);
+}
+
+TransportSuite::TransportSuite(bslma::Allocator* basicAllocator)
+: d_application(basicAllocator)
+, d_transportSecurity(ntsa::TransportSecurity::e_UNDEFINED)
+, d_transportProtocol(ntsa::TransportProtocol::e_UNDEFINED)
+, d_transportDomain(ntsa::TransportDomain::e_UNDEFINED)
+, d_transportMode(ntsa::TransportMode::e_UNDEFINED)
+{
+}
+
+TransportSuite::TransportSuite(const TransportSuite& original,
+                                 bslma::Allocator*      basicAllocator)
+: d_application(original.d_application, basicAllocator)
+, d_transportSecurity(original.d_transportSecurity)
+, d_transportProtocol(original.d_transportProtocol)
+, d_transportDomain(original.d_transportDomain)
+, d_transportMode(original.d_transportMode)
+{
+}
+
+TransportSuite::~TransportSuite()
+{
+}
+
+TransportSuite& TransportSuite::operator=(const TransportSuite& other)
+{
+    if (this != &other) {
+        d_application       = other.d_application;
+        d_transportSecurity = other.d_transportSecurity;
+        d_transportProtocol = other.d_transportProtocol;
+        d_transportDomain   = other.d_transportDomain;
+        d_transportMode     = other.d_transportMode;
+    }
+
+    return *this;
+}
+
+void TransportSuite::reset()
+{
+    d_application.clear();
+    d_transportSecurity = ntsa::TransportSecurity::e_UNDEFINED;
+    d_transportProtocol = ntsa::TransportProtocol::e_UNDEFINED;
+    d_transportDomain   = ntsa::TransportDomain::e_UNDEFINED;
+    d_transportMode     = ntsa::TransportMode::e_UNDEFINED;
+}
+
+void TransportSuite::setApplication(const bslstl::StringRef& value)
+{
+    d_application = value;
+}
+
+void TransportSuite::setTransportSecurity(
+    ntsa::TransportSecurity::Value value)
+{
+    d_transportSecurity = value;
+}
+
+void TransportSuite::setTransportProtocol(
+    ntsa::TransportProtocol::Value value)
+{
+    d_transportProtocol = value;
+}
+
+void TransportSuite::setTransportDomain(ntsa::TransportDomain::Value value)
+{
+    d_transportDomain = value;
+}
+
+void TransportSuite::setTransportMode(ntsa::TransportMode::Value value)
+{
+    d_transportMode = value;
+}
+
+const bsl::string& TransportSuite::application() const
+{
+    return d_application;
+}
+
+ntsa::TransportSecurity::Value TransportSuite::transportSecurity() const
+{
+    return d_transportSecurity;
+}
+
+ntsa::TransportProtocol::Value TransportSuite::transportProtocol() const
+{
+    return d_transportProtocol;
+}
+
+ntsa::TransportDomain::Value TransportSuite::transportDomain() const
+{
+    return d_transportDomain;
+}
+
+ntsa::TransportMode::Value TransportSuite::transportMode() const
+{
+    return d_transportMode;
+}
+
+ntsa::Transport::Value TransportSuite::transport() const
+{
+    if (d_transportProtocol == ntsa::TransportProtocol::e_TCP) {
+        if (d_transportDomain == ntsa::TransportDomain::e_IPV4) {
+            if (d_transportMode == ntsa::TransportMode::e_STREAM) {
+                return ntsa::Transport::e_TCP_IPV4_STREAM;
+            }
+            else {
+                return ntsa::Transport::e_UNDEFINED;
+            }
+        }
+        else if (d_transportDomain == ntsa::TransportDomain::e_IPV6) {
+            if (d_transportMode == ntsa::TransportMode::e_STREAM) {
+                return ntsa::Transport::e_TCP_IPV6_STREAM;
+            }
+            else {
+                return ntsa::Transport::e_UNDEFINED;
+            }
+        }
+        else {
+            return ntsa::Transport::e_UNDEFINED;
+        }
+    }
+    else if (d_transportProtocol == ntsa::TransportProtocol::e_UDP) {
+        if (d_transportDomain == ntsa::TransportDomain::e_IPV4) {
+            if (d_transportMode == ntsa::TransportMode::e_DATAGRAM) {
+                return ntsa::Transport::e_UDP_IPV4_DATAGRAM;
+            }
+            else {
+                return ntsa::Transport::e_UNDEFINED;
+            }
+        }
+        else if (d_transportDomain == ntsa::TransportDomain::e_IPV6) {
+            if (d_transportMode == ntsa::TransportMode::e_DATAGRAM) {
+                return ntsa::Transport::e_UDP_IPV6_DATAGRAM;
+            }
+            else {
+                return ntsa::Transport::e_UNDEFINED;
+            }
+        }
+        else {
+            return ntsa::Transport::e_UNDEFINED;
+        }
+    }
+    else if (d_transportProtocol == ntsa::TransportProtocol::e_LOCAL) {
+        if (d_transportMode == ntsa::TransportMode::e_STREAM) {
+            return ntsa::Transport::e_LOCAL_STREAM;
+        }
+        else if (d_transportMode == ntsa::TransportMode::e_DATAGRAM) {
+            return ntsa::Transport::e_LOCAL_DATAGRAM;
+        }
+        else {
+            return ntsa::Transport::e_UNDEFINED;
+        }
+    }
+    else if (d_transportDomain == ntsa::TransportDomain::e_LOCAL) {
+        if (d_transportMode == ntsa::TransportMode::e_STREAM) {
+            return ntsa::Transport::e_LOCAL_STREAM;
+        }
+        else if (d_transportMode == ntsa::TransportMode::e_DATAGRAM) {
+            return ntsa::Transport::e_LOCAL_DATAGRAM;
+        }
+        else {
+            return ntsa::Transport::e_UNDEFINED;
+        }
+    }
+    else {
+        return ntsa::Transport::e_UNDEFINED;
+    }
+}
+
+bslma::Allocator* TransportSuite::allocator() const
+{
+    return d_application.get_allocator().mechanism();
+}
+
+bool TransportSuite::equals(const TransportSuite& other) const
+{
+    return d_application       == other.d_application &&
+           d_transportSecurity == other.d_transportSecurity &&
+           d_transportProtocol == other.d_transportProtocol &&
+           d_transportDomain   == other.d_transportDomain &&
+           d_transportMode     == other.d_transportMode;
+}
+
+bool TransportSuite::less(const TransportSuite& other) const
+{
+    if (d_application < other.d_application) {
+        return true;
+    }
+
+    if (other.d_application < d_application) {
+        return false;
+    }
+
+    if (d_transportSecurity < other.d_transportSecurity) {
+        return true;
+    }
+
+    if (other.d_transportSecurity < d_transportSecurity) {
+        return false;
+    }
+
+    if (d_transportProtocol < other.d_transportProtocol) {
+        return true;
+    }
+
+    if (other.d_transportProtocol < d_transportProtocol) {
+        return false;
+    }
+
+    if (d_transportDomain < other.d_transportDomain) {
+        return true;
+    }
+
+    if (other.d_transportDomain < d_transportDomain) {
+        return false;
+    }
+
+    return d_transportMode < other.d_transportMode;
+}
+
+bsl::ostream& TransportSuite::print(bsl::ostream& stream,
+                                     int           level,
+                                     int           spacesPerLevel) const
+{
+    bslim::Printer printer(&stream, level, spacesPerLevel);
+    printer.start();
+
+    if (!d_application.empty()) {
+        printer.printAttribute("application", d_application);
+    }
+
+    if (d_transportSecurity != ntsa::TransportSecurity::e_UNDEFINED) {
+        printer.printAttribute("security", d_transportSecurity);
+    }
+
+    if (d_transportProtocol != ntsa::TransportProtocol::e_UNDEFINED) {
+        printer.printAttribute("protocol", d_transportProtocol);
+    }
+
+    if (d_transportDomain != ntsa::TransportDomain::e_UNDEFINED) {
+        printer.printAttribute("domain", d_transportDomain);
+    }
+
+    if (d_transportMode != ntsa::TransportMode::e_UNDEFINED) {
+        printer.printAttribute("mode", d_transportMode);
+    }
+
+    printer.end();
+    return stream;
+}
+
+bsl::ostream& operator<<(bsl::ostream& stream, const TransportSuite& object)
+{
+    return object.print(stream, 0, -1);
+}
+
+bool operator==(const TransportSuite& lhs, const TransportSuite& rhs)
+{
+    return lhs.equals(rhs);
+}
+
+bool operator!=(const TransportSuite& lhs, const TransportSuite& rhs)
+{
+    return !operator==(lhs, rhs);
+}
+
+bool operator<(const TransportSuite& lhs, const TransportSuite& rhs)
+{
+    return lhs.less(rhs);
 }
 
 }  // close package namespace

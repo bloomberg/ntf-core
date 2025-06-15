@@ -106,6 +106,21 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase1)
             BSLS_LOG_TRACE("Host = %s", ss.str().c_str());
         }
     }
+
+    {
+        ntsa::Host host;
+        bool       valid = host.parse("/path/to/file");
+        NTSCFG_TEST_ASSERT(valid);
+        NTSCFG_TEST_ASSERT(host.localName().isPersistent());
+        NTSCFG_TEST_ASSERT(host.isLocalName());
+
+        {
+            bsl::stringstream ss;
+            ss << host;
+
+            BSLS_LOG_TRACE("Host = %s", ss.str().c_str());
+        }
+    }
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase2)
@@ -113,13 +128,15 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase2)
     ntsa::Host host1("192.168.1.250");
     ntsa::Host host2("2001:41c0::645:a65e:60ff:feda:589d");
     ntsa::Host host3("localhost.localdomain");
+    ntsa::Host host4("/path/to/file");
 
     bsl::unordered_set<ntsa::Host> hostSet;
     hostSet.insert(host1);
     hostSet.insert(host2);
     hostSet.insert(host3);
+    hostSet.insert(host4);
 
-    NTSCFG_TEST_ASSERT(hostSet.size() == 3);
+    NTSCFG_TEST_ASSERT(hostSet.size() == 4);
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase3)
@@ -175,7 +192,7 @@ NTSCFG_TEST_FUNCTION(ntsa::HostTest::verifyCase4)
 
     e1.push_back(ntsa::Host("ntf.example.com"));
     e1.push_back(ntsa::Host("10.26.55.100"));
-    e1.push_back(ntsa::Host("/tmp/ntf/socket"));
+    e1.push_back(ntsa::Host("/path/to/file"));
 
     bdlsb::MemOutStreamBuf osb;
 
