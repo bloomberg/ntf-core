@@ -1080,6 +1080,51 @@ class Uri
     /// Return the textual representation of this object.
     bsl::string text() const;
 
+    /// Return the application, or the empty string if no application is known.
+    bslstl::StringRef application() const;
+
+    /// Return the transport protocol, if known, or 
+    /// 'ntsa::TransportProtocol::e_UNDEFINED' otherwise.
+    ntsa::TransportProtocol::Value transportProtocol() const;
+
+    /// Return the transport domain, if known, or 
+    /// 'ntsa::TransportDomain::e_UNDEFINED' otherwise.
+    ntsa::TransportDomain::Value transportDomain() const;
+
+    /// Return the transport mode, if known, or 
+    /// 'ntsa::TransportMode::e_UNDEFINED' otherwise.
+    ntsa::TransportMode::Value transportMode() const;
+
+    /// Return the transport, if each of the transport protocol, domain, and 
+    /// mode are known, or 'ntsa::Transport::e_UNDEFINED' otherwise.
+    ntsa::Transport::Value transport() const;
+
+    /// Return true if the transport mode indicates the URI's transport has
+    /// stream semantics, otherwise return false.
+    bool isStream() const;
+
+    /// Return true if the transport mode indicates the URI's transport has
+    /// datagram semantics, otherwise return false.
+    bool isDatagram() const;
+
+    /// Return true if either the transport domain is the Internet Protocol
+    /// version 4 (IPv4) domain, or the host is defined and represents an
+    /// explicit IPv4 address, otherwise return false.
+    bool isIpv4() const;
+
+    /// Return true if either the transport domain is the Internet Protocol
+    /// version 6 (IPv6) domain, or the host is defined and represents an
+    /// explicit IPv6 address, otherwise return false.
+    bool isIpv6() const;
+
+    /// Return true if the transport domain is the local (a.k.a. Unix) domain,
+    /// otherwise return false.
+    bool isLocal() const;
+
+    /// Return true if either the host is defined and indicates the local host,
+    /// or the transport domain is the local (a.k.a. Unix) domain.
+    bool isLocalhost() const;
+
     /// Return true if this object has the same value as the specified
     /// 'other' object, otherwise return false.
     bool equals(const Uri& other) const;
