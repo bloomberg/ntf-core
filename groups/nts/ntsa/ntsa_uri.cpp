@@ -3160,6 +3160,181 @@ bsl::string Uri::text() const
     return ss.str();
 }
 
+
+bslstl::StringRef Uri::application() const
+{
+    if (d_authority.has_value() && 
+        d_authority.value().transportSuite().has_value())
+    {
+        return d_authority.value().transportSuite().value().application();
+    }
+    else {
+        return bslstl::StringRef();
+    }
+}
+
+ntsa::TransportProtocol::Value Uri::transportProtocol() const
+{
+    if (d_authority.has_value() && 
+        d_authority.value().transportSuite().has_value())
+    {
+        return 
+            d_authority.value().transportSuite().value().transportProtocol();
+    }
+    else {
+        return ntsa::TransportProtocol::e_UNDEFINED;
+    }
+}
+
+ntsa::TransportDomain::Value Uri::transportDomain() const
+{
+    if (d_authority.has_value() && 
+        d_authority.value().transportSuite().has_value())
+    {
+        return d_authority.value().transportSuite().value().transportDomain();
+    }
+    else {
+        return ntsa::TransportDomain::e_UNDEFINED;
+    }
+}
+
+ntsa::TransportMode::Value Uri::transportMode() const
+{
+    if (d_authority.has_value() && 
+        d_authority.value().transportSuite().has_value())
+    {
+        return 
+            d_authority.value().transportSuite().value().transportMode();
+    }
+    else {
+        return ntsa::TransportMode::e_UNDEFINED;
+    }
+}
+
+ntsa::Transport::Value Uri::transport() const
+{
+    if (d_authority.has_value()) {
+
+        if (d_authority.value().transport().has_value()) {
+            return d_authority.value().transport().value();
+        }
+        else if (d_authority.value().transportSuite().has_value())
+        {
+            return d_authority.value().transportSuite().value().transport();
+        }
+        else {
+            return ntsa::Transport::e_UNDEFINED;
+        }
+    }
+    else {
+        return ntsa::Transport::e_UNDEFINED;
+    }
+}
+
+bool Uri::isStream() const
+{
+    const ntsa::TransportMode::Value transportMode = this->transportMode();
+    return transportMode == ntsa::TransportMode::e_STREAM;
+}
+
+bool Uri::isDatagram() const
+{
+    const ntsa::TransportMode::Value transportMode = this->transportMode();
+    return transportMode == ntsa::TransportMode::e_DATAGRAM;
+}
+
+bool Uri::isIpv4() const
+{
+    const ntsa::TransportDomain::Value transportDomain = 
+        this->transportDomain();
+    
+    if (transportDomain != ntsa::TransportDomain::e_UNDEFINED) {
+        return transportDomain == ntsa::TransportDomain::e_IPV4;
+    }
+    else {
+        return d_authority.has_value() && 
+               d_authority.value().host().has_value() && 
+               d_authority.value().host().value().isIp() &&
+               d_authority.value().host().value().ip().isV4();
+    }
+}
+
+bool Uri::isIpv6() const
+{
+    const ntsa::TransportDomain::Value transportDomain = 
+        this->transportDomain();
+    
+    if (transportDomain != ntsa::TransportDomain::e_UNDEFINED) {
+        return transportDomain == ntsa::TransportDomain::e_IPV6;
+    }
+    else {
+        return d_authority.has_value() && 
+               d_authority.value().host().has_value() && 
+               d_authority.value().host().value().isIp() &&
+               d_authority.value().host().value().ip().isV6();
+    }
+}
+
+bool Uri::isLocal() const
+{
+    const ntsa::TransportDomain::Value transportDomain = 
+        this->transportDomain();
+    
+    if (transportDomain != ntsa::TransportDomain::e_UNDEFINED) {
+        return transportDomain == ntsa::TransportDomain::e_LOCAL;
+    }
+    else {
+        return d_authority.has_value() && 
+               d_authority.value().host().has_value() && 
+               d_authority.value().host().value().isLocalName();
+    }
+}
+
+bool Uri::isLocalhost() const
+{
+    const ntsa::TransportDomain::Value transportDomain = 
+        this->transportDomain();
+
+    if (transportDomain == ntsa::TransportDomain::e_LOCAL) {
+        return true;
+    }
+    else {
+        if (d_authority.has_value() && d_authority.value().host().has_value()) 
+        {
+            const ntsa::Host& host = d_authority.value().host().value();
+
+            if (host.isLocalName()) {
+                return true;
+            }
+            else if (host.isDomainName()) {
+                if (host.domainName().equals("localhost")) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+            else if (host.isIp()) {
+                if (host.ip().isV4()) {
+                    return host.ip().v4().isLoopback();
+                }
+                else if (host.ip().isV6()) {
+                    return host.ip().v4().isLoopback();
+                }
+                else {
+                    return false;
+                }
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            return false;
+        }
+    }
+}
+
 bool Uri::equals(const Uri& other) const
 {
     return d_scheme == other.d_scheme && d_authority == other.d_authority &&
