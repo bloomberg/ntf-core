@@ -455,10 +455,14 @@ ntsa::Error UriUtil::parseScheme(
     canonicalScheme->clear();
     transportSuite->reset();
 
+    if (input->empty()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
     bool found = false;
 
-    const char* begin   = input->begin();
-    const char* end     = input->end();
+    const char* begin   = input->data();
+    const char* end     = begin + input->size();
     const char* current = begin;
 
     while (true) {
@@ -511,10 +515,14 @@ ntsa::Error UriUtil::parseUser(
 
     user->reset();
 
+    if (input->empty()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
     bool found = false;
 
-    const char* begin   = input->begin();
-    const char* end     = input->end();
+    const char* begin   = input->data();
+    const char* end     = begin + input->size();
     const char* current = begin;
 
     while (true) {
@@ -556,10 +564,14 @@ ntsa::Error UriUtil::parseHost(
 
     host->reset();
 
+    if (input->empty()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
     bool found = false;
 
-    const char* begin   = input->begin();
-    const char* end     = input->end();
+    const char* begin   = input->data();
+    const char* end     = begin + input->size();
     const char* current = begin;
 
     while (true) {
@@ -602,10 +614,14 @@ ntsa::Error UriUtil::parseHostBracket(
 
     host->reset();
 
+    if (input->empty()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
     bool found = false;
 
-    const char* begin   = input->begin();
-    const char* end     = input->end();
+    const char* begin   = input->data();
+    const char* end     = begin + input->size();
     const char* current = begin;
 
     if (current == end) {
@@ -662,10 +678,14 @@ ntsa::Error UriUtil::parsePort(
 
     port->reset();
 
+    if (input->empty()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
     bool found = false;
 
-    const char* begin   = input->begin();
-    const char* end     = input->end();
+    const char* begin   = input->data();
+    const char* end     = begin + input->size();
     const char* current = begin;
 
     while (true) {
@@ -717,10 +737,14 @@ ntsa::Error UriUtil::parsePath(
 
     path->reset();
 
+    if (input->empty()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
     bool found = false;
 
-    const char* begin   = input->begin();
-    const char* end     = input->end();
+    const char* begin   = input->data();
+    const char* end     = begin + input->size();
     const char* current = begin;
 
     while (true) {
@@ -758,8 +782,12 @@ ntsa::Error UriUtil::parseQuery(
 
     query->reset();
 
-    const char* begin   = input->begin();
-    const char* end     = input->end();
+    if (input->empty()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    const char* begin   = input->data();
+    const char* end     = begin + input->size();
     const char* current = begin;
     
     if (current == end) {
@@ -879,8 +907,12 @@ ntsa::Error UriUtil::parseFragment(
 
     fragment->reset();
 
-    const char* begin   = input->begin();
-    const char* end     = input->end();
+    if (input->empty()) {
+        return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    const char* begin   = input->data();
+    const char* end     = begin + input->size();
     const char* current = begin;
 
     if (current == end) {
