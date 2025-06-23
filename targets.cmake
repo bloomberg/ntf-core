@@ -19,7 +19,7 @@ ntf_repository(
     NAME
         ntf-core
     VERSION
-        2.5.13
+        2.5.14
     PATH
         ${CMAKE_CURRENT_LIST_DIR}
     URL
