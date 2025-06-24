@@ -1375,11 +1375,9 @@ NTSCFG_INLINE
 MutableBuffer& MutableBuffer::operator=(bslmf::MovableRef<MutableBuffer> other)
     NTSCFG_NOEXCEPT
 {
-    if (this != &other) {
-        d_data = NTSCFG_MOVE_FROM(other, d_data);
-        d_size = NTSCFG_MOVE_FROM(other, d_size);
-        NTSCFG_MOVE_RESET(other);
-    }
+    d_data = NTSCFG_MOVE_FROM(other, d_data);
+    d_size = NTSCFG_MOVE_FROM(other, d_size);
+    NTSCFG_MOVE_RESET(other);
 
     return *this;
 }
@@ -1528,11 +1526,11 @@ NTSCFG_INLINE
 ConstBuffer::ConstBuffer(bslmf::MovableRef<MutableBuffer> other)
     NTSCFG_NOEXCEPT
 #if defined(BSLS_PLATFORM_OS_UNIX)
-: d_data((BufferType)(other.data())),
-  d_size((LengthType)(other.size()))
+: d_data((BufferType)(NTSCFG_MOVE_ACCESS(other).data())),
+  d_size((LengthType)(NTSCFG_MOVE_ACCESS(other).size()))
 #elif defined(BSLS_PLATFORM_OS_WINDOWS)
-: d_size((LengthType)(other.size())),
-  d_data((BufferType)(other.data()))
+: d_size((LengthType)(NTSCFG_MOVE_ACCESS(other).size())),
+  d_data((BufferType)(NTSCFG_MOVE_ACCESS(other).data()))
 #else
 #error Not implemented
 #endif
@@ -1593,11 +1591,9 @@ NTSCFG_INLINE
 ConstBuffer& ConstBuffer::operator=(bslmf::MovableRef<ConstBuffer> other)
     NTSCFG_NOEXCEPT
 {
-    if (this != &other) {
-        d_data = NTSCFG_MOVE_FROM(other, d_data);
-        d_size = NTSCFG_MOVE_FROM(other, d_size);
-        NTSCFG_MOVE_RESET(other);
-    }
+    d_data = NTSCFG_MOVE_FROM(other, d_data);
+    d_size = NTSCFG_MOVE_FROM(other, d_size);
+    NTSCFG_MOVE_RESET(other);
 
     return *this;
 }
@@ -1615,8 +1611,9 @@ NTSCFG_INLINE
 ConstBuffer& ConstBuffer::operator=(bslmf::MovableRef<MutableBuffer> other)
     NTSCFG_NOEXCEPT
 {
-    d_data = other.data();
-    d_size = NTSCFG_WARNING_NARROW(LengthType, other.size());
+    d_data = NTSCFG_MOVE_ACCESS(other).data();
+    d_size = NTSCFG_WARNING_NARROW(
+        LengthType, NTSCFG_MOVE_ACCESS(other).size());
     NTSCFG_MOVE_RESET(other);
 
     return *this;

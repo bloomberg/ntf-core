@@ -301,7 +301,7 @@ IpAddress::IpAddress(const ntsa::Ipv6Address& value)
 
 NTSCFG_INLINE
 IpAddress::IpAddress(bslmf::MovableRef<IpAddress> other) NTSCFG_NOEXCEPT
-: d_type(other.d_type)
+: d_type(NTSCFG_MOVE_FROM(other, d_type))
 {
     switch (d_type) {
     case ntsa::IpAddressType::e_V4:
@@ -344,11 +344,11 @@ NTSCFG_INLINE
 IpAddress& IpAddress::operator=(bslmf::MovableRef<IpAddress> other)
     NTSCFG_NOEXCEPT
 {
-    if (this == &other) {
+    if (this == &NTSCFG_MOVE_ACCESS(other)) {
         return *this;
     }
 
-    switch (other.d_type) {
+    switch (NTSCFG_MOVE_ACCESS(other).d_type) {
     case ntsa::IpAddressType::e_V4:
         this->makeV4(NTSCFG_MOVE_FROM(other, d_v4.object()));
         break;
@@ -356,7 +356,8 @@ IpAddress& IpAddress::operator=(bslmf::MovableRef<IpAddress> other)
         this->makeV6(NTSCFG_MOVE_FROM(other, d_v6.object()));
         break;
     default:
-        BSLS_ASSERT(other.d_type == ntsa::IpAddressType::e_UNDEFINED);
+        BSLS_ASSERT(NTSCFG_MOVE_ACCESS(other).d_type == 
+                    ntsa::IpAddressType::e_UNDEFINED);
         this->reset();
     }
 

@@ -180,6 +180,11 @@ ntsa::Error EncryptionKey::generate(const ntca::EncryptionKeyOptions& options)
     return ntsa::Error();
 }
 
+ntsa::Error EncryptionKey::decode(bsl::streambuf* source)
+{
+    return ntci::EncryptionKey::decode(source);
+}
+
 ntsa::Error EncryptionKey::decode(
     bsl::streambuf*                        source,
     const ntca::EncryptionResourceOptions& options)
@@ -198,6 +203,47 @@ ntsa::Error EncryptionKey::decode(
     d_value = static_cast<unsigned int>(bigEndianValue);
 
     return ntsa::Error();
+}
+
+ntsa::Error EncryptionKey::decode(const bdlbb::Blob& source)
+{
+    return ntci::EncryptionKey::decode(source);
+}
+
+ntsa::Error EncryptionKey::decode(
+    const bdlbb::Blob&                     source,
+    const ntca::EncryptionResourceOptions& options)
+{
+    return ntci::EncryptionKey::decode(source, options);
+}
+
+ntsa::Error EncryptionKey::decode(const bsl::string& source)
+{
+    return ntci::EncryptionKey::decode(source);
+}
+
+ntsa::Error EncryptionKey::decode(
+    const bsl::string&                     source,
+    const ntca::EncryptionResourceOptions& options)
+{
+    return ntci::EncryptionKey::decode(source, options);
+}
+
+ntsa::Error EncryptionKey::decode(const bsl::vector<char>& source) 
+{
+    return ntci::EncryptionKey::decode(source);
+}
+
+ntsa::Error EncryptionKey::decode(
+    const bsl::vector<char>&               source,
+    const ntca::EncryptionResourceOptions& options)
+{
+    return ntci::EncryptionKey::decode(source, options);
+}
+
+ntsa::Error EncryptionKey::encode(bsl::streambuf* destination) const
+{
+    return ntci::EncryptionKey::encode(destination);
 }
 
 ntsa::Error EncryptionKey::encode(
@@ -224,6 +270,42 @@ ntsa::Error EncryptionKey::encode(
     }
 
     return ntsa::Error();
+}
+
+ntsa::Error EncryptionKey::encode(bdlbb::Blob* destination) const
+{
+    return ntci::EncryptionKey::encode(destination);
+}
+
+ntsa::Error EncryptionKey::encode(
+    bdlbb::Blob*                           destination,
+    const ntca::EncryptionResourceOptions& options) const 
+{
+    return ntci::EncryptionKey::encode(destination, options);
+}
+
+ntsa::Error EncryptionKey::encode(bsl::string* destination) const
+{
+    return ntci::EncryptionKey::encode(destination);
+}
+
+ntsa::Error EncryptionKey::encode(
+    bsl::string*                           destination,
+    const ntca::EncryptionResourceOptions& options) const 
+{
+    return ntci::EncryptionKey::encode(destination, options);
+}
+
+ntsa::Error EncryptionKey::encode(bsl::vector<char>* destination) const 
+{
+    return ntci::EncryptionKey::encode(destination);
+}
+
+ntsa::Error EncryptionKey::encode(
+    bsl::vector<char>*                     destination,
+    const ntca::EncryptionResourceOptions& options) const 
+{
+    return ntci::EncryptionKey::encode(destination, options);
 }
 
 void* EncryptionKey::handle() const
@@ -316,6 +398,11 @@ ntsa::Error EncryptionCertificate::generate(
     return ntsa::Error();
 }
 
+ntsa::Error EncryptionCertificate::decode(bsl::streambuf* source)
+{
+    return ntci::EncryptionCertificate::decode(source);
+}
+
 ntsa::Error EncryptionCertificate::decode(
     bsl::streambuf*                        source,
     const ntca::EncryptionResourceOptions& options)
@@ -348,6 +435,47 @@ ntsa::Error EncryptionCertificate::decode(
     }
 
     return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificate::decode(const bdlbb::Blob& source)
+{
+    return ntci::EncryptionCertificate::decode(source);
+}
+
+ntsa::Error EncryptionCertificate::decode(
+    const bdlbb::Blob&                     source,
+    const ntca::EncryptionResourceOptions& options)
+{
+    return ntci::EncryptionCertificate::decode(source, options);
+}
+
+ntsa::Error EncryptionCertificate::decode(const bsl::string& source)
+{
+    return ntci::EncryptionCertificate::decode(source);
+}
+
+ntsa::Error EncryptionCertificate::decode(
+    const bsl::string&                     source,
+    const ntca::EncryptionResourceOptions& options)
+{
+    return ntci::EncryptionCertificate::decode(source, options);
+}
+
+ntsa::Error EncryptionCertificate::decode(const bsl::vector<char>& source) 
+{
+    return ntci::EncryptionCertificate::decode(source);
+}
+
+ntsa::Error EncryptionCertificate::decode(
+    const bsl::vector<char>&               source,
+    const ntca::EncryptionResourceOptions& options)
+{
+    return ntci::EncryptionCertificate::decode(source, options);
+}
+
+ntsa::Error EncryptionCertificate::encode(bsl::streambuf* destination) const
+{
+    return ntci::EncryptionCertificate::encode(destination);
 }
 
 ntsa::Error EncryptionCertificate::encode(
@@ -395,6 +523,42 @@ ntsa::Error EncryptionCertificate::encode(
     }
 
     return ntsa::Error();
+}
+
+ntsa::Error EncryptionCertificate::encode(bdlbb::Blob* destination) const
+{
+    return ntci::EncryptionCertificate::encode(destination);
+}
+
+ntsa::Error EncryptionCertificate::encode(
+    bdlbb::Blob*                           destination,
+    const ntca::EncryptionResourceOptions& options) const 
+{
+    return ntci::EncryptionCertificate::encode(destination, options);
+}
+
+ntsa::Error EncryptionCertificate::encode(bsl::string* destination) const
+{
+    return ntci::EncryptionCertificate::encode(destination);
+}
+
+ntsa::Error EncryptionCertificate::encode(
+    bsl::string*                           destination,
+    const ntca::EncryptionResourceOptions& options) const 
+{
+    return ntci::EncryptionCertificate::encode(destination, options);
+}
+
+ntsa::Error EncryptionCertificate::encode(bsl::vector<char>* destination) const 
+{
+    return ntci::EncryptionCertificate::encode(destination);
+}
+
+ntsa::Error EncryptionCertificate::encode(
+    bsl::vector<char>*                     destination,
+    const ntca::EncryptionResourceOptions& options) const 
+{
+    return ntci::EncryptionCertificate::encode(destination, options);
 }
 
 void EncryptionCertificate::print(bsl::ostream& stream) const
