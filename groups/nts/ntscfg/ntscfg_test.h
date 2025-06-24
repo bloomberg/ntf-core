@@ -141,7 +141,7 @@ class TestCaseContext
     void setFunction(const bsl::function<void()>& value);
 
     /// Execute the test.
-    void execute();
+    void execute() const;
 
     /// Return the case number.
     int number() const;
@@ -198,7 +198,7 @@ inline void TestCaseContext::setFunction(const bsl::function<void()>& value)
     d_function = value;
 }
 
-inline void TestCaseContext::execute()
+inline void TestCaseContext::execute() const
 {
     BSLS_LOG_INFO("Testing: %s", d_name.c_str());
     d_function();
@@ -1065,14 +1065,44 @@ static ntscfg::TestCaseContextVector testCaseVector(
 class TestUtil
 {
   public:
+    /// Register the test case with the specified 'name' implemented by the
+    /// specified 'function'.
     static void registerTestCase(const char*             name,
                                  const TestCaseFunction& function);
 
+    /// Parse the specified 'text' and load the integer result into the 
+    /// specified 'result'. Return true if 'text was parsed successfully, 
+    /// otherwise return false.
     static bool parseInt(int* result, const char* text);
 
+    /// List all available test cases.
     static void list();
 
-    static void help();
+    /// List the specified 'testCaseContext'.
+    static void list(const ntscfg::TestCaseContext& testCaseContext);
+
+    /// List each test described in the specified 'testCaseContextVector'.
+    static void list(
+        const bsl::vector<const ntscfg::TestCaseContext*>& 
+        testCaseContextVector);
+    
+    /// Run all test cases.
+    static void call();
+
+    /// Run the test described by the specified 'testCaseContext'.
+    static void call(const ntscfg::TestCaseContext& testCaseContext);
+
+    /// Run each test described in the specified 'testCaseContextVector'.
+    static void call(
+        const bsl::vector<const ntscfg::TestCaseContext*>& 
+        testCaseContextVector);
+
+    /// Return true if the specified 'name' matches the specified 'pattern',
+    /// otherwise return false.
+    static bool match(const bsl::string& name, const bsl::string& pattern);
+
+    /// Show the command line usage.
+    static void help(const char* executableName);
 };
 
 void TestUtil::registerTestCase(const char*             name,
@@ -1131,11 +1161,154 @@ void TestUtil::list()
     }
 }
 
-void TestUtil::help()
+void TestUtil::list(const ntscfg::TestCaseContext& testCaseContext)
 {
-    bsl::printf("%s\n",
-                "usage: <test-driver>.exe "
-                "[ <test-case> ] [ <verbose> ]");
+    bsl::size_t maxDigits = 0;
+    {
+        bsl::size_t numTests = ntscfg::testCaseVector.size();
+        do {
+            numTests /= 10;
+            ++maxDigits;
+        } while (numTests != 0);
+    }
+
+    {
+        bsl::cout << bsl::setw(maxDigits);
+        bsl::cout << bsl::right;
+        bsl::cout << testCaseContext.number();
+        bsl::cout << ") ";
+        bsl::cout << testCaseContext.name();
+        bsl::cout << bsl::endl;
+    }
+}
+
+void TestUtil::list(
+    const bsl::vector<const ntscfg::TestCaseContext*>& testCaseContextVector)
+{
+    bsl::size_t maxDigits = 0;
+    {
+        bsl::size_t numTests = ntscfg::testCaseVector.size();
+        do {
+            numTests /= 10;
+            ++maxDigits;
+        } while (numTests != 0);
+    }
+
+    for (bsl::size_t i = 0; i < testCaseContextVector.size(); ++i) {
+        const ntscfg::TestCaseContext& testCaseContext = 
+            *testCaseContextVector[i];
+
+        bsl::cout << bsl::setw(maxDigits);
+        bsl::cout << bsl::right;
+        bsl::cout << testCaseContext.number();
+        bsl::cout << ") ";
+        bsl::cout << testCaseContext.name();
+        bsl::cout << bsl::endl;
+    }
+}
+
+void TestUtil::call()
+{
+    for (ntscfg::TestCaseContextMap::const_iterator it =
+             ntscfg::testCaseMap.begin();
+         it != ntscfg::testCaseMap.end();
+         ++it)
+    {
+        const ntscfg::TestCaseContext& testCaseContext = it->second;
+        ntscfg::TestUtil::call(testCaseContext);
+    }
+}
+
+void TestUtil::call(const ntscfg::TestCaseContext& testCaseContext)
+{
+    if (testCaseContext.isDefined()) {
+        BloombergLP::ntscfg::testCase = testCaseContext.number();
+
+        BloombergLP::ntscfg::TestAllocator ta;
+        BloombergLP::ntscfg::testAllocator = &ta;
+
+        testCaseContext.execute();
+        
+        if (ta.numBlocksInUse() != 0) {
+            bsl::cerr << "Leaked " << ta.numBlocksInUse()
+                      << " memory blocks" << bsl::endl;
+            bsl::abort();
+        }
+    }
+}
+
+void TestUtil::call(
+    const bsl::vector<const ntscfg::TestCaseContext*>& testCaseContextVector)
+{
+    for (bsl::size_t i = 0; i < testCaseContextVector.size(); ++i) {
+        const BloombergLP::ntscfg::TestCaseContext& testCaseContext =
+            *testCaseContextVector[i];
+
+        ntscfg::TestUtil::call(testCaseContext);
+    }
+}
+
+bool TestUtil::match(const bsl::string& name,
+                     const bsl::string& expression)
+{
+    if (expression.empty()) {
+        return true;
+    }
+
+    const char *np = name.data();
+    const char *ne = np + name.size();
+
+    const char *ep = expression.data();
+    const char *ee = ep + expression.size();
+
+    const char *cp = NULL;
+    const char *mp = NULL;
+
+    while ((np != ne) && (*ep != '*')) {
+        if ((*ep != *np) && (*ep != '?')) {
+            return false;
+        }
+        ep++;
+        np++;
+    }
+
+    while (np != ne) {
+        if (*ep == '*') {
+            if (++ep == ee) {
+                return true;
+            }
+            mp = ep;
+            cp = np + 1;
+        }
+        else if ((*ep == *np) || (*ep == '?')) {
+            ep++;
+            np++;
+        }
+        else {
+            ep = mp;
+            np = cp++;
+        }
+    }
+
+    while (*ep == '*') {
+        ep++;
+    }
+
+    if (ep == ee) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+void TestUtil::help(const char* executableName)
+{
+    bsl::printf("usage: %s "
+                "[-v <verbosity>] "
+                "[--list] "
+                "[<case-number>|<case-name>|<case-name-pattern>]\n",
+                executableName);
 }
 
 /// @internal @brief
@@ -1191,6 +1364,8 @@ int main(int argc, char** argv)
     try {
         BloombergLP::bdlb::NullableValue<bsl::string> concern;
 
+        bool list = false;
+
         int i = 1;
         while (i < argc) {
             const char* arg = argv[i];
@@ -1198,15 +1373,16 @@ int main(int argc, char** argv)
             if ((0 == bsl::strcmp(arg, "-?")) ||
                 (0 == bsl::strcmp(arg, "--help")))
             {
-                BloombergLP::ntscfg::TestUtil::help();
+                BloombergLP::ntscfg::TestUtil::help(argv[0]);
                 return 0;
             }
 
             if ((0 == bsl::strcmp(arg, "-l")) ||
                 (0 == bsl::strcmp(arg, "--list")))
             {
-                BloombergLP::ntscfg::TestUtil::list();
-                return 0;
+                list = true;
+                ++i;
+                continue;
             }
 
             if ((0 == bsl::strcmp(arg, "-v")) ||
@@ -1214,7 +1390,7 @@ int main(int argc, char** argv)
             {
                 ++i;
                 if (i >= argc) {
-                    BloombergLP::ntscfg::TestUtil::help();
+                    BloombergLP::ntscfg::TestUtil::help(argv[0]);
                     return 1;
                 }
                 arg = argv[i];
@@ -1236,7 +1412,7 @@ int main(int argc, char** argv)
             if (0 == bsl::strcmp(arg, "--concern")) {
                 ++i;
                 if (i >= argc) {
-                    BloombergLP::ntscfg::TestUtil::help();
+                    BloombergLP::ntscfg::TestUtil::help(argv[0]);
                     return 1;
                 }
                 arg = argv[i];
@@ -1257,6 +1433,9 @@ int main(int argc, char** argv)
             ++i;
         }
 
+        BloombergLP::ntscfg::TestLog testLog(
+            BloombergLP::ntscfg::testVerbosity);
+
         if (concern.has_value() && concern.value() == "0") {
             concern.reset();
         }
@@ -1269,6 +1448,20 @@ int main(int argc, char** argv)
             {
                 if (BloombergLP::ntscfg::testCaseMap.contains(number)) {
                     BloombergLP::ntscfg::testCase = number;
+
+                    const BloombergLP::ntscfg::TestCaseContext& 
+                    testCaseContext = 
+                        BloombergLP::ntscfg::testCaseMap
+                            [BloombergLP::ntscfg::testCase];
+
+                    if (list) {
+                        BloombergLP::ntscfg::TestUtil::list(
+                            testCaseContext);
+                    }
+                    else {
+                        BloombergLP::ntscfg::TestUtil::call(
+                            testCaseContext);
+                    }
                 }
                 else {
                     if (BloombergLP::ntscfg::testVerbosity >= 3) {
@@ -1279,76 +1472,65 @@ int main(int argc, char** argv)
                 }
             }
             else {
-                bool found = false;
+                bsl::vector<const BloombergLP::ntscfg::TestCaseContext*> 
+                testCaseContextVector;
+                
+                bool pattern = false;
+                if (concern.value().find('*') != bsl::string::npos) {
+                    testCaseContextVector.reserve(
+                        BloombergLP::ntscfg::testCaseMap.size());
+                    pattern = true;
+                }
+
                 for (BloombergLP::ntscfg::TestCaseContextMap::const_iterator
-                         it = BloombergLP::ntscfg::testCaseMap.begin();
-                     it != BloombergLP::ntscfg::testCaseMap.end();
-                     ++it)
+                         it  = BloombergLP::ntscfg::testCaseMap.begin();
+                         it != BloombergLP::ntscfg::testCaseMap.end();
+                       ++it)
                 {
                     const BloombergLP::ntscfg::TestCaseContext&
                         testCaseContext = it->second;
 
-                    if (concern.value() == testCaseContext.name()) {
-                        BloombergLP::ntscfg::testCase =
-                            testCaseContext.number();
-                        found = true;
-                        break;
+                    if (pattern) {
+                        if (BloombergLP::ntscfg::TestUtil::match(
+                            testCaseContext.name(), 
+                            concern.value())) 
+                        {
+                            testCaseContextVector.push_back(&testCaseContext);
+                        }
+                    }
+                    else {
+                        if (testCaseContext.name() == concern.value()) {
+                            testCaseContextVector.push_back(&testCaseContext);
+                            break;
+                        }
                     }
                 }
 
-                if (!found) {
+                if (testCaseContextVector.empty()) {
                     if (BloombergLP::ntscfg::testVerbosity >= 3) {
-                        bsl::cerr << "The test case number " << number
-                                  << " is not found" << bsl::endl;
+                        bsl::cerr << "No test case(s) matching \"" 
+                                  << concern.value()
+                                  << "\" are found" << bsl::endl;
                     }
                     return -1;
                 }
-            }
-        }
 
-        BloombergLP::ntscfg::TestLog testLog(
-            BloombergLP::ntscfg::testVerbosity);
-
-        if (BloombergLP::ntscfg::testCase == 0) {
-            BloombergLP::ntscfg::testCase = 1;
-            while (true) {
-                BloombergLP::ntscfg::TestCaseContext& testCaseContext =
-                    BloombergLP::ntscfg::testCaseMap
-                        [BloombergLP::ntscfg::testCase];
-
-                if (testCaseContext.isDefined()) {
-                    BloombergLP::ntscfg::TestAllocator ta;
-                    BloombergLP::ntscfg::testAllocator = &ta;
-                    testCaseContext.execute();
-                    if (ta.numBlocksInUse() != 0) {
-                        bsl::cerr << "Leaked " << ta.numBlocksInUse()
-                                  << " memory blocks" << bsl::endl;
-                        bsl::abort();
-                    }
-                    ++BloombergLP::ntscfg::testCase;
+                if (list) {
+                    BloombergLP::ntscfg::TestUtil::list(
+                        testCaseContextVector);
                 }
                 else {
-                    break;
+                    BloombergLP::ntscfg::TestUtil::call(
+                        testCaseContextVector);
                 }
             }
         }
         else {
-            BloombergLP::ntscfg::TestCaseContext& testCaseContext =
-                BloombergLP::ntscfg::testCaseMap
-                    [BloombergLP::ntscfg::testCase];
-
-            if (testCaseContext.isDefined()) {
-                BloombergLP::ntscfg::TestAllocator ta;
-                BloombergLP::ntscfg::testAllocator = &ta;
-                testCaseContext.execute();
-                if (ta.numBlocksInUse() != 0) {
-                    bsl::cerr << "Leaked " << ta.numBlocksInUse()
-                              << " memory blocks" << bsl::endl;
-                    bsl::abort();
-                }
+            if (list) {
+                BloombergLP::ntscfg::TestUtil::list();
             }
             else {
-                return -1;
+                BloombergLP::ntscfg::TestUtil::call();
             }
         }
     }
