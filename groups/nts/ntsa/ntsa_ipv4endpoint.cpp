@@ -89,7 +89,7 @@ Ipv4Endpoint::~Ipv4Endpoint()
 Ipv4Endpoint& Ipv4Endpoint::operator=(bslmf::MovableRef<Ipv4Endpoint> other)
     NTSCFG_NOEXCEPT
 {
-    if (this != &other) {
+    if (this != &NTSCFG_MOVE_ACCESS(other)) {
         d_host = NTSCFG_MOVE_FROM(other, d_host);
         d_port = NTSCFG_MOVE_FROM(other, d_port);
 

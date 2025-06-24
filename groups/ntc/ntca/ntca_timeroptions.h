@@ -246,15 +246,12 @@ TimerOptions::TimerOptions(const TimerOptions& original)
 
 NTCCFG_INLINE
 TimerOptions::TimerOptions(bslmf::MovableRef<TimerOptions> original)
-: d_handle(bslmf::MovableRefUtil::move(
-      bslmf::MovableRefUtil::access(original).d_handle))
-, d_id(bslmf::MovableRefUtil::move(
-      bslmf::MovableRefUtil::access(original).d_id))
-, d_flags(bslmf::MovableRefUtil::move(
-      bslmf::MovableRefUtil::access(original).d_flags))
-, d_eventMask(bslmf::MovableRefUtil::move(
-      bslmf::MovableRefUtil::access(original).d_eventMask))
+: d_handle(NTSCFG_MOVE_FROM(original, d_handle))
+, d_id(NTSCFG_MOVE_FROM(original, d_id))
+, d_flags(NTSCFG_MOVE_FROM(original, d_flags))
+, d_eventMask(NTSCFG_MOVE_FROM(original, d_eventMask))
 {
+    NTSCFG_MOVE_RESET(original);
 }
 
 NTCCFG_INLINE
@@ -276,17 +273,12 @@ TimerOptions& TimerOptions::operator=(const TimerOptions& other)
 NTCCFG_INLINE
 TimerOptions& TimerOptions::operator=(bslmf::MovableRef<TimerOptions> other)
 {
-    d_handle = bslmf::MovableRefUtil::move(
-        bslmf::MovableRefUtil::access(other).d_handle);
+    d_handle    = NTSCFG_MOVE_FROM(other, d_handle);
+    d_id        = NTSCFG_MOVE_FROM(other, d_id);
+    d_flags     = NTSCFG_MOVE_FROM(other, d_flags);
+    d_eventMask = NTSCFG_MOVE_FROM(other, d_eventMask);
 
-    d_id =
-        bslmf::MovableRefUtil::move(bslmf::MovableRefUtil::access(other).d_id);
-
-    d_flags = bslmf::MovableRefUtil::move(
-        bslmf::MovableRefUtil::access(other).d_flags);
-
-    d_eventMask = bslmf::MovableRefUtil::move(
-        bslmf::MovableRefUtil::access(other).d_eventMask);
+    NTSCFG_MOVE_RESET(other);
 
     return *this;
 }

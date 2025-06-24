@@ -71,16 +71,82 @@ class EncryptionKey : public ntci::EncryptionKey
     /// error.
     ntsa::Error generate(const ntca::EncryptionKeyOptions& options);
 
+    /// Decode the key in PEM format from the specified 'source'.
+    ntsa::Error decode(bsl::streambuf* source) BSLS_KEYWORD_OVERRIDE;
+
     /// Decode the key from the specified 'source' according to the specified
     /// 'options'.
     ntsa::Error decode(bsl::streambuf*                        source,
                        const ntca::EncryptionResourceOptions& options)
         BSLS_KEYWORD_OVERRIDE;
 
+    /// Decode the key in PEM format from the specified 'source'.
+    ntsa::Error decode(const bdlbb::Blob& source) BSLS_KEYWORD_OVERRIDE;
+
+    /// Decode the key according to the specified 'options' from the specified
+    /// 'source'.
+    ntsa::Error decode(const bdlbb::Blob&                     source,
+                       const ntca::EncryptionResourceOptions& options)
+                       BSLS_KEYWORD_OVERRIDE;
+
+    /// Decode the key in PEM format from the specified 'source'.
+    ntsa::Error decode(const bsl::string& source) BSLS_KEYWORD_OVERRIDE;
+
+    /// Decode the key according to the specified 'options' from the specified
+    /// 'source'.
+    ntsa::Error decode(const bsl::string&                     source,
+                       const ntca::EncryptionResourceOptions& options) 
+                       BSLS_KEYWORD_OVERRIDE;
+
+    /// Decode the key in PEM format from the specified 'source'.
+    ntsa::Error decode(const bsl::vector<char>& source) 
+                       BSLS_KEYWORD_OVERRIDE;
+
+    /// Decode the key according to the specified 'options' from the specified
+    /// 'source'.
+    ntsa::Error decode(const bsl::vector<char>&               source,
+                       const ntca::EncryptionResourceOptions& options)
+                       BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the key in PEM format to the specified 'destination'.
+    ntsa::Error encode(bsl::streambuf* destination) const 
+                       BSLS_KEYWORD_OVERRIDE;
+
     /// Encode the key to the specified 'destination' according to the
     /// specified 'options'.
     ntsa::Error encode(bsl::streambuf*                        destination,
                        const ntca::EncryptionResourceOptions& options) const
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the key in PEM format to the specified 'destination'.
+    ntsa::Error encode(bdlbb::Blob* destination) const BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the key according to the specified 'options' to the specified
+    /// 'destination'.
+    ntsa::Error encode(
+        bdlbb::Blob*                           destination,
+        const ntca::EncryptionResourceOptions& options) const 
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the key in PEM format to the specified 'destination'.
+    ntsa::Error encode(bsl::string* destination) const BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the key according to the specified 'options' to the specified
+    /// 'destination'.
+    ntsa::Error encode(
+        bsl::string*                           destination,
+        const ntca::EncryptionResourceOptions& options) const 
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the key in PEM format to the specified 'destination'.
+    ntsa::Error encode(bsl::vector<char>* destination) const 
+                       BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the key according to the specified 'options' to the specified
+    /// 'destination'.
+    ntsa::Error encode(
+        bsl::vector<char>*                     destination,
+        const ntca::EncryptionResourceOptions& options) const 
         BSLS_KEYWORD_OVERRIDE;
 
     /// Return a handle to the private implementation.
@@ -174,16 +240,82 @@ class EncryptionCertificate : public ntci::EncryptionCertificate
         const bsl::shared_ptr<ntcd::EncryptionKey>&         issuerPrivateKey,
         const ntca::EncryptionCertificateOptions&           options);
 
+    /// Decode the certificate in PEM format from the specified 'source'.
+    ntsa::Error decode(bsl::streambuf* source) BSLS_KEYWORD_OVERRIDE;
+
     /// Decode the certificate from the specified 'source' according to the
     /// specified 'options'. Return the error.
     ntsa::Error decode(bsl::streambuf*                        source,
                        const ntca::EncryptionResourceOptions& options)
         BSLS_KEYWORD_OVERRIDE;
 
+    /// Decode the certificate in PEM format from the specified 'source'.
+    ntsa::Error decode(const bdlbb::Blob& source) BSLS_KEYWORD_OVERRIDE;
+
+    /// Decode the certificate according to the specified 'options' from the
+    /// specified 'source'.
+    ntsa::Error decode(const bdlbb::Blob&                     source,
+                       const ntca::EncryptionResourceOptions& options)
+                       BSLS_KEYWORD_OVERRIDE;
+
+    /// Decode the certificate in PEM format from the specified 'source'.
+    ntsa::Error decode(const bsl::string& source) BSLS_KEYWORD_OVERRIDE;
+
+    /// Decode the certificate according to the specified 'options' from the
+    /// specified 'source'.
+    ntsa::Error decode(const bsl::string&                     source,
+                       const ntca::EncryptionResourceOptions& options) 
+                       BSLS_KEYWORD_OVERRIDE;
+
+    /// Decode the certificate in PEM format from the specified 'source'.
+    ntsa::Error decode(const bsl::vector<char>& source) 
+                       BSLS_KEYWORD_OVERRIDE;
+
+    /// Decode the certificate according to the specified 'options' from the
+    /// specified 'source'.
+    ntsa::Error decode(const bsl::vector<char>&               source,
+                       const ntca::EncryptionResourceOptions& options)
+                       BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the certificate in PEM format to the specified 'destination'.
+    ntsa::Error encode(bsl::streambuf* destination) const 
+                       BSLS_KEYWORD_OVERRIDE;
+
     /// Encode the certificate to the specified 'destination' according to the
     /// specified 'options'. Return the error.
     ntsa::Error encode(bsl::streambuf*                        destination,
                        const ntca::EncryptionResourceOptions& options) const
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the certificate in PEM format to the specified 'destination'.
+    ntsa::Error encode(bdlbb::Blob* destination) const BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the certificate according to the specified 'options' to the
+    /// specified 'destination'.
+    ntsa::Error encode(
+        bdlbb::Blob*                           destination,
+        const ntca::EncryptionResourceOptions& options) const 
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the certificate in PEM format to the specified 'destination'.
+    ntsa::Error encode(bsl::string* destination) const BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the certificate according to the specified 'options' to the
+    /// specified 'destination'.
+    ntsa::Error encode(
+        bsl::string*                           destination,
+        const ntca::EncryptionResourceOptions& options) const 
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the certificate in PEM format to the specified 'destination'.
+    ntsa::Error encode(bsl::vector<char>* destination) const 
+                       BSLS_KEYWORD_OVERRIDE;
+
+    /// Encode the certificate according to the specified 'options' to the
+    /// specified 'destination'.
+    ntsa::Error encode(
+        bsl::vector<char>*                     destination,
+        const ntca::EncryptionResourceOptions& options) const 
         BSLS_KEYWORD_OVERRIDE;
 
     /// Print the certificate to the specified stream in an unspecified but

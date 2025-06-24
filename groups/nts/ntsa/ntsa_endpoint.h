@@ -410,7 +410,7 @@ Endpoint::Endpoint(const ntsa::Ipv6Address& address, ntsa::Port port)
 
 NTSCFG_INLINE
 Endpoint::Endpoint(bslmf::MovableRef<Endpoint> other) NTSCFG_NOEXCEPT
-: d_type(other.d_type)
+: d_type(NTSCFG_MOVE_ACCESS(other).d_type)
 {
     switch (d_type) {
     case ntsa::EndpointType::e_IP:
@@ -453,11 +453,11 @@ NTSCFG_INLINE
 Endpoint& Endpoint::operator=(bslmf::MovableRef<Endpoint> other) 
     NTSCFG_NOEXCEPT
 {
-    if (this == &other) {
+    if (this == &NTSCFG_MOVE_ACCESS(other)) {
         return *this;
     }
 
-    switch (other.d_type) {
+    switch (NTSCFG_MOVE_ACCESS(other).d_type) {
     case ntsa::EndpointType::e_IP:
         this->makeIp(NTSCFG_MOVE_FROM(other, d_ip.object()));
         break;
@@ -465,7 +465,8 @@ Endpoint& Endpoint::operator=(bslmf::MovableRef<Endpoint> other)
         this->makeLocal(NTSCFG_MOVE_FROM(other, d_local.object()));
         break;
     default:
-        BSLS_ASSERT(other.d_type == ntsa::EndpointType::e_UNDEFINED);
+        BSLS_ASSERT(NTSCFG_MOVE_ACCESS(other).d_type == 
+                    ntsa::EndpointType::e_UNDEFINED);
         this->reset();
     }
 
