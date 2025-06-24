@@ -3126,13 +3126,13 @@ ntsa::Error StreamSocket::privateDequeueReceiveBuffer(
             return error;
         }
 
-        if (!d_encryption_sp) {
-            return ntsa::Error();
-        }
-
         bdlbb::BlobUtil::erase(d_receiveBlob_sp.get(),
                                0,
                                d_receiveBlob_sp->length());
+
+        if (!d_encryption_sp) {
+            return ntsa::Error();
+        }
 
         bsl::size_t numBytesReceived    = 0;
         bool        downgradeAbortively = false;
