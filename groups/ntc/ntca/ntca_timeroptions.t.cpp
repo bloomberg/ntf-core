@@ -220,6 +220,14 @@ NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyMoveConstructor)
     NTSCFG_TEST_EQ(timerOptions->wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 
+#if NTSCFG_MOVE_RESET_ENABLED
+
+    // Ensure the other time options is reset.
+
+    NTSCFG_TEST_EQ(otherTimerOptions, ntca::TimerOptions());
+
+#else
+
     // Ensure the other time options still has its original value.
 
     NTSCFG_TEST_EQ(otherTimerOptions.handle(), k_HANDLE);
@@ -235,6 +243,8 @@ NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyMoveConstructor)
         false);
     NTSCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyCopyAssignmentOperator)
@@ -352,6 +362,14 @@ NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyMoveAssignmentOperator)
     NTSCFG_TEST_EQ(timerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
 
+#if NTSCFG_MOVE_RESET_ENABLED
+
+    // Ensure the other time options is reset.
+
+    NTSCFG_TEST_EQ(otherTimerOptions, ntca::TimerOptions());
+
+#else
+
     // Ensure the other time options still has its original value.
 
     NTSCFG_TEST_EQ(otherTimerOptions.handle(), k_HANDLE);
@@ -367,6 +385,8 @@ NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyMoveAssignmentOperator)
         false);
     NTSCFG_TEST_EQ(otherTimerOptions.wantEvent(ntca::TimerEventType::e_CLOSED),
                    false);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntca::TimerOptionsTest::verifyReset)
