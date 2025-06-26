@@ -1,0 +1,41 @@
+name: Build and run Sanitizer
+
+on:
+  workflow_call:
+    inputs:
+      sanitizer-name:
+        description: Sanitizer name (asan/msan/tsan/ubsan)
+        type: string
+        required: true
+
+jobs:
+  build_and_run_sanitizer:
+    name: Build and run Sanitizer
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Debug
+        run: cd ${{ github.workspace }} && find .
+      - name: Set up dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qy build-essential \
+            gdb \
+            curl \
+            python3.10 \
+            python3-pip \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libbenchmark-dev \
+            libgmock-dev \
+            libz-dev
+      - name: Fetch & Build non packaged dependencies
+        run: |
+          mkdir -p deps
+          cd deps
+          ../.github/workflows/docker/build_deps.sh
+      - name: Build NTF and dependencies with sanitizer instrumentation
+        run: ${{ github.workspace }}/.github/workflows/sanitizers/build_sanitizer.sh ${{ inputs.sanitizer-name }}
+      - name: Run unit tests under sanitizer
+        run: ${{ github.workspace }}/run-unittests.sh
