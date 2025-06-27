@@ -79,7 +79,7 @@ LocalName::LocalName()
 
 LocalName::LocalName(bslmf::MovableRef<LocalName> original) NTSCFG_NOEXCEPT
 {
-    bsl::memcpy(this, &original, sizeof(LocalName));
+    bsl::memcpy(this, &NTSCFG_MOVE_ACCESS(original), sizeof(LocalName));
     NTSCFG_MOVE_RESET(original);
 }
 
@@ -96,7 +96,7 @@ LocalName& LocalName::operator=(bslmf::MovableRef<LocalName> other)
     NTSCFG_NOEXCEPT
 {
     if (this != &NTSCFG_MOVE_ACCESS(other)) {
-        bsl::memcpy(this, &other, sizeof(LocalName));
+        bsl::memcpy(this, &NTSCFG_MOVE_ACCESS(other), sizeof(LocalName));
         NTSCFG_MOVE_RESET(other);
     }
 
