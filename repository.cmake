@@ -1369,6 +1369,7 @@ function (ntf_target_options_common_epilog target)
         ntf_target_build_dependency(TARGET ${target} VALUE odbccp32.lib)
         ntf_target_build_dependency(TARGET ${target} VALUE ws2_32.lib)
         ntf_target_build_dependency(TARGET ${target} VALUE userenv.lib)
+        ntf_target_build_dependency(TARGET ${target} VALUE bcrypt.lib)
     endif()
 
 endfunction()
@@ -2246,6 +2247,11 @@ function (ntf_executable)
         add_dependencies(format format_${target})
     endif()
 
+    if (NOT TARGET generate_${target})
+        add_custom_target(generate_${target})
+        add_dependencies(generate generate_${target})
+    endif()
+
     if (TARGET documentation)
         add_dependencies(documentation ${target})
     endif()
@@ -3063,6 +3069,11 @@ function (ntf_adapter)
             add_dependencies(format format_${target})
         endif()
 
+        if (NOT TARGET generate_${target})
+            add_custom_target(generate_${target})
+            add_dependencies(generate generate_${target})
+        endif()
+
         if (TARGET documentation)
             add_dependencies(documentation ${target})
         endif()
@@ -3802,6 +3813,11 @@ function (ntf_group)
         if (NOT TARGET format_${target})
             add_custom_target(format_${target})
             add_dependencies(format format_${target})
+        endif()
+
+        if (NOT TARGET generate_${target})
+            add_custom_target(generate_${target})
+            add_dependencies(generate generate_${target})
         endif()
 
         if (TARGET documentation)
@@ -4715,6 +4731,11 @@ function (ntf_package)
             add_custom_target(format_${target})
             add_dependencies(format_${group} format_${target})
         endif()
+
+        if (NOT TARGET generate_${target})
+            add_custom_target(generate_${target})
+            add_dependencies(generate generate_${target})
+        endif()
     endif()
 
 endfunction()
@@ -5145,6 +5166,16 @@ function (ntf_component)
 
     cmake_path(
         APPEND
+        component_idl_path "${directory}" "${component}.idl"
+    )
+
+    cmake_path(
+        APPEND
+        component_xsd_path "${directory}" "${component}.xsd"
+    )
+
+    cmake_path(
+        APPEND
         component_header_path "${directory}" "${component}.h"
     )
 
@@ -5340,6 +5371,18 @@ function (ntf_component)
             WORKING_DIRECTORY "${repository_path}")
 
         add_dependencies(format_${target} format_${component})
+    endif()
+
+    if (EXISTS ${component_idl_path})
+        set(GENERATED_HEADER_INCLUDE_PATHS "-I=$<JOIN:$<TARGET_PROPERTY:${target},INTERFACE_INCLUDE_DIRECTORIES>,;-I=>")
+
+        add_custom_target(
+            generate_${component}
+            COMMAND ntf generate --silent "${GENERATED_HEADER_INCLUDE_PATHS}" --output-directory ${directory} ${component_idl_path}
+            WORKING_DIRECTORY "${repository_path}"
+            COMMAND_EXPAND_LISTS)
+
+        add_dependencies(generate_${target} generate_${component})
     endif()
 
     if (NOT ${component_private})
@@ -7212,6 +7255,10 @@ function (ntf_repository)
     endif()
 
     add_dependencies(all.t build_test)
+
+    if (NOT TARGET generate)
+        add_custom_target(generate)
+    endif()
 
     if (NOT TARGET format)
         add_custom_target(format)
