@@ -92,35 +92,39 @@ int Guid::Impl::getLocalIpv4Address()
 
     int result = 0;
 
-    bsl::memset(localHostname, 0, sizeof localHostname);
-    if (0 != gethostname(localHostname, sizeof localHostname)) {
-        BSLS_ASSERT(false && "Cannot use Guid without local hostname");
-    }
+    std::memset(localHostname, 0, sizeof localHostname);
+    if (0 == gethostname(localHostname, sizeof localHostname)) {
+        addrinfo hints;
+        std::memset(&hints, 0, sizeof hints);
+        hints.ai_family = AF_INET;
 
-    addrinfo hints;
-    bsl::memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET;
+        addrinfo *info = 0;
+        if (0 == getaddrinfo(localHostname, 0, &hints, &info)) {
+            for (addrinfo *current  = info;
+                           current != 0;
+                           current  = current->ai_next)
+            {
+                if (current->ai_addr->sa_family == AF_INET) {
+                    sockaddr_in *addr =
+                        reinterpret_cast<sockaddr_in*>(current->ai_addr);
 
-    addrinfo* info = 0;
-    if (0 == getaddrinfo(localHostname, 0, &hints, &info)) {
-        for (addrinfo* current = info; current != 0;
-             current           = current->ai_next)
-        {
-            if (current->ai_addr->sa_family == AF_INET) {
-                sockaddr_in* addr =
-                    reinterpret_cast<sockaddr_in*>(current->ai_addr);
-                result = addr->sin_addr.s_addr;
-                break;
+                    if (addr->sin_addr.s_addr == htonl(INADDR_LOOPBACK)) {
+                        continue;
+                    }
+
+                    result = addr->sin_addr.s_addr;
+                    break;
+                }
             }
+        }
+
+        if (info != 0) {
+            freeaddrinfo(info);
         }
     }
 
-    if (info != 0) {
-        freeaddrinfo(info);
-    }
-
     if (result == 0) {
-        BSLS_ASSERT(false && "Cannot use Guid without local IP address");
+        result = htonl(INADDR_LOOPBACK);
     }
 
 #if defined(BSLS_PLATFORM__OS_WINDOWS)
