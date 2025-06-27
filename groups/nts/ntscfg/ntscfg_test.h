@@ -1108,6 +1108,16 @@ class TestUtil
 void TestUtil::registerTestCase(const char*             name,
                                 const TestCaseFunction& function)
 {
+    bsl::string testCaseName;
+
+    const bsl::size_t nameLength = bsl::strlen(name);
+    for (bsl::size_t i = 0; i < nameLength; ++i) {
+        if (bdlb::CharType::isSpace(name[i])) {
+            continue;
+        }
+        testCaseName.push_back(name[i]);
+    }
+
     const int testCaseNumber =
         static_cast<int>(BloombergLP::ntscfg::testCaseVector.size() + 1);
 
@@ -1115,7 +1125,7 @@ void TestUtil::registerTestCase(const char*             name,
         BloombergLP::ntscfg::testCaseMap[testCaseNumber];
 
     testCaseContext.setNumber(testCaseNumber);
-    testCaseContext.setName(name);
+    testCaseContext.setName(testCaseName);
     testCaseContext.setFunction(function);
 
     BloombergLP::ntscfg::testCaseVector.push_back(

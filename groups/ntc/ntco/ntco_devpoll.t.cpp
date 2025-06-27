@@ -26,8 +26,6 @@ using namespace BloombergLP;
 namespace BloombergLP {
 namespace ntco {
 
-#if NTC_BUILD_WITH_DEVPOLL
-
 // Provide tests for 'ntco::Devpoll'.
 class DevpollTest
 {
@@ -44,29 +42,39 @@ class DevpollTest
 
 NTSCFG_TEST_FUNCTION(ntco::DevpollTest::verifySockets)
 {
+#if NTC_BUILD_WITH_DEVPOLL
+
     bsl::shared_ptr<ntco::DevpollFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorSockets(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::DevpollTest::verifyTimers)
 {
+#if NTC_BUILD_WITH_DEVPOLL
+
     bsl::shared_ptr<ntco::DevpollFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorTimers(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::DevpollTest::verifyFunctions)
 {
+#if NTC_BUILD_WITH_DEVPOLL
+
     bsl::shared_ptr<ntco::DevpollFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorFunctions(reactorFactory);
-}
 
 #endif
+}
 
 }  // close namespace ntco
 }  // close namespace BloombergLP

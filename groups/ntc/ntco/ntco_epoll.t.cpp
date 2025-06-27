@@ -26,8 +26,6 @@ using namespace BloombergLP;
 namespace BloombergLP {
 namespace ntco {
 
-#if NTC_BUILD_WITH_EPOLL
-
 // Provide tests for 'ntco::Epoll'.
 class EpollTest
 {
@@ -44,29 +42,39 @@ class EpollTest
 
 NTSCFG_TEST_FUNCTION(ntco::EpollTest::verifySockets)
 {
+#if NTC_BUILD_WITH_EPOLL
+
     bsl::shared_ptr<ntco::EpollFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorSockets(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::EpollTest::verifyTimers)
 {
+#if NTC_BUILD_WITH_EPOLL
+
     bsl::shared_ptr<ntco::EpollFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorTimers(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::EpollTest::verifyFunctions)
 {
+#if NTC_BUILD_WITH_EPOLL
+
     bsl::shared_ptr<ntco::EpollFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorFunctions(reactorFactory);
-}
 
 #endif
+}
 
 }  // close namespace ntco
 }  // close namespace BloombergLP

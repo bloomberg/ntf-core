@@ -5326,19 +5326,19 @@ function (ntf_component)
         ntf_repository_build_valgrind_get(OUTPUT use_valgrind)
 
         if (${use_valgrind})
-            add_test(
+            ntf_test_add(
                 NAME ${component_test_build_target}
                 COMMAND ${VALGRIND_PATH} --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1 ${component_test_build_target_path}
+                SOURCE ${component_driver_path}
             )
 
         else()
-            add_test(
+            ntf_test_add(
                 NAME ${component_test_build_target}
                 COMMAND ${component_test_build_target}
+                SOURCE ${component_driver_path}
             )
         endif()
-
-        set_tests_properties(${component_test_build_target} PROPERTIES TIMEOUT 600)
 
         add_custom_target(
             test_${component}
@@ -9085,3 +9085,81 @@ function (ntf_check_build_has_link_dynamic_ubsan)
     endif()
 
 endfunction()
+
+# Add a test.
+#
+# NAME    - The name of the test.
+# COMMAND - The command to run the test
+function (ntf_test_add)
+    cmake_parse_arguments(
+        NTF_TEST "" "NAME;SOURCE" "COMMAND" ${ARGN})
+
+    set(found_tests FALSE)
+
+    file(READ "${NTF_TEST_SOURCE}" content)
+
+    string(REPLACE "[" "<OPEN_BRACKET>"  content "${content}")
+    string(REPLACE "]" "<CLOSE_BRACKET>" content "${content}")
+    string(REPLACE ";" "\\;"             content "${content}")
+
+    string(REGEX MATCHALL "([^\r\n]*[\r\n])" content_line_list "${content}")
+    set(current_line_number "0")
+
+    set(test_line "0")
+    set(candidate "")
+
+    foreach(current_line_string IN LISTS content_line_list)
+        math(EXPR current_line_number "${current_line_number}+1")
+
+        string(REGEX MATCH 
+               "[ \t]*NTSCFG_TEST_FUNCTION[ \t]*[\\(]*" 
+               found_start 
+               "${current_line_string}")
+
+        if (found_start)
+            set(test_line "${current_line_number}")
+        endif()
+
+        set(candidate "${candidate}${current_line_string}")
+
+        string(REGEX MATCH 
+               "NTSCFG_TEST_FUNCTION[ \r\n\t]*\\(([A-Za-z0-9_: \r\n\t]+)\\)" 
+               found_end 
+               "${candidate}")
+
+        if (found_end)
+            set(candidate "")
+        else()
+            continue()
+        endif()
+
+        set(found_tests TRUE)
+
+        string(REGEX REPLACE "[ \r\n\t]" "" test_case "${CMAKE_MATCH_1}")
+        set(test_name "${NTF_TEST_NAME} ${test_case}")
+        set(test_command "${NTF_TEST_COMMAND}")
+        list(APPEND test_command "${test_case}")
+
+        if (VERBOSE) 
+            message(STATUS "Found test ${test_name} at line ${test_line}")
+        endif()
+
+        add_test(NAME ${test_name} COMMAND ${test_command})
+
+        set_tests_properties(${test_name} PROPERTIES TIMEOUT 600)
+
+        set_tests_properties(
+            ${test_name}
+            PROPERTIES
+            SKIP_REGULAR_EXPRESSION "\\[  SKIPPED \\]"
+            DEF_SOURCE_LINE "${NTF_TEST_SOURCE}:${test_line}"
+        )
+    endforeach()
+
+    if (NOT ${found_tests})
+        add_test(NAME ${NTF_TEST_NAME} COMMAND ${NTF_TEST_COMMAND})
+        set_tests_properties(${NTF_TEST_NAME} PROPERTIES TIMEOUT 600)
+    endif()
+
+endfunction()
+

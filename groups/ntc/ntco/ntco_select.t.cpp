@@ -26,8 +26,6 @@ using namespace BloombergLP;
 namespace BloombergLP {
 namespace ntco {
 
-#if NTC_BUILD_WITH_SELECT
-
 // Provide tests for 'ntco::Select'.
 class SelectTest
 {
@@ -44,29 +42,39 @@ class SelectTest
 
 NTSCFG_TEST_FUNCTION(ntco::SelectTest::verifySockets)
 {
+#if NTC_BUILD_WITH_SELECT
+
     bsl::shared_ptr<ntco::SelectFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorSockets(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::SelectTest::verifyTimers)
 {
+#if NTC_BUILD_WITH_SELECT
+
     bsl::shared_ptr<ntco::SelectFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorTimers(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::SelectTest::verifyFunctions)
 {
+#if NTC_BUILD_WITH_SELECT
+
     bsl::shared_ptr<ntco::SelectFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorFunctions(reactorFactory);
-}
 
 #endif
+}
 
 }  // close namespace ntco
 }  // close namespace BloombergLP

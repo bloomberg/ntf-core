@@ -26,8 +26,6 @@ using namespace BloombergLP;
 namespace BloombergLP {
 namespace ntso {
 
-#if NTSO_POLLSET_ENABLED
-
 // Provide tests for 'ntso::Pollset'.
 class PollsetTest
 {
@@ -46,6 +44,8 @@ class PollsetTest
 
 NTSCFG_TEST_FUNCTION(ntso::PollsetTest::verifyCase1)
 {
+#if NTSO_POLLSET_ENABLED
+
     // Concern: Test the usage example.
 
     ntsa::ReactorConfig reactorConfig(NTSCFG_TEST_ALLOCATOR);
@@ -58,10 +58,14 @@ NTSCFG_TEST_FUNCTION(ntso::PollsetTest::verifyCase1)
     reactorVector.push_back(reactor);
 
     ntso::Test::usage(reactorVector, NTSCFG_TEST_ALLOCATOR);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntso::PollsetTest::verifyCase2)
 {
+#if NTSO_POLLSET_ENABLED
+
     // Concern: Polling after a socket has been shutdown for both reading and
     // writing after both sides have shutdown writing does not block.
 
@@ -75,10 +79,14 @@ NTSCFG_TEST_FUNCTION(ntso::PollsetTest::verifyCase2)
     reactorVector.push_back(reactor);
 
     ntso::Test::pollingAfterFullShutdown(reactorVector, NTSCFG_TEST_ALLOCATOR);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntso::PollsetTest::verifyCase3)
 {
+#if NTSO_POLLSET_ENABLED
+
     // Concern: Close socket while it still remains added to the reactor.
     // Polling the reactor times out.
 
@@ -92,9 +100,9 @@ NTSCFG_TEST_FUNCTION(ntso::PollsetTest::verifyCase3)
     reactorVector.push_back(reactor);
 
     ntso::Test::pollingAfterClose(reactorVector, NTSCFG_TEST_ALLOCATOR);
-}
 
 #endif
+}
 
 }  // close namespace ntso
 }  // close namespace BloombergLP

@@ -26,8 +26,6 @@ using namespace BloombergLP;
 namespace BloombergLP {
 namespace ntco {
 
-#if NTC_BUILD_WITH_POLLSET
-
 // Provide tests for 'ntco::Pollset'.
 class PollsetTest
 {
@@ -44,29 +42,39 @@ class PollsetTest
 
 NTSCFG_TEST_FUNCTION(ntco::PollsetTest::verifySockets)
 {
+#if NTC_BUILD_WITH_POLLSET
+
     bsl::shared_ptr<ntco::PollsetFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorSockets(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::PollsetTest::verifyTimers)
 {
+#if NTC_BUILD_WITH_POLLSET
+
     bsl::shared_ptr<ntco::PollsetFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorTimers(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::PollsetTest::verifyFunctions)
 {
+#if NTC_BUILD_WITH_POLLSET
+
     bsl::shared_ptr<ntco::PollsetFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorFunctions(reactorFactory);
-}
 
 #endif
+}
 
 }  // close namespace ntco
 }  // close namespace BloombergLP

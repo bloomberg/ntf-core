@@ -57,6 +57,8 @@ using namespace BloombergLP;
 #define NTCO_IORING_TEST_LOG_POPPED(test, id)                                 \
     NTCO_IORING_TEST_LOG_OPERATION(test, "Popped", id)
 
+#endif
+
 namespace BloombergLP {
 namespace ntco {
 
@@ -79,6 +81,8 @@ class IoRingTest
 
 NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase1)
 {
+#if NTC_BUILD_WITH_IORING
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
@@ -146,10 +150,14 @@ NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase1)
             ++expectedId;
         }
     }
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase2)
 {
+#if NTC_BUILD_WITH_IORING
+
     if (!ntco::IoRingFactory::isSupported()) {
         return;
     }
@@ -159,10 +167,14 @@ NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase2)
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorSockets(proactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase3)
 {
+#if NTC_BUILD_WITH_IORING
+
     if (!ntco::IoRingFactory::isSupported()) {
         return;
     }
@@ -172,10 +184,14 @@ NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase3)
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorTimers(proactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase4)
 {
+#if NTC_BUILD_WITH_IORING
+
     if (!ntco::IoRingFactory::isSupported()) {
         return;
     }
@@ -185,9 +201,10 @@ NTSCFG_TEST_FUNCTION(ntco::IoRingTest::verifyCase4)
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorFunctions(proactorFactory);
+
+#endif
 }
 
 }  // close namespace ntco
 }  // close namespace BloombergLP
 
-#endif

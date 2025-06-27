@@ -26,8 +26,6 @@ using namespace BloombergLP;
 namespace BloombergLP {
 namespace ntco {
 
-#if NTC_BUILD_WITH_EVENTPORT
-
 // Provide tests for 'ntco::EventPort'.
 class EventPortTest
 {
@@ -44,29 +42,39 @@ class EventPortTest
 
 NTSCFG_TEST_FUNCTION(ntco::EventPortTest::verifySockets)
 {
+#if NTC_BUILD_WITH_EVENTPORT
+
     bsl::shared_ptr<ntco::EventPortFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorSockets(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::EventPortTest::verifyTimers)
 {
+#if NTC_BUILD_WITH_EVENTPORT
+
     bsl::shared_ptr<ntco::EventPortFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorTimers(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::EventPortTest::verifyFunctions)
 {
+#if NTC_BUILD_WITH_EVENTPORT
+
     bsl::shared_ptr<ntco::EventPortFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorFunctions(reactorFactory);
-}
 
 #endif
+}
 
 }  // close namespace ntco
 }  // close namespace BloombergLP
