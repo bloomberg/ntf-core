@@ -37,28 +37,31 @@ class LocalNameTest
 {
   public:
     // TODO
-    static void verifyCase1();
+    static void verifySetValueFromPathAbsolute();
 
     // TODO
-    static void verifyCase2();
+    static void verifySetValueFromPathRelative();
 
     // TODO
-    static void verifyCase3();
+    static void verifySetValueFromPathTooLong();
 
     // TODO
-    static void verifyCase4();
+    static void verifyGenerateUnique();
 
     // TODO
-    static void verifyCase5();
+    static void verifyGenerateUniqueTooLong();
 
     // TODO
-    static void verifyCase6();
+    static void verifyCodecBer();
 
     // TODO
-    static void verifyCase7();
+    static void verifyCodecJson();
+
+    // TODO
+    static void verifyMoveSemantics();
 };
 
-NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase1)
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathAbsolute)
 {
     // Concern: Local name explicitly set to an absolute path.
 
@@ -130,9 +133,9 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase1)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase2)
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathRelative)
 {
-    // Concern: Local name explicitly set to an absolute path.
+    // Concern: Local name explicitly set to a relative path.
     // Plan:
 
     {
@@ -229,32 +232,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase2)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase3)
-{
-    // Concern: Local name generated from a unique GUID.
-    // Plan:
-
-    ntsa::LocalName localName = ntsa::LocalName::generateUnique();
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    NTSCFG_TEST_TRUE(localName.isAbstract());
-#else
-    NTSCFG_TEST_FALSE(localName.isAbstract());
-#endif
-
-    NTSCFG_TEST_FALSE(localName.isUnnamed());
-
-    NTSCFG_TEST_TRUE(localName.isAbsolute());
-    NTSCFG_TEST_FALSE(localName.isRelative());
-
-    if (NTSCFG_TEST_VERBOSITY >= NTSCFG_TEST_VERBOSITY_DEBUG) {
-        bsl::cout << "Local name = '" << localName
-                  << "' (size = " << localName.value().size() << ")"
-                  << bsl::endl;
-    }
-}
-
-NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase4)
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathTooLong)
 {
     // Concern: Try to set explicitly value which is longer than can be stored
     // Plan:
@@ -302,7 +280,32 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase4)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase5)
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUnique)
+{
+    // Concern: Local name generated from a unique GUID.
+    // Plan:
+
+    ntsa::LocalName localName = ntsa::LocalName::generateUnique();
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    NTSCFG_TEST_TRUE(localName.isAbstract());
+#else
+    NTSCFG_TEST_FALSE(localName.isAbstract());
+#endif
+
+    NTSCFG_TEST_FALSE(localName.isUnnamed());
+
+    NTSCFG_TEST_TRUE(localName.isAbsolute());
+    NTSCFG_TEST_FALSE(localName.isRelative());
+
+    if (NTSCFG_TEST_VERBOSITY >= NTSCFG_TEST_VERBOSITY_DEBUG) {
+        bsl::cout << "Local name = '" << localName
+                  << "' (size = " << localName.value().size() << ")"
+                  << bsl::endl;
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueTooLong)
 {
     // Concern: Test generateUniqueName fails if generated path is long enough
     // Notes:
@@ -383,7 +386,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase5)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase6)
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCodecBer)
 {
     int rc;
 
@@ -429,7 +432,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase6)
     NTSCFG_TEST_EQ(e2, e1);
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase7)
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCodecJson)
 {
     int rc;
 
@@ -479,6 +482,47 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyCase7)
 
     for (bsl::size_t i = 0; i < e1.size(); ++i) {
         NTSCFG_TEST_EQ(e2[i], e1[i]);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyMoveSemantics)
+{
+    {
+        ntsa::LocalName localName;
+        localName.setValue("/tmp/ntf/test");
+
+        bsls::ObjectBuffer<ntsa::LocalName> otherLocalName;
+        new (otherLocalName.buffer()) ntsa::LocalName(NTSCFG_MOVE(localName));
+
+        bslstl::StringRef otherLocalNameValue = 
+            otherLocalName.object().value();
+
+        NTSCFG_TEST_EQ(bsl::string(otherLocalNameValue), 
+                       bsl::string("/tmp/ntf/test"));
+
+#if NTSCFG_MOVE_RESET_ENABLED
+        bslstl::StringRef localNameValue = localName.value();
+        NTSCFG_TEST_EQ(localNameValue.size(), 0);
+#endif
+    }
+
+    {
+        ntsa::LocalName localName;
+        localName.setValue("/tmp/ntf/test");
+
+        ntsa::LocalName otherLocalName;
+        otherLocalName = NTSCFG_MOVE(localName);
+
+        bslstl::StringRef otherLocalNameValue = 
+            otherLocalName.value();
+
+        NTSCFG_TEST_EQ(bsl::string(otherLocalNameValue), 
+                       bsl::string("/tmp/ntf/test"));
+
+#if NTSCFG_MOVE_RESET_ENABLED
+        bslstl::StringRef localNameValue = localName.value();
+        NTSCFG_TEST_EQ(localNameValue.size(), 0);
+#endif
     }
 }
 
