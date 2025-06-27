@@ -27,16 +27,18 @@ using namespace BloombergLP;
 namespace BloombergLP {
 namespace ntco {
 
-#if NTC_BUILD_WITH_KQUEUE
-
 // Provide tests for 'ntco::Kqueue'.
 class KqueueTest
 {
+#if NTC_BUILD_WITH_KQUEUE
+
     // Process the specified reactor 'event' by incrementing the specified
     // 'eventCount'.
     static void processReactorEvent(
         bsls::AtomicUint64*                    eventCount,
         const BloombergLP::ntca::ReactorEvent& event);
+
+#endif
 
   public:
     // Verify the reactor implements sockets.
@@ -52,6 +54,7 @@ class KqueueTest
     static void verifyTimerLimit();
 };
 
+#if NTC_BUILD_WITH_KQUEUE
 void KqueueTest::processReactorEvent(
     bsls::AtomicUint64*                    eventCount,
     const BloombergLP::ntca::ReactorEvent& event)
@@ -62,33 +65,48 @@ void KqueueTest::processReactorEvent(
 
     eventCount->add(1);
 }
+#endif
 
 NTSCFG_TEST_FUNCTION(ntco::KqueueTest::verifySockets)
 {
+#if NTC_BUILD_WITH_KQUEUE
+
     bsl::shared_ptr<ntco::KqueueFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorSockets(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::KqueueTest::verifyTimers)
 {
+#if NTC_BUILD_WITH_KQUEUE
+
     bsl::shared_ptr<ntco::KqueueFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorTimers(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::KqueueTest::verifyFunctions)
 {
+#if NTC_BUILD_WITH_KQUEUE
+
     bsl::shared_ptr<ntco::KqueueFactory> reactorFactory;
     reactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyReactorFunctions(reactorFactory);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntco::KqueueTest::verifyTimerLimit)
 {
+#if NTC_BUILD_WITH_KQUEUE
+
     ntsa::Error error;
 
     bsl::shared_ptr<ntci::User> user;
@@ -181,9 +199,9 @@ NTSCFG_TEST_FUNCTION(ntco::KqueueTest::verifyTimerLimit)
     timer->close();
     
     reactor->deregisterWaiter(waiter);
-}
 
 #endif
+}
 
 }  // close namespace ntco
 }  // close namespace BloombergLP

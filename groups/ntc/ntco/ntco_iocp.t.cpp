@@ -29,8 +29,6 @@ BSLS_IDENT_RCSID(ntco_iocp_t_cpp, "$Id$ $CSID$")
 
 using namespace BloombergLP;
 
-#if NTC_BUILD_WITH_IOCP
-
 namespace BloombergLP {
 namespace ntco {
 
@@ -46,43 +44,47 @@ class IocpTest
 
     // TODO
     static void verifyCase3();
-
-    // TODO
-    static void verifyCase4();
 };
+
 
 NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase1)
 {
-}
+#if NTC_BUILD_WITH_IOCP
 
-NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase2)
-{
     bsl::shared_ptr<ntco::IocpFactory> proactorFactory;
     proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorSockets(proactorFactory);
+
+#endif
 }
 
-NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase3)
+NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase2)
 {
+#if NTC_BUILD_WITH_IOCP
+
     bsl::shared_ptr<ntco::IocpFactory> proactorFactory;
     proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorTimers(proactorFactory);
+
+#endif
 }
 
-NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase4)
+NTSCFG_TEST_FUNCTION(ntco::IocpTest::verifyCase3)
 {
+#if NTC_BUILD_WITH_IOCP
+
     bsl::shared_ptr<ntco::IocpFactory> proactorFactory;
     proactorFactory.createInplace(NTSCFG_TEST_ALLOCATOR,
                                   NTSCFG_TEST_ALLOCATOR);
 
     Test::verifyProactorFunctions(proactorFactory);
+
+#endif
 }
 
 }  // close namespace ntco
 }  // close namespace BloombergLP
-
-#endif
