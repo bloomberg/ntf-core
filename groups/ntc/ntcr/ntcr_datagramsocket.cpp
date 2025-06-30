@@ -184,10 +184,10 @@ BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
                    "is shutting down transmission")
 
 #define NTCR_DATAGRAMSOCKET_LOG_TIMESTAMP_PROCESSING_ERROR()                  \
-    NTCI_LOG_WARN("Datagram socket timestamp processing error")
+    NTCI_LOG_TRACE("Datagram socket timestamp processing error")
 
 #define NTCR_DATAGRAMSOCKET_LOG_FAILED_TO_CORRELATE_TIMESTAMP(timestamp)      \
-    NTCI_LOG_WARN(                                                            \
+    NTCI_LOG_TRACE(                                                           \
         "Datagram socket failed to correlate timestamp ID %u type %s",        \
         timestamp.id(),                                                       \
         ntsa::TimestampType::toString(timestamp.type()));
@@ -763,8 +763,8 @@ void DatagramSocket::processSendDeadlineTimer(
         ntci::SendCallback callback;
         ntca::SendContext  context;
 
-        bool becameEmpty = d_sendQueue.removeEntryId(&callback, 
-                                                     &context, 
+        bool becameEmpty = d_sendQueue.removeEntryId(&callback,
+                                                     &context,
                                                      entryId);
         if (becameEmpty) {
             this->privateApplyFlowControl(self,
@@ -930,7 +930,7 @@ ntsa::Error DatagramSocket::privateSocketReadableIteration(
         receiveContext.setTransport(d_transport);
 
         bsl::shared_ptr<bdlbb::Blob> data;
-        
+
         {
             ntcq::ReceiveQueueEntry& entry = d_receiveQueue.frontEntry();
 
@@ -1035,7 +1035,7 @@ ntsa::Error DatagramSocket::privateSocketWritableIteration(
     ntcq::SendQueueEntry& entry = d_sendQueue.frontEntry();
 
     if (NTCCFG_LIKELY(entry.data())) {
-        ntsa::Handle foreignHandle = 
+        ntsa::Handle foreignHandle =
             entry.foreignHandle().value_or(ntsa::k_INVALID_HANDLE);
 
         ntsa::SendContext sendContext;
@@ -1284,12 +1284,12 @@ void DatagramSocket::privateShutdownSequence(
     // immeditiately by the reactor thread.
     //
     // TODO: Remove the 'defer' parameter and always defer the announcements.
-    // 
+    //
     // bool keepHalfOpen = NTCCFG_DEFAULT_DATAGRAM_SOCKET_KEEP_HALF_OPEN;
     // if (!d_options.keepHalfOpen().isNull()) {
     //     keepHalfOpen = d_options.keepHalfOpen().value();
     // }
-    // 
+    //
     // if (keepHalfOpen) {
     //     defer = true;
     // }
@@ -1399,7 +1399,7 @@ void DatagramSocket::privateShutdownSequenceComplete(
 
         NTCR_DATAGRAMSOCKET_LOG_SHUTDOWN_SEND();
 
-        typedef bsl::pair<ntca::SendContext, ntci::SendCallback> 
+        typedef bsl::pair<ntca::SendContext, ntci::SendCallback>
         SendContextCallback;
 
         bsl::vector<SendContextCallback> callbackVector;
@@ -1429,7 +1429,7 @@ void DatagramSocket::privateShutdownSequenceComplete(
                 announceWriteQueueDiscarded =
                     d_sendQueue.removeAll(&sendQueueEntryVector);
                 for (bsl::size_t i = 0; i < sendQueueEntryVector.size(); ++i) {
-                    const ntcq::SendQueueEntry& entry = 
+                    const ntcq::SendQueueEntry& entry =
                         sendQueueEntryVector[i];
                     if (entry.callback()) {
                         callbackVector.push_back(
@@ -2030,7 +2030,7 @@ ntsa::Error DatagramSocket::privateSend(
 
     ntsa::Error error;
 
-    ntsa::Handle foreignHandle = 
+    ntsa::Handle foreignHandle =
         options.foreignHandle().value_or(ntsa::k_INVALID_HANDLE);
 
     if (NTCCFG_LIKELY(!d_sendQueue.hasEntry())) {
@@ -2048,9 +2048,9 @@ ntsa::Error DatagramSocket::privateSend(
         else {
             if (sendContext.zeroCopy()) {
                 ntcq::ZeroCopyCounter zeroCopyCounter =
-                    d_zeroCopyQueue.push(state.counter(), 
-                                         data, 
-                                         setting, 
+                    d_zeroCopyQueue.push(state.counter(),
+                                         data,
+                                         setting,
                                          callback);
 
                 NTCCFG_WARNING_UNUSED(zeroCopyCounter);
@@ -2172,7 +2172,7 @@ ntsa::Error DatagramSocket::privateSend(
 
     ntsa::Error error;
 
-    ntsa::Handle foreignHandle = 
+    ntsa::Handle foreignHandle =
         options.foreignHandle().value_or(ntsa::k_INVALID_HANDLE);
 
     if (NTCCFG_LIKELY(!d_sendQueue.hasEntry())) {
@@ -2190,9 +2190,9 @@ ntsa::Error DatagramSocket::privateSend(
         else {
             if (sendContext.zeroCopy()) {
                 ntcq::ZeroCopyCounter zeroCopyCounter =
-                    d_zeroCopyQueue.push(state.counter(), 
-                                         data, 
-                                         setting, 
+                    d_zeroCopyQueue.push(state.counter(),
+                                         data,
+                                         setting,
                                          callback);
 
                 NTCCFG_WARNING_UNUSED(zeroCopyCounter);
@@ -2512,8 +2512,8 @@ ntsa::Error DatagramSocket::privateDequeueReceiveBuffer(
     }
     else {
         bsl::shared_ptr<bdlbb::Blob> deflatedData;
-        error = this->privateDequeueReceiveBufferRaw(self, 
-                                                     context, 
+        error = this->privateDequeueReceiveBufferRaw(self,
+                                                     context,
                                                      &deflatedData);
         if (error) {
             return error;
@@ -2526,16 +2526,16 @@ ntsa::Error DatagramSocket::privateDequeueReceiveBuffer(
             *data = d_dataPool_sp->createIncomingBlob();
         }
 
-        error = d_receiveInflater_sp->inflate(&inflateContext, 
-                                              data->get(), 
-                                              *deflatedData, 
+        error = d_receiveInflater_sp->inflate(&inflateContext,
+                                              data->get(),
+                                              *deflatedData,
                                               inflateOptions);
         if (error) {
             return error;
         }
 
         return ntsa::Error();
-    }  
+    }
 }
 
 ntsa::Error DatagramSocket::privateDequeueReceiveBufferRaw(
@@ -2829,9 +2829,9 @@ ntsa::Error DatagramSocket::privateOpen(
     }
 
     if (d_options.compressionConfig().has_value()) {
-        if (d_options.compressionConfig().value().type() != 
+        if (d_options.compressionConfig().value().type() !=
             ntca::CompressionType::e_UNDEFINED &&
-            d_options.compressionConfig().value().type() != 
+            d_options.compressionConfig().value().type() !=
             ntca::CompressionType::e_NONE)
         {
             bsl::shared_ptr<ntci::CompressionDriver> compressionDriver;
@@ -3677,9 +3677,9 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
 
         bdlbb::Blob deflatedData(d_outgoingBufferFactory_sp.get());
 
-        error = d_sendDeflater_sp->deflate(&deflateContext, 
-                                           &deflatedData, 
-                                           data, 
+        error = d_sendDeflater_sp->deflate(&deflateContext,
+                                           &deflatedData,
+                                           data,
                                            deflateOptions);
         if (error) {
             return error;
@@ -3687,13 +3687,13 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
 
         context.setCompressionType(deflateContext.compressionType());
         context.setCompressionRatio(
-            static_cast<double>(deflateContext.bytesWritten()) / 
+            static_cast<double>(deflateContext.bytesWritten()) /
             deflateContext.bytesRead());
 
-        return this->privateSend(self, 
-                                 deflatedData, 
-                                 state, 
-                                 options, 
+        return this->privateSend(self,
+                                 deflatedData,
+                                 state,
+                                 options,
                                  context,
                                  callback);
     }
@@ -3779,9 +3779,9 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
 
         bdlbb::Blob deflatedData(d_outgoingBufferFactory_sp.get());
 
-        error = d_sendDeflater_sp->deflate(&deflateContext, 
-                                           &deflatedData, 
-                                           data, 
+        error = d_sendDeflater_sp->deflate(&deflateContext,
+                                           &deflatedData,
+                                           data,
                                            deflateOptions);
         if (error) {
             return error;
@@ -3789,13 +3789,13 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
 
         context.setCompressionType(deflateContext.compressionType());
         context.setCompressionRatio(
-            static_cast<double>(deflateContext.bytesWritten()) / 
+            static_cast<double>(deflateContext.bytesWritten()) /
             deflateContext.bytesRead());
 
-        return this->privateSend(self, 
-                                 deflatedData, 
-                                 state, 
-                                 options, 
+        return this->privateSend(self,
+                                 deflatedData,
+                                 state,
+                                 options,
                                  context,
                                  callback);
     }
@@ -4749,8 +4749,8 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
     ntci::SendCallback callback;
     ntca::SendContext  context;
 
-    bool becameEmpty = d_sendQueue.removeEntryToken(&callback, 
-                                                    &context, 
+    bool becameEmpty = d_sendQueue.removeEntryToken(&callback,
+                                                    &context,
                                                     token);
 
     if (becameEmpty) {
@@ -4842,7 +4842,7 @@ ntsa::Error DatagramSocket::release(ntsa::Handle* result)
     return this->release(result, ntci::CloseCallback());
 }
 
-ntsa::Error DatagramSocket::release(ntsa::Handle*              result, 
+ntsa::Error DatagramSocket::release(ntsa::Handle*              result,
                                     const ntci::CloseFunction& callback)
 {
     return this->release(
@@ -4853,7 +4853,7 @@ ntsa::Error DatagramSocket::release(ntsa::Handle*              result,
                                   const ntci::CloseCallback& callback)
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
-    
+
     LockGuard lock(&d_mutex);
 
     *result = ntsa::k_INVALID_HANDLE;
@@ -4870,7 +4870,7 @@ ntsa::Error DatagramSocket::release(ntsa::Handle*              result,
 
     d_manager_sp.reset();
     d_session_sp.reset();
-    
+
     this->privateClose(self, callback);
 
     return ntsa::Error();
