@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_listenersocketevent.h>
 #include <ntccfg_platform.h>
 #include <ntci_listenersocket.h>
+#include <ntci_listenersocketmanager.h>
 #include <ntci_listenersocketsession.h>
 #include <ntci_strand.h>
 #include <ntcscm_version.h>
@@ -46,7 +47,8 @@ namespace ntcu {
 /// This class is thread safe.
 ///
 /// @ingroup module_ntcu
-class ListenerSocketEventQueue : public ntci::ListenerSocketSession
+class ListenerSocketEventQueue : public ntci::ListenerSocketSession, 
+                                 public ntci::ListenerSocketManager
 {
     /// Define a type alias for a queue of events.
     typedef bsl::list<ntca::ListenerSocketEvent> Queue;
@@ -73,6 +75,23 @@ class ListenerSocketEventQueue : public ntci::ListenerSocketSession
         BSLS_KEYWORD_DELETED;
 
   private:
+    /// Process the establishment of the specified 'listenerSocket'. Return
+    /// the application protocol of the 'listenerSocket'.
+    void processListenerSocketEstablished(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the closure of the specified 'listenerSocket'.
+    void processListenerSocketClosed(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Process indication that the specified 'listenerSocket' rejected
+    /// incoming connection.
+    void processListenerSocketLimit(
+        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
+        BSLS_KEYWORD_OVERRIDE;
+
     /// Process the condition that accept queue flow control has been
     /// relaxed: the connections in the backlog are now being automatically
     /// accepted from the operating system and enqueued to the accept queue.

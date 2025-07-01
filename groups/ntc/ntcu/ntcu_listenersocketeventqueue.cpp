@@ -32,6 +32,33 @@ BSLS_IDENT_RCSID(ntcu_listenersocketeventqueue_cpp, "$Id$ $CSID$")
 #define NTCU_LISTENERSOCKETEVENTQUEUE_TIMEOUT -1
 #endif
 
+#define NTCU_LISTENERSOCKETEVENTQUEUE_LOG_MANAGER_ESTABLISHED(                \
+        listenerSocket)                                                       \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG                                                 \
+            << "Listener socket at " << (listenerSocket)->sourceEndpoint()    \
+            << " is established"                                              \
+            << NTCI_LOG_STREAM_END;                                           \
+    } while (false)
+
+#define NTCU_LISTENERSOCKETEVENTQUEUE_LOG_MANAGER_LIMIT(                      \
+        listenerSocket)                                                       \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG                                                 \
+            << "Listener socket at " << (listenerSocket)->sourceEndpoint()    \
+            << " has reached its maximum connection limit"                    \
+            << NTCI_LOG_STREAM_END;                                           \
+    } while (false)
+
+#define NTCU_LISTENERSOCKETEVENTQUEUE_LOG_MANAGER_CLOSED(                     \
+        listenerSocket)                                                       \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG                                                 \
+            << "Listener socket at " << (listenerSocket)->sourceEndpoint()    \
+            << " is closed"                                                   \
+            << NTCI_LOG_STREAM_END;                                           \
+    } while (false)
+
 #define NTCU_LISTENERSOCKETEVENTQUEUE_LOG_EVENT(                              \
         listenerSocket, category, event)                                      \
     do {                                                                      \
@@ -44,6 +71,30 @@ BSLS_IDENT_RCSID(ntcu_listenersocketeventqueue_cpp, "$Id$ $CSID$")
 
 namespace BloombergLP {
 namespace ntcu {
+
+void ListenerSocketEventQueue::processListenerSocketEstablished(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_MANAGER_ESTABLISHED(listenerSocket);
+}
+
+void ListenerSocketEventQueue::processListenerSocketClosed(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_MANAGER_CLOSED(listenerSocket);
+}
+
+void ListenerSocketEventQueue::processListenerSocketLimit(
+    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket)
+{
+    NTCI_LOG_CONTEXT();
+    
+    NTCU_LISTENERSOCKETEVENTQUEUE_LOG_MANAGER_LIMIT(listenerSocket);
+}
 
 void ListenerSocketEventQueue::processAcceptQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
