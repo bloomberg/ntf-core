@@ -32,6 +32,26 @@ BSLS_IDENT_RCSID(ntcu_streamsocketeventqueue_cpp, "$Id$ $CSID$")
 #define NTCU_STREAMSOCKETEVENTQUEUE_TIMEOUT -1
 #endif
 
+#define NTCU_STREAMSOCKETEVENTQUEUE_LOG_MANAGER_ESTABLISHED(                  \
+        streamSocket)                                                         \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG                                                 \
+            << "Stream socket at " << (streamSocket)->sourceEndpoint()        \
+            << " to " << (streamSocket)->remoteEndpoint()                     \
+            << " is established"                                              \
+            << NTCI_LOG_STREAM_END;                                           \
+    } while (false)
+
+#define NTCU_STREAMSOCKETEVENTQUEUE_LOG_MANAGER_CLOSED(                       \
+        streamSocket)                                                         \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG                                                 \
+            << "Stream socket at " << (streamSocket)->sourceEndpoint()        \
+            << " to " << (streamSocket)->remoteEndpoint()                     \
+            << " is closed"                                                   \
+            << NTCI_LOG_STREAM_END;                                           \
+    } while (false)
+
 #define NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, category, event)  \
     do {                                                                      \
         NTCI_LOG_STREAM_DEBUG                                                 \
@@ -44,6 +64,32 @@ BSLS_IDENT_RCSID(ntcu_streamsocketeventqueue_cpp, "$Id$ $CSID$")
 
 namespace BloombergLP {
 namespace ntcu {
+
+void StreamSocketEventQueue::processStreamSocketEstablished(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_MANAGER_ESTABLISHED(streamSocket);
+
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    BSLS_ASSERT_OPT(!d_established);
+    d_established = true;
+}
+
+void StreamSocketEventQueue::processStreamSocketClosed(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_MANAGER_CLOSED(streamSocket);
+
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    BSLS_ASSERT_OPT(d_established);
+    d_established = false;
+}
 
 void StreamSocketEventQueue::processReadQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
@@ -490,6 +536,7 @@ StreamSocketEventQueue::StreamSocketEventQueue(
 : d_mutex()
 , d_condition()
 , d_queue(basicAllocator)
+, d_established(false)
 , d_closed(false)
 , d_strand_sp(ntci::Strand::unspecified())
 , d_allocator_p(bslma::Default::allocator(basicAllocator))

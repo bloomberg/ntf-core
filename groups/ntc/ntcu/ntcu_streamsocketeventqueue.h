@@ -23,6 +23,7 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_platform.h>
 #include <ntci_strand.h>
 #include <ntci_streamsocket.h>
+#include <ntci_streamsocketmanager.h>
 #include <ntci_streamsocketsession.h>
 #include <ntcscm_version.h>
 #include <bslmt_condition.h>
@@ -46,7 +47,8 @@ namespace ntcu {
 /// This class is thread safe.
 ///
 /// @ingroup module_ntcu
-class StreamSocketEventQueue : public ntci::StreamSocketSession
+class StreamSocketEventQueue : public ntci::StreamSocketSession,
+                               public ntci::StreamSocketManager
 {
     /// Define a type alias for a queue of events.
     typedef bsl::list<ntca::StreamSocketEvent> Queue;
@@ -61,6 +63,7 @@ class StreamSocketEventQueue : public ntci::StreamSocketSession
     ntccfg::ConditionMutex        d_mutex;
     ntccfg::Condition             d_condition;
     Queue                         d_queue;
+    bool                          d_established;
     bsl::uint32_t                 d_interest[k_NUM_EVENT_TYPES];
     bool                          d_closed;
     bsl::shared_ptr<ntci::Strand> d_strand_sp;
@@ -72,6 +75,17 @@ class StreamSocketEventQueue : public ntci::StreamSocketSession
         BSLS_KEYWORD_DELETED;
 
   private:
+    /// Process the establishment of the specified 'streamSocket'. Return
+    /// the application protocol of the 'streamSocket'.
+    void processStreamSocketEstablished(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the closure of the specified 'streamSocket'.
+    void processStreamSocketClosed(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
+        BSLS_KEYWORD_OVERRIDE;
+
     /// Process the condition that read queue flow control has been relaxed:
     /// the socket receive buffer is being automatically copied to the read
     /// queue.

@@ -555,11 +555,12 @@ class StreamSocket : public ntci::StreamSocket,
     /// Retry connecting to the remote peer.
     void privateRetryConnect(const bsl::shared_ptr<StreamSocket>& self);
 
-    /// Retry connecting to the remote name. Return the error.
-    ntsa::Error privateRetryConnectToName();
+    /// Retry connecting to the remote name.
+    void privateRetryConnectToName(
+        const bsl::shared_ptr<StreamSocket>& self);
 
-    /// Retry connecting to the remote endpoint. Return the error.
-    ntsa::Error privateRetryConnectToEndpoint(
+    /// Retry connecting to the remote endpoint.
+    void privateRetryConnectToEndpoint(
         const bsl::shared_ptr<StreamSocket>& self);
 
     /// Enable or disable timestamping of outgoing data according to the

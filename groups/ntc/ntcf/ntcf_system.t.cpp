@@ -31,6 +31,7 @@ BSLS_IDENT_RCSID(ntcf_system_t_cpp, "$Id$ $CSID$")
 #include <ntcscm_version.h>
 #include <ntcu_datagramsocketeventqueue.h>
 #include <ntcu_streamsocketeventqueue.h>
+#include <ntcu_listenersocketeventqueue.h>
 #include <ntsa_adapter.h>
 #include <ntsa_endpoint.h>
 #include <ntsa_ipaddress.h>
@@ -187,7 +188,11 @@ class SystemTest
     static void concernClose(const bsl::shared_ptr<ntci::Scheduler>& scheduler,
                              bslma::Allocator* allocator);
 
-    static void concernConnectInitiateAndClose(
+    static void concernConnectInitiateEndpointAndClose(
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
+
+    static void concernConnectInitiateNameAndClose(
         const bsl::shared_ptr<ntci::Scheduler>& scheduler,
         bslma::Allocator*                       allocator);
 
@@ -414,7 +419,8 @@ class SystemTest
     static void verifyDataExchange();
 
     static void verifyClose();
-    static void verifyConnectInitiateAndClose();
+    static void verifyConnectInitiateEndpointAndClose();
+    static void verifyConnectInitiateNameAndClose();
 
     static void verifyConnectEndpointAndShutdown();
 
@@ -7019,12 +7025,12 @@ public:
     }
 };
 
-void SystemTest::concernConnectInitiateAndClose(
+void SystemTest::concernConnectInitiateEndpointAndClose(
     const bsl::shared_ptr<ntci::Scheduler>& scheduler,
     bslma::Allocator*                       allocator)
 {
-    // Concern: Closing sockets before, during, and after name resolution
-    // completes.
+    // Concern: Closing sockets immediately after a connection is initiated to
+    // a name.
 
     #if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
@@ -7042,26 +7048,97 @@ void SystemTest::concernConnectInitiateAndClose(
     bsl::shared_ptr<ntci::StreamSocket> streamSocket =
         scheduler->createStreamSocket(streamSocketOptions, allocator);
 
-    const ntci::StreamSocketCloseGuard closeGuard(streamSocket);
-
     bslmt::Barrier barrier(2);
+
+    bsl::shared_ptr<ntcu::StreamSocketEventQueue> streamSocketEventQueue;
+    streamSocketEventQueue.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                         NTSCFG_TEST_ALLOCATOR);
 
     bsl::shared_ptr<SystemTestResolutionSession> session;
     session.createInplace(NTSCFG_TEST_ALLOCATOR, &barrier);
 
+    streamSocket->registerManager(streamSocketEventQueue);
     streamSocket->registerSession(session);
+
+    ntsa::Endpoint connectEndpoint("127.0.0.1:12345");
 
     ntca::ConnectOptions connectOptions;
     connectOptions.setRetryCount(k_MAX_CONNECTION_ATTEMPTS - 1);
 
-    const ntci::ConnectCallback emptyCb;
+    const ntci::ConnectCallback connectCallback;
 
-    error = streamSocket->connect("localhost:51", connectOptions, emptyCb);
+    error = streamSocket->connect(connectEndpoint, 
+                                  connectOptions, 
+                                  connectCallback);
     NTSCFG_TEST_OK(error);
 
     barrier.wait();
-    streamSocket->close();
+
+    ntci::CloseFuture closeFuture;
+    streamSocket->close(closeFuture);
+    
     barrier.wait();
+
+    ntci::CloseResult closeResult;
+    error = closeFuture.wait(&closeResult);
+    NTSCFG_TEST_OK(error);
+}
+
+void SystemTest::concernConnectInitiateNameAndClose(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
+{
+    // Concern: Closing sockets immediately after a connection is initiated to
+    // a name.
+
+    #if NTC_BUILD_WITH_VALGRIND
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
+#else
+    const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
+#endif
+
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    ntca::StreamSocketOptions streamSocketOptions;
+    streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket =
+        scheduler->createStreamSocket(streamSocketOptions, allocator);
+
+    bslmt::Barrier barrier(2);
+
+    bsl::shared_ptr<ntcu::StreamSocketEventQueue> streamSocketEventQueue;
+    streamSocketEventQueue.createInplace(NTSCFG_TEST_ALLOCATOR,
+                                         NTSCFG_TEST_ALLOCATOR);
+
+    bsl::shared_ptr<SystemTestResolutionSession> session;
+    session.createInplace(NTSCFG_TEST_ALLOCATOR, &barrier);
+
+    streamSocket->registerManager(streamSocketEventQueue);
+    streamSocket->registerSession(session);
+
+    bsl::string connectName("localhost:12345");
+
+    ntca::ConnectOptions connectOptions;
+    connectOptions.setRetryCount(k_MAX_CONNECTION_ATTEMPTS - 1);
+
+    const ntci::ConnectCallback connectCallback;
+
+    error = streamSocket->connect(connectName, connectOptions, connectCallback);
+    NTSCFG_TEST_OK(error);
+
+    barrier.wait();
+
+    ntci::CloseFuture closeFuture;
+    streamSocket->close(closeFuture);
+    
+    barrier.wait();
+
+    ntci::CloseResult closeResult;
+    error = closeFuture.wait(&closeResult);
+    NTSCFG_TEST_OK(error);
 }
 
 void SystemTest::concernConnectEndpointAndShutdown(
@@ -9597,6 +9674,10 @@ void SystemTest::concernConnectLimitPassive(bslma::Allocator* allocator)
     error = scheduler->start();
     NTSCFG_TEST_OK(error);
 
+    bsl::shared_ptr<ntcu::ListenerSocketEventQueue> listenerSocketEventQueue;
+    listenerSocketEventQueue.createInplace(NTSCFG_TEST_ALLOCATOR, 
+                                           NTSCFG_TEST_ALLOCATOR);
+
     // Create a listener socket and begin listening.
 
     ntca::ListenerSocketOptions listenerSocketOptions;
@@ -9611,6 +9692,12 @@ void SystemTest::concernConnectLimitPassive(bslma::Allocator* allocator)
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
         scheduler->createListenerSocket(listenerSocketOptions, allocator);
+
+    error = listenerSocket->registerManager(listenerSocketEventQueue);
+    NTSCFG_TEST_OK(error);
+
+    error = listenerSocket->registerSession(listenerSocketEventQueue);
+    NTSCFG_TEST_OK(error);
 
     error = listenerSocket->open();
     NTSCFG_TEST_OK(error);
@@ -13251,10 +13338,16 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyClose)
     test::concern(&test::concernClose, NTSCFG_TEST_ALLOCATOR);
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectInitiateAndClose)
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectInitiateEndpointAndClose)
 {
     test::concern(
-        &test::concernConnectInitiateAndClose, NTSCFG_TEST_ALLOCATOR);
+        &test::concernConnectInitiateEndpointAndClose, NTSCFG_TEST_ALLOCATOR);
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectInitiateNameAndClose)
+{
+    test::concern(
+        &test::concernConnectInitiateNameAndClose, NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectEndpointAndShutdown)

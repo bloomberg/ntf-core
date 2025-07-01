@@ -4703,8 +4703,6 @@ ntsa::Error StreamSocket::privateDowngradeAbortively(
 void StreamSocket::privateRetryConnect(
     const bsl::shared_ptr<StreamSocket>& self)
 {
-    ntsa::Error error;
-
     if (d_openState.value() != ntcs::OpenState::e_WAITING) {
         return;
     }
@@ -4741,18 +4739,15 @@ void StreamSocket::privateRetryConnect(
     d_connectOptions.setRetryCount(d_connectOptions.retryCount().value() - 1);
 
     if (!d_connectEndpoint.isUndefined()) {
-        error = this->privateRetryConnectToEndpoint(self);
+        this->privateRetryConnectToEndpoint(self);
     }
     else {
-        error = this->privateRetryConnectToName();
-    }
-
-    if (error) {
-        this->privateFailConnect(self, error, false, false);
+        this->privateRetryConnectToName(self);
     }
 }
 
-ntsa::Error StreamSocket::privateRetryConnectToName()
+void StreamSocket::privateRetryConnectToName(
+    const bsl::shared_ptr<StreamSocket>& self)
 {
     struct WeakBinder {
         static void invoke(const bsl::weak_ptr<StreamSocket>&     socket,
@@ -4775,7 +4770,8 @@ ntsa::Error StreamSocket::privateRetryConnectToName()
 
     ntcs::ObserverRef<ntci::Resolver> resolverRef(&d_resolver);
     if (!resolverRef) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
+        this->privateFailConnect(self, error, false, false);
+        return;
     }
 
     ntca::GetEndpointOptions getEndpointOptions;
@@ -4797,20 +4793,22 @@ ntsa::Error StreamSocket::privateRetryConnectToName()
                                      getEndpointCallback);
 
     if (error) {
-        return error;
+        this->privateFailConnect(self, error, false, false);
+        return;
     }
-
-    return ntsa::Error();
 }
 
-ntsa::Error StreamSocket::privateRetryConnectToEndpoint(
+void StreamSocket::privateRetryConnectToEndpoint(
     const bsl::shared_ptr<StreamSocket>& self)
 {
     ntsa::Error error;
 
+    bsl::size_t connectAttempts = d_connectAttempts;
+
     error = this->privateOpen(self, d_connectEndpoint);
     if (error) {
-        return error;
+        this->privateFailConnect(self, error, false, false);
+        return;
     }
 
     if (d_transport == ntsa::Transport::e_LOCAL_STREAM) {
@@ -4818,12 +4816,14 @@ ntsa::Error StreamSocket::privateRetryConnectToEndpoint(
             error =
                 d_socket_sp->bindAny(d_transport, d_options.reuseAddress());
             if (error) {
-                return error;
+                this->privateFailConnect(self, error, false, false);
+                return;
             }
 
             error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
             if (error) {
-                return error;
+                this->privateFailConnect(self, error, false, false);
+                return;
             }
 
             d_publicSourceEndpoint = d_systemSourceEndpoint;
@@ -4835,13 +4835,15 @@ ntsa::Error StreamSocket::privateRetryConnectToEndpoint(
         if (error != ntsa::Error::e_PENDING &&
             error != ntsa::Error::e_WOULD_BLOCK)
         {
-            return error;
+            this->privateFailConnect(self, error, false, false);
+            return;
         }
     }
 
     error = d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
     if (error) {
-        return error;
+        this->privateFailConnect(self, error, false, false);
+        return;
     }
 
     d_publicSourceEndpoint = d_systemSourceEndpoint;
@@ -4865,22 +4867,36 @@ ntsa::Error StreamSocket::privateRetryConnectToEndpoint(
             &d_mutex);
     }
 
+    if (d_detachState.mode() == ntcs::DetachMode::e_INITIATED) {
+        return;
+    }
+
+    if (!d_connectInProgress) {
+        return;
+    }
+
+    if (connectAttempts != d_connectAttempts) {
+        return;
+    }
+
     ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
     if (!reactorRef) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
+        this->privateFailConnect(
+            self, ntsa::Error(ntsa::Error::e_INVALID), false, false);
+        return;
     }
 
     error = reactorRef->attachSocket(self);
     if (error) {
-        return error;
+        this->privateFailConnect(self, error, false, false);
+        return;
     }
 
     error = reactorRef->showWritable(self, ntca::ReactorEventOptions());
     if (error) {
-        return error;
+        this->privateFailConnect(self, error, false, false);
+        return;
     }
-
-    return ntsa::Error();
 }
 
 ntsa::Error StreamSocket::privateTimestampOutgoingData(
