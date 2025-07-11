@@ -2451,7 +2451,8 @@ void Kqueue::clearTimers()
 
 void Kqueue::clearSockets()
 {
-    bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > entryList;
+    bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > entryList(
+                                                           d_allocator_p);
     d_registry.clear(&entryList, d_controllerDescriptorHandle);
 
     for (bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> >::iterator it =
@@ -2470,7 +2471,8 @@ void Kqueue::clear()
 {
     d_chronology.clear();
 
-    bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > entryList;
+    bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> > entryList(
+                                                           d_allocator_p);
     d_registry.clear(&entryList, d_controllerDescriptorHandle);
 
     for (bsl::vector<bsl::shared_ptr<ntcs::RegistryEntry> >::iterator it =
