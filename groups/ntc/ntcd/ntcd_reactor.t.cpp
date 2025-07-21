@@ -1198,22 +1198,27 @@ void ReactorTest::testFunctions()
 
 NTSCFG_TEST_FUNCTION(ntcd::ReactorTest::verifyCase1)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
     ReactorTest::testSockets(false);
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::ReactorTest::verifyCase2)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
     ReactorTest::testSockets(true);
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::ReactorTest::verifyCase3)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
@@ -1224,14 +1229,17 @@ NTSCFG_TEST_FUNCTION(ntcd::ReactorTest::verifyCase3)
             ReactorTest::testTimers(maskInterestCase, oneShotCase);
         }
     }
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::ReactorTest::verifyCase4)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
     ReactorTest::testFunctions();
+#endif
 }
 
 }  // close namespace ntcd

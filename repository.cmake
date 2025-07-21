@@ -772,6 +772,49 @@ function (ntf_target_libs_get)
     set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
 
+# Set the "install_component" variable scoped to a target. The contents of this
+# variable is assigned to the "Libs.private" variable in pkg-config metadata.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_install_component_set)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "")
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "install_component" VALUE ${ARG_VALUE})
+    else()
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "install_component" VALUE "")
+    endif()
+endfunction()
+
+# Get the "install_component" variable scoped to a target. The contents of this
+# variable is assigned to the "Libs.private" variable in pkg-config metadata.
+#
+# TARGET - The target.
+# OUTPUT - The variable name set in the parent scope.
+function (ntf_target_install_component_get)
+    cmake_parse_arguments(
+        ARG "" "TARGET;OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+    ntf_assert_defined(${ARG_OUTPUT})
+
+    ntf_target_variable_get(
+        TARGET ${ARG_TARGET} VARIABLE "install_component" OUTPUT result)
+
+    if (NOT "${result}" STREQUAL "")
+        set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
+    else()
+        string (REPLACE "_" "-" result "${ARG_TARGET}")
+        set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
+    endif()
+endfunction()
+
 # Add preprocessor defininitions when compiling a target. The definitions
 # are always added with private visibility.
 #
@@ -1317,6 +1360,7 @@ function (ntf_target_options_common_epilog target)
             ntf_target_build_dependency(TARGET ${target} VALUE dl)
             ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
         elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+            ntf_target_build_dependency(TARGET ${target} VALUE util)
             ntf_target_build_dependency(TARGET ${target} VALUE dl)
             ntf_target_build_dependency(TARGET ${target} VALUE rt)
             ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
@@ -1332,6 +1376,7 @@ function (ntf_target_options_common_epilog target)
             ntf_target_build_dependency(TARGET ${target} VALUE dl)
             ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
         elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+            ntf_target_build_dependency(TARGET ${target} VALUE util)
             ntf_target_build_dependency(TARGET ${target} VALUE dl)
             ntf_target_build_dependency(TARGET ${target} VALUE rt)
             ntf_target_build_dependency(TARGET ${target} VALUE Threads::Threads)
@@ -1906,6 +1951,11 @@ endfunction()
 
 # Dump all properties of a target.
 function (ntf_target_dump target)
+    if (NOT TARGET ${target})
+        message(STATUS "NTF: Failed to dump target '${target}': the target is not defined")
+        return()
+    endif()
+
     ntf_assert_target_defined(${target})
 
     if(NOT CMAKE_PROPERTY_LIST)
@@ -2232,7 +2282,7 @@ function (ntf_executable)
             DESTINATION
                 ${executable_destination_relative_path}
             COMPONENT
-                development
+                ${target}
         )
     endif()
 
@@ -2299,9 +2349,10 @@ function (ntf_executable_end)
 
     ntf_assert_target_defined(${target})
 
-    ntf_target_options_common_epilog(${target})
+    string(TOLOWER ${target} target_lowercase)
+    string(TOUPPER ${target} target_uppercase)
 
-    # TODO: Implement any post-processing for an executable.
+    ntf_target_options_common_epilog(${target})
 
 endfunction()
 
@@ -2633,23 +2684,8 @@ function (ntf_interface_end)
                     DESTINATION
                         ${library_install_ufid_relative_path}
                     COMPONENT
-                        development
+                        ${target}
             )
-
-            # foreach (alternate_install_ufid ${alternate_install_ufid_list})
-            #     set(canonical_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target}${CMAKE_STATIC_LIBRARY_SUFFIX})
-            #
-            #     if ("${alternate_install_ufid}" STREQUAL "!")
-            #         set(alternate_library_name ${canonical_library_name})
-            #     else()
-            #         set(alternate_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target}.${alternate_install_ufid}${CMAKE_STATIC_LIBRARY_SUFFIX})
-            #     endif()
-            #
-            #     install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")")
-            #
-            #     install(CODE "file(CREATE_LINK ${install_ufid}/${canonical_library_name} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} SYMBOLIC)")
-            #
-            # endforeach()
 
             export(
                 EXPORT
@@ -2750,7 +2786,7 @@ endif()\n\
                 DESTINATION
                     ${cmake_metadata_relative_path}
                 COMPONENT
-                    development
+                    ${target}
                 # TODO: Export the target into a CMake namespace, if advisable.
                 # NAMESPACE ${CMAKE_PROJECT_NAME}::
             )
@@ -2762,43 +2798,42 @@ endif()\n\
                 DESTINATION
                     ${cmake_metadata_relative_path}
                 COMPONENT
-                    development
+                    ${target}
             )
 
             # Install symlinks.
 
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")")
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")")
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config}.cmake\")")
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")")
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
 
 
-            install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake)")
+            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake)" COMPONENT ${target})
 
             ntf_path_normalize(
                 OUTPUT link_target
                 INPUT "../${install_ufid}/cmake/${target}"
                 NATIVE ESCAPE)
 
-            install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target} SYMBOLIC)")
+            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
 
             foreach (alternate_install_ufid ${alternate_install_ufid_list})
                 if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
                     NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config}.cmake\")")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")")
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
 
-                    install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake)")
-
+                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake)" COMPONENT ${target})
 
                     ntf_path_normalize(
                         OUTPUT link_target
                         INPUT "../../${install_ufid}/cmake/${target}"
                         NATIVE ESCAPE)
 
-                    install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target} SYMBOLIC)")
+                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
                 endif()
             endforeach()
 
@@ -2816,6 +2851,7 @@ endif()\n\
             ntf_target_libs_get(TARGET ${target} OUTPUT target_libs)
 
             string (REPLACE ";" " " target_requires_string "${target_requires}")
+            string(REPLACE "_" "-" target_requires_string "${target_requires_string}")
 
             set(target_libs_string "")
             foreach (target_libs_entry ${target_libs})
@@ -2864,34 +2900,35 @@ Libs.private:${target_libs_string}\n\
             install(
                 FILES ${CMAKE_CURRENT_BINARY_DIR}/${target}.pc
                 DESTINATION ${library_install_ufid_relative_path}/pkgconfig
+                COMPONENT ${target}
             )
 
             # Install symlinks.
 
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc\")")
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc\")" COMPONENT ${target})
 
-            install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)")
+            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)" COMPONENT ${target})
 
             ntf_path_normalize(
                 OUTPUT link_target
                 INPUT "../${install_ufid}/pkgconfig/${target}.pc"
                 NATIVE ESCAPE)
 
-            install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc SYMBOLIC)")
+            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc SYMBOLIC)" COMPONENT ${target})
 
             foreach (alternate_install_ufid ${alternate_install_ufid_list})
                 if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
                     NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc\")")
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc\")" COMPONENT ${target})
 
-                    install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)")
+                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)" COMPONENT ${target})
 
                     ntf_path_normalize(
                         OUTPUT link_target
                         INPUT "../../${install_ufid}/pkgconfig/${target}.pc"
                         NATIVE ESCAPE)
 
-                    install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc SYMBOLIC)")
+                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc SYMBOLIC)" COMPONENT ${target})
                 endif()
             endforeach()
 
@@ -3147,6 +3184,9 @@ function (ntf_adapter_end)
 
     ntf_assert_target_defined(${target})
 
+    string(TOLOWER ${target} target_lowercase)
+    string(TOUPPER ${target} target_uppercase)
+
     ntf_target_private_get(TARGET ${target} OUTPUT target_private)
     ntf_target_pseudo_get(TARGET ${target} OUTPUT target_pseudo)
 
@@ -3290,7 +3330,7 @@ function (ntf_adapter_end)
                     DESTINATION
                         ${library_install_ufid_relative_path}
                     COMPONENT
-                        development
+                        ${target}
             )
 
             foreach (alternate_install_ufid ${alternate_install_ufid_list})
@@ -3303,14 +3343,14 @@ function (ntf_adapter_end)
                 endif()
 
                 if (NOT ${target_pseudo})
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")")
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")" COMPONENT ${target})
 
                     ntf_path_normalize(
                         OUTPUT link_target
                         INPUT  "${install_ufid}/${canonical_library_name}"
                         NATIVE ESCAPE)
 
-                    install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} SYMBOLIC)")
+                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} SYMBOLIC)" COMPONENT ${target})
                 endif()
 
             endforeach()
@@ -3414,7 +3454,7 @@ endif()\n\
                 DESTINATION
                     ${cmake_metadata_relative_path}
                 COMPONENT
-                    development
+                    ${target}
                 # TODO: Export the target into a CMake namespace, if advisable.
                 # NAMESPACE ${CMAKE_PROJECT_NAME}::
             )
@@ -3426,35 +3466,35 @@ endif()\n\
                 DESTINATION
                     ${cmake_metadata_relative_path}
                 COMPONENT
-                    development
+                    ${target}
             )
 
             # Install symlinks.
 
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")")
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")")
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config}.cmake\")")
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")")
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
 
 
-            install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake)")
+            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake)" COMPONENT ${target})
 
             ntf_path_normalize(
                 OUTPUT link_target
                 INPUT "../${install_ufid}/cmake/${target}"
                 NATIVE ESCAPE)
 
-            install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target} SYMBOLIC)")
+            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
 
             foreach (alternate_install_ufid ${alternate_install_ufid_list})
                 if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
                     NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config}.cmake\")")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")")
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
 
-                    install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake)")
+                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake)" COMPONENT ${target})
 
 
                     ntf_path_normalize(
@@ -3462,7 +3502,7 @@ endif()\n\
                         INPUT "../../${install_ufid}/cmake/${target}"
                         NATIVE ESCAPE)
 
-                    install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target} SYMBOLIC)")
+                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
                 endif()
             endforeach()
 
@@ -3486,7 +3526,7 @@ endif()\n\
                 DESTINATION
                     ${archive_destination_relative_path}
                 COMPONENT
-                    development
+                    ${target}
             )
         endif()
     endif()
@@ -3502,6 +3542,7 @@ endif()\n\
             ntf_target_libs_get(TARGET ${target} OUTPUT target_libs)
 
             string (REPLACE ";" " " target_requires_string "${target_requires}")
+            string(REPLACE "_" "-" target_requires_string "${target_requires_string}")
 
             set(target_libs_string "")
             foreach (target_libs_entry ${target_libs})
@@ -3575,34 +3616,35 @@ Libs.private:${target_libs_string}\n\
             install(
                 FILES ${CMAKE_CURRENT_BINARY_DIR}/${target_pkgconfig_name}.pc
                 DESTINATION ${library_install_ufid_relative_path}/pkgconfig
+                COMPONENT ${target}
             )
 
             # Install symlinks.
 
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target_pkgconfig_name}.pc\")")
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target_pkgconfig_name}.pc\")" COMPONENT ${target})
 
-            install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)")
+            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)" COMPONENT ${target})
 
             ntf_path_normalize(
                 OUTPUT link_target
                 INPUT  "../${install_ufid}/pkgconfig/${target_pkgconfig_name}.pc"
                 NATIVE ESCAPE)
 
-            install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target_pkgconfig_name}.pc SYMBOLIC)")
+            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target_pkgconfig_name}.pc SYMBOLIC)" COMPONENT ${target})
 
             foreach (alternate_install_ufid ${alternate_install_ufid_list})
                 if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
                     NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target_pkgconfig_name}.pc\")")
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target_pkgconfig_name}.pc\")" COMPONENT ${target})
 
-                    install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)")
+                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)" COMPONENT ${target})
 
                     ntf_path_normalize(
                         OUTPUT link_target
                         INPUT "../../${install_ufid}/pkgconfig/${target_pkgconfig_name}.pc"
                         NATIVE ESCAPE)
 
-                    install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target_pkgconfig_name}.pc SYMBOLIC)")
+                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target_pkgconfig_name}.pc SYMBOLIC)" COMPONENT ${target})
                 endif()
             endforeach()
 
@@ -3887,6 +3929,9 @@ function (ntf_group_end)
 
     ntf_assert_target_defined(${target})
 
+    string(TOLOWER ${target} target_lowercase)
+    string(TOUPPER ${target} target_uppercase)
+
     ntf_target_private_get(TARGET ${target} OUTPUT target_private)
     ntf_target_thirdparty_get(TARGET ${target} OUTPUT target_thirdparty)
     ntf_target_unity_get(TARGET ${target} OUTPUT target_unity)
@@ -4169,17 +4214,17 @@ function (ntf_group_end)
                     DESTINATION
                         "bin"
                     COMPONENT
-                        runtime
+                        ${target}
                 LIBRARY
                     DESTINATION
                         ${library_install_ufid_relative_path}
                     COMPONENT
-                        runtime
+                        ${target}
                 ARCHIVE
                     DESTINATION
                         ${library_install_ufid_relative_path}
                     COMPONENT
-                        development
+                        ${target}
             )
 
             foreach (alternate_install_ufid ${alternate_install_ufid_list})
@@ -4191,14 +4236,14 @@ function (ntf_group_end)
                     set(alternate_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}.${alternate_install_ufid}${CMAKE_STATIC_LIBRARY_SUFFIX})
                 endif()
 
-                install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")")
+                install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")" COMPONENT ${target})
 
                 ntf_path_normalize(
                     OUTPUT link_target
                     INPUT "${install_ufid}/${canonical_library_name}"
                     NATIVE ESCAPE)
 
-                install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} SYMBOLIC)")
+                install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} SYMBOLIC)" COMPONENT ${target})
 
             endforeach()
 
@@ -4301,7 +4346,7 @@ endif()\n\
                 DESTINATION
                     ${cmake_metadata_relative_path}
                 COMPONENT
-                    development
+                    ${target}
                 # TODO: Export the target into a CMake namespace, if advisable.
                 # NAMESPACE ${CMAKE_PROJECT_NAME}::
             )
@@ -4313,43 +4358,42 @@ endif()\n\
                 DESTINATION
                     ${cmake_metadata_relative_path}
                 COMPONENT
-                    development
+                    ${target}
             )
 
             # Install symlinks.
 
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")")
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")")
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config}.cmake\")")
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")")
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
 
 
-            install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake)")
+            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake)" COMPONENT ${target})
 
             ntf_path_normalize(
                 OUTPUT link_target
                 INPUT "../${install_ufid}/cmake/${target}"
                 NATIVE ESCAPE)
 
-            install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target} SYMBOLIC)")
+            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
 
             foreach (alternate_install_ufid ${alternate_install_ufid_list})
                 if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
                     NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config}.cmake\")")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")")
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
 
-                    install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake)")
-
+                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake)" COMPONENT ${target})
 
                     ntf_path_normalize(
                         OUTPUT link_target
                         INPUT "../../${install_ufid}/cmake/${target}"
                         NATIVE ESCAPE)
 
-                    install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target} SYMBOLIC)")
+                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
                 endif()
             endforeach()
 
@@ -4373,7 +4417,7 @@ endif()\n\
                 DESTINATION
                     ${archive_destination_relative_path}
                 COMPONENT
-                    development
+                    ${target}
             )
         endif()
     endif()
@@ -4389,6 +4433,7 @@ endif()\n\
             ntf_target_libs_get(TARGET ${target} OUTPUT target_libs)
 
             string (REPLACE ";" " " target_requires_string "${target_requires}")
+            string(REPLACE "_" "-" target_requires_string "${target_requires_string}")
 
             set(target_libs_string "")
             foreach (target_libs_entry ${target_libs})
@@ -4437,39 +4482,39 @@ Libs.private:${target_libs_string}\n\
             install(
                 FILES ${CMAKE_CURRENT_BINARY_DIR}/${target}.pc
                 DESTINATION ${library_install_ufid_relative_path}/pkgconfig
+                COMPONENT ${target}
             )
 
             # Install symlinks.
 
-            install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc\")")
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc\")" COMPONENT ${target})
 
-            install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)")
+            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)" COMPONENT ${target})
 
             ntf_path_normalize(
                 OUTPUT link_target
                 INPUT "../${install_ufid}/pkgconfig/${target}.pc"
                 NATIVE ESCAPE)
 
-            install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc SYMBOLIC)")
+            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc SYMBOLIC)" COMPONENT ${target})
 
             foreach (alternate_install_ufid ${alternate_install_ufid_list})
                 if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
                     NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc\")")
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc\")" COMPONENT ${target})
 
-                    install(CODE "file(MAKE_DIRECTORY \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)")
+                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)" COMPONENT ${target})
 
                     ntf_path_normalize(
                         OUTPUT link_target
                         INPUT "../../${install_ufid}/pkgconfig/${target}.pc"
                         NATIVE ESCAPE)
 
-                    install(CODE "file(CREATE_LINK ${link_target} \${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc SYMBOLIC)")
+                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc SYMBOLIC)" COMPONENT ${target})
                 endif()
             endforeach()
 
         endif()
-
     endif()
 
 endfunction()
@@ -4896,6 +4941,17 @@ function (ntf_header)
 
     get_filename_component(directory ${header_path} DIRECTORY)
 
+    string(SUBSTRING ${target} 0 3 target_group)
+    if (NOT TARGET ${target_group})
+        set(target_group "")
+    endif()
+
+    if (NOT "${target_group}" STREQUAL "")
+        set(component_install_component ${target_group})
+    else()
+        set(component_install_component ${target})
+    endif()
+
     if (NOT ${header_private})
         get_target_property(target_type ${target} TYPE)
         if (NOT target_type STREQUAL "EXECUTABLE")
@@ -4917,7 +4973,7 @@ function (ntf_header)
                 DESTINATION
                     ${header_destination_relative_path}
                 COMPONENT
-                    development
+                    ${component_install_component}
             )
         endif()
     endif()
@@ -5100,7 +5156,6 @@ function (ntf_component)
             string(SUBSTRING ${component} 0 ${component_split} target)
         endif()
 
-
         string(TOLOWER ${target} target_lowercase)
         string(TOUPPER ${target} target_uppercase)
 
@@ -5114,6 +5169,17 @@ function (ntf_component)
 
         ntf_target_private_get(TARGET ${target} OUTPUT target_private)
         ntf_target_thirdparty_get(TARGET ${target} OUTPUT target_thirdparty)
+    endif()
+
+    string(SUBSTRING ${target} 0 3 target_group)
+    if (NOT TARGET ${target_group})
+        set(target_group "")
+    endif()
+
+    if (NOT "${target_group}" STREQUAL "")
+        set(component_install_component ${target_group})
+    else()
+        set(component_install_component ${target})
     endif()
 
     set(component_private ${NTF_COMPONENT_PRIVATE})
@@ -5193,9 +5259,10 @@ function (ntf_component)
         endif()
 
         message(STATUS "NTF Build: adding component '${component}' to target '${target}'${component_private_string}")
-        message(STATUS "         * header = ${component_header_path}")
-        message(STATUS "         * source = ${component_source_path}")
-        message(STATUS "         * driver = ${component_driver_path}")
+        message(STATUS "         * header  = ${component_header_path}")
+        message(STATUS "         * source  = ${component_source_path}")
+        message(STATUS "         * driver  = ${component_driver_path}")
+        message(STATUS "         * install = ${component_install_component}")
     endif()
 
     ntf_target_unity_get(TARGET ${target} OUTPUT target_unity)
@@ -5373,7 +5440,7 @@ function (ntf_component)
         add_dependencies(format_${target} format_${component})
     endif()
 
-    if (EXISTS ${component_idl_path})
+    if (NOT ${target_thirdparty} AND EXISTS ${component_idl_path})
         set(GENERATED_HEADER_INCLUDE_PATHS "-I=$<JOIN:$<TARGET_PROPERTY:${target},INTERFACE_INCLUDE_DIRECTORIES>,;-I=>")
 
         add_custom_target(
@@ -5396,7 +5463,7 @@ function (ntf_component)
                     DESTINATION
                         ${header_destination_relative_path}
                     COMPONENT
-                        development
+                        ${component_install_component}
                 )
             endif()
         endif()
@@ -5716,6 +5783,8 @@ function (ntf_target_link_dependency_by_pkgconfig)
         set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
     endif()
 
+    set(PKG_CONFIG_ARGN "--static" CACHE INTERNAL "")
+
     # Find the pkgconfig package.
 
     find_program(
@@ -5738,17 +5807,10 @@ function (ntf_target_link_dependency_by_pkgconfig)
         return()
     endif()
 
-    set(dependency_prefix ${dependency_uppercase})
+    set(dependency_prefix ${dependency_lowercase})
     string(REPLACE "-" "_" dependency_prefix "${dependency_prefix}")
 
     set(DEPENDENCY_FOUND "${dependency_prefix}_FOUND")
-
-    set(DEPENDENCY_STATIC_INCLUDE_DIRS "${dependency_prefix}_STATIC_INCLUDE_DIRS")
-    set(DEPENDENCY_STATIC_LIBRARY_DIRS "${dependency_prefix}_STATIC_LIBRARY_DIRS")
-    set(DEPENDENCY_STATIC_LIBRARIES "${dependency_prefix}_STATIC_LIBRARIES")
-    set(DEPENDENCY_STATIC_LINK_LIBRARIES "${dependency_prefix}_STATIC_LINK_LIBRARIES")
-    set(DEPENDENCY_LIBRARIES "${dependency_prefix}_LIBRARIES")
-    set(DEPENDENCY_LINK_LIBRARIES "${dependency_prefix}_LINK_LIBRARIES")
 
     # Save the original value of PKG_CONFIG_PATH environment variable, if any,
     # and set or override the PKG_CONFIG_PATH environment so that pkg-config
@@ -5789,19 +5851,24 @@ function (ntf_target_link_dependency_by_pkgconfig)
     if (NOT ${dependency_alternate} STREQUAL ${dependency})
         if (VERBOSE)
             pkg_search_module(${dependency_prefix}
+                              IMPORTED_TARGET GLOBAL
                               ${dependency}
                               ${dependency_alternate})
         else()
             pkg_search_module(${dependency_prefix}
-                              QUIET
+                              IMPORTED_TARGET GLOBAL
                               ${dependency}
                               ${dependency_alternate})
         endif()
     else()
         if (VERBOSE)
-            pkg_search_module(${dependency_prefix} ${dependency})
+            pkg_search_module(${dependency_prefix}
+                              IMPORTED_TARGET GLOBAL
+                              ${dependency})
         else()
-            pkg_search_module(${dependency_prefix} QUIET ${dependency})
+            pkg_search_module(${dependency_prefix}
+                              IMPORTED_TARGET GLOBAL
+                              ${dependency})
         endif()
     endif()
 
@@ -5831,225 +5898,16 @@ function (ntf_target_link_dependency_by_pkgconfig)
         return()
     endif()
 
-    if (VERBOSE)
-        message(STATUS "Dependency '${dependency}' found using pkg-config")
-        message(STATUS "NTF: ${DEPENDENCY_STATIC_INCLUDE_DIRS}:   ${${DEPENDENCY_STATIC_INCLUDE_DIRS}}")
-        message(STATUS "NTF: ${DEPENDENCY_STATIC_LIBRARY_DIRS}:   ${${DEPENDENCY_STATIC_LIBRARY_DIRS}}")
-        message(STATUS "NTF: ${DEPENDENCY_STATIC_LIBRARIES}:      ${${DEPENDENCY_STATIC_LIBRARIES}}")
-        message(STATUS "NTF: ${DEPENDENCY_STATIC_LINK_LIBRARIES}: ${${DEPENDENCY_STATIC_LINK_LIBRARIES}}")
-        message(STATUS "NTF: ${DEPENDENCY_LIBRARIES}:             ${${DEPENDENCY_LIBRARIES}}")
-        message(STATUS "NTF: ${DEPENDENCY_LINK_LIBRARIES}:        ${${DEPENDENCY_LINK_LIBRARIES}}")
+    if (NOT TARGET PkgConfig::${dependency_prefix})
+        message(FATAL_ERROR "No target created for dependency found by pkgconfig")
     endif()
 
-    # Create an import target from pkg-config. See _pkg_create_imp_target in
-    # https://github.com/Kitware/CMake/blob/master/Modules/FindPkgConfig.cmake
-    #
-    # The import target is created manually (instead of requesting
-    # pkg_search_module create it automatically) for two reasons:
-    #
-    # 1. We want the target to be named "${dependency}" and not
-    # "PkgConfig::${dependency}", which is pkg_search_module's behavior.
-    #
-    # 2. We want to ensure the header directory is included as a "system"
-    # directory (e.g. using -isystem) so that warnings are not produced while
-    # including those headers, to facilitate building with warnings treated as
-    # errors (not all dependencies can be assumed to be warning-free.)
+    add_library(${dependency} ALIAS PkgConfig::${dependency})
 
-    set(NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET FALSE)
-
-    if (${NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET})
-        add_library(${dependency} INTERFACE IMPORTED GLOBAL)
-
-        # Set the C standard.
-
-        set_property(TARGET ${dependency} PROPERTY C_STANDARD 11)
-
-        # Set the C++ standard version unless using xlc, which requires
-        # special, non-portable flag for some C++03-like behavior.
-
-        if (NOT CMAKE_CXX_COMPILER_ID MATCHES "XL")
-            ntf_repository_standard_get(OUTPUT cxx_standard)
-            set_property(TARGET ${dependency}
-                         PROPERTY CXX_STANDARD ${cxx_standard})
-        endif()
-
-        target_include_directories(
-            ${dependency}
-            SYSTEM INTERFACE ${${DEPENDENCY_STATIC_INCLUDE_DIRS}})
-
-        foreach(static_library_directory ${${DEPENDENCY_STATIC_LIBRARY_DIRS}})
-            if (EXISTS "${static_library_directory}/${install_ufid}")
-                target_link_directories(
-                    ${dependency}
-                    INTERFACE "${static_library_directory}/${install_ufid}")
-            endif()
-
-            if (EXISTS "${static_library_directory}")
-                target_link_directories(
-                    ${dependency}
-                    INTERFACE "${static_library_directory}")
-            endif()
-        endforeach()
-    endif() # NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET
-
-    set(interface_link_libraries)
-
-    # If true add -L and -l rules to target link libraries, otherwise, add
-    # full paths to libraries.
-
-    # TODO: !!! In the ntf-core release, this is set to TRUE. Maybe set
-    #           conditionally whether we are linking an executable !!!
-    set(NTF_BUILD_LINK_USING_L_RULES FALSE)
-
-    # If true use -l rules for all libraries not found in the refroot.
-    set(NTF_BUILD_LINK_USING_L_RULES_FOR_SYSTEM_LIBRARIES TRUE)
-
-    if (${NTF_BUILD_LINK_USING_L_RULES})
-        set(static_libraries ${${DEPENDENCY_STATIC_LIBRARIES}})
-        foreach (static_library ${static_libraries})
-            if (VERBOSE)
-                message(STATUS "Dependency '${dependency}' needs link library '${static_library}'")
-            endif()
-            if (UNIX)
-                list(APPEND interface_link_libraries "-l${static_library}")
-            elseif (WIN32)
-                list(APPEND interface_link_libraries "${static_library}.lib")
-            else()
-                ntf_die("Unknown platform")
-            endif()
-        endforeach()
+    if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+        target_link_libraries(${target} INTERFACE ${dependency})
     else()
-        set(static_libraries)
-        set(system_libraries)
-
-        foreach (static_library ${${DEPENDENCY_STATIC_LIBRARIES}})
-            if (VERBOSE)
-                message(STATUS "Dependency '${dependency}' needs link library '${static_library}'")
-            endif()
-
-            set(lib_prefix ${CMAKE_STATIC_LIBRARY_PREFIX})
-            set(lib_suffix ${CMAKE_STATIC_LIBRARY_SUFFIX})
-
-            set(static_library_name_list)
-            list(APPEND static_library_name_list
-                 ${lib_prefix}${static_library}${lib_suffix})
-            list(APPEND static_library_name_list
-                 ${lib_prefix}lib${static_library}${lib_suffix})
-            list(APPEND static_library_name_list
-                 ${lib_prefix}${static_library}lib${lib_suffix})
-
-            set(static_library_path_list)
-            list(APPEND static_library_path_list "${prefixLibraryUfidDir}")
-            list(APPEND static_library_path_list "${prefixLibraryDir}")
-            list(APPEND static_library_path_list
-                        ${${DEPENDENCY_STATIC_LIBRARY_DIRS}})
-
-            unset(static_library_path)
-            find_library(
-                static_library_path
-                NAMES ${static_library_name_list}
-                PATHS ${static_library_path_list}
-                NAMES_PER_DIR
-                NO_DEFAULT_PATH
-                NO_CACHE)
-
-            if ("${static_library_path}" MATCHES "NOTFOUND")
-                if (VERBOSE)
-                    message(STATUS "Target '${target}' dependency '${static_library}' not found as '${static_library_name_list}' in '${static_library_path_list}'")
-                endif()
-
-                if (${NTF_BUILD_LINK_USING_L_RULES_FOR_SYSTEM_LIBRARIES})
-                    if (VERBOSE)
-                        message(STATUS "Target '${target} dependency '${static_library}' assumed to be system library linked using -l${static_library}")
-                    endif()
-
-                    if (UNIX)
-                        list(APPEND system_libraries "-l${static_library}")
-                    elseif (WIN32)
-                        list(APPEND system_libraries "${static_library}.lib")
-                    else()
-                        ntf_die("Unknown platform")
-                    endif()
-                    continue()
-                else()
-                    unset(static_library_path)
-                    find_library(
-                        static_library_path
-                        NAMES ${static_library_name_list}
-                        NAMES_PER_DIR
-                        NO_CACHE)
-
-                    if ("${static_library_path}" MATCHES "NOTFOUND")
-                        if (VERBOSE)
-                            message(STATUS "Target '${target} dependency '${static_library}' not found as '${static_library_name_list}' in system paths")
-                        endif()
-                        if (UNIX)
-                            list(APPEND system_libraries "-l${static_library}")
-                        elseif (WIN32)
-                            list(APPEND system_libraries "${static_library}.lib")
-                        else()
-                            ntf_die("Unknown platform")
-                        endif()
-                        continue()
-                    endif()
-                endif()
-            endif()
-
-            if (VERBOSE)
-                message(STATUS "Target '${target}' dependency '${static_library}' found: '${static_library_path}'")
-            endif()
-
-            list(APPEND static_libraries "${static_library_path}")
-        endforeach()
-
-        foreach (static_library ${static_libraries})
-            list(APPEND interface_link_libraries ${static_library})
-        endforeach()
-
-        foreach (system_library ${system_libraries})
-            list(APPEND interface_link_libraries ${system_library})
-        endforeach()
-    endif()
-
-    if (${NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET})
-        set_property(
-            TARGET ${dependency} PROPERTY
-            INTERFACE_LINK_LIBRARIES "${interface_link_libraries}")
-
-        # add_library(PkgConfig::${dependency} ALIAS ${dependency})
-
-        if (VERBOSE)
-            ntf_target_dump("${dependency}")
-        endif()
-
-        # if (VERBOSE)
-        #     ntf_target_dump("PkgConfig::${dependency}")
-        # endif()
-
-    endif() # NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET
-
-    if (${NTF_TARGET_LINK_DEPENDENCY_BY_PKGCONFIG_IMPORT_TARGET})
-        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
-            target_link_libraries(${target} INTERFACE ${dependency})
-        else()
-            target_link_libraries(${target} PUBLIC ${dependency})
-        endif()
-    else()
-        target_include_directories(
-            ${target}
-            SYSTEM PRIVATE ${${DEPENDENCY_STATIC_INCLUDE_DIRS}})
-
-        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
-            target_link_libraries(
-                ${target}
-                INTERFACE
-                ${interface_link_libraries})
-        else()
-            target_link_libraries(
-                ${target}
-                PUBLIC
-                ${interface_link_libraries})
-        endif()
+        target_link_libraries(${target} PUBLIC ${dependency})
     endif()
 
     set(${ARG_OUTPUT} TRUE PARENT_SCOPE)
@@ -6105,6 +5963,8 @@ function (ntf_target_link_dependency)
     endif()
 
     # Attempt to find the dependency using CMake.
+
+    set(dependency_found_by_cmake FALSE)
 
     ntf_target_link_dependency_by_cmake(
         TARGET
@@ -6192,6 +6052,8 @@ function (ntf_target_link_dependency)
     endif()
 
     # Attempt to find the dependency using pkg-config.
+
+    set(dependency_found_by_pkgconfig FALSE)
 
     ntf_target_link_dependency_by_pkgconfig(
         TARGET
@@ -7481,47 +7343,51 @@ function (ntf_repository_end)
     ntf_ufid_string_has(UFID ${ufid} FLAG "cov" OUTPUT is_cov)
     ntf_repository_build_coverage_get(OUTPUT measure_coverage)
 
-    set(CPACK_PACKAGE_VENDOR "Bloomberg" PARENT_SCOPE)
-    set(CPACK_PACKAGE_DESCRIPTION ${PROJECT_NAME} PARENT_SCOPE)
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION} PARENT_SCOPE)
-    set(CPACK_PACKAGE_CONTACT
-        "Matthew Millett <mmillett@mailbox.org>"
-        PARENT_SCOPE)
     set(CPACK_PACKAGE_FILE_NAME
         ${PROJECT_NAME}-${PROJECT_VERSION}
         PARENT_SCOPE)
+
     set(CPACK_SOURCE_PACKAGE_FILE_NAME
         ${PROJECT_NAME}-${PROJECT_VERSION}-src
         PARENT_SCOPE)
 
     if("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
-        set(CPACK_GENERATOR TGZ ZIP PARENT_SCOPE)
-        set(CPACK_SOURCE_GENERATOR TGZ ZIP PARENT_SCOPE)
+        set(CPACK_GENERATOR TGZ PARENT_SCOPE)
+        set(CPACK_SOURCE_GENERATOR TGZ PARENT_SCOPE)
     elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")
-        set(CPACK_GENERATOR TGZ ZIP PARENT_SCOPE)
-        set(CPACK_SOURCE_GENERATOR TGZ ZIP PARENT_SCOPE)
+        set(CPACK_GENERATOR TGZ PARENT_SCOPE)
+        set(CPACK_SOURCE_GENERATOR TGZ PARENT_SCOPE)
     elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-        set(CPACK_GENERATOR TGZ ZIP DEB PARENT_SCOPE) # RPM
-        set(CPACK_SOURCE_GENERATOR TGZ ZIP PARENT_SCOPE)
+        set(CPACK_GENERATOR TGZ DEB PARENT_SCOPE)
+        set(CPACK_SOURCE_GENERATOR TGZ DEB PARENT_SCOPE)
     elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-        set(CPACK_GENERATOR TGZ ZIP PARENT_SCOPE)
-        set(CPACK_SOURCE_GENERATOR TGZ ZIP PARENT_SCOPE)
+        set(CPACK_GENERATOR TGZ PARENT_SCOPE)
+        set(CPACK_SOURCE_GENERATOR TGZ PARENT_SCOPE)
     elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
-        set(CPACK_GENERATOR TGZ ZIP PARENT_SCOPE)
-        set(CPACK_SOURCE_GENERATOR TGZ ZIP PARENT_SCOPE)
+        set(CPACK_GENERATOR TGZ DEB PARENT_SCOPE)
+        set(CPACK_SOURCE_GENERATOR TGZ PARENT_SCOPE)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+        set(CPACK_GENERATOR ZIP PARENT_SCOPE)
+        set(CPACK_SOURCE_GENERATOR ZIP PARENT_SCOPE)
+    endif()
+
+    set(CPACK_MONOLITHIC_INSTALL FALSE PARENT_SCOPE)
+    set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" PARENT_SCOPE)
+
+    if (EXISTS "${repository_path}/package.cmake")
+        set(CPACK_PROJECT_CONFIG_FILE
+            "${repository_path}/package.cmake" PARENT_SCOPE)
     endif()
 
     set(CPACK_SOURCE_IGNORE_FILES
         ".git" ".gitignore .vscode .config build"
         PARENT_SCOPE)
 
-    set(CPACK_ARCHIVE_COMPONENT_INSTALL ON PARENT_SCOPE)
+    set(CPACK_ARCHIVE_COMPONENT_INSTALL TRUE PARENT_SCOPE)
 
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64" PARENT_SCOPE)
-    #set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>=2.7-18)")
-    #set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-    #set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
-    #    "${CMAKE_CURRENT_SOURCE_DIR}/debian/postinst")
+    set(CPACK_DEB_COMPONENT_INSTALL TRUE PARENT_SCOPE)
+    set(CPACK_DEB_COMPONENT_NONE_HIDDEN TRUE PARENT_SCOPE)
+    set(CPACK_DEB_COMPONENT_NONE_DISABLED TRUE PARENT_SCOPE)
 
     ntf_repository_build_documentation_get(OUTPUT build_documentation)
 
@@ -7563,6 +7429,8 @@ function (ntf_repository_end)
                     ${doxygen_output_directory}/html/
                 DESTINATION
                     ${install_refroot}/${install_prefix}/share/doc/${repository_name}
+                COMPONENT
+                    documentation
                 MESSAGE_NEVER)
         endif()
     endif()
@@ -9111,9 +8979,9 @@ function (ntf_test_add)
     foreach(current_line_string IN LISTS content_line_list)
         math(EXPR current_line_number "${current_line_number}+1")
 
-        string(REGEX MATCH 
-               "[ \t]*NTSCFG_TEST_FUNCTION[ \t]*[\\(]*" 
-               found_start 
+        string(REGEX MATCH
+               "[ \t]*NTSCFG_TEST_FUNCTION[ \t]*[\\(]*"
+               found_start
                "${current_line_string}")
 
         if (found_start)
@@ -9122,9 +8990,9 @@ function (ntf_test_add)
 
         set(candidate "${candidate}${current_line_string}")
 
-        string(REGEX MATCH 
-               "NTSCFG_TEST_FUNCTION[ \r\n\t]*\\(([A-Za-z0-9_: \r\n\t]+)\\)" 
-               found_end 
+        string(REGEX MATCH
+               "NTSCFG_TEST_FUNCTION[ \r\n\t]*\\(([A-Za-z0-9_: \r\n\t]+)\\)"
+               found_end
                "${candidate}")
 
         if (found_end)
@@ -9140,7 +9008,7 @@ function (ntf_test_add)
         set(test_command "${NTF_TEST_COMMAND}")
         list(APPEND test_command "${test_case}")
 
-        if (VERBOSE) 
+        if (VERBOSE)
             message(STATUS "Found test ${test_name} at line ${test_line}")
         endif()
 
