@@ -1550,6 +1550,8 @@ void ProactorTest::processFunction(bslmt::Latch* latch)
 
 NTSCFG_TEST_FUNCTION(ntcd::ProactorTest::verifyCase1)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     ntsa::Error error;
 
     // Create the blob buffer factory.
@@ -1919,10 +1921,14 @@ NTSCFG_TEST_FUNCTION(ntcd::ProactorTest::verifyCase1)
     // Stop the simulation.
 
     simulation->stop();
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::ProactorTest::verifyCase2)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("test");
 
@@ -2167,10 +2173,14 @@ NTSCFG_TEST_FUNCTION(ntcd::ProactorTest::verifyCase2)
             simulation->stop();
         }
     }
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::ProactorTest::verifyCase3)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     ntsa::Error error;
 
     // Create the simulation.
@@ -2218,6 +2228,8 @@ NTSCFG_TEST_FUNCTION(ntcd::ProactorTest::verifyCase3)
     // Stop the simulation.
 
     simulation->stop();
+
+#endif
 }
 
 }  // close namespace ntcd

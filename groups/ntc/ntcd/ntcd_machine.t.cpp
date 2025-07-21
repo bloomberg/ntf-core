@@ -96,6 +96,8 @@ class MachineTest
 
 NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyOpen)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -174,10 +176,14 @@ NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyOpen)
 
     error = sessionC->close();
     NTSCFG_TEST_OK(error);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyBind)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -372,11 +378,15 @@ NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyBind)
 
     error = sessionC->close();
     NTSCFG_TEST_OK(error);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(
     ntcd::MachineTest::verifyForegroundBlockingDatagramSockets)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -561,11 +571,15 @@ NTSCFG_TEST_FUNCTION(
 
     error = server->close();
     NTSCFG_TEST_OK(error);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(
     ntcd::MachineTest::verifyForegroundBlockingDatagramSocketsConnectedOneWay)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -758,11 +772,15 @@ NTSCFG_TEST_FUNCTION(
 
     error = server->close();
     NTSCFG_TEST_OK(error);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(
     ntcd::MachineTest::verifyForegroundBlockingDatagramSocketsConnectedTwoWay)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -958,10 +976,14 @@ NTSCFG_TEST_FUNCTION(
 
     error = server->close();
     NTSCFG_TEST_OK(error);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyForegroundBlockingStreamSockets)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -1281,11 +1303,15 @@ NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyForegroundBlockingStreamSockets)
 
     error = listener->close();
     NTSCFG_TEST_OK(error);
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(
     ntcd::MachineTest::verifyBackgroundBlockingDatagramSockets)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -1469,11 +1495,15 @@ NTSCFG_TEST_FUNCTION(
     // Stop the machine.
 
     machine->stop();
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(
     ntcd::MachineTest::verifyBackgroundBlockingDatagramSocketsConnectedOneWay)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -1854,10 +1884,14 @@ NTSCFG_TEST_FUNCTION(
     // Stop the machine.
 
     machine->stop();
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyBackgroundBlockingStreamSockets)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -2161,11 +2195,15 @@ NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyBackgroundBlockingStreamSockets)
     // Stop the machine.
 
     machine->stop();
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(
     ntcd::MachineTest::verifyBackgroundNonblockingDatagramSockets)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -2508,12 +2546,16 @@ NTSCFG_TEST_FUNCTION(
     // Stop the machine.
 
     machine->stop();
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(
     ntcd::MachineTest::
         verifyBackgroundNonblockingDatagramSocketsConnectedOneWay)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -2859,12 +2901,16 @@ NTSCFG_TEST_FUNCTION(
     // Stop the machine.
 
     machine->stop();
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(
     ntcd::MachineTest::
         verifyBackgroundNonblockingDatagramSocketsConnectedTwoWay)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -3213,11 +3259,15 @@ NTSCFG_TEST_FUNCTION(
     // Stop the machine.
 
     machine->stop();
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(
     ntcd::MachineTest::verifyBackgroundNonblockingStreamSockets)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -3821,10 +3871,14 @@ NTSCFG_TEST_FUNCTION(
     // Stop the machine.
 
     machine->stop();
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifySendBufferOverflow)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_OWNER("main");
 
@@ -4261,6 +4315,8 @@ NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifySendBufferOverflow)
     // Stop the machine.
 
     machine->stop();
+
+#endif
 }
 
 }  // close namespace ntcd

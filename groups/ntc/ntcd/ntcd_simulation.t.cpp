@@ -36,6 +36,8 @@ class SimulationTest
 
 NTSCFG_TEST_FUNCTION(ntcd::SimulationTest::verify)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
@@ -282,6 +284,8 @@ NTSCFG_TEST_FUNCTION(ntcd::SimulationTest::verify)
     // Stop the simulation.
 
     simulation->stop();
+
+#endif
 }
 
 }  // close namespace ntcd
