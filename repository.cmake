@@ -394,6 +394,49 @@ function (ntf_target_variable_get)
     set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
 
+# Set the "type" variable scoped to a target. This type indicates the role
+# of the target in the build system: either GROUP, ADAPTER, INTERFACE, or
+# EXECUTABLE.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_type_set)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "GROUP" AND
+        NOT "${ARG_VALUE}" STREQUAL "ADAPTER" AND
+        NOT "${ARG_VALUE}" STREQUAL "INTERFACE" AND
+        NOT "${ARG_VALUE}" STREQUAL "EXECUTABLE")
+        ntf_die("Invalid target type: ${ARG_VALUE}")
+    endif()
+
+    ntf_target_variable_set(
+        TARGET ${ARG_TARGET} VARIABLE "type" VALUE ${ARG_VALUE})
+
+endfunction()
+
+# Get the "type" variable scoped to a target. This type indicates the role
+# of the target in the build system: either GROUP, ADAPTER, INTERFACE, or
+# EXECUTABLE.
+#
+# TARGET - The target.
+# OUTPUT - The variable name set in the parent scope.
+function (ntf_target_type_get)
+    cmake_parse_arguments(
+        ARG "" "TARGET;OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+    ntf_assert_defined(${ARG_OUTPUT})
+
+    ntf_target_variable_get(
+        TARGET ${ARG_TARGET} VARIABLE "type" OUTPUT result)
+
+    set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
+endfunction()
+
 # Set the "description" variable scoped to a target.
 #
 # TARGET - The target.
@@ -2073,6 +2116,8 @@ function (ntf_executable)
              BASE_DIRECTORY ${repository_path})
     endif()
 
+    set(target_type "EXECUTABLE")
+
     set(target_private ${NTF_EXECUTABLE_PRIVATE})
     if ("${target_private}" STREQUAL "")
         set(target_private FALSE)
@@ -2142,6 +2187,9 @@ function (ntf_executable)
 
     ntf_target_options(TARGET ${target})
 
+    ntf_target_type_set(
+        TARGET ${target} VALUE ${target_type})
+
     ntf_target_path_set(
         TARGET ${target} VALUE ${target_path})
 
@@ -2149,6 +2197,9 @@ function (ntf_executable)
         TARGET ${target} VALUE ${target_private})
 
     ntf_target_thirdparty_set(
+        TARGET ${target} VALUE FALSE)
+
+    ntf_target_pseudo_set(
         TARGET ${target} VALUE FALSE)
 
     ntf_target_unity_set(
@@ -2396,6 +2447,8 @@ function (ntf_interface)
     #          BASE_DIRECTORY ${repository_path})
     # endif()
 
+    set(target_type "INTERFACE")
+
     set(target_private ${NTF_INTERFACE_PRIVATE})
     if ("${target_private}" STREQUAL "")
         set(target_private FALSE)
@@ -2437,6 +2490,9 @@ function (ntf_interface)
 
     # ntf_target_options(TARGET ${target})
 
+    ntf_target_type_set(
+        TARGET ${target} VALUE ${target_type})
+
     ntf_target_path_set(
         TARGET ${target} VALUE ${target_path})
 
@@ -2448,6 +2504,9 @@ function (ntf_interface)
 
     ntf_target_thirdparty_set(
         TARGET ${target} VALUE ${target_thirdparty})
+
+    ntf_target_pseudo_set(
+        TARGET ${target} VALUE FALSE)
 
     ntf_target_unity_set(
         TARGET ${target} VALUE FALSE)
@@ -2550,390 +2609,10 @@ function (ntf_interface_end)
 
     ntf_target_private_get(TARGET ${target} OUTPUT target_private)
 
-    # ntf_target_options_common_epilog(${target})
-
-    ntf_repository_install_refroot_get(OUTPUT install_refroot)
-    ntf_repository_install_prefix_get(OUTPUT install_prefix)
-
-    ntf_repository_build_ufid_get(OUTPUT build_ufid)
-    ntf_repository_install_ufid_get(OUTPUT install_ufid)
-
-    ntf_ufid_string_has(UFID ${build_ufid} FLAG "64" OUTPUT is_64_bit)
-
-    if (${is_64_bit} AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-        set(lib_name "lib64" CACHE INTERNAL "")
+    if (${NTF_BUILD_FROM_PACKAGING})
+        ntf_target_install_rule(TARGET ${target})
     else()
-        set(lib_name "lib" CACHE INTERNAL "")
-    endif()
-
-    # Set the relative path to the library directory under the prefix. For
-    # example: lib64
-
-    set(library_relative_path ${lib_name})
-
-    # Set the relative path to the UFID-specific library directory under the
-    # prefix. For example: lib64/dbg_exc_mt
-
-    set(library_install_ufid_relative_path "${lib_name}/${install_ufid}")
-
-    # Define the installation UFIDs that are aliases for this UFID. Building
-    # the alias UFID is synonymous with the original UFID.
-
-    set(alias_install_ufid_list)
-
-    set(alias_install_ufid_pic ${install_ufid})
-    ntf_ufid_add(UFID "${alias_install_ufid_pic}" FLAG "pic" OUTPUT alias_install_ufid_pic)
-    list(APPEND alias_install_ufid_list ${alias_install_ufid_pic})
-
-    if(${is_64_bit})
-        set(alias_install_ufid_pic_64 ${install_ufid})
-        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "pic" OUTPUT alias_install_ufid_pic_64)
-        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "64" OUTPUT alias_install_ufid_pic_64)
-        list(APPEND alias_install_ufid_list ${alias_install_ufid_pic_64})
-    endif()
-
-    # Define the alternate install UFIDs. Other build systems may expect
-    # these paths to exist.
-
-    set(alternate_install_ufid_list)
-
-    list(APPEND alternate_install_ufid_list "!")
-    list(APPEND alternate_install_ufid_list "${install_ufid}")
-
-    if(${is_64_bit})
-        list(APPEND alternate_install_ufid_list "${install_ufid}_64")
-    endif()
-
-    list(APPEND alternate_install_ufid_list ${alias_install_ufid_list})
-
-    string (REPLACE "_exc_mt" "" modern_install_ufid_list "${alternate_install_ufid_list}")
-    list(POP_FRONT modern_install_ufid_list)
-    list(APPEND alternate_install_ufid_list ${modern_install_ufid_list})
-
-    if (VERBOSE)
-        message(STATUS "build_ufid:                  ${build_ufid}")
-        message(STATUS "install_ufid:                ${install_ufid}")
-        message(STATUS "alias_install_ufid_list:     ${alias_install_ufid_list}")
-        message(STATUS "alternate_install_ufid_list: ${alternate_install_ufid_list}")
-        message(STATUS "modern_install_ufid_list:    ${modern_install_ufid_list}")
-    endif()
-
-    # Install CMake target meta-data. TODO: Make this a configuration option.
-
-    set(install_cmake_metadata TRUE)
-
-    if (${install_cmake_metadata})
-        if (NOT ${target_private})
-            # CMake meta data names, version 1:
-
-            # ${target}Config.cmake
-            # ${target}ConfigVersion.cmake
-            # ${target}Targets.cmake
-            # ${target}Targets-debug.cmake
-
-            # CMake meta data names, version 2:
-
-            # ${target}-config.cmake
-            # ${target}-config-version.cmake
-            # ${target}-targets.cmake
-            # ${target}-targets-debug.cmake
-
-            set(cmake_metadata_relative_path
-                ${library_install_ufid_relative_path}/cmake/${target})
-
-            # Determine which CMake meta data case style to use.
-
-            if (EXISTS "${install_refroot}/${install_prefix}/${library_relative_path}/cmake/${target}/${target}Config.cmake")
-                set(install_cmake_metadata_style 1)
-            else()
-                set(install_cmake_metadata_style 2)
-            endif()
-
-            string(TOLOWER "${CMAKE_BUILD_TYPE}" buildTypeLowercase)
-
-            if (${install_cmake_metadata_style} EQUAL 1)
-                set(install_cmake_metadata_config "${target}Config")
-                set(install_cmake_metadata_config_version "${target}ConfigVersion")
-                set(install_cmake_metadata_targets "${target}Targets")
-                set(install_cmake_metadata_targets_build "${target}Targets-${buildTypeLowercase}")
-            else()
-                set(install_cmake_metadata_config "${target}-config")
-                set(install_cmake_metadata_config_version "${target}-config-version")
-                set(install_cmake_metadata_targets "${target}-targets")
-                set(install_cmake_metadata_targets_build "${target}-targets-${buildTypeLowercase}")
-            endif()
-
-            install(
-                TARGETS
-                    ${target}
-                EXPORT
-                    ${install_cmake_metadata_targets}
-                    DESTINATION
-                        ${library_install_ufid_relative_path}
-                RUNTIME
-                    DESTINATION
-                        "bin"
-                    COMPONENT
-                        runtime
-                LIBRARY
-                    DESTINATION
-                        ${library_install_ufid_relative_path}
-                    COMPONENT
-                        runtime
-                ARCHIVE
-                    DESTINATION
-                        ${library_install_ufid_relative_path}
-                    COMPONENT
-                        ${target}
-            )
-
-            export(
-                EXPORT
-                    ${install_cmake_metadata_targets}
-                FILE
-                    "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_targets}.cmake"
-
-                # TODO: Export the target into a CMake namespace, if advisable.
-                # NAMESPACE ${CMAKE_PROJECT_NAME}::
-            )
-
-            write_basic_package_version_file(
-                "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config_version}.cmake"
-                VERSION
-                    ${CMAKE_PROJECT_VERSION}
-                COMPATIBILITY
-                    AnyNewerVersion
-            )
-
-            # Recursively find dependencies of each "requires" of this
-            # target and manually generate it into the
-            # "${target}-config.cmake" file. Ideally, this should be done
-            # automatically by CMake itself but no version of CMake currently
-            # supports such a feature.
-            #
-            # See the issue described at
-            # https://gitlab.kitware.com/cmake/cmake/-/issues/20511
-
-            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
-
-            set(target_config_cmake_content "")
-
-            string(APPEND target_config_cmake_content "\
-include(CMakeFindDependencyMacro)\n\
-if (NOT TARGET ${target})\n\
-    message(DEBUG \"NTF: including ${target} from \${CMAKE_CURRENT_LIST_DIR}\")\n\
-    if (UNIX)\n\
-        find_dependency(Threads)\n\
-    endif()\n\
-")
-
-    set(target_requires_reversed ${target_requires})
-    list(REVERSE target_requires_reversed)
-    foreach (dependency ${target_requires_reversed})
-        if ("${dependency}" STREQUAL "openssl")
-            string(APPEND target_config_cmake_content "\
-    if (NOT TARGET OpenSSL::SSL)\n\
-        find_package(\n\
-            OpenSSL QUIET COMPONENTS SSL Crypto CONFIG\n\
-            NAMES openssl OpenSSL\n\
-            PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR\}/..\"\n\
-        )\n\
-    endif()\n\
-    if (NOT TARGET OpenSSL::SSL)\n\
-        find_package(OpenSSL MODULE COMPONENTS SSL Crypto)\n\
-    endif()\n\
-    if (NOT TARGET OpenSSL::SSL)\n\
-        message(FATAL_ERROR \"Failed to find OpenSSL::SSL\")\n\
-    endif()\n\
-    if (NOT TARGET OpenSSL::Crypto)\n\
-        message(FATAL_ERROR \"Failed to find OpenSSL::Crypto\")\n\
-    endif()\n\
-")
-            continue()
-        endif()
-
-            string(APPEND target_config_cmake_content "\
-    find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
-")
-    endforeach()
-
-            string(APPEND target_config_cmake_content "\
-    include(\"\${CMAKE_CURRENT_LIST_DIR}/${install_cmake_metadata_targets}.cmake\")\n\
-")
-
-            ntf_target_aliases_get(TARGET ${target} OUTPUT target_aliases)
-
-            foreach(alias ${target_aliases})
-            string(APPEND target_config_cmake_content "\
-    if (NOT TARGET ${alias})\n\
-        add_library(${alias} ALIAS ${target})\n\
-    endif()\n\
-")
-            endforeach()
-
-            string(APPEND target_config_cmake_content "\
-endif()\n\
-")
-
-            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config}.cmake"
-                ${target_config_cmake_content})
-
-            install(
-                EXPORT
-                    ${install_cmake_metadata_targets}
-                FILE
-                    ${install_cmake_metadata_targets}.cmake
-                DESTINATION
-                    ${cmake_metadata_relative_path}
-                COMPONENT
-                    ${target}
-                # TODO: Export the target into a CMake namespace, if advisable.
-                # NAMESPACE ${CMAKE_PROJECT_NAME}::
-            )
-
-            install(
-                FILES
-                    ${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config}.cmake
-                    ${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config_version}.cmake
-                DESTINATION
-                    ${cmake_metadata_relative_path}
-                COMPONENT
-                    ${target}
-            )
-
-            # Install symlinks.
-
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
-
-
-            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake)" COMPONENT ${target})
-
-            ntf_path_normalize(
-                OUTPUT link_target
-                INPUT "../${install_ufid}/cmake/${target}"
-                NATIVE ESCAPE)
-
-            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
-
-            foreach (alternate_install_ufid ${alternate_install_ufid_list})
-                if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
-                    NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
-
-                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake)" COMPONENT ${target})
-
-                    ntf_path_normalize(
-                        OUTPUT link_target
-                        INPUT "../../${install_ufid}/cmake/${target}"
-                        NATIVE ESCAPE)
-
-                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
-                endif()
-            endforeach()
-
-        endif()
-    endif()
-
-    # Install pkg-config meta-data. TODO: Make this a configuration option.
-
-    set(install_pkgconfig_metadata TRUE)
-
-    if (${install_pkgconfig_metadata})
-        if (NOT ${target_private})
-            ntf_target_description_get(TARGET ${target} OUTPUT target_description)
-            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
-            ntf_target_libs_get(TARGET ${target} OUTPUT target_libs)
-
-            string (REPLACE ";" " " target_requires_string "${target_requires}")
-            string(REPLACE "_" "-" target_requires_string "${target_requires_string}")
-
-            set(target_libs_string "")
-            foreach (target_libs_entry ${target_libs})
-                if (${target_libs_entry} MATCHES "^(-l|-framework)")
-                    set(target_libs_string "${target_libs_string} ${target_libs_entry}")
-                else()
-                    if (TARGET ${target_libs_entry})
-                        get_target_property(target_libs_entry_name ${target_libs_entry} OUTPUT_NAME)
-                        if ("${target_libs_entry_name}" STREQUAL "" OR
-                            "${target_libs_entry_name}" STREQUAL "target_libs_entry_name-NOTFOUND")
-                            set(target_libs_entry_name ${target_libs_entry})
-                        endif()
-                    else()
-                        set(target_libs_entry_name ${target_libs_entry})
-                    endif()
-
-                    set(target_libs_string "${target_libs_string} -l${target_libs_entry_name}")
-                endif()
-            endforeach()
-
-            # TODO: Set 'prefix' to "${pcfiledir}/../.." in the top-level
-            # pkgconfig directory, set it to "${pcfiledir}/../../.." in the
-            # UFID-specific pkgconfig directory, and do not install symlinks
-            # in each UFID-specific pkgconfig directory, but separate copies
-            # with prefix set to the directory hierarchy appropriately.
-
-            set(target_pc_content "\
-prefix=${CMAKE_INSTALL_PREFIX}\n\
-libdir=\${prefix}/${library_install_ufid_relative_path}\n\
-includedir=\${prefix}/include\n\
-\n\
-Name: ${target}\n\
-Description: ${target_description}\n\
-URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
-Version: ${CMAKE_PROJECT_VERSION}\n\
-Requires: \n\
-Requires.private: ${target_requires_string}\n\
-Cflags: -I\${includedir}\n\
-Libs: \n\
-Libs.private:${target_libs_string}\n\
-")
-
-            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${target}.pc"
-                ${target_pc_content})
-
-            install(
-                FILES ${CMAKE_CURRENT_BINARY_DIR}/${target}.pc
-                DESTINATION ${library_install_ufid_relative_path}/pkgconfig
-                COMPONENT ${target}
-            )
-
-            # Install symlinks.
-
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc\")" COMPONENT ${target})
-
-            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)" COMPONENT ${target})
-
-            ntf_path_normalize(
-                OUTPUT link_target
-                INPUT "../${install_ufid}/pkgconfig/${target}.pc"
-                NATIVE ESCAPE)
-
-            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc SYMBOLIC)" COMPONENT ${target})
-
-            foreach (alternate_install_ufid ${alternate_install_ufid_list})
-                if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
-                    NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc\")" COMPONENT ${target})
-
-                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)" COMPONENT ${target})
-
-                    ntf_path_normalize(
-                        OUTPUT link_target
-                        INPUT "../../${install_ufid}/pkgconfig/${target}.pc"
-                        NATIVE ESCAPE)
-
-                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc SYMBOLIC)" COMPONENT ${target})
-                endif()
-            endforeach()
-
-        endif()
-
+        ntf_target_install_rule(TARGET ${target} MULTICONFIG)
     endif()
 
 endfunction()
@@ -2977,6 +2656,8 @@ function (ntf_adapter)
         file(REAL_PATH ${NTF_ADAPTER_PATH} target_path
              BASE_DIRECTORY ${repository_path})
     endif()
+
+    set(target_type "ADAPTER")
 
     set(target_private ${NTF_ADAPTER_PRIVATE})
     if ("${target_private}" STREQUAL "")
@@ -3038,6 +2719,9 @@ function (ntf_adapter)
 
     ntf_target_options(TARGET ${target})
 
+    ntf_target_type_set(
+        TARGET ${target} VALUE ${target_type})
+
     ntf_target_path_set(
         TARGET ${target} VALUE ${target_path})
 
@@ -3050,11 +2734,11 @@ function (ntf_adapter)
     ntf_target_thirdparty_set(
         TARGET ${target} VALUE ${target_thirdparty})
 
-    ntf_target_unity_set(
-        TARGET ${target} VALUE FALSE)
-
     ntf_target_pseudo_set(
         TARGET ${target} VALUE ${target_pseudo})
+
+    ntf_target_unity_set(
+        TARGET ${target} VALUE FALSE)
 
     ntf_target_requires_set(
         TARGET ${target} VALUE ${NTF_ADAPTER_REQUIRES})
@@ -3192,464 +2876,10 @@ function (ntf_adapter_end)
 
     ntf_target_options_common_epilog(${target})
 
-    ntf_repository_install_refroot_get(OUTPUT install_refroot)
-    ntf_repository_install_prefix_get(OUTPUT install_prefix)
-
-    ntf_repository_build_ufid_get(OUTPUT build_ufid)
-    ntf_repository_install_ufid_get(OUTPUT install_ufid)
-
-    ntf_ufid_string_has(UFID ${build_ufid} FLAG "64" OUTPUT is_64_bit)
-
-    get_target_property(target_output_name ${target} OUTPUT_NAME)
-    if ("${target_output_name}" STREQUAL "" OR
-        "${target_output_name}" STREQUAL "target_output_name-NOTFOUND")
-        set(target_output_name "${target}")
-    endif()
-
-    if (${is_64_bit} AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-        set(lib_name "lib64" CACHE INTERNAL "")
+    if (${NTF_BUILD_FROM_PACKAGING})
+        ntf_target_install_rule(TARGET ${target})
     else()
-        set(lib_name "lib" CACHE INTERNAL "")
-    endif()
-
-    # Set the relative path to the library directory under the prefix. For
-    # example: lib64
-
-    set(library_relative_path ${lib_name})
-
-    # Set the relative path to the UFID-specific library directory under the
-    # prefix. For example: lib64/dbg_exc_mt
-
-    set(library_install_ufid_relative_path "${lib_name}/${install_ufid}")
-
-    # Define the installation UFIDs that are aliases for this UFID. Building
-    # the alias UFID is synonymous with the original UFID.
-
-    set(alias_install_ufid_list)
-
-    set(alias_install_ufid_pic ${install_ufid})
-    ntf_ufid_add(UFID "${alias_install_ufid_pic}" FLAG "pic" OUTPUT alias_install_ufid_pic)
-    list(APPEND alias_install_ufid_list ${alias_install_ufid_pic})
-
-    if(${is_64_bit})
-        set(alias_install_ufid_pic_64 ${install_ufid})
-        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "pic" OUTPUT alias_install_ufid_pic_64)
-        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "64" OUTPUT alias_install_ufid_pic_64)
-        list(APPEND alias_install_ufid_list ${alias_install_ufid_pic_64})
-    endif()
-
-    # Define the alternate install UFIDs. Other build systems may expect
-    # these paths to exist.
-
-    set(alternate_install_ufid_list)
-
-    list(APPEND alternate_install_ufid_list "!")
-    list(APPEND alternate_install_ufid_list "${install_ufid}")
-
-    if(${is_64_bit})
-        list(APPEND alternate_install_ufid_list "${install_ufid}_64")
-    endif()
-
-    list(APPEND alternate_install_ufid_list ${alias_install_ufid_list})
-
-    string (REPLACE "_exc_mt" "" modern_install_ufid_list "${alternate_install_ufid_list}")
-    list(POP_FRONT modern_install_ufid_list)
-    list(APPEND alternate_install_ufid_list ${modern_install_ufid_list})
-
-    if (VERBOSE)
-        message(STATUS "build_ufid:                  ${build_ufid}")
-        message(STATUS "install_ufid:                ${install_ufid}")
-        message(STATUS "alias_install_ufid_list:     ${alias_install_ufid_list}")
-        message(STATUS "alternate_install_ufid_list: ${alternate_install_ufid_list}")
-        message(STATUS "modern_install_ufid_list:    ${modern_install_ufid_list}")
-    endif()
-
-    # Install CMake target meta-data. TODO: Make this a configuration option.
-
-    set(install_cmake_metadata TRUE)
-
-    if (${install_cmake_metadata})
-        if (NOT ${target_private} AND NOT ${target_pseudo})
-            # CMake meta data names, version 1:
-
-            # ${target}Config.cmake
-            # ${target}ConfigVersion.cmake
-            # ${target}Targets.cmake
-            # ${target}Targets-debug.cmake
-
-            # CMake meta data names, version 2:
-
-            # ${target}-config.cmake
-            # ${target}-config-version.cmake
-            # ${target}-targets.cmake
-            # ${target}-targets-debug.cmake
-
-            set(cmake_metadata_relative_path
-                ${library_install_ufid_relative_path}/cmake/${target})
-
-            # Determine which CMake meta data case style to use.
-
-            if (EXISTS "${install_refroot}/${install_prefix}/${library_relative_path}/cmake/${target}/${target}Config.cmake")
-                set(install_cmake_metadata_style 1)
-            else()
-                set(install_cmake_metadata_style 2)
-            endif()
-
-            string(TOLOWER "${CMAKE_BUILD_TYPE}" buildTypeLowercase)
-
-            if (${install_cmake_metadata_style} EQUAL 1)
-                set(install_cmake_metadata_config "${target}Config")
-                set(install_cmake_metadata_config_version "${target}ConfigVersion")
-                set(install_cmake_metadata_targets "${target}Targets")
-                set(install_cmake_metadata_targets_build "${target}Targets-${buildTypeLowercase}")
-            else()
-                set(install_cmake_metadata_config "${target}-config")
-                set(install_cmake_metadata_config_version "${target}-config-version")
-                set(install_cmake_metadata_targets "${target}-targets")
-                set(install_cmake_metadata_targets_build "${target}-targets-${buildTypeLowercase}")
-            endif()
-
-            install(
-                TARGETS
-                    ${target}
-                EXPORT
-                    ${install_cmake_metadata_targets}
-                    DESTINATION
-                        ${library_install_ufid_relative_path}
-                RUNTIME
-                    DESTINATION
-                        "bin"
-                    COMPONENT
-                        runtime
-                LIBRARY
-                    DESTINATION
-                        ${library_install_ufid_relative_path}
-                    COMPONENT
-                        runtime
-                ARCHIVE
-                    DESTINATION
-                        ${library_install_ufid_relative_path}
-                    COMPONENT
-                        ${target}
-            )
-
-            foreach (alternate_install_ufid ${alternate_install_ufid_list})
-                set(canonical_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
-
-                if ("${alternate_install_ufid}" STREQUAL "!")
-                    set(alternate_library_name ${canonical_library_name})
-                else()
-                    set(alternate_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}.${alternate_install_ufid}${CMAKE_STATIC_LIBRARY_SUFFIX})
-                endif()
-
-                if (NOT ${target_pseudo})
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")" COMPONENT ${target})
-
-                    ntf_path_normalize(
-                        OUTPUT link_target
-                        INPUT  "${install_ufid}/${canonical_library_name}"
-                        NATIVE ESCAPE)
-
-                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} SYMBOLIC)" COMPONENT ${target})
-                endif()
-
-            endforeach()
-
-            export(
-                EXPORT
-                    ${install_cmake_metadata_targets}
-                FILE
-                    "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_targets}.cmake"
-
-                # TODO: Export the target into a CMake namespace, if advisable.
-                # NAMESPACE ${CMAKE_PROJECT_NAME}::
-            )
-
-            write_basic_package_version_file(
-                "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config_version}.cmake"
-                VERSION
-                    ${CMAKE_PROJECT_VERSION}
-                COMPATIBILITY
-                    AnyNewerVersion
-            )
-
-            # Recursively find dependencies of each "requires" of this
-            # target and manually generate it into the
-            # "${target}-config.cmake" file. Ideally, this should be done
-            # automatically by CMake itself but no version of CMake currently
-            # supports such a feature.
-            #
-            # See the issue described at
-            # https://gitlab.kitware.com/cmake/cmake/-/issues/20511
-
-            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
-
-            set(target_config_cmake_content "")
-
-            string(APPEND target_config_cmake_content "\
-include(CMakeFindDependencyMacro)\n\
-if (NOT TARGET ${target})\n\
-    message(DEBUG \"NTF: including ${target} from \${CMAKE_CURRENT_LIST_DIR}\")\n\
-    if (UNIX)\n\
-        find_dependency(Threads)\n\
-    endif()\n\
-")
-
-    set(target_requires_reversed ${target_requires})
-    list(REVERSE target_requires_reversed)
-    foreach (dependency ${target_requires_reversed})
-        if ("${dependency}" STREQUAL "openssl")
-            string(APPEND target_config_cmake_content "\
-    if (NOT TARGET OpenSSL::SSL)\n\
-        find_package(\n\
-            OpenSSL QUIET COMPONENTS SSL Crypto CONFIG\n\
-            NAMES openssl OpenSSL\n\
-            PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR\}/..\"\n\
-        )\n\
-    endif()\n\
-    if (NOT TARGET OpenSSL::SSL)\n\
-        find_package(OpenSSL MODULE COMPONENTS SSL Crypto)\n\
-    endif()\n\
-    if (NOT TARGET OpenSSL::SSL)\n\
-        message(FATAL_ERROR \"Failed to find OpenSSL::SSL\")\n\
-    endif()\n\
-    if (NOT TARGET OpenSSL::Crypto)\n\
-        message(FATAL_ERROR \"Failed to find OpenSSL::Crypto\")\n\
-    endif()\n\
-")
-            continue()
-        endif()
-
-            string(APPEND target_config_cmake_content "\
-    find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
-")
-    endforeach()
-
-            string(APPEND target_config_cmake_content "\
-    include(\"\${CMAKE_CURRENT_LIST_DIR}/${install_cmake_metadata_targets}.cmake\")\n\
-")
-
-            ntf_target_aliases_get(TARGET ${target} OUTPUT target_aliases)
-
-            foreach(alias ${target_aliases})
-            string(APPEND target_config_cmake_content "\
-    if (NOT TARGET ${alias})\n\
-        add_library(${alias} ALIAS ${target})\n\
-    endif()\n\
-")
-            endforeach()
-
-            string(APPEND target_config_cmake_content "\
-endif()\n\
-")
-
-            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config}.cmake"
-                ${target_config_cmake_content})
-
-            install(
-                EXPORT
-                    ${install_cmake_metadata_targets}
-                FILE
-                    ${install_cmake_metadata_targets}.cmake
-                DESTINATION
-                    ${cmake_metadata_relative_path}
-                COMPONENT
-                    ${target}
-                # TODO: Export the target into a CMake namespace, if advisable.
-                # NAMESPACE ${CMAKE_PROJECT_NAME}::
-            )
-
-            install(
-                FILES
-                    ${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config}.cmake
-                    ${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config_version}.cmake
-                DESTINATION
-                    ${cmake_metadata_relative_path}
-                COMPONENT
-                    ${target}
-            )
-
-            # Install symlinks.
-
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
-
-
-            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake)" COMPONENT ${target})
-
-            ntf_path_normalize(
-                OUTPUT link_target
-                INPUT "../${install_ufid}/cmake/${target}"
-                NATIVE ESCAPE)
-
-            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
-
-            foreach (alternate_install_ufid ${alternate_install_ufid_list})
-                if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
-                    NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
-
-                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake)" COMPONENT ${target})
-
-
-                    ntf_path_normalize(
-                        OUTPUT link_target
-                        INPUT "../../${install_ufid}/cmake/${target}"
-                        NATIVE ESCAPE)
-
-                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
-                endif()
-            endforeach()
-
-        endif()
-    else()
-        if (NOT ${target_private} AND NOT ${target_pseudo})
-            set(archive_basename ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
-
-            ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
-
-            cmake_path(
-                APPEND
-                archive_source_path
-                ${archive_output_path} ${archive_basename})
-
-            set(archive_destination_relative_path "${lib_name}")
-
-            install(
-                FILES
-                    ${archive_source_path}
-                DESTINATION
-                    ${archive_destination_relative_path}
-                COMPONENT
-                    ${target}
-            )
-        endif()
-    endif()
-
-    # Install pkg-config meta-data. TODO: Make this a configuration option.
-
-    set(install_pkgconfig_metadata TRUE)
-
-    if (${install_pkgconfig_metadata})
-        if (NOT ${target_private} AND NOT ${target_pseudo})
-            ntf_target_description_get(TARGET ${target} OUTPUT target_description)
-            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
-            ntf_target_libs_get(TARGET ${target} OUTPUT target_libs)
-
-            string (REPLACE ";" " " target_requires_string "${target_requires}")
-            string(REPLACE "_" "-" target_requires_string "${target_requires_string}")
-
-            set(target_libs_string "")
-            foreach (target_libs_entry ${target_libs})
-                if (${target_libs_entry} MATCHES "^(-l|-framework)")
-                    set(target_libs_string "${target_libs_string} ${target_libs_entry}")
-                else()
-                    if (TARGET ${target_libs_entry})
-                        get_target_property(target_libs_entry_name ${target_libs_entry} OUTPUT_NAME)
-                        if ("${target_libs_entry_name}" STREQUAL "" OR
-                            "${target_libs_entry_name}" STREQUAL "target_libs_entry_name-NOTFOUND")
-                            set(target_libs_entry_name ${target_libs_entry})
-                        endif()
-                    else()
-                        set(target_libs_entry_name ${target_libs_entry})
-                    endif()
-
-                    set(target_libs_string "${target_libs_string} -l${target_libs_entry_name}")
-                endif()
-            endforeach()
-
-            # TODO: Set 'prefix' to "${pcfiledir}/../.." in the top-level
-            # pkgconfig directory, set it to "${pcfiledir}/../../.." in the
-            # UFID-specific pkgconfig directory, and do not install symlinks
-            # in each UFID-specific pkgconfig directory, but separate copies
-            # with prefix set to the directory hierarchy appropriately.
-
-            set(install_pkgconfig_metadata_with_dashes TRUE)
-
-            set(target_pkgconfig_name ${target})
-            if (${install_pkgconfig_metadata_with_dashes})
-                string (REPLACE "_" "-" target_pkgconfig_name "${target}")
-            endif()
-
-            if (${target_pseudo})
-                set(target_pc_content "\
-prefix=${CMAKE_INSTALL_PREFIX}\n\
-libdir=\${prefix}/${library_install_ufid_relative_path}\n\
-includedir=\${prefix}/include\n\
-\n\
-Name: ${target_pkgconfig_name}\n\
-Description: ${target_description}\n\
-URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
-Version: ${CMAKE_PROJECT_VERSION}\n\
-Requires: \n\
-Requires.private: ${target_requires_string}\n\
-Cflags: -I\${includedir}\n\
-Libs: -L\${libdir}\n\
-Libs.private:${target_libs_string}\n\
-")
-            else()
-                set(target_pc_content "\
-prefix=${CMAKE_INSTALL_PREFIX}\n\
-libdir=\${prefix}/${library_install_ufid_relative_path}\n\
-includedir=\${prefix}/include\n\
-\n\
-Name: ${target_pkgconfig_name}\n\
-Description: ${target_description}\n\
-URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
-Version: ${CMAKE_PROJECT_VERSION}\n\
-Requires: \n\
-Requires.private: ${target_requires_string}\n\
-Cflags: -I\${includedir}\n\
-Libs: -L\${libdir} -l${target_output_name}\n\
-Libs.private:${target_libs_string}\n\
-")
-            endif()
-
-            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${target_pkgconfig_name}.pc"
-                ${target_pc_content})
-
-            install(
-                FILES ${CMAKE_CURRENT_BINARY_DIR}/${target_pkgconfig_name}.pc
-                DESTINATION ${library_install_ufid_relative_path}/pkgconfig
-                COMPONENT ${target}
-            )
-
-            # Install symlinks.
-
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target_pkgconfig_name}.pc\")" COMPONENT ${target})
-
-            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)" COMPONENT ${target})
-
-            ntf_path_normalize(
-                OUTPUT link_target
-                INPUT  "../${install_ufid}/pkgconfig/${target_pkgconfig_name}.pc"
-                NATIVE ESCAPE)
-
-            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target_pkgconfig_name}.pc SYMBOLIC)" COMPONENT ${target})
-
-            foreach (alternate_install_ufid ${alternate_install_ufid_list})
-                if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
-                    NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target_pkgconfig_name}.pc\")" COMPONENT ${target})
-
-                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)" COMPONENT ${target})
-
-                    ntf_path_normalize(
-                        OUTPUT link_target
-                        INPUT "../../${install_ufid}/pkgconfig/${target_pkgconfig_name}.pc"
-                        NATIVE ESCAPE)
-
-                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target_pkgconfig_name}.pc SYMBOLIC)" COMPONENT ${target})
-                endif()
-            endforeach()
-
-        endif()
-
+        ntf_target_install_rule(TARGET ${target} MULTICONFIG)
     endif()
 
 endfunction()
@@ -3767,6 +2997,8 @@ function (ntf_group)
              BASE_DIRECTORY ${repository_path})
     endif()
 
+    set(target_type "GROUP")
+
     set(target_private ${NTF_GROUP_PRIVATE})
     if ("${target_private}" STREQUAL "")
         set(target_private FALSE)
@@ -3813,6 +3045,9 @@ function (ntf_group)
 
     ntf_target_options(TARGET ${target})
 
+    ntf_target_type_set(
+        TARGET ${target} VALUE ${target_type})
+
     ntf_target_path_set(
         TARGET ${target} VALUE ${target_path})
 
@@ -3824,6 +3059,9 @@ function (ntf_group)
 
     ntf_target_thirdparty_set(
         TARGET ${target} VALUE ${target_thirdparty})
+
+    ntf_target_pseudo_set(
+        TARGET ${target} VALUE FALSE)
 
     ntf_target_unity_set(
         TARGET ${target} VALUE ${target_unity})
@@ -4086,435 +3324,10 @@ function (ntf_group_end)
 
     ntf_target_options_common_epilog(${target})
 
-    ntf_repository_install_refroot_get(OUTPUT install_refroot)
-    ntf_repository_install_prefix_get(OUTPUT install_prefix)
-
-    ntf_repository_build_ufid_get(OUTPUT build_ufid)
-    ntf_repository_install_ufid_get(OUTPUT install_ufid)
-
-    ntf_ufid_string_has(UFID ${build_ufid} FLAG "64" OUTPUT is_64_bit)
-
-    get_target_property(target_output_name ${target} OUTPUT_NAME)
-    if ("${target_output_name}" STREQUAL "" OR
-        "${target_output_name}" STREQUAL "target_output_name-NOTFOUND")
-        set(target_output_name "${target}")
-    endif()
-
-    if (${is_64_bit} AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-        set(lib_name "lib64" CACHE INTERNAL "")
+    if (${NTF_BUILD_FROM_PACKAGING})
+        ntf_target_install_rule(TARGET ${target})
     else()
-        set(lib_name "lib" CACHE INTERNAL "")
-    endif()
-
-    # Set the relative path to the library directory under the prefix. For
-    # example: lib64
-
-    set(library_relative_path ${lib_name})
-
-    # Set the relative path to the UFID-specific library directory under the
-    # prefix. For example: lib64/dbg_exc_mt
-
-    set(library_install_ufid_relative_path "${lib_name}/${install_ufid}")
-
-    # Define the installation UFIDs that are aliases for this UFID. Building
-    # the alias UFID is synonymous with the original UFID.
-
-    set(alias_install_ufid_list)
-
-    set(alias_install_ufid_pic ${install_ufid})
-    ntf_ufid_add(UFID "${alias_install_ufid_pic}" FLAG "pic" OUTPUT alias_install_ufid_pic)
-    list(APPEND alias_install_ufid_list ${alias_install_ufid_pic})
-
-    if(${is_64_bit})
-        set(alias_install_ufid_pic_64 ${install_ufid})
-        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "pic" OUTPUT alias_install_ufid_pic_64)
-        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "64" OUTPUT alias_install_ufid_pic_64)
-        list(APPEND alias_install_ufid_list ${alias_install_ufid_pic_64})
-    endif()
-
-    # Define the alternate install UFIDs. Other build systems may expect
-    # these paths to exist.
-
-    set(alternate_install_ufid_list)
-
-    list(APPEND alternate_install_ufid_list "!")
-    list(APPEND alternate_install_ufid_list "${install_ufid}")
-
-    if(${is_64_bit})
-        list(APPEND alternate_install_ufid_list "${install_ufid}_64")
-    endif()
-
-    list(APPEND alternate_install_ufid_list ${alias_install_ufid_list})
-
-    string (REPLACE "_exc_mt" "" modern_install_ufid_list "${alternate_install_ufid_list}")
-    list(POP_FRONT modern_install_ufid_list)
-    list(APPEND alternate_install_ufid_list ${modern_install_ufid_list})
-
-    if (VERBOSE)
-        message(STATUS "build_ufid:                  ${build_ufid}")
-        message(STATUS "install_ufid:                ${install_ufid}")
-        message(STATUS "alias_install_ufid_list:     ${alias_install_ufid_list}")
-        message(STATUS "alternate_install_ufid_list: ${alternate_install_ufid_list}")
-        message(STATUS "modern_install_ufid_list:    ${modern_install_ufid_list}")
-    endif()
-
-    # Install CMake target meta-data. TODO: Make this a configuration option.
-
-    set(install_cmake_metadata TRUE)
-
-    if (${install_cmake_metadata})
-        if (NOT ${target_private})
-            # CMake meta data names, version 1:
-
-            # ${target}Config.cmake
-            # ${target}ConfigVersion.cmake
-            # ${target}Targets.cmake
-            # ${target}Targets-debug.cmake
-
-            # CMake meta data names, version 2:
-
-            # ${target}-config.cmake
-            # ${target}-config-version.cmake
-            # ${target}-targets.cmake
-            # ${target}-targets-debug.cmake
-
-            set(cmake_metadata_relative_path
-                ${library_install_ufid_relative_path}/cmake/${target})
-
-            # Determine which CMake meta data case style to use.
-
-            if (EXISTS "${install_refroot}/${install_prefix}/${library_relative_path}/cmake/${target}/${target}Config.cmake")
-                set(install_cmake_metadata_style 1)
-            else()
-                set(install_cmake_metadata_style 2)
-            endif()
-
-            string(TOLOWER "${CMAKE_BUILD_TYPE}" buildTypeLowercase)
-
-            if (${install_cmake_metadata_style} EQUAL 1)
-                set(install_cmake_metadata_config "${target}Config")
-                set(install_cmake_metadata_config_version "${target}ConfigVersion")
-                set(install_cmake_metadata_targets "${target}Targets")
-                set(install_cmake_metadata_targets_build "${target}Targets-${buildTypeLowercase}")
-            else()
-                set(install_cmake_metadata_config "${target}-config")
-                set(install_cmake_metadata_config_version "${target}-config-version")
-                set(install_cmake_metadata_targets "${target}-targets")
-                set(install_cmake_metadata_targets_build "${target}-targets-${buildTypeLowercase}")
-            endif()
-
-            install(
-                TARGETS
-                    ${target}
-                EXPORT
-                    ${install_cmake_metadata_targets}
-                    DESTINATION
-                        ${library_install_ufid_relative_path}
-                RUNTIME
-                    DESTINATION
-                        "bin"
-                    COMPONENT
-                        ${target}
-                LIBRARY
-                    DESTINATION
-                        ${library_install_ufid_relative_path}
-                    COMPONENT
-                        ${target}
-                ARCHIVE
-                    DESTINATION
-                        ${library_install_ufid_relative_path}
-                    COMPONENT
-                        ${target}
-            )
-
-            foreach (alternate_install_ufid ${alternate_install_ufid_list})
-                set(canonical_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
-
-                if ("${alternate_install_ufid}" STREQUAL "!")
-                    set(alternate_library_name ${canonical_library_name})
-                else()
-                    set(alternate_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}.${alternate_install_ufid}${CMAKE_STATIC_LIBRARY_SUFFIX})
-                endif()
-
-                install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")" COMPONENT ${target})
-
-                ntf_path_normalize(
-                    OUTPUT link_target
-                    INPUT "${install_ufid}/${canonical_library_name}"
-                    NATIVE ESCAPE)
-
-                install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} SYMBOLIC)" COMPONENT ${target})
-
-            endforeach()
-
-            export(
-                EXPORT
-                    ${install_cmake_metadata_targets}
-                FILE
-                    "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_targets}.cmake"
-
-                # TODO: Export the target into a CMake namespace, if advisable.
-                # NAMESPACE ${CMAKE_PROJECT_NAME}::
-            )
-
-            write_basic_package_version_file(
-                "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config_version}.cmake"
-                VERSION
-                    ${CMAKE_PROJECT_VERSION}
-                COMPATIBILITY
-                    AnyNewerVersion
-            )
-
-            # Recursively find dependencies of each "requires" of this
-            # target and manually generate it into the
-            # "${target}-config.cmake" file. Ideally, this should be done
-            # automatically by CMake itself but no version of CMake currently
-            # supports such a feature.
-            #
-            # See the issue described at
-            # https://gitlab.kitware.com/cmake/cmake/-/issues/20511
-
-            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
-
-            set(target_config_cmake_content "")
-
-            string(APPEND target_config_cmake_content "\
-include(CMakeFindDependencyMacro)\n\
-if (NOT TARGET ${target})\n\
-    message(DEBUG \"NTF: including ${target} from \${CMAKE_CURRENT_LIST_DIR}\")\n\
-    if (UNIX)\n\
-        find_dependency(Threads)\n\
-    endif()\n\
-")
-
-    set(target_requires_reversed ${target_requires})
-    list(REVERSE target_requires_reversed)
-    foreach (dependency ${target_requires_reversed})
-        if ("${dependency}" STREQUAL "openssl")
-            string(APPEND target_config_cmake_content "\
-    if (NOT TARGET OpenSSL::SSL)\n\
-        find_package(\n\
-            OpenSSL QUIET COMPONENTS SSL Crypto CONFIG\n\
-            NAMES openssl OpenSSL\n\
-            PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR\}/..\"\n\
-        )\n\
-    endif()\n\
-    if (NOT TARGET OpenSSL::SSL)\n\
-        find_package(OpenSSL MODULE COMPONENTS SSL Crypto)\n\
-    endif()\n\
-    if (NOT TARGET OpenSSL::SSL)\n\
-        message(FATAL_ERROR \"Failed to find OpenSSL::SSL\")\n\
-    endif()\n\
-    if (NOT TARGET OpenSSL::Crypto)\n\
-        message(FATAL_ERROR \"Failed to find OpenSSL::Crypto\")\n\
-    endif()\n\
-")
-            continue()
-        endif()
-
-            string(APPEND target_config_cmake_content "\
-    find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
-")
-    endforeach()
-
-            string(APPEND target_config_cmake_content "\
-    include(\"\${CMAKE_CURRENT_LIST_DIR}/${install_cmake_metadata_targets}.cmake\")\n\
-")
-
-            ntf_target_aliases_get(TARGET ${target} OUTPUT target_aliases)
-
-            foreach(alias ${target_aliases})
-            string(APPEND target_config_cmake_content "\
-    if (NOT TARGET ${alias})\n\
-        add_library(${alias} ALIAS ${target})\n\
-    endif()\n\
-")
-            endforeach()
-
-            string(APPEND target_config_cmake_content "\
-endif()\n\
-")
-
-            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config}.cmake"
-                ${target_config_cmake_content})
-
-            install(
-                EXPORT
-                    ${install_cmake_metadata_targets}
-                FILE
-                    ${install_cmake_metadata_targets}.cmake
-                DESTINATION
-                    ${cmake_metadata_relative_path}
-                COMPONENT
-                    ${target}
-                # TODO: Export the target into a CMake namespace, if advisable.
-                # NAMESPACE ${CMAKE_PROJECT_NAME}::
-            )
-
-            install(
-                FILES
-                    ${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config}.cmake
-                    ${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config_version}.cmake
-                DESTINATION
-                    ${cmake_metadata_relative_path}
-                COMPONENT
-                    ${target}
-            )
-
-            # Install symlinks.
-
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
-
-
-            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake)" COMPONENT ${target})
-
-            ntf_path_normalize(
-                OUTPUT link_target
-                INPUT "../${install_ufid}/cmake/${target}"
-                NATIVE ESCAPE)
-
-            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
-
-            foreach (alternate_install_ufid ${alternate_install_ufid_list})
-                if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
-                    NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
-
-                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake)" COMPONENT ${target})
-
-                    ntf_path_normalize(
-                        OUTPUT link_target
-                        INPUT "../../${install_ufid}/cmake/${target}"
-                        NATIVE ESCAPE)
-
-                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target} SYMBOLIC)" COMPONENT ${target})
-                endif()
-            endforeach()
-
-        endif()
-    else()
-        if (NOT ${target_private})
-            set(archive_basename ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
-
-            ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
-
-            cmake_path(
-                APPEND
-                archive_source_path
-                ${archive_output_path} ${archive_basename})
-
-            set(archive_destination_relative_path "${lib_name}")
-
-            install(
-                FILES
-                    ${archive_source_path}
-                DESTINATION
-                    ${archive_destination_relative_path}
-                COMPONENT
-                    ${target}
-            )
-        endif()
-    endif()
-
-    # Install pkg-config meta-data. TODO: Make this a configuration option.
-
-    set(install_pkgconfig_metadata TRUE)
-
-    if (${install_pkgconfig_metadata})
-        if (NOT ${target_private})
-            ntf_target_description_get(TARGET ${target} OUTPUT target_description)
-            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
-            ntf_target_libs_get(TARGET ${target} OUTPUT target_libs)
-
-            string (REPLACE ";" " " target_requires_string "${target_requires}")
-            string(REPLACE "_" "-" target_requires_string "${target_requires_string}")
-
-            set(target_libs_string "")
-            foreach (target_libs_entry ${target_libs})
-                if (${target_libs_entry} MATCHES "^(-l|-framework)")
-                    set(target_libs_string "${target_libs_string} ${target_libs_entry}")
-                else()
-                    if (TARGET ${target_libs_entry})
-                        get_target_property(target_libs_entry_name ${target_libs_entry} OUTPUT_NAME)
-                        if ("${target_libs_entry_name}" STREQUAL "" OR
-                            "${target_libs_entry_name}" STREQUAL "target_libs_entry_name-NOTFOUND")
-                            set(target_libs_entry_name ${target_libs_entry})
-                        endif()
-                    else()
-                        set(target_libs_entry_name ${target_libs_entry})
-                    endif()
-
-                    set(target_libs_string "${target_libs_string} -l${target_libs_entry_name}")
-                endif()
-            endforeach()
-
-            # TODO: Set 'prefix' to "${pcfiledir}/../.." in the top-level
-            # pkgconfig directory, set it to "${pcfiledir}/../../.." in the
-            # UFID-specific pkgconfig directory, and do not install symlinks
-            # in each UFID-specific pkgconfig directory, but separate copies
-            # with prefix set to the directory hierarchy appropriately.
-
-            set(target_pc_content "\
-prefix=${CMAKE_INSTALL_PREFIX}\n\
-libdir=\${prefix}/${library_install_ufid_relative_path}\n\
-includedir=\${prefix}/include\n\
-\n\
-Name: ${target}\n\
-Description: ${target_description}\n\
-URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
-Version: ${CMAKE_PROJECT_VERSION}\n\
-Requires: \n\
-Requires.private: ${target_requires_string}\n\
-Cflags: -I\${includedir}\n\
-Libs: -L\${libdir} -l${target_output_name}\n\
-Libs.private:${target_libs_string}\n\
-")
-
-            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${target}.pc"
-                ${target_pc_content})
-
-            install(
-                FILES ${CMAKE_CURRENT_BINARY_DIR}/${target}.pc
-                DESTINATION ${library_install_ufid_relative_path}/pkgconfig
-                COMPONENT ${target}
-            )
-
-            # Install symlinks.
-
-            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc\")" COMPONENT ${target})
-
-            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)" COMPONENT ${target})
-
-            ntf_path_normalize(
-                OUTPUT link_target
-                INPUT "../${install_ufid}/pkgconfig/${target}.pc"
-                NATIVE ESCAPE)
-
-            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target}.pc SYMBOLIC)" COMPONENT ${target})
-
-            foreach (alternate_install_ufid ${alternate_install_ufid_list})
-                if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
-                    NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
-                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc\")" COMPONENT ${target})
-
-                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)" COMPONENT ${target})
-
-                    ntf_path_normalize(
-                        OUTPUT link_target
-                        INPUT "../../${install_ufid}/pkgconfig/${target}.pc"
-                        NATIVE ESCAPE)
-
-                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target}.pc SYMBOLIC)" COMPONENT ${target})
-                endif()
-            endforeach()
-
-        endif()
+        ntf_target_install_rule(TARGET ${target} MULTICONFIG)
     endif()
 
 endfunction()
@@ -4651,6 +3464,9 @@ function (ntf_package)
 
     ntf_target_thirdparty_set(
         TARGET ${target} VALUE ${target_thirdparty})
+
+    ntf_target_pseudo_set(
+        TARGET ${target} VALUE FALSE)
 
     ntf_target_unity_set(
         TARGET ${target} VALUE ${target_unity})
@@ -9031,3 +7847,1028 @@ function (ntf_test_add)
 
 endfunction()
 
+# Install the artifacts produced when building the target library, including
+# its build system meta-data.
+#
+# TARGET - The target.
+#
+# TODO: Remove this function, as it is no longer used.
+function (ntf_target_install_rule_legacy)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    ntf_nomenclature_target(TARGET ${ARG_TARGET} OUTPUT target)
+
+    ntf_assert_target_defined(${target})
+
+    string(TOLOWER ${target} target_lowercase)
+    string(TOUPPER ${target} target_uppercase)
+
+    ntf_target_type_get(TARGET ${target} OUTPUT target_type)
+    ntf_target_private_get(TARGET ${target} OUTPUT target_private)
+    ntf_target_pseudo_get(TARGET ${target} OUTPUT target_pseudo)
+    ntf_target_thirdparty_get(TARGET ${target} OUTPUT target_thirdparty)
+
+    if ("${target_type}" STREQUAL "EXECUTABLE")
+        ntf_die("Executables use special install rules")
+    endif()
+
+    ntf_repository_install_refroot_get(OUTPUT install_refroot)
+    ntf_repository_install_prefix_get(OUTPUT install_prefix)
+
+    ntf_repository_build_ufid_get(OUTPUT build_ufid)
+    ntf_repository_install_ufid_get(OUTPUT install_ufid)
+
+    ntf_ufid_string_has(UFID ${build_ufid} FLAG "64" OUTPUT is_64_bit)
+
+    get_target_property(target_output_name ${target} OUTPUT_NAME)
+    if ("${target_output_name}" STREQUAL "" OR
+        "${target_output_name}" STREQUAL "target_output_name-NOTFOUND")
+        set(target_output_name "${target}")
+    endif()
+
+    if (${is_64_bit} AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+        set(lib_name "lib64" CACHE INTERNAL "")
+    else()
+        set(lib_name "lib" CACHE INTERNAL "")
+    endif()
+
+    # Set the relative path to the library directory under the prefix. For
+    # example: lib64
+
+    set(library_relative_path ${lib_name})
+
+    # Set the relative path to the UFID-specific library directory under the
+    # prefix. For example: lib64/dbg_exc_mt
+
+    set(library_install_ufid_relative_path "${lib_name}/${install_ufid}")
+
+    # Define the installation UFIDs that are aliases for this UFID. Building
+    # the alias UFID is synonymous with the original UFID.
+
+    set(alias_install_ufid_list)
+
+    set(alias_install_ufid_pic ${install_ufid})
+    ntf_ufid_add(UFID "${alias_install_ufid_pic}" FLAG "pic" OUTPUT alias_install_ufid_pic)
+    list(APPEND alias_install_ufid_list ${alias_install_ufid_pic})
+
+    if(${is_64_bit})
+        set(alias_install_ufid_pic_64 ${install_ufid})
+        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "pic" OUTPUT alias_install_ufid_pic_64)
+        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "64" OUTPUT alias_install_ufid_pic_64)
+        list(APPEND alias_install_ufid_list ${alias_install_ufid_pic_64})
+    endif()
+
+    # Define the alternate install UFIDs. Other build systems may expect
+    # these paths to exist.
+
+    set(alternate_install_ufid_list)
+
+    list(APPEND alternate_install_ufid_list "!")
+    list(APPEND alternate_install_ufid_list "${install_ufid}")
+
+    if(${is_64_bit})
+        list(APPEND alternate_install_ufid_list "${install_ufid}_64")
+    endif()
+
+    list(APPEND alternate_install_ufid_list ${alias_install_ufid_list})
+
+    string (REPLACE "_exc_mt" "" modern_install_ufid_list "${alternate_install_ufid_list}")
+    list(POP_FRONT modern_install_ufid_list)
+    list(APPEND alternate_install_ufid_list ${modern_install_ufid_list})
+
+    if (VERBOSE)
+        message(STATUS "build_ufid:                  ${build_ufid}")
+        message(STATUS "install_ufid:                ${install_ufid}")
+        message(STATUS "alias_install_ufid_list:     ${alias_install_ufid_list}")
+        message(STATUS "alternate_install_ufid_list: ${alternate_install_ufid_list}")
+        message(STATUS "modern_install_ufid_list:    ${modern_install_ufid_list}")
+    endif()
+
+    # Install CMake target meta-data. TODO: Make this a configuration option.
+
+    set(install_cmake_metadata TRUE)
+
+    if (${install_cmake_metadata})
+        if (NOT ${target_private} AND NOT ${target_pseudo})
+            # CMake meta data names, version 1:
+
+            # ${target}Config.cmake
+            # ${target}ConfigVersion.cmake
+            # ${target}Targets.cmake
+            # ${target}Targets-debug.cmake
+
+            # CMake meta data names, version 2:
+
+            # ${target}-config.cmake
+            # ${target}-config-version.cmake
+            # ${target}-targets.cmake
+            # ${target}-targets-debug.cmake
+
+            set(cmake_metadata_relative_path
+                ${library_install_ufid_relative_path}/cmake/${target})
+
+            # Determine which CMake meta data case style to use.
+
+            if (EXISTS "${install_refroot}/${install_prefix}/${library_relative_path}/cmake/${target}/${target}Config.cmake")
+                set(install_cmake_metadata_style 1)
+            else()
+                set(install_cmake_metadata_style 2)
+            endif()
+
+            string(TOLOWER "${CMAKE_BUILD_TYPE}" buildTypeLowercase)
+
+            if (${install_cmake_metadata_style} EQUAL 1)
+                set(install_cmake_metadata_config "${target}Config")
+                set(install_cmake_metadata_config_version "${target}ConfigVersion")
+                set(install_cmake_metadata_targets "${target}Targets")
+                set(install_cmake_metadata_targets_build "${target}Targets-${buildTypeLowercase}")
+            else()
+                set(install_cmake_metadata_config "${target}-config")
+                set(install_cmake_metadata_config_version "${target}-config-version")
+                set(install_cmake_metadata_targets "${target}-targets")
+                set(install_cmake_metadata_targets_build "${target}-targets-${buildTypeLowercase}")
+            endif()
+
+            install(
+                TARGETS
+                    ${target}
+                EXPORT
+                    ${install_cmake_metadata_targets}
+                    DESTINATION
+                        ${library_install_ufid_relative_path}
+                RUNTIME
+                    DESTINATION
+                        "bin"
+                    COMPONENT
+                        ${target}
+                LIBRARY
+                    DESTINATION
+                        ${library_install_ufid_relative_path}
+                    COMPONENT
+                        ${target}
+                ARCHIVE
+                    DESTINATION
+                        ${library_install_ufid_relative_path}
+                    COMPONENT
+                        ${target}
+            )
+
+            if (NOT "${target_type}" STREQUAL "INTERFACE")
+                foreach (alternate_install_ufid ${alternate_install_ufid_list})
+                    set(canonical_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
+
+                    if ("${alternate_install_ufid}" STREQUAL "!")
+                        set(alternate_library_name ${canonical_library_name})
+                    else()
+                        set(alternate_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}.${alternate_install_ufid}${CMAKE_STATIC_LIBRARY_SUFFIX})
+                    endif()
+
+                    if (NOT ${target_pseudo})
+                        install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")" COMPONENT ${target})
+
+                        ntf_path_normalize(
+                            OUTPUT link_target
+                            INPUT  "${install_ufid}/${canonical_library_name}"
+                            NATIVE ESCAPE)
+
+                        install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} COPY_ON_ERROR SYMBOLIC)" COMPONENT ${target})
+                    endif()
+                endforeach()
+            endif()
+
+            export(
+                EXPORT
+                    ${install_cmake_metadata_targets}
+                FILE
+                    "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_targets}.cmake"
+
+                # TODO: Export the target into a CMake namespace, if advisable.
+                # NAMESPACE ${CMAKE_PROJECT_NAME}::
+            )
+
+            write_basic_package_version_file(
+                "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config_version}.cmake"
+                VERSION
+                    ${CMAKE_PROJECT_VERSION}
+                COMPATIBILITY
+                    AnyNewerVersion
+            )
+
+            # Recursively find dependencies of each "requires" of this
+            # target and manually generate it into the
+            # "${target}-config.cmake" file. Ideally, this should be done
+            # automatically by CMake itself but no version of CMake currently
+            # supports such a feature.
+            #
+            # See the issue described at
+            # https://gitlab.kitware.com/cmake/cmake/-/issues/20511
+
+            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
+
+            set(target_config_cmake_content "")
+
+            string(APPEND target_config_cmake_content "\
+include(CMakeFindDependencyMacro)\n\
+if (NOT TARGET ${target})\n\
+    message(DEBUG \"NTF: including ${target} from \${CMAKE_CURRENT_LIST_DIR}\")\n\
+    if (UNIX)\n\
+        find_dependency(Threads)\n\
+    endif()\n\
+")
+
+    set(target_requires_reversed ${target_requires})
+    list(REVERSE target_requires_reversed)
+    foreach (dependency ${target_requires_reversed})
+        if ("${dependency}" STREQUAL "openssl")
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(\n\
+            OpenSSL QUIET COMPONENTS SSL Crypto CONFIG\n\
+            NAMES openssl OpenSSL\n\
+            PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR\}/..\"\n\
+        )\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(OpenSSL MODULE COMPONENTS SSL Crypto)\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::SSL\")\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::Crypto)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::Crypto\")\n\
+    endif()\n\
+")
+            continue()
+        endif()
+
+            string(APPEND target_config_cmake_content "\
+    find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
+")
+    endforeach()
+
+            string(APPEND target_config_cmake_content "\
+    include(\"\${CMAKE_CURRENT_LIST_DIR}/${install_cmake_metadata_targets}.cmake\")\n\
+")
+
+            ntf_target_aliases_get(TARGET ${target} OUTPUT target_aliases)
+
+            foreach(alias ${target_aliases})
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET ${alias})\n\
+        add_library(${alias} ALIAS ${target})\n\
+    endif()\n\
+")
+            endforeach()
+
+            string(APPEND target_config_cmake_content "\
+endif()\n\
+")
+
+            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config}.cmake"
+                ${target_config_cmake_content})
+
+            install(
+                EXPORT
+                    ${install_cmake_metadata_targets}
+                FILE
+                    ${install_cmake_metadata_targets}.cmake
+                DESTINATION
+                    ${cmake_metadata_relative_path}
+                COMPONENT
+                    ${target}
+                # TODO: Export the target into a CMake namespace, if advisable.
+                # NAMESPACE ${CMAKE_PROJECT_NAME}::
+            )
+
+            install(
+                FILES
+                    ${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config}.cmake
+                    ${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config_version}.cmake
+                DESTINATION
+                    ${cmake_metadata_relative_path}
+                COMPONENT
+                    ${target}
+            )
+
+            # Install symlinks.
+
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
+
+            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake)" COMPONENT ${target})
+
+            ntf_path_normalize(
+                OUTPUT link_target
+                INPUT "../${install_ufid}/cmake/${target}"
+                NATIVE ESCAPE)
+
+            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target} COPY_ON_ERROR SYMBOLIC)" COMPONENT ${target})
+
+            foreach (alternate_install_ufid ${alternate_install_ufid_list})
+                if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
+                    NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
+
+                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake)" COMPONENT ${target})
+
+                    ntf_path_normalize(
+                        OUTPUT link_target
+                        INPUT "../../${install_ufid}/cmake/${target}"
+                        NATIVE ESCAPE)
+
+                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target} COPY_ON_ERROR SYMBOLIC)" COMPONENT ${target})
+                endif()
+            endforeach()
+
+        endif()
+    else()
+        if (NOT ${target_private} AND NOT ${target_pseudo} AND NOT "${target_type}" STREQUAL "INTERFACE")
+            set(archive_basename ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
+
+            ntf_repository_archive_output_path_get(OUTPUT archive_output_path)
+
+            cmake_path(
+                APPEND
+                archive_source_path
+                ${archive_output_path} ${archive_basename})
+
+            set(archive_destination_relative_path "${lib_name}")
+
+            install(
+                FILES
+                    ${archive_source_path}
+                DESTINATION
+                    ${archive_destination_relative_path}
+                COMPONENT
+                    ${target}
+            )
+        endif()
+    endif()
+
+    # Install pkg-config meta-data. TODO: Make this a configuration option.
+
+    set(install_pkgconfig_metadata TRUE)
+
+    if (${install_pkgconfig_metadata})
+        if (NOT ${target_private} AND NOT ${target_pseudo})
+            ntf_target_description_get(TARGET ${target} OUTPUT target_description)
+            ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
+            ntf_target_libs_get(TARGET ${target} OUTPUT target_libs)
+
+            string (REPLACE ";" " " target_requires_string "${target_requires}")
+            string(REPLACE "_" "-" target_requires_string "${target_requires_string}")
+
+            set(target_libs_string "")
+            foreach (target_libs_entry ${target_libs})
+                if (${target_libs_entry} MATCHES "^(-l|-framework)")
+                    set(target_libs_string "${target_libs_string} ${target_libs_entry}")
+                else()
+                    if (TARGET ${target_libs_entry})
+                        get_target_property(target_libs_entry_name ${target_libs_entry} OUTPUT_NAME)
+                        if ("${target_libs_entry_name}" STREQUAL "" OR
+                            "${target_libs_entry_name}" STREQUAL "target_libs_entry_name-NOTFOUND")
+                            set(target_libs_entry_name ${target_libs_entry})
+                        endif()
+                    else()
+                        set(target_libs_entry_name ${target_libs_entry})
+                    endif()
+
+                    set(target_libs_string "${target_libs_string} -l${target_libs_entry_name}")
+                endif()
+            endforeach()
+
+            # TODO: Set 'prefix' to "${pcfiledir}/../.." in the top-level
+            # pkgconfig directory, set it to "${pcfiledir}/../../.." in the
+            # UFID-specific pkgconfig directory, and do not install symlinks
+            # in each UFID-specific pkgconfig directory, but separate copies
+            # with prefix set to the directory hierarchy appropriately.
+
+            set(install_pkgconfig_metadata_with_dashes TRUE)
+
+            set(target_pkgconfig_name ${target})
+            if (${install_pkgconfig_metadata_with_dashes})
+                string (REPLACE "_" "-" target_pkgconfig_name "${target}")
+            endif()
+
+            if ("${target_type}" STREQUAL "INTERFACE")
+                set(target_pc_content "\
+prefix=${CMAKE_INSTALL_PREFIX}\n\
+libdir=\${prefix}/${library_install_ufid_relative_path}\n\
+includedir=\${prefix}/include\n\
+\n\
+Name: ${target}\n\
+Description: ${target_description}\n\
+URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
+Version: ${CMAKE_PROJECT_VERSION}\n\
+Requires: \n\
+Requires.private: ${target_requires_string}\n\
+Cflags: -I\${includedir}\n\
+Libs: \n\
+Libs.private:${target_libs_string}\n\
+")
+            elseif (${target_pseudo})
+                set(target_pc_content "\
+prefix=${CMAKE_INSTALL_PREFIX}\n\
+libdir=\${prefix}/${library_install_ufid_relative_path}\n\
+includedir=\${prefix}/include\n\
+\n\
+Name: ${target_pkgconfig_name}\n\
+Description: ${target_description}\n\
+URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
+Version: ${CMAKE_PROJECT_VERSION}\n\
+Requires: \n\
+Requires.private: ${target_requires_string}\n\
+Cflags: -I\${includedir}\n\
+Libs: -L\${libdir}\n\
+Libs.private:${target_libs_string}\n\
+")
+            else()
+                set(target_pc_content "\
+prefix=${CMAKE_INSTALL_PREFIX}\n\
+libdir=\${prefix}/${library_install_ufid_relative_path}\n\
+includedir=\${prefix}/include\n\
+\n\
+Name: ${target_pkgconfig_name}\n\
+Description: ${target_description}\n\
+URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
+Version: ${CMAKE_PROJECT_VERSION}\n\
+Requires: \n\
+Requires.private: ${target_requires_string}\n\
+Cflags: -I\${includedir}\n\
+Libs: -L\${libdir} -l${target_output_name}\n\
+Libs.private:${target_libs_string}\n\
+")
+            endif()
+
+            file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${target_pkgconfig_name}.pc"
+                ${target_pc_content})
+
+            install(
+                FILES ${CMAKE_CURRENT_BINARY_DIR}/${target_pkgconfig_name}.pc
+                DESTINATION ${library_install_ufid_relative_path}/pkgconfig
+                COMPONENT ${target}
+            )
+
+            # Install symlinks.
+
+            install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target_pkgconfig_name}.pc\")" COMPONENT ${target})
+
+            install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)" COMPONENT ${target})
+
+            ntf_path_normalize(
+                OUTPUT link_target
+                INPUT  "../${install_ufid}/pkgconfig/${target_pkgconfig_name}.pc"
+                NATIVE ESCAPE)
+
+            install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target_pkgconfig_name}.pc COPY_ON_ERROR SYMBOLIC)" COMPONENT ${target})
+
+            foreach (alternate_install_ufid ${alternate_install_ufid_list})
+                if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
+                    NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
+                    install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target_pkgconfig_name}.pc\")" COMPONENT ${target})
+
+                    install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)" COMPONENT ${target})
+
+                    ntf_path_normalize(
+                        OUTPUT link_target
+                        INPUT "../../${install_ufid}/pkgconfig/${target_pkgconfig_name}.pc"
+                        NATIVE ESCAPE)
+
+                    install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target_pkgconfig_name}.pc COPY_ON_ERROR SYMBOLIC)" COMPONENT ${target})
+                endif()
+            endforeach()
+
+        endif()
+
+    endif()
+    
+endfunction()
+
+
+
+# Install the artifacts produced when building the target library, including
+# its build system meta-data.
+#
+# TARGET - The target.
+function (ntf_target_install_rule)
+    cmake_parse_arguments(
+        ARG "MULTICONFIG" "TARGET" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    ntf_nomenclature_target(TARGET ${ARG_TARGET} OUTPUT target)
+
+    ntf_assert_target_defined(${target})
+
+    string(TOLOWER ${target} target_lowercase)
+    string(TOUPPER ${target} target_uppercase)
+
+    set(install_multiconfig ${ARG_MULTICONFIG})
+    if ("${install_multiconfig}" STREQUAL "")
+        set(install_multiconfig FALSE)
+    endif()
+
+    ntf_target_type_get(TARGET ${target} OUTPUT target_type)
+    ntf_target_private_get(TARGET ${target} OUTPUT target_private)
+    ntf_target_pseudo_get(TARGET ${target} OUTPUT target_pseudo)
+    ntf_target_thirdparty_get(TARGET ${target} OUTPUT target_thirdparty)
+
+    if (${target_private} OR ${target_pseudo})
+        return()
+    endif()
+
+    if ("${target_type}" STREQUAL "EXECUTABLE")
+        ntf_die("Executables use special install rules")
+    endif()
+
+    ntf_repository_install_refroot_get(OUTPUT install_refroot)
+    ntf_repository_install_prefix_get(OUTPUT install_prefix)
+
+    ntf_repository_build_ufid_get(OUTPUT build_ufid)
+    ntf_repository_install_ufid_get(OUTPUT install_ufid)
+
+    ntf_ufid_string_has(UFID ${build_ufid} FLAG "64" OUTPUT is_64_bit)
+
+    get_target_property(target_output_name ${target} OUTPUT_NAME)
+    if ("${target_output_name}" STREQUAL "" OR
+        "${target_output_name}" STREQUAL "target_output_name-NOTFOUND")
+        set(target_output_name "${target}")
+    endif()
+
+    if (${is_64_bit} AND NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+        set(lib_name "lib64" CACHE INTERNAL "")
+    else()
+        set(lib_name "lib" CACHE INTERNAL "")
+    endif()
+
+    # Set the relative path to the library directory under the prefix. For
+    # example: lib64
+
+    set(library_relative_path ${lib_name})
+
+    # Set the relative path to the UFID-specific library directory under the
+    # prefix. For example: lib64/dbg_exc_mt
+
+    if (${install_multiconfig})
+        set(library_install_ufid_relative_path "${lib_name}/${install_ufid}")
+    else()
+        set(library_install_ufid_relative_path "${lib_name}")
+    endif()
+
+    # Define the installation UFIDs that are aliases for this UFID. Building
+    # the alias UFID is synonymous with the original UFID.
+
+    if (${install_multiconfig})
+        ntf_target_install_traits_get_alternate_ufid_list(
+            TARGET 
+                ${target}
+            UFID 
+                ${install_ufid}
+            OUTPUT 
+                alternate_install_ufid_list
+        )
+    else()
+        set(alternate_install_ufid_list)
+    endif()
+
+    # Install CMake target meta-data.
+
+    # CMake meta data names, version 1:
+
+    # ${target}Config.cmake
+    # ${target}ConfigVersion.cmake
+    # ${target}Targets.cmake
+    # ${target}Targets-debug.cmake
+
+    # CMake meta data names, version 2:
+
+    # ${target}-config.cmake
+    # ${target}-config-version.cmake
+    # ${target}-targets.cmake
+    # ${target}-targets-debug.cmake
+
+    set(cmake_metadata_relative_path
+        ${library_install_ufid_relative_path}/cmake/${target})
+
+    # Determine which CMake meta data case style to use.
+
+    if (EXISTS "${install_refroot}/${install_prefix}/${library_relative_path}/cmake/${target}/${target}Config.cmake")
+        set(install_cmake_metadata_style 1)
+    else()
+        set(install_cmake_metadata_style 2)
+    endif()
+
+    string(TOLOWER "${CMAKE_BUILD_TYPE}" buildTypeLowercase)
+
+    if (${install_cmake_metadata_style} EQUAL 1)
+        set(install_cmake_metadata_config "${target}Config")
+        set(install_cmake_metadata_config_version "${target}ConfigVersion")
+        set(install_cmake_metadata_targets "${target}Targets")
+        set(install_cmake_metadata_targets_build "${target}Targets-${buildTypeLowercase}")
+    else()
+        set(install_cmake_metadata_config "${target}-config")
+        set(install_cmake_metadata_config_version "${target}-config-version")
+        set(install_cmake_metadata_targets "${target}-targets")
+        set(install_cmake_metadata_targets_build "${target}-targets-${buildTypeLowercase}")
+    endif()
+
+    install(
+        TARGETS
+            ${target}
+        EXPORT
+            ${install_cmake_metadata_targets}
+            DESTINATION
+                ${library_install_ufid_relative_path}
+        RUNTIME
+            DESTINATION
+                "bin"
+            COMPONENT
+                ${target}
+        LIBRARY
+            DESTINATION
+                ${library_install_ufid_relative_path}
+            COMPONENT
+                ${target}
+        ARCHIVE
+            DESTINATION
+                ${library_install_ufid_relative_path}
+            COMPONENT
+                ${target}
+    )
+
+    if (${install_multiconfig} AND NOT "${target_type}" STREQUAL "INTERFACE")
+        foreach (alternate_install_ufid ${alternate_install_ufid_list})
+            set(canonical_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}${CMAKE_STATIC_LIBRARY_SUFFIX})
+
+            if ("${alternate_install_ufid}" STREQUAL "!")
+                set(alternate_library_name ${canonical_library_name})
+            else()
+                set(alternate_library_name ${CMAKE_STATIC_LIBRARY_PREFIX}${target_output_name}.${alternate_install_ufid}${CMAKE_STATIC_LIBRARY_SUFFIX})
+            endif()
+
+            if (NOT ${target_pseudo})
+                install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name}\")" COMPONENT ${target})
+
+                ntf_path_normalize(
+                    OUTPUT link_target
+                    INPUT  "${install_ufid}/${canonical_library_name}"
+                    NATIVE ESCAPE)
+
+                install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_library_name} COPY_ON_ERROR SYMBOLIC)" COMPONENT ${target})
+            endif()
+        endforeach()
+    endif()
+
+    export(
+        EXPORT
+            ${install_cmake_metadata_targets}
+        FILE
+            "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_targets}.cmake"
+
+        # TODO: Export the target into a CMake namespace, if advisable.
+        # NAMESPACE ${CMAKE_PROJECT_NAME}::
+    )
+
+    write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config_version}.cmake"
+        VERSION
+            ${CMAKE_PROJECT_VERSION}
+        COMPATIBILITY
+            AnyNewerVersion
+    )
+
+    # Recursively find dependencies of each "requires" of this
+    # target and manually generate it into the
+    # "${target}-config.cmake" file. Ideally, this should be done
+    # automatically by CMake itself but no version of CMake currently
+    # supports such a feature.
+    #
+    # See the issue described at
+    # https://gitlab.kitware.com/cmake/cmake/-/issues/20511
+
+    ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
+
+    set(target_config_cmake_content "")
+
+    string(APPEND target_config_cmake_content "\
+include(CMakeFindDependencyMacro)\n\
+if (NOT TARGET ${target})\n\
+    message(DEBUG \"NTF: including ${target} from \${CMAKE_CURRENT_LIST_DIR}\")\n\
+    if (UNIX)\n\
+        find_dependency(Threads)\n\
+    endif()\n\
+")
+
+    set(target_requires_reversed ${target_requires})
+    list(REVERSE target_requires_reversed)
+    foreach (dependency ${target_requires_reversed})
+        if ("${dependency}" STREQUAL "openssl")
+            string(APPEND target_config_cmake_content "\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(\n\
+            OpenSSL QUIET COMPONENTS SSL Crypto CONFIG\n\
+            NAMES openssl OpenSSL\n\
+            PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR\}/..\"\n\
+        )\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        find_package(OpenSSL MODULE COMPONENTS SSL Crypto)\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::SSL)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::SSL\")\n\
+    endif()\n\
+    if (NOT TARGET OpenSSL::Crypto)\n\
+        message(FATAL_ERROR \"Failed to find OpenSSL::Crypto\")\n\
+    endif()\n\
+")
+            continue()
+        endif()
+
+        string(APPEND target_config_cmake_content "\
+    find_dependency(${dependency} PATHS \"\${CMAKE_CURRENT_LIST_DIR}\" \"\${CMAKE_CURRENT_LIST_DIR}/..\")\n\
+")
+    endforeach()
+
+    string(APPEND target_config_cmake_content "\
+    include(\"\${CMAKE_CURRENT_LIST_DIR}/${install_cmake_metadata_targets}.cmake\")\n\
+")
+
+    ntf_target_aliases_get(TARGET ${target} OUTPUT target_aliases)
+
+    foreach(alias ${target_aliases})
+        string(APPEND target_config_cmake_content "\
+    if (NOT TARGET ${alias})\n\
+        add_library(${alias} ALIAS ${target})\n\
+    endif()\n\
+")
+    endforeach()
+
+    string(APPEND target_config_cmake_content "\
+endif()\n\
+")
+
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config}.cmake"
+        ${target_config_cmake_content})
+
+    install(
+        EXPORT
+            ${install_cmake_metadata_targets}
+        FILE
+            ${install_cmake_metadata_targets}.cmake
+        DESTINATION
+            ${cmake_metadata_relative_path}
+        COMPONENT
+            ${target}
+        # TODO: Export the target into a CMake namespace, if advisable.
+        # NAMESPACE ${CMAKE_PROJECT_NAME}::
+    )
+
+    install(
+        FILES
+            ${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config}.cmake
+            ${CMAKE_CURRENT_BINARY_DIR}/${install_cmake_metadata_config_version}.cmake
+        DESTINATION
+            ${cmake_metadata_relative_path}
+        COMPONENT
+            ${target}
+    )
+
+    # Install symlinks.
+
+    if (${install_multiconfig})
+        install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
+        install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
+        install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
+        install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
+
+        install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake)" COMPONENT ${target})
+
+        ntf_path_normalize(
+            OUTPUT link_target
+            INPUT "../${install_ufid}/cmake/${target}"
+            NATIVE ESCAPE)
+
+        install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/cmake/${target} COPY_ON_ERROR SYMBOLIC)" COMPONENT ${target})
+
+        foreach (alternate_install_ufid ${alternate_install_ufid_list})
+            if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
+                NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
+                install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets}.cmake\")" COMPONENT ${target})
+                install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_targets_build}.cmake\")" COMPONENT ${target})
+                install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config}.cmake\")" COMPONENT ${target})
+                install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target}/${install_cmake_metadata_config_version}.cmake\")" COMPONENT ${target})
+
+                install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake)" COMPONENT ${target})
+
+                ntf_path_normalize(
+                    OUTPUT link_target
+                    INPUT "../../${install_ufid}/cmake/${target}"
+                    NATIVE ESCAPE)
+
+                install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/cmake/${target} COPY_ON_ERROR SYMBOLIC)" COMPONENT ${target})
+            endif()
+        endforeach()
+    endif()
+
+    # Install pkg-config meta-data. TODO: Make this a configuration option.
+
+    ntf_target_description_get(TARGET ${target} OUTPUT target_description)
+    ntf_target_requires_get(TARGET ${target} OUTPUT target_requires)
+    ntf_target_libs_get(TARGET ${target} OUTPUT target_libs)
+
+    string (REPLACE ";" " " target_requires_string "${target_requires}")
+    string(REPLACE "_" "-" target_requires_string "${target_requires_string}")
+
+    set(target_libs_string "")
+    foreach (target_libs_entry ${target_libs})
+        if (${target_libs_entry} MATCHES "^(-l|-framework)")
+            set(target_libs_string "${target_libs_string} ${target_libs_entry}")
+        else()
+            if (TARGET ${target_libs_entry})
+                get_target_property(target_libs_entry_name ${target_libs_entry} OUTPUT_NAME)
+                if ("${target_libs_entry_name}" STREQUAL "" OR
+                    "${target_libs_entry_name}" STREQUAL "target_libs_entry_name-NOTFOUND")
+                    set(target_libs_entry_name ${target_libs_entry})
+                endif()
+            else()
+                set(target_libs_entry_name ${target_libs_entry})
+            endif()
+
+            set(target_libs_string "${target_libs_string} -l${target_libs_entry_name}")
+        endif()
+    endforeach()
+
+    # TODO: Set 'prefix' to "${pcfiledir}/../.." in the top-level
+    # pkgconfig directory, set it to "${pcfiledir}/../../.." in the
+    # UFID-specific pkgconfig directory, and do not install symlinks
+    # in each UFID-specific pkgconfig directory, but separate copies
+    # with prefix set to the directory hierarchy appropriately.
+
+    set(install_pkgconfig_metadata_with_dashes TRUE)
+
+    set(target_pkgconfig_name ${target})
+    if (${install_pkgconfig_metadata_with_dashes})
+        string (REPLACE "_" "-" target_pkgconfig_name "${target}")
+    endif()
+
+    if ("${target_type}" STREQUAL "INTERFACE")
+        set(target_pc_content "\
+prefix=${CMAKE_INSTALL_PREFIX}\n\
+libdir=\${prefix}/${library_install_ufid_relative_path}\n\
+includedir=\${prefix}/include\n\
+\n\
+Name: ${target}\n\
+Description: ${target_description}\n\
+URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
+Version: ${CMAKE_PROJECT_VERSION}\n\
+Requires: \n\
+Requires.private: ${target_requires_string}\n\
+Cflags: -I\${includedir}\n\
+Libs: \n\
+Libs.private:${target_libs_string}\n\
+")
+    elseif (${target_pseudo})
+        set(target_pc_content "\
+prefix=${CMAKE_INSTALL_PREFIX}\n\
+libdir=\${prefix}/${library_install_ufid_relative_path}\n\
+includedir=\${prefix}/include\n\
+\n\
+Name: ${target_pkgconfig_name}\n\
+Description: ${target_description}\n\
+URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
+Version: ${CMAKE_PROJECT_VERSION}\n\
+Requires: \n\
+Requires.private: ${target_requires_string}\n\
+Cflags: -I\${includedir}\n\
+Libs: -L\${libdir}\n\
+Libs.private:${target_libs_string}\n\
+")
+    else()
+        set(target_pc_content "\
+prefix=${CMAKE_INSTALL_PREFIX}\n\
+libdir=\${prefix}/${library_install_ufid_relative_path}\n\
+includedir=\${prefix}/include\n\
+\n\
+Name: ${target_pkgconfig_name}\n\
+Description: ${target_description}\n\
+URL: ${CMAKE_PROJECT_HOMEPAGE_URL}\n\
+Version: ${CMAKE_PROJECT_VERSION}\n\
+Requires: \n\
+Requires.private: ${target_requires_string}\n\
+Cflags: -I\${includedir}\n\
+Libs: -L\${libdir} -l${target_output_name}\n\
+Libs.private:${target_libs_string}\n\
+")
+    endif()
+
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${target_pkgconfig_name}.pc"
+        ${target_pc_content})
+
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/${target_pkgconfig_name}.pc
+        DESTINATION ${library_install_ufid_relative_path}/pkgconfig
+        COMPONENT ${target}
+    )
+
+    # Install symlinks.
+
+    if (${install_multiconfig})
+        install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target_pkgconfig_name}.pc\")" COMPONENT ${target})
+
+        install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig)" COMPONENT ${target})
+
+        ntf_path_normalize(
+            OUTPUT link_target
+            INPUT  "../${install_ufid}/pkgconfig/${target_pkgconfig_name}.pc"
+            NATIVE ESCAPE)
+
+        install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/pkgconfig/${target_pkgconfig_name}.pc COPY_ON_ERROR SYMBOLIC)" COMPONENT ${target})
+
+        foreach (alternate_install_ufid ${alternate_install_ufid_list})
+            if (NOT "${alternate_install_ufid}" STREQUAL "!" AND
+                NOT "${alternate_install_ufid}" STREQUAL "${install_ufid}")
+                install(CODE "message(\"-- Installing: \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target_pkgconfig_name}.pc\")" COMPONENT ${target})
+
+                install(CODE "file(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig)" COMPONENT ${target})
+
+                ntf_path_normalize(
+                    OUTPUT link_target
+                    INPUT "../../${install_ufid}/pkgconfig/${target_pkgconfig_name}.pc"
+                    NATIVE ESCAPE)
+
+                install(CODE "file(CREATE_LINK ${link_target} \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${library_relative_path}/${alternate_install_ufid}/pkgconfig/${target_pkgconfig_name}.pc COPY_ON_ERROR SYMBOLIC)" COMPONENT ${target})
+            endif()
+        endforeach()
+    endif()
+    
+endfunction()
+
+
+# Get the list of alternate UFIDs to install.
+#
+# TARGET - The target.
+# OUTPUT - The variable name set in the parent scope.
+function (ntf_target_install_traits_get_alternate_ufid_list)
+    cmake_parse_arguments(
+        ARG "" "TARGET;UFID;OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+    ntf_assert_defined(${ARG_UFID})
+    ntf_assert_defined(${ARG_OUTPUT})
+
+    # Determine if this is a 64-bit build.
+
+    ntf_ufid_string_has(UFID ${build_ufid} FLAG "64" OUTPUT is_64_bit)
+
+    # Define the installation UFIDs that are aliases for this UFID. Building
+    # the alias UFID is synonymous with the original UFID.
+
+    set(alias_install_ufid_list)
+
+    set(alias_install_ufid_pic ${install_ufid})
+    ntf_ufid_add(UFID "${alias_install_ufid_pic}" FLAG "pic" OUTPUT alias_install_ufid_pic)
+    list(APPEND alias_install_ufid_list ${alias_install_ufid_pic})
+
+    if(${is_64_bit})
+        set(alias_install_ufid_pic_64 ${install_ufid})
+        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "pic" OUTPUT alias_install_ufid_pic_64)
+        ntf_ufid_add(UFID "${alias_install_ufid_pic_64}" FLAG "64" OUTPUT alias_install_ufid_pic_64)
+        list(APPEND alias_install_ufid_list ${alias_install_ufid_pic_64})
+    endif()
+
+    # Define the alternate install UFIDs. Other build systems may expect
+    # these paths to exist.
+
+    set(alternate_install_ufid_list)
+
+    list(APPEND alternate_install_ufid_list "!")
+    list(APPEND alternate_install_ufid_list "${install_ufid}")
+
+    if(${is_64_bit})
+        list(APPEND alternate_install_ufid_list "${install_ufid}_64")
+    endif()
+
+    list(APPEND alternate_install_ufid_list ${alias_install_ufid_list})
+
+    string (REPLACE "_exc_mt" "" modern_install_ufid_list "${alternate_install_ufid_list}")
+    list(POP_FRONT modern_install_ufid_list)
+    list(APPEND alternate_install_ufid_list ${modern_install_ufid_list})
+
+    if (VERBOSE)
+        message(STATUS "build_ufid:                  ${build_ufid}")
+        message(STATUS "install_ufid:                ${install_ufid}")
+        message(STATUS "alias_install_ufid_list:     ${alias_install_ufid_list}")
+        message(STATUS "alternate_install_ufid_list: ${alternate_install_ufid_list}")
+        message(STATUS "modern_install_ufid_list:    ${modern_install_ufid_list}")
+    endif()
+
+    set(${ARG_OUTPUT} ${alternate_install_ufid_list} PARENT_SCOPE)
+endfunction()
