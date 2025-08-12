@@ -121,6 +121,9 @@ namespace ntccfg {
 // Build with support for OpenSSL as the driver for TLS.
 #define NTC_BUILD_WITH_OPENSSL @NTF_BUILD_WITH_OPENSSL@
 
+// Build with support for coroutines.
+#define NTC_BUILD_WITH_COROUTINES @NTF_BUILD_WITH_COROUTINES@
+
 // Build with support for packet timestamping, if supported by the network
 // device.
 #define NTC_BUILD_WITH_TIMESTAMPING @NTF_BUILD_WITH_TIMESTAMPING@

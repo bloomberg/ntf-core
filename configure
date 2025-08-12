@@ -324,6 +324,10 @@ if [[ -z "${NTF_CONFIGURE_WITH_OPENSSL}" ]]; then
     NTF_CONFIGURE_WITH_OPENSSL=1
 fi
 
+if [[ -z "${NTF_CONFIGURE_WITH_COROUTINES}" ]]; then
+    NTF_CONFIGURE_WITH_COROUTINES=0
+fi
+
 if [[ -z "${NTF_CONFIGURE_WITH_TIMESTAMPING}" ]]; then
     if [[ "${NTF_CONFIGURE_UNAME}" == "Linux" ]]; then
         if [ ${NTF_CONFIGURE_FROM_CONTINUOUS_INTEGRATION} -eq 1 ]; then
@@ -529,6 +533,7 @@ usage()
 
     echo "    --with-openssl                     Enable the encryption driver implemented with OpenSSL [${NTF_CONFIGURE_WITH_OPENSSL}]"
 
+    echo "    --with-coroutines                  Enable coroutine support and APIs depending on coroutines [${NTF_CONFIGURE_WITH_COROUTINES}]"
     echo "    --with-timestamping                Enable packet timestamping, if supported by the network device [${NTF_CONFIGURE_WITH_TIMESTAMPING}]"
     echo "    --with-zero-copy                   Enable zero-copy send system calls, if supported by the operating system kernel [${NTF_CONFIGURE_WITH_ZERO_COPY}]"
 
@@ -708,6 +713,8 @@ while true ; do
         --with-openssl)
             NTF_CONFIGURE_WITH_OPENSSL=1 ; shift ;;
 
+        --with-coroutines)
+            NTF_CONFIGURE_WITH_COROUTINES=1 ; shift ;;
         --with-timestamping)
             NTF_CONFIGURE_WITH_TIMESTAMPING=1 ; shift ;;
         --with-zero-copy)
@@ -832,6 +839,8 @@ while true ; do
         --without-openssl)
             NTF_CONFIGURE_WITH_OPENSSL=0 ; shift ;;
 
+        --without-coroutines)
+            NTF_CONFIGURE_WITH_COROUTINES=0 ; shift ;;
         --without-timestamping)
             NTF_CONFIGURE_WITH_TIMESTAMPING=0 ; shift ;;
         --without-zero-copy)
@@ -970,6 +979,7 @@ export NTF_CONFIGURE_WITH_ZLIB
 
 export NTF_CONFIGURE_WITH_OPENSSL
 
+export NTF_CONFIGURE_WITH_COROUTINES
 export NTF_CONFIGURE_WITH_TIMESTAMPING
 export NTF_CONFIGURE_WITH_ZERO_COPY
 
