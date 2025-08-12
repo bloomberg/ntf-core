@@ -30,10 +30,10 @@ namespace BloombergLP {
 namespace ntcs {
 
 // -------------------------
-// class SimpleTask_AllocImp
+// class CoroutineTask_AllocImp
 // -------------------------
 
-void* SimpleTask_AllocImp::allocate(bsl::size_t size, const Alloc& alloc)
+void* CoroutineTask_AllocImp::allocate(bsl::size_t size, const Alloc& alloc)
 {
     // We're not told the required alignment for the coroutine frame, so we
     // have to assume that it's the maximum alignment.  Also, we have to stash
@@ -52,7 +52,7 @@ void* SimpleTask_AllocImp::allocate(bsl::size_t size, const Alloc& alloc)
     return buf;
 }
 
-void SimpleTask_AllocImp::deallocate(void* ptr, bsl::size_t size)
+void CoroutineTask_AllocImp::deallocate(void* ptr, bsl::size_t size)
 {
     constexpr bsl::size_t maxAlignment = __STDCPP_DEFAULT_NEW_ALIGNMENT__;
 
@@ -69,10 +69,10 @@ void SimpleTask_AllocImp::deallocate(void* ptr, bsl::size_t size)
 }
 
 // ----------------------------------------
-// class SimpleTask_SyncAwaitFinalAwaitable
+// class CoroutineTask_SyncAwaitFinalAwaitable
 // ----------------------------------------
 
-void SimpleTask_SyncAwaitFinalAwaitable::await_suspend(
+void CoroutineTask_SyncAwaitFinalAwaitable::await_suspend(
     std::coroutine_handle<>) noexcept
 {
     bsl::lock_guard<bsl::mutex> lock(d_state_p->d_mutex);
@@ -87,59 +87,60 @@ void SimpleTask_SyncAwaitFinalAwaitable::await_suspend(
     // access `state->d_cv` on the next line of this function.
 }
 
-void SimpleTask_SyncAwaitFinalAwaitable::await_resume() noexcept
+void CoroutineTask_SyncAwaitFinalAwaitable::await_resume() noexcept
 {
 }
 
 // ---------------------------------
-// class SimpleTask_SyncAwaitPromise
+// class CoroutineTask_SyncAwaitPromise
 // ---------------------------------
 
 // PRIVATE CREATORS
-SimpleTask_SyncAwaitPromise::SimpleTask_SyncAwaitPromise(
-    SimpleTask_SyncAwaitState* state)
+CoroutineTask_SyncAwaitPromise::CoroutineTask_SyncAwaitPromise(
+    CoroutineTask_SyncAwaitState* state)
 : d_state_p(state)
 {
 }
 
 // PRIVATE COROUTINE API
 
-bsl::suspend_always SimpleTask_SyncAwaitPromise::initial_suspend()
+bsl::suspend_always CoroutineTask_SyncAwaitPromise::initial_suspend()
 {
     return {};
 }
 
-SimpleTask_SyncAwaitFinalAwaitable SimpleTask_SyncAwaitPromise::final_suspend()
-    noexcept
+CoroutineTask_SyncAwaitFinalAwaitable CoroutineTask_SyncAwaitPromise::
+    final_suspend() noexcept
 {
-    SimpleTask_SyncAwaitFinalAwaitable a;
+    CoroutineTask_SyncAwaitFinalAwaitable a;
     a.d_state_p = d_state_p;
     return a;
 }
 
-SimpleTask_SyncAwaitImp SimpleTask_SyncAwaitPromise::get_return_object()
+CoroutineTask_SyncAwaitImp CoroutineTask_SyncAwaitPromise::get_return_object()
 {
-    return {std::coroutine_handle<SimpleTask_SyncAwaitPromise>::from_promise(
-        *this)};
+    return {
+        std::coroutine_handle<CoroutineTask_SyncAwaitPromise>::from_promise(
+            *this)};
 }
 
-void SimpleTask_SyncAwaitPromise::return_void()
+void CoroutineTask_SyncAwaitPromise::return_void()
 {
 }
 
-void SimpleTask_SyncAwaitPromise::unhandled_exception()
+void CoroutineTask_SyncAwaitPromise::unhandled_exception()
 {
     BSLS_ASSERT_INVOKE_NORETURN("unreachable");
 }
 
 // -----------------------------
-// class SimpleTask_SyncAwaitImp
+// class CoroutineTask_SyncAwaitImp
 // -----------------------------
 
 // PRIVATE CLASS METHODS
 
-SimpleTask_SyncAwaitImp SimpleTask_SyncAwaitImp::create(
-    SimpleTask_SyncAwaitState* state)
+CoroutineTask_SyncAwaitImp CoroutineTask_SyncAwaitImp::create(
+    CoroutineTask_SyncAwaitState* state)
 {
     struct Resumer {
         std::coroutine_handle<void> d_task;
@@ -168,12 +169,12 @@ SimpleTask_SyncAwaitImp SimpleTask_SyncAwaitImp::create(
     // coroutine frame is deallocated, which may be unexpected.  So instead, we
     // must suspend ourselves again and set the flag while we are suspended,
     // giving `syncAwait` the right to destroy this coroutine frame.  This is
-    // done by the final awaitable for `SimpleTask_SyncAwaitImp`.
+    // done by the final awaitable for `CoroutineTask_SyncAwaitImp`.
 }
 
 // PRIVATE CREATORS
 
-SimpleTask_SyncAwaitImp::SimpleTask_SyncAwaitImp(
+CoroutineTask_SyncAwaitImp::CoroutineTask_SyncAwaitImp(
     std::coroutine_handle<promise_type> handle)
 : d_handle(handle)
 {

@@ -105,7 +105,7 @@ class CoroutineTest
     }
 
     template <typename TYPE>
-    static ntcs::SimpleTask<TYPE> coReturnValue()
+    static ntcs::CoroutineTask<TYPE> coReturnValue()
     {
         co_return getValue<TYPE>();
     }
@@ -490,16 +490,16 @@ class CoroutineTest::Action
     // Create a new action having the specified 'task' and 'operation'.
     // Optionally specify a 'basicAllocator' used to supply memory. If
     // 'basicAllocator' is 0, the currently installed default allocator used.
-    explicit Action(ntcs::SimpleTask<ntsa::Error>&& task,
-                    Result*                         result,
-                    const Operation&                operation,
-                    bslma::Allocator*               basicAllocator = 0);
+    explicit Action(ntcs::CoroutineTask<ntsa::Error>&& task,
+                    Result*                            result,
+                    const Operation&                   operation,
+                    bslma::Allocator*                  basicAllocator = 0);
 
     // Destroy this object.
     ~Action();
 
     // The task.
-    ntcs::SimpleTask<ntsa::Error> task;
+    ntcs::CoroutineTask<ntsa::Error> task;
 
     // The result.
     Result* result;
@@ -541,9 +541,9 @@ class CoroutineTest::Mechanism
 
     // Execute an operation identified by the specified 'token' with the
     // specified 'parameters'. Return the error.
-    ntcs::SimpleTask<ntsa::Error> schedule(Result*           result,
-                                           Token             token,
-                                           const Parameters& parameters);
+    ntcs::CoroutineTask<ntsa::Error> schedule(Result*           result,
+                                              Token             token,
+                                              const Parameters& parameters);
 
     // Cancel the operation identified by the specified 'token'. Return the
     // error.
@@ -1072,10 +1072,10 @@ bsl::ostream& operator<<(bsl::ostream&                   stream,
     return object.print(stream, 0, -1);
 }
 
-CoroutineTest::Action::Action(ntcs::SimpleTask<ntsa::Error>&& task,
-                              Result*                         result,
-                              const Operation&                operation,
-                              bslma::Allocator*               basicAllocator)
+CoroutineTest::Action::Action(ntcs::CoroutineTask<ntsa::Error>&& task,
+                              Result*                            result,
+                              const Operation&                   operation,
+                              bslma::Allocator* basicAllocator)
 : task(bsl::move(task))
 , result(result)
 , operation(operation, basicAllocator)
@@ -1123,7 +1123,7 @@ ntsa::Error CoroutineTest::Mechanism::execute(Result*           result,
     return ntsa::Error();
 }
 
-ntcs::SimpleTask<ntsa::Error> CoroutineTest::Mechanism::schedule(
+ntcs::CoroutineTask<ntsa::Error> CoroutineTest::Mechanism::schedule(
     Result*           result,
     Token             token,
     const Parameters& parameters)
@@ -1133,7 +1133,7 @@ ntcs::SimpleTask<ntsa::Error> CoroutineTest::Mechanism::schedule(
 
     result->reset();
 
-    ntcs::SimpleTask<ntsa::Error> task =
+    ntcs::CoroutineTask<ntsa::Error> task =
         this->scheduleExecute(result, token, parameters);
 
     Operation operation;
@@ -1151,7 +1151,7 @@ ntcs::SimpleTask<ntsa::Error> CoroutineTest::Mechanism::schedule(
 
     d_actionMap.emplace(token, action);
 
-    // error = ntcs::SimpleTaskUtil::syncAwait(bsl::move(task));
+    // error = ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
 #endif
 
     co_return ntsa::Error();
@@ -1168,15 +1168,34 @@ NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase1)
 {
     int&& expectedRef = getValue<int&&>();
 
-    ntcs::SimpleTask<int&&> task = coReturnValue<int&&>();
+    ntcs::CoroutineTask<int&&> task = coReturnValue<int&&>();
 
-    int&& actualRef = ntcs::SimpleTaskUtil::syncAwait(bsl::move(task));
+    int&& actualRef = ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
 
     NTSCFG_TEST_EQ(&expectedRef, &actualRef);
 }
 
 NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase2)
 {
+    ntsa::Error error;
+
+    Mechanism mechanism(NTSCFG_TEST_ALLOCATOR);
+
+    Parameters parameters(NTSCFG_TEST_ALLOCATOR);
+    parameters.setAnnotation("test");
+    parameters.setLhs(1);
+    parameters.setRhs(2);
+
+    Result result(NTSCFG_TEST_ALLOCATOR);
+
+    ntcs::CoroutineTask<ntsa::Error> task =
+        mechanism.schedule(&result, 0, parameters);
+
+    error = ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_EQ(result.annotation(), "test");
+    NTSCFG_TEST_EQ(result.value(), 3);
 }
 
 NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase3)
@@ -1216,10 +1235,10 @@ using namespace bsl;
 //                                 --------
 // TODO
 // ----------------------------------------------------------------------------
-// [ 1] SimpleTask<>
-// [ 2] t_RESULT SimpleTaskUtil::syncAwait(SimpleTask<t_RESULT>&&);
-// [ 3] SimpleTask(SimpleTask&&)
-// [ 4] `co_await` for SimpleTask
+// [ 1] CoroutineTask<>
+// [ 2] RESULT CoroutineTaskUtil::syncAwait(CoroutineTask<RESULT>&&);
+// [ 3] CoroutineTask(CoroutineTask&&)
+// [ 4] `co_await` for CoroutineTask
 // ----------------------------------------------------------------------------
 // [ 1] BREATHING TEST
 // [ 5] USAGE EXAMPLE
@@ -1267,7 +1286,7 @@ void aSsErT(bool condition, const char *message, int line)
 #ifdef BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY
 namespace {
 
-using Util = bdxa::SimpleTaskUtil;
+using Util = bdxa::CoroutineTaskUtil;
 
 
 
@@ -1282,11 +1301,11 @@ struct EnforceVoid {
     void operator,(auto&&) = delete;
 };
 
-// Verify that an lvalue of type `SimpleTask<t_RESULT>` is not awaitable.
-template <class t_RESULT = void>
+// Verify that an lvalue of type `CoroutineTask<RESULT>` is not awaitable.
+template <class RESULT = void>
 void doP3()
 {
-    using Task = bdxa::SimpleTask<t_RESULT>;
+    using Task = bdxa::CoroutineTask<RESULT>;
     ASSERT(!requires (Task task) { task.await_ready(); });
     ASSERT(!requires (Task task) { task.operator co_await(); });
     ASSERT(!requires (Task task) { bdxa::operator co_await(task); });
@@ -1298,13 +1317,13 @@ void doP3()
 // ----------------------------------------------------------------------------
 
 namespace test_case_2 {
-// Verify that `ntcs::SimpleTaskUtil::syncAwait` doesn't accept an lvalue of type
-// `SimpleTask<t_RESULT>`.
-template <class t_RESULT = void>
+// Verify that `ntcs::CoroutineTaskUtil::syncAwait` doesn't accept an lvalue of type
+// `CoroutineTask<RESULT>`.
+template <class RESULT = void>
 void doP4()
 {
-    ASSERT(!(requires (bdxa::SimpleTask<t_RESULT> task) {
-                 ntcs::SimpleTaskUtil::syncAwait(task);
+    ASSERT(!(requires (bdxa::CoroutineTask<RESULT> task) {
+                 ntcs::CoroutineTaskUtil::syncAwait(task);
              }));
 }
 }  // close namespace test_case_4
@@ -1371,28 +1390,28 @@ int main(int argc, char *argv[])
         // `co_await`
         //
         // Concerns:
-        // 1. `co_await`ing a `SimpleTask<T>` suspends the awaiting coroutine
-        //    C, resumes the `SimpleTask` coroutine, and causes the latter to
+        // 1. `co_await`ing a `CoroutineTask<T>` suspends the awaiting coroutine
+        //    C, resumes the `CoroutineTask` coroutine, and causes the latter to
         //    resume C upon completion, at which point the value of the
         //    `co_await` expression is the `T` that was initialized by the
-        //    `co_return` statement in the `SimpleTask` coroutine.
-        // 2. An lvalue of `SimpleTask` is not awaitable.
+        //    `co_return` statement in the `CoroutineTask` coroutine.
+        // 2. An lvalue of `CoroutineTask` is not awaitable.
         //
         // Plan:
-        // 1. Create a coroutine template that returns `SimpleTask` of the
+        // 1. Create a coroutine template that returns `CoroutineTask` of the
         //    template argument, which can be an object type, void, lvalue
         //    reference, or rvalue reference.  Define this coroutine template
         //    to `co_return` a pre-set value of the specified return type.
-        //    For each kind of result type, create a `SimpleTask`, `T1`, by
-        //    instantiating the template, and another `SimpleTask`, `T2`, that
+        //    For each kind of result type, create a `CoroutineTask`, `T1`, by
+        //    instantiating the template, and another `CoroutineTask`, `T2`, that
         //    returns the same type, referring a coroutine that `co_await`s
         //    `T1` and `co_return` the result of the `co_await` expression.
         //    Use `syncAwait` to check that the result of `T2` is the expected
         //    pre-set value.  (C-1)
         //
         //    Note that the expected behavior is obtained only because a
-        //    `SimpleTask` coroutine returns control to the awaiter of the
-        //    `SimpleTask` upon completion of the coroutine.  The sequence of
+        //    `CoroutineTask` coroutine returns control to the awaiter of the
+        //    `CoroutineTask` upon completion of the coroutine.  The sequence of
         //    events is as follows:
         //    1. `syncAwait` awaits `T1`, resuming the coroutine;
         //    2. The coroutine referred to by `T1` awaits `T2`, resuming the
@@ -1407,7 +1426,7 @@ int main(int argc, char *argv[])
         //    6. The coroutine in `syncAwait` sets a flag and the wait
         //       completes.
         //
-        //    If `SimpleTask` coroutines were programmed not to suspend at the
+        //    If `CoroutineTask` coroutines were programmed not to suspend at the
         //    final suspend point, then the following (undesired) sequence of
         //    events would occur:
         //    1. `syncAwait` awaits `T1`, resuming the coroutine;
@@ -1419,22 +1438,22 @@ int main(int argc, char *argv[])
         //    5. `syncAwait` waits forever for the coroutine referred to by
         //       `T1` to complete.
         //
-        //    If `SimpleTask` coroutines were programmed to always suspend at
+        //    If `CoroutineTask` coroutines were programmed to always suspend at
         //    the final suspend point (returning control to the most recent
         //    awaiter), then the same (undesired) sequence of events occurs
         //    except that `T2` remains suspended at its final suspend point.
-        // 2. Create a `SimpleTask`, `T1`, referring to a coroutine that throws 
-        //    an exception, and another `SimpleTask`, `T2`, that `co_await`s
+        // 2. Create a `CoroutineTask`, `T1`, referring to a coroutine that throws 
+        //    an exception, and another `CoroutineTask`, `T2`, that `co_await`s
         //    `T1` within a try-catch block and `co_return`s the caught value.
         //    Use `syncAwait` to verify that the result of `T2` is the expected
         //    value.  (C-1)
         // 2. Use a requires-expression to verify that an lvalue of type
-        //    `SimpleTask` doesn't have a callable `await_ready` method or
+        //    `CoroutineTask` doesn't have a callable `await_ready` method or
         //    `operator co_await` method, and there is no free
         //    `operator co_await` function that accepts it.  (C-2)
         //
         // Testing:
-        //   `co_await` for SimpleTask
+        //   `co_await` for CoroutineTask
         // --------------------------------------------------------------------
 
         if (verbose) cout << "\n`co_await`"
@@ -1442,7 +1461,7 @@ int main(int argc, char *argv[])
 
 #ifdef BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY
         using namespace test_case_4;
-        using bdxa::SimpleTask;
+        using bdxa::CoroutineTask;
 
         // P-1
         {
@@ -1450,41 +1469,41 @@ int main(int argc, char *argv[])
             // can check whether a `co_await` expression has type `void` is to
             // use the comma expression trick (see definition of the
             // `EnforceVoid` helper class).
-            auto task = []() -> SimpleTask<bool> {
+            auto task = []() -> CoroutineTask<bool> {
                             EnforceVoid(), co_await coReturnValue<void>();
                             co_return true;
                         }();
-            ASSERT(ntcs::SimpleTaskUtil::syncAwait(bsl::move(task)));
+            ASSERT(ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task)));
         }
         {
-            auto task = []() -> SimpleTask<int> {
+            auto task = []() -> CoroutineTask<int> {
                             co_return co_await coReturnValue<int>();
                         }();
-            ASSERT(getValue<int>() == ntcs::SimpleTaskUtil::syncAwait(bsl::move(task)));
+            ASSERT(getValue<int>() == ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task)));
         }
         {
-            auto task = []() -> SimpleTask<int&> {
+            auto task = []() -> CoroutineTask<int&> {
                             co_return co_await coReturnValue<int&>();
                         }();
             ASSERT(&getValue<int&>() == &ntcs::SimplTaskUtil::syncAwait(bsl::move(task)));
         }
         {
-            auto task = []() -> SimpleTask<int&&> {
+            auto task = []() -> CoroutineTask<int&&> {
                             co_return co_await coReturnValue<int&&>();
                         }();
 
             int&& expectedRef = getValue<int&&>();
-            int&& actualRef   = ntcs::SimpleTaskUtil::syncAwait(bsl::move(task));
+            int&& actualRef   = ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
             ASSERT(&expectedRef == &actualRef);
         }
 
 #ifdef BDE_BUILD_TARGET_EXC
         // P-2
         {
-            auto task = []() -> SimpleTask<bsl::optional<int>> {
+            auto task = []() -> CoroutineTask<bsl::optional<int>> {
                             bsl::optional<int> thrownValue;
                             try {
-                                co_await []() -> SimpleTask<void> {
+                                co_await []() -> CoroutineTask<void> {
                                              throw 2;
                                          }();
                             } catch (int ex) {
@@ -1492,7 +1511,7 @@ int main(int argc, char *argv[])
                             }
                             co_return thrownValue;
                         }();
-            ASSERT(2 == ntcs::SimpleTaskUtil::syncAwait(bsl::move(task)));
+            ASSERT(2 == ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task)));
         }
 #endif
 
@@ -1507,51 +1526,51 @@ int main(int argc, char *argv[])
         // MOVE CONSTRUCTION
         //
         // Concerns:
-        // 1. The move constructor of `SimpleTask` creates a `SimpleTask`
+        // 1. The move constructor of `CoroutineTask` creates a `CoroutineTask`
         //    object that refers to the coroutine that the source referred to.
         // 2. The default constructor, copy constructor, copy assignment
-        //    operator, and move assignment operator of `SimpleTask` are
+        //    operator, and move assignment operator of `CoroutineTask` are
         //    deleted or not declared.
         //
         // Plan:
-        // 1. Create a `SimpleTask` coroutine and call it.  Then,
-        //    move-construct a `SimpleTask` object from the result of the call.
+        // 1. Create a `CoroutineTask` coroutine and call it.  Then,
+        //    move-construct a `CoroutineTask` object from the result of the call.
         //    Finally, use `syncAwait` to resume the coroutine through the
-        //    newly created `SimpleTask` and verify that the expected result is
+        //    newly created `CoroutineTask` and verify that the expected result is
         //    obtained.  (C-1)
         // 2. Use the appropriate standard library traits to verify the
         //    properties described in (C-2).  (C-2)
         //
         // Testing:
-        //   SimpleTask(SimpleTask&&);
+        //   CoroutineTask(CoroutineTask&&);
         // --------------------------------------------------------------------
 
         if (verbose) cout << "\n`MOVE CONSTRUCTION`"
                              "\n==================\n";
 
 #ifdef BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY
-        using bdxa::SimpleTask;
+        using bdxa::CoroutineTask;
 
-        auto task  = []() -> SimpleTask<int> {
+        auto task  = []() -> CoroutineTask<int> {
             co_return 4;
         }();
         auto task2 = bsl::move(task);
-        ASSERT(4 == ntcs::SimpleTaskUtil::syncAwait(bsl::move(task2)));
+        ASSERT(4 == ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task2)));
 
-        ASSERT(!bsl::is_default_constructible_v<SimpleTask<>>);
-        ASSERT(!bsl::is_copy_constructible_v<SimpleTask<>>);
-        ASSERT(!bsl::is_copy_assignable_v<SimpleTask<>>);
-        ASSERT(!bsl::is_move_assignable_v<SimpleTask<>>);
+        ASSERT(!bsl::is_default_constructible_v<CoroutineTask<>>);
+        ASSERT(!bsl::is_copy_constructible_v<CoroutineTask<>>);
+        ASSERT(!bsl::is_copy_assignable_v<CoroutineTask<>>);
+        ASSERT(!bsl::is_move_assignable_v<CoroutineTask<>>);
 #else
         cout << "Skipping test case 3 before C++20...\n";
 #endif
       } break;
       case 2: {
         // --------------------------------------------------------------------
-        // `SimpleTaskUtil::syncAwait`
+        // `CoroutineTaskUtil::syncAwait`
         //
         // Concerns:
-        // 1. The `syncAwait` method waits for the `SimpleTask` coroutine to
+        // 1. The `syncAwait` method waits for the `CoroutineTask` coroutine to
         //    complete, then returns the value or propagates the exception with
         //    which the coroutine exited.
         // 2. The thread on which the coroutine completes can be either the
@@ -1559,26 +1578,26 @@ int main(int argc, char *argv[])
         // 3. `syncAwait` doesn't accept lvalues.
         //
         // Plan:
-        // 1. Create a coroutine template that returns `SimpleTask` of the
+        // 1. Create a coroutine template that returns `CoroutineTask` of the
         //    template argument, which can be an object type, void, lvalue
         //    reference, or rvalue reference.  Define this coroutine template
         //    to `co_return` a pre-set value of the specified return type.
         //    Verify that in each case, the result of calling `syncAwait` is
         //    the pre-set value of the specified type.  (C-1,2)
-        // 2. Create a `SimpleTask` coroutine that throws an exception.  Call
+        // 2. Create a `CoroutineTask` coroutine that throws an exception.  Call
         //    `syncAwait` within a try-catch block and verify that the
         //    expected exception was propagated from `syncAwait`.  (C-1,2)
         // 3. Create an awaitable that will suspend the awaiter and signal a
-        //    configured thread to resume the awaiter.  Create a `SimpleTask`
+        //    configured thread to resume the awaiter.  Create a `CoroutineTask`
         //    coroutine that will `co_await` such an awaitable.  Use
         //    `syncAwait` to verify that the calling thread obtains the value
-        //    that is eventually returned by the `SimpleTask` coroutine.
+        //    that is eventually returned by the `CoroutineTask` coroutine.
         //    (C-2)
         // 4. Use a requires-expression to verify that a call to `syncAwait` is
         //    ill formed when the argument is an lvalue.  (C-3)
         //
         // Testing:
-        //   t_RESULT SimpleTaskUtil::syncAwait(SimpleTask<t_RESULT>&&);
+        //   RESULT CoroutineTaskUtil::syncAwait(CoroutineTask<RESULT>&&);
         // --------------------------------------------------------------------
 
         if (verbose) cout << "\n`syncAwait`"
@@ -1589,12 +1608,12 @@ int main(int argc, char *argv[])
 
         // P-1
         ASSERT(
-             bsl::is_void_v<decltype(ntcs::SimpleTaskUtil::syncAwait(coReturnValue<void>()))>);
-        ASSERT(getValue<int>() == ntcs::SimpleTaskUtil::syncAwait(coReturnValue<int>()));
+             bsl::is_void_v<decltype(ntcs::CoroutineTaskUtil::syncAwait(coReturnValue<void>()))>);
+        ASSERT(getValue<int>() == ntcs::CoroutineTaskUtil::syncAwait(coReturnValue<int>()));
         ASSERT(&getValue<int&>() == &ntcs::SimplTaskUtil::syncAwait(coReturnValue<int&>()));
         {
             int&& expectedRef = getValue<int&&>();
-            int&& actualRef   = ntcs::SimpleTaskUtil::syncAwait(coReturnValue<int&&>());
+            int&& actualRef   = ntcs::CoroutineTaskUtil::syncAwait(coReturnValue<int&&>());
             ASSERT(&expectedRef == &actualRef);
         }
 
@@ -1603,12 +1622,12 @@ int main(int argc, char *argv[])
         {
             bsl::optional<int> thrownValue;
 
-            auto throwingCoro = []() -> bdxa::SimpleTask<void> {
+            auto throwingCoro = []() -> bdxa::CoroutineTask<void> {
                 throw 2;
             };
 
             try {
-                ntcs::SimpleTaskUtil::syncAwait(throwingCoro());
+                ntcs::CoroutineTaskUtil::syncAwait(throwingCoro());
             } catch (int ex) {
                 thrownValue = ex;
             }
@@ -1646,12 +1665,12 @@ int main(int argc, char *argv[])
             void await_resume() {}
         } awaitable;
 
-        auto awaitingTask = [&awaitable]() -> bdxa::SimpleTask<int> {
+        auto awaitingTask = [&awaitable]() -> bdxa::CoroutineTask<int> {
             co_await awaitable;
             co_return 3;
         }();
 
-        ASSERT(3 == ntcs::SimpleTaskUtil::syncAwait(bsl::move(awaitingTask)));
+        ASSERT(3 == ntcs::CoroutineTaskUtil::syncAwait(bsl::move(awaitingTask)));
 
         // P-4
         doP4();
@@ -1667,25 +1686,25 @@ int main(int argc, char *argv[])
         // Concerns:
         // 1. The class is sufficiently functional to enable comprehensive
         //    testing in subsequent test cases.
-        // 2. The default template argument for `SimpleTask` is `void`.
+        // 2. The default template argument for `CoroutineTask` is `void`.
         //
         // Plan:
-        // 1. Create and call a `SimpleTask<>` coroutine.  Verify that the
-        //    return type is `SimpleTask<void>`, then call `syncAwait` on that
+        // 1. Create and call a `CoroutineTask<>` coroutine.  Verify that the
+        //    return type is `CoroutineTask<void>`, then call `syncAwait` on that
         //    object.  (C-1)
         //
         // Testing:
         //   BREATHING TEST
-        //   SimpleTask<>
+        //   CoroutineTask<>
         // --------------------------------------------------------------------
 
         if (verbose) cout << "\nBREATHING TEST"
                              "\n==============\n";
 
 #ifdef BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY
-        auto task = []() -> bdxa::SimpleTask<> { co_return; }();
-        ASSERT((bsl::is_same_v<bdxa::SimpleTask<void>, decltype(task)>));
-        ntcs::SimpleTaskUtil::syncAwait(bsl::move(task));
+        auto task = []() -> bdxa::CoroutineTask<> { co_return; }();
+        ASSERT((bsl::is_same_v<bdxa::CoroutineTask<void>, decltype(task)>));
+        ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
 #else
         cout << "Skipping breathing test before C++20...\n";
         ASSERT(true);
