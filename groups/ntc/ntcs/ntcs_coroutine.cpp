@@ -29,43 +29,37 @@ BSLS_IDENT_RCSID(ntcs_coroutine_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntcs {
 
-// -------------------------
-// class CoroutineTask_AllocImp
-// -------------------------
-
-void* CoroutineTask_AllocImp::allocate(bsl::size_t size, const Alloc& alloc)
+void* CoroutineTaskPromiseUtil::allocate(bsl::size_t      size,
+                                         const Allocator& allocator)
 {
-    // We're not told the required alignment for the coroutine frame, so we
-    // have to assume that it's the maximum alignment.  Also, we have to stash
-    // a copy of the allocator so that `deallocate` is able to use it later.
     constexpr bsl::size_t maxAlignment = __STDCPP_DEFAULT_NEW_ALIGNMENT__;
 
     const bsl::size_t frameRoundedSize =
         maxAlignment * ((size + maxAlignment - 1) / maxAlignment);
 
-    size = frameRoundedSize + sizeof(Alloc);
+    size = frameRoundedSize + sizeof(Allocator);
 
-    void* buf = alloc.mechanism()->allocate(size);
+    void* buf = allocator.mechanism()->allocate(size);
 
     char* allocStart = static_cast<char*>(buf) + frameRoundedSize;
-    ::new (static_cast<void*>(allocStart)) Alloc(alloc);
+    ::new (static_cast<void*>(allocStart)) Allocator(allocator);
     return buf;
 }
 
-void CoroutineTask_AllocImp::deallocate(void* ptr, bsl::size_t size)
+void CoroutineTaskPromiseUtil::deallocate(void* ptr, bsl::size_t size)
 {
     constexpr bsl::size_t maxAlignment = __STDCPP_DEFAULT_NEW_ALIGNMENT__;
 
     const bsl::size_t frameRoundedSize =
         maxAlignment * ((size + maxAlignment - 1) / maxAlignment);
 
-    size = frameRoundedSize + sizeof(Alloc);
+    size = frameRoundedSize + sizeof(Allocator);
 
     char* allocStart = static_cast<char*>(ptr) + frameRoundedSize;
 
-    const Alloc alloc = *reinterpret_cast<Alloc*>(allocStart);
+    const Allocator allocator = *reinterpret_cast<Allocator*>(allocStart);
 
-    alloc.mechanism()->deallocate(ptr);
+    allocator.mechanism()->deallocate(ptr);
 }
 
 // ----------------------------------------
@@ -104,7 +98,8 @@ CoroutineTask_SyncAwaitPromise::CoroutineTask_SyncAwaitPromise(
 
 // PRIVATE COROUTINE API
 
-bsl::suspend_always CoroutineTask_SyncAwaitPromise::initial_suspend()
+CoroutineTask_SyncAwaitInitialAwaitable CoroutineTask_SyncAwaitPromise::
+    initial_suspend()
 {
     return {};
 }

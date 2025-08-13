@@ -56,6 +56,8 @@ namespace ntcs {
 class CoroutineTest
 {
   public:
+    BALL_LOG_SET_CLASS_CATEGORY("NTCS.COROUTINE.TEST");
+
     // Describe a test operation's unique identifier.
     typedef int Token;
 
@@ -1205,6 +1207,15 @@ NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase1)
 
 NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase2)
 {
+    ntcs::CoroutineTask<int> task = coReturnValue<int>();
+
+    int value = ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
+
+    BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase3)
+{
     ntsa::Error error;
 
     Mechanism mechanism(NTSCFG_TEST_ALLOCATOR);
@@ -1224,10 +1235,6 @@ NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase2)
 
     NTSCFG_TEST_EQ(result.annotation(), "test");
     NTSCFG_TEST_EQ(result.value(), 3);
-}
-
-NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase3)
-{
 }
 
 NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase4)
