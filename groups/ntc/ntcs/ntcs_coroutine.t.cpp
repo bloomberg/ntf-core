@@ -1166,13 +1166,41 @@ int ntcs::CoroutineTest::globalInt;
 
 NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase1)
 {
-    int&& expectedRef = getValue<int&&>();
+    {
+        int expectedRef = getValue<int>();
 
-    ntcs::CoroutineTask<int&&> task = coReturnValue<int&&>();
+        ntcs::CoroutineTask<int> task = coReturnValue<int>();
 
-    int&& actualRef = ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
+        int actualRef = ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
 
-    NTSCFG_TEST_EQ(&expectedRef, &actualRef);
+        NTSCFG_TEST_EQ(&expectedRef, &actualRef);
+    }
+
+    {
+        int& expectedRef = getValue<int&>();
+
+        ntcs::CoroutineTask<int&> task = coReturnValue<int&>();
+
+        int& actualRef = ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
+
+        NTSCFG_TEST_EQ(&expectedRef, &actualRef);
+    }
+
+    {
+        int&& expectedRef = getValue<int&&>();
+
+        ntcs::CoroutineTask<int&&> task = coReturnValue<int&&>();
+
+        int&& actualRef = ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
+
+        NTSCFG_TEST_EQ(&expectedRef, &actualRef);
+    }
+
+    {
+        ntcs::CoroutineTask<void> task = coReturnValue<void>();
+
+        ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
+    }
 }
 
 NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase2)

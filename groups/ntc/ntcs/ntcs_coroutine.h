@@ -59,6 +59,7 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntcs {
 
+/// Describe a coroutine task result stored by value.
 template <typename TYPE>
 class CoroutineTaskResultValue
 {
@@ -130,28 +131,25 @@ class CoroutineTaskResultValue
     void reset();
 
     /// Assign the specified 'exception' value to this object.
-    void makeException(std::exception_ptr&& exception);
+    void store(std::exception_ptr&& exception);
 
     /// Assign the specified 'exception' value to this object.
-    void makeException(std::exception_ptr exception);
+    void store(std::exception_ptr exception);
 
     /// Assign the specified 'completion' value to this object.
-    void makeCompletion(TYPE&& completion);
+    void store(TYPE&& completion);
 
     /// Assign the specified 'completion' value to this object.
-    void makeCompletion(const TYPE& completion);
+    void store(const TYPE& completion);
 
-    /// Return a reference to the exception.
-    std::exception_ptr& exception();
+    /// Return a `RESULT` object that is move-initialized from the object
+    /// stored by this object. The behavior is undefined if this method is
+    /// called more than once for this object.
+    TYPE release();
 
-    /// Return a reference to the completion.
-    TYPE& completion();
-
-    /// Return a reference to the non-modifiable exception.
-    const std::exception_ptr& exception() const;
-
-    /// Return a referent to the non-modifiable completion.
-    TYPE& completion() const;
+    /// Rethrow the stored exception. The behavior is undefined if this method
+    /// is called more than once for this object.
+    void rethrow();
 
     /// Return true if the value is undefined, otherwise return false.
     bool isUndefined() const;
@@ -166,12 +164,179 @@ class CoroutineTaskResultValue
     bslma::Allocator* allocator() const;
 };
 
+/// Describe a coroutine task result stored by address.
+template <typename TYPE>
 class CoroutineTaskResultAddress
 {
+    /// Enumerates the state of the value.
+    enum Type {
+        /// The value is undefined.
+        e_UNDEFINED,
+
+        /// The value is complete.
+        e_COMPLETION,
+
+        /// An exception ocurrred.
+        e_EXCEPTION
+    };
+
+    /// Defines a type alias for the exception type.
+    typedef std::exception_ptr ExceptionType;
+
+    /// Defines a type alias for the completed type.
+    typedef TYPE* CompletionType;
+
+    /// The state of the value.
+    Type d_type;
+
+    union {
+        /// The completed value.
+        bsls::ObjectBuffer<CompletionType> d_completion;
+
+        /// The exception.
+        bsls::ObjectBuffer<ExceptionType> d_exception;
+    };
+
+  public:
+    /// Create a coroutine task result value.
+    explicit CoroutineTaskResultAddress();
+
+    /// Create a new coroutine task value having the same value and allocator
+    /// as the specified 'original' object. Assign an unspecified but valid
+    /// value to the 'original' original.
+    CoroutineTaskResultAddress(CoroutineTaskResultAddress&& original)
+        NTSCFG_NOEXCEPT;
+
+    /// Create a coroutine task result value having the same value as the
+    /// specified 'original' object.
+    CoroutineTaskResultAddress(const CoroutineTaskResultAddress& original);
+
+    /// Destroy this object.
+    ~CoroutineTaskResultAddress();
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    CoroutineTaskResultAddress& operator=(CoroutineTaskResultAddress&& other)
+        NTSCFG_NOEXCEPT;
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    CoroutineTaskResultAddress& operator=(
+        const CoroutineTaskResultAddress& other);
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
+
+    /// Assign the specified 'exception' value to this object.
+    void store(std::exception_ptr&& exception);
+
+    /// Assign the specified 'exception' value to this object.
+    void store(std::exception_ptr exception);
+
+    /// Assign the specified 'completion' value to this object.
+    void store(TYPE* completion);
+
+    /// Return a `RESULT` object that is move-initialized from the object
+    /// stored by this object. The behavior is undefined if this method is
+    /// called more than once for this object.
+    TYPE* release();
+
+    /// Rethrow the stored exception. The behavior is undefined if this method
+    /// is called more than once for this object.
+    void rethrow();
+
+    /// Return true if the value is undefined, otherwise return false.
+    bool isUndefined() const;
+
+    /// Return true if an exception occurred, otherwise return false.
+    bool isException() const;
+
+    /// Return true if the value is complete, otherwise return false.
+    bool isCompletion() const;
 };
 
+/// Describe a coroutine task result that is void.
 class CoroutineTaskResultEmpty
 {
+    /// Enumerates the state of the value.
+    enum Type {
+        /// The value is undefined.
+        e_UNDEFINED,
+
+        /// The value is complete.
+        e_COMPLETION,
+
+        /// An exception ocurrred.
+        e_EXCEPTION
+    };
+
+    /// Defines a type alias for the exception type.
+    typedef std::exception_ptr ExceptionType;
+
+    /// The state of the value.
+    Type d_type;
+
+    union {
+        /// The exception.
+        bsls::ObjectBuffer<ExceptionType> d_exception;
+    };
+
+  public:
+    /// Create a coroutine task result value.
+    explicit CoroutineTaskResultEmpty();
+
+    /// Create a new coroutine task value having the same value and allocator
+    /// as the specified 'original' object. Assign an unspecified but valid
+    /// value to the 'original' original.
+    CoroutineTaskResultEmpty(CoroutineTaskResultEmpty&& original)
+        NTSCFG_NOEXCEPT;
+
+    /// Create a coroutine task result value having the same value as the
+    /// specified 'original' object.
+    CoroutineTaskResultEmpty(const CoroutineTaskResultEmpty& original);
+
+    /// Destroy this object.
+    ~CoroutineTaskResultEmpty();
+
+    /// Assign the value of the specified 'other' object to this object. Assign
+    /// an unspecified but valid value to the 'original' original. Return a
+    /// reference to this modifiable object.
+    CoroutineTaskResultEmpty& operator=(CoroutineTaskResultEmpty&& other)
+        NTSCFG_NOEXCEPT;
+
+    /// Assign the value of the specified 'other' object to this object.
+    /// Return a reference to this modifiable object.
+    CoroutineTaskResultEmpty& operator=(const CoroutineTaskResultEmpty& other);
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
+
+    /// Assign the specified 'exception' value to this object.
+    void store(std::exception_ptr&& exception);
+
+    /// Assign the specified 'exception' value to this object.
+    void store(std::exception_ptr exception);
+
+    /// Assign the void value to this object.
+    void store();
+
+    /// Return void. The behavior is undefined if this method is called more
+    /// than once for this object.
+    void release();
+
+    /// Rethrow the stored exception. The behavior is undefined if this method
+    /// is called more than once for this object.
+    void rethrow();
+
+    /// Return true if the value is undefined, otherwise return false.
+    bool isUndefined() const;
+
+    /// Return true if an exception occurred, otherwise return false.
+    bool isException() const;
+
+    /// Return true if the value is complete, otherwise return false.
+    bool isCompletion() const;
 };
 
 /// @internal @brief
@@ -198,14 +363,11 @@ class CoroutineTaskResultEmpty
 template <typename RESULT>
 class CoroutineTaskResult
 {
-  private:
-    bsl::variant<bsl::monostate, RESULT, std::exception_ptr> d_variant;
+    ntcs::CoroutineTaskResultValue<RESULT> d_storage;
 
   private:
-    // NOT IMPLEMENTED
-    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
-
-    void operator=(const CoroutineTaskResult&) = delete;
+    CoroutineTaskResult(const CoroutineTaskResult&)            = delete;
+    CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
 
   protected:
     // PROTECTED CREATORS
@@ -224,7 +386,7 @@ class CoroutineTaskResult
     /// Set the held exception to the specified `ep`.  The behavior is
     /// undefined if this `CoroutineTaskResult` object already holds a value or
     /// exception.
-    void setException(std::exception_ptr ep);
+    void setException(std::exception_ptr exception);
 
     /// Return a `RESULT` object that is move-initialized from the object
     /// held by this `CoroutineTaskResult`, if any; otherwise, rethrow the held
@@ -251,15 +413,12 @@ template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 class CoroutineTaskResult<RESULT>
 {
-  private:
-    // DATA
-    bsl::variant<bsl::monostate, bsl::monostate, std::exception_ptr> d_variant;
+    ntcs::CoroutineTaskResultEmpty d_storage;
 
   private:
     // NOT IMPLEMENTED
-    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
-
-    void operator=(const CoroutineTaskResult&) = delete;
+    CoroutineTaskResult(const CoroutineTaskResult&)            = delete;
+    CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
 
   protected:
     // PROTECTED CREATORS
@@ -299,17 +458,12 @@ NTSCFG_REQUIRE_REFERENCE(RESULT)
 class CoroutineTaskResult<RESULT>
 {
   private:
-    // DATA
-    bsl::variant<bsl::monostate,
-                 bsl::remove_reference_t<RESULT>*,
-                 std::exception_ptr>
-        d_variant;
+    ntcs::CoroutineTaskResultAddress<bsl::remove_reference_t<RESULT> >
+        d_storage;
 
   private:
-    // NOT IMPLEMENTED
-    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
-
-    void operator=(const CoroutineTaskResult&) = delete;
+    CoroutineTaskResult(const CoroutineTaskResult&)            = delete;
+    CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
 
   protected:
     // PROTECTED CREATORS
@@ -324,7 +478,7 @@ class CoroutineTaskResult<RESULT>
     /// Set the held exception to the specified `ep`.  The behavior is
     /// undefined if this `CoroutineTaskResult` object already holds a reference
     /// or exception.
-    void setException(std::exception_ptr ep);
+    void setException(std::exception_ptr exception);
 
     /// Return the held reference, if any; otherwise, rethrow the held
     /// exception, if any; otherwise, the behavior is undefined.  The behavior
@@ -835,10 +989,10 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
 {
     if (this != &other) {
         if (other.d_type == e_COMPLETION) {
-            this->makeCompletion(bsl::move(other.d_completion.object()));
+            this->store(bsl::move(other.d_completion.object()));
         }
         else if (other.d_exception == e_EXCEPTION) {
-            this->makeException(bsl::move(other.d_exception.object()));
+            this->store(bsl::move(other.d_exception.object()));
         }
         else {
             this->reset();
@@ -854,10 +1008,10 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
 {
     if (this != &other) {
         if (other.d_type == e_COMPLETION) {
-            this->makeCompletion(other.d_completion.object());
+            this->store(other.d_completion.object());
         }
         else if (other.d_exception == e_EXCEPTION) {
-            this->makeException(other.d_exception.object());
+            this->store(other.d_exception.object());
         }
         else {
             this->reset();
@@ -881,7 +1035,7 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::reset()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::makeException(
+NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::store(
     std::exception_ptr&& exception)
 {
     if (d_type == e_COMPLETION) {
@@ -900,7 +1054,7 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::makeException(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::makeException(
+NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::store(
     std::exception_ptr exception)
 {
     if (d_type == e_COMPLETION) {
@@ -918,8 +1072,7 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::makeException(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::makeCompletion(
-    TYPE&& completion)
+NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::store(TYPE&& completion)
 {
     if (d_type == e_COMPLETION) {
         bslma::DestructionUtil::destroy(d_completion.address());
@@ -936,7 +1089,7 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::makeCompletion(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::makeCompletion(
+NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::store(
     const TYPE& completion)
 {
     if (d_type == e_COMPLETION) {
@@ -954,32 +1107,17 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::makeCompletion(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE std::exception_ptr& CoroutineTaskResultValue<TYPE>::exception()
-{
-    BSLS_ASSERT(d_type == e_EXCEPTION);
-    return d_exception.object();
-}
-
-template <typename TYPE>
-NTCCFG_INLINE TYPE& CoroutineTaskResultValue<TYPE>::completion()
+NTCCFG_INLINE TYPE CoroutineTaskResultValue<TYPE>::release()
 {
     BSLS_ASSERT(d_type == e_COMPLETION);
-    return d_completion.object();
+    return bsl::move(d_completion.object());
 }
 
 template <typename TYPE>
-NTCCFG_INLINE const std::exception_ptr& CoroutineTaskResultValue<
-    TYPE>::exception() const
+NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::rethrow()
 {
     BSLS_ASSERT(d_type == e_EXCEPTION);
-    return d_exception.object();
-}
-
-template <typename TYPE>
-NTCCFG_INLINE TYPE& CoroutineTaskResultValue<TYPE>::completion() const
-{
-    BSLS_ASSERT(d_type == e_COMPLETION);
-    return d_completion.object();
+    std::rethrow_exception(d_exception.object());
 }
 
 template <typename TYPE>
@@ -1007,6 +1145,320 @@ NTCCFG_INLINE bslma::Allocator* CoroutineTaskResultValue<TYPE>::allocator()
     return d_allocator;
 }
 
+template <typename TYPE>
+NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress()
+: d_type(e_UNDEFINED)
+{
+}
+
+template <typename TYPE>
+NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress(
+    CoroutineTaskResultAddress&& original) NTSCFG_NOEXCEPT
+: d_type(original.d_type)
+{
+    if (d_type == e_COMPLETION) {
+        new (d_completion.address())
+            CompletionType(original.d_completion.object());
+    }
+    else if (d_type == e_EXCEPTION) {
+        new (d_exception.address())
+            ExceptionType(original.d_exception.object());
+    }
+}
+
+template <typename TYPE>
+NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress(
+    const CoroutineTaskResultAddress& original)
+: d_type(original.d_type)
+{
+    if (d_type == e_COMPLETION) {
+        new (d_completion.address())
+            CompletionType(original.d_completion.object());
+    }
+    else if (d_type == e_EXCEPTION) {
+        new (d_exception.address())
+            ExceptionType(original.d_exception.object());
+    }
+}
+
+template <typename TYPE>
+NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::~CoroutineTaskResultAddress()
+{
+    if (d_type == e_COMPLETION) {
+        bslma::DestructionUtil::destroy(d_completion.address());
+    }
+    else if (d_type == e_EXCEPTION) {
+        bslma::DestructionUtil::destroy(d_exception.address());
+    }
+}
+
+template <typename TYPE>
+NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
+    TYPE>::operator=(CoroutineTaskResultAddress&& other) NTSCFG_NOEXCEPT
+{
+    if (this != &other) {
+        if (other.d_type == e_COMPLETION) {
+            this->store(bsl::move(other.d_completion.object()));
+        }
+        else if (other.d_exception == e_EXCEPTION) {
+            this->store(bsl::move(other.d_exception.object()));
+        }
+        else {
+            this->reset();
+        }
+    }
+
+    return *this;
+}
+
+template <typename TYPE>
+NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
+    TYPE>::operator=(const CoroutineTaskResultAddress& other)
+{
+    if (this != &other) {
+        if (other.d_type == e_COMPLETION) {
+            this->store(other.d_completion.object());
+        }
+        else if (other.d_exception == e_EXCEPTION) {
+            this->store(other.d_exception.object());
+        }
+        else {
+            this->reset();
+        }
+    }
+
+    return *this;
+}
+
+template <typename TYPE>
+NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::reset()
+{
+    if (d_type == e_COMPLETION) {
+        bslma::DestructionUtil::destroy(d_completion.address());
+    }
+    else if (d_type == e_EXCEPTION) {
+        bslma::DestructionUtil::destroy(d_exception.address());
+    }
+
+    d_type = e_UNDEFINED;
+}
+
+template <typename TYPE>
+NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::store(
+    std::exception_ptr&& exception)
+{
+    if (d_type == e_COMPLETION) {
+        bslma::DestructionUtil::destroy(d_completion.address());
+    }
+    else if (d_type == e_EXCEPTION) {
+        bslma::DestructionUtil::destroy(d_exception.address());
+    }
+
+    new (d_exception.address()) ExceptionType(bsl::move(exception));
+
+    d_type = e_EXCEPTION;
+}
+
+template <typename TYPE>
+NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::store(
+    std::exception_ptr exception)
+{
+    if (d_type == e_COMPLETION) {
+        bslma::DestructionUtil::destroy(d_completion.address());
+    }
+    else if (d_type == e_EXCEPTION) {
+        bslma::DestructionUtil::destroy(d_exception.address());
+    }
+
+    new (d_exception.address()) ExceptionType(exception);
+
+    d_type = e_EXCEPTION;
+}
+
+template <typename TYPE>
+NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::store(TYPE* completion)
+{
+    if (d_type == e_COMPLETION) {
+        bslma::DestructionUtil::destroy(d_completion.address());
+    }
+    else if (d_type == e_EXCEPTION) {
+        bslma::DestructionUtil::destroy(d_exception.address());
+    }
+
+    new (d_completion.address()) CompletionType(completion);
+
+    d_type = e_COMPLETION;
+}
+
+template <typename TYPE>
+NTCCFG_INLINE TYPE* CoroutineTaskResultAddress<TYPE>::release()
+{
+    BSLS_ASSERT(d_type == e_COMPLETION);
+    return bsl::move(d_completion.object());
+}
+
+template <typename TYPE>
+NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::rethrow()
+{
+    BSLS_ASSERT(d_type == e_EXCEPTION);
+    std::rethrow_exception(d_exception.object());
+}
+
+template <typename TYPE>
+NTCCFG_INLINE bool CoroutineTaskResultAddress<TYPE>::isUndefined() const
+{
+    return d_type == e_UNDEFINED;
+}
+
+template <typename TYPE>
+NTCCFG_INLINE bool CoroutineTaskResultAddress<TYPE>::isException() const
+{
+    return d_type == e_EXCEPTION;
+}
+
+template <typename TYPE>
+NTCCFG_INLINE bool CoroutineTaskResultAddress<TYPE>::isCompletion() const
+{
+    return d_type == e_COMPLETION;
+}
+
+NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty()
+: d_type(e_UNDEFINED)
+{
+}
+
+NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty(
+    CoroutineTaskResultEmpty&& original) NTSCFG_NOEXCEPT
+: d_type(original.d_type)
+{
+    if (d_type == e_EXCEPTION) {
+        new (d_exception.address())
+            ExceptionType(original.d_exception.object());
+    }
+}
+
+NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty(
+    const CoroutineTaskResultEmpty& original)
+: d_type(original.d_type)
+{
+    if (d_type == e_EXCEPTION) {
+        new (d_exception.address())
+            ExceptionType(original.d_exception.object());
+    }
+}
+
+NTCCFG_INLINE CoroutineTaskResultEmpty::~CoroutineTaskResultEmpty()
+{
+    if (d_type == e_EXCEPTION) {
+        bslma::DestructionUtil::destroy(d_exception.address());
+    }
+}
+
+NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
+    CoroutineTaskResultEmpty&& other) NTSCFG_NOEXCEPT
+{
+    if (this != &other) {
+        if (other.d_type == e_COMPLETION) {
+            this->store();
+        }
+        else if (other.d_type == e_EXCEPTION) {
+            this->store(other.d_exception.object());
+        }
+        else {
+            this->reset();
+        }
+    }
+
+    return *this;
+}
+
+NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
+    const CoroutineTaskResultEmpty& other)
+{
+    if (this != &other) {
+        if (other.d_type == e_COMPLETION) {
+            this->store();
+        }
+        else if (other.d_type == e_EXCEPTION) {
+            this->store(other.d_exception.object());
+        }
+        else {
+            this->reset();
+        }
+    }
+
+    return *this;
+}
+
+NTCCFG_INLINE void CoroutineTaskResultEmpty::reset()
+{
+    if (d_type == e_EXCEPTION) {
+        bslma::DestructionUtil::destroy(d_exception.address());
+    }
+
+    d_type = e_UNDEFINED;
+}
+
+NTCCFG_INLINE void CoroutineTaskResultEmpty::store(
+    std::exception_ptr&& exception)
+{
+    if (d_type == e_EXCEPTION) {
+        bslma::DestructionUtil::destroy(d_exception.address());
+    }
+
+    new (d_exception.address()) ExceptionType(bsl::move(exception));
+
+    d_type = e_EXCEPTION;
+}
+
+NTCCFG_INLINE void CoroutineTaskResultEmpty::store(
+    std::exception_ptr exception)
+{
+    if (d_type == e_EXCEPTION) {
+        bslma::DestructionUtil::destroy(d_exception.address());
+    }
+
+    new (d_exception.address()) ExceptionType(exception);
+
+    d_type = e_EXCEPTION;
+}
+
+NTCCFG_INLINE void CoroutineTaskResultEmpty::store()
+{
+    if (d_type == e_EXCEPTION) {
+        bslma::DestructionUtil::destroy(d_exception.address());
+    }
+
+    d_type = e_COMPLETION;
+}
+
+NTCCFG_INLINE void CoroutineTaskResultEmpty::release()
+{
+    BSLS_ASSERT(d_type == e_COMPLETION);
+    return;
+}
+
+NTCCFG_INLINE void CoroutineTaskResultEmpty::rethrow()
+{
+    BSLS_ASSERT(d_type == e_EXCEPTION);
+    std::rethrow_exception(d_exception.object());
+}
+
+NTCCFG_INLINE bool CoroutineTaskResultEmpty::isUndefined() const
+{
+    return d_type == e_UNDEFINED;
+}
+
+NTCCFG_INLINE bool CoroutineTaskResultEmpty::isException() const
+{
+    return d_type == e_EXCEPTION;
+}
+
+NTCCFG_INLINE bool CoroutineTaskResultEmpty::isCompletion() const
+{
+    return d_type == e_COMPLETION;
+}
+
 // -----------------------
 // class CoroutineTaskResult
 // -----------------------
@@ -1014,31 +1466,36 @@ NTCCFG_INLINE bslma::Allocator* CoroutineTaskResultValue<TYPE>::allocator()
 // PROTECTED CREATORS
 
 template <typename RESULT>
-CoroutineTaskResult<RESULT>::CoroutineTaskResult() = default;
+CoroutineTaskResult<RESULT>::CoroutineTaskResult()
+: d_storage()
+{
+}
 
 template <typename RESULT>
 CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>& alloc)
-: d_variant(bslma::ConstructionUtil::make<decltype(d_variant)>(alloc))
+: d_storage(alloc.mechanism())
 {
 }
 
 // PROTECTED MANIPULATORS
 
 template <typename RESULT>
-void CoroutineTaskResult<RESULT>::setException(std::exception_ptr ep)
+void CoroutineTaskResult<RESULT>::setException(std::exception_ptr exception)
 {
-    d_variant.template emplace<2>(ep);
+    d_storage.store(exception);
 }
 
 template <typename RESULT>
 RESULT CoroutineTaskResult<RESULT>::releaseResult()
 {
-    if (const auto* ep = bsl::get_if<2>(&d_variant)) {
-        std::rethrow_exception(*ep);
+    if (d_storage.isCompletion()) {
+        return d_storage.release();
     }
-    else {
-        return bsl::move(bsl::get<1>(d_variant));
+    else if (d_storage.isException()) {
+        d_storage.rethrow();
     }
+
+    NTCCFG_UNREACHABLE();
 }
 
 // MANIPULATORS
@@ -1047,7 +1504,7 @@ template <typename RESULT>
 void CoroutineTaskResult<RESULT>::return_value(
     bsl::convertible_to<RESULT> auto&& arg)
 {
-    d_variant.template emplace<1>(static_cast<decltype(arg)>(arg));
+    d_storage.store(bsl::move(arg));
 }
 
 // -----------------------------
@@ -1058,12 +1515,15 @@ void CoroutineTaskResult<RESULT>::return_value(
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
-CoroutineTaskResult<RESULT>::CoroutineTaskResult() = default;
+CoroutineTaskResult<RESULT>::CoroutineTaskResult()
+: d_storage()
+{
+}
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>&)
-: CoroutineTaskResult()
+: d_storage()
 {
 }
 
@@ -1071,18 +1531,24 @@ CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>&)
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
-void CoroutineTaskResult<RESULT>::setException(std::exception_ptr ep)
+void CoroutineTaskResult<RESULT>::setException(std::exception_ptr exception)
 {
-    d_variant.template emplace<2>(ep);
+    d_storage.store(exception);
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 void CoroutineTaskResult<RESULT>::releaseResult()
 {
-    if (const auto* ep = bsl::get_if<2>(&d_variant)) {
-        std::rethrow_exception(*ep);
+    if (d_storage.isCompletion()) {
+        d_storage.release();
+        return;
     }
+    else if (d_storage.isException()) {
+        d_storage.rethrow();
+    }
+
+    NTCCFG_UNREACHABLE();
 }
 
 // MANIPULATORS
@@ -1091,6 +1557,7 @@ template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 void CoroutineTaskResult<RESULT>::return_void()
 {
+    d_storage.store();
 }
 
 // ---------------------------
@@ -1105,12 +1572,15 @@ void CoroutineTaskResult<RESULT>::return_void()
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-CoroutineTaskResult<RESULT>::CoroutineTaskResult() = default;
+CoroutineTaskResult<RESULT>::CoroutineTaskResult()
+: d_storage()
+{
+}
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
 CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>&)
-: CoroutineTaskResult()
+: d_storage()
 {
 }
 
@@ -1118,21 +1588,32 @@ CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>&)
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-void CoroutineTaskResult<RESULT>::setException(std::exception_ptr ep)
+void CoroutineTaskResult<RESULT>::setException(std::exception_ptr exception)
 {
-    d_variant.template emplace<2>(ep);
+    d_storage.store(exception);
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
 RESULT CoroutineTaskResult<RESULT>::releaseResult()
 {
+    if (d_storage.isCompletion()) {
+        return static_cast<RESULT>(*d_storage.release());
+    }
+    else if (d_storage.isException()) {
+        d_storage.rethrow();
+    }
+
+    NTCCFG_UNREACHABLE();
+
+#if 0
     if (const auto* ep = bsl::get_if<2>(&d_variant)) {
         std::rethrow_exception(*ep);
     }
     else {
         return static_cast<RESULT>(*bsl::get<1>(d_variant));
     }
+#endif
 }
 
 // MANIPULATORS
@@ -1142,7 +1623,7 @@ void CoroutineTaskResult<RESULT>::return_value(
     bsl::convertible_to<RESULT> auto&& arg)
 {
     RESULT r = static_cast<decltype(arg)>(arg);
-    d_variant.template emplace<1>(BSLS_UTIL_ADDRESSOF(r));
+    d_storage.store(BSLS_UTIL_ADDRESSOF(r));
 }
 
 // --------------------------------
