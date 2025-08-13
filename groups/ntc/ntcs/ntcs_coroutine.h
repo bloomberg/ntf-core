@@ -59,6 +59,10 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntcs {
 
+template <typename RESULT>
+class CoroutineTask;
+
+/// @internal @brief
 /// Describe a coroutine task result stored by value.
 template <typename TYPE>
 class CoroutineTaskResultValue
@@ -69,27 +73,27 @@ class CoroutineTaskResultValue
         e_UNDEFINED,
 
         /// The value is complete.
-        e_COMPLETION,
+        e_SUCCESS,
 
         /// An exception ocurrred.
-        e_EXCEPTION
+        e_FAILURE
     };
 
-    /// Defines a type alias for the exception type.
-    typedef std::exception_ptr ExceptionType;
+    /// Defines a type alias for the success type.
+    typedef TYPE SuccessType;
 
-    /// Defines a type alias for the completed type.
-    typedef TYPE CompletionType;
+    /// Defines a type alias for the failure type.
+    typedef std::exception_ptr FailureType;
 
     /// The state of the value.
     Type d_type;
 
     union {
-        /// The completed value.
-        bsls::ObjectBuffer<CompletionType> d_completion;
+        /// The success value.
+        bsls::ObjectBuffer<SuccessType> d_success;
 
-        /// The exception.
-        bsls::ObjectBuffer<ExceptionType> d_exception;
+        /// The failure value.
+        bsls::ObjectBuffer<FailureType> d_failure;
     };
 
     /// The memory allocator.
@@ -131,39 +135,27 @@ class CoroutineTaskResultValue
     void reset();
 
     /// Assign the specified 'exception' value to this object.
-    void store(std::exception_ptr&& exception);
+    void acquire(std::exception_ptr&& exception);
 
     /// Assign the specified 'exception' value to this object.
-    void store(std::exception_ptr exception);
+    void acquire(std::exception_ptr exception);
 
     /// Assign the specified 'completion' value to this object.
-    void store(TYPE&& completion);
+    void acquire(TYPE&& completion);
 
     /// Assign the specified 'completion' value to this object.
-    void store(const TYPE& completion);
+    void acquire(const TYPE& completion);
 
     /// Return a `RESULT` object that is move-initialized from the object
-    /// stored by this object. The behavior is undefined if this method is
-    /// called more than once for this object.
+    /// stored by this object, or rethrow the stored exception. The behavior is
+    /// undefined if this method is called more than once for this object.
     TYPE release();
-
-    /// Rethrow the stored exception. The behavior is undefined if this method
-    /// is called more than once for this object.
-    void rethrow();
-
-    /// Return true if the value is undefined, otherwise return false.
-    bool isUndefined() const;
-
-    /// Return true if an exception occurred, otherwise return false.
-    bool isException() const;
-
-    /// Return true if the value is complete, otherwise return false.
-    bool isCompletion() const;
 
     /// Return the allocator.
     bslma::Allocator* allocator() const;
 };
 
+/// @internal @brief
 /// Describe a coroutine task result stored by address.
 template <typename TYPE>
 class CoroutineTaskResultAddress
@@ -174,27 +166,27 @@ class CoroutineTaskResultAddress
         e_UNDEFINED,
 
         /// The value is complete.
-        e_COMPLETION,
+        e_SUCCESS,
 
         /// An exception ocurrred.
-        e_EXCEPTION
+        e_FAILURE
     };
 
-    /// Defines a type alias for the exception type.
-    typedef std::exception_ptr ExceptionType;
+    /// Defines a type alias for the success type.
+    typedef TYPE* SuccessType;
 
-    /// Defines a type alias for the completed type.
-    typedef TYPE* CompletionType;
+    /// Defines a type alias for the failure type.
+    typedef std::exception_ptr FailureType;
 
     /// The state of the value.
     Type d_type;
 
     union {
-        /// The completed value.
-        bsls::ObjectBuffer<CompletionType> d_completion;
+        /// The success value.
+        bsls::ObjectBuffer<SuccessType> d_success;
 
-        /// The exception.
-        bsls::ObjectBuffer<ExceptionType> d_exception;
+        /// The failure value.
+        bsls::ObjectBuffer<FailureType> d_failure;
     };
 
   public:
@@ -229,33 +221,21 @@ class CoroutineTaskResultAddress
     void reset();
 
     /// Assign the specified 'exception' value to this object.
-    void store(std::exception_ptr&& exception);
+    void acquire(std::exception_ptr&& exception);
 
     /// Assign the specified 'exception' value to this object.
-    void store(std::exception_ptr exception);
+    void acquire(std::exception_ptr exception);
 
     /// Assign the specified 'completion' value to this object.
-    void store(TYPE* completion);
+    void acquire(TYPE* completion);
 
     /// Return a `RESULT` object that is move-initialized from the object
-    /// stored by this object. The behavior is undefined if this method is
-    /// called more than once for this object.
+    /// stored by this object, or rethrow the stored exception. The behavior is
+    /// undefined if this method is called more than once for this object.
     TYPE* release();
-
-    /// Rethrow the stored exception. The behavior is undefined if this method
-    /// is called more than once for this object.
-    void rethrow();
-
-    /// Return true if the value is undefined, otherwise return false.
-    bool isUndefined() const;
-
-    /// Return true if an exception occurred, otherwise return false.
-    bool isException() const;
-
-    /// Return true if the value is complete, otherwise return false.
-    bool isCompletion() const;
 };
 
+/// @internal @brief
 /// Describe a coroutine task result that is void.
 class CoroutineTaskResultEmpty
 {
@@ -265,21 +245,21 @@ class CoroutineTaskResultEmpty
         e_UNDEFINED,
 
         /// The value is complete.
-        e_COMPLETION,
+        e_SUCCESS,
 
         /// An exception ocurrred.
-        e_EXCEPTION
+        e_FAILURE
     };
 
-    /// Defines a type alias for the exception type.
-    typedef std::exception_ptr ExceptionType;
+    /// Defines a type alias for the failure type.
+    typedef std::exception_ptr FailureType;
 
     /// The state of the value.
     Type d_type;
 
     union {
-        /// The exception.
-        bsls::ObjectBuffer<ExceptionType> d_exception;
+        /// The failure value.
+        bsls::ObjectBuffer<FailureType> d_failure;
     };
 
   public:
@@ -313,192 +293,185 @@ class CoroutineTaskResultEmpty
     void reset();
 
     /// Assign the specified 'exception' value to this object.
-    void store(std::exception_ptr&& exception);
+    void acquire(std::exception_ptr&& exception);
 
     /// Assign the specified 'exception' value to this object.
-    void store(std::exception_ptr exception);
+    void acquire(std::exception_ptr exception);
 
     /// Assign the void value to this object.
-    void store();
+    void acquire();
 
-    /// Return void. The behavior is undefined if this method is called more
-    /// than once for this object.
+    /// Return void or rethrow the stored exception. The behavior is undefined
+    /// if this method is called more than once for this object.
     void release();
-
-    /// Rethrow the stored exception. The behavior is undefined if this method
-    /// is called more than once for this object.
-    void rethrow();
-
-    /// Return true if the value is undefined, otherwise return false.
-    bool isUndefined() const;
-
-    /// Return true if an exception occurred, otherwise return false.
-    bool isException() const;
-
-    /// Return true if the value is complete, otherwise return false.
-    bool isCompletion() const;
 };
 
 /// @internal @brief
-/// Provide a coroutine task.
+/// Describe a coroutine task result stored by value.
 ///
-/// This component provides a class template, `ntcs::CoroutineTask`, that can be
-/// used as the return type for a coroutine.  The `CoroutineTask` object returned
-/// when the coroutine is invoked represents a piece of deferred work that will
-/// be completed when the coroutine is resumed by `co_await`ing the
-/// `CoroutineTask` object.  This component also provides the utility function
-/// `ntcs::CoroutineTaskUtil::syncAwait`, which takes a `CoroutineTask` as an
-/// argument and synchronously awaits it (returning or rethrowing the result).
+/// @details
+/// This component-private class template initially holds no value and is
+/// eventually set to hold either the result value of a coroutine task or a an
+/// exception, if the coroutine was exited by an exception. The primary
+/// template provides the implementation for the case where the result type is
+/// an object type.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
-///
-/// @ingroup module_ntcs
-
-/// This component-private class template initially holds no value and is
-/// eventually set to hold either the result value of a `CoroutineTask` or a
-/// `std::exception_ptr` (if the coroutine was exited by an exception).  The
-/// primary template provides the implementation for the case where the result
-/// type is an object type.
 template <typename RESULT>
 class CoroutineTaskResult
 {
-    ntcs::CoroutineTaskResultValue<RESULT> d_storage;
+    /// Defines a type alias for the result type.
+    using ResultType = RESULT;
+
+    /// The result storage.
+    ntcs::CoroutineTaskResultValue<ResultType> d_storage;
 
   private:
-    CoroutineTaskResult(const CoroutineTaskResult&)            = delete;
+    /// This class is not copyable.
+    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
+
+    /// This class is not assignable.
     CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
 
   protected:
-    // PROTECTED CREATORS
-
-    /// Create a `CoroutineTaskResult` object that holds no value.
+    /// Create a new coroutine task result that is initially incomplete.
     CoroutineTaskResult();
 
-    /// Create a `CoroutineTaskResult` object that holds no value and will
-    /// eventually use the specified `alloc` to provide memory for the
-    /// `RESULT` object, if such a result object is created and is
-    /// allocator-aware.  Otherwise, `alloc` is ignored.
-    explicit CoroutineTaskResult(const bsl::allocator<>& alloc);
+    /// Create a new coroutine task result that is initally incomplete. Use
+    /// specified `allocator` to provide memory for the `RESULT` object, if
+    /// such a result object is created and is allocator-aware.
+    explicit CoroutineTaskResult(const bsl::allocator<>& allocator);
 
-    // PROTECTED MANIPULATORS
+    /// Set the held exception to the specified `exception`.  The behavior is
+    /// undefined if this object already holds a value or exception.
+    void acquire(std::exception_ptr exception);
 
-    /// Set the held exception to the specified `ep`.  The behavior is
-    /// undefined if this `CoroutineTaskResult` object already holds a value or
-    /// exception.
-    void setException(std::exception_ptr exception);
-
-    /// Return a `RESULT` object that is move-initialized from the object
-    /// held by this `CoroutineTaskResult`, if any; otherwise, rethrow the held
-    /// exception, if any; otherwise, the behavior is undefined.  The behavior
-    /// is also undefined if this method is called more than once for a single
-    /// `CoroutineTaskResult` object.
-    RESULT releaseResult();
+    /// Return a `RESULT` object that is move-initialized from the object held
+    /// by this object, if any; otherwise, rethrow the held exception, if any;
+    /// otherwise, the behavior is undefined.  The behavior is also undefined
+    /// if this method is called more than once for this object.
+    RESULT release();
 
   public:
-    // MANIPULATORS
-
     /// Construct a held object of type `RESULT` by implicit conversion from
     /// the specified `arg` (forwarded).  This method participates in overload
     /// resolution only if that conversion is possible.  The behavior is
-    /// undefined if this `CoroutineTaskResult` object already holds a value or
-    /// exception.
+    /// undefined if this object already holds a value or exception.
     void return_value(bsl::convertible_to<RESULT> auto&& arg);
 };
 
-/// This partial specialization of `CoroutineTaskResult` is used when `RESULT`
-/// is a void type.  It is said to "hold a result" when `return_void` has been
-/// called (even though there's nothing there).
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-class CoroutineTaskResult<RESULT>
-{
-    ntcs::CoroutineTaskResultEmpty d_storage;
-
-  private:
-    // NOT IMPLEMENTED
-    CoroutineTaskResult(const CoroutineTaskResult&)            = delete;
-    CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
-
-  protected:
-    // PROTECTED CREATORS
-
-    /// Create a `CoroutineTaskResult` object that does not have a result and
-    /// does not hold an exception.  The optionally specified allocator is
-    /// ignored.
-    CoroutineTaskResult();
-    explicit CoroutineTaskResult(const bsl::allocator<>&);
-
-    // PROTECTED MANIPULATORS
-
-    /// Set the held exception to the specified `ep`.  The behavior is
-    /// undefined if this `CoroutineTaskResult` object already holds a value or
-    /// exception.
-    void setException(std::exception_ptr ep);
-
-    /// Rethrow the held exception, if any; otherwise, there is no effect, but
-    /// the behavior is undefined if a result has not been set for this object.
-    /// The behavior is also undefined if this method is called more than once
-    /// for a single `CoroutineTaskResult` object.
-    void releaseResult();
-
-  public:
-    // MANIPULATORS
-
-    /// Set the result of this `CoroutineTaskResult` object.  The behavior is
-    /// undefined if this `CoroutineTaskResult` object already has a result or
-    /// holds an exception.
-    void return_void();
-};
-
-/// This partial specialization of `CoroutineTaskResult` is used when `RESULT`
-/// is a reference type (either kind of reference).
+/// @internal @brief
+/// Describe a coroutine task result stored by reference.
+///
+/// @details
+/// This component-private class template initially holds no value and is
+/// eventually set to hold either the result value of a coroutine task or a an
+/// exception, if the coroutine was exited by an exception. This partial
+/// specialization is used when `RESULT` is a reference type of any kind.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
 class CoroutineTaskResult<RESULT>
 {
-  private:
-    ntcs::CoroutineTaskResultAddress<bsl::remove_reference_t<RESULT> >
-        d_storage;
+    /// Defines a type alias for the result type.
+    using ResultType = RESULT;
+
+    /// Defines a type alias for the dereferenced result type.
+    using ResultTypeDereference = bsl::remove_reference_t<RESULT>;
+
+    /// The result storage.
+    ntcs::CoroutineTaskResultAddress<ResultTypeDereference> d_storage;
 
   private:
-    CoroutineTaskResult(const CoroutineTaskResult&)            = delete;
+    /// This class is not copyable.
+    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
+
+    /// This class is not assignable.
     CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
 
   protected:
-    // PROTECTED CREATORS
-
-    /// Create a `CoroutineTaskResult` object that holds no reference.  The
-    /// optionally specified allocator is ignored.
+    /// Create a new coroutine task result that is initially incomplete.
     CoroutineTaskResult();
-    explicit CoroutineTaskResult(const bsl::allocator<>&);
 
-    // PROTECTED MANIPULATORS
+    /// Create a new coroutine task result that is initally incomplete. The
+    /// specified 'allocator' is ignored.
+    explicit CoroutineTaskResult(const bsl::allocator<>& allocator);
 
-    /// Set the held exception to the specified `ep`.  The behavior is
-    /// undefined if this `CoroutineTaskResult` object already holds a reference
+    /// Set the held exception to the specified `exception`.  The behavior is
+    /// undefined if this object already holds a reference
     /// or exception.
-    void setException(std::exception_ptr exception);
+    void acquire(std::exception_ptr exception);
 
     /// Return the held reference, if any; otherwise, rethrow the held
     /// exception, if any; otherwise, the behavior is undefined.  The behavior
-    /// is also undefined if this method is called more than once for a single
-    /// `CoroutineTaskResult` object.
-    RESULT releaseResult();
+    /// is also undefined if this method is called more than once for this
+    /// object.
+    RESULT release();
 
   public:
-    // MANIPULATORS
-
-    /// Construct a held reference by implicit conversion to `RESULT` from
-    /// the specified `arg` (forwarded).  This method participates in overload
+    /// Construct a held reference by implicit conversion to `RESULT` from the
+    /// specified `arg` (forwarded).  This method participates in overload
     /// resolution only if that conversion is possible.  The behavior is
-    /// undefined if this `CoroutineTaskResult` object already holds a reference
-    /// or exception.
+    /// undefined if this object already holds a reference or exception.
     void return_value(bsl::convertible_to<RESULT> auto&& arg);
 };
 
+/// @internal @brief
+/// Describe a coroutine task result that is void.
+///
+/// @details
+/// This component-private class template initially holds no value and is
+/// eventually set to hold either the result value of a coroutine task or a an
+/// exception, if the coroutine was exited by an exception. This partial
+/// specialization is used when `RESULT` is a void type. It is said to "hold a
+/// result" when `return_void` has been called.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
 template <typename RESULT>
-class CoroutineTask;
+NTSCFG_REQUIRE_VOID(RESULT)
+class CoroutineTaskResult<RESULT>
+{
+    /// Defines a type alias for the result type.
+    using ResultType = RESULT;
+
+    /// The result storage.
+    ntcs::CoroutineTaskResultEmpty d_storage;
+
+  private:
+    /// This class is not copyable.
+    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
+
+    /// This class is not assignable.
+    CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
+
+  protected:
+    /// Create a new coroutine task result that is initially incomplete.
+    CoroutineTaskResult();
+
+    /// Create a new coroutine task result that is initally incomplete. The
+    /// specified 'allocator' is ignored.
+    explicit CoroutineTaskResult(const bsl::allocator<>& allocator);
+
+    /// Set the held exception to the specified `exception`.  The behavior is
+    /// undefined if this object already holds a value or
+    /// exception.
+    void acquire(std::exception_ptr exception);
+
+    /// Rethrow the held exception, if any; otherwise, there is no effect, but
+    /// the behavior is undefined if a result has not been set for this object.
+    /// The behavior is also undefined if this method is called more than once
+    /// for this object.
+    void release();
+
+  public:
+    /// Set the result of this object.  The behavior is undefined if this
+    /// object already has a result or holds an exception.
+    void return_void();
+};
 
 // ================================
 // class CoroutineTask_FinalAwaitable
@@ -555,25 +528,23 @@ template <typename RESULT>
 class CoroutineTaskPromise : private CoroutineTask_AllocImp,
                              public CoroutineTaskResult<RESULT>
 {
-  private:
-    // DATA
+    // CLASS METHODS
+    using Alloc = bsl::allocator<>;
+
     std::coroutine_handle<void> d_awaiter;  // coroutine that awaits us
 
     bsl::allocator<> d_alloc;  // allocator passed to constructor
 
-    // FRIENDS
     friend CoroutineTask<RESULT>;
 
-    template <typename t_OTHER_RESULT>
+    template <typename OTHER_RESULT>
     friend class CoroutineTask_Awaitable;
 
     friend class CoroutineTask_FinalAwaitable;
     friend class CoroutineTaskUtil;
 
   public:
-    // CLASS METHODS
-
-    /// Return a pointer to a maximally aligned block of memory having at least
+        /// Return a pointer to a maximally aligned block of memory having at least
     /// the specified `size`, allocated using the specified `alloc`.  This
     /// function is called implicitly to allocate the coroutine frame for a
     /// `CoroutineTask` coroutine that is a non-member or static member function
@@ -722,6 +693,21 @@ class CoroutineTask_Awaitable
 // class CoroutineTask
 // ================
 
+/// @internal @brief
+/// Provide a coroutine task.
+///
+/// This component provides a class template, `ntcs::CoroutineTask`, that can be
+/// used as the return type for a coroutine.  The `CoroutineTask` object returned
+/// when the coroutine is invoked represents a piece of deferred work that will
+/// be completed when the coroutine is resumed by `co_await`ing the
+/// `CoroutineTask` object.  This component also provides the utility function
+/// `ntcs::CoroutineTaskUtil::syncAwait`, which takes a `CoroutineTask` as an
+/// argument and synchronously awaits it (returning or rethrowing the result).
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntcs
 template <typename RESULT = void>
 class CoroutineTask
 {
@@ -839,7 +825,7 @@ class CoroutineTask_SyncAwaitFinalAwaitable
 class CoroutineTask_SyncAwaitPromise : private CoroutineTask_AllocImp
 {
   private:
-    // PRIVATE TYPES
+    using Alloc = bsl::allocator<>;
 
     // DATA
     CoroutineTask_SyncAwaitState* d_state_p;
@@ -939,17 +925,17 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
 : d_type(original.d_type),
   d_allocator(bslma::Default::defaultAllocator())
 {
-    if (d_type == e_COMPLETION) {
+    if (d_type == e_SUCCESS) {
         bslma::ConstructionUtil::destructiveMove(
-            d_completion.address(),
+            d_success.address(),
             reinterpret_cast<bslma::Allocator*>(0),
-            &original.d_completion.object());
+            &original.d_success.object());
     }
-    else if (d_type == e_EXCEPTION) {
+    else if (d_type == e_FAILURE) {
         bslma::ConstructionUtil::destructiveMove(
-            d_exception.address(),
+            d_failure.address(),
             reinterpret_cast<bslma::Allocator*>(0),
-            &original.d_exception.object());
+            &original.d_failure.object());
     }
 }
 
@@ -960,26 +946,26 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
 : d_type(original.d_type)
 , d_allocator(bslma::Default::allocator(basicAllocator))
 {
-    if (d_type == e_COMPLETION) {
-        bslma::ConstructionUtil::construct(d_completion.address(),
+    if (d_type == e_SUCCESS) {
+        bslma::ConstructionUtil::construct(d_success.address(),
                                            basicAllocator,
-                                           original.d_completion.object());
+                                           original.d_success.object());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::ConstructionUtil::construct(d_exception.address(),
+    else if (d_type == e_FAILURE) {
+        bslma::ConstructionUtil::construct(d_failure.address(),
                                            basicAllocator,
-                                           original.d_exception.object());
+                                           original.d_failure.object());
     }
 }
 
 template <typename TYPE>
 NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::~CoroutineTaskResultValue()
 {
-    if (d_type == e_COMPLETION) {
-        bslma::DestructionUtil::destroy(d_completion.address());
+    if (d_type == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    else if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 }
 
@@ -988,11 +974,11 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
     TYPE>::operator=(CoroutineTaskResultValue&& other) NTSCFG_NOEXCEPT
 {
     if (this != &other) {
-        if (other.d_type == e_COMPLETION) {
-            this->store(bsl::move(other.d_completion.object()));
+        if (other.d_type == e_SUCCESS) {
+            this->acquire(bsl::move(other.d_success.object()));
         }
-        else if (other.d_exception == e_EXCEPTION) {
-            this->store(bsl::move(other.d_exception.object()));
+        else if (other.d_failure == e_FAILURE) {
+            this->acquire(bsl::move(other.d_failure.object()));
         }
         else {
             this->reset();
@@ -1007,11 +993,11 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
     TYPE>::operator=(const CoroutineTaskResultValue& other)
 {
     if (this != &other) {
-        if (other.d_type == e_COMPLETION) {
-            this->store(other.d_completion.object());
+        if (other.d_type == e_SUCCESS) {
+            this->acquire(other.d_success.object());
         }
-        else if (other.d_exception == e_EXCEPTION) {
-            this->store(other.d_exception.object());
+        else if (other.d_failure == e_FAILURE) {
+            this->acquire(other.d_failure.object());
         }
         else {
             this->reset();
@@ -1024,118 +1010,99 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
 template <typename TYPE>
 NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::reset()
 {
-    if (d_type == e_COMPLETION) {
-        bslma::DestructionUtil::destroy(d_completion.address());
+    if (d_type == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    else if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
     d_type = e_UNDEFINED;
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::store(
+NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
     std::exception_ptr&& exception)
 {
-    if (d_type == e_COMPLETION) {
-        bslma::DestructionUtil::destroy(d_completion.address());
+    if (d_type == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    else if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
     bslma::ConstructionUtil::destructiveMove(
-        d_exception.address(),
+        d_failure.address(),
         reinterpret_cast<bslma::Allocator*>(0),
         &exception);
 
-    d_type = e_EXCEPTION;
+    d_type = e_FAILURE;
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::store(
+NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
     std::exception_ptr exception)
 {
-    if (d_type == e_COMPLETION) {
-        bslma::DestructionUtil::destroy(d_completion.address());
+    if (d_type == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    else if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
-    bslma::ConstructionUtil::construct(d_exception.address(),
+    bslma::ConstructionUtil::construct(d_failure.address(),
                                        d_allocator,
                                        exception);
 
-    d_type = e_EXCEPTION;
+    d_type = e_FAILURE;
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::store(TYPE&& completion)
+NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(TYPE&& completion)
 {
-    if (d_type == e_COMPLETION) {
-        bslma::DestructionUtil::destroy(d_completion.address());
+    if (d_type == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    else if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
-    bslma::ConstructionUtil::destructiveMove(d_completion.address(),
+    bslma::ConstructionUtil::destructiveMove(d_success.address(),
                                              d_allocator,
                                              &completion);
 
-    d_type = e_COMPLETION;
+    d_type = e_SUCCESS;
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::store(
+NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
     const TYPE& completion)
 {
-    if (d_type == e_COMPLETION) {
-        bslma::DestructionUtil::destroy(d_completion.address());
+    if (d_type == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    else if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
-    bslma::ConstructionUtil::construct(d_completion.address(),
+    bslma::ConstructionUtil::construct(d_success.address(),
                                        d_allocator,
                                        completion);
 
-    d_type = e_COMPLETION;
+    d_type = e_SUCCESS;
 }
 
 template <typename TYPE>
 NTCCFG_INLINE TYPE CoroutineTaskResultValue<TYPE>::release()
 {
-    BSLS_ASSERT(d_type == e_COMPLETION);
-    return bsl::move(d_completion.object());
-}
+    if (d_type == e_SUCCESS) {
+        return bsl::move(d_success.object());
+    }
+    else if (d_type == e_FAILURE) {
+        std::rethrow_exception(d_failure.object());
+    }
 
-template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::rethrow()
-{
-    BSLS_ASSERT(d_type == e_EXCEPTION);
-    std::rethrow_exception(d_exception.object());
-}
-
-template <typename TYPE>
-NTCCFG_INLINE bool CoroutineTaskResultValue<TYPE>::isUndefined() const
-{
-    return d_type == e_UNDEFINED;
-}
-
-template <typename TYPE>
-NTCCFG_INLINE bool CoroutineTaskResultValue<TYPE>::isException() const
-{
-    return d_type == e_EXCEPTION;
-}
-
-template <typename TYPE>
-NTCCFG_INLINE bool CoroutineTaskResultValue<TYPE>::isCompletion() const
-{
-    return d_type == e_COMPLETION;
+    NTCCFG_UNREACHABLE();
 }
 
 template <typename TYPE>
@@ -1156,13 +1123,11 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress(
     CoroutineTaskResultAddress&& original) NTSCFG_NOEXCEPT
 : d_type(original.d_type)
 {
-    if (d_type == e_COMPLETION) {
-        new (d_completion.address())
-            CompletionType(original.d_completion.object());
+    if (d_type == e_SUCCESS) {
+        new (d_success.address()) SuccessType(original.d_success.object());
     }
-    else if (d_type == e_EXCEPTION) {
-        new (d_exception.address())
-            ExceptionType(original.d_exception.object());
+    else if (d_type == e_FAILURE) {
+        new (d_failure.address()) FailureType(original.d_failure.object());
     }
 }
 
@@ -1171,24 +1136,22 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress(
     const CoroutineTaskResultAddress& original)
 : d_type(original.d_type)
 {
-    if (d_type == e_COMPLETION) {
-        new (d_completion.address())
-            CompletionType(original.d_completion.object());
+    if (d_type == e_SUCCESS) {
+        new (d_success.address()) SuccessType(original.d_success.object());
     }
-    else if (d_type == e_EXCEPTION) {
-        new (d_exception.address())
-            ExceptionType(original.d_exception.object());
+    else if (d_type == e_FAILURE) {
+        new (d_failure.address()) FailureType(original.d_failure.object());
     }
 }
 
 template <typename TYPE>
 NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::~CoroutineTaskResultAddress()
 {
-    if (d_type == e_COMPLETION) {
-        bslma::DestructionUtil::destroy(d_completion.address());
+    if (d_type == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    else if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 }
 
@@ -1197,11 +1160,11 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
     TYPE>::operator=(CoroutineTaskResultAddress&& other) NTSCFG_NOEXCEPT
 {
     if (this != &other) {
-        if (other.d_type == e_COMPLETION) {
-            this->store(bsl::move(other.d_completion.object()));
+        if (other.d_type == e_SUCCESS) {
+            this->acquire(bsl::move(other.d_success.object()));
         }
-        else if (other.d_exception == e_EXCEPTION) {
-            this->store(bsl::move(other.d_exception.object()));
+        else if (other.d_failure == e_FAILURE) {
+            this->acquire(bsl::move(other.d_failure.object()));
         }
         else {
             this->reset();
@@ -1216,11 +1179,11 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
     TYPE>::operator=(const CoroutineTaskResultAddress& other)
 {
     if (this != &other) {
-        if (other.d_type == e_COMPLETION) {
-            this->store(other.d_completion.object());
+        if (other.d_type == e_SUCCESS) {
+            this->acquire(other.d_success.object());
         }
-        else if (other.d_exception == e_EXCEPTION) {
-            this->store(other.d_exception.object());
+        else if (other.d_failure == e_FAILURE) {
+            this->acquire(other.d_failure.object());
         }
         else {
             this->reset();
@@ -1233,93 +1196,74 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
 template <typename TYPE>
 NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::reset()
 {
-    if (d_type == e_COMPLETION) {
-        bslma::DestructionUtil::destroy(d_completion.address());
+    if (d_type == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    else if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
     d_type = e_UNDEFINED;
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::store(
+NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(
     std::exception_ptr&& exception)
 {
-    if (d_type == e_COMPLETION) {
-        bslma::DestructionUtil::destroy(d_completion.address());
+    if (d_type == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    else if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
-    new (d_exception.address()) ExceptionType(bsl::move(exception));
+    new (d_failure.address()) FailureType(bsl::move(exception));
 
-    d_type = e_EXCEPTION;
+    d_type = e_FAILURE;
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::store(
+NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(
     std::exception_ptr exception)
 {
-    if (d_type == e_COMPLETION) {
-        bslma::DestructionUtil::destroy(d_completion.address());
+    if (d_type == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    else if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
-    new (d_exception.address()) ExceptionType(exception);
+    new (d_failure.address()) FailureType(exception);
 
-    d_type = e_EXCEPTION;
+    d_type = e_FAILURE;
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::store(TYPE* completion)
+NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(TYPE* completion)
 {
-    if (d_type == e_COMPLETION) {
-        bslma::DestructionUtil::destroy(d_completion.address());
+    if (d_type == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
     }
-    else if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    else if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
-    new (d_completion.address()) CompletionType(completion);
+    new (d_success.address()) SuccessType(completion);
 
-    d_type = e_COMPLETION;
+    d_type = e_SUCCESS;
 }
 
 template <typename TYPE>
 NTCCFG_INLINE TYPE* CoroutineTaskResultAddress<TYPE>::release()
 {
-    BSLS_ASSERT(d_type == e_COMPLETION);
-    return bsl::move(d_completion.object());
-}
+    if (d_type == e_SUCCESS) {
+        return d_success.object();
+    }
+    else if (d_type == e_FAILURE) {
+        std::rethrow_exception(d_failure.object());
+    }
 
-template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::rethrow()
-{
-    BSLS_ASSERT(d_type == e_EXCEPTION);
-    std::rethrow_exception(d_exception.object());
-}
-
-template <typename TYPE>
-NTCCFG_INLINE bool CoroutineTaskResultAddress<TYPE>::isUndefined() const
-{
-    return d_type == e_UNDEFINED;
-}
-
-template <typename TYPE>
-NTCCFG_INLINE bool CoroutineTaskResultAddress<TYPE>::isException() const
-{
-    return d_type == e_EXCEPTION;
-}
-
-template <typename TYPE>
-NTCCFG_INLINE bool CoroutineTaskResultAddress<TYPE>::isCompletion() const
-{
-    return d_type == e_COMPLETION;
+    NTCCFG_UNREACHABLE();
 }
 
 NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty()
@@ -1331,9 +1275,8 @@ NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty(
     CoroutineTaskResultEmpty&& original) NTSCFG_NOEXCEPT
 : d_type(original.d_type)
 {
-    if (d_type == e_EXCEPTION) {
-        new (d_exception.address())
-            ExceptionType(original.d_exception.object());
+    if (d_type == e_FAILURE) {
+        new (d_failure.address()) FailureType(original.d_failure.object());
     }
 }
 
@@ -1341,16 +1284,15 @@ NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty(
     const CoroutineTaskResultEmpty& original)
 : d_type(original.d_type)
 {
-    if (d_type == e_EXCEPTION) {
-        new (d_exception.address())
-            ExceptionType(original.d_exception.object());
+    if (d_type == e_FAILURE) {
+        new (d_failure.address()) FailureType(original.d_failure.object());
     }
 }
 
 NTCCFG_INLINE CoroutineTaskResultEmpty::~CoroutineTaskResultEmpty()
 {
-    if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 }
 
@@ -1358,11 +1300,11 @@ NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
     CoroutineTaskResultEmpty&& other) NTSCFG_NOEXCEPT
 {
     if (this != &other) {
-        if (other.d_type == e_COMPLETION) {
-            this->store();
+        if (other.d_type == e_SUCCESS) {
+            this->acquire();
         }
-        else if (other.d_type == e_EXCEPTION) {
-            this->store(other.d_exception.object());
+        else if (other.d_type == e_FAILURE) {
+            this->acquire(other.d_failure.object());
         }
         else {
             this->reset();
@@ -1376,11 +1318,11 @@ NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
     const CoroutineTaskResultEmpty& other)
 {
     if (this != &other) {
-        if (other.d_type == e_COMPLETION) {
-            this->store();
+        if (other.d_type == e_SUCCESS) {
+            this->acquire();
         }
-        else if (other.d_type == e_EXCEPTION) {
-            this->store(other.d_exception.object());
+        else if (other.d_type == e_FAILURE) {
+            this->acquire(other.d_failure.object());
         }
         else {
             this->reset();
@@ -1392,71 +1334,56 @@ NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
 
 NTCCFG_INLINE void CoroutineTaskResultEmpty::reset()
 {
-    if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
     d_type = e_UNDEFINED;
 }
 
-NTCCFG_INLINE void CoroutineTaskResultEmpty::store(
+NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire(
     std::exception_ptr&& exception)
 {
-    if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
-    new (d_exception.address()) ExceptionType(bsl::move(exception));
+    new (d_failure.address()) FailureType(bsl::move(exception));
 
-    d_type = e_EXCEPTION;
+    d_type = e_FAILURE;
 }
 
-NTCCFG_INLINE void CoroutineTaskResultEmpty::store(
+NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire(
     std::exception_ptr exception)
 {
-    if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
-    new (d_exception.address()) ExceptionType(exception);
+    new (d_failure.address()) FailureType(exception);
 
-    d_type = e_EXCEPTION;
+    d_type = e_FAILURE;
 }
 
-NTCCFG_INLINE void CoroutineTaskResultEmpty::store()
+NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire()
 {
-    if (d_type == e_EXCEPTION) {
-        bslma::DestructionUtil::destroy(d_exception.address());
+    if (d_type == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
     }
 
-    d_type = e_COMPLETION;
+    d_type = e_SUCCESS;
 }
 
 NTCCFG_INLINE void CoroutineTaskResultEmpty::release()
 {
-    BSLS_ASSERT(d_type == e_COMPLETION);
-    return;
-}
+    if (d_type == e_SUCCESS) {
+        return;
+    }
+    else if (d_type == e_FAILURE) {
+        std::rethrow_exception(d_failure.object());
+    }
 
-NTCCFG_INLINE void CoroutineTaskResultEmpty::rethrow()
-{
-    BSLS_ASSERT(d_type == e_EXCEPTION);
-    std::rethrow_exception(d_exception.object());
-}
-
-NTCCFG_INLINE bool CoroutineTaskResultEmpty::isUndefined() const
-{
-    return d_type == e_UNDEFINED;
-}
-
-NTCCFG_INLINE bool CoroutineTaskResultEmpty::isException() const
-{
-    return d_type == e_EXCEPTION;
-}
-
-NTCCFG_INLINE bool CoroutineTaskResultEmpty::isCompletion() const
-{
-    return d_type == e_COMPLETION;
+    NTCCFG_UNREACHABLE();
 }
 
 // -----------------------
@@ -1480,22 +1407,15 @@ CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>& alloc)
 // PROTECTED MANIPULATORS
 
 template <typename RESULT>
-void CoroutineTaskResult<RESULT>::setException(std::exception_ptr exception)
+void CoroutineTaskResult<RESULT>::acquire(std::exception_ptr exception)
 {
-    d_storage.store(exception);
+    d_storage.acquire(exception);
 }
 
 template <typename RESULT>
-RESULT CoroutineTaskResult<RESULT>::releaseResult()
+RESULT CoroutineTaskResult<RESULT>::release()
 {
-    if (d_storage.isCompletion()) {
-        return d_storage.release();
-    }
-    else if (d_storage.isException()) {
-        d_storage.rethrow();
-    }
-
-    NTCCFG_UNREACHABLE();
+    return d_storage.release();
 }
 
 // MANIPULATORS
@@ -1504,60 +1424,7 @@ template <typename RESULT>
 void CoroutineTaskResult<RESULT>::return_value(
     bsl::convertible_to<RESULT> auto&& arg)
 {
-    d_storage.store(bsl::move(arg));
-}
-
-// -----------------------------
-// class CoroutineTaskResult<void>
-// -----------------------------
-
-// PROTECTED CREATORS
-
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-CoroutineTaskResult<RESULT>::CoroutineTaskResult()
-: d_storage()
-{
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>&)
-: d_storage()
-{
-}
-
-// PROTECTED MANIPULATORS
-
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-void CoroutineTaskResult<RESULT>::setException(std::exception_ptr exception)
-{
-    d_storage.store(exception);
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-void CoroutineTaskResult<RESULT>::releaseResult()
-{
-    if (d_storage.isCompletion()) {
-        d_storage.release();
-        return;
-    }
-    else if (d_storage.isException()) {
-        d_storage.rethrow();
-    }
-
-    NTCCFG_UNREACHABLE();
-}
-
-// MANIPULATORS
-
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-void CoroutineTaskResult<RESULT>::return_void()
-{
-    d_storage.store();
+    d_storage.acquire(bsl::move(arg));
 }
 
 // ---------------------------
@@ -1588,32 +1455,16 @@ CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>&)
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-void CoroutineTaskResult<RESULT>::setException(std::exception_ptr exception)
+void CoroutineTaskResult<RESULT>::acquire(std::exception_ptr exception)
 {
-    d_storage.store(exception);
+    d_storage.acquire(exception);
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-RESULT CoroutineTaskResult<RESULT>::releaseResult()
+RESULT CoroutineTaskResult<RESULT>::release()
 {
-    if (d_storage.isCompletion()) {
-        return static_cast<RESULT>(*d_storage.release());
-    }
-    else if (d_storage.isException()) {
-        d_storage.rethrow();
-    }
-
-    NTCCFG_UNREACHABLE();
-
-#if 0
-    if (const auto* ep = bsl::get_if<2>(&d_variant)) {
-        std::rethrow_exception(*ep);
-    }
-    else {
-        return static_cast<RESULT>(*bsl::get<1>(d_variant));
-    }
-#endif
+    return static_cast<RESULT>(*d_storage.release());
 }
 
 // MANIPULATORS
@@ -1623,7 +1474,52 @@ void CoroutineTaskResult<RESULT>::return_value(
     bsl::convertible_to<RESULT> auto&& arg)
 {
     RESULT r = static_cast<decltype(arg)>(arg);
-    d_storage.store(BSLS_UTIL_ADDRESSOF(r));
+    d_storage.acquire(BSLS_UTIL_ADDRESSOF(r));
+}
+
+// -----------------------------
+// class CoroutineTaskResult<void>
+// -----------------------------
+
+// PROTECTED CREATORS
+
+template <typename RESULT>
+NTSCFG_REQUIRE_VOID(RESULT)
+CoroutineTaskResult<RESULT>::CoroutineTaskResult()
+: d_storage()
+{
+}
+
+template <typename RESULT>
+NTSCFG_REQUIRE_VOID(RESULT)
+CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>&)
+: d_storage()
+{
+}
+
+// PROTECTED MANIPULATORS
+
+template <typename RESULT>
+NTSCFG_REQUIRE_VOID(RESULT)
+void CoroutineTaskResult<RESULT>::acquire(std::exception_ptr exception)
+{
+    d_storage.acquire(exception);
+}
+
+template <typename RESULT>
+NTSCFG_REQUIRE_VOID(RESULT)
+void CoroutineTaskResult<RESULT>::release()
+{
+    return d_storage.release();
+}
+
+// MANIPULATORS
+
+template <typename RESULT>
+NTSCFG_REQUIRE_VOID(RESULT)
+void CoroutineTaskResult<RESULT>::return_void()
+{
+    d_storage.acquire();
 }
 
 // --------------------------------
@@ -1659,6 +1555,7 @@ inline void CoroutineTask_FinalAwaitable::await_resume() noexcept
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
+
 template <typename RESULT>
 BDXA_SIMPLETASK_ALWAYS_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
     bsl::size_t size,
@@ -1744,7 +1641,7 @@ CoroutineTask_FinalAwaitable CoroutineTaskPromise<RESULT>::final_suspend()
 template <typename RESULT>
 void CoroutineTaskPromise<RESULT>::unhandled_exception()
 {
-    this->setException(bsl::current_exception());
+    this->acquire(bsl::current_exception());
 }
 
 template <typename RESULT>
@@ -1787,7 +1684,7 @@ std::coroutine_handle<CoroutineTaskPromise<RESULT> > CoroutineTask_Awaitable<
 template <typename RESULT>
 RESULT CoroutineTask_Awaitable<RESULT>::await_resume()
 {
-    return d_promise.releaseResult();
+    return d_promise.release();
 }
 
 // ----------------
@@ -1862,7 +1759,7 @@ RESULT CoroutineTaskUtil::syncAwait(CoroutineTask<RESULT>&& task)
     }
 
     imp.d_handle.destroy();
-    return task.d_promise_p->releaseResult();
+    return task.d_promise_p->release();
 }
 
 // ----------------------------------------
