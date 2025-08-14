@@ -63,6 +63,21 @@ BSLS_IDENT("$Id: $")
 /// Require the parameterized template 'TYPE' is a reference, of any kind.
 #define NTSCFG_REQUIRE_REFERENCE(TYPE) requires bsl::is_reference_v<TYPE>
 
+#define NTCS_COROUTINE_LOG_CONTEXT() NTCI_LOG_CONTEXT()
+
+#define NTCS_COROUTINE_LOG_PROCESS()                                          \
+    do {                                                                      \
+        NTCI_LOG_STREAM_TRACE << d_context << ": " << __FUNCTION__            \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
+#define NTCS_COROUTINE_LOG_AWAIT_SUSPEND(coroutine)                           \
+    do {                                                                      \
+        NTCI_LOG_STREAM_TRACE << d_context << ": " << __FUNCTION__ << ": "    \
+                              << (coroutine).address()                        \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
 namespace BloombergLP {
 namespace ntcs {
 
@@ -694,12 +709,6 @@ class CoroutineTaskContext
     /// Return the awaiter activation frame.
     AwaiterFrame awaiter() const;
 
-    /// Write a formatted, human-readable description of the specified 'object'
-    /// to the specified 'stream'. Return a reference to the modifiable
-    /// 'stream'.
-    friend bsl::ostream&
-    operator<<(bsl::ostream& stream, const CoroutineTaskContext& object);
-
   private:
     /// The current activation frame.
     CurrentFrame d_current;
@@ -707,6 +716,13 @@ class CoroutineTaskContext
     /// The awaiter activation frame.
     AwaiterFrame d_awaiter;
 };
+
+/// Write a formatted, human-readable description of the specified 'object'
+/// to the specified 'stream'. Return a reference to the modifiable
+/// 'stream'.
+template <typename RESULT>
+bsl::ostream&
+operator<<(bsl::ostream& stream, const CoroutineTaskContext<RESULT>& object);
 
 /// @internal @brief
 /// Provide an awaitable that is the result of the compiler calling
@@ -743,9 +759,17 @@ class CoroutineTaskContext
 ///
 /// @note
 /// This class's behavior is similar to 'std::suspend_always'.
+template <typename RESULT>
 class CoroutineTaskPromiseAwaitableInitial
 {
   public:
+    /// Defines a type alias for this type.
+    using Self = CoroutineTaskPromiseAwaitableInitial<RESULT>;
+
+    /// Create a new awaitable for the specified 'context'.
+    explicit CoroutineTaskPromiseAwaitableInitial(
+        const CoroutineTaskContext<RESULT>& context);
+
     /// Return false.
     ///
     /// @details
@@ -776,6 +800,10 @@ class CoroutineTaskPromiseAwaitableInitial
     /// is resumed. Return the result of the co_await expression, or rethrow
     /// the exception that occurred during the asynchronous operation, if any.
     void await_resume() const noexcept;
+
+  private:
+    /// The coroutine context.
+    CoroutineTaskContext<RESULT> d_context;
 };
 
 /// @internal @brief
@@ -810,9 +838,17 @@ class CoroutineTaskPromiseAwaitableInitial
 /// operation and potentially throwing any exceptions that occurred during the
 /// asynchronous operation. The return value of await_resume() becomes the
 /// result of the co_await expression.
+template <typename RESULT>
 class CoroutineTaskPromiseAwaitableFinal
 {
   public:
+    /// Defines a type alias for this type.
+    using Self = CoroutineTaskPromiseAwaitableInitial<RESULT>;
+
+    /// Create a new awaitable for the specified 'context'.
+    explicit CoroutineTaskPromiseAwaitableFinal(
+        const CoroutineTaskContext<RESULT>& context);
+
     /// Return false.
     ///
     /// @details
@@ -845,6 +881,10 @@ class CoroutineTaskPromiseAwaitableFinal
     /// is resumed. Return the result of the co_await expression, or rethrow
     /// the exception that occurred during the asynchronous operation, if any.
     void await_resume() noexcept;
+
+  private:
+    /// The coroutine context.
+    CoroutineTaskContext<RESULT> d_context;
 };
 
 /// This class is the promise type for 'CoroutineTask'.  The name
@@ -883,8 +923,8 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     template <typename OTHER_RESULT>
     friend class CoroutineTaskAwaitable;
 
-    friend class CoroutineTaskPromiseAwaitableInitial;
-    friend class CoroutineTaskPromiseAwaitableFinal;
+    friend class CoroutineTaskPromiseAwaitableInitial<RESULT>;
+    friend class CoroutineTaskPromiseAwaitableFinal<RESULT>;
 
     friend class CoroutineTaskUtil;
 
@@ -960,12 +1000,12 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     /// parameters are passed to this function implicitly, but ignored thereby.
     CoroutineTaskPromise(auto&&...);
 
-    CoroutineTaskPromiseAwaitableInitial initial_suspend();
+    CoroutineTaskPromiseAwaitableInitial<RESULT> initial_suspend();
 
     /// Return an awaitable object that, when awaited by a coroutine having
     /// '*this' as its promise object, will resume the coroutine referred to by
     /// 'd_awaiter'.
-    CoroutineTaskPromiseAwaitableFinal final_suspend() noexcept;
+    CoroutineTaskPromiseAwaitableFinal<RESULT> final_suspend() noexcept;
 
     // Note that 'unhandled_exception and either 'return_value' or
     // 'return_void' is provided by the base class.
@@ -2039,45 +2079,80 @@ template <typename RESULT>
 NTSCFG_INLINE bsl::ostream&
 operator<<(bsl::ostream& stream, const CoroutineTaskContext<RESULT>& object)
 {
-    stream << "[ current = " << object.d_current.address()
-           << " awaiter = " << object.d_awaiter.address() << " ]";
+    stream << "[ current = " << object.current().address()
+           << " awaiter = " << object.awaiter().address() << " ]";
     return stream;
 }
 
-NTSCFG_INLINE bool CoroutineTaskPromiseAwaitableInitial::await_ready() const noexcept
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskPromiseAwaitableInitial<RESULT>::
+    CoroutineTaskPromiseAwaitableInitial(
+        const CoroutineTaskContext<RESULT>& context)
+: d_context(context)
 {
+}
+
+template <typename RESULT>
+NTSCFG_INLINE bool
+CoroutineTaskPromiseAwaitableInitial<RESULT>::await_ready() const noexcept
+{
+    NTCS_COROUTINE_LOG_CONTEXT();
+    NTCS_COROUTINE_LOG_PROCESS();
+
     return false;
 }
 
-NTSCFG_INLINE void CoroutineTaskPromiseAwaitableInitial::await_suspend(
-    std::coroutine_handle<>) const noexcept
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineTaskPromiseAwaitableInitial<RESULT>::await_suspend(
+    std::coroutine_handle<> coroutine) const noexcept
+{
+    NTCS_COROUTINE_LOG_CONTEXT();
+    NTCS_COROUTINE_LOG_AWAIT_SUSPEND(coroutine);
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void
+CoroutineTaskPromiseAwaitableInitial<RESULT>::await_resume() const noexcept
+{
+    NTCS_COROUTINE_LOG_CONTEXT();
+    NTCS_COROUTINE_LOG_PROCESS();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskPromiseAwaitableFinal<RESULT>::
+    CoroutineTaskPromiseAwaitableFinal(
+        const CoroutineTaskContext<RESULT>& context)
+: d_context(context)
 {
 }
 
-NTSCFG_INLINE void CoroutineTaskPromiseAwaitableInitial::await_resume() const noexcept
+template <typename RESULT>
+NTSCFG_INLINE bool CoroutineTaskPromiseAwaitableFinal<RESULT>::await_ready() noexcept
 {
-}
+    NTCS_COROUTINE_LOG_CONTEXT();
+    NTCS_COROUTINE_LOG_PROCESS();
 
-NTSCFG_INLINE bool CoroutineTaskPromiseAwaitableFinal::await_ready() noexcept
-{
     return false;
 }
 
+template <typename RESULT>
 template <typename PROMISE>
 NTSCFG_INLINE std::coroutine_handle<void>
-CoroutineTaskPromiseAwaitableFinal::await_suspend(
+CoroutineTaskPromiseAwaitableFinal<RESULT>::await_suspend(
     std::coroutine_handle<PROMISE> task) noexcept
 {
+    NTCS_COROUTINE_LOG_CONTEXT();
+    NTCS_COROUTINE_LOG_AWAIT_SUSPEND(task);
+
     return task.promise().d_context.awaiter();
 }
 
-NTSCFG_INLINE void CoroutineTaskPromiseAwaitableFinal::await_resume() noexcept
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineTaskPromiseAwaitableFinal<RESULT>::await_resume() noexcept
 {
+    NTCS_COROUTINE_LOG_CONTEXT();
+    NTCS_COROUTINE_LOG_PROCESS();
 }
-
-// ------------------------
-// class CoroutineTaskPromise
-// ------------------------
 
 template <typename RESULT>
 NTSCFG_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
@@ -2149,17 +2224,17 @@ CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(auto&&...)
 }
 
 template <typename RESULT>
-CoroutineTaskPromiseAwaitableInitial
+CoroutineTaskPromiseAwaitableInitial<RESULT>
 CoroutineTaskPromise<RESULT>::initial_suspend()
 {
-    return {};
+    return CoroutineTaskPromiseAwaitableInitial<RESULT>(d_context);
 }
 
 template <typename RESULT>
-CoroutineTaskPromiseAwaitableFinal
+CoroutineTaskPromiseAwaitableFinal<RESULT>
 CoroutineTaskPromise<RESULT>::final_suspend() noexcept
 {
-    return {};
+    return CoroutineTaskPromiseAwaitableFinal<RESULT>(d_context);
 }
 
 template <typename RESULT>
