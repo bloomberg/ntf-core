@@ -31,9 +31,10 @@ AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 # BDE: AllowShortNamespacesOnASingleLine: true
 AlwaysBreakAfterDefinitionReturnType: None
-AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterReturnType: ExceptShortType
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: Yes
+BreakAfterAttributes: Always
 # BDE: AlwaysBreakAfterInline: true
 BinPackArguments: false
 BinPackParameters: false
@@ -63,7 +64,7 @@ BreakInheritanceList: BeforeColon
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializersBeforeComma: false
 BreakConstructorInitializers: BeforeComma
-BreakAfterJavaFieldAnnotations: false
+BreakAfterJavaFieldAnnotations: true
 BreakStringLiterals: true
 ColumnLimit:     79
 CommentPragmas: '^ ======'
@@ -153,7 +154,7 @@ PenaltyBreakFirstLessLess: 120
 PenaltyBreakString: 1000
 PenaltyBreakTemplateDeclaration: 10
 PenaltyExcessCharacter: 1000000
-PenaltyReturnTypeOnItsOwnLine: 6000000
+PenaltyReturnTypeOnItsOwnLine: 0
 PointerAlignment: Left
 ReferenceAlignment: Left
 ReflowComments:  false
@@ -180,6 +181,8 @@ SpacesInParentheses: false
 SpacesInSquareBrackets: false
 SpaceBeforeSquareBrackets: false
 Standard:        c++03
+Macros:
+  - NTSCFG_INLINE=inline
 StatementMacros:
   - Q_UNUSED
   - QT_REQUIRE_VERSION

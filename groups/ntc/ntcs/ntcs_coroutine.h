@@ -20,6 +20,7 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
+#include <ntci_log.h>
 #include <ntcscm_version.h>
 
 #include <ball_log.h>
@@ -67,6 +68,111 @@ namespace ntcs {
 
 template <typename RESULT>
 class CoroutineTask;
+
+template <typename RESULT>
+class CoroutineTaskPromise;
+
+/// @internal @brief
+/// Provide an awaitable that never suspends a coroutine.
+///
+/// @details
+/// In C++20, an "awaitable" is an object that can be used with the 'co_await'
+/// operator within a coroutine. The 'co_await' operator allows a coroutine to
+/// suspend its execution until the awaitable object indicates that it's ready
+/// to resume, typically when an asynchronous operation completes.
+///
+/// For an object to be awaitable, it must provide specific member functions
+/// (or be adaptable to provide them via operator co_await or await_transform
+/// in the promise type):
+///
+/// @li @b await_ready()
+/// This function is called first. If it returns true, the coroutine does not
+/// suspend, and await_resume() is called immediately. This serves as an
+/// optimization for cases where the awaited operation is already complete.
+///
+/// @li @b await_suspend(std::coroutine_handle<>)
+/// If await_ready() returns false, this function is called. It receives a
+/// std::coroutine_handle<> representing the calling coroutine. This function
+/// is responsible for initiating the asynchronous operation and storing the
+/// handle so the coroutine can be resumed later when the operation completes.
+/// It can return void, bool, or std::coroutine_handle<>.
+///
+/// @li @b await_resume()
+/// This function is called when the awaited operation completes and the
+/// coroutine is resumed. It is responsible for retrieving the result of the
+/// operation and potentially throwing any exceptions that occurred during the
+/// asynchronous operation. The return value of await_resume() becomes the
+/// result of the co_await expression.
+///
+/// @note
+/// This class's behavior is similar to 'std::suspend_never'.
+class CoroutineGenericAwaitableNow
+{
+  public:
+    bool await_ready() const noexcept
+    {
+        return true;
+    }
+
+    void await_suspend(std::coroutine_handle<>) const noexcept
+    {
+    }
+
+    void await_resume() const noexcept
+    {
+    }
+};
+
+/// @internal @brief
+/// Provide an awaitable that always suspends a coroutine.
+///
+/// @details
+/// In C++20, an "awaitable" is an object that can be used with the 'co_await'
+/// operator within a coroutine. The 'co_await' operator allows a coroutine to
+/// suspend its execution until the awaitable object indicates that it's ready
+/// to resume, typically when an asynchronous operation completes.
+///
+/// For an object to be awaitable, it must provide specific member functions
+/// (or be adaptable to provide them via operator co_await or await_transform
+/// in the promise type):
+///
+/// @li @b await_ready()
+/// This function is called first. If it returns true, the coroutine does not
+/// suspend, and await_resume() is called immediately. This serves as an
+/// optimization for cases where the awaited operation is already complete.
+///
+/// @li @b await_suspend(std::coroutine_handle<>)
+/// If await_ready() returns false, this function is called. It receives a
+/// std::coroutine_handle<> representing the calling coroutine. This function
+/// is responsible for initiating the asynchronous operation and storing the
+/// handle so the coroutine can be resumed later when the operation completes.
+/// It can return void, bool, or std::coroutine_handle<>.
+///
+/// @li @b await_resume()
+/// This function is called when the awaited operation completes and the
+/// coroutine is resumed. It is responsible for retrieving the result of the
+/// operation and potentially throwing any exceptions that occurred during the
+/// asynchronous operation. The return value of await_resume() becomes the
+/// result of the co_await expression.
+///
+/// @note
+/// This class's behavior is similar to 'std::suspend_always'.
+class CoroutineGenericAwaitableLater
+{
+  public:
+    bool await_ready() const noexcept
+    {
+        return false;
+    }
+
+    void await_suspend(std::coroutine_handle<>) const noexcept
+    {
+    }
+
+    void await_resume() const noexcept
+    {
+    }
+};
 
 /// @internal @brief
 /// Describe a coroutine task result stored by value.
@@ -130,8 +236,8 @@ class CoroutineTaskResultValue
     /// Assign the value of the specified 'other' object to this object. Assign
     /// an unspecified but valid value to the 'original' original. Return a
     /// reference to this modifiable object.
-    CoroutineTaskResultValue& operator=(CoroutineTaskResultValue&& other)
-        NTSCFG_NOEXCEPT;
+    CoroutineTaskResultValue&
+    operator=(CoroutineTaskResultValue&& other) NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
@@ -215,13 +321,13 @@ class CoroutineTaskResultAddress
     /// Assign the value of the specified 'other' object to this object. Assign
     /// an unspecified but valid value to the 'original' original. Return a
     /// reference to this modifiable object.
-    CoroutineTaskResultAddress& operator=(CoroutineTaskResultAddress&& other)
-        NTSCFG_NOEXCEPT;
+    CoroutineTaskResultAddress&
+    operator=(CoroutineTaskResultAddress&& other) NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
-    CoroutineTaskResultAddress& operator=(
-        const CoroutineTaskResultAddress& other);
+    CoroutineTaskResultAddress&
+    operator=(const CoroutineTaskResultAddress& other);
 
     /// Reset the value of this object to its value upon default construction.
     void reset();
@@ -288,8 +394,8 @@ class CoroutineTaskResultEmpty
     /// Assign the value of the specified 'other' object to this object. Assign
     /// an unspecified but valid value to the 'original' original. Return a
     /// reference to this modifiable object.
-    CoroutineTaskResultEmpty& operator=(CoroutineTaskResultEmpty&& other)
-        NTSCFG_NOEXCEPT;
+    CoroutineTaskResultEmpty&
+    operator=(CoroutineTaskResultEmpty&& other) NTSCFG_NOEXCEPT;
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
@@ -365,6 +471,10 @@ class CoroutineTaskResult
     /// resolution only if that conversion is possible.  The behavior is
     /// undefined if this object already holds a value or exception.
     void return_value(bsl::convertible_to<RESULT> auto&& arg);
+
+    /// Store the current exception so that it can be rethrown when 'release'
+    /// is called.
+    void unhandled_exception();
 };
 
 /// @internal @brief
@@ -423,6 +533,10 @@ class CoroutineTaskResult<RESULT>
     /// resolution only if that conversion is possible.  The behavior is
     /// undefined if this object already holds a reference or exception.
     void return_value(bsl::convertible_to<RESULT> auto&& arg);
+
+    /// Store the current exception so that it can be rethrown when 'release'
+    /// is called.
+    void unhandled_exception();
 };
 
 /// @internal @brief
@@ -477,6 +591,10 @@ class CoroutineTaskResult<RESULT>
     /// Set the result of this object.  The behavior is undefined if this
     /// object already has a result or holds an exception.
     void return_void();
+
+    /// Store the current exception so that it can be rethrown when 'release'
+    /// is called.
+    void unhandled_exception();
 };
 
 /// This component-private class provides the implementation for allocation and
@@ -498,106 +616,96 @@ class CoroutineTaskPromiseUtil
     static void deallocate(void* ptr, bsl::size_t size);
 };
 
-/// @internal @brief
-/// Provide an awaitable that never suspends a coroutine.
-///
-/// @details
-/// In C++20, an "awaitable" is an object that can be used with the 'co_await'
-/// operator within a coroutine. The 'co_await' operator allows a coroutine to
-/// suspend its execution until the awaitable object indicates that it's ready
-/// to resume, typically when an asynchronous operation completes.
-///
-/// For an object to be awaitable, it must provide specific member functions
-/// (or be adaptable to provide them via operator co_await or await_transform
-/// in the promise type):
-///
-/// @li @b await_ready()
-/// This function is called first. If it returns true, the coroutine does not
-/// suspend, and await_resume() is called immediately. This serves as an
-/// optimization for cases where the awaited operation is already complete.
-///
-/// @li @b await_suspend(std::coroutine_handle<>)
-/// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<> representing the calling coroutine. This function
-/// is responsible for initiating the asynchronous operation and storing the
-/// handle so the coroutine can be resumed later when the operation completes.
-/// It can return void, bool, or std::coroutine_handle<>.
-///
-/// @li @b await_resume()
-/// This function is called when the awaited operation completes and the
-/// coroutine is resumed. It is responsible for retrieving the result of the
-/// operation and potentially throwing any exceptions that occurred during the
-/// asynchronous operation. The return value of await_resume() becomes the
-/// result of the co_await expression.
-///
-/// @note
-/// This class's behavior is similar to 'std::suspend_never'.
-class CoroutineGenericAwaitableNow
+/// This class is the promise type for 'CoroutineTask'.  The name
+/// 'CoroutineTaskPromise' is component-private.  Objects of this type should not
+/// be used directly.
+template <typename RESULT>
+class CoroutineTaskContext
 {
   public:
-    constexpr bool await_ready() const noexcept
-    {
-        return true;
-    }
+    /// Defines a type alias for this type.
+    using Self = CoroutineTaskContext<RESULT>;
 
-    constexpr void await_suspend(std::coroutine_handle<>) const noexcept
-    {
-    }
+    /// Defines a type alias for a coroutine whose promise is this type.
+    using CurrentFrame = std::coroutine_handle<CoroutineTaskPromise<RESULT> >;
 
-    constexpr void await_resume() const noexcept
-    {
-    }
-};
+    /// Defines a type alias for a coroutine whose promise is type-erased.
+    using AwaiterFrame = std::coroutine_handle<void>;
 
-/// @internal @brief
-/// Provide an awaitable that always suspends a coroutine.
-///
-/// @details
-/// In C++20, an "awaitable" is an object that can be used with the 'co_await'
-/// operator within a coroutine. The 'co_await' operator allows a coroutine to
-/// suspend its execution until the awaitable object indicates that it's ready
-/// to resume, typically when an asynchronous operation completes.
-///
-/// For an object to be awaitable, it must provide specific member functions
-/// (or be adaptable to provide them via operator co_await or await_transform
-/// in the promise type):
-///
-/// @li @b await_ready()
-/// This function is called first. If it returns true, the coroutine does not
-/// suspend, and await_resume() is called immediately. This serves as an
-/// optimization for cases where the awaited operation is already complete.
-///
-/// @li @b await_suspend(std::coroutine_handle<>)
-/// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<> representing the calling coroutine. This function
-/// is responsible for initiating the asynchronous operation and storing the
-/// handle so the coroutine can be resumed later when the operation completes.
-/// It can return void, bool, or std::coroutine_handle<>.
-///
-/// @li @b await_resume()
-/// This function is called when the awaited operation completes and the
-/// coroutine is resumed. It is responsible for retrieving the result of the
-/// operation and potentially throwing any exceptions that occurred during the
-/// asynchronous operation. The return value of await_resume() becomes the
-/// result of the co_await expression.
-///
-/// @note
-/// This class's behavior is similar to 'std::suspend_always'.
-class CoroutineGenericAwaitableLater
-{
-  public:
-    constexpr bool await_ready() const noexcept
-    {
-        return false;
-    }
+    /// Create a new coroutine task context with the current and awaiter
+    /// frames initially uninitialized.
+    CoroutineTaskContext();
 
-    constexpr void await_suspend(std::coroutine_handle<>) const noexcept
-    {
-    }
+    /// Create a new coroutine task context referring to the specified
+    /// 'current' activation frame and the awaiter frame initially
+    /// uninitialized.
+    CoroutineTaskContext(CurrentFrame current);
 
-    constexpr void await_resume() const noexcept
-    {
-    }
+    /// Create a new coroutine task context referring to the specified
+    /// 'current' activation frame and 'awaiter' activation frame.
+    CoroutineTaskContext(CurrentFrame current, AwaiterFrame awaiter);
+
+    /// Create a new coroutine task context having the same value as the
+    /// specified 'other' object.
+    CoroutineTaskContext(CoroutineTaskContext&& other) noexcept;
+
+    /// Create a new coroutine task context having the same value as the
+    /// specified 'other' object.
+    CoroutineTaskContext(const CoroutineTaskContext& other);
+
+    /// Destroy this object.
+    ~CoroutineTaskContext();
+
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object.
+    CoroutineTaskContext& operator=(CoroutineTaskContext&& other) noexcept;
+
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object.
+    CoroutineTaskContext& operator=(const CoroutineTaskContext& other);
+
+    /// Reset the value of this object to its value upon default construction.
+    void reset();
+
+    /// Set the current activation frame to the specified 'current' activation
+    /// frame.
+    void setCurrent(CurrentFrame current);
+
+    /// Set the awaiter activation frame to the specified 'awaiter' activation
+    /// frame.
+    void setAwaiter(AwaiterFrame awaiter);
+
+    /// Return the promise of the current activation frame. The behavior is
+    /// undefined unless the current activation frame is defined.
+    CoroutineTaskPromise<RESULT>& promise();
+
+    /// Resume the awaiter activation frame.
+    void resumeAwaiter();
+
+    /// Resume the current activation frame.
+    void resumeCurrent();
+
+    /// Destroy the current activation frame.
+    void destroy();
+
+    /// Return the current activation frame.
+    CurrentFrame current() const;
+
+    /// Return the awaiter activation frame.
+    AwaiterFrame awaiter() const;
+
+    /// Write a formatted, human-readable description of the specified 'object'
+    /// to the specified 'stream'. Return a reference to the modifiable
+    /// 'stream'.
+    friend bsl::ostream&
+    operator<<(bsl::ostream& stream, const CoroutineTaskContext& object);
+
+  private:
+    /// The current activation frame.
+    CurrentFrame d_current;
+
+    /// The awaiter activation frame.
+    AwaiterFrame d_awaiter;
 };
 
 /// @internal @brief
@@ -645,7 +753,7 @@ class CoroutineTaskPromiseAwaitableInitial
     /// infrastructure when awaiting. Return true if the awaited operation is
     /// already complete (causing 'await_suspend' to be skipped and
     /// 'await_resume' to be called immediately.
-    constexpr bool await_ready() const noexcept;
+    bool await_ready() const noexcept;
 
     /// Do nothing.
     ///
@@ -658,7 +766,7 @@ class CoroutineTaskPromiseAwaitableInitial
     /// suspended. If it returns true, the coroutine remains suspended. If it
     /// returns false, the coroutine is automatically destroyed. If it returns
     /// 'std::coroutine_handle', that coroutine is resumed.
-    constexpr void await_suspend(std::coroutine_handle<>) const noexcept;
+    void await_suspend(std::coroutine_handle<>) const noexcept;
 
     /// Do nothing.
     ///
@@ -667,7 +775,7 @@ class CoroutineTaskPromiseAwaitableInitial
     /// infrastructure when the awaited operation completes and the coroutine
     /// is resumed. Return the result of the co_await expression, or rethrow
     /// the exception that occurred during the asynchronous operation, if any.
-    constexpr void await_resume() const noexcept;
+    void await_resume() const noexcept;
 };
 
 /// @internal @brief
@@ -726,8 +834,8 @@ class CoroutineTaskPromiseAwaitableFinal
     /// returns false, the coroutine is automatically destroyed. If it returns
     /// 'std::coroutine_handle', that coroutine is resumed.
     template <typename PROMISE>
-    std::coroutine_handle<void> await_suspend(
-        std::coroutine_handle<PROMISE> task) noexcept;
+    std::coroutine_handle<void>
+    await_suspend(std::coroutine_handle<PROMISE> task) noexcept;
 
     /// Do nothing.
     ///
@@ -745,11 +853,27 @@ class CoroutineTaskPromiseAwaitableFinal
 template <typename RESULT>
 class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 {
+    /// Defines a type alias for this type.
+    using Self = CoroutineTaskPromise<RESULT>;
+
+    /// Defines a type alias for a coroutine whose promise is this type.
+    using CurrentContext =
+        std::coroutine_handle<CoroutineTaskPromise<RESULT> >;
+
+    /// Defines a type alias for a coroutine whose promise is type-erased.
+    using AwaiterContext = std::coroutine_handle<void>;
+
     /// Defines a type alias for the alloator type.
     using Alloc = bsl::allocator<>;
 
+    /// The coroutine context.
+    CoroutineTaskContext<RESULT> d_context;
+
+    /// The current coroutine.
+    // CurrentContext d_current;
+
     /// The coroutine that awaits us.
-    std::coroutine_handle<void> d_awaiter;
+    /// AwaiterContext d_awaiter;
 
     /// The memory allocator.
     bsl::allocator<> d_allocator;
@@ -836,8 +960,6 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     /// parameters are passed to this function implicitly, but ignored thereby.
     CoroutineTaskPromise(auto&&...);
 
-    // COROUTINE API
-
     CoroutineTaskPromiseAwaitableInitial initial_suspend();
 
     /// Return an awaitable object that, when awaited by a coroutine having
@@ -845,11 +967,8 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     /// 'd_awaiter'.
     CoroutineTaskPromiseAwaitableFinal final_suspend() noexcept;
 
-    // Note that 'return_value' or 'return_void' is provided by the base class.
-
-    /// Store the current exception so that it can be rethrown when the
-    /// 'CoroutineTask' is awaited.
-    void unhandled_exception();
+    // Note that 'unhandled_exception and either 'return_value' or
+    // 'return_void' is provided by the base class.
 
     /// Return a 'CoroutineTask' object that refers to the coroutine that has
     /// '*this' as its promise object.
@@ -859,7 +978,7 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 /// Defines a type alias for a coroutine handle templation instantiation using
 /// the coroutine task's promise type.
 template <typename RESULT>
-using CoroutineTaskContext =
+using CoroutineTaskFrame =
     std::coroutine_handle<CoroutineTaskPromise<RESULT> >;
 
 // ==========================
@@ -875,7 +994,7 @@ class CoroutineTaskAwaitable
   public:
     /// Create a 'CoroutineTaskAwaitable' object that refers to the specified
     /// 'task'.
-    explicit CoroutineTaskAwaitable(CoroutineTaskContext<RESULT> coroutine);
+    explicit CoroutineTaskAwaitable(CoroutineTaskFrame<RESULT> coroutine);
 
     /// Return 'false'.
     bool await_ready();
@@ -885,8 +1004,8 @@ class CoroutineTaskAwaitable
     /// the coroutine of 'd_promise' refers to (causing it to be resumed).  The
     /// behavior is undefined if 'awaiter' does not refer to a coroutine.
     template <typename AWAITER>
-    CoroutineTaskContext<RESULT> await_suspend(
-        std::coroutine_handle<AWAITER> awaiter);
+    CoroutineTaskFrame<RESULT>
+    await_suspend(std::coroutine_handle<AWAITER> awaiter);
 
     /// Return the result of the coroutine of 'd_promise', or rethrow the
     /// exception by which that coroutine exited.
@@ -900,12 +1019,12 @@ class CoroutineTaskAwaitable
     CoroutineTaskAwaitable& operator=(const CoroutineTaskAwaitable&) = delete;
 
   private:
-    CoroutineTaskContext<RESULT>  d_coroutine;
+    CoroutineTaskFrame<RESULT>    d_coroutine;
     CoroutineTaskPromise<RESULT>* d_promise;
 
     template <typename OTHER_RESULT>
-    friend CoroutineTaskAwaitable<OTHER_RESULT> operator co_await(
-        CoroutineTask<OTHER_RESULT>&& task);
+    friend CoroutineTaskAwaitable<OTHER_RESULT>
+    operator co_await(CoroutineTask<OTHER_RESULT>&& task);
 };
 
 // ================
@@ -915,13 +1034,11 @@ class CoroutineTaskAwaitable
 /// @internal @brief
 /// Provide a coroutine task.
 ///
-/// This component provides a class template, 'ntcs::CoroutineTask', that can be
-/// used as the return type for a coroutine.  The 'CoroutineTask' object returned
-/// when the coroutine is invoked represents a piece of deferred work that will
-/// be completed when the coroutine is resumed by 'co_await'ing the
-/// 'CoroutineTask' object.  This component also provides the utility function
-/// 'ntcs::CoroutineTaskUtil::syncAwait', which takes a 'CoroutineTask' as an
-/// argument and synchronously awaits it (returning or rethrowing the result).
+/// @details
+/// This component provides a class that can be used as the return type for a
+/// coroutine.  The coroutine task object returned when the coroutine is
+/// invoked represents a piece of deferred work that will be completed when the
+/// coroutine is resumed by 'co_await'-ing the coroutine task object.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -946,8 +1063,8 @@ class CoroutineTask
     friend class CoroutineTaskUtil;
 
     template <typename OTHER_RESULT>
-    friend CoroutineTaskAwaitable<OTHER_RESULT> operator co_await(
-        CoroutineTask<OTHER_RESULT>&& task);
+    friend CoroutineTaskAwaitable<OTHER_RESULT>
+    operator co_await(CoroutineTask<OTHER_RESULT>&& task);
 
   private:
     /// This class is not copyable.
@@ -974,8 +1091,6 @@ class CoroutineTask
     ~CoroutineTask();
 };
 
-// FREE OPERATORS
-
 /// Provide the implementation for 'co_await'ing the specified 'task' by
 /// returning a 'CoroutineTaskAwaitable' object that owns 'task' and implements
 /// the necessary 'await_' methods.  The behavior is undefined if 'task' does
@@ -988,22 +1103,27 @@ CoroutineTaskAwaitable<RESULT> operator co_await(CoroutineTask<RESULT>&& task);
 // class CoroutineTaskUtil
 // =====================
 
+/// @internal @brief
+/// Provide utilities for coroutine tasks.
+///
+/// @par Thread Safety
+/// This class is thread safe.
 class CoroutineTaskUtil
 {
   public:
-    /// 'co_await' the specified 'task' and block the calling thread until the
+    /// Await the specified 'task' and block the calling thread until the
     /// coroutine referred to by 'task' has either returned or exited by
     /// throwing an exception.  Return the result of the coroutine, or else
     /// rethrow the exception by which it exited.
     template <typename RESULT>
-    static RESULT syncAwait(CoroutineTask<RESULT>&& task);
+    static RESULT synchronize(CoroutineTask<RESULT>&& task);
 };
 
 // ================================
 // class CoroutineTask_SyncAwaitState
 // ================================
 
-/// This component-private class is used by 'CoroutineTask::syncAwait' to
+/// This component-private class is used by 'CoroutineTask::synchronize' to
 /// communicate with an internal coroutine.
 class CoroutineTask_SyncAwaitState
 {
@@ -1054,16 +1174,16 @@ class CoroutineTask_SyncAwaitImp;
 class CoroutineTask_SyncAwaitInitialAwaitable
 {
   public:
-    constexpr bool await_ready() const noexcept
+    bool await_ready() const noexcept
     {
         return false;
     }
 
-    constexpr void await_suspend(std::coroutine_handle<>) const noexcept
+    void await_suspend(std::coroutine_handle<>) const noexcept
     {
     }
 
-    constexpr void await_resume() const noexcept
+    void await_resume() const noexcept
     {
     }
 };
@@ -1169,8 +1289,8 @@ class CoroutineTask_SyncAwaitImp
     /// coroutine referred to by the 'd_task' member of the specified 'state'.
     /// Use the 'd_allocator' member to provide memory.  Upon completion, set the
     /// 'd_done' member and then signal the 'd_cv' member.
-    static CoroutineTask_SyncAwaitImp create(
-        CoroutineTask_SyncAwaitState* state);
+    static CoroutineTask_SyncAwaitImp
+    create(CoroutineTask_SyncAwaitState* state);
 
     /// Create a 'CoroutineTask_SyncAwaitImp' object that refers to the coroutine
     /// specified by 'handle'.
@@ -1240,8 +1360,9 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::~CoroutineTaskResultValue()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
-    TYPE>::operator=(CoroutineTaskResultValue&& other) NTSCFG_NOEXCEPT
+NTCCFG_INLINE CoroutineTaskResultValue<TYPE>&
+CoroutineTaskResultValue<TYPE>::operator=(CoroutineTaskResultValue&& other)
+    NTSCFG_NOEXCEPT
 {
     if (this != &other) {
         if (other.d_type == e_SUCCESS) {
@@ -1259,8 +1380,9 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
-    TYPE>::operator=(const CoroutineTaskResultValue& other)
+NTCCFG_INLINE CoroutineTaskResultValue<TYPE>&
+              CoroutineTaskResultValue<TYPE>::operator=(
+    const CoroutineTaskResultValue& other)
 {
     if (this != &other) {
         if (other.d_type == e_SUCCESS) {
@@ -1291,8 +1413,8 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::reset()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
-    std::exception_ptr&& exception)
+NTCCFG_INLINE void
+CoroutineTaskResultValue<TYPE>::acquire(std::exception_ptr&& exception)
 {
     if (d_type == e_SUCCESS) {
         bslma::DestructionUtil::destroy(d_success.address());
@@ -1310,8 +1432,8 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
-    std::exception_ptr exception)
+NTCCFG_INLINE void
+CoroutineTaskResultValue<TYPE>::acquire(std::exception_ptr exception)
 {
     if (d_type == e_SUCCESS) {
         bslma::DestructionUtil::destroy(d_success.address());
@@ -1345,8 +1467,8 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(TYPE&& completion)
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
-    const TYPE& completion)
+NTCCFG_INLINE void
+CoroutineTaskResultValue<TYPE>::acquire(const TYPE& completion)
 {
     if (d_type == e_SUCCESS) {
         bslma::DestructionUtil::destroy(d_success.address());
@@ -1376,8 +1498,8 @@ NTCCFG_INLINE TYPE CoroutineTaskResultValue<TYPE>::release()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE bslma::Allocator* CoroutineTaskResultValue<TYPE>::allocator()
-    const
+NTCCFG_INLINE bslma::Allocator*
+              CoroutineTaskResultValue<TYPE>::allocator() const
 {
     return d_allocator;
 }
@@ -1426,8 +1548,9 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::~CoroutineTaskResultAddress()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
-    TYPE>::operator=(CoroutineTaskResultAddress&& other) NTSCFG_NOEXCEPT
+NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>&
+CoroutineTaskResultAddress<TYPE>::operator=(CoroutineTaskResultAddress&& other)
+    NTSCFG_NOEXCEPT
 {
     if (this != &other) {
         if (other.d_type == e_SUCCESS) {
@@ -1445,8 +1568,9 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
-    TYPE>::operator=(const CoroutineTaskResultAddress& other)
+NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>&
+              CoroutineTaskResultAddress<TYPE>::operator=(
+    const CoroutineTaskResultAddress& other)
 {
     if (this != &other) {
         if (other.d_type == e_SUCCESS) {
@@ -1477,8 +1601,8 @@ NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::reset()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(
-    std::exception_ptr&& exception)
+NTCCFG_INLINE void
+CoroutineTaskResultAddress<TYPE>::acquire(std::exception_ptr&& exception)
 {
     if (d_type == e_SUCCESS) {
         bslma::DestructionUtil::destroy(d_success.address());
@@ -1493,8 +1617,8 @@ NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(
-    std::exception_ptr exception)
+NTCCFG_INLINE void
+CoroutineTaskResultAddress<TYPE>::acquire(std::exception_ptr exception)
 {
     if (d_type == e_SUCCESS) {
         bslma::DestructionUtil::destroy(d_success.address());
@@ -1566,8 +1690,9 @@ NTCCFG_INLINE CoroutineTaskResultEmpty::~CoroutineTaskResultEmpty()
     }
 }
 
-NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
-    CoroutineTaskResultEmpty&& other) NTSCFG_NOEXCEPT
+NTCCFG_INLINE CoroutineTaskResultEmpty&
+CoroutineTaskResultEmpty::operator=(CoroutineTaskResultEmpty&& other)
+    NTSCFG_NOEXCEPT
 {
     if (this != &other) {
         if (other.d_type == e_SUCCESS) {
@@ -1584,8 +1709,8 @@ NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
     return *this;
 }
 
-NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
-    const CoroutineTaskResultEmpty& other)
+NTCCFG_INLINE CoroutineTaskResultEmpty&
+CoroutineTaskResultEmpty::operator=(const CoroutineTaskResultEmpty& other)
 {
     if (this != &other) {
         if (other.d_type == e_SUCCESS) {
@@ -1611,8 +1736,8 @@ NTCCFG_INLINE void CoroutineTaskResultEmpty::reset()
     d_type = e_UNDEFINED;
 }
 
-NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire(
-    std::exception_ptr&& exception)
+NTCCFG_INLINE void
+CoroutineTaskResultEmpty::acquire(std::exception_ptr&& exception)
 {
     if (d_type == e_FAILURE) {
         bslma::DestructionUtil::destroy(d_failure.address());
@@ -1623,8 +1748,8 @@ NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire(
     d_type = e_FAILURE;
 }
 
-NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire(
-    std::exception_ptr exception)
+NTCCFG_INLINE void
+CoroutineTaskResultEmpty::acquire(std::exception_ptr exception)
 {
     if (d_type == e_FAILURE) {
         bslma::DestructionUtil::destroy(d_failure.address());
@@ -1688,6 +1813,12 @@ void CoroutineTaskResult<RESULT>::return_value(
 }
 
 template <typename RESULT>
+void CoroutineTaskResult<RESULT>::unhandled_exception()
+{
+    this->acquire(bsl::current_exception());
+}
+
+template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
 CoroutineTaskResult<RESULT>::CoroutineTaskResult()
 : d_storage()
@@ -1725,6 +1856,13 @@ void CoroutineTaskResult<RESULT>::return_value(
 }
 
 template <typename RESULT>
+NTSCFG_REQUIRE_REFERENCE(RESULT)
+void CoroutineTaskResult<RESULT>::unhandled_exception()
+{
+    this->acquire(bsl::current_exception());
+}
+
+template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 CoroutineTaskResult<RESULT>::CoroutineTaskResult()
 : d_storage()
@@ -1759,22 +1897,164 @@ void CoroutineTaskResult<RESULT>::return_void()
     d_storage.acquire();
 }
 
-NTSCFG_INLINE
-constexpr bool CoroutineTaskPromiseAwaitableInitial::await_ready()
-    const noexcept
+template <typename RESULT>
+NTSCFG_REQUIRE_VOID(RESULT)
+void CoroutineTaskResult<RESULT>::unhandled_exception()
+{
+    this->acquire(bsl::current_exception());
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext()
+: d_current(nullptr)
+, d_awaiter(nullptr)
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext(CurrentFrame current)
+: d_current(current)
+, d_awaiter(nullptr)
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext(CurrentFrame current,
+                                                          AwaiterFrame awaiter)
+: d_current(current)
+, d_awaiter(awaiter)
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext(
+    CoroutineTaskContext&& other) noexcept : d_current(other.d_current),
+                                             d_awaiter(other.d_awaiter)
+{
+    other.d_current = nullptr;
+    other.d_awaiter = nullptr;
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext(
+    const CoroutineTaskContext& other)
+: d_current(other.d_current)
+, d_awaiter(other.d_awaiter)
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskContext<RESULT>::~CoroutineTaskContext()
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskContext<RESULT>&
+CoroutineTaskContext<RESULT>::operator=(CoroutineTaskContext&& other) noexcept
+{
+    if (this != &other) {
+        d_current = other.d_current;
+        d_awaiter = other.d_awaiter;
+    }
+
+    return *this;
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskContext<RESULT>&
+CoroutineTaskContext<RESULT>::operator=(const CoroutineTaskContext& other)
+{
+    if (this != &other) {
+        d_current = other.d_current;
+        d_awaiter = other.d_awaiter;
+    }
+
+    return *this;
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineTaskContext<RESULT>::reset()
+{
+    d_current = nullptr;
+    d_awaiter = nullptr;
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineTaskContext<RESULT>::setCurrent(CurrentFrame current)
+{
+    d_current = current;
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineTaskContext<RESULT>::setAwaiter(AwaiterFrame awaiter)
+{
+    d_awaiter = awaiter;
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskPromise<RESULT>& CoroutineTaskContext<RESULT>::promise()
+{
+    BSLS_ASSERT(d_current.address() != nullptr);
+    d_current.promise();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineTaskContext<RESULT>::resumeAwaiter()
+{
+    BSLS_ASSERT(d_awaiter.address() != nullptr);
+    d_awaiter.resume();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineTaskContext<RESULT>::resumeCurrent()
+{
+    BSLS_ASSERT(d_current.address() != nullptr);
+    d_current.resume();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineTaskContext<RESULT>::destroy()
+{
+    if (d_current.address() != nullptr) {
+        d_current.destroy();
+        d_current = nullptr;
+    }
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskContext<RESULT>::CurrentFrame
+CoroutineTaskContext<RESULT>::current() const
+{
+    return d_current;
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskContext<RESULT>::AwaiterFrame
+CoroutineTaskContext<RESULT>::awaiter() const
+{
+    return d_awaiter;
+}
+
+template <typename RESULT>
+NTSCFG_INLINE bsl::ostream&
+operator<<(bsl::ostream& stream, const CoroutineTaskContext<RESULT>& object)
+{
+    stream << "[ current = " << object.d_current.address()
+           << " awaiter = " << object.d_awaiter.address() << " ]";
+    return stream;
+}
+
+NTSCFG_INLINE bool CoroutineTaskPromiseAwaitableInitial::await_ready() const noexcept
 {
     return false;
 }
 
-NTSCFG_INLINE
-constexpr void CoroutineTaskPromiseAwaitableInitial::await_suspend(
+NTSCFG_INLINE void CoroutineTaskPromiseAwaitableInitial::await_suspend(
     std::coroutine_handle<>) const noexcept
 {
 }
 
-NTSCFG_INLINE
-constexpr void CoroutineTaskPromiseAwaitableInitial::await_resume()
-    const noexcept
+NTSCFG_INLINE void CoroutineTaskPromiseAwaitableInitial::await_resume() const noexcept
 {
 }
 
@@ -1784,10 +2064,11 @@ NTSCFG_INLINE bool CoroutineTaskPromiseAwaitableFinal::await_ready() noexcept
 }
 
 template <typename PROMISE>
-NTSCFG_INLINE std::coroutine_handle<void> CoroutineTaskPromiseAwaitableFinal::
-    await_suspend(std::coroutine_handle<PROMISE> task) noexcept
+NTSCFG_INLINE std::coroutine_handle<void>
+CoroutineTaskPromiseAwaitableFinal::await_suspend(
+    std::coroutine_handle<PROMISE> task) noexcept
 {
-    return task.promise().d_awaiter;
+    return task.promise().d_context.awaiter();
 }
 
 NTSCFG_INLINE void CoroutineTaskPromiseAwaitableFinal::await_resume() noexcept
@@ -1820,17 +2101,15 @@ NTSCFG_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
 }
 
 template <typename RESULT>
-NTSCFG_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
-    bsl::size_t size,
-    auto&&...)
+NTSCFG_INLINE void*
+CoroutineTaskPromise<RESULT>::operator new(bsl::size_t size, auto&&...)
 {
     return CoroutineTaskPromiseUtil::allocate(size, Alloc());
 }
 
 template <typename RESULT>
-NTSCFG_INLINE void CoroutineTaskPromise<RESULT>::operator delete(
-    void*       ptr,
-    bsl::size_t size)
+NTSCFG_INLINE void
+CoroutineTaskPromise<RESULT>::operator delete(void* ptr, bsl::size_t size)
 {
     CoroutineTaskPromiseUtil::deallocate(ptr, size);
 }
@@ -1841,8 +2120,10 @@ CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     bsl::convertible_to<Alloc> auto&& alloc,
     auto&&...)
 : CoroutineTaskResult<RESULT>(static_cast<decltype(alloc)>(alloc))
+, d_context()
 , d_allocator(static_cast<decltype(alloc)>(alloc))
 {
+    d_context.setCurrent(std::coroutine_handle<Self>::from_promise(*this));
 }
 
 template <typename RESULT>
@@ -1852,35 +2133,33 @@ CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     bsl::convertible_to<Alloc> auto&& alloc,
     auto&&...)
 : CoroutineTaskResult<RESULT>(static_cast<decltype(alloc)>(alloc))
+, d_context()
 , d_allocator(static_cast<decltype(alloc)>(alloc))
 {
+    d_context.setCurrent(std::coroutine_handle<Self>::from_promise(*this));
 }
 
 template <typename RESULT>
 CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(auto&&...)
+: CoroutineTaskResult<RESULT>()
+, d_context()
+, d_allocator()
 {
+    d_context.setCurrent(std::coroutine_handle<Self>::from_promise(*this));
 }
 
-// COROUTINE API
-
 template <typename RESULT>
-CoroutineTaskPromiseAwaitableInitial CoroutineTaskPromise<
-    RESULT>::initial_suspend()
+CoroutineTaskPromiseAwaitableInitial
+CoroutineTaskPromise<RESULT>::initial_suspend()
 {
     return {};
 }
 
 template <typename RESULT>
-CoroutineTaskPromiseAwaitableFinal CoroutineTaskPromise<
-    RESULT>::final_suspend() noexcept
+CoroutineTaskPromiseAwaitableFinal
+CoroutineTaskPromise<RESULT>::final_suspend() noexcept
 {
     return {};
-}
-
-template <typename RESULT>
-void CoroutineTaskPromise<RESULT>::unhandled_exception()
-{
-    this->acquire(bsl::current_exception());
 }
 
 template <typename RESULT>
@@ -1897,7 +2176,7 @@ CoroutineTask<RESULT> CoroutineTaskPromise<RESULT>::get_return_object()
 
 template <typename RESULT>
 CoroutineTaskAwaitable<RESULT>::CoroutineTaskAwaitable(
-    CoroutineTaskContext<RESULT> coroutine)
+    CoroutineTaskFrame<RESULT> coroutine)
 : d_coroutine(coroutine)
 , d_promise(&coroutine.promise())
 {
@@ -1911,16 +2190,16 @@ bool CoroutineTaskAwaitable<RESULT>::await_ready()
 
 template <typename RESULT>
 template <typename AWAITER>
-CoroutineTaskContext<RESULT> CoroutineTaskAwaitable<RESULT>::await_suspend(
+CoroutineTaskFrame<RESULT> CoroutineTaskAwaitable<RESULT>::await_suspend(
     std::coroutine_handle<AWAITER> awaiter)
 {
     BALL_LOG_SET_CATEGORY("NTF");
     BALL_LOG_INFO << "await_suspend" << BALL_LOG_END;
 
-    d_promise->d_awaiter = awaiter;
+    d_promise->d_context.setAwaiter(awaiter);
 
-    CoroutineTaskContext<RESULT> coroutine =
-        CoroutineTaskContext<RESULT>::from_promise(*d_promise);
+    CoroutineTaskFrame<RESULT> coroutine =
+        CoroutineTaskFrame<RESULT>::from_promise(*d_promise);
 
     BSLS_ASSERT_OPT(coroutine == d_coroutine);
 
@@ -1970,8 +2249,6 @@ CoroutineTask<RESULT>::~CoroutineTask()
     }
 }
 
-// FREE OPERATORS
-
 template <typename RESULT>
 CoroutineTaskAwaitable<RESULT> operator co_await(CoroutineTask<RESULT>&& task)
 {
@@ -1983,7 +2260,7 @@ CoroutineTaskAwaitable<RESULT> operator co_await(CoroutineTask<RESULT>&& task)
 // ---------------------
 
 template <typename RESULT>
-RESULT CoroutineTaskUtil::syncAwait(CoroutineTask<RESULT>&& task)
+RESULT CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&& task)
 {
     // The idea is to create an auxiliary coroutine that will resume the
     // 'CoroutineTask' for us, setting itself as the awaiter.  So that coroutine
@@ -2000,7 +2277,7 @@ RESULT CoroutineTaskUtil::syncAwait(CoroutineTask<RESULT>&& task)
 
     CoroutineTask_SyncAwaitImp imp =
         CoroutineTask_SyncAwaitImp::create(&state);
-    task.d_promise->d_awaiter = imp.d_handle;
+    task.d_promise->d_context.setAwaiter(imp.d_handle);
     imp.d_handle.resume();
 
     {
@@ -2018,8 +2295,7 @@ RESULT CoroutineTaskUtil::syncAwait(CoroutineTask<RESULT>&& task)
 // class CoroutineTask_SyncAwaitFinalAwaitable
 // ----------------------------------------
 
-NTSCFG_INLINE bool CoroutineTask_SyncAwaitFinalAwaitable::await_ready()
-    noexcept
+NTSCFG_INLINE bool CoroutineTask_SyncAwaitFinalAwaitable::await_ready() noexcept
 {
     return false;
 }
@@ -2037,9 +2313,8 @@ NTSCFG_INLINE void* CoroutineTask_SyncAwaitPromise::operator new(
     return CoroutineTaskPromiseUtil::allocate(size, state->d_allocator);
 }
 
-NTSCFG_INLINE void CoroutineTask_SyncAwaitPromise::operator delete(
-    void*       ptr,
-    bsl::size_t size)
+NTSCFG_INLINE void
+CoroutineTask_SyncAwaitPromise::operator delete(void* ptr, bsl::size_t size)
 {
     CoroutineTaskPromiseUtil::deallocate(ptr, size);
 }
