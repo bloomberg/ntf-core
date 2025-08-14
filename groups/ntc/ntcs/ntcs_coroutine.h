@@ -85,7 +85,13 @@ template <typename RESULT>
 class CoroutineTask;
 
 template <typename RESULT>
+class CoroutineTaskContext;
+
+template <typename RESULT>
 class CoroutineTaskPromise;
+
+template <typename RESULT>
+class CoroutineTaskAwaitable;
 
 /// @internal @brief
 /// Provide an awaitable that never suspends a coroutine.
@@ -461,7 +467,7 @@ class CoroutineTaskResult
     /// This class is not assignable.
     CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
 
-  protected:
+  public:
     /// Create a new coroutine task result that is initially incomplete.
     CoroutineTaskResult();
 
@@ -523,7 +529,7 @@ class CoroutineTaskResult<RESULT>
     /// This class is not assignable.
     CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
 
-  protected:
+  public:
     /// Create a new coroutine task result that is initially incomplete.
     CoroutineTaskResult();
 
@@ -583,7 +589,7 @@ class CoroutineTaskResult<RESULT>
     /// This class is not assignable.
     CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
 
-  protected:
+  public:
     /// Create a new coroutine task result that is initially incomplete.
     CoroutineTaskResult();
 
@@ -699,6 +705,9 @@ class CoroutineTaskContext
 
     /// Resume the current activation frame.
     void resumeCurrent();
+
+    /// Release the result or throw an exception.
+    RESULT release();
 
     /// Destroy the current activation frame.
     void destroy();
@@ -928,6 +937,10 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 
     friend class CoroutineTaskUtil;
 
+    template <typename OTHER_RESULT>
+    friend CoroutineTaskAwaitable<OTHER_RESULT>
+    operator co_await(CoroutineTask<OTHER_RESULT>&& task);
+
   public:
     /// Return a pointer to a maximally aligned block of memory having at least
     /// the specified 'size', allocated using the specified 'alloc'.  This
@@ -1032,9 +1045,11 @@ template <typename RESULT>
 class CoroutineTaskAwaitable
 {
   public:
-    /// Create a 'CoroutineTaskAwaitable' object that refers to the specified
-    /// 'task'.
-    explicit CoroutineTaskAwaitable(CoroutineTaskFrame<RESULT> coroutine);
+    /// Defines a type alias for this type.
+    using Self = CoroutineTaskAwaitable<RESULT>;
+
+    /// Create a new awaitable for the specified 'context'.
+    explicit CoroutineTaskAwaitable(CoroutineTaskContext<RESULT>* context);
 
     /// Return 'false'.
     bool await_ready();
@@ -1059,8 +1074,8 @@ class CoroutineTaskAwaitable
     CoroutineTaskAwaitable& operator=(const CoroutineTaskAwaitable&) = delete;
 
   private:
-    CoroutineTaskFrame<RESULT>    d_coroutine;
-    CoroutineTaskPromise<RESULT>* d_promise;
+    /// The coroutine context.
+    CoroutineTaskContext<RESULT>* d_context;
 
     template <typename OTHER_RESULT>
     friend CoroutineTaskAwaitable<OTHER_RESULT>
@@ -2053,6 +2068,13 @@ NTSCFG_INLINE void CoroutineTaskContext<RESULT>::resumeCurrent()
 }
 
 template <typename RESULT>
+NTSCFG_INLINE RESULT CoroutineTaskContext<RESULT>::release()
+{
+    BSLS_ASSERT(d_current.address() != nullptr);
+    return d_current.promise().release();
+}
+
+template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskContext<RESULT>::destroy()
 {
     if (d_current.address() != nullptr) {
@@ -2251,9 +2273,8 @@ CoroutineTask<RESULT> CoroutineTaskPromise<RESULT>::get_return_object()
 
 template <typename RESULT>
 CoroutineTaskAwaitable<RESULT>::CoroutineTaskAwaitable(
-    CoroutineTaskFrame<RESULT> coroutine)
-: d_coroutine(coroutine)
-, d_promise(&coroutine.promise())
+    CoroutineTaskContext<RESULT>* context)
+: d_context(context)
 {
 }
 
@@ -2271,20 +2292,15 @@ CoroutineTaskFrame<RESULT> CoroutineTaskAwaitable<RESULT>::await_suspend(
     BALL_LOG_SET_CATEGORY("NTF");
     BALL_LOG_INFO << "await_suspend" << BALL_LOG_END;
 
-    d_promise->d_context.setAwaiter(awaiter);
+    d_context->setAwaiter(awaiter);
 
-    CoroutineTaskFrame<RESULT> coroutine =
-        CoroutineTaskFrame<RESULT>::from_promise(*d_promise);
-
-    BSLS_ASSERT_OPT(coroutine == d_coroutine);
-
-    return coroutine;
+    return d_context->current();
 }
 
 template <typename RESULT>
 RESULT CoroutineTaskAwaitable<RESULT>::await_resume()
 {
-    return d_promise->release();
+    return d_context->release();
 }
 
 // ----------------
@@ -2327,7 +2343,7 @@ CoroutineTask<RESULT>::~CoroutineTask()
 template <typename RESULT>
 CoroutineTaskAwaitable<RESULT> operator co_await(CoroutineTask<RESULT>&& task)
 {
-    return CoroutineTaskAwaitable<RESULT>(task.d_coroutine);
+    return CoroutineTaskAwaitable<RESULT>(&task.d_promise->d_context);
 }
 
 // ---------------------
