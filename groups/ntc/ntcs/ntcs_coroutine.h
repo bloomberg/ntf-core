@@ -21,6 +21,9 @@ BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+
+#include <ball_log.h>
+
 #include <bsl_memory.h>
 
 #include <bslma_constructionutil.h>
@@ -853,6 +856,12 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     CoroutineTask<RESULT> get_return_object();
 };
 
+/// Defines a type alias for a coroutine handle templation instantiation using
+/// the coroutine task's promise type.
+template <typename RESULT>
+using CoroutineTaskContext =
+    std::coroutine_handle<CoroutineTaskPromise<RESULT> >;
+
 // ==========================
 // class CoroutineTaskAwaitable
 // ==========================
@@ -863,24 +872,10 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 template <typename RESULT>
 class CoroutineTaskAwaitable
 {
-  private:
-    CoroutineTaskPromise<RESULT>& d_promise;
-
-    template <typename t_OTHER_RESULT>
-    friend CoroutineTaskAwaitable<t_OTHER_RESULT> operator co_await(
-        CoroutineTask<t_OTHER_RESULT>&& task);
-
-  private:
-    /// This class is not copyable.
-    CoroutineTaskAwaitable(const CoroutineTaskAwaitable&) = delete;
-
-    /// This class is not assignable.
-    CoroutineTaskAwaitable& operator=(const CoroutineTaskAwaitable&) = delete;
-
   public:
     /// Create a 'CoroutineTaskAwaitable' object that refers to the specified
     /// 'task'.
-    CoroutineTaskAwaitable(CoroutineTask<RESULT>& task);
+    explicit CoroutineTaskAwaitable(CoroutineTaskContext<RESULT> coroutine);
 
     /// Return 'false'.
     bool await_ready();
@@ -890,12 +885,27 @@ class CoroutineTaskAwaitable
     /// the coroutine of 'd_promise' refers to (causing it to be resumed).  The
     /// behavior is undefined if 'awaiter' does not refer to a coroutine.
     template <typename AWAITER>
-    std::coroutine_handle<CoroutineTaskPromise<RESULT> > await_suspend(
+    CoroutineTaskContext<RESULT> await_suspend(
         std::coroutine_handle<AWAITER> awaiter);
 
     /// Return the result of the coroutine of 'd_promise', or rethrow the
     /// exception by which that coroutine exited.
     RESULT await_resume();
+
+  private:
+    /// This class is not copyable.
+    CoroutineTaskAwaitable(const CoroutineTaskAwaitable&) = delete;
+
+    /// This class is not assignable.
+    CoroutineTaskAwaitable& operator=(const CoroutineTaskAwaitable&) = delete;
+
+  private:
+    CoroutineTaskContext<RESULT>  d_coroutine;
+    CoroutineTaskPromise<RESULT>* d_promise;
+
+    template <typename OTHER_RESULT>
+    friend CoroutineTaskAwaitable<OTHER_RESULT> operator co_await(
+        CoroutineTask<OTHER_RESULT>&& task);
 };
 
 // ================
@@ -925,7 +935,7 @@ class CoroutineTask
 
   private:
     /// The coroutine.
-    std::coroutine_handle<promise_type> m_coroutine;
+    std::coroutine_handle<promise_type> d_coroutine;
 
     /// The promise.
     promise_type* d_promise;
@@ -934,6 +944,10 @@ class CoroutineTask
     friend CoroutineTaskPromise<RESULT>;
 
     friend class CoroutineTaskUtil;
+
+    template <typename OTHER_RESULT>
+    friend CoroutineTaskAwaitable<OTHER_RESULT> operator co_await(
+        CoroutineTask<OTHER_RESULT>&& task);
 
   private:
     /// This class is not copyable.
@@ -1883,8 +1897,9 @@ CoroutineTask<RESULT> CoroutineTaskPromise<RESULT>::get_return_object()
 
 template <typename RESULT>
 CoroutineTaskAwaitable<RESULT>::CoroutineTaskAwaitable(
-    CoroutineTask<RESULT>& task)
-: d_promise(*task.d_promise)
+    CoroutineTaskContext<RESULT> coroutine)
+: d_coroutine(coroutine)
+, d_promise(&coroutine.promise())
 {
 }
 
@@ -1896,18 +1911,26 @@ bool CoroutineTaskAwaitable<RESULT>::await_ready()
 
 template <typename RESULT>
 template <typename AWAITER>
-std::coroutine_handle<CoroutineTaskPromise<RESULT> > CoroutineTaskAwaitable<
-    RESULT>::await_suspend(std::coroutine_handle<AWAITER> awaiter)
+CoroutineTaskContext<RESULT> CoroutineTaskAwaitable<RESULT>::await_suspend(
+    std::coroutine_handle<AWAITER> awaiter)
 {
-    d_promise.d_awaiter = awaiter;
-    return std::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
-        d_promise);
+    BALL_LOG_SET_CATEGORY("NTF");
+    BALL_LOG_INFO << "await_suspend" << BALL_LOG_END;
+
+    d_promise->d_awaiter = awaiter;
+
+    CoroutineTaskContext<RESULT> coroutine =
+        CoroutineTaskContext<RESULT>::from_promise(*d_promise);
+
+    BSLS_ASSERT_OPT(coroutine == d_coroutine);
+
+    return coroutine;
 }
 
 template <typename RESULT>
 RESULT CoroutineTaskAwaitable<RESULT>::await_resume()
 {
-    return d_promise.release();
+    return d_promise->release();
 }
 
 // ----------------
@@ -1916,7 +1939,7 @@ RESULT CoroutineTaskAwaitable<RESULT>::await_resume()
 
 template <typename RESULT>
 CoroutineTask<RESULT>::CoroutineTask()
-: m_coroutine(nullptr)
+: d_coroutine(nullptr)
 , d_promise(nullptr)
 {
 }
@@ -1925,25 +1948,25 @@ template <typename RESULT>
 CoroutineTask<RESULT>::CoroutineTask(
     std::coroutine_handle<promise_type> coroutine,
     CoroutineTaskPromise<RESULT>*       promise)
-: m_coroutine(coroutine)
+: d_coroutine(coroutine)
 , d_promise(promise)
 {
 }
 
 template <typename RESULT>
 CoroutineTask<RESULT>::CoroutineTask(CoroutineTask&& other)
-: m_coroutine(other.m_coroutine)
+: d_coroutine(other.d_coroutine)
 , d_promise(other.d_promise)
 {
-    other.m_coroutine = nullptr;
+    other.d_coroutine = nullptr;
     other.d_promise   = nullptr;
 }
 
 template <typename RESULT>
 CoroutineTask<RESULT>::~CoroutineTask()
 {
-    if (m_coroutine) {
-        m_coroutine.destroy();
+    if (d_coroutine) {
+        d_coroutine.destroy();
     }
 }
 
@@ -1952,7 +1975,7 @@ CoroutineTask<RESULT>::~CoroutineTask()
 template <typename RESULT>
 CoroutineTaskAwaitable<RESULT> operator co_await(CoroutineTask<RESULT>&& task)
 {
-    return CoroutineTaskAwaitable<RESULT>(task);
+    return CoroutineTaskAwaitable<RESULT>(task.d_coroutine);
 }
 
 // ---------------------

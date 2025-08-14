@@ -112,6 +112,20 @@ class CoroutineTest
         co_return getValue<TYPE>();
     }
 
+    template <typename TYPE>
+    static ntcs::CoroutineTask<TYPE> coReturnValueChain()
+    {
+        ntcs::CoroutineTask<TYPE> lhsTask = coReturnValue<TYPE>();
+        ntcs::CoroutineTask<TYPE> rhsTask = coReturnValue<TYPE>();
+
+        TYPE lhsValue = co_await bsl::move(lhsTask);
+        TYPE rhsValue = co_await bsl::move(rhsTask);
+
+        TYPE sum = lhsValue + rhsValue;
+
+        co_return sum;
+    }
+
   public:
     // TODO
     static void verifyCase1();
@@ -1216,6 +1230,15 @@ NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase2)
 
 NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase3)
 {
+    ntcs::CoroutineTask<int> task = coReturnValueChain<int>();
+
+    int value = ntcs::CoroutineTaskUtil::syncAwait(bsl::move(task));
+
+    BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase4)
+{
     ntsa::Error error;
 
     Mechanism mechanism(NTSCFG_TEST_ALLOCATOR);
@@ -1235,10 +1258,6 @@ NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase3)
 
     NTSCFG_TEST_EQ(result.annotation(), "test");
     NTSCFG_TEST_EQ(result.value(), 3);
-}
-
-NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase4)
-{
 }
 
 NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase5)
