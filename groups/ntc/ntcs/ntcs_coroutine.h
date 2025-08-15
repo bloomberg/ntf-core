@@ -259,8 +259,7 @@ class CoroutineTaskResultValue
     /// Create a new coroutine task value having the same value and allocator
     /// as the specified 'original' object. Assign an unspecified but valid
     /// value to the 'original' original.
-    CoroutineTaskResultValue(CoroutineTaskResultValue&& original)
-        NTSCFG_NOEXCEPT;
+    CoroutineTaskResultValue(CoroutineTaskResultValue&& original) noexcept;
 
     /// Create a coroutine task result value having the same value as the
     /// specified 'original' object. Optionally specify a 'basicAllocator' used
@@ -276,7 +275,7 @@ class CoroutineTaskResultValue
     /// an unspecified but valid value to the 'original' original. Return a
     /// reference to this modifiable object.
     CoroutineTaskResultValue&
-    operator=(CoroutineTaskResultValue&& other) NTSCFG_NOEXCEPT;
+    operator=(CoroutineTaskResultValue&& other) noexcept;
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
@@ -347,8 +346,7 @@ class CoroutineTaskResultAddress
     /// Create a new coroutine task value having the same value and allocator
     /// as the specified 'original' object. Assign an unspecified but valid
     /// value to the 'original' original.
-    CoroutineTaskResultAddress(CoroutineTaskResultAddress&& original)
-        NTSCFG_NOEXCEPT;
+    CoroutineTaskResultAddress(CoroutineTaskResultAddress&& original) noexcept;
 
     /// Create a coroutine task result value having the same value as the
     /// specified 'original' object.
@@ -361,7 +359,7 @@ class CoroutineTaskResultAddress
     /// an unspecified but valid value to the 'original' original. Return a
     /// reference to this modifiable object.
     CoroutineTaskResultAddress&
-    operator=(CoroutineTaskResultAddress&& other) NTSCFG_NOEXCEPT;
+    operator=(CoroutineTaskResultAddress&& other) noexcept;
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
@@ -420,8 +418,7 @@ class CoroutineTaskResultEmpty
     /// Create a new coroutine task value having the same value and allocator
     /// as the specified 'original' object. Assign an unspecified but valid
     /// value to the 'original' original.
-    CoroutineTaskResultEmpty(CoroutineTaskResultEmpty&& original)
-        NTSCFG_NOEXCEPT;
+    CoroutineTaskResultEmpty(CoroutineTaskResultEmpty&& original) noexcept;
 
     /// Create a coroutine task result value having the same value as the
     /// specified 'original' object.
@@ -434,7 +431,7 @@ class CoroutineTaskResultEmpty
     /// an unspecified but valid value to the 'original' original. Return a
     /// reference to this modifiable object.
     CoroutineTaskResultEmpty&
-    operator=(CoroutineTaskResultEmpty&& other) NTSCFG_NOEXCEPT;
+    operator=(CoroutineTaskResultEmpty&& other) noexcept;
 
     /// Assign the value of the specified 'other' object to this object.
     /// Return a reference to this modifiable object.
@@ -479,10 +476,10 @@ class CoroutineTaskResult
     ntcs::CoroutineTaskResultValue<ResultType> d_storage;
 
   private:
-    /// This class is not copyable.
+    /// This class is not copy-constructable.
     CoroutineTaskResult(const CoroutineTaskResult&) = delete;
 
-    /// This class is not assignable.
+    /// This class is not copy-assignable.
     CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
 
   public:
@@ -541,10 +538,10 @@ class CoroutineTaskResult<RESULT>
     ntcs::CoroutineTaskResultAddress<ResultTypeDereference> d_storage;
 
   private:
-    /// This class is not copyable.
+    /// This class is not copy-constructable.
     CoroutineTaskResult(const CoroutineTaskResult&) = delete;
 
-    /// This class is not assignable.
+    /// This class is not copy-assignable.
     CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
 
   public:
@@ -601,10 +598,10 @@ class CoroutineTaskResult<RESULT>
     ntcs::CoroutineTaskResultEmpty d_storage;
 
   private:
-    /// This class is not copyable.
+    /// This class is not copy-constructable.
     CoroutineTaskResult(const CoroutineTaskResult&) = delete;
 
-    /// This class is not assignable.
+    /// This class is not copy-assignable.
     CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
 
   public:
@@ -845,10 +842,10 @@ class CoroutineTaskPrologAwaitable
     void await_resume() const noexcept;
 
   private:
-    /// This class is not copyable.
+    /// This class is not copy-constructable.
     CoroutineTaskPrologAwaitable(const CoroutineTaskPrologAwaitable&) = delete;
 
-    /// This class is not assignable.
+    /// This class is not copy-assignable.
     CoroutineTaskPrologAwaitable&
     operator=(const CoroutineTaskPrologAwaitable&) = delete;
 
@@ -934,10 +931,10 @@ class CoroutineTaskEpilogAwaitable
     void await_resume() noexcept;
 
   private:
-    /// This class is not copyable.
+    /// This class is not copy-constructable.
     CoroutineTaskEpilogAwaitable(const CoroutineTaskEpilogAwaitable&) = delete;
 
-    /// This class is not assignable.
+    /// This class is not copy-assignable.
     CoroutineTaskEpilogAwaitable&
     operator=(const CoroutineTaskEpilogAwaitable&) = delete;
 
@@ -976,10 +973,10 @@ class CoroutineTaskResultAwaitable
     RESULT await_resume();
 
   private:
-    /// This class is not copyable.
+    /// This class is not copy-constructable.
     CoroutineTaskResultAwaitable(const CoroutineTaskResultAwaitable&) = delete;
 
-    /// This class is not assignable.
+    /// This class is not copy-assignable.
     CoroutineTaskResultAwaitable&
     operator=(const CoroutineTaskResultAwaitable&) = delete;
 
@@ -998,6 +995,7 @@ class CoroutineTaskResultAwaitable
 template <typename RESULT>
 class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 {
+  public:
     /// Defines a type alias for the type of the task result.
     using Result = RESULT;
 
@@ -1015,24 +1013,6 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 
     /// Defines a type alias for this type.
     using Self = CoroutineTaskPromise<Result>;
-
-    /// The coroutine context.
-    CoroutineTaskContext<RESULT> d_context;
-
-    /// The memory allocator.
-    bsl::allocator<> d_allocator;
-
-    friend CoroutineTask<RESULT>;
-
-    friend class CoroutineTaskResultAwaitable<RESULT>;
-    friend class CoroutineTaskPrologAwaitable<RESULT>;
-    friend class CoroutineTaskEpilogAwaitable<RESULT>;
-
-    friend class CoroutineTaskUtil;
-
-    template <typename OTHER_RESULT>
-    friend CoroutineTaskResultAwaitable<OTHER_RESULT>
-    operator co_await(CoroutineTask<OTHER_RESULT>&& task);
 
   public:
     /// Return a pointer to a maximally aligned block of memory having at least
@@ -1106,6 +1086,7 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     /// parameters are passed to this function implicitly, but ignored thereby.
     CoroutineTaskPromise(auto&&...);
 
+    /// Return an awaitable object that will suspend this coroutine.
     CoroutineTaskPrologAwaitable<RESULT> initial_suspend();
 
     /// Return an awaitable object that, when awaited by a coroutine having
@@ -1113,12 +1094,24 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     /// 'd_awaiter'.
     CoroutineTaskEpilogAwaitable<RESULT> final_suspend() noexcept;
 
-    // Note that 'unhandled_exception and either 'return_value' or
-    // 'return_void' is provided by the base class.
-
     /// Return a 'CoroutineTask' object that refers to the coroutine that has
     /// '*this' as its promise object.
     CoroutineTask<RESULT> get_return_object();
+
+  private:
+    /// The coroutine context.
+    CoroutineTaskContext<RESULT> d_context;
+
+    /// The memory allocator.
+    bsl::allocator<> d_allocator;
+
+    friend CoroutineTask<RESULT>;
+
+    friend class CoroutineTaskResultAwaitable<RESULT>;
+    friend class CoroutineTaskPrologAwaitable<RESULT>;
+    friend class CoroutineTaskEpilogAwaitable<RESULT>;
+
+    friend class CoroutineTaskUtil;
 };
 
 /// @internal @brief
@@ -1134,7 +1127,7 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntcs
-template <typename RESULT = void>
+template <typename RESULT>
 class CoroutineTask
 {
   public:
@@ -1162,25 +1155,35 @@ class CoroutineTask
 
   public:
     /// Create a new, uninitialized coroutine task.
-    CoroutineTask();
+    CoroutineTask() noexcept;
 
     /// Create a new coroutine task referring to the specified 'coroutine'
     /// whose promise object is the specified 'promise'.
-    explicit CoroutineTask(CoroutineTaskContext<RESULT>* context);
+    explicit CoroutineTask(CoroutineTaskContext<RESULT>* context) noexcept;
 
     /// Create new coroutine task having the same value as the specified
-    /// 'other' task then reset the 'other' task.
-    CoroutineTask(CoroutineTask&& other);
+    /// 'other' coroutine task then reset the 'other' coroutine task.
+    CoroutineTask(CoroutineTask&& other) noexcept;
 
-    /// Destroy this 'CoroutineTask' object and the coroutine instance it refers
-    /// to (if any).
-    ~CoroutineTask();
+    /// Destroy this object.
+    ~CoroutineTask() noexcept;
+
+    /// Assign the value of the specified 'other' coroutine task to this
+    /// object, then reset the 'other' coroutine task. Return a reference to
+    /// this modifiable object.
+    CoroutineTask& operator=(CoroutineTask&& other) noexcept;
+
+    /// Return the awaitable object that returns the result of the task.
+    CoroutineTaskResultAwaitable<RESULT> operator co_await() const& noexcept;
+
+    /// Return the awaitable object that returns the result of the task.
+    CoroutineTaskResultAwaitable<RESULT> operator co_await() const&& noexcept;
 
   private:
-    /// This class is not copyable.
+    /// This class is not copy-constructable.
     CoroutineTask(const CoroutineTask&) = delete;
 
-    /// This class is not assignable.
+    /// This class is not copy-assignable.
     CoroutineTask& operator=(const CoroutineTask&) = delete;
 
   private:
@@ -1191,20 +1194,7 @@ class CoroutineTask
     friend CoroutineTaskPromise<RESULT>;
 
     friend class CoroutineTaskUtil;
-
-    template <typename OTHER_RESULT>
-    friend CoroutineTaskResultAwaitable<OTHER_RESULT>
-    operator co_await(CoroutineTask<OTHER_RESULT>&& task);
 };
-
-/// Provide the implementation for 'co_await'ing the specified 'task' by
-/// returning a 'CoroutineTaskResultAwaitable' object that owns 'task' and implements
-/// the necessary 'await_' methods.  The behavior is undefined if 'task' does
-/// not refer to a coroutine or if this function is called twice for the same
-/// 'CoroutineTask' object.
-template <typename RESULT>
-CoroutineTaskResultAwaitable<RESULT>
-operator co_await(CoroutineTask<RESULT>&& task);
 
 // =====================
 // class CoroutineTaskUtil
@@ -1418,7 +1408,7 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
 
 template <typename TYPE>
 NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
-    CoroutineTaskResultValue&& original) NTSCFG_NOEXCEPT
+    CoroutineTaskResultValue&& original) noexcept
 : d_type(original.d_type),
   d_allocator(bslma::Default::defaultAllocator())
 {
@@ -1468,8 +1458,8 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::~CoroutineTaskResultValue()
 
 template <typename TYPE>
 NTCCFG_INLINE CoroutineTaskResultValue<TYPE>&
-CoroutineTaskResultValue<TYPE>::operator=(CoroutineTaskResultValue&& other)
-    NTSCFG_NOEXCEPT
+              CoroutineTaskResultValue<TYPE>::operator=(
+    CoroutineTaskResultValue&& other) noexcept
 {
     if (this != &other) {
         if (other.d_type == e_SUCCESS) {
@@ -1619,8 +1609,7 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress()
 
 template <typename TYPE>
 NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress(
-    CoroutineTaskResultAddress&& original) NTSCFG_NOEXCEPT
-: d_type(original.d_type)
+    CoroutineTaskResultAddress&& original) noexcept : d_type(original.d_type)
 {
     if (d_type == e_SUCCESS) {
         new (d_success.address()) SuccessType(original.d_success.object());
@@ -1656,8 +1645,8 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::~CoroutineTaskResultAddress()
 
 template <typename TYPE>
 NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>&
-CoroutineTaskResultAddress<TYPE>::operator=(CoroutineTaskResultAddress&& other)
-    NTSCFG_NOEXCEPT
+              CoroutineTaskResultAddress<TYPE>::operator=(
+    CoroutineTaskResultAddress&& other) noexcept
 {
     if (this != &other) {
         if (other.d_type == e_SUCCESS) {
@@ -1773,8 +1762,7 @@ NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty()
 }
 
 NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty(
-    CoroutineTaskResultEmpty&& original) NTSCFG_NOEXCEPT
-: d_type(original.d_type)
+    CoroutineTaskResultEmpty&& original) noexcept : d_type(original.d_type)
 {
     if (d_type == e_FAILURE) {
         new (d_failure.address()) FailureType(original.d_failure.object());
@@ -1798,8 +1786,7 @@ NTCCFG_INLINE CoroutineTaskResultEmpty::~CoroutineTaskResultEmpty()
 }
 
 NTCCFG_INLINE CoroutineTaskResultEmpty&
-CoroutineTaskResultEmpty::operator=(CoroutineTaskResultEmpty&& other)
-    NTSCFG_NOEXCEPT
+CoroutineTaskResultEmpty::operator=(CoroutineTaskResultEmpty&& other) noexcept
 {
     if (this != &other) {
         if (other.d_type == e_SUCCESS) {
@@ -2351,42 +2338,61 @@ CoroutineTask<RESULT> CoroutineTaskPromise<RESULT>::get_return_object()
     return CoroutineTask(&d_context);
 }
 
-// ----------------
-// class CoroutineTask
-// ----------------
-
 template <typename RESULT>
-CoroutineTask<RESULT>::CoroutineTask()
-: d_context(nullptr)
+NTSCFG_INLINE CoroutineTask<RESULT>::CoroutineTask() noexcept : d_context(nullptr)
 {
 }
 
 template <typename RESULT>
-CoroutineTask<RESULT>::CoroutineTask(CoroutineTaskContext<RESULT>* context)
-: d_context(context)
+NTSCFG_INLINE CoroutineTask<RESULT>::CoroutineTask(
+    CoroutineTaskContext<RESULT>* context) noexcept : d_context(context)
 {
 }
 
 template <typename RESULT>
-CoroutineTask<RESULT>::CoroutineTask(CoroutineTask&& other)
+NTSCFG_INLINE CoroutineTask<RESULT>::CoroutineTask(CoroutineTask&& other) noexcept
 : d_context(other.d_context)
 {
     other.d_context = nullptr;
 }
 
 template <typename RESULT>
-CoroutineTask<RESULT>::~CoroutineTask()
+NTSCFG_INLINE CoroutineTask<RESULT>::~CoroutineTask() noexcept
 {
     if (d_context) {
         d_context->destroy();
+        d_context = nullptr;
     }
 }
 
 template <typename RESULT>
-CoroutineTaskResultAwaitable<RESULT>
-operator co_await(CoroutineTask<RESULT>&& task)
+CoroutineTask<RESULT>&
+CoroutineTask<RESULT>::operator=(CoroutineTask&& other) noexcept
 {
-    return CoroutineTaskResultAwaitable<RESULT>(task.d_context);
+    if (this != std::addressof(other)) {
+        if (d_context) {
+            d_context->destroy();
+        }
+
+        d_context       = other.d_context;
+        other.d_context = nullptr;
+    }
+
+    return *this;
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskResultAwaitable<RESULT>
+    CoroutineTask<RESULT>::operator co_await() const& noexcept
+{
+    return CoroutineTaskResultAwaitable<RESULT>(d_context);
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTaskResultAwaitable<RESULT>
+    CoroutineTask<RESULT>::operator co_await() const&& noexcept
+{
+    return CoroutineTaskResultAwaitable<RESULT>(d_context);
 }
 
 // ---------------------
