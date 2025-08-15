@@ -662,14 +662,30 @@ template <typename RESULT>
 class CoroutineTaskContext
 {
   public:
-    /// Defines a type alias for this type.
-    using Self = CoroutineTaskContext<RESULT>;
+    /// Defines a type alias for the type of the task result.
+    using Result = RESULT;
 
-    /// Defines a type alias for a coroutine whose promise is this type.
-    using CurrentFrame = std::coroutine_handle<CoroutineTaskPromise<RESULT> >;
+    /// Defines a type alias for the type of the task context.
+    using Context = CoroutineTaskContext<Result>;
+
+    /// Defines a type alias for the type of the task promise.
+    using Promise = CoroutineTaskPromise<Result>;
+
+    /// Defines a type alias for the type of the task.
+    using Task = CoroutineTask<Result>;
+
+    /// Defines a type alias for a coroutine whose promise is the type of the
+    /// task promise.
+    using CurrentFrame = std::coroutine_handle<Promise>;
 
     /// Defines a type alias for a coroutine whose promise is type-erased.
     using AwaiterFrame = std::coroutine_handle<void>;
+
+    /// Defines a type alias for the type of the allocator.
+    using Alloc = bsl::allocator<>;
+
+    /// Defines a type alias for this type.
+    using Self = CoroutineTaskContext<Result>;
 
     /// Create a new coroutine task context with the current and awaiter
     /// frames initially uninitialized.
@@ -982,36 +998,33 @@ class CoroutineTaskResultAwaitable
 template <typename RESULT>
 class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 {
-    /// Defines a type alias for this type.
-    using Self = CoroutineTaskPromise<RESULT>;
+    /// Defines a type alias for the type of the task result.
+    using Result = RESULT;
 
-    /// Defines a type alias for a coroutine whose promise is this type.
-    using CurrentContext =
-        std::coroutine_handle<CoroutineTaskPromise<RESULT> >;
+    /// Defines a type alias for the type of the task context.
+    using Context = CoroutineTaskContext<Result>;
 
-    /// Defines a type alias for a coroutine whose promise is type-erased.
-    using AwaiterContext = std::coroutine_handle<void>;
+    /// Defines a type alias for the type of the task promise.
+    using Promise = CoroutineTaskPromise<Result>;
 
-    /// Defines a type alias for the alloator type.
+    /// Defines a type alias for the type of the task.
+    using Task = CoroutineTask<Result>;
+
+    /// Defines a type alias for the type of the allocator.
     using Alloc = bsl::allocator<>;
+
+    /// Defines a type alias for this type.
+    using Self = CoroutineTaskPromise<Result>;
 
     /// The coroutine context.
     CoroutineTaskContext<RESULT> d_context;
-
-    /// The current coroutine.
-    // CurrentContext d_current;
-
-    /// The coroutine that awaits us.
-    /// AwaiterContext d_awaiter;
 
     /// The memory allocator.
     bsl::allocator<> d_allocator;
 
     friend CoroutineTask<RESULT>;
 
-    template <typename OTHER_RESULT>
-    friend class CoroutineTaskResultAwaitable;
-
+    friend class CoroutineTaskResultAwaitable<RESULT>;
     friend class CoroutineTaskPrologAwaitable<RESULT>;
     friend class CoroutineTaskEpilogAwaitable<RESULT>;
 
@@ -1125,14 +1138,54 @@ template <typename RESULT = void>
 class CoroutineTask
 {
   public:
+    /// Defines a type alias for the type of the task result.
+    using Result = RESULT;
+
+    /// Defines a type alias for the type of the task context.
+    using Context = CoroutineTaskContext<Result>;
+
+    /// Defines a type alias for the type of the task promise.
+    using Promise = CoroutineTaskPromise<Result>;
+
+    /// Defines a type alias for the type of the task.
+    using Task = CoroutineTask<Result>;
+
+    /// Defines a type alias for the type of the allocator.
+    using Alloc = bsl::allocator<>;
+
+    /// Defines a type alias for this type.
+    using Self = CoroutineTask<Result>;
+
+    /// Defines a type alias for the type of the task promise, as required
+    /// by the coroutine compiler infrastructure.
     using promise_type = CoroutineTaskPromise<RESULT>;
 
-  private:
-    /// The coroutine.
-    std::coroutine_handle<promise_type> d_coroutine;
+  public:
+    /// Create a new, uninitialized coroutine task.
+    CoroutineTask();
 
-    /// The promise.
-    promise_type* d_promise;
+    /// Create a new coroutine task referring to the specified 'coroutine'
+    /// whose promise object is the specified 'promise'.
+    explicit CoroutineTask(CoroutineTaskContext<RESULT>* context);
+
+    /// Create new coroutine task having the same value as the specified
+    /// 'other' task then reset the 'other' task.
+    CoroutineTask(CoroutineTask&& other);
+
+    /// Destroy this 'CoroutineTask' object and the coroutine instance it refers
+    /// to (if any).
+    ~CoroutineTask();
+
+  private:
+    /// This class is not copyable.
+    CoroutineTask(const CoroutineTask&) = delete;
+
+    /// This class is not assignable.
+    CoroutineTask& operator=(const CoroutineTask&) = delete;
+
+  private:
+    /// The coroutine context.
+    CoroutineTaskContext<RESULT>* d_context;
 
     friend CoroutineTaskResultAwaitable<RESULT>;
     friend CoroutineTaskPromise<RESULT>;
@@ -1142,30 +1195,6 @@ class CoroutineTask
     template <typename OTHER_RESULT>
     friend CoroutineTaskResultAwaitable<OTHER_RESULT>
     operator co_await(CoroutineTask<OTHER_RESULT>&& task);
-
-  private:
-    /// This class is not copyable.
-    CoroutineTask(const CoroutineTask&) = delete;
-
-    /// This class is not assignable.
-    CoroutineTask& operator=(const CoroutineTask&) = delete;
-
-  public:
-    /// Create a new, uninitialized task.
-    CoroutineTask();
-
-    /// Create a new coroutine task referring to the specified 'coroutine'
-    /// whose promise object is the specified 'promise'.
-    explicit CoroutineTask(std::coroutine_handle<promise_type> coroutine,
-                           CoroutineTaskPromise<RESULT>*       promise);
-
-    /// Createa  new coroutine having the same value as the specified 'other'
-    /// task then reset the 'other' task.
-    CoroutineTask(CoroutineTask&& other);
-
-    /// Destroy this 'CoroutineTask' object and the coroutine instance it refers
-    /// to (if any).
-    ~CoroutineTask();
 };
 
 /// Provide the implementation for 'co_await'ing the specified 'task' by
@@ -2073,7 +2102,7 @@ template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>& CoroutineTaskContext<RESULT>::promise()
 {
     BSLS_ASSERT(d_current.address() != nullptr);
-    d_current.promise();
+    return d_current.promise();
 }
 
 template <typename RESULT>
@@ -2319,9 +2348,7 @@ CoroutineTaskPromise<RESULT>::final_suspend() noexcept
 template <typename RESULT>
 CoroutineTask<RESULT> CoroutineTaskPromise<RESULT>::get_return_object()
 {
-    return CoroutineTask(
-        std::coroutine_handle<CoroutineTaskPromise>::from_promise(*this),
-        this);
+    return CoroutineTask(&d_context);
 }
 
 // ----------------
@@ -2330,34 +2357,28 @@ CoroutineTask<RESULT> CoroutineTaskPromise<RESULT>::get_return_object()
 
 template <typename RESULT>
 CoroutineTask<RESULT>::CoroutineTask()
-: d_coroutine(nullptr)
-, d_promise(nullptr)
+: d_context(nullptr)
 {
 }
 
 template <typename RESULT>
-CoroutineTask<RESULT>::CoroutineTask(
-    std::coroutine_handle<promise_type> coroutine,
-    CoroutineTaskPromise<RESULT>*       promise)
-: d_coroutine(coroutine)
-, d_promise(promise)
+CoroutineTask<RESULT>::CoroutineTask(CoroutineTaskContext<RESULT>* context)
+: d_context(context)
 {
 }
 
 template <typename RESULT>
 CoroutineTask<RESULT>::CoroutineTask(CoroutineTask&& other)
-: d_coroutine(other.d_coroutine)
-, d_promise(other.d_promise)
+: d_context(other.d_context)
 {
-    other.d_coroutine = nullptr;
-    other.d_promise   = nullptr;
+    other.d_context = nullptr;
 }
 
 template <typename RESULT>
 CoroutineTask<RESULT>::~CoroutineTask()
 {
-    if (d_coroutine) {
-        d_coroutine.destroy();
+    if (d_context) {
+        d_context->destroy();
     }
 }
 
@@ -2365,7 +2386,7 @@ template <typename RESULT>
 CoroutineTaskResultAwaitable<RESULT>
 operator co_await(CoroutineTask<RESULT>&& task)
 {
-    return CoroutineTaskResultAwaitable<RESULT>(&task.d_promise->d_context);
+    return CoroutineTaskResultAwaitable<RESULT>(task.d_context);
 }
 
 // ---------------------
@@ -2382,15 +2403,18 @@ RESULT CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&& task)
     // case the 'wait' below will just return immediately.
 
     CoroutineTask_SyncAwaitState state;
-    state.d_task =
-        std::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
-            *task.d_promise);
-    state.d_allocator = task.d_promise->d_allocator;
+
+    state.d_task = task.d_context->current();
+    // std::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
+    //    *task.d_promise);
+
+    state.d_allocator = task.d_context->promise().d_allocator;
     state.d_done      = false;
 
     CoroutineTask_SyncAwaitImp imp =
         CoroutineTask_SyncAwaitImp::create(&state);
-    task.d_promise->d_context.setAwaiter(imp.d_handle);
+
+    task.d_context->setAwaiter(imp.d_handle);
     imp.d_handle.resume();
 
     {
@@ -2401,7 +2425,7 @@ RESULT CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&& task)
     }
 
     imp.d_handle.destroy();
-    return task.d_promise->release();
+    return task.d_context->release();
 }
 
 // ----------------------------------------
