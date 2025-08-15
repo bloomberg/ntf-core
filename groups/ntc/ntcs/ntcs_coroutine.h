@@ -1234,6 +1234,7 @@ class CoroutineSynchronization;
 class CoroutineSynchronizationContext;
 class CoroutineSynchronizationPrologAwaitable;
 class CoroutineSynchronizationEpilogAwaitable;
+class CoroutineSynchronizationResultAwaitable;
 class CoroutineSynchronizationPromise;
 
 /// This component-private class is used by 'CoroutineTask::synchronize' to
@@ -1247,11 +1248,12 @@ class CoroutineSynchronizationContext
     /// Create a new synchronization context.
     CoroutineSynchronizationContext(bsl::allocator<> allocator);
 
-    bsl::mutex              d_mutex;
-    bsl::condition_variable d_condition;
-    bool                    d_done;
-    bsl::coroutine_handle<> d_task;
-    bsl::allocator<>        d_allocator;
+    bsl::mutex                                             d_mutex;
+    bsl::condition_variable                                d_condition;
+    bool                                                   d_done;
+    bsl::coroutine_handle<CoroutineSynchronizationPromise> d_handle;
+    bsl::coroutine_handle<>                                d_task;
+    bsl::allocator<>                                       d_allocator;
 
   private:
     /// This class is not copy-constructable.
@@ -1355,6 +1357,35 @@ class CoroutineSynchronizationEpilogAwaitable
     friend class CoroutineSynchronizationPromise;
 };
 
+class CoroutineSynchronizationResultAwaitable
+{
+  public:
+    explicit CoroutineSynchronizationResultAwaitable(
+        CoroutineSynchronizationContext* context) noexcept;
+
+    /// Return 'false'.
+    bool await_ready() noexcept;
+
+    /// Return the task to-be-synchronized coroutine.
+    std::coroutine_handle<> await_suspend(
+        std::coroutine_handle<> couroutine) noexcept;
+
+    /// The behavior of this method is undefined.
+    void await_resume() noexcept;
+
+  private:
+    /// This class is not copy-constructable.
+    CoroutineSynchronizationResultAwaitable(
+        const CoroutineSynchronizationResultAwaitable&) = delete;
+
+    /// This class is not copy-assignable.
+    CoroutineSynchronizationResultAwaitable& operator=(
+        const CoroutineSynchronizationResultAwaitable&) = delete;
+
+  private:
+    CoroutineSynchronizationContext* d_context;
+};
+
 // =================================
 // class CoroutineSynchronizationPromise
 // =================================
@@ -1422,13 +1453,10 @@ class CoroutineSynchronization
   public:
     using promise_type = CoroutineSynchronizationPromise;
 
-  private:
-    std::coroutine_handle<promise_type> d_handle;
-
-    friend class CoroutineTaskUtil;
-    friend class CoroutineSynchronizationPromise;
-
-    // PRIVATE CLASS METHODS
+    /// Create a 'CoroutineSynchronization' object that refers to the coroutine
+    /// specified by 'handle'.
+    explicit CoroutineSynchronization(
+        CoroutineSynchronizationContext* context);
 
     /// Start a suspended coroutine that, when resumed, will resume the
     /// coroutine referred to by the 'd_task' member of the specified 'state'.
@@ -1437,9 +1465,11 @@ class CoroutineSynchronization
     static CoroutineSynchronization create(
         CoroutineSynchronizationContext* state);
 
-    /// Create a 'CoroutineSynchronization' object that refers to the coroutine
-    /// specified by 'handle'.
-    CoroutineSynchronization(std::coroutine_handle<promise_type> handle);
+  private:
+    CoroutineSynchronizationContext* d_context;
+
+    friend class CoroutineTaskUtil;
+    friend class CoroutineSynchronizationPromise;
 };
 
 // ============================================================================
@@ -2512,28 +2542,31 @@ RESULT CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&& task)
     // that the task can complete synchronously on the same thread: in that
     // case the 'wait' below will just return immediately.
 
-    CoroutineSynchronizationContext state;
+    CoroutineSynchronizationContext context;
 
-    state.d_task = task.d_context->current();
+    context.d_task = task.d_context->current();
     // std::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
     //    *task.d_promise);
 
-    state.d_allocator = task.allocator();
-    state.d_done      = false;
+    context.d_allocator = task.allocator();
+    context.d_done      = false;
 
-    CoroutineSynchronization imp = CoroutineSynchronization::create(&state);
+    CoroutineSynchronization synchronization =
+        CoroutineSynchronization::create(&context);
 
-    task.d_context->setAwaiter(imp.d_handle);
-    imp.d_handle.resume();
+    NTCCFG_WARNING_UNUSED(synchronization);
+
+    task.d_context->setAwaiter(context.d_handle);
+    context.d_handle.resume();
 
     {
-        bsl::unique_lock<bsl::mutex> lock(state.d_mutex);
-        state.d_condition.wait(lock, [&state] {
-            return state.d_done;
+        bsl::unique_lock<bsl::mutex> lock(context.d_mutex);
+        context.d_condition.wait(lock, [&context] {
+            return context.d_done;
         });
     }
 
-    imp.d_handle.destroy();
+    context.d_handle.destroy();
     return task.d_context->release();
 }
 
@@ -2542,6 +2575,7 @@ CoroutineSynchronizationContext::CoroutineSynchronizationContext()
 : d_mutex()
 , d_condition()
 , d_done(false)
+, d_handle(nullptr)
 , d_task(nullptr)
 , d_allocator()
 {
@@ -2553,6 +2587,7 @@ CoroutineSynchronizationContext::CoroutineSynchronizationContext(
 : d_mutex()
 , d_condition()
 , d_done(false)
+, d_handle(nullptr)
 , d_task(nullptr)
 , d_allocator(allocator)
 {
@@ -2578,8 +2613,9 @@ bool CoroutineSynchronizationPrologAwaitable::await_ready() const noexcept
 
 NTSCFG_INLINE
 void CoroutineSynchronizationPrologAwaitable::await_suspend(
-    std::coroutine_handle<>) const noexcept
+    std::coroutine_handle<> coroutine) const noexcept
 {
+    NTCCFG_WARNING_UNUSED(coroutine);
 }
 
 NTSCFG_INLINE
@@ -2606,8 +2642,10 @@ NTSCFG_INLINE bool CoroutineSynchronizationEpilogAwaitable::await_ready()
 
 NTSCFG_INLINE
 void CoroutineSynchronizationEpilogAwaitable::await_suspend(
-    std::coroutine_handle<>) noexcept
+    std::coroutine_handle<> coroutine) noexcept
 {
+    NTCCFG_WARNING_UNUSED(coroutine);
+
     bsl::lock_guard<bsl::mutex> lock(d_context->d_mutex);
     d_context->d_done = true;
     d_context->d_condition.notify_one();
@@ -2615,6 +2653,37 @@ void CoroutineSynchronizationEpilogAwaitable::await_suspend(
 
 NTSCFG_INLINE
 void CoroutineSynchronizationEpilogAwaitable::await_resume() noexcept
+{
+}
+
+// ----------------------------------------
+// class CoroutineSynchronizationResultAwaitable
+// ----------------------------------------
+
+NTSCFG_INLINE
+CoroutineSynchronizationResultAwaitable::
+    CoroutineSynchronizationResultAwaitable(
+        CoroutineSynchronizationContext* context) noexcept : d_context(context)
+{
+}
+
+NTSCFG_INLINE bool CoroutineSynchronizationResultAwaitable::await_ready()
+    noexcept
+{
+    return false;
+}
+
+NTSCFG_INLINE
+std::coroutine_handle<> CoroutineSynchronizationResultAwaitable::await_suspend(
+    std::coroutine_handle<> coroutine) noexcept
+{
+    NTCCFG_WARNING_UNUSED(coroutine);
+
+    return d_context->d_task;
+}
+
+NTSCFG_INLINE
+void CoroutineSynchronizationResultAwaitable::await_resume() noexcept
 {
 }
 
@@ -2672,9 +2741,11 @@ CoroutineSynchronizationEpilogAwaitable CoroutineSynchronizationPromise::
 NTSCFG_INLINE CoroutineSynchronization
 CoroutineSynchronizationPromise::get_return_object()
 {
-    return {
+    d_context->d_handle =
         std::coroutine_handle<CoroutineSynchronizationPromise>::from_promise(
-            *this)};
+            *this);
+
+    return CoroutineSynchronization(d_context);
 }
 
 NTSCFG_INLINE
@@ -2692,49 +2763,21 @@ void CoroutineSynchronizationPromise::unhandled_exception()
 // class CoroutineSynchronization
 // -----------------------------
 
-// PRIVATE CLASS METHODS
+NTSCFG_INLINE
+CoroutineSynchronization::CoroutineSynchronization(
+    CoroutineSynchronizationContext* context)
+: d_context(context)
+{
+    NTCCFG_WARNING_UNUSED(d_context);
+}
 
 NTSCFG_INLINE
 CoroutineSynchronization CoroutineSynchronization::create(
     CoroutineSynchronizationContext* context)
 {
-    struct Resumer {
-        std::coroutine_handle<void> d_task;
+    CoroutineSynchronizationResultAwaitable awaitable(context);
 
-        bool await_ready()
-        {
-            return false;
-        }
-
-        std::coroutine_handle<> await_suspend(std::coroutine_handle<>)
-        {
-            return d_task;
-        }
-
-        void await_resume()
-        {
-        }
-    };
-
-    co_await Resumer{context->d_task};
-
-    // When the task completes, it resumes us.  Now, we could just set the
-    // `state->d_done` flag and finish without suspending, but if the thread
-    // that called `syncAwait` is different from the thread that resumes us,
-    // that thread can complete the wait before the memory allocated for our
-    // coroutine frame is deallocated, which may be unexpected.  So instead, we
-    // must suspend ourselves again and set the flag while we are suspended,
-    // giving `syncAwait` the right to destroy this coroutine frame.  This is
-    // done by the final awaitable for `CoroutineSynchronization`.
-}
-
-// PRIVATE CREATORS
-
-NTSCFG_INLINE
-CoroutineSynchronization::CoroutineSynchronization(
-    std::coroutine_handle<promise_type> handle)
-: d_handle(handle)
-{
+    co_await awaitable;
 }
 
 }  // close package namespace
