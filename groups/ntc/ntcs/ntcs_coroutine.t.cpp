@@ -231,8 +231,9 @@ class CoroutineTest::Parameters
     // entire output on one line.  If 'stream' is initially invalid, this
     // operation has no effect.  Note that a trailing newline is provided
     // in multiline mode only.
-    bsl::ostream&
-    print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
 
     // This type accepts an allocator argument to its constructors and may
     // dynamically allocate memory during its operation.
@@ -262,8 +263,8 @@ bool operator<(const CoroutineTest::Parameters& lhs,
 
 // Write the specified 'object' to the specified 'stream'. Return a modifiable
 // reference to the 'stream'.
-bsl::ostream&
-operator<<(bsl::ostream& stream, const CoroutineTest::Parameters& object);
+bsl::ostream& operator<<(bsl::ostream&                    stream,
+                         const CoroutineTest::Parameters& object);
 
 // Describe a test operation's result.
 class CoroutineTest::Result
@@ -342,8 +343,9 @@ class CoroutineTest::Result
     // entire output on one line.  If 'stream' is initially invalid, this
     // operation has no effect.  Note that a trailing newline is provided
     // in multiline mode only.
-    bsl::ostream&
-    print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
 
     // This type accepts an allocator argument to its constructors and may
     // dynamically allocate memory during its operation.
@@ -372,8 +374,8 @@ bool operator<(const CoroutineTest::Result& lhs,
 
 // Write the specified 'object' to the specified 'stream'. Return a modifiable
 // reference to the 'stream'.
-bsl::ostream&
-operator<<(bsl::ostream& stream, const CoroutineTest::Result& object);
+bsl::ostream& operator<<(bsl::ostream&                stream,
+                         const CoroutineTest::Result& object);
 
 // Describe a test operation.
 class CoroutineTest::Operation
@@ -459,8 +461,9 @@ class CoroutineTest::Operation
     // entire output on one line.  If 'stream' is initially invalid, this
     // operation has no effect.  Note that a trailing newline is provided
     // in multiline mode only.
-    bsl::ostream&
-    print(bsl::ostream& stream, int level = 0, int spacesPerLevel = 4) const;
+    bsl::ostream& print(bsl::ostream& stream,
+                        int           level          = 0,
+                        int           spacesPerLevel = 4) const;
 
     // This type accepts an allocator argument to its constructors and may
     // dynamically allocate memory during its operation.
@@ -490,8 +493,8 @@ bool operator<(const CoroutineTest::Operation& lhs,
 
 // Write the specified 'object' to the specified 'stream'. Return a modifiable
 // reference to the 'stream'.
-bsl::ostream&
-operator<<(bsl::ostream& stream, const CoroutineTest::Operation& object);
+bsl::ostream& operator<<(bsl::ostream&                   stream,
+                         const CoroutineTest::Operation& object);
 
 // Provide action performed by a test mechanism.
 class CoroutineTest::Action
@@ -530,14 +533,25 @@ class CoroutineTest::Mechanism
     bdlmt::FixedThreadPool d_threadPool;
     bslma::Allocator*      d_allocator;
 
-    /// Perform the specified 'action'.
-    void perform(const bsl::shared_ptr<Action>& action);
+    void enqueueCoroutine(std::coroutine_handle<void> coroutine);
+
+    void dequeueCoroutine(std::coroutine_handle<void> coroutine);
+
+    void enqueueAction(const bsl::shared_ptr<Action>& action);
+
+    void dequeueAction(const bsl::shared_ptr<Action>& action);
 
   private:
     Mechanism(const Mechanism&) BSLS_KEYWORD_DELETED;
     Mechanism& operator=(const Mechanism&) BSLS_KEYWORD_DELETED;
 
   public:
+    /// Provider an awaiter to schedule coroutines to run on threads managed
+    /// by the mechanism.
+    class Awaiter;
+
+    friend class Awaiter;
+
     // Create a new mechanism. Optionally specify a 'basicAllocator' used to
     // supply memory. If 'basicAllocator' is 0, the currently installed default
     // allocator used.
@@ -546,15 +560,24 @@ class CoroutineTest::Mechanism
     // Destroy this object.
     ~Mechanism();
 
-    // Execute an operation identified by the specified 'token' with the
-    // specified 'parameters'. Return the error.
-    ntsa::Error
-    execute(Result* result, Token token, const Parameters& parameters);
+    /// Schedule the current coroutine to run on threads managed by this
+    /// mechanism.
+    Awaiter schedule();
+
+    ntcs::CoroutineTask<void> hello();
 
     // Execute an operation identified by the specified 'token' with the
     // specified 'parameters'. Return the error.
-    ntcs::CoroutineTask<ntsa::Error>
-    schedule(Result* result, Token token, const Parameters& parameters);
+    ntsa::Error execute(Result*           result,
+                        Token             token,
+                        const Parameters& parameters);
+
+    // Execute an operation identified by the specified 'token' with the
+    // specified 'parameters'. Return the error.
+    ntcs::CoroutineTask<ntsa::Error> executeCooperatively(
+        Result*           result,
+        Token             token,
+        const Parameters& parameters);
 
     // Cancel the operation identified by the specified 'token'. Return the
     // error.
@@ -595,8 +618,8 @@ CoroutineTest::Parameters::~Parameters()
 {
 }
 
-CoroutineTest::Parameters&
-CoroutineTest::Parameters::operator=(Parameters&& other) NTSCFG_NOEXCEPT
+CoroutineTest::Parameters& CoroutineTest::Parameters::operator=(
+    Parameters&& other) NTSCFG_NOEXCEPT
 {
     d_annotation = NTSCFG_MOVE_FROM(other, d_annotation);
     d_lhs        = NTSCFG_MOVE_FROM(other, d_lhs);
@@ -608,8 +631,8 @@ CoroutineTest::Parameters::operator=(Parameters&& other) NTSCFG_NOEXCEPT
     return *this;
 }
 
-CoroutineTest::Parameters&
-CoroutineTest::Parameters::operator=(const Parameters& other)
+CoroutineTest::Parameters& CoroutineTest::Parameters::operator=(
+    const Parameters& other)
 {
     if (this != &other) {
         d_annotation = other.d_annotation;
@@ -741,8 +764,8 @@ bool operator<(const CoroutineTest::Parameters& lhs,
     return lhs.less(rhs);
 }
 
-bsl::ostream&
-operator<<(bsl::ostream& stream, const CoroutineTest::Parameters& object)
+bsl::ostream& operator<<(bsl::ostream&                    stream,
+                         const CoroutineTest::Parameters& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -774,8 +797,8 @@ CoroutineTest::Result::~Result()
 {
 }
 
-CoroutineTest::Result&
-CoroutineTest::Result::operator=(Result&& other) NTSCFG_NOEXCEPT
+CoroutineTest::Result& CoroutineTest::Result::operator=(Result&& other)
+    NTSCFG_NOEXCEPT
 {
     d_annotation = NTSCFG_MOVE_FROM(other, d_annotation);
     d_value      = NTSCFG_MOVE_FROM(other, d_value);
@@ -894,8 +917,8 @@ bool operator<(const CoroutineTest::Result& lhs,
     return lhs.less(rhs);
 }
 
-bsl::ostream&
-operator<<(bsl::ostream& stream, const CoroutineTest::Result& object)
+bsl::ostream& operator<<(bsl::ostream&                stream,
+                         const CoroutineTest::Result& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -930,8 +953,8 @@ CoroutineTest::Operation::~Operation()
 {
 }
 
-CoroutineTest::Operation&
-CoroutineTest::Operation::operator=(Operation&& other) NTSCFG_NOEXCEPT
+CoroutineTest::Operation& CoroutineTest::Operation::operator=(
+    Operation&& other) NTSCFG_NOEXCEPT
 {
     d_token      = NTSCFG_MOVE_FROM(other, d_token);
     d_parameters = NTSCFG_MOVE_FROM(other, d_parameters);
@@ -943,8 +966,8 @@ CoroutineTest::Operation::operator=(Operation&& other) NTSCFG_NOEXCEPT
     return *this;
 }
 
-CoroutineTest::Operation&
-CoroutineTest::Operation::operator=(const Operation& other)
+CoroutineTest::Operation& CoroutineTest::Operation::operator=(
+    const Operation& other)
 {
     if (this != &other) {
         d_token      = other.d_token;
@@ -987,8 +1010,8 @@ const CoroutineTest::Parameters& CoroutineTest::Operation::parameters() const
     return d_parameters;
 }
 
-const bdlb::NullableValue<CoroutineTest::Result>&
-CoroutineTest::Operation::result() const
+const bdlb::NullableValue<CoroutineTest::Result>& CoroutineTest::Operation::
+    result() const
 {
     return d_result;
 }
@@ -1077,8 +1100,8 @@ bool operator<(const CoroutineTest::Operation& lhs,
     return lhs.less(rhs);
 }
 
-bsl::ostream&
-operator<<(bsl::ostream& stream, const CoroutineTest::Operation& object)
+bsl::ostream& operator<<(bsl::ostream&                   stream,
+                         const CoroutineTest::Operation& object)
 {
     return object.print(stream, 0, -1);
 }
@@ -1097,17 +1120,74 @@ CoroutineTest::Action::~Action()
 {
 }
 
-void CoroutineTest::Mechanism::perform(const bsl::shared_ptr<Action>& action)
+/// Provider an awaiter to schedule coroutines to run on threads managed
+/// by the mechanism.
+class CoroutineTest::Mechanism::Awaiter
 {
-    ntsa::Error error;
+  public:
+    /// Create a new awaiter with the specified 'mechanism'.
+    explicit Awaiter(CoroutineTest::Mechanism* mechanism) noexcept;
 
-    error = this->execute(action->result,
-                          action->operation.token(),
-                          action->operation.parameters());
-    if (error) {
-        // TODO.
-        return;
-    }
+    bool await_ready() const noexcept;
+
+    void await_suspend(std::coroutine_handle<void> coroutine) const noexcept;
+
+    void await_resume() const noexcept;
+
+  private:
+    /// The mechanism.
+    CoroutineTest::Mechanism* d_mechanism;
+};
+
+CoroutineTest::Mechanism::Awaiter::Awaiter(
+    CoroutineTest::Mechanism* mechanism) noexcept : d_mechanism(mechanism)
+{
+}
+
+bool CoroutineTest::Mechanism::Awaiter::await_ready() const noexcept
+{
+    return false;
+}
+
+void CoroutineTest::Mechanism::Awaiter::await_suspend(
+    std::coroutine_handle<void> coroutine) const noexcept
+{
+    d_mechanism->enqueueCoroutine(coroutine);
+}
+
+void CoroutineTest::Mechanism::Awaiter::await_resume() const noexcept
+{
+}
+
+void CoroutineTest::Mechanism::enqueueCoroutine(
+    std::coroutine_handle<void> coroutine)
+{
+    d_threadPool.enqueueJob(
+        NTCCFG_BIND(&CoroutineTest::Mechanism::dequeueCoroutine,
+                    this,
+                    coroutine));
+}
+
+void CoroutineTest::Mechanism::dequeueCoroutine(
+    std::coroutine_handle<void> coroutine)
+{
+    coroutine.resume();
+}
+
+void CoroutineTest::Mechanism::enqueueAction(
+    const bsl::shared_ptr<Action>& action)
+{
+    d_threadPool.enqueueJob(
+        NTCCFG_BIND(&CoroutineTest::Mechanism::dequeueAction, this, action));
+}
+
+void CoroutineTest::Mechanism::dequeueAction(
+    const bsl::shared_ptr<Action>& action)
+{
+    action->result->setAnnotation(action->operation.parameters().annotation());
+
+    action->result->setValue(action->operation.parameters().lhs() +
+                             action->operation.parameters().rhs());
 }
 
 CoroutineTest::Mechanism::Mechanism(bslma::Allocator* basicAllocator)
@@ -1124,6 +1204,22 @@ CoroutineTest::Mechanism::~Mechanism()
     d_threadPool.stop();
 }
 
+CoroutineTest::Mechanism::Awaiter CoroutineTest::Mechanism::schedule()
+{
+    return Awaiter(this);
+}
+
+ntcs::CoroutineTask<void> CoroutineTest::Mechanism::hello()
+{
+    bsl::cout << "Scheduling on thread " << bslmt::ThreadUtil::selfIdAsUint64()
+              << bsl::endl;
+
+    co_await this->schedule();
+
+    bsl::cout << "Executing on thread " << bslmt::ThreadUtil::selfIdAsUint64()
+              << bsl::endl;
+}
+
 ntsa::Error CoroutineTest::Mechanism::execute(Result*           result,
                                               Token             token,
                                               const Parameters& parameters)
@@ -1134,10 +1230,10 @@ ntsa::Error CoroutineTest::Mechanism::execute(Result*           result,
     return ntsa::Error();
 }
 
-ntcs::CoroutineTask<ntsa::Error>
-CoroutineTest::Mechanism::schedule(Result*           result,
-                                   Token             token,
-                                   const Parameters& parameters)
+ntcs::CoroutineTask<ntsa::Error> CoroutineTest::Mechanism::
+    executeCooperatively(Result*           result,
+                         Token             token,
+                         const Parameters& parameters)
 {
 #if 0
     ntsa::Error error;
@@ -1239,6 +1335,17 @@ NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase4)
 
     Mechanism mechanism(NTSCFG_TEST_ALLOCATOR);
 
+    ntcs::CoroutineTask<void> task = mechanism.hello();
+
+    ntcs::CoroutineTaskUtil::synchronize(bsl::move(task));
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase5)
+{
+    ntsa::Error error;
+
+    Mechanism mechanism(NTSCFG_TEST_ALLOCATOR);
+
     Parameters parameters(NTSCFG_TEST_ALLOCATOR);
     parameters.setAnnotation("test");
     parameters.setLhs(1);
@@ -1247,17 +1354,13 @@ NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase4)
     Result result(NTSCFG_TEST_ALLOCATOR);
 
     ntcs::CoroutineTask<ntsa::Error> task =
-        mechanism.schedule(&result, 0, parameters);
+        mechanism.executeCooperatively(&result, 0, parameters);
 
     error = ntcs::CoroutineTaskUtil::synchronize(bsl::move(task));
     NTSCFG_TEST_OK(error);
 
     NTSCFG_TEST_EQ(result.annotation(), "test");
     NTSCFG_TEST_EQ(result.value(), 3);
-}
-
-NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase5)
-{
 }
 
 NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase6)

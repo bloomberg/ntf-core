@@ -71,16 +71,19 @@ BSLS_IDENT("$Id: $")
 
 #define NTCS_COROUTINE_LOG_CONTEXT() NTCI_LOG_CONTEXT()
 
+#define NTCS_COROUTINE_LOG_FUNCTION ""
+// #define NTCS_COROUTINE_LOG_FUNCTION NTCS_COROUTINE_FUNCTION << ":\n"
+
 #define NTCS_COROUTINE_LOG_AWAIT_READY(kind, phase, context)                  \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_FUNCTION << ":\nCoroutine "   \
+        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_LOG_FUNCTION << "Coroutine "  \
                               << (kind) << " " << (phase) << " " << (context) \
                               << ": await_ready" << NTCI_LOG_STREAM_END;      \
     } while (false)
 
 #define NTCS_COROUTINE_LOG_AWAIT_SUSPEND(kind, phase, context, coroutine)     \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_FUNCTION << ":\nCoroutine "   \
+        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_LOG_FUNCTION << "Coroutine "  \
                               << (kind) << " " << (phase) << " " << (context) \
                               << ": await_suspend: " << (coroutine).address() \
                               << NTCI_LOG_STREAM_END;                         \
@@ -88,14 +91,14 @@ BSLS_IDENT("$Id: $")
 
 #define NTCS_COROUTINE_LOG_AWAIT_RESUME(kind, phase, context)                 \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_FUNCTION << ":\nCoroutine "   \
+        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_LOG_FUNCTION << "Coroutine "  \
                               << (kind) << " " << (phase) << " " << (context) \
                               << ": await_resume" << NTCI_LOG_STREAM_END;     \
     } while (false)
 
 #define NTCS_COROUTINE_LOG_FRAME_DESTROYED(kind, address)                     \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_FUNCTION << ":\nCoroutine "   \
+        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_LOG_FUNCTION << "Coroutine "  \
                               << (kind) << " frame destroyed: " << (address)  \
                               << NTCI_LOG_STREAM_END;                         \
     } while (false)
