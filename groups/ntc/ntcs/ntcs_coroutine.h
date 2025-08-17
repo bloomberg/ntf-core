@@ -1358,21 +1358,38 @@ class CoroutineSynchronizationPromise;
 class CoroutineSynchronizationContext
 {
   public:
-    /// Create a new synchronization context.
-    CoroutineSynchronizationContext();
+    /// Create a new synchronization context that synchronized the specified
+    /// 'coroutine'. Allocate memory using the specified 'allocator'.
+    CoroutineSynchronizationContext(bsl::coroutine_handle<> coroutine,
+                                    bsl::allocator<>        allocator);
 
-    /// Create a new synchronization context.
-    CoroutineSynchronizationContext(bsl::allocator<> allocator);
+    /// Set the current coroutine to the specified 'coroutine'.
+    void setHandle(
+        bsl::coroutine_handle<CoroutineSynchronizationPromise> coroutine);
+
+    /// Set the awaiter coroutine to the specified 'coroutine'.
+    void setTask(bsl::coroutine_handle<> coroutine);
+
+    /// Resume the synchronization coroutine.
+    void resume();
+
+    /// Wait until the task is done.
+    void wait();
+
+    /// Wake the thread waiting until the task is done.
+    void wake();
 
     /// Destroy the current activation frame.
     void destroy();
 
-    bsl::mutex                                             d_mutex;
-    bsl::condition_variable                                d_condition;
-    bool                                                   d_done;
-    bsl::coroutine_handle<CoroutineSynchronizationPromise> d_handle;
-    bsl::coroutine_handle<>                                d_task;
-    bsl::allocator<>                                       d_allocator;
+    /// Return the synchronization coroutine.
+    bsl::coroutine_handle<CoroutineSynchronizationPromise> handle() const;
+
+    /// Return the task to-be-synchronized coroutine.
+    bsl::coroutine_handle<> task() const;
+
+    /// Return the allocator.
+    bsl::allocator<> allocator() const;
 
   private:
     /// This class is not copy-constructable.
@@ -1382,6 +1399,14 @@ class CoroutineSynchronizationContext
     /// This class is not copy-assignable.
     CoroutineSynchronizationContext& operator=(
         const CoroutineSynchronizationContext&) = delete;
+
+  private:
+    ntccfg::ConditionMutex                                 d_mutex;
+    ntccfg::Condition                                      d_condition;
+    bool                                                   d_done;
+    bsl::coroutine_handle<CoroutineSynchronizationPromise> d_handle;
+    bsl::coroutine_handle<>                                d_task;
+    bsl::allocator<>                                       d_allocator;
 };
 
 /// Write a formatted, human-readable description of the specified 'object'
@@ -1578,9 +1603,6 @@ class CoroutineSynchronizationEpilogAwaitable
   private:
     /// The coroutine context.
     CoroutineSynchronizationContext* d_context;
-
-    friend class CoroutineSynchronization;
-    friend class CoroutineSynchronizationPromise;
 };
 
 /// @internal @brief
@@ -1739,11 +1761,6 @@ class CoroutineSynchronizationPromise
   private:
     /// The coroutine context.
     CoroutineSynchronizationContext* d_context;
-
-    template <typename RESULT>
-    friend class CoroutineTask;
-
-    friend class CoroutineSynchronization;
 };
 
 /// @internal @brief
@@ -1794,9 +1811,6 @@ class CoroutineSynchronization
   private:
     /// The coroutine context.
     CoroutineSynchronizationContext* d_context;
-
-    friend class CoroutineTaskUtil;
-    friend class CoroutineSynchronizationPromise;
 };
 
 template <typename TYPE>
@@ -2864,53 +2878,72 @@ RESULT CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&& task)
     // that the task can complete synchronously on the same thread: in that
     // case the 'wait' below will just return immediately.
 
-    CoroutineSynchronizationContext context;
-
-    context.d_task = task.d_context->current();
-
-    context.d_allocator = task.allocator();
-    context.d_done      = false;
+    CoroutineSynchronizationContext context(task.d_context->current(),
+                                            task.allocator());
 
     CoroutineSynchronization synchronization =
         CoroutineSynchronization::create(&context);
 
     NTCCFG_WARNING_UNUSED(synchronization);
 
-    task.d_context->setAwaiter(context.d_handle);
-    context.d_handle.resume();
+    task.d_context->setAwaiter(context.handle());
 
-    {
-        bsl::unique_lock<bsl::mutex> lock(context.d_mutex);
-        context.d_condition.wait(lock, [&context] {
-            return context.d_done;
-        });
-    }
+    context.resume();
 
+    context.wait();
     context.destroy();
+
     return task.d_context->release();
 }
 
 NTSCFG_INLINE
-CoroutineSynchronizationContext::CoroutineSynchronizationContext()
+CoroutineSynchronizationContext::CoroutineSynchronizationContext(
+    bsl::coroutine_handle<> coroutine,
+    bsl::allocator<>        allocator)
 : d_mutex()
 , d_condition()
 , d_done(false)
 , d_handle(nullptr)
-, d_task(nullptr)
-, d_allocator()
+, d_task(coroutine)
+, d_allocator(allocator)
 {
 }
 
 NTSCFG_INLINE
-CoroutineSynchronizationContext::CoroutineSynchronizationContext(
-    bsl::allocator<> allocator)
-: d_mutex()
-, d_condition()
-, d_done(false)
-, d_handle(nullptr)
-, d_task(nullptr)
-, d_allocator(allocator)
+void CoroutineSynchronizationContext::setHandle(
+    bsl::coroutine_handle<CoroutineSynchronizationPromise> coroutine)
 {
+    d_handle = coroutine;
+}
+
+NTSCFG_INLINE
+void CoroutineSynchronizationContext::setTask(
+    bsl::coroutine_handle<> coroutine)
+{
+    d_task = coroutine;
+}
+
+NTSCFG_INLINE
+void CoroutineSynchronizationContext::resume()
+{
+    d_handle.resume();
+}
+
+NTSCFG_INLINE
+void CoroutineSynchronizationContext::wait()
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+    while (!d_done) {
+        d_condition.wait(&d_mutex);
+    }
+}
+
+NTSCFG_INLINE
+void CoroutineSynchronizationContext::wake()
+{
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+    d_done = true;
+    d_condition.signal();
 }
 
 NTSCFG_INLINE void CoroutineSynchronizationContext::destroy()
@@ -2925,11 +2958,30 @@ NTSCFG_INLINE void CoroutineSynchronizationContext::destroy()
 }
 
 NTSCFG_INLINE
+bsl::coroutine_handle<CoroutineSynchronizationPromise>
+CoroutineSynchronizationContext::handle() const
+{
+    return d_handle;
+}
+
+NTSCFG_INLINE
+bsl::coroutine_handle<> CoroutineSynchronizationContext::task() const
+{
+    return d_task;
+}
+
+NTSCFG_INLINE
+bsl::allocator<> CoroutineSynchronizationContext::allocator() const
+{
+    return d_allocator;
+}
+
+NTSCFG_INLINE
 bsl::ostream& operator<<(bsl::ostream&                          stream,
                          const CoroutineSynchronizationContext& object)
 {
-    stream << "[ current = " << object.d_handle.address()
-           << " task = " << object.d_task.address() << " ]";
+    stream << "[ current = " << object.handle().address()
+           << " task = " << object.task().address() << " ]";
     return stream;
 }
 
@@ -2992,9 +3044,7 @@ void CoroutineSynchronizationEpilogAwaitable::await_suspend(
     NTCS_COROUTINE_LOG_CONTEXT();
     NTCS_COROUTINE_LOG_AWAIT_SUSPEND("sync", "epilog", *d_context, coroutine);
 
-    bsl::lock_guard<bsl::mutex> lock(d_context->d_mutex);
-    d_context->d_done = true;
-    d_context->d_condition.notify_one();
+    d_context->wake();
 }
 
 NTSCFG_INLINE
@@ -3029,7 +3079,7 @@ std::coroutine_handle<> CoroutineSynchronizationResultAwaitable::await_suspend(
     NTCS_COROUTINE_LOG_CONTEXT();
     NTCS_COROUTINE_LOG_AWAIT_SUSPEND("sync", "result", *d_context, coroutine);
 
-    return d_context->d_task;
+    return d_context->task();
 }
 
 NTSCFG_INLINE
@@ -3043,7 +3093,7 @@ NTSCFG_INLINE void* CoroutineSynchronizationPromise::operator new(
     bsl::size_t                      size,
     CoroutineSynchronizationContext* state)
 {
-    return CoroutineTaskPromiseUtil::allocate(size, state->d_allocator);
+    return CoroutineTaskPromiseUtil::allocate(size, state->allocator());
 }
 
 NTSCFG_INLINE void CoroutineSynchronizationPromise::operator delete(
@@ -3057,6 +3107,7 @@ NTSCFG_INLINE
 CoroutineSynchronizationPromise::CoroutineSynchronizationPromise()
 : d_context(0)
 {
+    NTCCFG_UNREACHABLE();
 }
 
 NTSCFG_INLINE
@@ -3064,6 +3115,7 @@ CoroutineSynchronizationPromise::CoroutineSynchronizationPromise(
     CoroutineSynchronizationContext* context)
 : d_context(context)
 {
+    d_context->setHandle(std::coroutine_handle<Self>::from_promise(*this));
 }
 
 NTSCFG_INLINE
@@ -3083,10 +3135,6 @@ CoroutineSynchronizationEpilogAwaitable CoroutineSynchronizationPromise::
 NTSCFG_INLINE CoroutineSynchronization
 CoroutineSynchronizationPromise::get_return_object()
 {
-    d_context->d_handle =
-        std::coroutine_handle<CoroutineSynchronizationPromise>::from_promise(
-            *this);
-
     return CoroutineSynchronization(d_context);
 }
 
