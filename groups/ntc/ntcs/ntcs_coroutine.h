@@ -145,12 +145,12 @@ using CoroutineTaskFrame =
 /// suspend, and await_resume() is called immediately. This serves as an
 /// optimization for cases where the awaited operation is already complete.
 ///
-/// @li @b await_suspend(std::coroutine_handle<>)
+/// @li @b await_suspend(std::coroutine_handle<void>)
 /// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<> representing the calling coroutine. This function
-/// is responsible for initiating the asynchronous operation and storing the
-/// handle so the coroutine can be resumed later when the operation completes.
-/// It can return void, bool, or std::coroutine_handle<>.
+/// std::coroutine_handle<void> representing the calling coroutine. This
+/// function is responsible for initiating the asynchronous operation and
+/// storing the handle so the coroutine can be resumed later when the operation
+/// completes. It can return void, bool, or std::coroutine_handle<void>.
 ///
 /// @li @b await_resume()
 /// This function is called when the awaited operation completes and the
@@ -174,7 +174,7 @@ class CoroutineGenericAwaitableNow
         return true;
     }
 
-    void await_suspend(std::coroutine_handle<>) const noexcept
+    void await_suspend(std::coroutine_handle<void>) const noexcept
     {
     }
 
@@ -201,12 +201,12 @@ class CoroutineGenericAwaitableNow
 /// suspend, and await_resume() is called immediately. This serves as an
 /// optimization for cases where the awaited operation is already complete.
 ///
-/// @li @b await_suspend(std::coroutine_handle<>)
+/// @li @b await_suspend(std::coroutine_handle<void>)
 /// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<> representing the calling coroutine. This function
-/// is responsible for initiating the asynchronous operation and storing the
-/// handle so the coroutine can be resumed later when the operation completes.
-/// It can return void, bool, or std::coroutine_handle<>.
+/// std::coroutine_handle<void> representing the calling coroutine. This
+/// function is responsible for initiating the asynchronous operation and
+/// storing the handle so the coroutine can be resumed later when the operation
+/// completes. It can return void, bool, or std::coroutine_handle<void>.
 ///
 /// @li @b await_resume()
 /// This function is called when the awaited operation completes and the
@@ -230,7 +230,7 @@ class CoroutineGenericAwaitableLater
         return false;
     }
 
-    void await_suspend(std::coroutine_handle<>) const noexcept
+    void await_suspend(std::coroutine_handle<void>) const noexcept
     {
     }
 
@@ -842,12 +842,12 @@ bsl::ostream& operator<<(bsl::ostream&                       stream,
 /// suspend, and await_resume() is called immediately. This serves as an
 /// optimization for cases where the awaited operation is already complete.
 ///
-/// @li @b await_suspend(std::coroutine_handle<>)
+/// @li @b await_suspend(std::coroutine_handle<void>)
 /// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<> representing the calling coroutine. This function
-/// is responsible for initiating the asynchronous operation and storing the
-/// handle so the coroutine can be resumed later when the operation completes.
-/// It can return void, bool, or std::coroutine_handle<>.
+/// std::coroutine_handle<void> representing the calling coroutine. This
+/// function is responsible for initiating the asynchronous operation and
+/// storing the handle so the coroutine can be resumed later when the operation
+/// completes. It can return void, bool, or std::coroutine_handle<void>.
 ///
 /// @li @b await_resume()
 /// This function is called when the awaited operation completes and the
@@ -890,11 +890,11 @@ class CoroutineTaskPrologAwaitable
     /// infrastructure when 'await_ready' returns false. Store the specified
     /// 'caller' so it can be later resumed and initiate the asynchronous
     /// operation. Note that this function can return 'void', 'bool', or
-    /// 'std::coroutine_handle<>'. If it returns 'void', the coroutine remains
-    /// suspended. If it returns true, the coroutine remains suspended. If it
-    /// returns false, the coroutine is automatically destroyed. If it returns
-    /// 'std::coroutine_handle', that coroutine is resumed.
-    void await_suspend(std::coroutine_handle<> coroutine) const noexcept;
+    /// 'std::coroutine_handle<void>'. If it returns 'void', the coroutine
+    /// remains suspended. If it returns true, the coroutine remains suspended.
+    /// If it returns false, the coroutine is automatically destroyed. If it
+    /// returns 'std::coroutine_handle', that coroutine is resumed.
+    void await_suspend(std::coroutine_handle<void> coroutine) const noexcept;
 
     /// Do nothing.
     ///
@@ -937,12 +937,12 @@ class CoroutineTaskPrologAwaitable
 /// suspend, and await_resume() is called immediately. This serves as an
 /// optimization for cases where the awaited operation is already complete.
 ///
-/// @li @b await_suspend(std::coroutine_handle<>)
+/// @li @b await_suspend(std::coroutine_handle<void>)
 /// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<> representing the calling coroutine. This function
-/// is responsible for initiating the asynchronous operation and storing the
-/// handle so the coroutine can be resumed later when the operation completes.
-/// It can return void, bool, or std::coroutine_handle<>.
+/// std::coroutine_handle<void> representing the calling coroutine. This
+/// function is responsible for initiating the asynchronous operation and
+/// storing the handle so the coroutine can be resumed later when the operation
+/// completes. It can return void, bool, or std::coroutine_handle<void>.
 ///
 /// @li @b await_resume()
 /// This function is called when the awaited operation completes and the
@@ -982,13 +982,12 @@ class CoroutineTaskEpilogAwaitable
     /// infrastructure when 'await_ready' returns false. Store the specified
     /// 'caller' so it can be later resumed and initiate the asynchronous
     /// operation. Note that this function can return 'void', 'bool', or
-    /// 'std::coroutine_handle<>'. If it returns 'void', the coroutine remains
-    /// suspended. If it returns true, the coroutine remains suspended. If it
-    /// returns false, the coroutine is automatically destroyed. If it returns
-    /// 'std::coroutine_handle', that coroutine is resumed.
-    template <typename PROMISE>
+    /// 'std::coroutine_handle<void>'. If it returns 'void', the coroutine
+    /// remains suspended. If it returns true, the coroutine remains suspended.
+    /// If it returns false, the coroutine is automatically destroyed. If it
+    /// returns 'std::coroutine_handle', that coroutine is resumed.
     std::coroutine_handle<void> await_suspend(
-        std::coroutine_handle<PROMISE> coroutine) noexcept;
+        std::coroutine_handle<void> coroutine) noexcept;
 
     /// Do nothing.
     ///
@@ -1030,12 +1029,12 @@ class CoroutineTaskEpilogAwaitable
 /// suspend, and await_resume() is called immediately. This serves as an
 /// optimization for cases where the awaited operation is already complete.
 ///
-/// @li @b await_suspend(std::coroutine_handle<>)
+/// @li @b await_suspend(std::coroutine_handle<void>)
 /// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<> representing the calling coroutine. This function
-/// is responsible for initiating the asynchronous operation and storing the
-/// handle so the coroutine can be resumed later when the operation completes.
-/// It can return void, bool, or std::coroutine_handle<>.
+/// std::coroutine_handle<void> representing the calling coroutine. This
+/// function is responsible for initiating the asynchronous operation and
+/// storing the handle so the coroutine can be resumed later when the operation
+/// completes. It can return void, bool, or std::coroutine_handle<void>.
 ///
 /// @li @b await_resume()
 /// This function is called when the awaited operation completes and the
@@ -1078,13 +1077,12 @@ class CoroutineTaskResultAwaitable
     /// infrastructure when 'await_ready' returns false. Store the specified
     /// 'caller' so it can be later resumed and initiate the asynchronous
     /// operation. Note that this function can return 'void', 'bool', or
-    /// 'std::coroutine_handle<>'. If it returns 'void', the coroutine remains
-    /// suspended. If it returns true, the coroutine remains suspended. If it
-    /// returns false, the coroutine is automatically destroyed. If it returns
-    /// 'std::coroutine_handle', that coroutine is resumed.
-    template <typename AWAITER>
+    /// 'std::coroutine_handle<void>'. If it returns 'void', the coroutine
+    /// remains suspended. If it returns true, the coroutine remains suspended.
+    /// If it returns false, the coroutine is automatically destroyed. If it
+    /// returns 'std::coroutine_handle', that coroutine is resumed.
     CoroutineTaskFrame<RESULT> await_suspend(
-        std::coroutine_handle<AWAITER> awaiter);
+        std::coroutine_handle<void> coroutine);
 
     /// Return the result of the coroutine of 'd_promise', or rethrow the
     /// exception by which that coroutine exited.
@@ -1360,15 +1358,15 @@ class CoroutineSynchronizationContext
   public:
     /// Create a new synchronization context that synchronized the specified
     /// 'coroutine'. Allocate memory using the specified 'allocator'.
-    CoroutineSynchronizationContext(bsl::coroutine_handle<> coroutine,
-                                    bsl::allocator<>        allocator);
+    CoroutineSynchronizationContext(bsl::coroutine_handle<void> coroutine,
+                                    bsl::allocator<>            allocator);
 
     /// Set the current coroutine to the specified 'coroutine'.
     void setHandle(
         bsl::coroutine_handle<CoroutineSynchronizationPromise> coroutine);
 
     /// Set the awaiter coroutine to the specified 'coroutine'.
-    void setTask(bsl::coroutine_handle<> coroutine);
+    void setTask(bsl::coroutine_handle<void> coroutine);
 
     /// Resume the synchronization coroutine.
     void resume();
@@ -1386,7 +1384,7 @@ class CoroutineSynchronizationContext
     bsl::coroutine_handle<CoroutineSynchronizationPromise> handle() const;
 
     /// Return the task to-be-synchronized coroutine.
-    bsl::coroutine_handle<> task() const;
+    bsl::coroutine_handle<void> task() const;
 
     /// Return the allocator.
     bsl::allocator<> allocator() const;
@@ -1405,7 +1403,7 @@ class CoroutineSynchronizationContext
     ntccfg::Condition                                      d_condition;
     bool                                                   d_done;
     bsl::coroutine_handle<CoroutineSynchronizationPromise> d_handle;
-    bsl::coroutine_handle<>                                d_task;
+    bsl::coroutine_handle<void>                            d_task;
     bsl::allocator<>                                       d_allocator;
 };
 
@@ -1436,12 +1434,12 @@ bsl::ostream& operator<<(bsl::ostream&                          stream,
 /// suspend, and await_resume() is called immediately. This serves as an
 /// optimization for cases where the awaited operation is already complete.
 ///
-/// @li @b await_suspend(std::coroutine_handle<>)
+/// @li @b await_suspend(std::coroutine_handle<void>)
 /// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<> representing the calling coroutine. This function
-/// is responsible for initiating the asynchronous operation and storing the
-/// handle so the coroutine can be resumed later when the operation completes.
-/// It can return void, bool, or std::coroutine_handle<>.
+/// std::coroutine_handle<void> representing the calling coroutine. This
+/// function is responsible for initiating the asynchronous operation and
+/// storing the handle so the coroutine can be resumed later when the operation
+/// completes. It can return void, bool, or std::coroutine_handle<void>.
 ///
 /// @li @b await_resume()
 /// This function is called when the awaited operation completes and the
@@ -1483,11 +1481,11 @@ class CoroutineSynchronizationPrologAwaitable
     /// infrastructure when 'await_ready' returns false. Store the specified
     /// 'caller' so it can be later resumed and initiate the asynchronous
     /// operation. Note that this function can return 'void', 'bool', or
-    /// 'std::coroutine_handle<>'. If it returns 'void', the coroutine remains
-    /// suspended. If it returns true, the coroutine remains suspended. If it
-    /// returns false, the coroutine is automatically destroyed. If it returns
-    /// 'std::coroutine_handle', that coroutine is resumed.
-    void await_suspend(std::coroutine_handle<> coroutine) const noexcept;
+    /// 'std::coroutine_handle<void>'. If it returns 'void', the coroutine
+    /// remains suspended. If it returns true, the coroutine remains suspended.
+    /// If it returns false, the coroutine is automatically destroyed. If it
+    /// returns 'std::coroutine_handle', that coroutine is resumed.
+    void await_suspend(std::coroutine_handle<void> coroutine) const noexcept;
 
     /// Do nothing.
     ///
@@ -1531,12 +1529,12 @@ class CoroutineSynchronizationPrologAwaitable
 /// suspend, and await_resume() is called immediately. This serves as an
 /// optimization for cases where the awaited operation is already complete.
 ///
-/// @li @b await_suspend(std::coroutine_handle<>)
+/// @li @b await_suspend(std::coroutine_handle<void>)
 /// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<> representing the calling coroutine. This function
-/// is responsible for initiating the asynchronous operation and storing the
-/// handle so the coroutine can be resumed later when the operation completes.
-/// It can return void, bool, or std::coroutine_handle<>.
+/// std::coroutine_handle<void> representing the calling coroutine. This
+/// function is responsible for initiating the asynchronous operation and
+/// storing the handle so the coroutine can be resumed later when the operation
+/// completes. It can return void, bool, or std::coroutine_handle<void>.
 ///
 /// @li @b await_resume()
 /// This function is called when the awaited operation completes and the
@@ -1576,11 +1574,11 @@ class CoroutineSynchronizationEpilogAwaitable
     /// infrastructure when 'await_ready' returns false. Store the specified
     /// 'caller' so it can be later resumed and initiate the asynchronous
     /// operation. Note that this function can return 'void', 'bool', or
-    /// 'std::coroutine_handle<>'. If it returns 'void', the coroutine remains
-    /// suspended. If it returns true, the coroutine remains suspended. If it
-    /// returns false, the coroutine is automatically destroyed. If it returns
-    /// 'std::coroutine_handle', that coroutine is resumed.
-    void await_suspend(std::coroutine_handle<>) noexcept;
+    /// 'std::coroutine_handle<void>'. If it returns 'void', the coroutine
+    /// remains suspended. If it returns true, the coroutine remains suspended.
+    /// If it returns false, the coroutine is automatically destroyed. If it
+    /// returns 'std::coroutine_handle', that coroutine is resumed.
+    void await_suspend(std::coroutine_handle<void>) noexcept;
 
     /// The behavior of this method is undefined.
     ///
@@ -1624,12 +1622,12 @@ class CoroutineSynchronizationEpilogAwaitable
 /// suspend, and await_resume() is called immediately. This serves as an
 /// optimization for cases where the awaited operation is already complete.
 ///
-/// @li @b await_suspend(std::coroutine_handle<>)
+/// @li @b await_suspend(std::coroutine_handle<void>)
 /// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<> representing the calling coroutine. This function
-/// is responsible for initiating the asynchronous operation and storing the
-/// handle so the coroutine can be resumed later when the operation completes.
-/// It can return void, bool, or std::coroutine_handle<>.
+/// std::coroutine_handle<void> representing the calling coroutine. This
+/// function is responsible for initiating the asynchronous operation and
+/// storing the handle so the coroutine can be resumed later when the operation
+/// completes. It can return void, bool, or std::coroutine_handle<void>.
 ///
 /// @li @b await_resume()
 /// This function is called when the awaited operation completes and the
@@ -1668,12 +1666,12 @@ class CoroutineSynchronizationResultAwaitable
     /// infrastructure when 'await_ready' returns false. Store the specified
     /// 'caller' so it can be later resumed and initiate the asynchronous
     /// operation. Note that this function can return 'void', 'bool', or
-    /// 'std::coroutine_handle<>'. If it returns 'void', the coroutine remains
-    /// suspended. If it returns true, the coroutine remains suspended. If it
-    /// returns false, the coroutine is automatically destroyed. If it returns
-    /// 'std::coroutine_handle', that coroutine is resumed.
-    std::coroutine_handle<> await_suspend(
-        std::coroutine_handle<> couroutine) noexcept;
+    /// 'std::coroutine_handle<void>'. If it returns 'void', the coroutine
+    /// remains suspended. If it returns true, the coroutine remains suspended.
+    /// If it returns false, the coroutine is automatically destroyed. If it
+    /// returns 'std::coroutine_handle', that coroutine is resumed.
+    std::coroutine_handle<void> await_suspend(
+        std::coroutine_handle<void> couroutine) noexcept;
 
     /// The behavior of this method is undefined.
     ///
@@ -2609,7 +2607,7 @@ NTSCFG_INLINE bool CoroutineTaskPrologAwaitable<RESULT>::await_ready()
 
 template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskPrologAwaitable<RESULT>::await_suspend(
-    std::coroutine_handle<> coroutine) const noexcept
+    std::coroutine_handle<void> coroutine) const noexcept
 {
     NTCS_COROUTINE_LOG_CONTEXT();
     NTCS_COROUTINE_LOG_AWAIT_SUSPEND("task", "prolog", *d_context, coroutine);
@@ -2640,14 +2638,13 @@ NTSCFG_INLINE bool CoroutineTaskEpilogAwaitable<RESULT>::await_ready() noexcept
 }
 
 template <typename RESULT>
-template <typename PROMISE>
 NTSCFG_INLINE std::coroutine_handle<void> CoroutineTaskEpilogAwaitable<
-    RESULT>::await_suspend(std::coroutine_handle<PROMISE> coroutine) noexcept
+    RESULT>::await_suspend(std::coroutine_handle<void> coroutine) noexcept
 {
     NTCS_COROUTINE_LOG_CONTEXT();
     NTCS_COROUTINE_LOG_AWAIT_SUSPEND("task", "epilog", *d_context, coroutine);
 
-    return coroutine.promise().awaiter();
+    return d_context->awaiter();
 }
 
 template <typename RESULT>
@@ -2675,9 +2672,8 @@ bool CoroutineTaskResultAwaitable<RESULT>::await_ready()
 }
 
 template <typename RESULT>
-template <typename AWAITER>
 CoroutineTaskFrame<RESULT> CoroutineTaskResultAwaitable<RESULT>::await_suspend(
-    std::coroutine_handle<AWAITER> coroutine)
+    std::coroutine_handle<void> coroutine)
 {
     NTCS_COROUTINE_LOG_CONTEXT();
     NTCS_COROUTINE_LOG_AWAIT_SUSPEND("task", "result", *d_context, coroutine);
@@ -2898,8 +2894,8 @@ RESULT CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&& task)
 
 NTSCFG_INLINE
 CoroutineSynchronizationContext::CoroutineSynchronizationContext(
-    bsl::coroutine_handle<> coroutine,
-    bsl::allocator<>        allocator)
+    bsl::coroutine_handle<void> coroutine,
+    bsl::allocator<>            allocator)
 : d_mutex()
 , d_condition()
 , d_done(false)
@@ -2918,7 +2914,7 @@ void CoroutineSynchronizationContext::setHandle(
 
 NTSCFG_INLINE
 void CoroutineSynchronizationContext::setTask(
-    bsl::coroutine_handle<> coroutine)
+    bsl::coroutine_handle<void> coroutine)
 {
     d_task = coroutine;
 }
@@ -2965,7 +2961,7 @@ CoroutineSynchronizationContext::handle() const
 }
 
 NTSCFG_INLINE
-bsl::coroutine_handle<> CoroutineSynchronizationContext::task() const
+bsl::coroutine_handle<void> CoroutineSynchronizationContext::task() const
 {
     return d_task;
 }
@@ -3004,7 +3000,7 @@ bool CoroutineSynchronizationPrologAwaitable::await_ready() const noexcept
 
 NTSCFG_INLINE
 void CoroutineSynchronizationPrologAwaitable::await_suspend(
-    std::coroutine_handle<> coroutine) const noexcept
+    std::coroutine_handle<void> coroutine) const noexcept
 {
     NTCCFG_WARNING_UNUSED(coroutine);
 
@@ -3037,7 +3033,7 @@ NTSCFG_INLINE bool CoroutineSynchronizationEpilogAwaitable::await_ready()
 
 NTSCFG_INLINE
 void CoroutineSynchronizationEpilogAwaitable::await_suspend(
-    std::coroutine_handle<> coroutine) noexcept
+    std::coroutine_handle<void> coroutine) noexcept
 {
     NTCCFG_WARNING_UNUSED(coroutine);
 
@@ -3071,8 +3067,8 @@ NTSCFG_INLINE bool CoroutineSynchronizationResultAwaitable::await_ready()
 }
 
 NTSCFG_INLINE
-std::coroutine_handle<> CoroutineSynchronizationResultAwaitable::await_suspend(
-    std::coroutine_handle<> coroutine) noexcept
+std::coroutine_handle<void> CoroutineSynchronizationResultAwaitable::
+    await_suspend(std::coroutine_handle<void> coroutine) noexcept
 {
     NTCCFG_WARNING_UNUSED(coroutine);
 
