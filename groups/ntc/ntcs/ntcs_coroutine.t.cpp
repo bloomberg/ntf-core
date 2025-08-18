@@ -1337,6 +1337,9 @@ NTSCFG_TEST_FUNCTION(ntcs::CoroutineTest::verifyCase4)
 
     ntcs::CoroutineTask<void> task = mechanism.hello();
 
+    BALL_LOG_DEBUG << "Sleeping" << BALL_LOG_END;
+    bslmt::ThreadUtil::sleep(bsls::TimeInterval(3));
+
     ntcs::CoroutineTaskUtil::synchronize(bsl::move(task));
 }
 
