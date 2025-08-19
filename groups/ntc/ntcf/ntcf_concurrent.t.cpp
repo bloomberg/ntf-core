@@ -39,62 +39,141 @@ class ConcurrentTest
 
   public:
     // TODO
-    static void verifyCase1();
-
-    // TODO
-    static void verifyCase2();
-
-    // TODO
     static void verifySandbox();
 };
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifySandbox(
     const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    ntsa::Allocator                         memory)
+    ntsa::Allocator                         allocator)
 {
-    // Get the memory allocator.
+    ntccfg::Object scope("coVerifySandbox");
 
-    bslma::Allocator* allocator = memory.mechanism();
+    ntsa::Error error;
 
     // Create a client datagram socket.
 
     ntca::DatagramSocketOptions clientDatagramSocketOptions;
+
     clientDatagramSocketOptions.setTransport(
         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
 
+    clientDatagramSocketOptions.setSourceEndpoint(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
+
     bsl::shared_ptr<ntci::DatagramSocket> clientDatagramSocket =
         scheduler->createDatagramSocket(clientDatagramSocketOptions,
-                                        allocator);
+                                        allocator.mechanism());
+
+    error = clientDatagramSocket->open();
+    NTSCFG_TEST_OK(error);
 
     // Create a server datagram socket.
 
     ntca::DatagramSocketOptions serverDatagramSocketOptions;
+
     serverDatagramSocketOptions.setTransport(
         ntsa::Transport::e_UDP_IPV4_DATAGRAM);
 
+    serverDatagramSocketOptions.setSourceEndpoint(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
+
     bsl::shared_ptr<ntci::DatagramSocket> serverDatagramSocket =
         scheduler->createDatagramSocket(serverDatagramSocketOptions,
-                                        allocator);
+                                        allocator.mechanism());
 
-    ntsa::AwaitableValue<int> awaitable(static_cast<int>(123));
+    error = serverDatagramSocket->open();
+    NTSCFG_TEST_OK(error);
 
-    int value = co_await awaitable;
+    // Connect the client datagram socket to the server datagram socket.
 
-    BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
+    ntca::ConnectContext clientConnectContext;
+    ntca::ConnectOptions clientConnectOptions;
+
+    error = co_await ntcf::Concurrent::connect(
+        clientDatagramSocket,
+        &clientConnectContext,
+        serverDatagramSocket->sourceEndpoint(),
+        clientConnectOptions);
+    NTSCFG_TEST_OK(error);
+
+    BALL_LOG_INFO << "Client socket connect complete: " << clientConnectContext
+                  << BALL_LOG_END;
+
+    // Connect the server datagram socket to the client datagram socket.
+
+    ntca::ConnectContext serverConnectContext;
+    ntca::ConnectOptions serverConnectOptions;
+
+    error = co_await ntcf::Concurrent::connect(
+        serverDatagramSocket,
+        0,
+        clientDatagramSocket->sourceEndpoint(),
+        ntca::ConnectOptions());
+    NTSCFG_TEST_OK(error);
+
+    BALL_LOG_INFO << "Server socket connect complete: " << clientConnectContext
+                  << BALL_LOG_END;
+
+    // Send data from the client datagram socket to the server datagram socket.
+
+    bsl::shared_ptr<bdlbb::Blob> clientSendData =
+        clientDatagramSocket->createOutgoingBlob();
+
+    bdlbb::BlobUtil::append(clientSendData.get(), "Hello, world!", 13);
+
+    ntca::SendContext clientSendContext;
+    ntca::SendOptions clientSendOptions;
+
+    error = co_await ntcf::Concurrent::send(clientDatagramSocket,
+                                            &clientSendContext,
+                                            clientSendData,
+                                            clientSendOptions);
+    NTSCFG_TEST_OK(error);
+
+    BALL_LOG_INFO << "Client socket send complete: " << clientSendContext
+                  << "\n"
+                  << bdlbb::BlobUtilHexDumper(clientSendData.get())
+                  << BALL_LOG_END;
+
+    // Receive data at the server datagram socket from the client datagram
+    // socket.
+
+    bsl::shared_ptr<bdlbb::Blob> serverReceiveData =
+        serverDatagramSocket->createIncomingBlob();
+
+    ntca::ReceiveContext serverReceiveContext;
+    ntca::ReceiveOptions serverReceiveOptions;
+
+    error = co_await ntcf::Concurrent::receive(serverDatagramSocket,
+                                               &serverReceiveContext,
+                                               &serverReceiveData,
+                                               serverReceiveOptions);
+    NTSCFG_TEST_OK(error);
+
+    BALL_LOG_INFO << "Server socket receive complete: " << serverReceiveContext
+                  << "\n"
+                  << bdlbb::BlobUtilHexDumper(serverReceiveData.get())
+                  << BALL_LOG_END;
+
+    // Close the client datagram socket.
+
+    co_await ntcf::Concurrent::close(clientDatagramSocket);
+
+    BALL_LOG_INFO << "Client socket closed" << BALL_LOG_END;
+
+    // Close the server datagram socket.
+
+    co_await ntcf::Concurrent::close(serverDatagramSocket);
+
+    BALL_LOG_INFO << "Server socket closed" << BALL_LOG_END;
 
     co_return;
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyCase1)
-{
-}
-
-NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyCase2)
-{
-}
-
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifySandbox)
 {
+    ntccfg::Object scope("coVerifySandbox");
+
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
 
     bsl::shared_ptr<ntci::Scheduler> scheduler;
