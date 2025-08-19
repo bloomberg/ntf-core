@@ -411,6 +411,7 @@
 // ntcf
 
 // #include <ntcf_api.t.cpp>
+#include <ntcf_concurrent.t.cpp>
 #include <ntcf_system.t.cpp>
 #include <ntcf_test.t.cpp>
 

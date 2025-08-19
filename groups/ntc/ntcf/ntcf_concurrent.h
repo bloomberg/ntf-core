@@ -13,33 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCI_CONCURRENT
-#define INCLUDED_NTCI_CONCURRENT
+#ifndef INCLUDED_NTCF_CONCURRENT
+#define INCLUDED_NTCF_CONCURRENT
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
 #include <ntccfg_config.h>
 #include <ntccfg_platform.h>
-#include <ntci_datagramsocket.h>
-#include <ntci_listenersocket.h>
-#include <ntci_resolver.h>
-#include <ntci_scheduler.h>
-#include <ntci_streamsocket.h>
+#include <ntci_concurrent.h>
+#include <ntcf_system.h>
+#include <ntsf_system.h>
 #include <ntsa_coroutine.h>
 #include <ntsa_error.h>
 
 #if NTC_BUILD_WITH_COROUTINES
 
 namespace BloombergLP {
-namespace ntci {
+namespace ntcf {
 
 /// Provide an interface for concurrent operations.
 ///
 /// @par Thread Safety
 /// This class is thread safe.
 ///
-/// @ingroup module_ntci_utility
+/// @ingroup module_ntci_runtime
 class Concurrent
 {
   public:
@@ -57,7 +55,7 @@ class Concurrent
     static void exit();
 };
 
-}  // close namespace ntci
+}  // close namespace ntcf
 }  // close namespace BloombergLP
 
 #endif

@@ -503,7 +503,7 @@ class CoroutineTaskResult
     /// Create a new coroutine task result that is initally incomplete. Use
     /// specified 'allocator' to provide memory for the 'RESULT' object, if
     /// such a result object is created and is allocator-aware.
-    explicit CoroutineTaskResult(const bsl::allocator<>& allocator);
+    explicit CoroutineTaskResult(const ntsa::Allocator& allocator);
 
     /// Set the held exception to the specified 'exception'.  The behavior is
     /// undefined if this object already holds a value or exception.
@@ -566,7 +566,7 @@ class CoroutineTaskResult<RESULT>
 
     /// Create a new coroutine task result that is initally incomplete. The
     /// specified 'allocator' is ignored.
-    explicit CoroutineTaskResult(const bsl::allocator<>& allocator);
+    explicit CoroutineTaskResult(const ntsa::Allocator& allocator);
 
     /// Set the held exception to the specified 'exception'.  The behavior is
     /// undefined if this object already holds a reference
@@ -628,7 +628,7 @@ class CoroutineTaskResult<RESULT>
 
     /// Create a new coroutine task result that is initally incomplete. The
     /// specified 'allocator' is ignored.
-    explicit CoroutineTaskResult(const bsl::allocator<>& allocator);
+    explicit CoroutineTaskResult(const ntsa::Allocator& allocator);
 
     /// Set the held exception to the specified 'exception'.  The behavior is
     /// undefined if this object already holds a value or
@@ -657,7 +657,7 @@ class CoroutineTaskPromiseUtil
 {
   public:
     /// Defines a type alias for the allocator type.
-    using Allocator = bsl::allocator<>;
+    using Allocator = ntsa::Allocator;
 
     /// Return a pointer to a maximally aligned block of memory having at least
     /// the specified 'size', allocated using the specified 'allocator'.
@@ -701,7 +701,7 @@ class CoroutineTaskContext
     using AwaiterFrame = std::coroutine_handle<void>;
 
     /// Defines a type alias for the type of the allocator.
-    using Alloc = bsl::allocator<>;
+    using Alloc = ntsa::Allocator;
 
     /// Defines a type alias for this type.
     using Self = CoroutineTaskContext<Result>;
@@ -772,7 +772,7 @@ class CoroutineTaskContext
     AwaiterFrame awaiter() const;
 
     /// Return the allocator.
-    bsl::allocator<> allocator() const;
+    ntsa::Allocator allocator() const;
 
     /// Return true if the task is complete, otherwise return false.
     bool isComplete() const;
@@ -1106,7 +1106,7 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     using Task = CoroutineTask<Result>;
 
     /// Defines a type alias for the type of the allocator.
-    using Alloc = bsl::allocator<>;
+    using Alloc = ntsa::Allocator;
 
     /// Defines a type alias for this type.
     using Self = CoroutineTaskPromise<Result>;
@@ -1154,6 +1154,14 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     /// 'CoroutineTask' coroutine.
     void operator delete(void* ptr, bsl::size_t size);
 
+    /// Create a new coroutine task promise. Allocate memory using the default
+    /// allocator.
+    CoroutineTaskPromise();
+
+    /// Create a new coroutine task promise. Allocate memory using the
+    /// specified 'allocator'.
+    explicit CoroutineTaskPromise(ntsa::Allocator allocator);
+
     /// Create a new coroutine task promise that will use the specified 'alloc'
     /// to provide memory for the result object if 'RESULT' is an
     /// allocator-aware object type; otherwise, 'alloc' is ignored.  This
@@ -1200,14 +1208,14 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     std::coroutine_handle<void> awaiter() const noexcept;
 
     /// Return the allocator.
-    bsl::allocator<> allocator() const;
+    ntsa::Allocator allocator() const;
 
   private:
     /// The coroutine context.
     CoroutineTaskContext<RESULT> d_context;
 
     /// The memory allocator.
-    bsl::allocator<> d_allocator;
+    ntsa::Allocator d_allocator;
 };
 
 /// @internal @brief
@@ -1240,7 +1248,7 @@ class CoroutineTask
     using Task = CoroutineTask<Result>;
 
     /// Defines a type alias for the type of the allocator.
-    using Alloc = bsl::allocator<>;
+    using Alloc = ntsa::Allocator;
 
     /// Defines a type alias for this type.
     using Self = CoroutineTask<Result>;
@@ -1275,7 +1283,7 @@ class CoroutineTask
     CoroutineTaskResultAwaitable<RESULT> operator co_await() const&& noexcept;
 
     /// Return the allocator.
-    bsl::allocator<> allocator() const;
+    ntsa::Allocator allocator() const;
 
   private:
     /// This class is not copy-constructable.
@@ -1330,7 +1338,7 @@ class CoroutineSynchronizationContext
     /// Create a new synchronization context that synchronized the specified
     /// 'coroutine'. Allocate memory using the specified 'allocator'.
     CoroutineSynchronizationContext(bsl::coroutine_handle<void> coroutine,
-                                    bsl::allocator<>            allocator);
+                                    ntsa::Allocator             allocator);
 
     /// Set the current coroutine to the specified 'coroutine'.
     void setHandle(
@@ -1358,7 +1366,7 @@ class CoroutineSynchronizationContext
     bsl::coroutine_handle<void> task() const;
 
     /// Return the allocator.
-    bsl::allocator<> allocator() const;
+    ntsa::Allocator allocator() const;
 
   private:
     /// This class is not copy-constructable.
@@ -1375,7 +1383,7 @@ class CoroutineSynchronizationContext
     bool                                                   d_done;
     bsl::coroutine_handle<CoroutineSynchronizationPromise> d_handle;
     bsl::coroutine_handle<void>                            d_task;
-    bsl::allocator<>                                       d_allocator;
+    ntsa::Allocator                                        d_allocator;
 };
 
 /// Write a formatted, human-readable description of the specified 'object'
@@ -1684,7 +1692,7 @@ class CoroutineSynchronizationPromise
     using Promise = CoroutineSynchronizationPromise;
 
     /// Defines a type alias for the type of the allocator.
-    using Alloc = bsl::allocator<>;
+    using Alloc = ntsa::Allocator;
 
     /// Defines a type alias for this type.
     using Self = CoroutineSynchronizationPromise;
@@ -1749,7 +1757,7 @@ class CoroutineSynchronization
     using Promise = CoroutineSynchronizationPromise;
 
     /// Defines a type alias for the type of the allocator.
-    using Alloc = bsl::allocator<>;
+    using Alloc = ntsa::Allocator;
 
     /// Defines a type alias for this type.
     using Self = CoroutineSynchronization;
@@ -2262,7 +2270,7 @@ CoroutineTaskResult<RESULT>::CoroutineTaskResult()
 }
 
 template <typename RESULT>
-CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>& alloc)
+CoroutineTaskResult<RESULT>::CoroutineTaskResult(const ntsa::Allocator& alloc)
 : d_storage(alloc.mechanism())
 {
 }
@@ -2301,7 +2309,7 @@ CoroutineTaskResult<RESULT>::CoroutineTaskResult()
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>&)
+CoroutineTaskResult<RESULT>::CoroutineTaskResult(const ntsa::Allocator&)
 : d_storage()
 {
 }
@@ -2345,7 +2353,7 @@ CoroutineTaskResult<RESULT>::CoroutineTaskResult()
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
-CoroutineTaskResult<RESULT>::CoroutineTaskResult(const bsl::allocator<>&)
+CoroutineTaskResult<RESULT>::CoroutineTaskResult(const ntsa::Allocator&)
 : d_storage()
 {
 }
@@ -2525,13 +2533,13 @@ NTSCFG_INLINE CoroutineTaskContext<RESULT>::AwaiterFrame CoroutineTaskContext<
 }
 
 template <typename RESULT>
-bsl::allocator<> CoroutineTaskContext<RESULT>::allocator() const
+ntsa::Allocator CoroutineTaskContext<RESULT>::allocator() const
 {
     if (d_current.address() != nullptr) {
         return d_current.promise().allocator();
     }
     else {
-        return bsl::allocator<>();
+        return ntsa::Allocator();
     }
 }
 
@@ -2701,6 +2709,24 @@ NTSCFG_INLINE void CoroutineTaskPromise<RESULT>::operator delete(
 }
 
 template <typename RESULT>
+CoroutineTaskPromise<RESULT>::CoroutineTaskPromise()
+: CoroutineTaskResult<RESULT>()
+, d_context()
+, d_allocator()
+{
+    d_context.setCurrent(std::coroutine_handle<Self>::from_promise(*this));
+}
+
+template <typename RESULT>
+CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(ntsa::Allocator allocator)
+: CoroutineTaskResult<RESULT>(allocator.mechanism())
+, d_context()
+, d_allocator(allocator)
+{
+    d_context.setCurrent(std::coroutine_handle<Self>::from_promise(*this));
+}
+
+template <typename RESULT>
 CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     bsl::allocator_arg_t,
     bsl::convertible_to<Alloc> auto&& alloc,
@@ -2762,7 +2788,7 @@ std::coroutine_handle<void> CoroutineTaskPromise<RESULT>::awaiter()
 }
 
 template <typename RESULT>
-bsl::allocator<> CoroutineTaskPromise<RESULT>::allocator() const
+ntsa::Allocator CoroutineTaskPromise<RESULT>::allocator() const
 {
     return d_allocator;
 }
@@ -2826,13 +2852,13 @@ NTSCFG_INLINE CoroutineTaskResultAwaitable<RESULT> CoroutineTask<
 }
 
 template <typename RESULT>
-bsl::allocator<> CoroutineTask<RESULT>::allocator() const
+ntsa::Allocator CoroutineTask<RESULT>::allocator() const
 {
     if (d_context) {
         return d_context->allocator();
     }
     else {
-        return bsl::allocator<>();
+        return ntsa::Allocator();
     }
 }
 
@@ -2866,7 +2892,7 @@ RESULT CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&& task)
 NTSCFG_INLINE
 CoroutineSynchronizationContext::CoroutineSynchronizationContext(
     bsl::coroutine_handle<void> coroutine,
-    bsl::allocator<>            allocator)
+    ntsa::Allocator             allocator)
 : d_mutex()
 , d_condition()
 , d_done(false)
@@ -2938,7 +2964,7 @@ bsl::coroutine_handle<void> CoroutineSynchronizationContext::task() const
 }
 
 NTSCFG_INLINE
-bsl::allocator<> CoroutineSynchronizationContext::allocator() const
+ntsa::Allocator CoroutineSynchronizationContext::allocator() const
 {
     return d_allocator;
 }

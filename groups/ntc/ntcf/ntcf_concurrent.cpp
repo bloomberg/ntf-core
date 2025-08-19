@@ -13,14 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntci_concurrent.h>
+#include <ntcf_concurrent.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntci_concurrent_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntcf_concurrent_cpp, "$Id$ $CSID$")
 
 #if NTC_BUILD_WITH_COROUTINES
 namespace BloombergLP {
-namespace ntci {
+namespace ntcf {
 
 void Concurrent::initialize()
 {
@@ -44,6 +44,6 @@ void Concurrent::exit()
 {
 }
 
-}  // close namespace ntci
+}  // close namespace ntcf
 }  // close namespace BloombergLP
 #endif

@@ -198,6 +198,7 @@ class CoroutineTest
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifySandbox(
+        ntsa::AllocatorArg,
         ntsa::Allocator allocator);
 
   public:
@@ -261,7 +262,7 @@ class CoroutineTest::String
 {
   public:
     // Defines a type alias for the allocator type.
-    typedef bsl::allocator<> allocator_type;
+    typedef ntsa::Allocator allocator_type;
 
     // Create a new string. Allocate memory using the default allocator.
     String();
@@ -2192,6 +2193,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase6()
 }
 
 ntsa::CoroutineTask<void> CoroutineTest::coVerifySandbox(
+    ntsa::AllocatorArg,
     ntsa::Allocator allocator)
 {
     ntsa::CoroutineTest::Scope function("verifySandbox");
@@ -2207,7 +2209,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifySandbox(
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyPrerequisites)
 {
-    bsl::allocator<> allocator(NTSCFG_TEST_ALLOCATOR);
+    ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
 
     CoroutineTest::String empty;
 
@@ -2317,7 +2319,7 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifySandbox)
 {
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
 
-    coVerifySandbox(allocator);
+    coVerifySandbox(ntsa::AllocatorArg(), allocator);
 
     BloombergLP::ntscfg::TestAllocator* testAllocator =
         dynamic_cast<BloombergLP::ntscfg::TestAllocator*>(

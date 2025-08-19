@@ -33,8 +33,16 @@ namespace ntsa {
 /// @ingroup module_ntsa_system
 typedef bsl::allocator<> Allocator;
 
+/// Defines a type alias for the standard allocator argument disambiguator
+/// type.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntsa_system
+typedef bsl::allocator_arg_t AllocatorArg;
+
 }  // close namespace ntsa
 }  // close namespace BloombergLP
 
 #endif
-
