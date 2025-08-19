@@ -13,19 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCI_COROUTINE
-#define INCLUDED_NTCI_COROUTINE
+#ifndef INCLUDED_NTSA_COROUTINE
+#define INCLUDED_NTSA_COROUTINE
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
-#include <ntccfg_config.h>
-#include <ntccfg_platform.h>
+#include <ntscfg_config.h>
+#include <ntscfg_platform.h>
 
-#if NTC_BUILD_WITH_COROUTINES
+#if NTS_BUILD_WITH_COROUTINES
 
-#include <ntci_log.h>
-#include <ntcscm_version.h>
+#include <ntsa_allocator.h>
+#include <ntsa_error.h>
+#include <ntsscm_version.h>
 
 #include <ball_log.h>
 
@@ -33,6 +34,10 @@ BSLS_IDENT("$Id: $")
 
 #include <bslma_constructionutil.h>
 #include <bslma_destructionutil.h>
+#include <bslmt_condition.h>
+#include <bslmt_lockguard.h>
+#include <bslmt_mutex.h>
+#include <bslmt_threadutil.h>
 
 #include <bsls_libraryfeatures.h>
 #include <bsls_objectbuffer.h>
@@ -66,71 +71,61 @@ BSLS_IDENT("$Id: $")
 #define NTSCFG_REQUIRE_REFERENCE(TYPE) requires bsl::is_reference_v<TYPE>
 
 #ifdef BSLS_PLATFORM_CMP_CLANG
-#define NTCI_COROUTINE_FUNCTION __PRETTY_FUNCTION__
+#define NTSA_COROUTINE_FUNCTION __PRETTY_FUNCTION__
 #else
-#define NTCI_COROUTINE_FUNCTION __FUNCTION__
+#define NTSA_COROUTINE_FUNCTION __FUNCTION__
 #endif
 
-#define NTCI_COROUTINE_LOG_CONTEXT() NTCI_LOG_CONTEXT()
+#define NTSA_COROUTINE_LOG_CONTEXT() BALL_LOG_SET_CATEGORY("NTSA.COROUTINE")
 
-#define NTCI_COROUTINE_LOG_FUNCTION ""
-// #define NTCI_COROUTINE_LOG_FUNCTION NTCI_COROUTINE_FUNCTION << ":\n"
+#define NTSA_COROUTINE_LOG_FUNCTION ""
+// #define NTSA_COROUTINE_LOG_FUNCTION NTSA_COROUTINE_FUNCTION << ":\n"
 
-#define NTCI_COROUTINE_LOG_AWAIT_READY(kind, phase, context)                  \
+#define NTSA_COROUTINE_LOG_AWAIT_READY(kind, phase, context)                  \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
-                              << (kind) << " " << (phase) << " " << (context) \
-                              << ": await_ready" << NTCI_LOG_STREAM_END;      \
+        BALL_LOG_TRACE << NTSA_COROUTINE_LOG_FUNCTION << "Coroutine "         \
+                       << (kind) << " " << (phase) << " " << (context)        \
+                       << ": await_ready" << BALL_LOG_END;                    \
     } while (false)
 
-#define NTCI_COROUTINE_LOG_AWAIT_SUSPEND(kind, phase, context, coroutine)     \
+#define NTSA_COROUTINE_LOG_AWAIT_SUSPEND(kind, phase, context, coroutine)     \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
-                              << (kind) << " " << (phase) << " " << (context) \
-                              << ": await_suspend: " << (coroutine).address() \
-                              << NTCI_LOG_STREAM_END;                         \
+        BALL_LOG_TRACE << NTSA_COROUTINE_LOG_FUNCTION << "Coroutine "         \
+                       << (kind) << " " << (phase) << " " << (context)        \
+                       << ": await_suspend: " << (coroutine).address()        \
+                       << BALL_LOG_END;                                       \
     } while (false)
 
-#define NTCI_COROUTINE_LOG_AWAIT_RESUME(kind, phase, context)                 \
+#define NTSA_COROUTINE_LOG_AWAIT_RESUME(kind, phase, context)                 \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
-                              << (kind) << " " << (phase) << " " << (context) \
-                              << ": await_resume" << NTCI_LOG_STREAM_END;     \
+        BALL_LOG_TRACE << NTSA_COROUTINE_LOG_FUNCTION << "Coroutine "         \
+                       << (kind) << " " << (phase) << " " << (context)        \
+                       << ": await_resume" << BALL_LOG_END;                   \
     } while (false)
 
-#define NTCI_COROUTINE_LOG_FRAME_DESTROYED(kind, address)                     \
+#define NTSA_COROUTINE_LOG_FRAME_DESTROYED(kind, address)                     \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
-                              << (kind) << " frame destroyed: " << (address)  \
-                              << NTCI_LOG_STREAM_END;                         \
+        BALL_LOG_TRACE << NTSA_COROUTINE_LOG_FUNCTION << "Coroutine "         \
+                       << (kind) << " frame destroyed: " << (address)         \
+                       << BALL_LOG_END;                                       \
     } while (false)
 
-#define NTCI_COROUTINE_LOG_ALLOCATE(address, size)                            \
+#define NTSA_COROUTINE_LOG_ALLOCATE(address, size)                            \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
-                              << "frame allocated: " << (address)             \
-                              << " [ size = " << (size) << " ]"               \
-                              << NTCI_LOG_STREAM_END;                         \
+        BALL_LOG_TRACE << NTSA_COROUTINE_LOG_FUNCTION << "Coroutine "         \
+                       << "frame allocated: " << (address)                    \
+                       << " [ size = " << (size) << " ]" << BALL_LOG_END;     \
     } while (false)
 
-#define NTCI_COROUTINE_LOG_FREE(address, size)                                \
+#define NTSA_COROUTINE_LOG_FREE(address, size)                                \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
-                              << "frame freed: " << (address)                 \
-                              << " [ size = " << (size) << " ]"               \
-                              << NTCI_LOG_STREAM_END;                         \
+        BALL_LOG_TRACE << NTSA_COROUTINE_LOG_FUNCTION << "Coroutine "         \
+                       << "frame freed: " << (address)                        \
+                       << " [ size = " << (size) << " ]" << BALL_LOG_END;     \
     } while (false)
 
 namespace BloombergLP {
-namespace ntccfg {
-
-typedef bsl::allocator<> Allocator;
-
-}
-}
-
-namespace BloombergLP {
-namespace ntci {
+namespace ntsa {
 
 /// @internal @brief
 /// Provide an awaitable value that is immediately ready.
@@ -138,7 +133,7 @@ namespace ntci {
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename T>
 struct AwaitableValue {
     AwaitableValue(T value)
@@ -169,7 +164,7 @@ struct AwaitableValue {
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <>
 struct AwaitableValue<void> {
     AwaitableValue()
@@ -221,7 +216,7 @@ using CoroutineTaskFrame =
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename TYPE>
 class CoroutineTaskResultValue
 {
@@ -318,7 +313,7 @@ class CoroutineTaskResultValue
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename TYPE>
 class CoroutineTaskResultAddress
 {
@@ -402,7 +397,7 @@ class CoroutineTaskResultAddress
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 class CoroutineTaskResultEmpty
 {
     /// Enumerates the state of the value.
@@ -484,7 +479,7 @@ class CoroutineTaskResultEmpty
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename RESULT>
 class CoroutineTaskResult
 {
@@ -492,7 +487,7 @@ class CoroutineTaskResult
     using ResultType = RESULT;
 
     /// The result storage.
-    ntci::CoroutineTaskResultValue<ResultType> d_storage;
+    ntsa::CoroutineTaskResultValue<ResultType> d_storage;
 
   private:
     /// This class is not copy-constructable.
@@ -544,7 +539,7 @@ class CoroutineTaskResult
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
 class CoroutineTaskResult<RESULT>
@@ -556,7 +551,7 @@ class CoroutineTaskResult<RESULT>
     using ResultTypeDereference = bsl::remove_reference_t<RESULT>;
 
     /// The result storage.
-    ntci::CoroutineTaskResultAddress<ResultTypeDereference> d_storage;
+    ntsa::CoroutineTaskResultAddress<ResultTypeDereference> d_storage;
 
   private:
     /// This class is not copy-constructable.
@@ -609,7 +604,7 @@ class CoroutineTaskResult<RESULT>
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 class CoroutineTaskResult<RESULT>
@@ -618,7 +613,7 @@ class CoroutineTaskResult<RESULT>
     using ResultType = RESULT;
 
     /// The result storage.
-    ntci::CoroutineTaskResultEmpty d_storage;
+    ntsa::CoroutineTaskResultEmpty d_storage;
 
   private:
     /// This class is not copy-constructable.
@@ -681,7 +676,7 @@ class CoroutineTaskPromiseUtil
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename RESULT>
 class CoroutineTaskContext
 {
@@ -794,7 +789,7 @@ class CoroutineTaskContext
 /// to the specified 'stream'. Return a reference to the modifiable
 /// 'stream'.
 ///
-/// @related ntci::CoroutineTaskContext
+/// @related ntsa::CoroutineTaskContext
 template <typename RESULT>
 bsl::ostream& operator<<(bsl::ostream&                       stream,
                          const CoroutineTaskContext<RESULT>& object);
@@ -838,7 +833,7 @@ bsl::ostream& operator<<(bsl::ostream&                       stream,
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename RESULT>
 class CoroutineTaskPrologAwaitable
 {
@@ -930,7 +925,7 @@ class CoroutineTaskPrologAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename RESULT>
 class CoroutineTaskEpilogAwaitable
 {
@@ -1022,7 +1017,7 @@ class CoroutineTaskEpilogAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename RESULT>
 class CoroutineTaskResultAwaitable
 {
@@ -1093,7 +1088,7 @@ class CoroutineTaskResultAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename RESULT>
 class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 {
@@ -1227,7 +1222,7 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 template <typename RESULT>
 class CoroutineTask
 {
@@ -1303,7 +1298,7 @@ class CoroutineTask
 /// @par Thread Safety
 /// This class is thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 class CoroutineTaskUtil
 {
   public:
@@ -1328,7 +1323,7 @@ class CoroutineSynchronizationPromise;
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 class CoroutineSynchronizationContext
 {
   public:
@@ -1375,8 +1370,8 @@ class CoroutineSynchronizationContext
         const CoroutineSynchronizationContext&) = delete;
 
   private:
-    ntccfg::ConditionMutex                                 d_mutex;
-    ntccfg::Condition                                      d_condition;
+    bslmt::Mutex                                           d_mutex;
+    bslmt::Condition                                       d_condition;
     bool                                                   d_done;
     bsl::coroutine_handle<CoroutineSynchronizationPromise> d_handle;
     bsl::coroutine_handle<void>                            d_task;
@@ -1387,7 +1382,7 @@ class CoroutineSynchronizationContext
 /// to the specified 'stream'. Return a reference to the modifiable
 /// 'stream'.
 ///
-/// @related ntci::CoroutineSynchronizationContext
+/// @related ntsa::CoroutineSynchronizationContext
 bsl::ostream& operator<<(bsl::ostream&                          stream,
                          const CoroutineSynchronizationContext& object);
 
@@ -1430,7 +1425,7 @@ bsl::ostream& operator<<(bsl::ostream&                          stream,
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 class CoroutineSynchronizationPrologAwaitable
 {
   public:
@@ -1522,7 +1517,7 @@ class CoroutineSynchronizationPrologAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 class CoroutineSynchronizationEpilogAwaitable
 {
   public:
@@ -1615,7 +1610,7 @@ class CoroutineSynchronizationEpilogAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 class CoroutineSynchronizationResultAwaitable
 {
   public:
@@ -1678,7 +1673,7 @@ class CoroutineSynchronizationResultAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 class CoroutineSynchronizationPromise
 {
   public:
@@ -1743,7 +1738,7 @@ class CoroutineSynchronizationPromise
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntci
+/// @ingroup module_ntsa
 class CoroutineSynchronization
 {
   public:
@@ -1788,7 +1783,7 @@ class CoroutineSynchronization
 };
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
+NTSCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
     bslma::Allocator* basicAllocator)
 : d_type(e_UNDEFINED)
 , d_allocator(bslma::Default::allocator(basicAllocator))
@@ -1796,7 +1791,7 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
+NTSCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
     CoroutineTaskResultValue&& original) noexcept
 : d_type(original.d_type),
   d_allocator(bslma::Default::defaultAllocator())
@@ -1816,7 +1811,7 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
+NTSCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
     const CoroutineTaskResultValue& original,
     bslma::Allocator*               basicAllocator)
 : d_type(original.d_type)
@@ -1835,7 +1830,7 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::CoroutineTaskResultValue(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::~CoroutineTaskResultValue()
+NTSCFG_INLINE CoroutineTaskResultValue<TYPE>::~CoroutineTaskResultValue()
 {
     if (d_type == e_SUCCESS) {
         bslma::DestructionUtil::destroy(d_success.address());
@@ -1846,7 +1841,7 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>::~CoroutineTaskResultValue()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
+NTSCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
     TYPE>::operator=(CoroutineTaskResultValue&& other) noexcept
 {
     if (this != &other) {
@@ -1865,7 +1860,7 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
+NTSCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
     TYPE>::operator=(const CoroutineTaskResultValue& other)
 {
     if (this != &other) {
@@ -1884,7 +1879,7 @@ NTCCFG_INLINE CoroutineTaskResultValue<TYPE>& CoroutineTaskResultValue<
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::reset()
+NTSCFG_INLINE void CoroutineTaskResultValue<TYPE>::reset()
 {
     if (d_type == e_SUCCESS) {
         bslma::DestructionUtil::destroy(d_success.address());
@@ -1897,7 +1892,7 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::reset()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
+NTSCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
     std::exception_ptr&& exception)
 {
     if (d_type == e_SUCCESS) {
@@ -1916,7 +1911,7 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
+NTSCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
     std::exception_ptr exception)
 {
     if (d_type == e_SUCCESS) {
@@ -1934,7 +1929,7 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(TYPE&& completion)
+NTSCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(TYPE&& completion)
 {
     if (d_type == e_SUCCESS) {
         bslma::DestructionUtil::destroy(d_success.address());
@@ -1951,7 +1946,7 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(TYPE&& completion)
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
+NTSCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
     const TYPE& completion)
 {
     if (d_type == e_SUCCESS) {
@@ -1969,7 +1964,7 @@ NTCCFG_INLINE void CoroutineTaskResultValue<TYPE>::acquire(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE TYPE CoroutineTaskResultValue<TYPE>::release()
+NTSCFG_INLINE TYPE CoroutineTaskResultValue<TYPE>::release()
 {
     if (d_type == e_SUCCESS) {
         return bsl::move(d_success.object());
@@ -1978,24 +1973,24 @@ NTCCFG_INLINE TYPE CoroutineTaskResultValue<TYPE>::release()
         std::rethrow_exception(d_failure.object());
     }
 
-    NTCCFG_UNREACHABLE();
+    NTSCFG_UNREACHABLE();
 }
 
 template <typename TYPE>
-NTCCFG_INLINE bslma::Allocator* CoroutineTaskResultValue<TYPE>::allocator()
+NTSCFG_INLINE bslma::Allocator* CoroutineTaskResultValue<TYPE>::allocator()
     const
 {
     return d_allocator;
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress()
+NTSCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress()
 : d_type(e_UNDEFINED)
 {
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress(
+NTSCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress(
     CoroutineTaskResultAddress&& original) noexcept : d_type(original.d_type)
 {
     if (d_type == e_SUCCESS) {
@@ -2007,7 +2002,7 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress(
+NTSCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress(
     const CoroutineTaskResultAddress& original)
 : d_type(original.d_type)
 {
@@ -2020,7 +2015,7 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::CoroutineTaskResultAddress(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::~CoroutineTaskResultAddress()
+NTSCFG_INLINE CoroutineTaskResultAddress<TYPE>::~CoroutineTaskResultAddress()
 {
     if (d_type == e_SUCCESS) {
         bslma::DestructionUtil::destroy(d_success.address());
@@ -2031,7 +2026,7 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>::~CoroutineTaskResultAddress()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
+NTSCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
     TYPE>::operator=(CoroutineTaskResultAddress&& other) noexcept
 {
     if (this != &other) {
@@ -2050,7 +2045,7 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
 }
 
 template <typename TYPE>
-NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
+NTSCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
     TYPE>::operator=(const CoroutineTaskResultAddress& other)
 {
     if (this != &other) {
@@ -2069,7 +2064,7 @@ NTCCFG_INLINE CoroutineTaskResultAddress<TYPE>& CoroutineTaskResultAddress<
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::reset()
+NTSCFG_INLINE void CoroutineTaskResultAddress<TYPE>::reset()
 {
     if (d_type == e_SUCCESS) {
         bslma::DestructionUtil::destroy(d_success.address());
@@ -2082,7 +2077,7 @@ NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::reset()
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(
+NTSCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(
     std::exception_ptr&& exception)
 {
     if (d_type == e_SUCCESS) {
@@ -2098,7 +2093,7 @@ NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(
+NTSCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(
     std::exception_ptr exception)
 {
     if (d_type == e_SUCCESS) {
@@ -2114,7 +2109,7 @@ NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(
 }
 
 template <typename TYPE>
-NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(TYPE* completion)
+NTSCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(TYPE* completion)
 {
     if (d_type == e_SUCCESS) {
         bslma::DestructionUtil::destroy(d_success.address());
@@ -2129,7 +2124,7 @@ NTCCFG_INLINE void CoroutineTaskResultAddress<TYPE>::acquire(TYPE* completion)
 }
 
 template <typename TYPE>
-NTCCFG_INLINE TYPE* CoroutineTaskResultAddress<TYPE>::release()
+NTSCFG_INLINE TYPE* CoroutineTaskResultAddress<TYPE>::release()
 {
     if (d_type == e_SUCCESS) {
         return d_success.object();
@@ -2138,15 +2133,15 @@ NTCCFG_INLINE TYPE* CoroutineTaskResultAddress<TYPE>::release()
         std::rethrow_exception(d_failure.object());
     }
 
-    NTCCFG_UNREACHABLE();
+    NTSCFG_UNREACHABLE();
 }
 
-NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty()
+NTSCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty()
 : d_type(e_UNDEFINED)
 {
 }
 
-NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty(
+NTSCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty(
     CoroutineTaskResultEmpty&& original) noexcept : d_type(original.d_type)
 {
     if (d_type == e_FAILURE) {
@@ -2154,7 +2149,7 @@ NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty(
     }
 }
 
-NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty(
+NTSCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty(
     const CoroutineTaskResultEmpty& original)
 : d_type(original.d_type)
 {
@@ -2163,14 +2158,14 @@ NTCCFG_INLINE CoroutineTaskResultEmpty::CoroutineTaskResultEmpty(
     }
 }
 
-NTCCFG_INLINE CoroutineTaskResultEmpty::~CoroutineTaskResultEmpty()
+NTSCFG_INLINE CoroutineTaskResultEmpty::~CoroutineTaskResultEmpty()
 {
     if (d_type == e_FAILURE) {
         bslma::DestructionUtil::destroy(d_failure.address());
     }
 }
 
-NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
+NTSCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
     CoroutineTaskResultEmpty&& other) noexcept
 {
     if (this != &other) {
@@ -2188,7 +2183,7 @@ NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
     return *this;
 }
 
-NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
+NTSCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
     const CoroutineTaskResultEmpty& other)
 {
     if (this != &other) {
@@ -2206,7 +2201,7 @@ NTCCFG_INLINE CoroutineTaskResultEmpty& CoroutineTaskResultEmpty::operator=(
     return *this;
 }
 
-NTCCFG_INLINE void CoroutineTaskResultEmpty::reset()
+NTSCFG_INLINE void CoroutineTaskResultEmpty::reset()
 {
     if (d_type == e_FAILURE) {
         bslma::DestructionUtil::destroy(d_failure.address());
@@ -2215,7 +2210,7 @@ NTCCFG_INLINE void CoroutineTaskResultEmpty::reset()
     d_type = e_UNDEFINED;
 }
 
-NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire(
+NTSCFG_INLINE void CoroutineTaskResultEmpty::acquire(
     std::exception_ptr&& exception)
 {
     if (d_type == e_FAILURE) {
@@ -2227,7 +2222,7 @@ NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire(
     d_type = e_FAILURE;
 }
 
-NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire(
+NTSCFG_INLINE void CoroutineTaskResultEmpty::acquire(
     std::exception_ptr exception)
 {
     if (d_type == e_FAILURE) {
@@ -2239,7 +2234,7 @@ NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire(
     d_type = e_FAILURE;
 }
 
-NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire()
+NTSCFG_INLINE void CoroutineTaskResultEmpty::acquire()
 {
     if (d_type == e_FAILURE) {
         bslma::DestructionUtil::destroy(d_failure.address());
@@ -2248,7 +2243,7 @@ NTCCFG_INLINE void CoroutineTaskResultEmpty::acquire()
     d_type = e_SUCCESS;
 }
 
-NTCCFG_INLINE void CoroutineTaskResultEmpty::release()
+NTSCFG_INLINE void CoroutineTaskResultEmpty::release()
 {
     if (d_type == e_SUCCESS) {
         return;
@@ -2257,7 +2252,7 @@ NTCCFG_INLINE void CoroutineTaskResultEmpty::release()
         std::rethrow_exception(d_failure.object());
     }
 
-    NTCCFG_UNREACHABLE();
+    NTSCFG_UNREACHABLE();
 }
 
 template <typename RESULT>
@@ -2506,10 +2501,10 @@ NTSCFG_INLINE RESULT CoroutineTaskContext<RESULT>::release()
 template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskContext<RESULT>::destroy()
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_CONTEXT();
 
     if (d_current.address() != nullptr) {
-        NTCI_COROUTINE_LOG_FRAME_DESTROYED("task", d_current.address());
+        NTSA_COROUTINE_LOG_FRAME_DESTROYED("task", d_current.address());
         d_current.destroy();
         d_current = nullptr;
     }
@@ -2575,8 +2570,8 @@ template <typename RESULT>
 NTSCFG_INLINE bool CoroutineTaskPrologAwaitable<RESULT>::await_ready()
     const noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_READY("task", "prolog", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_READY("task", "prolog", *d_context);
 
     return false;
 }
@@ -2585,16 +2580,16 @@ template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskPrologAwaitable<RESULT>::await_suspend(
     std::coroutine_handle<void> coroutine) const noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("task", "prolog", *d_context, coroutine);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_SUSPEND("task", "prolog", *d_context, coroutine);
 }
 
 template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskPrologAwaitable<RESULT>::await_resume()
     const noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_RESUME("task", "prolog", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_RESUME("task", "prolog", *d_context);
 }
 
 template <typename RESULT>
@@ -2607,8 +2602,8 @@ NTSCFG_INLINE CoroutineTaskEpilogAwaitable<RESULT>::
 template <typename RESULT>
 NTSCFG_INLINE bool CoroutineTaskEpilogAwaitable<RESULT>::await_ready() noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_READY("task", "epilog", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_READY("task", "epilog", *d_context);
 
     return false;
 }
@@ -2617,8 +2612,8 @@ template <typename RESULT>
 NTSCFG_INLINE std::coroutine_handle<void> CoroutineTaskEpilogAwaitable<
     RESULT>::await_suspend(std::coroutine_handle<void> coroutine) noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("task", "epilog", *d_context, coroutine);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_SUSPEND("task", "epilog", *d_context, coroutine);
 
     return d_context->awaiter();
 }
@@ -2627,8 +2622,8 @@ template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskEpilogAwaitable<RESULT>::await_resume()
     noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_RESUME("task", "epilog", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_RESUME("task", "epilog", *d_context);
 }
 
 template <typename RESULT>
@@ -2641,8 +2636,8 @@ CoroutineTaskResultAwaitable<RESULT>::CoroutineTaskResultAwaitable(
 template <typename RESULT>
 bool CoroutineTaskResultAwaitable<RESULT>::await_ready()
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_READY("task", "result", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_READY("task", "result", *d_context);
 
     return false;
 }
@@ -2651,8 +2646,8 @@ template <typename RESULT>
 CoroutineTaskFrame<RESULT> CoroutineTaskResultAwaitable<RESULT>::await_suspend(
     std::coroutine_handle<void> coroutine)
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("task", "result", *d_context, coroutine);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_SUSPEND("task", "result", *d_context, coroutine);
 
     d_context->setAwaiter(coroutine);
 
@@ -2662,8 +2657,8 @@ CoroutineTaskFrame<RESULT> CoroutineTaskResultAwaitable<RESULT>::await_suspend(
 template <typename RESULT>
 RESULT CoroutineTaskResultAwaitable<RESULT>::await_resume()
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_RESUME("task", "result", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_RESUME("task", "result", *d_context);
 
     return d_context->release();
 }
@@ -2856,7 +2851,7 @@ RESULT CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&& task)
     CoroutineSynchronization synchronization =
         CoroutineSynchronization::create(&context);
 
-    NTCCFG_WARNING_UNUSED(synchronization);
+    NTSCFG_WARNING_UNUSED(synchronization);
 
     task.d_context->setAwaiter(context.handle());
 
@@ -2904,7 +2899,7 @@ void CoroutineSynchronizationContext::resume()
 NTSCFG_INLINE
 void CoroutineSynchronizationContext::wait()
 {
-    ntccfg::ConditionMutexGuard lock(&d_mutex);
+    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
     while (!d_done) {
         d_condition.wait(&d_mutex);
     }
@@ -2913,17 +2908,17 @@ void CoroutineSynchronizationContext::wait()
 NTSCFG_INLINE
 void CoroutineSynchronizationContext::wake()
 {
-    ntccfg::ConditionMutexGuard lock(&d_mutex);
+    bslmt::LockGuard<bslmt::Mutex> lock(&d_mutex);
     d_done = true;
     d_condition.signal();
 }
 
 NTSCFG_INLINE void CoroutineSynchronizationContext::destroy()
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_CONTEXT();
 
     if (d_handle.address() != nullptr) {
-        NTCI_COROUTINE_LOG_FRAME_DESTROYED("sync", d_handle.address());
+        NTSA_COROUTINE_LOG_FRAME_DESTROYED("sync", d_handle.address());
         d_handle.destroy();
         d_handle = nullptr;
     }
@@ -2962,14 +2957,14 @@ CoroutineSynchronizationPrologAwaitable::
     CoroutineSynchronizationPrologAwaitable(
         CoroutineSynchronizationContext* context) noexcept : d_context(context)
 {
-    NTCCFG_WARNING_UNUSED(d_context);
+    NTSCFG_WARNING_UNUSED(d_context);
 }
 
 NTSCFG_INLINE
 bool CoroutineSynchronizationPrologAwaitable::await_ready() const noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_READY("sync", "prolog", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_READY("sync", "prolog", *d_context);
 
     return false;
 }
@@ -2978,17 +2973,17 @@ NTSCFG_INLINE
 void CoroutineSynchronizationPrologAwaitable::await_suspend(
     std::coroutine_handle<void> coroutine) const noexcept
 {
-    NTCCFG_WARNING_UNUSED(coroutine);
+    NTSCFG_WARNING_UNUSED(coroutine);
 
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("sync", "prolog", *d_context, coroutine);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_SUSPEND("sync", "prolog", *d_context, coroutine);
 }
 
 NTSCFG_INLINE
 void CoroutineSynchronizationPrologAwaitable::await_resume() const noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_RESUME("sync", "prolog", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_RESUME("sync", "prolog", *d_context);
 }
 
 NTSCFG_INLINE
@@ -3001,8 +2996,8 @@ CoroutineSynchronizationEpilogAwaitable::
 NTSCFG_INLINE bool CoroutineSynchronizationEpilogAwaitable::await_ready()
     noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_READY("sync", "epilog", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_READY("sync", "epilog", *d_context);
 
     return false;
 }
@@ -3011,10 +3006,10 @@ NTSCFG_INLINE
 void CoroutineSynchronizationEpilogAwaitable::await_suspend(
     std::coroutine_handle<void> coroutine) noexcept
 {
-    NTCCFG_WARNING_UNUSED(coroutine);
+    NTSCFG_WARNING_UNUSED(coroutine);
 
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("sync", "epilog", *d_context, coroutine);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_SUSPEND("sync", "epilog", *d_context, coroutine);
 
     d_context->wake();
 }
@@ -3022,8 +3017,8 @@ void CoroutineSynchronizationEpilogAwaitable::await_suspend(
 NTSCFG_INLINE
 void CoroutineSynchronizationEpilogAwaitable::await_resume() noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_RESUME("sync", "epilog", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_RESUME("sync", "epilog", *d_context);
 }
 
 NTSCFG_INLINE
@@ -3036,8 +3031,8 @@ CoroutineSynchronizationResultAwaitable::
 NTSCFG_INLINE bool CoroutineSynchronizationResultAwaitable::await_ready()
     noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_READY("sync", "result", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_READY("sync", "result", *d_context);
 
     return false;
 }
@@ -3046,10 +3041,10 @@ NTSCFG_INLINE
 std::coroutine_handle<void> CoroutineSynchronizationResultAwaitable::
     await_suspend(std::coroutine_handle<void> coroutine) noexcept
 {
-    NTCCFG_WARNING_UNUSED(coroutine);
+    NTSCFG_WARNING_UNUSED(coroutine);
 
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("sync", "result", *d_context, coroutine);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_SUSPEND("sync", "result", *d_context, coroutine);
 
     return d_context->task();
 }
@@ -3057,8 +3052,8 @@ std::coroutine_handle<void> CoroutineSynchronizationResultAwaitable::
 NTSCFG_INLINE
 void CoroutineSynchronizationResultAwaitable::await_resume() noexcept
 {
-    NTCI_COROUTINE_LOG_CONTEXT();
-    NTCI_COROUTINE_LOG_AWAIT_RESUME("sync", "result", *d_context);
+    NTSA_COROUTINE_LOG_CONTEXT();
+    NTSA_COROUTINE_LOG_AWAIT_RESUME("sync", "result", *d_context);
 }
 
 NTSCFG_INLINE void* CoroutineSynchronizationPromise::operator new(
@@ -3079,7 +3074,7 @@ NTSCFG_INLINE
 CoroutineSynchronizationPromise::CoroutineSynchronizationPromise()
 : d_context(0)
 {
-    NTCCFG_UNREACHABLE();
+    NTSCFG_UNREACHABLE();
 }
 
 NTSCFG_INLINE
@@ -3118,7 +3113,7 @@ void CoroutineSynchronizationPromise::return_void()
 NTSCFG_INLINE
 void CoroutineSynchronizationPromise::unhandled_exception()
 {
-    NTCCFG_UNREACHABLE();
+    NTSCFG_UNREACHABLE();
 }
 
 NTSCFG_INLINE
@@ -3126,7 +3121,7 @@ CoroutineSynchronization::CoroutineSynchronization(
     CoroutineSynchronizationContext* context)
 : d_context(context)
 {
-    NTCCFG_WARNING_UNUSED(d_context);
+    NTSCFG_WARNING_UNUSED(d_context);
 }
 
 NTSCFG_INLINE
@@ -3145,5 +3140,5 @@ CoroutineSynchronization CoroutineSynchronization::create(
 #pragma GCC diagnostic pop
 #endif
 
-#endif  // NTC_BUILD_WITH_COROUTINES
+#endif  // NTS_BUILD_WITH_COROUTINES
 #endif

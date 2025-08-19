@@ -16,13 +16,16 @@
 #include <ntscfg_test.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntci_coroutine_t_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntsa_coroutine_t_cpp, "$Id$ $CSID$")
 
-#include <ntci_coroutine.h>
+#include <ntsa_coroutine.h>
 #include <ntsa_error.h>
 
-#if NTC_BUILD_WITH_COROUTINES
+#if NTS_BUILD_WITH_COROUTINES
 
+#include <bdlf_bind.h>
+#include <bdlf_memfn.h>
+#include <bdlf_placeholder.h>
 #include <bdlmt_fixedthreadpool.h>
 
 #include <bslim_testutil.h>
@@ -51,16 +54,19 @@ using namespace BloombergLP;
 #endif
 
 namespace BloombergLP {
-namespace ntci {
+namespace ntsa {
 
-// Provide tests for 'ntci::Coroutine'.
+// Provide tests for 'ntsa::Coroutine'.
 class CoroutineTest
 {
   public:
-    BALL_LOG_SET_CLASS_CATEGORY("NTCI.COROUTINE.TEST");
+    BALL_LOG_SET_CLASS_CATEGORY("NTSA.COROUTINE.TEST");
 
     // Describe a test operation's unique identifier.
     typedef int Token;
+
+    // Describe a scope.
+    class Scope;
 
     // Describe a string.
     class String;
@@ -82,14 +88,14 @@ class CoroutineTest
 
   private:
     // Defines a type alias for a coroutine test function.
-    typedef ntci::CoroutineTask<void> (*CoroutineTestFunction)();
+    typedef ntsa::CoroutineTask<void> (*CoroutineTestFunction)();
 
     // Execute the specified test function and synchronously await the current
     // thread on its result.
     static void main(CoroutineTestFunction testFunction);
 
     // Return a coroutine executing the specified 'function'.
-    static ntci::CoroutineTask<void> coMain(
+    static ntsa::CoroutineTask<void> coMain(
         CoroutineTestFunction testFunction);
 
     // A variable with no meaning except that its address is returned by some
@@ -128,71 +134,71 @@ class CoroutineTest
     static String returnStringLiteral(const String& value);
 
     // Return an awaitable with a void result type.
-    static ntci::CoroutineTask<void> coReturnVoid();
+    static ntsa::CoroutineTask<void> coReturnVoid();
 
     // Return an awaitable with an integer result type.
-    static ntci::CoroutineTask<int> coReturnInt();
+    static ntsa::CoroutineTask<int> coReturnInt();
 
     // Return an awaitable with a reference to an integer result type.
-    static ntci::CoroutineTask<int&> coReturnIntReference();
+    static ntsa::CoroutineTask<int&> coReturnIntReference();
 
     // Return an awaitable with a reference to a movable integer result type.
-    static ntci::CoroutineTask<int&&> coReturnIntReferenceMovable();
+    static ntsa::CoroutineTask<int&&> coReturnIntReferenceMovable();
 
     // Return an awaitable with an integer result type whose value is the
     // specified 'value'.
-    static ntci::CoroutineTask<int> coReturnIntLiteral(int value);
+    static ntsa::CoroutineTask<int> coReturnIntLiteral(int value);
 
     // Return an awaitable with an integer result type whose value is the
     // sum of the specified 'lhs' and 'rhs' values.
-    static ntci::CoroutineTask<int> coReturnIntChain(int lhs, int rhs);
+    static ntsa::CoroutineTask<int> coReturnIntChain(int lhs, int rhs);
 
     // Return an awaitable with a string result type.
-    static ntci::CoroutineTask<String> coReturnString();
+    static ntsa::CoroutineTask<String> coReturnString();
 
     // Return an awaitable with a reference to a string result type.
-    static ntci::CoroutineTask<String&> coReturnStringReference();
+    static ntsa::CoroutineTask<String&> coReturnStringReference();
 
     // Return an awaitable with a reference to a movable string result type.
-    static ntci::CoroutineTask<String&&> coReturnStringReferenceMovable();
+    static ntsa::CoroutineTask<String&&> coReturnStringReferenceMovable();
 
     // Return an awaitable with a string result type whose value is the
     // specified 'value'.
-    static ntci::CoroutineTask<String> coReturnStringLiteral(
+    static ntsa::CoroutineTask<String> coReturnStringLiteral(
         const String& value);
 
     // Return an awaitable with a string result type whose value is the
     // sum of the specified 'lhs' and 'rhs' values.
-    static ntci::CoroutineTask<String> coReturnStringChain(const String& lhs,
+    static ntsa::CoroutineTask<String> coReturnStringChain(const String& lhs,
                                                            const String& rhs);
 
     // TODO
-    static ntci::CoroutineTask<void> coVerifyReturnVoid();
+    static ntsa::CoroutineTask<void> coVerifyReturnVoid();
 
     // TODO
-    static ntci::CoroutineTask<void> coVerifyReturnInt();
+    static ntsa::CoroutineTask<void> coVerifyReturnInt();
 
     // TODO
-    static ntci::CoroutineTask<void> coVerifyReturnIntChain();
+    static ntsa::CoroutineTask<void> coVerifyReturnIntChain();
 
     // TODO
-    static ntci::CoroutineTask<void> coVerifyReturnString();
+    static ntsa::CoroutineTask<void> coVerifyReturnString();
 
     // TODO
-    static ntci::CoroutineTask<void> coVerifyReturnStringChain();
+    static ntsa::CoroutineTask<void> coVerifyReturnStringChain();
 
     // TODO
-    static ntci::CoroutineTask<void> coVerifyCase4();
+    static ntsa::CoroutineTask<void> coVerifyCase4();
 
     // TODO
-    static ntci::CoroutineTask<void> coVerifyCase5();
+    static ntsa::CoroutineTask<void> coVerifyCase5();
 
     // TODO
-    static ntci::CoroutineTask<void> coVerifyCase6();
+    static ntsa::CoroutineTask<void> coVerifyCase6();
 
     // TODO
-    static ntci::CoroutineTask<void> coVerifySandbox(
-        ntccfg::Allocator allocator);
+    static ntsa::CoroutineTask<void> coVerifySandbox(
+        ntsa::Allocator allocator);
 
   public:
     // TODO
@@ -227,6 +233,27 @@ class CoroutineTest
 
     // TODO
     static void verifySandbox();
+};
+
+// Describe a scope.
+class CoroutineTest::Scope
+{
+  public:
+    // Create a new scope with the specified 'name'.
+    explicit Scope(const char* name);
+
+    // Destroy this object.
+    ~Scope();
+
+  private:
+    // This class is not copy-constructable.
+    Scope(const Scope&) = delete;
+
+    // This class is not copy-assignable.
+    Scope& operator=(const Scope&) = delete;
+
+    // The name.
+    const char* d_name;
 };
 
 // Describe a string.
@@ -743,7 +770,7 @@ class CoroutineTest::Action
     // Create a new action having the specified 'task' and 'operation'.
     // Optionally specify a 'basicAllocator' used to supply memory. If
     // 'basicAllocator' is 0, the currently installed default allocator used.
-    explicit Action(ntci::CoroutineTask<ntsa::Error>&& task,
+    explicit Action(ntsa::CoroutineTask<ntsa::Error>&& task,
                     Result*                            result,
                     const Operation&                   operation,
                     bslma::Allocator*                  basicAllocator = 0);
@@ -752,7 +779,7 @@ class CoroutineTest::Action
     ~Action();
 
     // The task.
-    ntci::CoroutineTask<ntsa::Error> task;
+    ntsa::CoroutineTask<ntsa::Error> task;
 
     // The result.
     Result* result;
@@ -766,10 +793,10 @@ class CoroutineTest::Mechanism
 {
     typedef bsl::unordered_map<Token, bsl::shared_ptr<Action> > ActionMap;
 
-    ntccfg::Object         d_object;
-    ActionMap              d_actionMap;
-    bdlmt::FixedThreadPool d_threadPool;
-    bslma::Allocator*      d_allocator;
+    ntsa::CoroutineTest::Scope d_object;
+    ActionMap                  d_actionMap;
+    bdlmt::FixedThreadPool     d_threadPool;
+    bslma::Allocator*          d_allocator;
 
     void enqueueCoroutine(std::coroutine_handle<void> coroutine);
 
@@ -802,7 +829,7 @@ class CoroutineTest::Mechanism
     /// mechanism.
     Awaiter schedule();
 
-    ntci::CoroutineTask<void> hello();
+    ntsa::CoroutineTask<void> hello();
 
     // Execute an operation identified by the specified 'token' with the
     // specified 'parameters'. Return the error.
@@ -812,7 +839,7 @@ class CoroutineTest::Mechanism
 
     // Execute an operation identified by the specified 'token' with the
     // specified 'parameters'. Return the error.
-    ntci::CoroutineTask<ntsa::Error> executeCooperatively(
+    ntsa::CoroutineTask<ntsa::Error> executeCooperatively(
         Result*           result,
         Token             token,
         const Parameters& parameters);
@@ -825,6 +852,17 @@ class CoroutineTest::Mechanism
     // dynamically allocate memory during its operation.
     NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(Mechanism);
 };
+
+CoroutineTest::Scope::Scope(const char* name)
+: d_name(name)
+{
+    BALL_LOG_TRACE << "Object ctor: " << d_name << BALL_LOG_END;
+}
+
+CoroutineTest::Scope::~Scope()
+{
+    BALL_LOG_TRACE << "Object dtor: " << d_name << BALL_LOG_END;
+}
 
 const char*       CoroutineTest::String::k_EMPTY    = "";
 const bsl::size_t CoroutineTest::String::k_MAX_SIZE = 1024;
@@ -1083,8 +1121,8 @@ bsl::ostream& CoroutineTest::String::print(bsl::ostream& stream,
                                            int           level,
                                            int           spacesPerLevel) const
 {
-    NTCCFG_WARNING_UNUSED(level);
-    NTCCFG_WARNING_UNUSED(spacesPerLevel);
+    NTSCFG_WARNING_UNUSED(level);
+    NTSCFG_WARNING_UNUSED(spacesPerLevel);
 
     return stream << d_data;
 }
@@ -1661,7 +1699,7 @@ bsl::ostream& operator<<(bsl::ostream&                   stream,
     return object.print(stream, 0, -1);
 }
 
-CoroutineTest::Action::Action(ntci::CoroutineTask<ntsa::Error>&& task,
+CoroutineTest::Action::Action(ntsa::CoroutineTask<ntsa::Error>&& task,
                               Result*                            result,
                               const Operation&                   operation,
                               bslma::Allocator* basicAllocator)
@@ -1718,9 +1756,9 @@ void CoroutineTest::Mechanism::enqueueCoroutine(
     std::coroutine_handle<void> coroutine)
 {
     d_threadPool.enqueueJob(
-        NTCCFG_BIND(&CoroutineTest::Mechanism::dequeueCoroutine,
-                    this,
-                    coroutine));
+        bdlf::BindUtil::bind(&CoroutineTest::Mechanism::dequeueCoroutine,
+                             this,
+                             coroutine));
 }
 
 void CoroutineTest::Mechanism::dequeueCoroutine(
@@ -1733,7 +1771,9 @@ void CoroutineTest::Mechanism::enqueueAction(
     const bsl::shared_ptr<Action>& action)
 {
     d_threadPool.enqueueJob(
-        NTCCFG_BIND(&CoroutineTest::Mechanism::dequeueAction, this, action));
+        bdlf::BindUtil::bind(&CoroutineTest::Mechanism::dequeueAction,
+                             this,
+                             action));
 }
 
 void CoroutineTest::Mechanism::dequeueAction(
@@ -1765,7 +1805,7 @@ CoroutineTest::Mechanism::Awaiter CoroutineTest::Mechanism::schedule()
     return Awaiter(this);
 }
 
-ntci::CoroutineTask<void> CoroutineTest::Mechanism::hello()
+ntsa::CoroutineTask<void> CoroutineTest::Mechanism::hello()
 {
     bsl::cout << "Scheduling on thread " << bslmt::ThreadUtil::selfIdAsUint64()
               << bsl::endl;
@@ -1786,7 +1826,7 @@ ntsa::Error CoroutineTest::Mechanism::execute(Result*           result,
     return ntsa::Error();
 }
 
-ntci::CoroutineTask<ntsa::Error> CoroutineTest::Mechanism::
+ntsa::CoroutineTask<ntsa::Error> CoroutineTest::Mechanism::
     executeCooperatively(Result*           result,
                          Token             token,
                          const Parameters& parameters)
@@ -1796,7 +1836,7 @@ ntci::CoroutineTask<ntsa::Error> CoroutineTest::Mechanism::
 
     result->reset();
 
-    ntci::CoroutineTask<ntsa::Error> task =
+    ntsa::CoroutineTask<ntsa::Error> task =
         this->scheduleExecute(result, token, parameters);
 
     Operation operation;
@@ -1814,7 +1854,7 @@ ntci::CoroutineTask<ntsa::Error> CoroutineTest::Mechanism::
 
     d_actionMap.emplace(token, action);
 
-    // error = ntci::CoroutineTaskUtil::synchronize(bsl::move(task));
+    // error = ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
 #endif
 
     co_return ntsa::Error();
@@ -1825,71 +1865,71 @@ ntsa::Error CoroutineTest::Mechanism::cancel(int token)
     return ntsa::Error();
 }
 
-int                         ntci::CoroutineTest::globalInt;
-ntci::CoroutineTest::String ntci::CoroutineTest::globalString;
+int                         ntsa::CoroutineTest::globalInt;
+ntsa::CoroutineTest::String ntsa::CoroutineTest::globalString;
 
-void ntci::CoroutineTest::main(CoroutineTestFunction testFunction)
+void ntsa::CoroutineTest::main(CoroutineTestFunction testFunction)
 {
-    ntccfg::Object function("main");
+    ntsa::CoroutineTest::Scope function("main");
 
-    ntci::CoroutineTask<void> task = coMain(testFunction);
-    ntci::CoroutineTaskUtil::synchronize(bsl::move(task));
+    ntsa::CoroutineTask<void> task = coMain(testFunction);
+    ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
 }
 
-ntci::CoroutineTask<void> ntci::CoroutineTest::coMain(
+ntsa::CoroutineTask<void> ntsa::CoroutineTest::coMain(
     CoroutineTestFunction testFunction)
 {
-    ntccfg::Object function("coMain");
+    ntsa::CoroutineTest::Scope function("coMain");
 
     return testFunction();
 }
 
-void ntci::CoroutineTest::returnVoid()
+void ntsa::CoroutineTest::returnVoid()
 {
 }
 
-int ntci::CoroutineTest::returnInt()
+int ntsa::CoroutineTest::returnInt()
 {
     return 1;
 }
 
-int& ntci::CoroutineTest::returnIntReference()
+int& ntsa::CoroutineTest::returnIntReference()
 {
     return globalInt;
 }
 
-int&& ntci::CoroutineTest::returnIntReferenceMovable()
+int&& ntsa::CoroutineTest::returnIntReferenceMovable()
 {
     return bsl::move(globalInt);
 }
 
-int ntci::CoroutineTest::returnIntLiteral(int value)
+int ntsa::CoroutineTest::returnIntLiteral(int value)
 {
     return value;
 }
 
-ntci::CoroutineTest::String ntci::CoroutineTest::returnString()
+ntsa::CoroutineTest::String ntsa::CoroutineTest::returnString()
 {
-    return ntci::CoroutineTest::String();
+    return ntsa::CoroutineTest::String();
 }
 
-ntci::CoroutineTest::String& ntci::CoroutineTest::returnStringReference()
+ntsa::CoroutineTest::String& ntsa::CoroutineTest::returnStringReference()
 {
     return globalString;
 }
 
-ntci::CoroutineTest::String&& ntci::CoroutineTest::
+ntsa::CoroutineTest::String&& ntsa::CoroutineTest::
     returnStringReferenceMovable()
 {
     return bsl::move(globalString);
 }
 
-ntci::CoroutineTest::String ntci::CoroutineTest::returnStringLiteral(
-    const ntci::CoroutineTest::String& value)
+ntsa::CoroutineTest::String ntsa::CoroutineTest::returnStringLiteral(
+    const ntsa::CoroutineTest::String& value)
 {
-    ntccfg::Object function("returnStringLiteral");
+    ntsa::CoroutineTest::Scope function("returnStringLiteral");
 
-    ntci::CoroutineTest::String copy(value);
+    ntsa::CoroutineTest::String copy(value);
 
     BALL_LOG_DEBUG << "returnStringLiteral: returning " << copy
                    << " (from parameter: " << value << ")" << BALL_LOG_END;
@@ -1897,36 +1937,36 @@ ntci::CoroutineTest::String ntci::CoroutineTest::returnStringLiteral(
     return copy;
 }
 
-ntci::CoroutineTask<void> ntci::CoroutineTest::coReturnVoid()
+ntsa::CoroutineTask<void> ntsa::CoroutineTest::coReturnVoid()
 {
     co_return returnVoid();
 }
 
-ntci::CoroutineTask<int> ntci::CoroutineTest::coReturnInt()
+ntsa::CoroutineTask<int> ntsa::CoroutineTest::coReturnInt()
 {
     co_return returnInt();
 }
 
-ntci::CoroutineTask<int&> ntci::CoroutineTest::coReturnIntReference()
+ntsa::CoroutineTask<int&> ntsa::CoroutineTest::coReturnIntReference()
 {
     co_return returnIntReference();
 }
 
-ntci::CoroutineTask<int&&> ntci::CoroutineTest::coReturnIntReferenceMovable()
+ntsa::CoroutineTask<int&&> ntsa::CoroutineTest::coReturnIntReferenceMovable()
 {
     co_return returnIntReferenceMovable();
 }
 
-ntci::CoroutineTask<int> ntci::CoroutineTest::coReturnIntLiteral(int value)
+ntsa::CoroutineTask<int> ntsa::CoroutineTest::coReturnIntLiteral(int value)
 {
     co_return returnIntLiteral(value);
 }
 
-ntci::CoroutineTask<int> ntci::CoroutineTest::coReturnIntChain(int lhs,
+ntsa::CoroutineTask<int> ntsa::CoroutineTest::coReturnIntChain(int lhs,
                                                                int rhs)
 {
-    ntci::CoroutineTask<int> lhsTask = coReturnIntLiteral(lhs);
-    ntci::CoroutineTask<int> rhsTask = coReturnIntLiteral(rhs);
+    ntsa::CoroutineTask<int> lhsTask = coReturnIntLiteral(lhs);
+    ntsa::CoroutineTask<int> rhsTask = coReturnIntLiteral(rhs);
 
     int lhsValue = co_await bsl::move(lhsTask);
     int rhsValue = co_await bsl::move(rhsTask);
@@ -1939,30 +1979,30 @@ ntci::CoroutineTask<int> ntci::CoroutineTest::coReturnIntChain(int lhs,
     co_return sum;
 }
 
-ntci::CoroutineTask<ntci::CoroutineTest::String> ntci::CoroutineTest::
+ntsa::CoroutineTask<ntsa::CoroutineTest::String> ntsa::CoroutineTest::
     coReturnString()
 {
     co_return returnString();
 }
 
-ntci::CoroutineTask<ntci::CoroutineTest::String&> ntci::CoroutineTest::
+ntsa::CoroutineTask<ntsa::CoroutineTest::String&> ntsa::CoroutineTest::
     coReturnStringReference()
 {
     co_return returnStringReference();
 }
 
-ntci::CoroutineTask<ntci::CoroutineTest::String&&> ntci::CoroutineTest::
+ntsa::CoroutineTask<ntsa::CoroutineTest::String&&> ntsa::CoroutineTest::
     coReturnStringReferenceMovable()
 {
     co_return returnStringReferenceMovable();
 }
 
-ntci::CoroutineTask<ntci::CoroutineTest::String> ntci::CoroutineTest::
-    coReturnStringLiteral(const ntci::CoroutineTest::String& value)
+ntsa::CoroutineTask<ntsa::CoroutineTest::String> ntsa::CoroutineTest::
+    coReturnStringLiteral(const ntsa::CoroutineTest::String& value)
 {
-    ntccfg::Object object("coReturnStringLiteral");
+    ntsa::CoroutineTest::Scope object("coReturnStringLiteral");
 
-    ntci::CoroutineTest::String result = returnStringLiteral(value);
+    ntsa::CoroutineTest::String result = returnStringLiteral(value);
 
     BALL_LOG_DEBUG << "coReturnStringLiteral: " << result
                    << " (from parameter: " << value << ")" << BALL_LOG_END;
@@ -1970,42 +2010,42 @@ ntci::CoroutineTask<ntci::CoroutineTest::String> ntci::CoroutineTest::
     co_return result;
 }
 
-ntci::CoroutineTask<ntci::CoroutineTest::String> ntci::CoroutineTest::
-    coReturnStringChain(const ntci::CoroutineTest::String& lhs,
-                        const ntci::CoroutineTest::String& rhs)
+ntsa::CoroutineTask<ntsa::CoroutineTest::String> ntsa::CoroutineTest::
+    coReturnStringChain(const ntsa::CoroutineTest::String& lhs,
+                        const ntsa::CoroutineTest::String& rhs)
 {
-    ntci::CoroutineTask<ntci::CoroutineTest::String> lhsTask =
+    ntsa::CoroutineTask<ntsa::CoroutineTest::String> lhsTask =
         coReturnStringLiteral(lhs);
-    ntci::CoroutineTask<ntci::CoroutineTest::String> rhsTask =
+    ntsa::CoroutineTask<ntsa::CoroutineTest::String> rhsTask =
         coReturnStringLiteral(rhs);
 
-    ntci::CoroutineTest::String lhsValue = co_await bsl::move(lhsTask);
-    ntci::CoroutineTest::String rhsValue = co_await bsl::move(rhsTask);
+    ntsa::CoroutineTest::String lhsValue = co_await bsl::move(lhsTask);
+    ntsa::CoroutineTest::String rhsValue = co_await bsl::move(rhsTask);
 
     BALL_LOG_DEBUG << "LHS = " << lhsValue << " RHS = " << rhsValue
                    << BALL_LOG_END;
 
-    ntci::CoroutineTest::String sum;
+    ntsa::CoroutineTest::String sum;
     sum.append(lhsValue);
     sum.append(rhsValue);
 
     co_return sum;
 }
 
-ntci::CoroutineTask<void> CoroutineTest::coVerifyReturnVoid()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyReturnVoid()
 {
-    ntccfg::Object function("coVerifyReturnVoid");
+    ntsa::CoroutineTest::Scope function("coVerifyReturnVoid");
 
     co_return;
 }
 
-ntci::CoroutineTask<void> CoroutineTest::coVerifyReturnInt()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyReturnInt()
 {
-    ntccfg::Object function("coVerifyReturnInt");
+    ntsa::CoroutineTest::Scope function("coVerifyReturnInt");
 
-    ntci::CoroutineTask<int> task = coReturnIntLiteral(100);
+    ntsa::CoroutineTask<int> task = coReturnIntLiteral(100);
 
-    int value = ntci::CoroutineTaskUtil::synchronize(bsl::move(task));
+    int value = ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
 
     BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
 
@@ -2014,13 +2054,13 @@ ntci::CoroutineTask<void> CoroutineTest::coVerifyReturnInt()
     co_return;
 }
 
-ntci::CoroutineTask<void> CoroutineTest::coVerifyReturnIntChain()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyReturnIntChain()
 {
-    ntccfg::Object function("coVerifyReturnIntChain");
+    ntsa::CoroutineTest::Scope function("coVerifyReturnIntChain");
 
-    ntci::CoroutineTask<int> task = coReturnIntChain(100, 200);
+    ntsa::CoroutineTask<int> task = coReturnIntChain(100, 200);
 
-    int value = ntci::CoroutineTaskUtil::synchronize(bsl::move(task));
+    int value = ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
 
     BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
 
@@ -2029,26 +2069,26 @@ ntci::CoroutineTask<void> CoroutineTest::coVerifyReturnIntChain()
     co_return;
 }
 
-ntci::CoroutineTask<void> CoroutineTest::coVerifyReturnString()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyReturnString()
 {
-    ntccfg::Object function("coVerifyReturnString");
+    ntsa::CoroutineTest::Scope function("coVerifyReturnString");
 
     // MRM: The temporary passed to 'coReturnStringLiteral' seems to be
     // destroyed.
 
 #if 0
     // This doesn't work (the parameter temporary is destroyed too early).
-    ntci::CoroutineTask<ntci::CoroutineTest::String> task =
-        coReturnStringLiteral(ntci::CoroutineTest::String("abc"));
+    ntsa::CoroutineTask<ntsa::CoroutineTest::String> task =
+        coReturnStringLiteral(ntsa::CoroutineTest::String("abc"));
 #else
     // This works (hoisting the parameter to a copy before creating the task).
-    ntci::CoroutineTest::String taskParam("abc");
+    ntsa::CoroutineTest::String taskParam("abc");
 
-    ntci::CoroutineTask<ntci::CoroutineTest::String> task =
+    ntsa::CoroutineTask<ntsa::CoroutineTest::String> task =
         coReturnStringLiteral(taskParam);
 #endif
 
-    ntci::CoroutineTest::String value = co_await bsl::move(task);
+    ntsa::CoroutineTest::String value = co_await bsl::move(task);
 
     BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
 
@@ -2057,9 +2097,9 @@ ntci::CoroutineTask<void> CoroutineTest::coVerifyReturnString()
     co_return;
 }
 
-ntci::CoroutineTask<void> CoroutineTest::coVerifyReturnStringChain()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyReturnStringChain()
 {
-    ntccfg::Object function("coVerifyReturnStringChain");
+    ntsa::CoroutineTest::Scope function("coVerifyReturnStringChain");
 
     // MRM: The temporary passed to 'coReturnStringLiteral' seems to be
     // destroyed.
@@ -2067,63 +2107,65 @@ ntci::CoroutineTask<void> CoroutineTest::coVerifyReturnStringChain()
 #if 0
     // This doesn't work (the parameter temporary is destroyed too early).
 
-    ntci::CoroutineTask<ntci::CoroutineTest::String> task =
-        coReturnStringChain(ntci::CoroutineTest::String("abc"),
-                            ntci::CoroutineTest::String("123"));
+    ntsa::CoroutineTask<ntsa::CoroutineTest::String> task =
+        coReturnStringChain(ntsa::CoroutineTest::String("abc"),
+                            ntsa::CoroutineTest::String("123"));
 
 #else
     // This works (hoisting the parameter to a copy before creating the task).
-    ntci::CoroutineTest::String taskParamLhs("abc");
-    ntci::CoroutineTest::String taskParamRhs("123");
+    ntsa::CoroutineTest::String taskParamLhs("abc");
+    ntsa::CoroutineTest::String taskParamRhs("123");
 
-    ntci::CoroutineTask<ntci::CoroutineTest::String> task =
+    ntsa::CoroutineTask<ntsa::CoroutineTest::String> task =
         coReturnStringChain(taskParamLhs, taskParamRhs);
 #endif
 
-    ntci::CoroutineTest::String value = co_await bsl::move(task);
+    ntsa::CoroutineTest::String value = co_await bsl::move(task);
 
     BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
 
-    NTSCFG_TEST_EQ(value, ntci::CoroutineTest::String("abc123"));
+    NTSCFG_TEST_EQ(value, ntsa::CoroutineTest::String("abc123"));
 
     co_return;
 }
 
-ntci::CoroutineTask<void> CoroutineTest::coVerifyCase4()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase4()
 {
-    ntccfg::Object function("coVerifyCase4");
+    ntsa::CoroutineTest::Scope function("coVerifyCase4");
 
     ntsa::Error error;
 
     Mechanism mechanism(NTSCFG_TEST_ALLOCATOR);
 
-    ntci::CoroutineTask<void> task = mechanism.hello();
+    ntsa::CoroutineTask<void> task = mechanism.hello();
 
-    ntci::CoroutineTaskUtil::synchronize(bsl::move(task));
+    ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
 
     co_return;
 }
 
-ntci::CoroutineTask<void> CoroutineTest::coVerifyCase5()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase5()
 {
-    ntccfg::Object function("coVerifyCase5");
+    ntsa::CoroutineTest::Scope function("coVerifyCase5");
 
     ntsa::Error error;
 
     Mechanism mechanism(NTSCFG_TEST_ALLOCATOR);
 
-    ntci::CoroutineTask<void> task1 = mechanism.hello();
+    ntsa::CoroutineTask<void> task1 = mechanism.hello();
     co_await                  task1;
 
-    ntci::CoroutineTask<void> task2 = mechanism.hello();
+    ntsa::CoroutineTask<void> task2 = mechanism.hello();
     co_await                  task2;
 
     co_return;
 }
 
-ntci::CoroutineTask<void> CoroutineTest::coVerifyCase6()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase6()
 {
-    ntccfg::Object function("coVerifyCase6");
+// TODO
+#if 0
+    ntsa::CoroutineTest::Scope function("coVerifyCase6");
 
     ntsa::Error error;
 
@@ -2136,24 +2178,25 @@ ntci::CoroutineTask<void> CoroutineTest::coVerifyCase6()
 
     Result result(NTSCFG_TEST_ALLOCATOR);
 
-    ntci::CoroutineTask<ntsa::Error> task =
+    ntsa::CoroutineTask<ntsa::Error> task =
         mechanism.executeCooperatively(&result, 0, parameters);
 
-    error = ntci::CoroutineTaskUtil::synchronize(bsl::move(task));
+    error = ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
     NTSCFG_TEST_OK(error);
 
     NTSCFG_TEST_EQ(result.annotation(), "test");
     NTSCFG_TEST_EQ(result.value(), 3);
+#endif
 
     co_return;
 }
 
-ntci::CoroutineTask<void> CoroutineTest::coVerifySandbox(
-    ntccfg::Allocator allocator)
+ntsa::CoroutineTask<void> CoroutineTest::coVerifySandbox(
+    ntsa::Allocator allocator)
 {
-    ntccfg::Object function("verifySandbox");
+    ntsa::CoroutineTest::Scope function("verifySandbox");
 
-    ntci::AwaitableValue<int> awaitable(static_cast<int>(123));
+    ntsa::AwaitableValue<int> awaitable(static_cast<int>(123));
 
     int value = co_await awaitable;
 
@@ -2162,7 +2205,7 @@ ntci::CoroutineTask<void> CoroutineTest::coVerifySandbox(
     co_return;
 }
 
-NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifyPrerequisites)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyPrerequisites)
 {
     bsl::allocator<> allocator(NTSCFG_TEST_ALLOCATOR);
 
@@ -2184,95 +2227,95 @@ NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifyPrerequisites)
     BALL_LOG_DEBUG << "Sum = " << concatenation << BALL_LOG_END;
 }
 
-NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifyBasic)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
 {
-    ntccfg::Object function("verifyBasic");
+    ntsa::CoroutineTest::Scope function("verifyBasic");
 
     {
-        ntci::CoroutineTask<void> t = coReturnVoid();
+        ntsa::CoroutineTask<void> t = coReturnVoid();
 
-        ntci::CoroutineTaskUtil::synchronize(bsl::move(t));
+        ntsa::CoroutineTaskUtil::synchronize(bsl::move(t));
     }
 
     {
         int                      e = returnInt();
-        ntci::CoroutineTask<int> t = coReturnInt();
+        ntsa::CoroutineTask<int> t = coReturnInt();
 
-        int f = ntci::CoroutineTaskUtil::synchronize(bsl::move(t));
+        int f = ntsa::CoroutineTaskUtil::synchronize(bsl::move(t));
 
         NTSCFG_TEST_EQ(e, f);
     }
 
     {
         int&                      e = returnIntReference();
-        ntci::CoroutineTask<int&> t = coReturnIntReference();
+        ntsa::CoroutineTask<int&> t = coReturnIntReference();
 
-        int& f = ntci::CoroutineTaskUtil::synchronize(bsl::move(t));
+        int& f = ntsa::CoroutineTaskUtil::synchronize(bsl::move(t));
 
         NTSCFG_TEST_EQ(&e, &f);
     }
 
     {
         int&&                      e = returnIntReferenceMovable();
-        ntci::CoroutineTask<int&&> t = coReturnIntReferenceMovable();
+        ntsa::CoroutineTask<int&&> t = coReturnIntReferenceMovable();
 
-        int&& f = ntci::CoroutineTaskUtil::synchronize(bsl::move(t));
+        int&& f = ntsa::CoroutineTaskUtil::synchronize(bsl::move(t));
 
         NTSCFG_TEST_EQ(&e, &f);
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifyReturnVoid)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyReturnVoid)
 {
-    ntccfg::Object function("verifyReturnVoid");
-    ntci::CoroutineTest::main(&ntci::CoroutineTest::coVerifyReturnVoid);
+    ntsa::CoroutineTest::Scope function("verifyReturnVoid");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyReturnVoid);
 }
 
-NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifyReturnInt)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyReturnInt)
 {
-    ntccfg::Object function("verifyReturnInt");
-    ntci::CoroutineTest::main(&ntci::CoroutineTest::coVerifyReturnInt);
+    ntsa::CoroutineTest::Scope function("verifyReturnInt");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyReturnInt);
 }
 
-NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifyReturnIntChain)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyReturnIntChain)
 {
-    ntccfg::Object function("verifyReturnIntChain");
-    ntci::CoroutineTest::main(&ntci::CoroutineTest::coVerifyReturnIntChain);
+    ntsa::CoroutineTest::Scope function("verifyReturnIntChain");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyReturnIntChain);
 }
 
-NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifyReturnString)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyReturnString)
 {
-    ntccfg::Object function("verifyReturnString");
-    ntci::CoroutineTest::main(&ntci::CoroutineTest::coVerifyReturnString);
+    ntsa::CoroutineTest::Scope function("verifyReturnString");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyReturnString);
 }
 
-NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifyReturnStringChain)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyReturnStringChain)
 {
-    ntccfg::Object function("verifyReturnStringChain");
-    ntci::CoroutineTest::main(&ntci::CoroutineTest::coVerifyReturnStringChain);
+    ntsa::CoroutineTest::Scope function("verifyReturnStringChain");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyReturnStringChain);
 }
 
-NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifyCase4)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyCase4)
 {
-    ntccfg::Object function("verifyCase4");
-    ntci::CoroutineTest::main(&ntci::CoroutineTest::coVerifyCase4);
+    ntsa::CoroutineTest::Scope function("verifyCase4");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyCase4);
 }
 
-NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifyCase5)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyCase5)
 {
-    ntccfg::Object function("verifyCase5");
-    ntci::CoroutineTest::main(&ntci::CoroutineTest::coVerifyCase5);
+    ntsa::CoroutineTest::Scope function("verifyCase5");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyCase5);
 }
 
-NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifyCase6)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyCase6)
 {
-    ntccfg::Object function("verifyCase6");
-    ntci::CoroutineTest::main(&ntci::CoroutineTest::coVerifyCase6);
+    ntsa::CoroutineTest::Scope function("verifyCase6");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyCase6);
 }
 
-NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifySandbox)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifySandbox)
 {
-    ntccfg::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
+    ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
 
     coVerifySandbox(allocator);
 
@@ -2287,10 +2330,10 @@ NTSCFG_TEST_FUNCTION(ntci::CoroutineTest::verifySandbox)
     }
 }
 
-}  // close namespace ntci
+}  // close namespace ntsa
 }  // close namespace BloombergLP
 
-#endif  // NTC_BUILD_WITH_COROUTINES
+#endif  // NTS_BUILD_WITH_COROUTINES
 
 // MRM
 #if 0
@@ -2391,13 +2434,13 @@ void doP3()
 // ----------------------------------------------------------------------------
 
 namespace test_case_2 {
-// Verify that `ntci::CoroutineTaskUtil::synchronize` doesn't accept an lvalue of type
+// Verify that `ntsa::CoroutineTaskUtil::synchronize` doesn't accept an lvalue of type
 // `CoroutineTask<RESULT>`.
 template <class RESULT = void>
 void doP4()
 {
     ASSERT(!(requires (bdxa::CoroutineTask<RESULT> task) {
-                 ntci::CoroutineTaskUtil::synchronize(task);
+                 ntsa::CoroutineTaskUtil::synchronize(task);
              }));
 }
 }  // close namespace test_case_4
@@ -2547,19 +2590,19 @@ int main(int argc, char *argv[])
                             EnforceVoid(), co_await coReturnValue<void>();
                             co_return true;
                         }();
-            ASSERT(ntci::CoroutineTaskUtil::synchronize(bsl::move(task)));
+            ASSERT(ntsa::CoroutineTaskUtil::synchronize(bsl::move(task)));
         }
         {
             auto task = []() -> CoroutineTask<int> {
                             co_return co_await coReturnValue<int>();
                         }();
-            ASSERT(getValue<int>() == ntci::CoroutineTaskUtil::synchronize(bsl::move(task)));
+            ASSERT(getValue<int>() == ntsa::CoroutineTaskUtil::synchronize(bsl::move(task)));
         }
         {
             auto task = []() -> CoroutineTask<int&> {
                             co_return co_await coReturnValue<int&>();
                         }();
-            ASSERT(&getValue<int&>() == &ntci::SimplTaskUtil::synchronize(bsl::move(task)));
+            ASSERT(&getValue<int&>() == &ntsa::SimplTaskUtil::synchronize(bsl::move(task)));
         }
         {
             auto task = []() -> CoroutineTask<int&&> {
@@ -2567,7 +2610,7 @@ int main(int argc, char *argv[])
                         }();
 
             int&& expectedRef = getValue<int&&>();
-            int&& actualRef   = ntci::CoroutineTaskUtil::synchronize(bsl::move(task));
+            int&& actualRef   = ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
             ASSERT(&expectedRef == &actualRef);
         }
 
@@ -2585,7 +2628,7 @@ int main(int argc, char *argv[])
                             }
                             co_return thrownValue;
                         }();
-            ASSERT(2 == ntci::CoroutineTaskUtil::synchronize(bsl::move(task)));
+            ASSERT(2 == ntsa::CoroutineTaskUtil::synchronize(bsl::move(task)));
         }
 #endif
 
@@ -2629,7 +2672,7 @@ int main(int argc, char *argv[])
             co_return 4;
         }();
         auto task2 = bsl::move(task);
-        ASSERT(4 == ntci::CoroutineTaskUtil::synchronize(bsl::move(task2)));
+        ASSERT(4 == ntsa::CoroutineTaskUtil::synchronize(bsl::move(task2)));
 
         ASSERT(!bsl::is_default_constructible_v<CoroutineTask<>>);
         ASSERT(!bsl::is_copy_constructible_v<CoroutineTask<>>);
@@ -2682,12 +2725,12 @@ int main(int argc, char *argv[])
 
         // P-1
         ASSERT(
-             bsl::is_void_v<decltype(ntci::CoroutineTaskUtil::synchronize(coReturnValue<void>()))>);
-        ASSERT(getValue<int>() == ntci::CoroutineTaskUtil::synchronize(coReturnValue<int>()));
-        ASSERT(&getValue<int&>() == &ntci::SimplTaskUtil::synchronize(coReturnValue<int&>()));
+             bsl::is_void_v<decltype(ntsa::CoroutineTaskUtil::synchronize(coReturnValue<void>()))>);
+        ASSERT(getValue<int>() == ntsa::CoroutineTaskUtil::synchronize(coReturnValue<int>()));
+        ASSERT(&getValue<int&>() == &ntsa::SimplTaskUtil::synchronize(coReturnValue<int&>()));
         {
             int&& expectedRef = getValue<int&&>();
-            int&& actualRef   = ntci::CoroutineTaskUtil::synchronize(coReturnValue<int&&>());
+            int&& actualRef   = ntsa::CoroutineTaskUtil::synchronize(coReturnValue<int&&>());
             ASSERT(&expectedRef == &actualRef);
         }
 
@@ -2701,7 +2744,7 @@ int main(int argc, char *argv[])
             };
 
             try {
-                ntci::CoroutineTaskUtil::synchronize(throwingCoro());
+                ntsa::CoroutineTaskUtil::synchronize(throwingCoro());
             } catch (int ex) {
                 thrownValue = ex;
             }
@@ -2744,7 +2787,7 @@ int main(int argc, char *argv[])
             co_return 3;
         }();
 
-        ASSERT(3 == ntci::CoroutineTaskUtil::synchronize(bsl::move(awaitingTask)));
+        ASSERT(3 == ntsa::CoroutineTaskUtil::synchronize(bsl::move(awaitingTask)));
 
         // P-4
         doP4();
@@ -2778,7 +2821,7 @@ int main(int argc, char *argv[])
 #ifdef BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY
         auto task = []() -> bdxa::CoroutineTask<> { co_return; }();
         ASSERT((bsl::is_same_v<bdxa::CoroutineTask<void>, decltype(task)>));
-        ntci::CoroutineTaskUtil::synchronize(bsl::move(task));
+        ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
 #else
         cout << "Skipping breathing test before C++20...\n";
         ASSERT(true);

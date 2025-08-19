@@ -171,12 +171,14 @@
 // #include <ntci_closecallbackfactory.t.cpp>
 // #include <ntci_closefuture.t.cpp>
 // #include <ntci_closeresult.t.cpp>
+// #include <ntci_compression.t.cpp>
+// #include <ntci_compressiondriver.t.cpp>
 // #include <ntci_connectcallback.t.cpp>
 // #include <ntci_connectcallbackfactory.t.cpp>
 // #include <ntci_connectfuture.t.cpp>
 // #include <ntci_connector.t.cpp>
 // #include <ntci_connectresult.t.cpp>
-#include <ntci_coroutine.t.cpp>
+#include <ntci_concurrent.t.cpp>
 // #include <ntci_datagramsocket.t.cpp>
 // #include <ntci_datagramsocketfactory.t.cpp>
 // #include <ntci_datagramsocketmanager.t.cpp>

@@ -183,12 +183,12 @@
 #include <ntci_closeresult.cpp>
 #include <ntci_compression.cpp>
 #include <ntci_compressiondriver.cpp>
+#include <ntci_concurrent.cpp>
 #include <ntci_connectcallback.cpp>
 #include <ntci_connectcallbackfactory.cpp>
 #include <ntci_connectfuture.cpp>
 #include <ntci_connector.cpp>
 #include <ntci_connectresult.cpp>
-#include <ntci_coroutine.cpp>
 #include <ntci_datagramsocket.cpp>
 #include <ntci_datagramsocketfactory.cpp>
 #include <ntci_datagramsocketmanager.cpp>

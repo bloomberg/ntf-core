@@ -1,6 +1,8 @@
 ntsa_adapter
 ntsa_abstract
+ntsa_allocator
 ntsa_buffer
+ntsa_coroutine
 ntsa_data
 ntsa_datatype
 ntsa_distinguishedname
