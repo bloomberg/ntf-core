@@ -21,6 +21,8 @@ BSLS_IDENT("$Id: $")
 
 #include <ntcscm_version.h>
 #include <ntscfg_config.h>
+#include <bsls_libraryfeatures.h>
+#include <bsls_platform.h>
 #include <bsl_cstddef.h>
 #include <bsl_cstdint.h>
 
@@ -122,7 +124,8 @@ namespace ntccfg {
 #define NTC_BUILD_WITH_OPENSSL @NTF_BUILD_WITH_OPENSSL@
 
 // Build with support for coroutines.
-#define NTC_BUILD_WITH_COROUTINES @NTF_BUILD_WITH_COROUTINES@
+#define NTC_BUILD_WITH_COROUTINES (@NTF_BUILD_WITH_COROUTINES@ && \
+    BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY)
 
 // Build with support for packet timestamping, if supported by the network
 // device.

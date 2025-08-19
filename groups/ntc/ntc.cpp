@@ -188,6 +188,7 @@
 #include <ntci_connectfuture.cpp>
 #include <ntci_connector.cpp>
 #include <ntci_connectresult.cpp>
+#include <ntci_coroutine.cpp>
 #include <ntci_datagramsocket.cpp>
 #include <ntci_datagramsocketfactory.cpp>
 #include <ntci_datagramsocketmanager.cpp>

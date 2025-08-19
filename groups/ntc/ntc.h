@@ -181,6 +181,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_connectfuture.h>
 #include <ntci_connector.h>
 #include <ntci_connectresult.h>
+#include <ntci_coroutine.h>
 #include <ntci_datagramsocket.h>
 #include <ntci_datagramsocketfactory.h>
 #include <ntci_datagramsocketmanager.h>

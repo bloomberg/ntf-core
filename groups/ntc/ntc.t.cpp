@@ -176,6 +176,7 @@
 // #include <ntci_connectfuture.t.cpp>
 // #include <ntci_connector.t.cpp>
 // #include <ntci_connectresult.t.cpp>
+#include <ntci_coroutine.t.cpp>
 // #include <ntci_datagramsocket.t.cpp>
 // #include <ntci_datagramsocketfactory.t.cpp>
 // #include <ntci_datagramsocketmanager.t.cpp>

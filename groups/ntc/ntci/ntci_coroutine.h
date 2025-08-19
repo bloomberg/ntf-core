@@ -13,13 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INCLUDED_NTCS_COROUTINE
-#define INCLUDED_NTCS_COROUTINE
+#ifndef INCLUDED_NTCI_COROUTINE
+#define INCLUDED_NTCI_COROUTINE
 
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntccfg_config.h>
 #include <ntccfg_platform.h>
+
+#if NTC_BUILD_WITH_COROUTINES
+
 #include <ntci_log.h>
 #include <ntcscm_version.h>
 
@@ -45,8 +49,6 @@ BSLS_IDENT("$Id: $")
 #include <bsl_utility.h>
 #include <bsl_variant.h>
 
-#ifdef BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY
-
 // We have to mark these functions 'always_inline' to prevent warnings at the
 // point of use, but for some reason we also get a warning saying some of them
 // might not be inlinable, so we have to suppress that warning too.
@@ -64,47 +66,130 @@ BSLS_IDENT("$Id: $")
 #define NTSCFG_REQUIRE_REFERENCE(TYPE) requires bsl::is_reference_v<TYPE>
 
 #ifdef BSLS_PLATFORM_CMP_CLANG
-#define NTCS_COROUTINE_FUNCTION __PRETTY_FUNCTION__
+#define NTCI_COROUTINE_FUNCTION __PRETTY_FUNCTION__
 #else
-#define NTCS_COROUTINE_FUNCTION __FUNCTION__
+#define NTCI_COROUTINE_FUNCTION __FUNCTION__
 #endif
 
-#define NTCS_COROUTINE_LOG_CONTEXT() NTCI_LOG_CONTEXT()
+#define NTCI_COROUTINE_LOG_CONTEXT() NTCI_LOG_CONTEXT()
 
-#define NTCS_COROUTINE_LOG_FUNCTION ""
-// #define NTCS_COROUTINE_LOG_FUNCTION NTCS_COROUTINE_FUNCTION << ":\n"
+#define NTCI_COROUTINE_LOG_FUNCTION ""
+// #define NTCI_COROUTINE_LOG_FUNCTION NTCI_COROUTINE_FUNCTION << ":\n"
 
-#define NTCS_COROUTINE_LOG_AWAIT_READY(kind, phase, context)                  \
+#define NTCI_COROUTINE_LOG_AWAIT_READY(kind, phase, context)                  \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_LOG_FUNCTION << "Coroutine "  \
+        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
                               << (kind) << " " << (phase) << " " << (context) \
                               << ": await_ready" << NTCI_LOG_STREAM_END;      \
     } while (false)
 
-#define NTCS_COROUTINE_LOG_AWAIT_SUSPEND(kind, phase, context, coroutine)     \
+#define NTCI_COROUTINE_LOG_AWAIT_SUSPEND(kind, phase, context, coroutine)     \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_LOG_FUNCTION << "Coroutine "  \
+        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
                               << (kind) << " " << (phase) << " " << (context) \
                               << ": await_suspend: " << (coroutine).address() \
                               << NTCI_LOG_STREAM_END;                         \
     } while (false)
 
-#define NTCS_COROUTINE_LOG_AWAIT_RESUME(kind, phase, context)                 \
+#define NTCI_COROUTINE_LOG_AWAIT_RESUME(kind, phase, context)                 \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_LOG_FUNCTION << "Coroutine "  \
+        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
                               << (kind) << " " << (phase) << " " << (context) \
                               << ": await_resume" << NTCI_LOG_STREAM_END;     \
     } while (false)
 
-#define NTCS_COROUTINE_LOG_FRAME_DESTROYED(kind, address)                     \
+#define NTCI_COROUTINE_LOG_FRAME_DESTROYED(kind, address)                     \
     do {                                                                      \
-        NTCI_LOG_STREAM_TRACE << NTCS_COROUTINE_LOG_FUNCTION << "Coroutine "  \
+        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
                               << (kind) << " frame destroyed: " << (address)  \
                               << NTCI_LOG_STREAM_END;                         \
     } while (false)
 
+#define NTCI_COROUTINE_LOG_ALLOCATE(address, size)                            \
+    do {                                                                      \
+        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
+                              << "frame allocated: " << (address)             \
+                              << " [ size = " << (size) << " ]"               \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
+#define NTCI_COROUTINE_LOG_FREE(address, size)                                \
+    do {                                                                      \
+        NTCI_LOG_STREAM_TRACE << NTCI_COROUTINE_LOG_FUNCTION << "Coroutine "  \
+                              << "frame freed: " << (address)                 \
+                              << " [ size = " << (size) << " ]"               \
+                              << NTCI_LOG_STREAM_END;                         \
+    } while (false)
+
 namespace BloombergLP {
-namespace ntcs {
+namespace ntccfg {
+
+typedef bsl::allocator<> Allocator;
+
+}
+}
+
+namespace BloombergLP {
+namespace ntci {
+
+/// @internal @brief
+/// Provide an awaitable value that is immediately ready.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci
+template <typename T>
+struct AwaitableValue {
+    AwaitableValue(T value)
+    : d_value(std::move(value))
+    {
+    }
+
+    bool await_ready() const noexcept
+    {
+        return true;
+    }
+
+    void await_suspend(std::coroutine_handle<>) const noexcept
+    {
+    }
+
+    T await_resume() noexcept
+    {
+        return std::move(d_value);
+    }
+
+    T d_value;
+};
+
+/// @internal @brief
+/// Provide an awaitable void that is immediately ready.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntci
+template <>
+struct AwaitableValue<void> {
+    AwaitableValue()
+    {
+    }
+
+    bool await_ready() const noexcept
+    {
+        return true;
+    }
+
+    void await_suspend(std::coroutine_handle<>) const noexcept
+    {
+    }
+
+    void await_resume() noexcept
+    {
+        return;
+    }
+};
 
 template <typename RESULT>
 class CoroutineTask;
@@ -131,124 +216,12 @@ using CoroutineTaskFrame =
     std::coroutine_handle<CoroutineTaskPromise<RESULT> >;
 
 /// @internal @brief
-/// Provide an awaitable that never suspends a coroutine.
-///
-/// @details
-/// In C++20, an "awaitable" is an object that can be used with the 'co_await'
-/// operator within a coroutine. The 'co_await' operator allows a coroutine to
-/// suspend its execution until the awaitable object indicates that it's ready
-/// to resume, typically when an asynchronous operation completes.
-///
-/// For an object to be awaitable, it must provide specific member functions
-/// (or be adaptable to provide them via operator co_await or await_transform
-/// in the promise type):
-///
-/// @li @b await_ready()
-/// This function is called first. If it returns true, the coroutine does not
-/// suspend, and await_resume() is called immediately. This serves as an
-/// optimization for cases where the awaited operation is already complete.
-///
-/// @li @b await_suspend(std::coroutine_handle<void>)
-/// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<void> representing the calling coroutine. This
-/// function is responsible for initiating the asynchronous operation and
-/// storing the handle so the coroutine can be resumed later when the operation
-/// completes. It can return void, bool, or std::coroutine_handle<void>.
-///
-/// @li @b await_resume()
-/// This function is called when the awaited operation completes and the
-/// coroutine is resumed. It is responsible for retrieving the result of the
-/// operation and potentially throwing any exceptions that occurred during the
-/// asynchronous operation. The return value of await_resume() becomes the
-/// result of the co_await expression.
-///
-/// @note
-/// This class's behavior is similar to 'std::suspend_never'.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntcs
-class CoroutineGenericAwaitableNow
-{
-  public:
-    bool await_ready() const noexcept
-    {
-        return true;
-    }
-
-    void await_suspend(std::coroutine_handle<void>) const noexcept
-    {
-    }
-
-    void await_resume() const noexcept
-    {
-    }
-};
-
-/// @internal @brief
-/// Provide an awaitable that always suspends a coroutine.
-///
-/// @details
-/// In C++20, an "awaitable" is an object that can be used with the 'co_await'
-/// operator within a coroutine. The 'co_await' operator allows a coroutine to
-/// suspend its execution until the awaitable object indicates that it's ready
-/// to resume, typically when an asynchronous operation completes.
-///
-/// For an object to be awaitable, it must provide specific member functions
-/// (or be adaptable to provide them via operator co_await or await_transform
-/// in the promise type):
-///
-/// @li @b await_ready()
-/// This function is called first. If it returns true, the coroutine does not
-/// suspend, and await_resume() is called immediately. This serves as an
-/// optimization for cases where the awaited operation is already complete.
-///
-/// @li @b await_suspend(std::coroutine_handle<void>)
-/// If await_ready() returns false, this function is called. It receives a
-/// std::coroutine_handle<void> representing the calling coroutine. This
-/// function is responsible for initiating the asynchronous operation and
-/// storing the handle so the coroutine can be resumed later when the operation
-/// completes. It can return void, bool, or std::coroutine_handle<void>.
-///
-/// @li @b await_resume()
-/// This function is called when the awaited operation completes and the
-/// coroutine is resumed. It is responsible for retrieving the result of the
-/// operation and potentially throwing any exceptions that occurred during the
-/// asynchronous operation. The return value of await_resume() becomes the
-/// result of the co_await expression.
-///
-/// @note
-/// This class's behavior is similar to 'std::suspend_always'.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntcs
-class CoroutineGenericAwaitableLater
-{
-  public:
-    bool await_ready() const noexcept
-    {
-        return false;
-    }
-
-    void await_suspend(std::coroutine_handle<void>) const noexcept
-    {
-    }
-
-    void await_resume() const noexcept
-    {
-    }
-};
-
-/// @internal @brief
 /// Describe a coroutine task result stored by value.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 template <typename TYPE>
 class CoroutineTaskResultValue
 {
@@ -345,7 +318,7 @@ class CoroutineTaskResultValue
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 template <typename TYPE>
 class CoroutineTaskResultAddress
 {
@@ -429,7 +402,7 @@ class CoroutineTaskResultAddress
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 class CoroutineTaskResultEmpty
 {
     /// Enumerates the state of the value.
@@ -511,7 +484,7 @@ class CoroutineTaskResultEmpty
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 template <typename RESULT>
 class CoroutineTaskResult
 {
@@ -519,7 +492,7 @@ class CoroutineTaskResult
     using ResultType = RESULT;
 
     /// The result storage.
-    ntcs::CoroutineTaskResultValue<ResultType> d_storage;
+    ntci::CoroutineTaskResultValue<ResultType> d_storage;
 
   private:
     /// This class is not copy-constructable.
@@ -571,7 +544,7 @@ class CoroutineTaskResult
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
 class CoroutineTaskResult<RESULT>
@@ -583,7 +556,7 @@ class CoroutineTaskResult<RESULT>
     using ResultTypeDereference = bsl::remove_reference_t<RESULT>;
 
     /// The result storage.
-    ntcs::CoroutineTaskResultAddress<ResultTypeDereference> d_storage;
+    ntci::CoroutineTaskResultAddress<ResultTypeDereference> d_storage;
 
   private:
     /// This class is not copy-constructable.
@@ -636,7 +609,7 @@ class CoroutineTaskResult<RESULT>
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 class CoroutineTaskResult<RESULT>
@@ -645,7 +618,7 @@ class CoroutineTaskResult<RESULT>
     using ResultType = RESULT;
 
     /// The result storage.
-    ntcs::CoroutineTaskResultEmpty d_storage;
+    ntci::CoroutineTaskResultEmpty d_storage;
 
   private:
     /// This class is not copy-constructable.
@@ -708,7 +681,7 @@ class CoroutineTaskPromiseUtil
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 template <typename RESULT>
 class CoroutineTaskContext
 {
@@ -821,7 +794,7 @@ class CoroutineTaskContext
 /// to the specified 'stream'. Return a reference to the modifiable
 /// 'stream'.
 ///
-/// @related ntcs::CoroutineTaskContext
+/// @related ntci::CoroutineTaskContext
 template <typename RESULT>
 bsl::ostream& operator<<(bsl::ostream&                       stream,
                          const CoroutineTaskContext<RESULT>& object);
@@ -865,7 +838,7 @@ bsl::ostream& operator<<(bsl::ostream&                       stream,
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 template <typename RESULT>
 class CoroutineTaskPrologAwaitable
 {
@@ -957,7 +930,7 @@ class CoroutineTaskPrologAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 template <typename RESULT>
 class CoroutineTaskEpilogAwaitable
 {
@@ -1049,7 +1022,7 @@ class CoroutineTaskEpilogAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 template <typename RESULT>
 class CoroutineTaskResultAwaitable
 {
@@ -1120,7 +1093,7 @@ class CoroutineTaskResultAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 template <typename RESULT>
 class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 {
@@ -1254,7 +1227,7 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 template <typename RESULT>
 class CoroutineTask
 {
@@ -1330,7 +1303,7 @@ class CoroutineTask
 /// @par Thread Safety
 /// This class is thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 class CoroutineTaskUtil
 {
   public:
@@ -1355,7 +1328,7 @@ class CoroutineSynchronizationPromise;
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 class CoroutineSynchronizationContext
 {
   public:
@@ -1414,7 +1387,7 @@ class CoroutineSynchronizationContext
 /// to the specified 'stream'. Return a reference to the modifiable
 /// 'stream'.
 ///
-/// @related ntcs::CoroutineSynchronizationContext
+/// @related ntci::CoroutineSynchronizationContext
 bsl::ostream& operator<<(bsl::ostream&                          stream,
                          const CoroutineSynchronizationContext& object);
 
@@ -1457,7 +1430,7 @@ bsl::ostream& operator<<(bsl::ostream&                          stream,
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 class CoroutineSynchronizationPrologAwaitable
 {
   public:
@@ -1549,7 +1522,7 @@ class CoroutineSynchronizationPrologAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 class CoroutineSynchronizationEpilogAwaitable
 {
   public:
@@ -1642,7 +1615,7 @@ class CoroutineSynchronizationEpilogAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 class CoroutineSynchronizationResultAwaitable
 {
   public:
@@ -1705,7 +1678,7 @@ class CoroutineSynchronizationResultAwaitable
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 class CoroutineSynchronizationPromise
 {
   public:
@@ -1770,7 +1743,7 @@ class CoroutineSynchronizationPromise
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
-/// @ingroup module_ntcs
+/// @ingroup module_ntci
 class CoroutineSynchronization
 {
   public:
@@ -2533,10 +2506,10 @@ NTSCFG_INLINE RESULT CoroutineTaskContext<RESULT>::release()
 template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskContext<RESULT>::destroy()
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_CONTEXT();
 
     if (d_current.address() != nullptr) {
-        NTCS_COROUTINE_LOG_FRAME_DESTROYED("task", d_current.address());
+        NTCI_COROUTINE_LOG_FRAME_DESTROYED("task", d_current.address());
         d_current.destroy();
         d_current = nullptr;
     }
@@ -2602,8 +2575,8 @@ template <typename RESULT>
 NTSCFG_INLINE bool CoroutineTaskPrologAwaitable<RESULT>::await_ready()
     const noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_READY("task", "prolog", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_READY("task", "prolog", *d_context);
 
     return false;
 }
@@ -2612,16 +2585,16 @@ template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskPrologAwaitable<RESULT>::await_suspend(
     std::coroutine_handle<void> coroutine) const noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_SUSPEND("task", "prolog", *d_context, coroutine);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("task", "prolog", *d_context, coroutine);
 }
 
 template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskPrologAwaitable<RESULT>::await_resume()
     const noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_RESUME("task", "prolog", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_RESUME("task", "prolog", *d_context);
 }
 
 template <typename RESULT>
@@ -2634,8 +2607,8 @@ NTSCFG_INLINE CoroutineTaskEpilogAwaitable<RESULT>::
 template <typename RESULT>
 NTSCFG_INLINE bool CoroutineTaskEpilogAwaitable<RESULT>::await_ready() noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_READY("task", "epilog", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_READY("task", "epilog", *d_context);
 
     return false;
 }
@@ -2644,8 +2617,8 @@ template <typename RESULT>
 NTSCFG_INLINE std::coroutine_handle<void> CoroutineTaskEpilogAwaitable<
     RESULT>::await_suspend(std::coroutine_handle<void> coroutine) noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_SUSPEND("task", "epilog", *d_context, coroutine);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("task", "epilog", *d_context, coroutine);
 
     return d_context->awaiter();
 }
@@ -2654,8 +2627,8 @@ template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskEpilogAwaitable<RESULT>::await_resume()
     noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_RESUME("task", "epilog", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_RESUME("task", "epilog", *d_context);
 }
 
 template <typename RESULT>
@@ -2668,8 +2641,8 @@ CoroutineTaskResultAwaitable<RESULT>::CoroutineTaskResultAwaitable(
 template <typename RESULT>
 bool CoroutineTaskResultAwaitable<RESULT>::await_ready()
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_READY("task", "result", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_READY("task", "result", *d_context);
 
     return false;
 }
@@ -2678,8 +2651,8 @@ template <typename RESULT>
 CoroutineTaskFrame<RESULT> CoroutineTaskResultAwaitable<RESULT>::await_suspend(
     std::coroutine_handle<void> coroutine)
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_SUSPEND("task", "result", *d_context, coroutine);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("task", "result", *d_context, coroutine);
 
     d_context->setAwaiter(coroutine);
 
@@ -2689,8 +2662,8 @@ CoroutineTaskFrame<RESULT> CoroutineTaskResultAwaitable<RESULT>::await_suspend(
 template <typename RESULT>
 RESULT CoroutineTaskResultAwaitable<RESULT>::await_resume()
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_RESUME("task", "result", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_RESUME("task", "result", *d_context);
 
     return d_context->release();
 }
@@ -2947,10 +2920,10 @@ void CoroutineSynchronizationContext::wake()
 
 NTSCFG_INLINE void CoroutineSynchronizationContext::destroy()
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_CONTEXT();
 
     if (d_handle.address() != nullptr) {
-        NTCS_COROUTINE_LOG_FRAME_DESTROYED("sync", d_handle.address());
+        NTCI_COROUTINE_LOG_FRAME_DESTROYED("sync", d_handle.address());
         d_handle.destroy();
         d_handle = nullptr;
     }
@@ -2995,8 +2968,8 @@ CoroutineSynchronizationPrologAwaitable::
 NTSCFG_INLINE
 bool CoroutineSynchronizationPrologAwaitable::await_ready() const noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_READY("sync", "prolog", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_READY("sync", "prolog", *d_context);
 
     return false;
 }
@@ -3007,15 +2980,15 @@ void CoroutineSynchronizationPrologAwaitable::await_suspend(
 {
     NTCCFG_WARNING_UNUSED(coroutine);
 
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_SUSPEND("sync", "prolog", *d_context, coroutine);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("sync", "prolog", *d_context, coroutine);
 }
 
 NTSCFG_INLINE
 void CoroutineSynchronizationPrologAwaitable::await_resume() const noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_RESUME("sync", "prolog", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_RESUME("sync", "prolog", *d_context);
 }
 
 NTSCFG_INLINE
@@ -3028,8 +3001,8 @@ CoroutineSynchronizationEpilogAwaitable::
 NTSCFG_INLINE bool CoroutineSynchronizationEpilogAwaitable::await_ready()
     noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_READY("sync", "epilog", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_READY("sync", "epilog", *d_context);
 
     return false;
 }
@@ -3040,8 +3013,8 @@ void CoroutineSynchronizationEpilogAwaitable::await_suspend(
 {
     NTCCFG_WARNING_UNUSED(coroutine);
 
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_SUSPEND("sync", "epilog", *d_context, coroutine);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("sync", "epilog", *d_context, coroutine);
 
     d_context->wake();
 }
@@ -3049,8 +3022,8 @@ void CoroutineSynchronizationEpilogAwaitable::await_suspend(
 NTSCFG_INLINE
 void CoroutineSynchronizationEpilogAwaitable::await_resume() noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_RESUME("sync", "epilog", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_RESUME("sync", "epilog", *d_context);
 }
 
 NTSCFG_INLINE
@@ -3063,8 +3036,8 @@ CoroutineSynchronizationResultAwaitable::
 NTSCFG_INLINE bool CoroutineSynchronizationResultAwaitable::await_ready()
     noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_READY("sync", "result", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_READY("sync", "result", *d_context);
 
     return false;
 }
@@ -3075,8 +3048,8 @@ std::coroutine_handle<void> CoroutineSynchronizationResultAwaitable::
 {
     NTCCFG_WARNING_UNUSED(coroutine);
 
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_SUSPEND("sync", "result", *d_context, coroutine);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_SUSPEND("sync", "result", *d_context, coroutine);
 
     return d_context->task();
 }
@@ -3084,8 +3057,8 @@ std::coroutine_handle<void> CoroutineSynchronizationResultAwaitable::
 NTSCFG_INLINE
 void CoroutineSynchronizationResultAwaitable::await_resume() noexcept
 {
-    NTCS_COROUTINE_LOG_CONTEXT();
-    NTCS_COROUTINE_LOG_AWAIT_RESUME("sync", "result", *d_context);
+    NTCI_COROUTINE_LOG_CONTEXT();
+    NTCI_COROUTINE_LOG_AWAIT_RESUME("sync", "result", *d_context);
 }
 
 NTSCFG_INLINE void* CoroutineSynchronizationPromise::operator new(
@@ -3172,5 +3145,5 @@ CoroutineSynchronization CoroutineSynchronization::create(
 #pragma GCC diagnostic pop
 #endif
 
-#endif  // C++20
+#endif  // NTC_BUILD_WITH_COROUTINES
 #endif

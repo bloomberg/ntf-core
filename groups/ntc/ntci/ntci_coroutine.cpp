@@ -13,25 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntcs_coroutine.h>
+#include <ntci_coroutine.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntcs_coroutine_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntci_coroutine_cpp, "$Id$ $CSID$")
 
-#include <ntccfg_bind.h>
 #include <ntccfg_limits.h>
 #include <bslma_allocator.h>
 #include <bslma_default.h>
 #include <bsls_assert.h>
 #include <bsl_new.h>
 
-#ifdef BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY
+#if NTC_BUILD_WITH_COROUTINES
+
 namespace BloombergLP {
-namespace ntcs {
+namespace ntci {
 
 void* CoroutineTaskPromiseUtil::allocate(bsl::size_t      size,
                                          const Allocator& allocator)
 {
+    NTCI_COROUTINE_LOG_CONTEXT();
+
     constexpr bsl::size_t maxAlignment = __STDCPP_DEFAULT_NEW_ALIGNMENT__;
 
     const bsl::size_t frameRoundedSize =
@@ -41,6 +43,8 @@ void* CoroutineTaskPromiseUtil::allocate(bsl::size_t      size,
 
     void* buf = allocator.mechanism()->allocate(size);
 
+    NTCI_COROUTINE_LOG_ALLOCATE(buf, size);
+
     char* allocStart = static_cast<char*>(buf) + frameRoundedSize;
     ::new (static_cast<void*>(allocStart)) Allocator(allocator);
     return buf;
@@ -48,12 +52,16 @@ void* CoroutineTaskPromiseUtil::allocate(bsl::size_t      size,
 
 void CoroutineTaskPromiseUtil::deallocate(void* ptr, bsl::size_t size)
 {
+    NTCI_COROUTINE_LOG_CONTEXT();
+
     constexpr bsl::size_t maxAlignment = __STDCPP_DEFAULT_NEW_ALIGNMENT__;
 
     const bsl::size_t frameRoundedSize =
         maxAlignment * ((size + maxAlignment - 1) / maxAlignment);
 
     size = frameRoundedSize + sizeof(Allocator);
+
+    NTCI_COROUTINE_LOG_FREE(ptr, size);
 
     char* allocStart = static_cast<char*>(ptr) + frameRoundedSize;
 
@@ -64,4 +72,5 @@ void CoroutineTaskPromiseUtil::deallocate(void* ptr, bsl::size_t size)
 
 }  // close package namespace
 }  // close enterprise namespace
-#endif
+
+#endif  // NTC_BUILD_WITH_COROUTINES

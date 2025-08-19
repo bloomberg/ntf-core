@@ -7,7 +7,6 @@ ntcs_callbackstate
 ntcs_chronology
 ntcs_compat
 ntcs_controller
-ntcs_coroutine
 ntcs_datapool
 ntcs_detachstate
 ntcs_dispatch

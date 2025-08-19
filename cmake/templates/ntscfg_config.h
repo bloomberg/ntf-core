@@ -20,6 +20,8 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntsscm_version.h>
+#include <bsls_libraryfeatures.h>
+#include <bsls_platform.h>
 #include <bsl_cstddef.h>
 #include <bsl_cstdint.h>
 
