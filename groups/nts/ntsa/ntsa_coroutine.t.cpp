@@ -799,9 +799,9 @@ class CoroutineTest::Mechanism
     bdlmt::FixedThreadPool     d_threadPool;
     bslma::Allocator*          d_allocator;
 
-    void enqueueCoroutine(std::coroutine_handle<void> coroutine);
+    void enqueueCoroutine(bsl::coroutine_handle<void> coroutine);
 
-    void dequeueCoroutine(std::coroutine_handle<void> coroutine);
+    void dequeueCoroutine(bsl::coroutine_handle<void> coroutine);
 
     void enqueueAction(const bsl::shared_ptr<Action>& action);
 
@@ -1724,7 +1724,7 @@ class CoroutineTest::Mechanism::Awaiter
 
     bool await_ready() const noexcept;
 
-    void await_suspend(std::coroutine_handle<void> coroutine) const noexcept;
+    void await_suspend(bsl::coroutine_handle<void> coroutine) const noexcept;
 
     void await_resume() const noexcept;
 
@@ -1744,7 +1744,7 @@ bool CoroutineTest::Mechanism::Awaiter::await_ready() const noexcept
 }
 
 void CoroutineTest::Mechanism::Awaiter::await_suspend(
-    std::coroutine_handle<void> coroutine) const noexcept
+    bsl::coroutine_handle<void> coroutine) const noexcept
 {
     d_mechanism->enqueueCoroutine(coroutine);
 }
@@ -1754,7 +1754,7 @@ void CoroutineTest::Mechanism::Awaiter::await_resume() const noexcept
 }
 
 void CoroutineTest::Mechanism::enqueueCoroutine(
-    std::coroutine_handle<void> coroutine)
+    bsl::coroutine_handle<void> coroutine)
 {
     d_threadPool.enqueueJob(
         bdlf::BindUtil::bind(&CoroutineTest::Mechanism::dequeueCoroutine,
@@ -1763,7 +1763,7 @@ void CoroutineTest::Mechanism::enqueueCoroutine(
 }
 
 void CoroutineTest::Mechanism::dequeueCoroutine(
-    std::coroutine_handle<void> coroutine)
+    bsl::coroutine_handle<void> coroutine)
 {
     coroutine.resume();
 }
@@ -2761,7 +2761,7 @@ int main(int argc, char *argv[])
 
             bsl::atomic<bool> d_ready;
 
-            std::coroutine_handle<> d_awaiter;
+            bsl::coroutine_handle<> d_awaiter;
 
             Awaitable()
             : d_thread([this] {
@@ -2775,7 +2775,7 @@ int main(int argc, char *argv[])
 
             bool await_ready() { return false; }
 
-            void await_suspend(std::coroutine_handle<> awaiter)
+            void await_suspend(bsl::coroutine_handle<> awaiter)
             {
                 d_awaiter = awaiter;
                 d_ready = true;

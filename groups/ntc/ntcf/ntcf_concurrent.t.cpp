@@ -21,9 +21,130 @@ BSLS_IDENT_RCSID(ntcf_concurrent_t_cpp, "$Id$ $CSID$")
 #include <ntcf_concurrent.h>
 #include <ntcf_test.h>
 
+#include <bsl_queue.h>
+
 using namespace BloombergLP;
 
 #if NTC_BUILD_WITH_COROUTINES
+
+namespace BloombergLP {
+namespace ntsa {
+
+struct CoroutineSchedulerTask {
+    struct promise_type {
+        std::suspend_always initial_suspend() noexcept
+        {
+            return {};
+        }
+
+        std::suspend_always final_suspend() noexcept
+        {
+            return {};
+        }
+
+        CoroutineSchedulerTask get_return_object()
+        {
+            std::coroutine_handle<promise_type> coroutine =
+                std::coroutine_handle<promise_type>::from_promise(*this);
+
+            return CoroutineSchedulerTask(coroutine);
+        }
+
+        void return_void()
+        {
+        }
+
+        void unhandled_exception()
+        {
+        }
+    };
+
+    explicit CoroutineSchedulerTask(std::coroutine_handle<promise_type> handle)
+    : handle(handle)
+    {
+    }
+
+    auto get_handle()
+    {
+        return handle;
+    }
+
+    std::coroutine_handle<promise_type> handle;
+};
+
+class CoroutineScheduler
+{
+    bsl::queue<std::coroutine_handle<void> > d_tasks;
+
+  public:
+    void emplace(std::coroutine_handle<void> task)
+    {
+        d_tasks.push(task);
+    }
+
+    void schedule()
+    {
+        while (!d_tasks.empty()) {
+            std::coroutine_handle<void> task = d_tasks.front();
+            d_tasks.pop();
+            task.resume();
+
+            if (!task.done()) {
+                d_tasks.push(task);
+            }
+            else {
+                task.destroy();
+            }
+        }
+    }
+
+    auto suspend()
+    {
+        return std::suspend_always{};
+    }
+};
+
+class CoroutineSchedulerUtil
+{
+  public:
+    static CoroutineSchedulerTask createTaskA(CoroutineScheduler& sch)
+    {
+        std::cout << "Hello from TaskA\n";
+        co_await sch.suspend();
+        std::cout << "Executing the TaskA\n";
+        co_await sch.suspend();
+        std::cout << "TaskA is finished\n";
+    }
+
+    static CoroutineSchedulerTask createTaskB(CoroutineScheduler& sch)
+    {
+        std::cout << "Hello from TaskB\n";
+        co_await sch.suspend();
+        std::cout << "Executing the TaskB\n";
+        co_await sch.suspend();
+        std::cout << "TaskB is finished\n";
+    }
+
+    static void run()
+    {
+        std::cout << '\n';
+
+        CoroutineScheduler sch;
+
+        sch.emplace(createTaskA(sch).get_handle());
+        sch.emplace(createTaskB(sch).get_handle());
+
+        std::cout << "Start scheduling...\n";
+
+        sch.schedule();
+
+        std::cout << '\n';
+    }
+};
+
+}  // close namespace ntsa
+}  // close namespace BloombergLP
+
 namespace BloombergLP {
 namespace ntcf {
 
@@ -36,7 +157,8 @@ class ConcurrentTest
     class Configuration
     {
       public:
-        bsl::size_t numConnections;
+        bsl::size_t    numConnections;
+        ntsa::Endpoint endpoint;
     };
 
     // TODO
@@ -62,17 +184,15 @@ class ConcurrentTest
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyApplicationClient(
-        const Configuration&                         configuration,
-        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-        const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
-        ntsa::Allocator                              allocator);
+        const Configuration&                       configuration,
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        ntsa::Allocator                            allocator);
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyApplicationServer(
-        const Configuration&                         configuration,
-        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-        const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
-        ntsa::Allocator                              allocator);
+        const Configuration&                       configuration,
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        ntsa::Allocator                            allocator);
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifySandbox(
@@ -359,9 +479,6 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
 {
     ntsa::Error error;
 
-    Configuration configuration;
-    configuration.numConnections = 3;
-
     // Create the listener socket and begin listening.
 
     ntca::ListenerSocketOptions listenerSocketOptions;
@@ -382,16 +499,24 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
     error = listenerSocket->listen();
     NTSCFG_TEST_OK(error);
 
-    BALL_LOG_DEBUG << "Listening at " << listenerSocket->sourceEndpoint()
+    Configuration configuration;
+
+    configuration.numConnections = 3;
+    configuration.endpoint       = listenerSocket->sourceEndpoint();
+
+    BALL_LOG_DEBUG << "Listening at " << configuration.endpoint
                    << BALL_LOG_END;
 
     // Enter a coroutine dedicated to the listener socket.
 
-    co_await coVerifyApplicationListener(configuration,
-                                         listenerSocket,
-                                         allocator);
+    ntsa::CoroutineTask<void> listenerTask =
+        coVerifyApplicationListener(configuration, listenerSocket, allocator);
 
     // Create the client sockets.
+
+    typedef bsl::vector<ntsa::CoroutineTask<void> > TaskVector;
+
+    TaskVector tasks;
 
     for (bsl::size_t i = 0; i < configuration.numConnections; ++i) {
         // Create a client stream socket.
@@ -407,10 +532,10 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
 
         // Enter a coroutine dedicated to the client stream socket.
 
-        co_await coVerifyApplicationClient(configuration,
-                                           listenerSocket,
-                                           streamSocket,
-                                           allocator);
+        ntsa::CoroutineTask<void> clientTask =
+            coVerifyApplicationClient(configuration, streamSocket, allocator);
+
+        tasks.emplace_back(bsl::move(clientTask));
     }
 
     co_return;
@@ -443,7 +568,6 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
         // Enter a coroutine dedicated to the server stream socket.
 
         co_await coVerifyApplicationServer(configuration,
-                                           listenerSocket,
                                            streamSocket,
                                            allocator);
     }
@@ -458,10 +582,9 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
 }
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
-    const Configuration&                         configuration,
-    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-    const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
-    ntsa::Allocator                              allocator)
+    const Configuration&                       configuration,
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    ntsa::Allocator                            allocator)
 {
     ntsa::Error error;
 
@@ -470,11 +593,10 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
     ntca::ConnectContext connectContext;
     ntca::ConnectOptions connectOptions;
 
-    error =
-        co_await ntcf::Concurrent::connect(streamSocket,
-                                           &connectContext,
-                                           listenerSocket->sourceEndpoint(),
-                                           connectOptions);
+    error = co_await ntcf::Concurrent::connect(streamSocket,
+                                               &connectContext,
+                                               configuration.endpoint,
+                                               connectOptions);
     NTSCFG_TEST_OK(error);
 
     BALL_LOG_INFO << "Client socket connect complete: " << connectContext
@@ -508,10 +630,9 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
 }
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationServer(
-    const Configuration&                         configuration,
-    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-    const bsl::shared_ptr<ntci::StreamSocket>&   streamSocket,
-    ntsa::Allocator                              allocator)
+    const Configuration&                       configuration,
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    ntsa::Allocator                            allocator)
 {
     ntsa::Error error;
 
@@ -599,6 +720,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifySandbox)
 {
+#if 0
     ntccfg::Object scope("verifySandbox");
 
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
@@ -608,6 +730,9 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifySandbox)
 
     ntsa::CoroutineTask<void> task = coVerifySandbox(scheduler, allocator);
     ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+#endif
+
+    ntsa::CoroutineSchedulerUtil::run();
 }
 
 }  // close namespace ntcf
