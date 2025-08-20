@@ -46,6 +46,15 @@ ntcf::Concurrent::Connect Concurrent::connect(
     return Concurrent::Connect(connector, context, name, options);
 }
 
+ntcf::Concurrent::Accept Concurrent::accept(
+    const bsl::shared_ptr<ntci::Acceptor>& acceptor,
+    ntca::AcceptContext*                   context,
+    bsl::shared_ptr<ntci::StreamSocket>*   streamSocket,
+    const ntca::AcceptOptions&             options)
+{
+    return Concurrent::Accept(acceptor, context, streamSocket, options);
+}
+
 ntcf::Concurrent::Send Concurrent::send(
     const bsl::shared_ptr<ntci::Sender>& sender,
     ntca::SendContext*                   context,
@@ -163,6 +172,86 @@ void Concurrent::Connect::Awaiter::complete(
 
     if (event.isComplete()) {
         ;
+    }
+    else if (event.isError()) {
+        d_awaitable->d_error = event.context().error();
+    }
+    else {
+        d_awaitable->d_error = ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    coroutine.resume();
+}
+
+Concurrent::Accept::Accept(const bsl::shared_ptr<ntci::Acceptor>& acceptor,
+                           ntca::AcceptContext*                   context,
+                           bsl::shared_ptr<ntci::StreamSocket>*   streamSocket,
+                           ntca::AcceptOptions                    options)
+: d_acceptor(acceptor)
+, d_context(context)
+, d_streamSocket(streamSocket)
+, d_options(options)
+, d_error()
+{
+}
+
+Concurrent::Accept::Awaiter Concurrent::Accept::operator co_await()
+{
+    return Concurrent::Accept::Awaiter(this);
+}
+
+Concurrent::Accept::Awaiter::Awaiter(Concurrent::Accept* awaitable) noexcept
+: d_awaitable(awaitable)
+{
+}
+
+bool Concurrent::Accept::Awaiter::await_ready() const noexcept
+{
+    return false;
+}
+
+void Concurrent::Accept::Awaiter::await_suspend(
+    std::coroutine_handle<void> coroutine) noexcept
+{
+    ntsa::Error error;
+
+    ntci::AcceptCallback acceptCallback =
+        d_awaitable->d_acceptor->createAcceptCallback(
+            NTCCFG_BIND(&Concurrent::Accept::Awaiter::complete,
+                        this,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2,
+                        NTCCFG_BIND_PLACEHOLDER_3,
+                        coroutine));
+
+    error = d_awaitable->d_acceptor->accept(d_awaitable->d_options,
+                                            acceptCallback);
+
+    if (error) {
+        d_awaitable->d_error = error;
+        coroutine.resume();
+    }
+}
+
+ntsa::Error Concurrent::Accept::Awaiter::await_resume() const noexcept
+{
+    return d_awaitable->d_error;
+}
+
+void Concurrent::Accept::Awaiter::complete(
+    const bsl::shared_ptr<ntci::Acceptor>&     acceptor,
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::AcceptEvent&                   event,
+    std::coroutine_handle<void>                coroutine)
+{
+    BSLS_ASSERT(acceptor == d_awaitable->d_acceptor);
+
+    if (d_awaitable->d_context != 0) {
+        *d_awaitable->d_context = event.context();
+    }
+
+    if (event.isComplete()) {
+        *d_awaitable->d_streamSocket = streamSocket;
     }
     else if (event.isError()) {
         d_awaitable->d_error = event.context().error();

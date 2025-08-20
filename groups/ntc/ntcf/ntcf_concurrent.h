@@ -44,6 +44,9 @@ class Concurrent
     /// Provide an awaitable for a connect operation.
     class Connect;
 
+    /// Provide an awaitable for a accept operation.
+    class Accept;
+
     /// Provide an awaitable for a send operation.
     class Send;
 
@@ -75,6 +78,33 @@ class Concurrent
         ntca::ConnectContext*                   context,
         const bsl::string&                      name,
         const ntca::ConnectOptions&             options);
+
+    /// Dequeue a connection from the backlog according to the specified
+    /// 'options'. If the accept queue is not empty, synchronously pop the
+    /// front of the accept queue into an internally allocated stream socket
+    /// and resume the current coroutine on the objects's strand, if any, with
+    /// that stream socket. Otherwise, queue the accept operation and
+    /// asynchronously accept connections from the backlog onto the accept
+    /// queue as connections in the backlog become accepted, at the configured
+    /// accept rate limit, if any, up to the accept queue high watermark. When
+    /// the accept queue becomes non-empty, synchronously pop the front of the
+    /// accept queue into an internally allocated stream socket and resume the
+    /// current corouting on the objects' strand, if any, with that stream
+    /// socket. After satisfying any queued accept operations, when the accept
+    /// queue is asynchronously filled up to the accept queue low watermark,
+    /// announce an accept queue low watermark event. When asynchronously
+    /// enqueuing connections onto the accept queue causes the accept queue
+    /// high watermark to become breached, stop asynchronously accepting
+    /// connections from the backlog onto the accept queue and announce an
+    /// accept queue high watermark event. Return the awaitable error, notably
+    /// 'ntsa::Error::e_WOULD_BLOCK' if neither the accept queue nor the
+    /// backlog is non-empty. All other errors indicate no more connections
+    /// have been accepted at this time or will become accepted in the future.
+    static ntcf::Concurrent::Accept accept(
+        const bsl::shared_ptr<ntci::Acceptor>& acceptor,
+        ntca::AcceptContext*                   context,
+        bsl::shared_ptr<ntci::StreamSocket>*   streamSocket,
+        const ntca::AcceptOptions&             options);
 
     /// Enqueue the specified 'data' for transmission according to the
     /// specified 'options'. If the write queue is empty and the write rate
@@ -232,6 +262,82 @@ class Concurrent::Connect::Awaiter
 
     /// The awaitable.
     Concurrent::Connect* d_awaitable;
+};
+
+/// Provide an awaitable for a accept operation.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntci_runtime
+class Concurrent::Accept
+{
+  public:
+    /// TODO
+    class Awaiter;
+
+    /// TODO
+    explicit Accept(const bsl::shared_ptr<ntci::Acceptor>& acceptor,
+                    ntca::AcceptContext*                   context,
+                    bsl::shared_ptr<ntci::StreamSocket>*   streamSocket,
+                    ntca::AcceptOptions                    options);
+
+    /// TODO
+    Awaiter operator co_await();
+
+  private:
+    /// Allow the associated awaiter to access this class's private data.
+    friend class Awaiter;
+
+    /// The acceptor.
+    bsl::shared_ptr<ntci::Acceptor> d_acceptor;
+
+    /// The output context.
+    ntca::AcceptContext* d_context;
+
+    /// The output stream socket.
+    bsl::shared_ptr<ntci::StreamSocket>* d_streamSocket;
+
+    /// The input options.
+    ntca::AcceptOptions d_options;
+
+    /// The error.
+    ntsa::Error d_error;
+};
+
+/// Provide an awaiter for a accept operation.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntci_runtime
+class Concurrent::Accept::Awaiter
+{
+  public:
+    /// Create a new awaiter that is the result of 'co_await'-ing the specified
+    /// 'awaitable'.
+    explicit Awaiter(Concurrent::Accept* awaitable) noexcept;
+
+    // TODO
+    bool await_ready() const noexcept;
+
+    // TODO
+    void await_suspend(std::coroutine_handle<> coroutine) noexcept;
+
+    // TODO
+    ntsa::Error await_resume() const noexcept;
+
+  private:
+    /// Process a acceptance of the specified 'streamSocket' by the specified
+    /// 'acceptor' according to the specified 'event'. Resume the specified
+    /// 'coroutine'.
+    void complete(const bsl::shared_ptr<ntci::Acceptor>&     acceptor,
+                  const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+                  const ntca::AcceptEvent&                   event,
+                  std::coroutine_handle<void>                coroutine);
+
+    /// The awaitable.
+    Concurrent::Accept* d_awaitable;
 };
 
 /// Provide an awaitable for a send operation.
