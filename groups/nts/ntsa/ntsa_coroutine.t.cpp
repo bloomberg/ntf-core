@@ -133,6 +133,10 @@ class CoroutineTest
     // Return the specified string 'value' by value.
     static String returnStringLiteral(const String& value);
 
+    // Log the specified 'message'.
+    static ntsa::CoroutineTask<void> coLog(bsl::size_t sleep,
+                                           const char* message);
+
     // Return an awaitable with a void result type.
     static ntsa::CoroutineTask<void> coReturnVoid();
 
@@ -196,12 +200,17 @@ class CoroutineTest
     // TODO
     static ntsa::CoroutineTask<void> coVerifyCase6();
 
+    static ntsa::CoroutineTask<void> coVerifyBarrier();
+
     // TODO
     static ntsa::CoroutineTask<void> coVerifySandbox(
         ntsa::AllocatorArg,
         ntsa::Allocator allocator);
 
   public:
+    // TODO
+    static void verifyMeta();
+
     // TODO
     static void verifyPrerequisites();
 
@@ -231,6 +240,9 @@ class CoroutineTest
 
     // TODO
     static void verifyCase6();
+
+    // TODO
+    static void verifyBarrier();
 
     // TODO
     static void verifySandbox();
@@ -1938,6 +1950,14 @@ ntsa::CoroutineTest::String ntsa::CoroutineTest::returnStringLiteral(
     return copy;
 }
 
+ntsa::CoroutineTask<void> ntsa::CoroutineTest::coLog(bsl::size_t sleep,
+                                                     const char* message)
+{
+    bslmt::ThreadUtil::sleep(bsls::TimeInterval(static_cast<int>(sleep)));
+    BALL_LOG_DEBUG << message << BALL_LOG_END;
+    co_return;
+}
+
 ntsa::CoroutineTask<void> ntsa::CoroutineTest::coReturnVoid()
 {
     co_return returnVoid();
@@ -2192,6 +2212,21 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase6()
     co_return;
 }
 
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyBarrier()
+{
+    ntsa::CoroutineTask<void> task1 = CoroutineTest::coLog(4, "Coroutine 1");
+    ntsa::CoroutineTask<void> task2 = CoroutineTest::coLog(3, "Coroutine 2");
+    ntsa::CoroutineTask<void> task3 = CoroutineTest::coLog(2, "Coroutine 3");
+    ntsa::CoroutineTask<void> task4 = CoroutineTest::coLog(1, "Coroutine 4");
+
+    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(task1),
+                                                  bsl::move(task2),
+                                                  bsl::move(task3),
+                                                  bsl::move(task4));
+
+    co_return;
+}
+
 ntsa::CoroutineTask<void> CoroutineTest::coVerifySandbox(
     ntsa::AllocatorArg,
     ntsa::Allocator allocator)
@@ -2205,6 +2240,227 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifySandbox(
     BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
 
     co_return;
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyMeta)
+{
+    // IsCoroutineHandle
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsCoroutineHandle<void>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsCoroutineHandle<bool>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsCoroutineHandle<int>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsCoroutineHandle<bsl::string>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result = ntsa::CoroutineMeta::IsCoroutineHandle<
+            bsl::coroutine_handle<void> >::value;
+        NTSCFG_TEST_TRUE(result);
+    }
+
+    // IsValidReturnForAwaitReady
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitReady<void>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitReady<bool>::value;
+        NTSCFG_TEST_TRUE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitReady<int>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitReady<
+                bsl::string>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitReady<
+                bsl::coroutine_handle<void> >::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    // IsValidReturnForAwaitSuspend
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitSuspend<void>::value;
+        NTSCFG_TEST_TRUE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitSuspend<bool>::value;
+        NTSCFG_TEST_TRUE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitSuspend<int>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitSuspend<
+                bsl::string>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitSuspend<
+                bsl::coroutine_handle<void> >::value;
+        NTSCFG_TEST_TRUE(result);
+    }
+
+    // IsValidReturnForAwaitResume
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitResume<void>::value;
+        NTSCFG_TEST_TRUE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitResume<bool>::value;
+        NTSCFG_TEST_TRUE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitResume<int>::value;
+        NTSCFG_TEST_TRUE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitResume<
+                bsl::string>::value;
+        NTSCFG_TEST_TRUE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsValidReturnForAwaitResume<
+                bsl::coroutine_handle<void> >::value;
+        NTSCFG_TEST_TRUE(result);
+    }
+
+    // IsAwaiter
+
+    {
+        constexpr bool result = ntsa::CoroutineMeta::IsAwaiter<void>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result = ntsa::CoroutineMeta::IsAwaiter<bool>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result = ntsa::CoroutineMeta::IsAwaiter<int>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsAwaiter<bsl::string>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result = ntsa::CoroutineMeta::IsAwaiter<
+            bsl::coroutine_handle<void> >::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    struct TestAwaiterIncomplete1 {
+        bool await_ready() const noexcept
+        {
+            return false;
+        }
+    };
+
+    struct TestAwaiterIncomplete2 {
+        bool await_ready() noexcept
+        {
+            return false;
+        }
+
+        bsl::coroutine_handle<void> await_suspend(
+            bsl::coroutine_handle<void> coroutine) noexcept
+        {
+            return coroutine;
+        }
+    };
+
+    struct TestAwaiter {
+        bool await_ready() const noexcept
+        {
+            return false;
+        }
+
+        bsl::coroutine_handle<void> await_suspend(
+            bsl::coroutine_handle<void> coroutine) const noexcept
+        {
+            return coroutine;
+        }
+
+        void await_resume() const noexcept
+        {
+        }
+    };
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsAwaiter<TestAwaiterIncomplete1>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsAwaiter<TestAwaiterIncomplete2>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMeta::IsAwaiter<TestAwaiter>::value;
+        NTSCFG_TEST_TRUE(result);
+    }
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyPrerequisites)
@@ -2313,6 +2569,12 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyCase6)
 {
     ntsa::CoroutineTest::Scope function("verifyCase6");
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyCase6);
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBarrier)
+{
+    ntsa::CoroutineTest::Scope function("verifyBarrier");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyBarrier);
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifySandbox)

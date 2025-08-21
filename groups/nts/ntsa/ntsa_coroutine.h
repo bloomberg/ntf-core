@@ -44,15 +44,16 @@ BSLS_IDENT("$Id: $")
 #include <bsls_platform.h>
 #include <bsls_util.h>
 
+#include <bsl_atomic.h>
 #include <bsl_concepts.h>
-#include <bsl_condition_variable.h>
 #include <bsl_coroutine.h>
 #include <bsl_cstddef.h>
 #include <bsl_exception.h>
 #include <bsl_memory.h>
-#include <bsl_mutex.h>
+#include <bsl_string.h>
 #include <bsl_utility.h>
 #include <bsl_variant.h>
+#include <bsl_vector.h>
 
 // We have to mark these functions 'always_inline' to prevent warnings at the
 // point of use, but for some reason we also get a warning saying some of them
@@ -126,6 +127,303 @@ BSLS_IDENT("$Id: $")
 
 namespace BloombergLP {
 namespace ntsa {
+
+/// @internal @brief
+/// Provide meta functions for coroutines and awaiters.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntsa
+class CoroutineMeta
+{
+  public:
+    // Helper type that is empty.
+    struct Nil {
+    };
+
+    // Helper type that may be cast-to from any type.
+    struct Any {
+        template <typename TYPE>
+        Any(TYPE&&) noexcept
+        {
+        }
+    };
+
+    template <typename T>
+    struct unwrap_reference {
+        using type = T;
+    };
+
+    template <typename T>
+    struct unwrap_reference<std::reference_wrapper<T> > {
+        using type = T;
+    };
+
+    template <typename T>
+    using unwrap_reference_t = typename unwrap_reference<T>::type;
+
+    template <typename TYPE>
+    struct IsCoroutineHandle : std::false_type {
+    };
+
+    template <typename TYPE>
+    struct IsCoroutineHandle<bsl::coroutine_handle<TYPE> > : std::true_type {
+    };
+
+    template <typename TYPE>
+    struct IsValidReturnForAwaitReady : std::is_same<TYPE, bool> {
+    };
+
+    template <typename TYPE>
+    struct IsValidReturnForAwaitSuspend
+    : std::disjunction<std::is_void<TYPE>,
+                       std::is_same<TYPE, bool>,
+                       CoroutineMeta::IsCoroutineHandle<TYPE> > {
+    };
+
+    template <typename TYPE>
+    struct IsValidReturnForAwaitResume : std::true_type {
+    };
+
+    template <typename TYPE, typename = std::void_t<> >
+    struct IsAwaiter : std::false_type {
+    };
+
+    template <typename TYPE>
+    struct IsAwaiter<
+        TYPE,
+        std::void_t<decltype(std::declval<TYPE>().await_ready()),
+                    decltype(std::declval<TYPE>().await_suspend(
+                        std::declval<bsl::coroutine_handle<> >())),
+                    decltype(std::declval<TYPE>().await_resume())> >
+    : std::conjunction<
+          std::is_constructible<bool,
+                                decltype(std::declval<TYPE>().await_ready())>,
+          CoroutineMeta::IsValidReturnForAwaitSuspend<decltype(
+              std::declval<TYPE>().await_suspend(
+                  std::declval<bsl::coroutine_handle<> >()))>,
+          CoroutineMeta::IsValidReturnForAwaitResume<decltype(
+              std::declval<TYPE>().await_resume())> > {
+    };
+
+    template <typename T>
+    static auto get_awaiter_impl(T&& value, int)
+        noexcept(noexcept(static_cast<T&&>(value).operator co_await()))
+            -> decltype(static_cast<T&&>(value).operator co_await())
+    {
+        return static_cast<T&&>(value).operator co_await();
+    }
+
+    template <typename T>
+    static auto get_awaiter_impl(T&& value, long)
+        noexcept(noexcept(operator co_await(static_cast<T&&>(value))))
+            -> decltype(operator co_await(static_cast<T&&>(value)))
+    {
+        return operator co_await(static_cast<T&&>(value));
+    }
+
+    template <typename T,
+              std::enable_if_t<CoroutineMeta::IsAwaiter<T&&>::value, int> = 0>
+    static T&& get_awaiter_impl(T&& value, CoroutineMeta::Any) noexcept
+    {
+        return static_cast<T&&>(value);
+    }
+
+    template <typename T>
+    static auto get_awaiter(T&& value) noexcept(noexcept(
+        CoroutineMeta::get_awaiter_impl(static_cast<T&&>(value), 123)))
+        -> decltype(CoroutineMeta::get_awaiter_impl(static_cast<T&&>(value),
+                                                    123))
+    {
+        return CoroutineMeta::get_awaiter_impl(static_cast<T&&>(value), 123);
+    }
+
+    template <typename T, typename = std::void_t<> >
+    struct IsAwaitable : std::false_type {
+    };
+
+    template <typename T>
+    struct IsAwaitable<
+        T,
+        std::void_t<decltype(CoroutineMeta::get_awaiter(std::declval<T>()))> >
+    : std::true_type {
+    };
+
+    template <typename T>
+    constexpr static bool IsAwaitableValue = IsAwaitable<T>::value;
+
+    template <typename TYPE, typename = void>
+    struct awaitable_traits {
+    };
+
+    template <typename T>
+    struct awaitable_traits<T,
+                            std::void_t<decltype(CoroutineMeta::get_awaiter(
+                                std::declval<T>()))> > {
+        using awaiter_t =
+            decltype(CoroutineMeta::get_awaiter(std::declval<T>()));
+
+        using await_result_t =
+            decltype(std::declval<awaiter_t>().await_resume());
+    };
+
+    template <typename FUNC, typename AWAITABLE>
+    class fmap_awaiter
+    {
+        using awaiter_t =
+            typename CoroutineMeta::awaitable_traits<AWAITABLE&&>::awaiter_t;
+        FUNC&&    m_func;
+        awaiter_t m_awaiter;
+
+      public:
+        fmap_awaiter(FUNC&& func, AWAITABLE&& awaitable)
+            noexcept(std::is_nothrow_move_constructible_v<awaiter_t>&&
+                         noexcept(CoroutineMeta::get_awaiter(
+                             static_cast<AWAITABLE&&>(awaitable))))
+        : m_func(static_cast<FUNC&&>(func))
+        , m_awaiter(
+              CoroutineMeta::get_awaiter(static_cast<AWAITABLE&&>(awaitable)))
+        {
+        }
+
+        decltype(auto) await_ready() noexcept(
+            noexcept(static_cast<awaiter_t&&>(m_awaiter).await_ready()))
+        {
+            return static_cast<awaiter_t&&>(m_awaiter).await_ready();
+        }
+
+        template <typename PROMISE>
+        decltype(auto) await_suspend(std::coroutine_handle<PROMISE> coro)
+            noexcept(noexcept(static_cast<awaiter_t&&>(m_awaiter)
+                                  .await_suspend(std::move(coro))))
+        {
+            return static_cast<awaiter_t&&>(m_awaiter).await_suspend(
+                std::move(coro));
+        }
+
+        template <typename AWAIT_RESULT =
+                      decltype(std::declval<awaiter_t>().await_resume()),
+                  std::enable_if_t<std::is_void_v<AWAIT_RESULT>, int> = 0>
+        decltype(auto) await_resume()
+            noexcept(noexcept(std::invoke(static_cast<FUNC&&>(m_func))))
+        {
+            static_cast<awaiter_t&&>(m_awaiter).await_resume();
+            return std::invoke(static_cast<FUNC&&>(m_func));
+        }
+
+        template <typename AWAIT_RESULT =
+                      decltype(std::declval<awaiter_t>().await_resume()),
+                  std::enable_if_t<!std::is_void_v<AWAIT_RESULT>, int> = 0>
+        decltype(auto) await_resume() noexcept(noexcept(
+            std::invoke(static_cast<FUNC&&>(m_func),
+                        static_cast<awaiter_t&&>(m_awaiter).await_resume())))
+        {
+            return std::invoke(
+                static_cast<FUNC&&>(m_func),
+                static_cast<awaiter_t&&>(m_awaiter).await_resume());
+        }
+    };
+
+    template <typename FUNC, typename AWAITABLE>
+    class fmap_awaitable
+    {
+        static_assert(!std::is_lvalue_reference_v<FUNC>);
+        static_assert(!std::is_lvalue_reference_v<AWAITABLE>);
+
+      public:
+        template <typename FUNC_ARG,
+                  typename AWAITABLE_ARG,
+                  std::enable_if_t<
+                      std::is_constructible_v<FUNC, FUNC_ARG&&> &&
+                          std::is_constructible_v<AWAITABLE, AWAITABLE_ARG&&>,
+                      int> = 0>
+        explicit fmap_awaitable(FUNC_ARG&& func, AWAITABLE_ARG&& awaitable)
+            noexcept(std::is_nothrow_constructible_v<FUNC, FUNC_ARG&&>&&
+                         std::is_nothrow_constructible_v<AWAITABLE,
+                                                         AWAITABLE_ARG&&>)
+        : m_func(static_cast<FUNC_ARG&&>(func))
+        , m_awaitable(static_cast<AWAITABLE_ARG&&>(awaitable))
+        {
+        }
+
+        auto operator co_await() const&
+        {
+            return fmap_awaiter<const FUNC&, const AWAITABLE&>(m_func,
+                                                               m_awaitable);
+        }
+
+        auto operator co_await() &
+        {
+            return fmap_awaiter<FUNC&, AWAITABLE&>(m_func, m_awaitable);
+        }
+
+        auto operator co_await() &&
+        {
+            return fmap_awaiter<FUNC&&, AWAITABLE&&>(
+                static_cast<FUNC&&>(m_func),
+                static_cast<AWAITABLE&&>(m_awaitable));
+        }
+
+      private:
+        FUNC      m_func;
+        AWAITABLE m_awaitable;
+    };
+
+    template <typename FUNC>
+    struct fmap_transform {
+        explicit fmap_transform(FUNC&& f)
+            noexcept(std::is_nothrow_move_constructible_v<FUNC>)
+        : func(std::forward<FUNC>(f))
+        {
+        }
+
+        FUNC func;
+    };
+
+    template <
+        typename FUNC,
+        typename AWAITABLE,
+        std::enable_if_t<CoroutineMeta::IsAwaitableValue<AWAITABLE>, int> = 0>
+    static auto fmap(FUNC&& func, AWAITABLE&& awaitable)
+    {
+        return CoroutineMeta::fmap_awaitable<
+            std::remove_cv_t<std::remove_reference_t<FUNC> >,
+            std::remove_cv_t<std::remove_reference_t<AWAITABLE> > >(
+            std::forward<FUNC>(func),
+            std::forward<AWAITABLE>(awaitable));
+    }
+
+    template <typename FUNC>
+    static auto fmap(FUNC&& func)
+    {
+        return fmap_transform<FUNC>{std::forward<FUNC>(func)};
+    }
+};
+
+template <typename T, typename FUNC>
+decltype(auto) operator|(T &&                                  value,
+                         CoroutineMeta::fmap_transform<FUNC>&& transform)
+{
+    // Use ADL for finding fmap() overload.
+    return fmap(std::forward<FUNC>(transform.func), std::forward<T>(value));
+}
+
+template <typename T, typename FUNC>
+decltype(auto) operator|(T &&                                       value,
+                         const CoroutineMeta::fmap_transform<FUNC>& transform)
+{
+    // Use ADL for finding fmap() overload.
+    return fmap(transform.func, std::forward<T>(value));
+}
+
+template <typename T, typename FUNC>
+decltype(auto) operator|(T &&                                 value,
+                         CoroutineMeta::fmap_transform<FUNC>& transform)
+{
+    // Use ADL for finding fmap() overload.
+    return fmap(transform.func, std::forward<T>(value));
+}
 
 /// @internal @brief
 /// Provide an awaitable value that is immediately ready.
@@ -3196,6 +3494,697 @@ CoroutineSynchronization CoroutineSynchronization::create(
 
     co_await awaitable;
 }
+
+// =========================== ALGORITHMS ====================================
+
+template <typename TASK_CONTAINER>
+class when_all_ready_awaitable;
+
+template <typename RESULT>
+class when_all_task;
+
+template <typename RESULT>
+class when_all_task_promise;
+
+class CoroutineBarrierCounter
+{
+  public:
+    explicit CoroutineBarrierCounter(std::size_t count) noexcept
+    : m_count(count + 1),
+      m_awaitingCoroutine(nullptr)
+    {
+    }
+
+    bool is_ready() const noexcept
+    {
+        // We consider this complete if we're asking whether it's ready
+        // after a coroutine has already been registered.
+        return static_cast<bool>(m_awaitingCoroutine);
+    }
+
+    bool try_await(bsl::coroutine_handle<void> awaitingCoroutine) noexcept
+    {
+        m_awaitingCoroutine = awaitingCoroutine;
+        return m_count.fetch_sub(1, bsl::memory_order_acq_rel) > 1;
+    }
+
+    void notify_awaitable_completed() noexcept
+    {
+        if (m_count.fetch_sub(1, bsl::memory_order_acq_rel) == 1) {
+            m_awaitingCoroutine.resume();
+        }
+    }
+
+  protected:
+    bsl::atomic<bsl::size_t> m_count;
+    bsl::coroutine_handle<>  m_awaitingCoroutine;
+};
+
+template <>
+class when_all_ready_awaitable<std::tuple<> >
+{
+  public:
+    constexpr when_all_ready_awaitable() noexcept
+    {
+    }
+    explicit constexpr when_all_ready_awaitable(std::tuple<>) noexcept
+    {
+    }
+
+    constexpr bool await_ready() const noexcept
+    {
+        return true;
+    }
+    void await_suspend(std::coroutine_handle<void>) noexcept
+    {
+    }
+    std::tuple<> await_resume() const noexcept
+    {
+        return {};
+    }
+};
+
+template <typename... TASKS>
+class when_all_ready_awaitable<std::tuple<TASKS...> >
+{
+  public:
+    explicit when_all_ready_awaitable(TASKS&&... tasks) noexcept(
+        std::conjunction_v<std::is_nothrow_move_constructible<TASKS>...>)
+    : m_counter(sizeof...(TASKS))
+    , m_tasks(std::move(tasks)...)
+    {
+    }
+
+    explicit when_all_ready_awaitable(std::tuple<TASKS...>&& tasks)
+        noexcept(std::is_nothrow_move_constructible_v<std::tuple<TASKS...> >)
+    : m_counter(sizeof...(TASKS))
+    , m_tasks(std::move(tasks))
+    {
+    }
+
+    when_all_ready_awaitable(when_all_ready_awaitable&& other) noexcept
+    : m_counter(sizeof...(TASKS)),
+      m_tasks(std::move(other.m_tasks))
+    {
+    }
+
+    auto operator co_await() & noexcept
+    {
+        struct awaiter {
+            awaiter(when_all_ready_awaitable& awaitable) noexcept
+            : m_awaitable(awaitable)
+            {
+            }
+
+            bool await_ready() const noexcept
+            {
+                return m_awaitable.is_ready();
+            }
+
+            bool await_suspend(
+                std::coroutine_handle<void> awaitingCoroutine) noexcept
+            {
+                return m_awaitable.try_await(awaitingCoroutine);
+            }
+
+            std::tuple<TASKS...>& await_resume() noexcept
+            {
+                return m_awaitable.m_tasks;
+            }
+
+          private:
+            when_all_ready_awaitable& m_awaitable;
+        };
+
+        return awaiter{*this};
+    }
+
+    auto operator co_await() && noexcept
+    {
+        struct awaiter {
+            awaiter(when_all_ready_awaitable& awaitable) noexcept
+            : m_awaitable(awaitable)
+            {
+            }
+
+            bool await_ready() const noexcept
+            {
+                return m_awaitable.is_ready();
+            }
+
+            bool await_suspend(
+                std::coroutine_handle<void> awaitingCoroutine) noexcept
+            {
+                return m_awaitable.try_await(awaitingCoroutine);
+            }
+
+            std::tuple<TASKS...>&& await_resume() noexcept
+            {
+                return std::move(m_awaitable.m_tasks);
+            }
+
+          private:
+            when_all_ready_awaitable& m_awaitable;
+        };
+
+        return awaiter{*this};
+    }
+
+  private:
+    bool is_ready() const noexcept
+    {
+        return m_counter.is_ready();
+    }
+
+    bool try_await(std::coroutine_handle<void> awaitingCoroutine) noexcept
+    {
+        start_tasks(
+            std::make_integer_sequence<std::size_t, sizeof...(TASKS)>{});
+        return m_counter.try_await(awaitingCoroutine);
+    }
+
+    template <std::size_t... INDICES>
+    void start_tasks(std::integer_sequence<std::size_t, INDICES...>) noexcept
+    {
+        (void)std::initializer_list<int>{
+            (std::get<INDICES>(m_tasks).start(m_counter), 0)...};
+    }
+
+    CoroutineBarrierCounter m_counter;
+    std::tuple<TASKS...>    m_tasks;
+};
+
+template <typename TASK_CONTAINER>
+class when_all_ready_awaitable
+{
+  public:
+    explicit when_all_ready_awaitable(TASK_CONTAINER&& tasks) noexcept
+    : m_counter(tasks.size()),
+      m_tasks(std::forward<TASK_CONTAINER>(tasks))
+    {
+    }
+
+    when_all_ready_awaitable(when_all_ready_awaitable&& other)
+        noexcept(std::is_nothrow_move_constructible_v<TASK_CONTAINER>)
+    : m_counter(other.m_tasks.size())
+    , m_tasks(std::move(other.m_tasks))
+    {
+    }
+
+    when_all_ready_awaitable(const when_all_ready_awaitable&) = delete;
+    when_all_ready_awaitable& operator=(const when_all_ready_awaitable&) =
+        delete;
+
+    auto operator co_await() & noexcept
+    {
+        class awaiter
+        {
+          public:
+            awaiter(when_all_ready_awaitable& awaitable)
+            : m_awaitable(awaitable)
+            {
+            }
+
+            bool await_ready() const noexcept
+            {
+                return m_awaitable.is_ready();
+            }
+
+            bool await_suspend(
+                std::coroutine_handle<void> awaitingCoroutine) noexcept
+            {
+                return m_awaitable.try_await(awaitingCoroutine);
+            }
+
+            TASK_CONTAINER& await_resume() noexcept
+            {
+                return m_awaitable.m_tasks;
+            }
+
+          private:
+            when_all_ready_awaitable& m_awaitable;
+        };
+
+        return awaiter{*this};
+    }
+
+    auto operator co_await() && noexcept
+    {
+        class awaiter
+        {
+          public:
+            awaiter(when_all_ready_awaitable& awaitable)
+            : m_awaitable(awaitable)
+            {
+            }
+
+            bool await_ready() const noexcept
+            {
+                return m_awaitable.is_ready();
+            }
+
+            bool await_suspend(
+                std::coroutine_handle<void> awaitingCoroutine) noexcept
+            {
+                return m_awaitable.try_await(awaitingCoroutine);
+            }
+
+            TASK_CONTAINER&& await_resume() noexcept
+            {
+                return std::move(m_awaitable.m_tasks);
+            }
+
+          private:
+            when_all_ready_awaitable& m_awaitable;
+        };
+
+        return awaiter{*this};
+    }
+
+  private:
+    bool is_ready() const noexcept
+    {
+        return m_counter.is_ready();
+    }
+
+    bool try_await(std::coroutine_handle<void> awaitingCoroutine) noexcept
+    {
+        for (auto&& task : m_tasks) {
+            task.start(m_counter);
+        }
+
+        return m_counter.try_await(awaitingCoroutine);
+    }
+
+    CoroutineBarrierCounter m_counter;
+    TASK_CONTAINER          m_tasks;
+};
+
+template <typename RESULT>
+class when_all_task_promise final
+{
+  public:
+    using coroutine_handle_t =
+        bsl::coroutine_handle<when_all_task_promise<RESULT> >;
+
+    when_all_task_promise() noexcept
+    {
+    }
+
+    auto get_return_object() noexcept
+    {
+        return coroutine_handle_t::from_promise(*this);
+    }
+
+    std::suspend_always initial_suspend() noexcept
+    {
+        return {};
+    }
+
+    auto final_suspend() noexcept
+    {
+        class completion_notifier
+        {
+          public:
+            bool await_ready() const noexcept
+            {
+                return false;
+            }
+
+            void await_suspend(coroutine_handle_t coro) const noexcept
+            {
+                coro.promise().m_counter->notify_awaitable_completed();
+            }
+
+            void await_resume() const noexcept
+            {
+            }
+        };
+
+        return completion_notifier{};
+    }
+
+    void unhandled_exception() noexcept
+    {
+        m_exception = std::current_exception();
+    }
+
+    void return_void() noexcept
+    {
+        // We should have either suspended at co_yield point or
+        // an exception was thrown before running off the end of
+        // the coroutine.
+
+        NTSCFG_UNREACHABLE();
+    }
+
+    auto yield_value(RESULT&& result) noexcept
+    {
+        m_result = std::addressof(result);
+        return final_suspend();
+    }
+
+    void start(CoroutineBarrierCounter& counter) noexcept
+    {
+        m_counter = &counter;
+        coroutine_handle_t::from_promise(*this).resume();
+    }
+
+    RESULT& result() &
+    {
+        if (m_exception) {
+            std::rethrow_exception(m_exception);
+        }
+
+        return *m_result;
+    }
+
+    RESULT&& result() &&
+    {
+        if (m_exception) {
+            std::rethrow_exception(m_exception);
+        }
+
+        return std::forward<RESULT>(*m_result);
+    }
+
+  private:
+    CoroutineBarrierCounter*   m_counter;
+    std::exception_ptr         m_exception;
+    std::add_pointer_t<RESULT> m_result;
+};
+
+template <>
+class when_all_task_promise<void> final
+{
+  public:
+    using coroutine_handle_t =
+        bsl::coroutine_handle<when_all_task_promise<void> >;
+
+    when_all_task_promise() noexcept
+    {
+    }
+
+    auto get_return_object() noexcept
+    {
+        return coroutine_handle_t::from_promise(*this);
+    }
+
+    std::suspend_always initial_suspend() noexcept
+    {
+        return {};
+    }
+
+    auto final_suspend() noexcept
+    {
+        class completion_notifier
+        {
+          public:
+            bool await_ready() const noexcept
+            {
+                return false;
+            }
+
+            void await_suspend(coroutine_handle_t coro) const noexcept
+            {
+                coro.promise().m_counter->notify_awaitable_completed();
+            }
+
+            void await_resume() const noexcept
+            {
+            }
+        };
+
+        return completion_notifier{};
+    }
+
+    void unhandled_exception() noexcept
+    {
+        m_exception = std::current_exception();
+    }
+
+    void return_void() noexcept
+    {
+    }
+
+    void start(CoroutineBarrierCounter& counter) noexcept
+    {
+        m_counter = &counter;
+        coroutine_handle_t::from_promise(*this).resume();
+    }
+
+    void result()
+    {
+        if (m_exception) {
+            std::rethrow_exception(m_exception);
+        }
+    }
+
+  private:
+    CoroutineBarrierCounter* m_counter;
+    std::exception_ptr       m_exception;
+};
+
+template <typename RESULT>
+class when_all_task final
+{
+  public:
+    using promise_type = when_all_task_promise<RESULT>;
+
+    using coroutine_handle_t = typename promise_type::coroutine_handle_t;
+
+    when_all_task(coroutine_handle_t coroutine) noexcept
+    : m_coroutine(coroutine)
+    {
+    }
+
+    when_all_task(when_all_task&& other) noexcept
+    : m_coroutine(std::exchange(other.m_coroutine, coroutine_handle_t{}))
+    {
+    }
+
+    ~when_all_task()
+    {
+        if (m_coroutine) {
+            m_coroutine.destroy();
+        }
+    }
+
+    when_all_task(const when_all_task&)            = delete;
+    when_all_task& operator=(const when_all_task&) = delete;
+
+    decltype(auto) result() &
+    {
+        return m_coroutine.promise().result();
+    }
+
+    decltype(auto) result() &&
+    {
+        return std::move(m_coroutine.promise()).result();
+    }
+
+    decltype(auto) non_void_result() &
+    {
+        if constexpr (std::is_void_v<decltype(this->result())>) {
+            this->result();
+            return CoroutineMeta::Nil{};
+        }
+        else {
+            return this->result();
+        }
+    }
+
+    decltype(auto) non_void_result() &&
+    {
+        if constexpr (std::is_void_v<decltype(this->result())>) {
+            std::move(*this).result();
+            return CoroutineMeta::Nil{};
+        }
+        else {
+            return std::move(*this).result();
+        }
+    }
+
+  private:
+    template <typename TASK_CONTAINER>
+    friend class when_all_ready_awaitable;
+
+    void start(CoroutineBarrierCounter& counter) noexcept
+    {
+        m_coroutine.promise().start(counter);
+    }
+
+    coroutine_handle_t m_coroutine;
+};
+
+class CoroutineBarrierContext
+{
+  public:
+};
+
+class CoroutineBarrierPromise
+{
+  public:
+};
+
+class CoroutineBarrier
+{
+  public:
+};
+
+class CoroutineBarrierUtil
+{
+  private:
+    template <typename AWAITABLE,
+              typename RESULT = typename CoroutineMeta::awaitable_traits<
+                  AWAITABLE&&>::await_result_t,
+              std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
+    static when_all_task<RESULT> make_when_all_task(AWAITABLE awaitable)
+    {
+        co_yield co_await static_cast<AWAITABLE&&>(awaitable);
+    }
+
+    template <typename AWAITABLE,
+              typename RESULT = typename CoroutineMeta::awaitable_traits<
+                  AWAITABLE&&>::await_result_t,
+              std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
+    static when_all_task<void> make_when_all_task(AWAITABLE awaitable)
+    {
+        co_await static_cast<AWAITABLE&&>(awaitable);
+    }
+
+    template <typename AWAITABLE,
+              typename RESULT = typename CoroutineMeta::awaitable_traits<
+                  AWAITABLE&>::await_result_t,
+              std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
+    static when_all_task<RESULT> make_when_all_task(
+        std::reference_wrapper<AWAITABLE> awaitable)
+    {
+        co_yield co_await awaitable.get();
+    }
+
+    template <typename AWAITABLE,
+              typename RESULT = typename CoroutineMeta::awaitable_traits<
+                  AWAITABLE&>::await_result_t,
+              std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
+    static when_all_task<void> make_when_all_task(
+        std::reference_wrapper<AWAITABLE> awaitable)
+    {
+        co_await awaitable.get();
+    }
+
+  public:
+    template <
+        typename... AWAITABLES,
+        std::enable_if_t<std::conjunction_v<CoroutineMeta::IsAwaitable<
+                             CoroutineMeta::unwrap_reference_t<
+                                 std::remove_reference_t<AWAITABLES> > >...>,
+                         int> = 0>
+    [[nodiscard]]
+    NTSCFG_INLINE static auto when_all_ready(AWAITABLES&&... awaitables)
+    {
+        return when_all_ready_awaitable<
+            std::tuple<when_all_task<typename CoroutineMeta::awaitable_traits<
+                CoroutineMeta::unwrap_reference_t<std::remove_reference_t<
+                    AWAITABLES> > >::await_result_t>...> >(
+            std::make_tuple(
+                make_when_all_task(std::forward<AWAITABLES>(awaitables))...));
+    }
+
+    template <
+        typename AWAITABLE,
+        typename RESULT = typename CoroutineMeta::awaitable_traits<
+            CoroutineMeta::unwrap_reference_t<AWAITABLE> >::await_result_t>
+    [[nodiscard]]
+    static auto when_all_ready(std::vector<AWAITABLE> awaitables)
+    {
+        std::vector<when_all_task<RESULT> > tasks;
+
+        tasks.reserve(awaitables.size());
+
+        for (auto& awaitable : awaitables) {
+            tasks.emplace_back(make_when_all_task(std::move(awaitable)));
+        }
+
+        return when_all_ready_awaitable<std::vector<when_all_task<RESULT> > >(
+            std::move(tasks));
+    }
+
+    //////////
+    // Variadic when_all()
+
+    template <
+        typename... AWAITABLES,
+        std::enable_if_t<std::conjunction_v<CoroutineMeta::IsAwaitable<
+                             CoroutineMeta::unwrap_reference_t<
+                                 std::remove_reference_t<AWAITABLES> > >...>,
+                         int> = 0>
+    [[nodiscard]] static auto when_all(AWAITABLES&&... awaitables)
+    {
+        return CoroutineMeta::fmap(
+            [](auto&& taskTuple) {
+                return std::apply(
+                    [](auto&&... tasks) {
+                        return std::make_tuple(
+                            static_cast<decltype(tasks)>(tasks)
+                                .non_void_result()...);
+                    },
+                    static_cast<decltype(taskTuple)>(taskTuple));
+            },
+            when_all_ready(std::forward<AWAITABLES>(awaitables)...));
+    }
+
+    //////////
+    // when_all() with vector of awaitable
+
+    template <
+        typename AWAITABLE,
+        typename RESULT = typename CoroutineMeta::awaitable_traits<
+            CoroutineMeta::unwrap_reference_t<AWAITABLE> >::await_result_t,
+        std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
+    [[nodiscard]]
+    static auto when_all(std::vector<AWAITABLE> awaitables)
+    {
+        return CoroutineMeta::fmap(
+            [](auto&& taskVector) {
+                for (auto& task : taskVector) {
+                    task.result();
+                }
+            },
+            when_all_ready(std::move(awaitables)));
+    }
+
+    template <
+        typename AWAITABLE,
+        typename RESULT = typename CoroutineMeta::awaitable_traits<
+            CoroutineMeta::unwrap_reference_t<AWAITABLE> >::await_result_t,
+        std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
+    [[nodiscard]]
+    static auto when_all(std::vector<AWAITABLE> awaitables)
+    {
+        using result_t = std::conditional_t<
+            std::is_lvalue_reference_v<RESULT>,
+            std::reference_wrapper<std::remove_reference_t<RESULT> >,
+            std::remove_reference_t<RESULT> >;
+
+        return CoroutineMeta::fmap(
+            [](auto&& taskVector) {
+                std::vector<result_t> results;
+                results.reserve(taskVector.size());
+                for (auto& task : taskVector) {
+                    if constexpr (std::is_rvalue_reference_v<decltype(
+                                      taskVector)>) {
+                        results.emplace_back(std::move(task).result());
+                    }
+                    else {
+                        results.emplace_back(task.result());
+                    }
+                }
+                return results;
+            },
+            when_all_ready(std::move(awaitables)));
+    }
+};
 
 }  // close package namespace
 }  // close enterprise namespace

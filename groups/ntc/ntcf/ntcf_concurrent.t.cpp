@@ -167,6 +167,19 @@ class ConcurrentTest
     static bsl::shared_ptr<ntci::Scheduler> createScheduler(
         ntsa::Allocator allocator);
 
+    // Create a new listener socket bound to any available ephemeral port at
+    // the loopback address and begin listening. Allocate memory using the
+    // specified 'allocator'.
+    static bsl::shared_ptr<ntci::ListenerSocket> createListenerSocket(
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        ntsa::Allocator                         allocator);
+
+    // Create a new stream socket. Allocate memory using the specified
+    // 'allocator'.
+    static bsl::shared_ptr<ntci::StreamSocket> createStreamSocket(
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        ntsa::Allocator                         allocator);
+
     // TODO
     static ntsa::CoroutineTask<void> coVerifyExecute(
         bsl::shared_ptr<ntci::Scheduler> scheduler,
@@ -245,6 +258,51 @@ bsl::shared_ptr<ntci::Scheduler> ConcurrentTest::createScheduler(
     NTSCFG_TEST_OK(error);
 
     return scheduler;
+}
+
+bsl::shared_ptr<ntci::ListenerSocket> ConcurrentTest::createListenerSocket(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    ntsa::Allocator                         allocator)
+{
+    ntsa::Error error;
+
+    ntca::ListenerSocketOptions listenerSocketOptions;
+
+    listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    listenerSocketOptions.setKeepHalfOpen(true);
+
+    listenerSocketOptions.setSourceEndpoint(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+        scheduler->createListenerSocket(listenerSocketOptions,
+                                        allocator.mechanism());
+
+    error = listenerSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    error = listenerSocket->listen();
+    NTSCFG_TEST_OK(error);
+
+    return listenerSocket;
+}
+
+bsl::shared_ptr<ntci::StreamSocket> ConcurrentTest::createStreamSocket(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    ntsa::Allocator                         allocator)
+{
+    ntsa::Error error;
+
+    ntca::StreamSocketOptions streamSocketOptions;
+
+    streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    streamSocketOptions.setKeepHalfOpen(true);
+
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket =
+        scheduler->createStreamSocket(streamSocketOptions,
+                                      allocator.mechanism());
+
+    return streamSocket;
 }
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyExecute(
@@ -404,32 +462,13 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyStreamSocket(
 
     // Create the listener socket and begin listening.
 
-    ntca::ListenerSocketOptions listenerSocketOptions;
-
-    listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
-    listenerSocketOptions.setSourceEndpoint(
-        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
-
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        scheduler->createListenerSocket(listenerSocketOptions,
-                                        allocator.mechanism());
-
-    error = listenerSocket->open();
-    NTSCFG_TEST_OK(error);
-
-    error = listenerSocket->listen();
-    NTSCFG_TEST_OK(error);
+        ntcf::ConcurrentTest::createListenerSocket(scheduler, allocator);
 
     // Create a client stream socket.
 
-    ntca::StreamSocketOptions clientStreamSocketOptions;
-
-    clientStreamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-
     bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket =
-        scheduler->createStreamSocket(clientStreamSocketOptions,
-                                      allocator.mechanism());
+        ntcf::ConcurrentTest::createStreamSocket(scheduler, allocator);
 
     // Connect the client stream socket to the listener socket.
 
@@ -536,23 +575,8 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
 
     // Create the listener socket and begin listening.
 
-    ntca::ListenerSocketOptions listenerSocketOptions;
-
-    listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-    listenerSocketOptions.setKeepHalfOpen(true);
-
-    listenerSocketOptions.setSourceEndpoint(
-        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
-
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        scheduler->createListenerSocket(listenerSocketOptions,
-                                        allocator.mechanism());
-
-    error = listenerSocket->open();
-    NTSCFG_TEST_OK(error);
-
-    error = listenerSocket->listen();
-    NTSCFG_TEST_OK(error);
+        ntcf::ConcurrentTest::createListenerSocket(scheduler, allocator);
 
     Configuration configuration;
 
@@ -575,11 +599,6 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
     for (bsl::size_t i = 0; i < configuration.numConnections; ++i) {
         // Create a client stream socket.
 
-        ntca::StreamSocketOptions streamSocketOptions;
-
-        streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
-        streamSocketOptions.setKeepHalfOpen(true);
-
         bsl::shared_ptr<ntci::StreamSocket> streamSocket =
             scheduler->createStreamSocket(streamSocketOptions,
                                           allocator.mechanism());
@@ -596,15 +615,14 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
     // TODO: Schedule.
 
 #if 0
-
     co_await listenerTask;
 
     for (bsl::size_t i = 0; i < clientTaskVector.size(); ++i) {
         co_await clientTaskVector[i];
     }
-
 #endif
 
+#if 0
     ntsa::CoroutineScheduler coroutineScheduler;
 
     coroutineScheduler.emplace(listenerTask.coroutine());
@@ -614,6 +632,9 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
     }
 
     coroutineScheduler.schedule();
+#endif
+
+    co_await listenerTask;
 
     co_return;
 }
@@ -624,6 +645,14 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
     ntsa::Allocator                       allocator)
 {
     ntccfg::Object scope("coVerifyApplicationListener");
+
+    BALL_LOG_DEBUG << "Starting listener coroutine on thread "
+                   << bslmt::ThreadUtil::selfIdAsUint64() << BALL_LOG_END;
+
+    co_await ntcf::Concurrent::resume(listenerSocket);
+
+    BALL_LOG_DEBUG << "Resuming listener coroutine on thread "
+                   << bslmt::ThreadUtil::selfIdAsUint64() << BALL_LOG_END;
 
     ntsa::Error error;
 
