@@ -30,7 +30,7 @@ using namespace BloombergLP;
 namespace BloombergLP {
 namespace ntsa {
 
-struct CoroutineSchedulerTask {
+struct CoroutineHandleSchedulerTask {
     struct promise_type {
         std::suspend_always initial_suspend() noexcept
         {
@@ -42,12 +42,12 @@ struct CoroutineSchedulerTask {
             return {};
         }
 
-        CoroutineSchedulerTask get_return_object()
+        CoroutineHandleSchedulerTask get_return_object()
         {
             std::coroutine_handle<promise_type> coroutine =
                 std::coroutine_handle<promise_type>::from_promise(*this);
 
-            return CoroutineSchedulerTask(coroutine);
+            return CoroutineHandleSchedulerTask(coroutine);
         }
 
         void return_void()
@@ -59,7 +59,8 @@ struct CoroutineSchedulerTask {
         }
     };
 
-    explicit CoroutineSchedulerTask(std::coroutine_handle<promise_type> handle)
+    explicit CoroutineHandleSchedulerTask(
+        std::coroutine_handle<promise_type> handle)
     : handle(handle)
     {
     }
@@ -72,7 +73,7 @@ struct CoroutineSchedulerTask {
     std::coroutine_handle<promise_type> handle;
 };
 
-class CoroutineScheduler
+class CoroutineHandleScheduler
 {
     bsl::queue<bsl::coroutine_handle<void> > d_tasks;
 
@@ -106,10 +107,36 @@ class CoroutineScheduler
     }
 };
 
+class CoroutineTaskScheduler
+{
+    bsl::queue<ntsa::CoroutineTask<void> > d_tasks;
+
+  public:
+    void emplace(ntsa::CoroutineTask<void>&& task)
+    {
+        d_tasks.push(bsl::move(task));
+    }
+
+    void schedule()
+    {
+        while (!d_tasks.empty()) {
+            ntsa::CoroutineTask<void> task = bsl::move(d_tasks.front());
+            d_tasks.pop();
+
+            task.coroutine().resume();
+
+            if (!task.coroutine().done()) {
+                d_tasks.push(bsl::move(task));
+            }
+        }
+    }
+};
+
 class CoroutineSchedulerUtil
 {
   public:
-    static CoroutineSchedulerTask createTaskA(CoroutineScheduler& sch)
+    static CoroutineHandleSchedulerTask createTaskA(
+        CoroutineHandleScheduler& sch)
     {
         std::cout << "Hello from TaskA\n";
         co_await sch.suspend();
@@ -118,7 +145,8 @@ class CoroutineSchedulerUtil
         std::cout << "TaskA is finished\n";
     }
 
-    static CoroutineSchedulerTask createTaskB(CoroutineScheduler& sch)
+    static CoroutineHandleSchedulerTask createTaskB(
+        CoroutineHandleScheduler& sch)
     {
         std::cout << "Hello from TaskB\n";
         co_await sch.suspend();
@@ -131,7 +159,7 @@ class CoroutineSchedulerUtil
     {
         std::cout << '\n';
 
-        CoroutineScheduler sch;
+        CoroutineHandleScheduler sch;
 
         sch.emplace(createTaskA(sch).get_handle());
         sch.emplace(createTaskB(sch).get_handle());
@@ -203,18 +231,21 @@ class ConcurrentTest
     // TODO
     static ntsa::CoroutineTask<void> coVerifyApplicationListener(
         Configuration                         configuration,
+        ntsa::CoroutineTaskScheduler*         taskSwitcher,
         bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
         ntsa::Allocator                       allocator);
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyApplicationClient(
         Configuration                       configuration,
+        ntsa::CoroutineTaskScheduler*       taskSwitcher,
         bsl::shared_ptr<ntci::StreamSocket> streamSocket,
         ntsa::Allocator                     allocator);
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyApplicationServer(
         Configuration                       configuration,
+        ntsa::CoroutineTaskScheduler*       taskSwitcher,
         bsl::shared_ptr<ntci::StreamSocket> streamSocket,
         ntsa::Allocator                     allocator);
 
@@ -573,6 +604,8 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
 
     ntsa::Error error;
 
+    ntsa::CoroutineTaskScheduler taskSwitcher;
+
     // Create the listener socket and begin listening.
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
@@ -586,66 +619,49 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
     BALL_LOG_DEBUG << "Listening at " << configuration.endpoint
                    << BALL_LOG_END;
 
-    // Enter a coroutine dedicated to the listener socket.
+    // Create a coroutine dedicated to the listener socket.
 
     ntsa::CoroutineTask<void> listenerTask =
-        coVerifyApplicationListener(configuration, listenerSocket, allocator);
+        coVerifyApplicationListener(configuration,
+                                    &taskSwitcher,
+                                    listenerSocket,
+                                    allocator);
 
-    typedef bsl::vector<ntsa::CoroutineTask<void> > TaskVector;
+    taskSwitcher.emplace(bsl::move(listenerTask));
 
-    TaskVector clientTaskVector;
-
-#if 0
     for (bsl::size_t i = 0; i < configuration.numConnections; ++i) {
         // Create a client stream socket.
 
         bsl::shared_ptr<ntci::StreamSocket> streamSocket =
-            scheduler->createStreamSocket(streamSocketOptions,
-                                          allocator.mechanism());
+            ntcf::ConcurrentTest::createStreamSocket(scheduler, allocator);
 
-        // Enter a coroutine dedicated to the client stream socket.
+        // Create a coroutine dedicated to the client stream socket.
 
         ntsa::CoroutineTask<void> clientTask =
-            coVerifyApplicationClient(configuration, streamSocket, allocator);
+            coVerifyApplicationClient(configuration,
+                                      &taskSwitcher,
+                                      streamSocket,
+                                      allocator);
 
-        clientTaskVector.emplace_back(bsl::move(clientTask));
-    }
-#endif
-
-    // TODO: Schedule.
-
-#if 0
-    co_await listenerTask;
-
-    for (bsl::size_t i = 0; i < clientTaskVector.size(); ++i) {
-        co_await clientTaskVector[i];
-    }
-#endif
-
-#if 0
-    ntsa::CoroutineScheduler coroutineScheduler;
-
-    coroutineScheduler.emplace(listenerTask.coroutine());
-
-    for (bsl::size_t i = 0; i < clientTaskVector.size(); ++i) {
-        coroutineScheduler.emplace(clientTaskVector[i].coroutine());
+        taskSwitcher.emplace(bsl::move(clientTask));
     }
 
-    coroutineScheduler.schedule();
-#endif
+    // Run all coroutines until complete.
 
-    co_await listenerTask;
+    taskSwitcher.schedule();
 
     co_return;
 }
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
     Configuration                         configuration,
+    ntsa::CoroutineTaskScheduler*         taskSwitcher,
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
     ntsa::Allocator                       allocator)
 {
     ntccfg::Object scope("coVerifyApplicationListener");
 
+#if 0
     BALL_LOG_DEBUG << "Starting listener coroutine on thread "
                    << bslmt::ThreadUtil::selfIdAsUint64() << BALL_LOG_END;
 
@@ -653,10 +669,14 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
 
     BALL_LOG_DEBUG << "Resuming listener coroutine on thread "
                    << bslmt::ThreadUtil::selfIdAsUint64() << BALL_LOG_END;
+#endif
 
     ntsa::Error error;
 
     for (bsl::size_t i = 0; i < configuration.numConnections; ++i) {
+        ntccfg::Object scope(
+            "coVerifyApplicationListener: for-loop iteration");
+
         // Accept a server stream socket from the listener socket.
 
         bsl::shared_ptr<ntci::StreamSocket> streamSocket;
@@ -675,9 +695,13 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
 
         // Enter a coroutine dedicated to the server stream socket.
 
-        co_await coVerifyApplicationServer(configuration,
-                                           streamSocket,
-                                           allocator);
+        ntsa::CoroutineTask<void> serverTask =
+            coVerifyApplicationServer(configuration,
+                                      taskSwitcher,
+                                      streamSocket,
+                                      allocator);
+
+        taskSwitcher->emplace(bsl::move(serverTask));
     }
 
     // Close the listener socket.
@@ -691,6 +715,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
     Configuration                       configuration,
+    ntsa::CoroutineTaskScheduler*       taskSwitcher,
     bsl::shared_ptr<ntci::StreamSocket> streamSocket,
     ntsa::Allocator                     allocator)
 {
@@ -762,6 +787,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationServer(
     Configuration                       configuration,
+    ntsa::CoroutineTaskScheduler*       taskSwitcher,
     bsl::shared_ptr<ntci::StreamSocket> streamSocket,
     ntsa::Allocator                     allocator)
 {
