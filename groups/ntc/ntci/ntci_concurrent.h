@@ -46,13 +46,6 @@ class Concurrent
     /// Initialize concurrent operations.
     static void initialize();
 
-    /// TODO
-    static ntsa::Error receive(
-        ntca::ReceiveContext*                        context,
-        const bsl::shared_ptr<ntci::Scheduler>&      scheduler,
-        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
-        const ntca::ReceiveOptions&                  options);
-
     /// Clean up the resources required by all concurrent operations.
     static void exit();
 };

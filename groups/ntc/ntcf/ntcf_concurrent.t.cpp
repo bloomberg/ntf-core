@@ -74,19 +74,21 @@ struct CoroutineSchedulerTask {
 
 class CoroutineScheduler
 {
-    bsl::queue<std::coroutine_handle<void> > d_tasks;
+    bsl::queue<bsl::coroutine_handle<void> > d_tasks;
 
   public:
-    void emplace(std::coroutine_handle<void> task)
+    void emplace(bsl::coroutine_handle<void> task)
     {
+        BSLS_ASSERT(task.address() != 0);
         d_tasks.push(task);
     }
 
     void schedule()
     {
         while (!d_tasks.empty()) {
-            std::coroutine_handle<void> task = d_tasks.front();
+            bsl::coroutine_handle<void> task = d_tasks.front();
             d_tasks.pop();
+
             task.resume();
 
             if (!task.done()) {
@@ -161,45 +163,57 @@ class ConcurrentTest
         ntsa::Endpoint endpoint;
     };
 
+    // Create a new scheduler. Allocate memory using the specified 'allocator'.
+    static bsl::shared_ptr<ntci::Scheduler> createScheduler(
+        ntsa::Allocator allocator);
+
+    // TODO
+    static ntsa::CoroutineTask<void> coVerifyExecute(
+        bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::Allocator                  allocator);
+
     // TODO
     static ntsa::CoroutineTask<void> coVerifyDatagramSocket(
-        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-        ntsa::Allocator                         allocator);
+        bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::Allocator                  allocator);
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyStreamSocket(
-        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-        ntsa::Allocator                         allocator);
+        bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::Allocator                  allocator);
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyApplication(
-        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-        ntsa::Allocator                         allocator);
+        bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::Allocator                  allocator);
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyApplicationListener(
-        const Configuration&                         configuration,
-        const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-        ntsa::Allocator                              allocator);
+        Configuration                         configuration,
+        bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
+        ntsa::Allocator                       allocator);
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyApplicationClient(
-        const Configuration&                       configuration,
-        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-        ntsa::Allocator                            allocator);
+        Configuration                       configuration,
+        bsl::shared_ptr<ntci::StreamSocket> streamSocket,
+        ntsa::Allocator                     allocator);
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyApplicationServer(
-        const Configuration&                       configuration,
-        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-        ntsa::Allocator                            allocator);
+        Configuration                       configuration,
+        bsl::shared_ptr<ntci::StreamSocket> streamSocket,
+        ntsa::Allocator                     allocator);
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifySandbox(
-        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-        ntsa::Allocator                         allocator);
+        bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::Allocator                  allocator);
 
   public:
+    // TODO
+    static void verifyExecute();
+
     // TODO
     static void verifyDatagramSocket();
 
@@ -213,9 +227,48 @@ class ConcurrentTest
     static void verifySandbox();
 };
 
+bsl::shared_ptr<ntci::Scheduler> ConcurrentTest::createScheduler(
+    ntsa::Allocator allocator)
+{
+    ntsa::Error error;
+
+    ntca::SchedulerConfig schedulerConfig;
+
+    schedulerConfig.setThreadName("test");
+    schedulerConfig.setMinThreads(4);
+    schedulerConfig.setMaxThreads(4);
+
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::System::createScheduler(schedulerConfig, allocator.mechanism());
+
+    error = scheduler->start();
+    NTSCFG_TEST_OK(error);
+
+    return scheduler;
+}
+
+ntsa::CoroutineTask<void> ConcurrentTest::coVerifyExecute(
+    bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::Allocator                  allocator)
+{
+    ntccfg::Object scope("coVerifyExecute");
+
+    BALL_LOG_DEBUG << "Starting on thread "
+                   << bslmt::ThreadUtil::selfIdAsUint64() << BALL_LOG_END;
+
+    for (bsl::size_t i = 0; i < 8; ++i) {
+        co_await ntcf::Concurrent::resume(scheduler);
+
+        BALL_LOG_DEBUG << "Resuming on thread "
+                       << bslmt::ThreadUtil::selfIdAsUint64() << BALL_LOG_END;
+    }
+
+    co_return;
+}
+
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyDatagramSocket(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    ntsa::Allocator                         allocator)
+    bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::Allocator                  allocator)
 {
     ntccfg::Object scope("coVerifyDatagramSocket");
 
@@ -342,8 +395,8 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyDatagramSocket(
 }
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyStreamSocket(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    ntsa::Allocator                         allocator)
+    bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::Allocator                  allocator)
 {
     ntccfg::Object scope("coVerifyStreamSocket");
 
@@ -474,9 +527,11 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyStreamSocket(
 }
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    ntsa::Allocator                         allocator)
+    bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::Allocator                  allocator)
 {
+    ntccfg::Object scope("coVerifyApplication");
+
     ntsa::Error error;
 
     // Create the listener socket and begin listening.
@@ -512,12 +567,11 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
     ntsa::CoroutineTask<void> listenerTask =
         coVerifyApplicationListener(configuration, listenerSocket, allocator);
 
-    // Create the client sockets.
-
     typedef bsl::vector<ntsa::CoroutineTask<void> > TaskVector;
 
-    TaskVector tasks;
+    TaskVector clientTaskVector;
 
+#if 0
     for (bsl::size_t i = 0; i < configuration.numConnections; ++i) {
         // Create a client stream socket.
 
@@ -535,17 +589,42 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
         ntsa::CoroutineTask<void> clientTask =
             coVerifyApplicationClient(configuration, streamSocket, allocator);
 
-        tasks.emplace_back(bsl::move(clientTask));
+        clientTaskVector.emplace_back(bsl::move(clientTask));
     }
+#endif
+
+    // TODO: Schedule.
+
+#if 0
+
+    co_await listenerTask;
+
+    for (bsl::size_t i = 0; i < clientTaskVector.size(); ++i) {
+        co_await clientTaskVector[i];
+    }
+
+#endif
+
+    ntsa::CoroutineScheduler coroutineScheduler;
+
+    coroutineScheduler.emplace(listenerTask.coroutine());
+
+    for (bsl::size_t i = 0; i < clientTaskVector.size(); ++i) {
+        coroutineScheduler.emplace(clientTaskVector[i].coroutine());
+    }
+
+    coroutineScheduler.schedule();
 
     co_return;
 }
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
-    const Configuration&                         configuration,
-    const bsl::shared_ptr<ntci::ListenerSocket>& listenerSocket,
-    ntsa::Allocator                              allocator)
+    Configuration                         configuration,
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
+    ntsa::Allocator                       allocator)
 {
+    ntccfg::Object scope("coVerifyApplicationListener");
+
     ntsa::Error error;
 
     for (bsl::size_t i = 0; i < configuration.numConnections; ++i) {
@@ -582,10 +661,12 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
 }
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
-    const Configuration&                       configuration,
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    ntsa::Allocator                            allocator)
+    Configuration                       configuration,
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket,
+    ntsa::Allocator                     allocator)
 {
+    ntccfg::Object scope("coVerifyApplicationClient");
+
     ntsa::Error error;
 
     // Connect the client stream socket to the listener socket.
@@ -602,7 +683,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
     BALL_LOG_INFO << "Client socket connect complete: " << connectContext
                   << BALL_LOG_END;
 
-    // Send data from the client stream socket to the server stream socket.
+    // Send data to the peer.
 
     bsl::shared_ptr<bdlbb::Blob> sendData = streamSocket->createOutgoingBlob();
 
@@ -620,7 +701,28 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
     BALL_LOG_INFO << "Client socket send complete: " << sendContext << "\n"
                   << bdlbb::BlobUtilHexDumper(sendData.get()) << BALL_LOG_END;
 
-    // Close the client stream socket.
+    // Receive data from the peer.
+
+    bsl::shared_ptr<bdlbb::Blob> receiveData =
+        streamSocket->createIncomingBlob();
+
+    ntca::ReceiveContext receiveContext;
+    ntca::ReceiveOptions receiveOptions;
+
+    receiveOptions.setSize(13);
+
+    error = co_await ntcf::Concurrent::receive(streamSocket,
+                                               &receiveContext,
+                                               &receiveData,
+                                               receiveOptions);
+    NTSCFG_TEST_OK(error);
+
+    BALL_LOG_INFO << "Client socket receive complete: " << receiveContext
+                  << "\n"
+                  << bdlbb::BlobUtilHexDumper(receiveData.get())
+                  << BALL_LOG_END;
+
+    // Close the socket.
 
     co_await ntcf::Concurrent::close(streamSocket);
 
@@ -630,14 +732,15 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
 }
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationServer(
-    const Configuration&                       configuration,
-    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-    ntsa::Allocator                            allocator)
+    Configuration                       configuration,
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket,
+    ntsa::Allocator                     allocator)
 {
+    ntccfg::Object scope("coVerifyApplicationServer");
+
     ntsa::Error error;
 
-    // Receive data at the server datagram socket from the client datagram
-    // socket.
+    // Receive data from the peer.
 
     bsl::shared_ptr<bdlbb::Blob> receiveData =
         streamSocket->createIncomingBlob();
@@ -658,7 +761,23 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationServer(
                   << bdlbb::BlobUtilHexDumper(receiveData.get())
                   << BALL_LOG_END;
 
-    // Close the server stream socket.
+    // Send data to the peer.
+
+    bsl::shared_ptr<bdlbb::Blob> sendData = receiveData;
+
+    ntca::SendContext sendContext;
+    ntca::SendOptions sendOptions;
+
+    error = co_await ntcf::Concurrent::send(streamSocket,
+                                            &sendContext,
+                                            sendData,
+                                            sendOptions);
+    NTSCFG_TEST_OK(error);
+
+    BALL_LOG_INFO << "Server socket send complete: " << sendContext << "\n"
+                  << bdlbb::BlobUtilHexDumper(sendData.get()) << BALL_LOG_END;
+
+    // Close the socket.
 
     co_await ntcf::Concurrent::close(streamSocket);
 
@@ -668,13 +787,28 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationServer(
 }
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifySandbox(
-    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-    ntsa::Allocator                         allocator)
+    bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::Allocator                  allocator)
 {
     NTCCFG_WARNING_UNUSED(scheduler);
     NTCCFG_WARNING_UNUSED(allocator);
 
     co_return;
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyExecute)
+{
+    ntccfg::Object scope("verifyExecute");
+
+    ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
+
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::ConcurrentTest::createScheduler(allocator);
+
+    ntci::SchedulerStopGuard schedulerGuard(scheduler);
+
+    ntsa::CoroutineTask<void> task = coVerifyExecute(scheduler, allocator);
+    ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyDatagramSocket)

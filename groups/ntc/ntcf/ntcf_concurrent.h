@@ -41,6 +41,9 @@ namespace ntcf {
 class Concurrent
 {
   public:
+    /// Provide an awaitable for an execute operation.
+    class Execute;
+
     /// Provide an awaitable for a connect operation.
     class Connect;
 
@@ -58,6 +61,10 @@ class Concurrent
 
     /// Initialize concurrent operations.
     static void initialize();
+
+    /// Resume the current coroutine on the specified 'executor'.
+    static ntcf::Concurrent::Execute resume(
+        const bsl::shared_ptr<ntci::Executor>& executor);
 
     /// Connect to the specified 'endpoint' according to the specified
     /// 'options'. Resume the current coroutine on this object's strand,
@@ -181,6 +188,62 @@ class Concurrent
     static void exit();
 };
 
+/// Provide an awaitable for an execute operation.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntci_runtime
+class Concurrent::Execute
+{
+  public:
+    /// TODO
+    class Awaiter;
+
+    /// TODO
+    explicit Execute(const bsl::shared_ptr<ntci::Executor>& executor);
+
+    /// TODO
+    Awaiter operator co_await();
+
+  private:
+    /// Allow the associated awaiter to access this class's private data.
+    friend class Awaiter;
+
+    /// The coroutine.
+    bsl::shared_ptr<ntci::Executor> d_executor;
+};
+
+/// Provide an awaiter for an execute operation.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntci_runtime
+class Concurrent::Execute::Awaiter
+{
+  public:
+    /// Create a new awaiter that is the result of 'co_await'-ing the specified
+    /// 'awaitable'.
+    explicit Awaiter(Concurrent::Execute* awaitable) noexcept;
+
+    // TODO
+    bool await_ready() const noexcept;
+
+    // TODO
+    void await_suspend(std::coroutine_handle<> coroutine) noexcept;
+
+    // TODO
+    void await_resume() const noexcept;
+
+  private:
+    /// Resume the specified 'coroutine'.
+    static void complete(bsl::coroutine_handle<void> coroutine);
+
+    /// The awaitable.
+    Concurrent::Execute* d_awaitable;
+};
+
 /// Provide an awaitable for a connect operation.
 ///
 /// @par Thread Safety
@@ -258,7 +321,7 @@ class Concurrent::Connect::Awaiter
     /// specified 'event'. Resume the specified 'coroutine'.
     void complete(const bsl::shared_ptr<ntci::Connector>& connector,
                   const ntca::ConnectEvent&               event,
-                  std::coroutine_handle<void>             coroutine);
+                  bsl::coroutine_handle<void>             coroutine);
 
     /// The awaitable.
     Concurrent::Connect* d_awaitable;
@@ -334,7 +397,7 @@ class Concurrent::Accept::Awaiter
     void complete(const bsl::shared_ptr<ntci::Acceptor>&     acceptor,
                   const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
                   const ntca::AcceptEvent&                   event,
-                  std::coroutine_handle<void>                coroutine);
+                  bsl::coroutine_handle<void>                coroutine);
 
     /// The awaitable.
     Concurrent::Accept* d_awaitable;
@@ -408,7 +471,7 @@ class Concurrent::Send::Awaiter
     /// specified 'event'. Resume the specified 'coroutine'.
     void complete(const bsl::shared_ptr<ntci::Sender>& sender,
                   const ntca::SendEvent&               event,
-                  std::coroutine_handle<void>          coroutine);
+                  bsl::coroutine_handle<void>          coroutine);
 
     /// The awaitable.
     Concurrent::Send* d_awaitable;
@@ -484,7 +547,7 @@ class Concurrent::Receive::Awaiter
     void complete(const bsl::shared_ptr<ntci::Receiver>& receiver,
                   const bsl::shared_ptr<bdlbb::Blob>&    data,
                   const ntca::ReceiveEvent&              event,
-                  std::coroutine_handle<void>            coroutine);
+                  bsl::coroutine_handle<void>            coroutine);
 
     /// The awaitable.
     Concurrent::Receive* d_awaitable;

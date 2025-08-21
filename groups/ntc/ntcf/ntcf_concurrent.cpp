@@ -28,6 +28,12 @@ void Concurrent::initialize()
 {
 }
 
+ntcf::Concurrent::Execute Concurrent::resume(
+    const bsl::shared_ptr<ntci::Executor>& executor)
+{
+    return Concurrent::Execute(executor);
+}
+
 ntcf::Concurrent::Connect Concurrent::connect(
     const bsl::shared_ptr<ntci::Connector>& connector,
     ntca::ConnectContext*                   context,
@@ -83,6 +89,43 @@ void Concurrent::exit()
 {
 }
 
+Concurrent::Execute::Execute(const bsl::shared_ptr<ntci::Executor>& executor)
+: d_executor(executor)
+{
+}
+
+Concurrent::Execute::Awaiter Concurrent::Execute::operator co_await()
+{
+    return Concurrent::Execute::Awaiter(this);
+}
+
+Concurrent::Execute::Awaiter::Awaiter(Concurrent::Execute* awaitable) noexcept
+: d_awaitable(awaitable)
+{
+}
+
+bool Concurrent::Execute::Awaiter::await_ready() const noexcept
+{
+    return false;
+}
+
+void Concurrent::Execute::Awaiter::await_suspend(
+    bsl::coroutine_handle<void> coroutine) noexcept
+{
+    d_awaitable->d_executor->execute(
+        NTCCFG_BIND(&Concurrent::Execute::Awaiter::complete, coroutine));
+}
+
+void Concurrent::Execute::Awaiter::await_resume() const noexcept
+{
+}
+
+void Concurrent::Execute::Awaiter::complete(
+    bsl::coroutine_handle<void> coroutine)
+{
+    coroutine.resume();
+}
+
 Concurrent::Connect::Connect(const bsl::shared_ptr<ntci::Connector>& connector,
                              ntca::ConnectContext*                   context,
                              const ntsa::Endpoint&                   endpoint,
@@ -125,7 +168,7 @@ bool Concurrent::Connect::Awaiter::await_ready() const noexcept
 }
 
 void Concurrent::Connect::Awaiter::await_suspend(
-    std::coroutine_handle<void> coroutine) noexcept
+    bsl::coroutine_handle<void> coroutine) noexcept
 {
     ntsa::Error error;
 
@@ -162,7 +205,7 @@ ntsa::Error Concurrent::Connect::Awaiter::await_resume() const noexcept
 void Concurrent::Connect::Awaiter::complete(
     const bsl::shared_ptr<ntci::Connector>& connector,
     const ntca::ConnectEvent&               event,
-    std::coroutine_handle<void>             coroutine)
+    bsl::coroutine_handle<void>             coroutine)
 {
     BSLS_ASSERT(connector == d_awaitable->d_connector);
 
@@ -211,7 +254,7 @@ bool Concurrent::Accept::Awaiter::await_ready() const noexcept
 }
 
 void Concurrent::Accept::Awaiter::await_suspend(
-    std::coroutine_handle<void> coroutine) noexcept
+    bsl::coroutine_handle<void> coroutine) noexcept
 {
     ntsa::Error error;
 
@@ -242,7 +285,7 @@ void Concurrent::Accept::Awaiter::complete(
     const bsl::shared_ptr<ntci::Acceptor>&     acceptor,
     const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::AcceptEvent&                   event,
-    std::coroutine_handle<void>                coroutine)
+    bsl::coroutine_handle<void>                coroutine)
 {
     BSLS_ASSERT(acceptor == d_awaitable->d_acceptor);
 
@@ -291,7 +334,7 @@ bool Concurrent::Send::Awaiter::await_ready() const noexcept
 }
 
 void Concurrent::Send::Awaiter::await_suspend(
-    std::coroutine_handle<void> coroutine) noexcept
+    bsl::coroutine_handle<void> coroutine) noexcept
 {
     ntsa::Error error;
 
@@ -321,7 +364,7 @@ ntsa::Error Concurrent::Send::Awaiter::await_resume() const noexcept
 void Concurrent::Send::Awaiter::complete(
     const bsl::shared_ptr<ntci::Sender>& sender,
     const ntca::SendEvent&               event,
-    std::coroutine_handle<void>          coroutine)
+    bsl::coroutine_handle<void>          coroutine)
 {
     BSLS_ASSERT(sender == d_awaitable->d_sender);
 
@@ -370,7 +413,7 @@ bool Concurrent::Receive::Awaiter::await_ready() const noexcept
 }
 
 void Concurrent::Receive::Awaiter::await_suspend(
-    std::coroutine_handle<void> coroutine) noexcept
+    bsl::coroutine_handle<void> coroutine) noexcept
 {
     ntsa::Error error;
 
@@ -401,7 +444,7 @@ void Concurrent::Receive::Awaiter::complete(
     const bsl::shared_ptr<ntci::Receiver>& receiver,
     const bsl::shared_ptr<bdlbb::Blob>&    data,
     const ntca::ReceiveEvent&              event,
-    std::coroutine_handle<void>            coroutine)
+    bsl::coroutine_handle<void>            coroutine)
 {
     BSLS_ASSERT(receiver == d_awaitable->d_receiver);
 
@@ -448,7 +491,7 @@ bool Concurrent::Close::Awaiter::await_ready() const noexcept
 }
 
 void Concurrent::Close::Awaiter::await_suspend(
-    std::coroutine_handle<void> coroutine) noexcept
+    bsl::coroutine_handle<void> coroutine) noexcept
 {
     ntci::CloseCallback closeCallback =
         d_awaitable->d_closable->createCloseCallback(

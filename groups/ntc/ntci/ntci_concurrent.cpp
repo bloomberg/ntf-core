@@ -26,20 +26,6 @@ void Concurrent::initialize()
 {
 }
 
-ntsa::Error Concurrent::receive(
-    ntca::ReceiveContext*                        context,
-    const bsl::shared_ptr<ntci::Scheduler>&      scheduler,
-    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
-    const ntca::ReceiveOptions&                  options)
-{
-    NTCCFG_WARNING_UNUSED(context);
-    NTCCFG_WARNING_UNUSED(scheduler);
-    NTCCFG_WARNING_UNUSED(datagramSocket);
-    NTCCFG_WARNING_UNUSED(options);
-
-    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
-}
-
 void Concurrent::exit()
 {
 }

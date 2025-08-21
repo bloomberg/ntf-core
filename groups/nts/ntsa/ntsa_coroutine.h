@@ -2271,73 +2271,77 @@ NTSCFG_INLINE void CoroutineTaskResultEmpty::release()
 }
 
 template <typename RESULT>
-CoroutineTaskResult<RESULT>::CoroutineTaskResult()
+NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult()
 : d_storage()
 {
 }
 
 template <typename RESULT>
-CoroutineTaskResult<RESULT>::CoroutineTaskResult(const ntsa::Allocator& alloc)
+NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult(
+    const ntsa::Allocator& alloc)
 : d_storage(alloc.mechanism())
 {
 }
 
 template <typename RESULT>
-void CoroutineTaskResult<RESULT>::acquire(std::exception_ptr exception)
+NTSCFG_INLINE void CoroutineTaskResult<RESULT>::acquire(
+    std::exception_ptr exception)
 {
     d_storage.acquire(exception);
 }
 
 template <typename RESULT>
-RESULT CoroutineTaskResult<RESULT>::release()
+NTSCFG_INLINE RESULT CoroutineTaskResult<RESULT>::release()
 {
     return d_storage.release();
 }
 
 template <typename RESULT>
-void CoroutineTaskResult<RESULT>::return_value(
+NTSCFG_INLINE void CoroutineTaskResult<RESULT>::return_value(
     bsl::convertible_to<RESULT> auto&& arg)
 {
     d_storage.acquire(bsl::move(arg));
 }
 
 template <typename RESULT>
-void CoroutineTaskResult<RESULT>::unhandled_exception()
+NTSCFG_INLINE void CoroutineTaskResult<RESULT>::unhandled_exception()
 {
     this->acquire(bsl::current_exception());
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-CoroutineTaskResult<RESULT>::CoroutineTaskResult()
+NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult()
 : d_storage()
 {
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-CoroutineTaskResult<RESULT>::CoroutineTaskResult(const ntsa::Allocator&)
+NTSCFG_INLINE
+    CoroutineTaskResult<RESULT>::CoroutineTaskResult(const ntsa::Allocator&)
 : d_storage()
 {
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-void CoroutineTaskResult<RESULT>::acquire(std::exception_ptr exception)
+NTSCFG_INLINE
+    void CoroutineTaskResult<RESULT>::acquire(std::exception_ptr exception)
 {
     d_storage.acquire(exception);
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-RESULT CoroutineTaskResult<RESULT>::release()
+NTSCFG_INLINE RESULT CoroutineTaskResult<RESULT>::release()
 {
     return static_cast<RESULT>(*d_storage.release());
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-void CoroutineTaskResult<RESULT>::return_value(
+NTSCFG_INLINE void CoroutineTaskResult<RESULT>::return_value(
     bsl::convertible_to<RESULT> auto&& arg)
 {
     RESULT r = static_cast<decltype(arg)>(arg);
@@ -2346,49 +2350,51 @@ void CoroutineTaskResult<RESULT>::return_value(
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-void CoroutineTaskResult<RESULT>::unhandled_exception()
+NTSCFG_INLINE void CoroutineTaskResult<RESULT>::unhandled_exception()
 {
     this->acquire(bsl::current_exception());
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
-CoroutineTaskResult<RESULT>::CoroutineTaskResult()
+NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult()
 : d_storage()
 {
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
-CoroutineTaskResult<RESULT>::CoroutineTaskResult(const ntsa::Allocator&)
+NTSCFG_INLINE
+    CoroutineTaskResult<RESULT>::CoroutineTaskResult(const ntsa::Allocator&)
 : d_storage()
 {
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
-void CoroutineTaskResult<RESULT>::acquire(std::exception_ptr exception)
+NTSCFG_INLINE
+    void CoroutineTaskResult<RESULT>::acquire(std::exception_ptr exception)
 {
     d_storage.acquire(exception);
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
-void CoroutineTaskResult<RESULT>::release()
+NTSCFG_INLINE void CoroutineTaskResult<RESULT>::release()
 {
     return d_storage.release();
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
-void CoroutineTaskResult<RESULT>::return_void()
+NTSCFG_INLINE void CoroutineTaskResult<RESULT>::return_void()
 {
     d_storage.acquire();
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
-void CoroutineTaskResult<RESULT>::unhandled_exception()
+NTSCFG_INLINE void CoroutineTaskResult<RESULT>::unhandled_exception()
 {
     this->acquire(bsl::current_exception());
 }
@@ -2540,7 +2546,7 @@ NTSCFG_INLINE CoroutineTaskContext<RESULT>::AwaiterFrame CoroutineTaskContext<
 }
 
 template <typename RESULT>
-ntsa::Allocator CoroutineTaskContext<RESULT>::allocator() const
+NTSCFG_INLINE ntsa::Allocator CoroutineTaskContext<RESULT>::allocator() const
 {
     if (d_current.address() != nullptr) {
         return d_current.promise().allocator();
@@ -2551,7 +2557,7 @@ ntsa::Allocator CoroutineTaskContext<RESULT>::allocator() const
 }
 
 template <typename RESULT>
-bool CoroutineTaskContext<RESULT>::isComplete() const
+NTSCFG_INLINE bool CoroutineTaskContext<RESULT>::isComplete() const
 {
     if (d_current.address() == 0) {
         return true;
@@ -2597,6 +2603,8 @@ NTSCFG_INLINE void CoroutineTaskPrologAwaitable<RESULT>::await_suspend(
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_SUSPEND("task", "prolog", *d_context, coroutine);
+
+    BSLS_ASSERT(coroutine.address() == d_context->current().address());
 }
 
 template <typename RESULT>
@@ -2630,6 +2638,8 @@ NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTaskEpilogAwaitable<
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_SUSPEND("task", "epilog", *d_context, coroutine);
 
+    BSLS_ASSERT(coroutine.address() == d_context->current().address());
+
     return d_context->awaiter();
 }
 
@@ -2642,14 +2652,14 @@ NTSCFG_INLINE void CoroutineTaskEpilogAwaitable<RESULT>::await_resume()
 }
 
 template <typename RESULT>
-CoroutineTaskResultAwaitable<RESULT>::CoroutineTaskResultAwaitable(
-    CoroutineTaskContext<RESULT>* context)
+NTSCFG_INLINE CoroutineTaskResultAwaitable<RESULT>::
+    CoroutineTaskResultAwaitable(CoroutineTaskContext<RESULT>* context)
 : d_context(context)
 {
 }
 
 template <typename RESULT>
-bool CoroutineTaskResultAwaitable<RESULT>::await_ready()
+NTSCFG_INLINE bool CoroutineTaskResultAwaitable<RESULT>::await_ready()
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_READY("task", "result", *d_context);
@@ -2658,8 +2668,8 @@ bool CoroutineTaskResultAwaitable<RESULT>::await_ready()
 }
 
 template <typename RESULT>
-CoroutineTaskFrame<RESULT> CoroutineTaskResultAwaitable<RESULT>::await_suspend(
-    bsl::coroutine_handle<void> coroutine)
+NTSCFG_INLINE CoroutineTaskFrame<RESULT> CoroutineTaskResultAwaitable<
+    RESULT>::await_suspend(bsl::coroutine_handle<void> coroutine)
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_SUSPEND("task", "result", *d_context, coroutine);
@@ -2670,7 +2680,7 @@ CoroutineTaskFrame<RESULT> CoroutineTaskResultAwaitable<RESULT>::await_suspend(
 }
 
 template <typename RESULT>
-RESULT CoroutineTaskResultAwaitable<RESULT>::await_resume()
+NTSCFG_INLINE RESULT CoroutineTaskResultAwaitable<RESULT>::await_resume()
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_RESUME("task", "result", *d_context);
@@ -2716,7 +2726,7 @@ NTSCFG_INLINE void CoroutineTaskPromise<RESULT>::operator delete(
 }
 
 template <typename RESULT>
-CoroutineTaskPromise<RESULT>::CoroutineTaskPromise()
+NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise()
 : CoroutineTaskResult<RESULT>()
 , d_context()
 , d_allocator()
@@ -2725,7 +2735,8 @@ CoroutineTaskPromise<RESULT>::CoroutineTaskPromise()
 }
 
 template <typename RESULT>
-CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(ntsa::Allocator allocator)
+NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
+    ntsa::Allocator allocator)
 : CoroutineTaskResult<RESULT>(allocator.mechanism())
 , d_context()
 , d_allocator(allocator)
@@ -2734,8 +2745,9 @@ CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(ntsa::Allocator allocator)
 }
 
 template <typename RESULT>
-CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(auto&&...,
-                                                   ntsa::Allocator allocator)
+NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
+    auto&&...,
+    ntsa::Allocator allocator)
 : CoroutineTaskResult<RESULT>(allocator.mechanism())
 , d_context()
 , d_allocator(allocator)
@@ -2744,7 +2756,7 @@ CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(auto&&...,
 }
 
 template <typename RESULT>
-CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
+NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     bsl::allocator_arg_t,
     bsl::convertible_to<Alloc> auto&& alloc,
     auto&&...)
@@ -2756,7 +2768,7 @@ CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
 }
 
 template <typename RESULT>
-CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
+NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     auto&&,
     bsl::allocator_arg_t,
     bsl::convertible_to<Alloc> auto&& alloc,
@@ -2769,7 +2781,7 @@ CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
 }
 
 template <typename RESULT>
-CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(auto&&...)
+NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(auto&&...)
 : CoroutineTaskResult<RESULT>()
 , d_context()
 , d_allocator()
@@ -2778,34 +2790,35 @@ CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(auto&&...)
 }
 
 template <typename RESULT>
-CoroutineTaskPrologAwaitable<RESULT> CoroutineTaskPromise<
+NTSCFG_INLINE CoroutineTaskPrologAwaitable<RESULT> CoroutineTaskPromise<
     RESULT>::initial_suspend()
 {
     return CoroutineTaskPrologAwaitable<RESULT>(&d_context);
 }
 
 template <typename RESULT>
-CoroutineTaskEpilogAwaitable<RESULT> CoroutineTaskPromise<
+NTSCFG_INLINE CoroutineTaskEpilogAwaitable<RESULT> CoroutineTaskPromise<
     RESULT>::final_suspend() noexcept
 {
     return CoroutineTaskEpilogAwaitable<RESULT>(&d_context);
 }
 
 template <typename RESULT>
-CoroutineTask<RESULT> CoroutineTaskPromise<RESULT>::get_return_object()
+NTSCFG_INLINE CoroutineTask<RESULT> CoroutineTaskPromise<
+    RESULT>::get_return_object()
 {
     return CoroutineTask(&d_context);
 }
 
 template <typename RESULT>
-bsl::coroutine_handle<void> CoroutineTaskPromise<RESULT>::awaiter()
-    const noexcept
+NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTaskPromise<
+    RESULT>::awaiter() const noexcept
 {
     return d_context.awaiter();
 }
 
 template <typename RESULT>
-ntsa::Allocator CoroutineTaskPromise<RESULT>::allocator() const
+NTSCFG_INLINE ntsa::Allocator CoroutineTaskPromise<RESULT>::allocator() const
 {
     return d_allocator;
 }
@@ -2839,7 +2852,7 @@ NTSCFG_INLINE CoroutineTask<RESULT>::~CoroutineTask() noexcept
 }
 
 template <typename RESULT>
-CoroutineTask<RESULT>& CoroutineTask<RESULT>::operator=(
+NTSCFG_INLINE CoroutineTask<RESULT>& CoroutineTask<RESULT>::operator=(
     CoroutineTask&& other) noexcept
 {
     if (this != std::addressof(other)) {
@@ -2869,9 +2882,10 @@ NTSCFG_INLINE CoroutineTaskResultAwaitable<RESULT> CoroutineTask<
 }
 
 template <typename RESULT>
-bsl::coroutine_handle<void> CoroutineTask<RESULT>::coroutine() const
+NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTask<RESULT>::coroutine()
+    const
 {
-    return d_context->d_current;
+    return d_context->current();
 }
 
 template <typename RESULT>
@@ -2886,7 +2900,8 @@ NTSCFG_INLINE ntsa::Allocator CoroutineTask<RESULT>::allocator() const
 }
 
 template <typename RESULT>
-RESULT CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&& task)
+NTSCFG_INLINE RESULT
+CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&& task)
 {
     // The idea is to create an auxiliary coroutine that will resume the
     // 'CoroutineTask' for us, setting itself as the awaiter.  So that coroutine
