@@ -36,47 +36,40 @@ ntcf::Concurrent::Execute Concurrent::resume(
 
 ntcf::Concurrent::Connect Concurrent::connect(
     const bsl::shared_ptr<ntci::Connector>& connector,
-    ntca::ConnectContext*                   context,
     const ntsa::Endpoint&                   endpoint,
     const ntca::ConnectOptions&             options)
 {
-    return Concurrent::Connect(connector, context, endpoint, options);
+    return Concurrent::Connect(connector, endpoint, options);
 }
 
 ntcf::Concurrent::Connect Concurrent::connect(
     const bsl::shared_ptr<ntci::Connector>& connector,
-    ntca::ConnectContext*                   context,
     const bsl::string&                      name,
     const ntca::ConnectOptions&             options)
 {
-    return Concurrent::Connect(connector, context, name, options);
+    return Concurrent::Connect(connector, name, options);
 }
 
 ntcf::Concurrent::Accept Concurrent::accept(
     const bsl::shared_ptr<ntci::Acceptor>& acceptor,
-    ntca::AcceptContext*                   context,
-    bsl::shared_ptr<ntci::StreamSocket>*   streamSocket,
     const ntca::AcceptOptions&             options)
 {
-    return Concurrent::Accept(acceptor, context, streamSocket, options);
+    return Concurrent::Accept(acceptor, options);
 }
 
 ntcf::Concurrent::Send Concurrent::send(
     const bsl::shared_ptr<ntci::Sender>& sender,
-    ntca::SendContext*                   context,
     const bsl::shared_ptr<bdlbb::Blob>&  data,
     const ntca::SendOptions&             options)
 {
-    return Concurrent::Send(sender, context, data, options);
+    return Concurrent::Send(sender, data, options);
 }
 
 ntcf::Concurrent::Receive Concurrent::receive(
     const bsl::shared_ptr<ntci::Receiver>& receiver,
-    ntca::ReceiveContext*                  context,
-    bsl::shared_ptr<bdlbb::Blob>*          data,
     const ntca::ReceiveOptions&            options)
 {
-    return Concurrent::Receive(receiver, context, data, options);
+    return Concurrent::Receive(receiver, options);
 }
 
 Concurrent::Close Concurrent::close(
@@ -127,28 +120,24 @@ void Concurrent::Execute::Awaiter::complete(
 }
 
 Concurrent::Connect::Connect(const bsl::shared_ptr<ntci::Connector>& connector,
-                             ntca::ConnectContext*                   context,
                              const ntsa::Endpoint&                   endpoint,
                              ntca::ConnectOptions                    options)
 : d_connector(connector)
-, d_context(context)
 , d_endpoint(endpoint)
 , d_name()
 , d_options(options)
-, d_error()
+, d_result()
 {
 }
 
 Concurrent::Connect::Connect(const bsl::shared_ptr<ntci::Connector>& connector,
-                             ntca::ConnectContext*                   context,
                              const bsl::string&                      name,
                              ntca::ConnectOptions                    options)
 : d_connector(connector)
-, d_context(context)
 , d_endpoint()
 , d_name(name)
 , d_options(options)
-, d_error()
+, d_result()
 {
 }
 
@@ -192,14 +181,23 @@ void Concurrent::Connect::Awaiter::await_suspend(
     }
 
     if (error) {
-        d_awaitable->d_error = error;
+        ntca::ConnectContext context;
+        context.setError(error);
+
+        ntca::ConnectEvent event;
+        event.setType(ntca::ConnectEventType::e_ERROR);
+        event.setContext(context);
+
+        d_awaitable->d_result.setConnector(d_awaitable->d_connector);
+        d_awaitable->d_result.setEvent(event);
+
         coroutine.resume();
     }
 }
 
-ntsa::Error Concurrent::Connect::Awaiter::await_resume() const noexcept
+ntci::ConnectResult Concurrent::Connect::Awaiter::await_resume() const noexcept
 {
-    return d_awaitable->d_error;
+    return d_awaitable->d_result;
 }
 
 void Concurrent::Connect::Awaiter::complete(
@@ -209,32 +207,17 @@ void Concurrent::Connect::Awaiter::complete(
 {
     BSLS_ASSERT(connector == d_awaitable->d_connector);
 
-    if (d_awaitable->d_context != 0) {
-        *d_awaitable->d_context = event.context();
-    }
-
-    if (event.isComplete()) {
-        ;
-    }
-    else if (event.isError()) {
-        d_awaitable->d_error = event.context().error();
-    }
-    else {
-        d_awaitable->d_error = ntsa::Error(ntsa::Error::e_INVALID);
-    }
+    d_awaitable->d_result.setConnector(connector);
+    d_awaitable->d_result.setEvent(event);
 
     coroutine.resume();
 }
 
 Concurrent::Accept::Accept(const bsl::shared_ptr<ntci::Acceptor>& acceptor,
-                           ntca::AcceptContext*                   context,
-                           bsl::shared_ptr<ntci::StreamSocket>*   streamSocket,
                            ntca::AcceptOptions                    options)
 : d_acceptor(acceptor)
-, d_context(context)
-, d_streamSocket(streamSocket)
 , d_options(options)
-, d_error()
+, d_result()
 {
 }
 
@@ -271,14 +254,23 @@ void Concurrent::Accept::Awaiter::await_suspend(
                                             acceptCallback);
 
     if (error) {
-        d_awaitable->d_error = error;
+        ntca::AcceptContext context;
+        context.setError(error);
+
+        ntca::AcceptEvent event;
+        event.setType(ntca::AcceptEventType::e_ERROR);
+        event.setContext(context);
+
+        d_awaitable->d_result.setAcceptor(d_awaitable->d_acceptor);
+        d_awaitable->d_result.setEvent(event);
+
         coroutine.resume();
     }
 }
 
-ntsa::Error Concurrent::Accept::Awaiter::await_resume() const noexcept
+ntci::AcceptResult Concurrent::Accept::Awaiter::await_resume() const noexcept
 {
-    return d_awaitable->d_error;
+    return d_awaitable->d_result;
 }
 
 void Concurrent::Accept::Awaiter::complete(
@@ -289,33 +281,22 @@ void Concurrent::Accept::Awaiter::complete(
 {
     BSLS_ASSERT(acceptor == d_awaitable->d_acceptor);
 
-    if (d_awaitable->d_context != 0) {
-        *d_awaitable->d_context = event.context();
-    }
-
-    if (event.isComplete()) {
-        *d_awaitable->d_streamSocket = streamSocket;
-    }
-    else if (event.isError()) {
-        d_awaitable->d_error = event.context().error();
-    }
-    else {
-        d_awaitable->d_error = ntsa::Error(ntsa::Error::e_INVALID);
-    }
+    d_awaitable->d_result.setAcceptor(acceptor);
+    d_awaitable->d_result.setStreamSocket(streamSocket);
+    d_awaitable->d_result.setEvent(event);
 
     coroutine.resume();
 }
 
 Concurrent::Send::Send(const bsl::shared_ptr<ntci::Sender>& sender,
-                       ntca::SendContext*                   context,
                        const bsl::shared_ptr<bdlbb::Blob>&  data,
                        ntca::SendOptions                    options)
 : d_sender(sender)
-, d_context(context)
-, d_data(data)
+, d_data()
 , d_options(options)
-, d_error()
+, d_result()
 {
+    d_data.makeSharedBlob(data);
 }
 
 Concurrent::Send::Awaiter Concurrent::Send::operator co_await()
@@ -346,19 +327,28 @@ void Concurrent::Send::Awaiter::await_suspend(
                         NTCCFG_BIND_PLACEHOLDER_2,
                         coroutine));
 
-    error = d_awaitable->d_sender->send(*d_awaitable->d_data,
+    error = d_awaitable->d_sender->send(d_awaitable->d_data,
                                         d_awaitable->d_options,
                                         sendCallback);
 
     if (error) {
-        d_awaitable->d_error = error;
+        ntca::SendContext context;
+        context.setError(error);
+
+        ntca::SendEvent event;
+        event.setType(ntca::SendEventType::e_ERROR);
+        event.setContext(context);
+
+        d_awaitable->d_result.setSender(d_awaitable->d_sender);
+        d_awaitable->d_result.setEvent(event);
+
         coroutine.resume();
     }
 }
 
-ntsa::Error Concurrent::Send::Awaiter::await_resume() const noexcept
+ntci::SendResult Concurrent::Send::Awaiter::await_resume() const noexcept
 {
-    return d_awaitable->d_error;
+    return d_awaitable->d_result;
 }
 
 void Concurrent::Send::Awaiter::complete(
@@ -368,32 +358,17 @@ void Concurrent::Send::Awaiter::complete(
 {
     BSLS_ASSERT(sender == d_awaitable->d_sender);
 
-    if (d_awaitable->d_context != 0) {
-        *d_awaitable->d_context = event.context();
-    }
-
-    if (event.isComplete()) {
-        ;
-    }
-    else if (event.isError()) {
-        d_awaitable->d_error = event.context().error();
-    }
-    else {
-        d_awaitable->d_error = ntsa::Error(ntsa::Error::e_INVALID);
-    }
+    d_awaitable->d_result.setSender(sender);
+    d_awaitable->d_result.setEvent(event);
 
     coroutine.resume();
 }
 
 Concurrent::Receive::Receive(const bsl::shared_ptr<ntci::Receiver>& receiver,
-                             ntca::ReceiveContext*                  context,
-                             bsl::shared_ptr<bdlbb::Blob>*          data,
                              ntca::ReceiveOptions                   options)
 : d_receiver(receiver)
-, d_context(context)
-, d_data(data)
 , d_options(options)
-, d_error()
+, d_result()
 {
 }
 
@@ -430,14 +405,23 @@ void Concurrent::Receive::Awaiter::await_suspend(
                                              receiveCallback);
 
     if (error) {
-        d_awaitable->d_error = error;
+        ntca::ReceiveContext context;
+        context.setError(error);
+
+        ntca::ReceiveEvent event;
+        event.setType(ntca::ReceiveEventType::e_ERROR);
+        event.setContext(context);
+
+        d_awaitable->d_result.setReceiver(d_awaitable->d_receiver);
+        d_awaitable->d_result.setEvent(event);
+
         coroutine.resume();
     }
 }
 
-ntsa::Error Concurrent::Receive::Awaiter::await_resume() const noexcept
+ntci::ReceiveResult Concurrent::Receive::Awaiter::await_resume() const noexcept
 {
-    return d_awaitable->d_error;
+    return d_awaitable->d_result;
 }
 
 void Concurrent::Receive::Awaiter::complete(
@@ -448,24 +432,9 @@ void Concurrent::Receive::Awaiter::complete(
 {
     BSLS_ASSERT(receiver == d_awaitable->d_receiver);
 
-    if (d_awaitable->d_context != 0) {
-        *d_awaitable->d_context = event.context();
-    }
-
-    if (event.isComplete()) {
-        if (d_awaitable->d_data->get() == 0) {
-            *d_awaitable->d_data = data;
-        }
-        else {
-            ntcs::BlobUtil::append(d_awaitable->d_data->get(), data);
-        }
-    }
-    else if (event.isError()) {
-        d_awaitable->d_error = event.context().error();
-    }
-    else {
-        d_awaitable->d_error = ntsa::Error(ntsa::Error::e_INVALID);
-    }
+    d_awaitable->d_result.setReceiver(receiver);
+    d_awaitable->d_result.setData(data);
+    d_awaitable->d_result.setEvent(event);
 
     coroutine.resume();
 }
@@ -507,7 +476,8 @@ void Concurrent::Close::Awaiter::await_resume() const noexcept
     return;
 }
 
-void Concurrent::Close::Awaiter::complete(std::coroutine_handle<> coroutine)
+void Concurrent::Close::Awaiter::complete(
+    bsl::coroutine_handle<void> coroutine)
 {
     coroutine.resume();
 }

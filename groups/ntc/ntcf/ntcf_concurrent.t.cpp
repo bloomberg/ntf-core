@@ -27,6 +27,76 @@ using namespace BloombergLP;
 
 #if NTC_BUILD_WITH_COROUTINES
 
+#define NTCF_CONCURRENT_TEST_LOG_CLIENT_CONNECT_COMPLETE(result)              \
+    do {                                                                      \
+        BALL_LOG_INFO << "Client socket connect complete: "                   \
+                      << (result).event() << BALL_LOG_END;                    \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_CLIENT_SEND_COMPLETE(result, data)           \
+    do {                                                                      \
+        BALL_LOG_INFO << "Client socket send complete: " << (result).event()  \
+                      << "\n"                                                 \
+                      << bdlbb::BlobUtilHexDumper((data).get())               \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(result)              \
+    do {                                                                      \
+        BALL_LOG_INFO << "Client socket receive complete: "                   \
+                      << (result).event() << "\n"                             \
+                      << bdlbb::BlobUtilHexDumper((result).data().get())      \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED()                              \
+    do {                                                                      \
+        BALL_LOG_INFO << "Client socket closed" << BALL_LOG_END;              \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_SERVER_CONNECT_COMPLETE(result)              \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server socket connect complete: "                   \
+                      << (result).event() << BALL_LOG_END;                    \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_SERVER_ACCEPT_COMPLETE(result)               \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server socket accept complete: "                    \
+                      << (result).event() << BALL_LOG_END;                    \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_SERVER_SEND_COMPLETE(result, data)           \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server socket send complete: " << (result).event()  \
+                      << "\n"                                                 \
+                      << bdlbb::BlobUtilHexDumper((data).get())               \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(result)              \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server socket receive complete: "                   \
+                      << (result).event() << "\n"                             \
+                      << bdlbb::BlobUtilHexDumper((result).data().get())      \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED()                              \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server socket closed" << BALL_LOG_END;              \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_LISTENER_READY(endpoint)                     \
+    do {                                                                      \
+        BALL_LOG_DEBUG << "Listening at " << (endpoint) << BALL_LOG_END;      \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_LISTENER_CLOSED()                            \
+    do {                                                                      \
+        BALL_LOG_INFO << "Listener socket closed" << BALL_LOG_END;            \
+    } while (false)
+
 namespace BloombergLP {
 namespace ntsa {
 
@@ -73,7 +143,7 @@ struct CoroutineHandleSchedulerTask {
     std::coroutine_handle<promise_type> handle;
 };
 
-class CoroutineHandleScheduler
+class CoroutineHandleSchedulerSimple
 {
     bsl::queue<bsl::coroutine_handle<void> > d_tasks;
 
@@ -107,7 +177,7 @@ class CoroutineHandleScheduler
     }
 };
 
-class CoroutineTaskScheduler
+class CoroutineTaskSchedulerSimple
 {
     bsl::queue<ntsa::CoroutineTask<void> > d_tasks;
 
@@ -132,43 +202,249 @@ class CoroutineTaskScheduler
     }
 };
 
-class CoroutineSchedulerUtil
+class CoroutineHandleSchedulerTest
 {
   public:
-    static CoroutineHandleSchedulerTask createTaskA(
-        CoroutineHandleScheduler& sch)
+    static std::suspend_always suspend()
     {
-        std::cout << "Hello from TaskA\n";
-        co_await sch.suspend();
-        std::cout << "Executing the TaskA\n";
-        co_await sch.suspend();
-        std::cout << "TaskA is finished\n";
+        return std::suspend_always();
     }
 
-    static CoroutineHandleSchedulerTask createTaskB(
-        CoroutineHandleScheduler& sch)
+    static CoroutineHandleSchedulerTask createTaskA()
     {
-        std::cout << "Hello from TaskB\n";
-        co_await sch.suspend();
-        std::cout << "Executing the TaskB\n";
-        co_await sch.suspend();
-        std::cout << "TaskB is finished\n";
+        std::cout << "Task A starting\n";
+        co_await CoroutineHandleSchedulerTest::suspend();
+        std::cout << "Task A resuming - 1\n";
+        co_await CoroutineHandleSchedulerTest::suspend();
+        std::cout << "Task A resuming - 2\n";
+        co_await CoroutineHandleSchedulerTest::suspend();
+        std::cout << "Task A resuming - 3\n";
+        co_await CoroutineHandleSchedulerTest::suspend();
+        std::cout << "Task A complete\n";
     }
 
-    static void run()
+    static CoroutineHandleSchedulerTask createTaskB()
+    {
+        std::cout << "Task B starting\n";
+        co_await CoroutineHandleSchedulerTest::suspend();
+        std::cout << "Task B resuming - 1\n";
+        co_await CoroutineHandleSchedulerTest::suspend();
+        std::cout << "Task B resuming - 2\n";
+        co_await CoroutineHandleSchedulerTest::suspend();
+        std::cout << "Task B resuming - 3\n";
+        co_await CoroutineHandleSchedulerTest::suspend();
+        std::cout << "Task B complete\n";
+    }
+
+    static void test()
     {
         std::cout << '\n';
 
-        CoroutineHandleScheduler sch;
+        CoroutineHandleSchedulerSimple sch;
 
-        sch.emplace(createTaskA(sch).get_handle());
-        sch.emplace(createTaskB(sch).get_handle());
+        sch.emplace(createTaskA().get_handle());
+        sch.emplace(createTaskB().get_handle());
 
         std::cout << "Start scheduling...\n";
 
         sch.schedule();
 
         std::cout << '\n';
+    }
+};
+
+/// This is a scheduler class that schedules coroutines in a round-robin
+/// fashion once N coroutines have been scheduled to it.
+///
+/// Only supports access from a single thread at a time so
+///
+/// This implementation was inspired by Gor Nishanov's CppCon 2018 talk
+/// about nano-coroutines.
+///
+/// The implementation relies on symmetric transfer and noop_coroutine()
+/// and so only works with a relatively recent version of Clang and does
+/// not yet work with MSVC.
+template <size_t N>
+class round_robin_scheduler
+{
+    static_assert(N >= 2,
+                  "Round robin scheduler must be configured to support at "
+                  "least two coroutines");
+
+    class schedule_operation
+    {
+      public:
+        explicit schedule_operation(round_robin_scheduler& s) noexcept
+        : m_scheduler(s)
+        {
+        }
+
+        bool await_ready() noexcept
+        {
+            return false;
+        }
+
+        bsl::coroutine_handle<void> await_suspend(
+            bsl::coroutine_handle<void> awaitingCoroutine) noexcept
+        {
+            return m_scheduler.exchange_next(awaitingCoroutine);
+        }
+
+        void await_resume() noexcept
+        {
+        }
+
+      private:
+        round_robin_scheduler& m_scheduler;
+    };
+
+    friend class schedule_operation;
+
+  public:
+    round_robin_scheduler() noexcept : m_index(0),
+                                       m_noop(std::noop_coroutine())
+    {
+        for (size_t i = 0; i < N - 1; ++i) {
+            m_coroutines[i] = m_noop;
+        }
+    }
+
+    ~round_robin_scheduler()
+    {
+        // All tasks should have been joined before calling destructor.
+        BSLS_ASSERT(
+            std::all_of(m_coroutines.begin(), m_coroutines.end(), [&](auto h) {
+                return h == m_noop;
+            }));
+    }
+
+    schedule_operation schedule() noexcept
+    {
+        return schedule_operation{*this};
+    }
+
+    /// Resume any queued coroutines until there are no more coroutines.
+    void drain() noexcept
+    {
+        size_t countRemaining = N - 1;
+        do {
+            auto nextToResume = exchange_next(m_noop);
+            if (nextToResume != m_noop) {
+                nextToResume.resume();
+                countRemaining = N - 1;
+            }
+            else {
+                --countRemaining;
+            }
+        } while (countRemaining > 0);
+    }
+
+  private:
+    bsl::coroutine_handle<void> exchange_next(
+        bsl::coroutine_handle<void> coroutine) noexcept
+    {
+        auto coroutineToResume =
+            std::exchange(m_coroutines[m_index], coroutine);
+        m_index = m_index < (N - 2) ? m_index + 1 : 0;
+        return coroutineToResume;
+    }
+
+    size_t                                         m_index;
+    const bsl::coroutine_handle<void>              m_noop;
+    std::array<bsl::coroutine_handle<void>, N - 1> m_coroutines;
+};
+
+class RoundRobinSchedulerUtil
+{
+  public:
+    static ntsa::CoroutineTask<void> createTaskA(
+        round_robin_scheduler<32>& scheduler)
+    {
+        std::cout << "Task A starting\n";
+        co_await scheduler.schedule();
+        std::cout << "Task A resuming - 1\n";
+        co_await scheduler.schedule();
+        std::cout << "Task A resuming - 2\n";
+        co_await scheduler.schedule();
+        std::cout << "Task A resuming - 3\n";
+        co_await scheduler.schedule();
+        std::cout << "Task A complete\n";
+
+        co_return;
+    }
+
+    static ntsa::CoroutineTask<void> createTaskB(
+        round_robin_scheduler<32>& scheduler)
+    {
+        std::cout << "Task B starting\n";
+        co_await scheduler.schedule();
+        std::cout << "Task B resuming - 1\n";
+        co_await scheduler.schedule();
+        std::cout << "Task B resuming - 2\n";
+        co_await scheduler.schedule();
+        std::cout << "Task B resuming - 3\n";
+        co_await scheduler.schedule();
+        std::cout << "Task B complete\n";
+
+        co_return;
+    }
+
+    static ntsa::CoroutineTask<void> createTaskScheduler(
+        round_robin_scheduler<32>& scheduler)
+    {
+        std::cout << "Drain starting" << std::endl;
+        scheduler.drain();
+        std::cout << "Drain complete" << std::endl;
+        co_return;
+    }
+
+    static ntsa::CoroutineTask<void> coTest(
+        round_robin_scheduler<32>& scheduler)
+    {
+        ntsa::CoroutineTask<void> taskA = createTaskA(scheduler);
+        ntsa::CoroutineTask<void> taskB = createTaskB(scheduler);
+
+        ntsa::CoroutineTask<void> taskScheduler =
+            createTaskScheduler(scheduler);
+
+        co_await ntsa::CoroutineBarrierUtil::when_all(
+            bsl::move(taskA),
+            bsl::move(taskB),
+            bsl::move(taskScheduler));
+    }
+
+    static void test()
+    {
+        round_robin_scheduler<32> scheduler;
+
+        ntsa::CoroutineTask<void> main = coTest(scheduler);
+
+        ntsa::CoroutineTaskUtil::synchronize(bsl::move(main));
+    }
+};
+
+typedef round_robin_scheduler<64> CoroutineTaskScheduler;
+
+class CoroutineTaskSchedulerUtil
+{
+  public:
+    static ntsa::CoroutineTask<void> createTaskScheduler(
+        CoroutineTaskScheduler* scheduler)
+    {
+        std::cout << "Drain starting" << std::endl;
+        scheduler->drain();
+        std::cout << "Drain complete" << std::endl;
+        co_return;
+    }
+
+    template <typename SCHEDULER, typename AWAITABLE>
+    static auto schedule_on(SCHEDULER& scheduler, AWAITABLE awaitable)
+        -> ntsa::CoroutineTask<ntsa::CoroutineMeta::remove_rvalue_reference_t<
+            typename ntsa::CoroutineMeta::awaitable_traits<
+                AWAITABLE>::await_result_t> >
+    {
+        co_await           scheduler.schedule();
+        co_return co_await std::move(awaitable);
     }
 };
 
@@ -399,33 +675,30 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyDatagramSocket(
 
     // Connect the client datagram socket to the server datagram socket.
 
-    ntca::ConnectContext clientConnectContext;
     ntca::ConnectOptions clientConnectOptions;
+    ntci::ConnectResult  clientConnectResult;
 
-    error = co_await ntcf::Concurrent::connect(
+    clientConnectResult = co_await ntcf::Concurrent::connect(
         clientDatagramSocket,
-        &clientConnectContext,
         serverDatagramSocket->sourceEndpoint(),
         clientConnectOptions);
-    NTSCFG_TEST_OK(error);
 
-    BALL_LOG_INFO << "Client socket connect complete: " << clientConnectContext
-                  << BALL_LOG_END;
+    NTSCFG_TEST_OK(clientConnectResult.event().context().error());
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CONNECT_COMPLETE(clientConnectResult);
 
     // Connect the server datagram socket to the client datagram socket.
 
-    ntca::ConnectContext serverConnectContext;
     ntca::ConnectOptions serverConnectOptions;
+    ntci::ConnectResult  serverConnectResult;
 
-    error = co_await ntcf::Concurrent::connect(
+    serverConnectResult = co_await ntcf::Concurrent::connect(
         serverDatagramSocket,
-        &serverConnectContext,
         clientDatagramSocket->sourceEndpoint(),
         ntca::ConnectOptions());
-    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(serverConnectResult.event().context().error());
 
-    BALL_LOG_INFO << "Server socket connect complete: " << clientConnectContext
-                  << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_SERVER_CONNECT_COMPLETE(serverConnectResult);
 
     // Send data from the client datagram socket to the server datagram socket.
 
@@ -434,51 +707,39 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyDatagramSocket(
 
     bdlbb::BlobUtil::append(clientSendData.get(), "Hello, world!", 13);
 
-    ntca::SendContext clientSendContext;
     ntca::SendOptions clientSendOptions;
+    ntci::SendResult  clientSendResult;
 
-    error = co_await ntcf::Concurrent::send(clientDatagramSocket,
-                                            &clientSendContext,
-                                            clientSendData,
-                                            clientSendOptions);
-    NTSCFG_TEST_OK(error);
+    clientSendResult = co_await ntcf::Concurrent::send(clientDatagramSocket,
+                                                       clientSendData,
+                                                       clientSendOptions);
+    NTSCFG_TEST_OK(clientSendResult.event().context().error());
 
-    BALL_LOG_INFO << "Client socket send complete: " << clientSendContext
-                  << "\n"
-                  << bdlbb::BlobUtilHexDumper(clientSendData.get())
-                  << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_SEND_COMPLETE(clientSendResult,
+                                                  clientSendData);
 
     // Receive data at the server datagram socket from the client datagram
     // socket.
 
-    bsl::shared_ptr<bdlbb::Blob> serverReceiveData =
-        serverDatagramSocket->createIncomingBlob();
-
-    ntca::ReceiveContext serverReceiveContext;
     ntca::ReceiveOptions serverReceiveOptions;
+    ntci::ReceiveResult  serverReceiveResult;
 
-    error = co_await ntcf::Concurrent::receive(serverDatagramSocket,
-                                               &serverReceiveContext,
-                                               &serverReceiveData,
-                                               serverReceiveOptions);
-    NTSCFG_TEST_OK(error);
+    serverReceiveResult =
+        co_await ntcf::Concurrent::receive(serverDatagramSocket,
+                                           serverReceiveOptions);
+    NTSCFG_TEST_OK(serverReceiveResult.event().context().error());
 
-    BALL_LOG_INFO << "Server socket receive complete: " << serverReceiveContext
-                  << "\n"
-                  << bdlbb::BlobUtilHexDumper(serverReceiveData.get())
-                  << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(serverReceiveResult);
 
     // Close the client datagram socket.
 
     co_await ntcf::Concurrent::close(clientDatagramSocket);
-
-    BALL_LOG_INFO << "Client socket closed" << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED();
 
     // Close the server datagram socket.
 
     co_await ntcf::Concurrent::close(serverDatagramSocket);
-
-    BALL_LOG_INFO << "Server socket closed" << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED();
 
     co_return;
 }
@@ -503,34 +764,30 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyStreamSocket(
 
     // Connect the client stream socket to the listener socket.
 
-    ntca::ConnectContext clientConnectContext;
     ntca::ConnectOptions clientConnectOptions;
+    ntci::ConnectResult  clientConnectResult;
 
-    error =
+    clientConnectResult =
         co_await ntcf::Concurrent::connect(clientStreamSocket,
-                                           &clientConnectContext,
                                            listenerSocket->sourceEndpoint(),
                                            clientConnectOptions);
-    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_OK(clientConnectResult.event().context().error());
 
-    BALL_LOG_INFO << "Client socket connect complete: " << clientConnectContext
-                  << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CONNECT_COMPLETE(clientConnectResult);
 
     // Accept the server stream socket from the listener socket.
 
-    bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket;
-
-    ntca::AcceptContext serverAcceptContext;
     ntca::AcceptOptions serverAcceptOptions;
+    ntci::AcceptResult  serverAcceptResult;
 
-    error = co_await ntcf::Concurrent::accept(listenerSocket,
-                                              &serverAcceptContext,
-                                              &serverStreamSocket,
-                                              serverAcceptOptions);
-    NTSCFG_TEST_OK(error);
+    serverAcceptResult =
+        co_await ntcf::Concurrent::accept(listenerSocket, serverAcceptOptions);
+    NTSCFG_TEST_OK(serverAcceptResult.event().context().error());
 
-    BALL_LOG_INFO << "Server socket accept complete: " << serverAcceptContext
-                  << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_SERVER_ACCEPT_COMPLETE(serverAcceptResult);
+
+    bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket =
+        serverAcceptResult.streamSocket();
 
     // Send data from the client stream socket to the server stream socket.
 
@@ -539,59 +796,46 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyStreamSocket(
 
     bdlbb::BlobUtil::append(clientSendData.get(), "Hello, world!", 13);
 
-    ntca::SendContext clientSendContext;
     ntca::SendOptions clientSendOptions;
+    ntci::SendResult  clientSendResult;
 
-    error = co_await ntcf::Concurrent::send(clientStreamSocket,
-                                            &clientSendContext,
-                                            clientSendData,
-                                            clientSendOptions);
-    NTSCFG_TEST_OK(error);
+    clientSendResult = co_await ntcf::Concurrent::send(clientStreamSocket,
+                                                       clientSendData,
+                                                       clientSendOptions);
+    NTSCFG_TEST_OK(clientSendResult.event().context().error());
 
-    BALL_LOG_INFO << "Client socket send complete: " << clientSendContext
-                  << "\n"
-                  << bdlbb::BlobUtilHexDumper(clientSendData.get())
-                  << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_SEND_COMPLETE(clientSendResult,
+                                                  clientSendData);
 
     // Receive data at the server datagram socket from the client datagram
     // socket.
 
-    bsl::shared_ptr<bdlbb::Blob> serverReceiveData =
-        serverStreamSocket->createIncomingBlob();
-
-    ntca::ReceiveContext serverReceiveContext;
     ntca::ReceiveOptions serverReceiveOptions;
+    ntci::ReceiveResult  serverReceiveResult;
 
     serverReceiveOptions.setSize(13);
 
-    error = co_await ntcf::Concurrent::receive(serverStreamSocket,
-                                               &serverReceiveContext,
-                                               &serverReceiveData,
-                                               serverReceiveOptions);
-    NTSCFG_TEST_OK(error);
+    serverReceiveResult =
+        co_await ntcf::Concurrent::receive(serverStreamSocket,
+                                           serverReceiveOptions);
+    NTSCFG_TEST_OK(serverReceiveResult.event().context().error());
 
-    BALL_LOG_INFO << "Server socket receive complete: " << serverReceiveContext
-                  << "\n"
-                  << bdlbb::BlobUtilHexDumper(serverReceiveData.get())
-                  << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(serverReceiveResult);
 
     // Close the client stream socket.
 
     co_await ntcf::Concurrent::close(clientStreamSocket);
-
-    BALL_LOG_INFO << "Client socket closed" << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED();
 
     // Close the server stream socket.
 
     co_await ntcf::Concurrent::close(serverStreamSocket);
-
-    BALL_LOG_INFO << "Server socket closed" << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED();
 
     // Close the listener socket.
 
     co_await ntcf::Concurrent::close(listenerSocket);
-
-    BALL_LOG_INFO << "Listener socket closed" << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_LISTENER_CLOSED();
 
     co_return;
 }
@@ -604,7 +848,9 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
 
     ntsa::Error error;
 
-    ntsa::CoroutineTaskScheduler taskSwitcher;
+    ntsa::CoroutineTaskScheduler taskScheduler;
+
+    std::vector<ntsa::CoroutineTask<void> > taskList;
 
     // Create the listener socket and begin listening.
 
@@ -616,18 +862,17 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
     configuration.numConnections = 3;
     configuration.endpoint       = listenerSocket->sourceEndpoint();
 
-    BALL_LOG_DEBUG << "Listening at " << configuration.endpoint
-                   << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_LISTENER_READY(configuration.endpoint);
 
     // Create a coroutine dedicated to the listener socket.
 
     ntsa::CoroutineTask<void> listenerTask =
         coVerifyApplicationListener(configuration,
-                                    &taskSwitcher,
+                                    &taskScheduler,
                                     listenerSocket,
                                     allocator);
 
-    taskSwitcher.emplace(bsl::move(listenerTask));
+    taskList.emplace_back(bsl::move(listenerTask));
 
     for (bsl::size_t i = 0; i < configuration.numConnections; ++i) {
         // Create a client stream socket.
@@ -639,16 +884,23 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
 
         ntsa::CoroutineTask<void> clientTask =
             coVerifyApplicationClient(configuration,
-                                      &taskSwitcher,
+                                      &taskScheduler,
                                       streamSocket,
                                       allocator);
 
-        taskSwitcher.emplace(bsl::move(clientTask));
+        taskList.emplace_back(bsl::move(clientTask));
     }
 
     // Run all coroutines until complete.
 
-    taskSwitcher.schedule();
+    ntsa::CoroutineTask<void> schedulerTask =
+        ntsa::CoroutineTaskSchedulerUtil::createTaskScheduler(&taskScheduler);
+
+    taskList.emplace_back(bsl::move(schedulerTask));
+
+    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(taskList));
+
+    // taskSwitcher.schedule();
 
     co_return;
 }
@@ -679,36 +931,37 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
 
         // Accept a server stream socket from the listener socket.
 
-        bsl::shared_ptr<ntci::StreamSocket> streamSocket;
-
-        ntca::AcceptContext acceptContext;
         ntca::AcceptOptions acceptOptions;
+        ntci::AcceptResult  acceptResult;
 
-        error = co_await ntcf::Concurrent::accept(listenerSocket,
-                                                  &acceptContext,
-                                                  &streamSocket,
-                                                  acceptOptions);
-        NTSCFG_TEST_OK(error);
+        acceptResult =
+            co_await ntcf::Concurrent::accept(listenerSocket, acceptOptions);
+        NTSCFG_TEST_OK(acceptResult.event().context().error());
 
-        BALL_LOG_INFO << "Server socket accept complete: " << acceptContext
-                      << BALL_LOG_END;
+        NTCF_CONCURRENT_TEST_LOG_SERVER_ACCEPT_COMPLETE(acceptResult);
 
         // Enter a coroutine dedicated to the server stream socket.
 
         ntsa::CoroutineTask<void> serverTask =
             coVerifyApplicationServer(configuration,
                                       taskSwitcher,
-                                      streamSocket,
+                                      acceptResult.streamSocket(),
                                       allocator);
 
-        taskSwitcher->emplace(bsl::move(serverTask));
+        // taskSwitcher->emplace(bsl::move(serverTask));
+        //
+
+        // co_await ntsa::CoroutineTaskSchedulerUtil::schedule_on(*taskSwitcher,
+        //                                                        serverTask);
+
+        // MRM: This serializes the processing of each connection.
+        co_await serverTask;
     }
 
     // Close the listener socket.
 
     co_await ntcf::Concurrent::close(listenerSocket);
-
-    BALL_LOG_INFO << "Listener socket closed" << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_LISTENER_CLOSED();
 
     co_return;
 }
@@ -725,17 +978,15 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
 
     // Connect the client stream socket to the listener socket.
 
-    ntca::ConnectContext connectContext;
     ntca::ConnectOptions connectOptions;
+    ntci::ConnectResult  connectResult;
 
-    error = co_await ntcf::Concurrent::connect(streamSocket,
-                                               &connectContext,
-                                               configuration.endpoint,
-                                               connectOptions);
-    NTSCFG_TEST_OK(error);
+    connectResult = co_await ntcf::Concurrent::connect(streamSocket,
+                                                       configuration.endpoint,
+                                                       connectOptions);
+    NTSCFG_TEST_OK(connectResult.event().context().error());
 
-    BALL_LOG_INFO << "Client socket connect complete: " << connectContext
-                  << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CONNECT_COMPLETE(connectResult);
 
     // Send data to the peer.
 
@@ -743,44 +994,33 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
 
     bdlbb::BlobUtil::append(sendData.get(), "Hello, world!", 13);
 
-    ntca::SendContext sendContext;
     ntca::SendOptions sendOptions;
+    ntci::SendResult  sendResult;
 
-    error = co_await ntcf::Concurrent::send(streamSocket,
-                                            &sendContext,
-                                            sendData,
-                                            sendOptions);
-    NTSCFG_TEST_OK(error);
+    sendResult =
+        co_await ntcf::Concurrent::send(streamSocket, sendData, sendOptions);
 
-    BALL_LOG_INFO << "Client socket send complete: " << sendContext << "\n"
-                  << bdlbb::BlobUtilHexDumper(sendData.get()) << BALL_LOG_END;
+    NTSCFG_TEST_OK(sendResult.event().context().error());
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_SEND_COMPLETE(sendResult, sendData);
 
     // Receive data from the peer.
 
-    bsl::shared_ptr<bdlbb::Blob> receiveData =
-        streamSocket->createIncomingBlob();
-
-    ntca::ReceiveContext receiveContext;
     ntca::ReceiveOptions receiveOptions;
+    ntci::ReceiveResult  receiveResult;
 
     receiveOptions.setSize(13);
 
-    error = co_await ntcf::Concurrent::receive(streamSocket,
-                                               &receiveContext,
-                                               &receiveData,
-                                               receiveOptions);
-    NTSCFG_TEST_OK(error);
+    receiveResult =
+        co_await ntcf::Concurrent::receive(streamSocket, receiveOptions);
+    NTSCFG_TEST_OK(receiveResult.event().context().error());
 
-    BALL_LOG_INFO << "Client socket receive complete: " << receiveContext
-                  << "\n"
-                  << bdlbb::BlobUtilHexDumper(receiveData.get())
-                  << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(receiveResult);
 
     // Close the socket.
 
     co_await ntcf::Concurrent::close(streamSocket);
-
-    BALL_LOG_INFO << "Client socket closed" << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED();
 
     co_return;
 }
@@ -791,52 +1031,43 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationServer(
     bsl::shared_ptr<ntci::StreamSocket> streamSocket,
     ntsa::Allocator                     allocator)
 {
+    BALL_LOG_INFO << "Processing accepted socket" << BALL_LOG_END;
+
     ntccfg::Object scope("coVerifyApplicationServer");
 
     ntsa::Error error;
 
     // Receive data from the peer.
 
-    bsl::shared_ptr<bdlbb::Blob> receiveData =
-        streamSocket->createIncomingBlob();
-
-    ntca::ReceiveContext receiveContext;
     ntca::ReceiveOptions receiveOptions;
+    ntci::ReceiveResult  receiveResult;
 
     receiveOptions.setSize(13);
 
-    error = co_await ntcf::Concurrent::receive(streamSocket,
-                                               &receiveContext,
-                                               &receiveData,
-                                               receiveOptions);
-    NTSCFG_TEST_OK(error);
+    receiveResult =
+        co_await ntcf::Concurrent::receive(streamSocket, receiveOptions);
+    NTSCFG_TEST_OK(receiveResult.event().context().error());
 
-    BALL_LOG_INFO << "Server socket receive complete: " << receiveContext
-                  << "\n"
-                  << bdlbb::BlobUtilHexDumper(receiveData.get())
-                  << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(receiveResult);
 
     // Send data to the peer.
 
-    bsl::shared_ptr<bdlbb::Blob> sendData = receiveData;
+    bsl::shared_ptr<bdlbb::Blob> sendData = receiveResult.data();
 
-    ntca::SendContext sendContext;
     ntca::SendOptions sendOptions;
+    ntci::SendResult  sendResult;
 
-    error = co_await ntcf::Concurrent::send(streamSocket,
-                                            &sendContext,
-                                            sendData,
-                                            sendOptions);
-    NTSCFG_TEST_OK(error);
+    sendResult =
+        co_await ntcf::Concurrent::send(streamSocket, sendData, sendOptions);
 
-    BALL_LOG_INFO << "Server socket send complete: " << sendContext << "\n"
-                  << bdlbb::BlobUtilHexDumper(sendData.get()) << BALL_LOG_END;
+    NTSCFG_TEST_OK(sendResult.event().context().error());
+
+    NTCF_CONCURRENT_TEST_LOG_SERVER_SEND_COMPLETE(sendResult, sendData);
 
     // Close the socket.
 
     co_await ntcf::Concurrent::close(streamSocket);
-
-    BALL_LOG_INFO << "Server socket closed" << BALL_LOG_END;
+    NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED();
 
     co_return;
 }
@@ -921,7 +1152,13 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifySandbox)
     ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
 #endif
 
-    ntsa::CoroutineSchedulerUtil::run();
+    BALL_LOG_INFO << "Testing simple scheduler" << BALL_LOG_END;
+
+    ntsa::CoroutineHandleSchedulerTest::test();
+
+    BALL_LOG_INFO << "Testing round-robin scheduler" << BALL_LOG_END;
+
+    ntsa::RoundRobinSchedulerUtil::test();
 }
 
 }  // close namespace ntcf

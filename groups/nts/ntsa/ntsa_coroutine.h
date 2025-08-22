@@ -163,6 +163,20 @@ class CoroutineMeta
     template <typename T>
     using unwrap_reference_t = typename unwrap_reference<T>::type;
 
+    template <typename T>
+    struct remove_rvalue_reference {
+        using type = T;
+    };
+
+    template <typename T>
+    struct remove_rvalue_reference<T&&> {
+        using type = T;
+    };
+
+    template <typename T>
+    using remove_rvalue_reference_t =
+        typename remove_rvalue_reference<T>::type;
+
     template <typename TYPE>
     struct IsCoroutineHandle : std::false_type {
     };

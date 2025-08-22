@@ -72,7 +72,6 @@ class Concurrent
     /// Return the awaitable error.
     static ntcf::Concurrent::Connect connect(
         const bsl::shared_ptr<ntci::Connector>& connector,
-        ntca::ConnectContext*                   context,
         const ntsa::Endpoint&                   endpoint,
         const ntca::ConnectOptions&             options);
 
@@ -82,7 +81,6 @@ class Concurrent
     /// error occurs. Return the awaitable error.
     static ntcf::Concurrent::Connect connect(
         const bsl::shared_ptr<ntci::Connector>& connector,
-        ntca::ConnectContext*                   context,
         const bsl::string&                      name,
         const ntca::ConnectOptions&             options);
 
@@ -109,8 +107,6 @@ class Concurrent
     /// have been accepted at this time or will become accepted in the future.
     static ntcf::Concurrent::Accept accept(
         const bsl::shared_ptr<ntci::Acceptor>& acceptor,
-        ntca::AcceptContext*                   context,
-        bsl::shared_ptr<ntci::StreamSocket>*   streamSocket,
         const ntca::AcceptOptions&             options);
 
     /// Enqueue the specified 'data' for transmission according to the
@@ -146,7 +142,6 @@ class Concurrent
     /// the future.
     static ntcf::Concurrent::Send send(
         const bsl::shared_ptr<ntci::Sender>& sender,
-        ntca::SendContext*                   context,
         const bsl::shared_ptr<bdlbb::Blob>&  data,
         const ntca::SendOptions&             options);
 
@@ -176,8 +171,6 @@ class Concurrent
     /// in the future.
     static ntcf::Concurrent::Receive receive(
         const bsl::shared_ptr<ntci::Receiver>& receiver,
-        ntca::ReceiveContext*                  context,
-        bsl::shared_ptr<bdlbb::Blob>*          data,
         const ntca::ReceiveOptions&            options);
 
     /// Close the specified 'closable' object. Return the awaitable "void".
@@ -231,7 +224,7 @@ class Concurrent::Execute::Awaiter
     bool await_ready() const noexcept;
 
     // TODO
-    void await_suspend(std::coroutine_handle<> coroutine) noexcept;
+    void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
     // TODO
     void await_resume() const noexcept;
@@ -258,13 +251,11 @@ class Concurrent::Connect
 
     /// TODO
     explicit Connect(const bsl::shared_ptr<ntci::Connector>& connector,
-                     ntca::ConnectContext*                   context,
                      const ntsa::Endpoint&                   endpoint,
                      ntca::ConnectOptions                    options);
 
     /// TODO
     explicit Connect(const bsl::shared_ptr<ntci::Connector>& connector,
-                     ntca::ConnectContext*                   context,
                      const bsl::string&                      name,
                      ntca::ConnectOptions                    options);
 
@@ -278,9 +269,6 @@ class Concurrent::Connect
     /// The connector.
     bsl::shared_ptr<ntci::Connector> d_connector;
 
-    /// The output context.
-    ntca::ConnectContext* d_context;
-
     /// The input endpoint.
     ntsa::Endpoint d_endpoint;
 
@@ -290,8 +278,8 @@ class Concurrent::Connect
     /// The input options.
     ntca::ConnectOptions d_options;
 
-    /// The error.
-    ntsa::Error d_error;
+    /// The output result.
+    ntci::ConnectResult d_result;
 };
 
 /// Provide an awaiter for a connect operation.
@@ -311,10 +299,10 @@ class Concurrent::Connect::Awaiter
     bool await_ready() const noexcept;
 
     // TODO
-    void await_suspend(std::coroutine_handle<> coroutine) noexcept;
+    void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
     // TODO
-    ntsa::Error await_resume() const noexcept;
+    ntci::ConnectResult await_resume() const noexcept;
 
   private:
     /// Process a transmission by the specified 'connector' according to the
@@ -341,8 +329,6 @@ class Concurrent::Accept
 
     /// TODO
     explicit Accept(const bsl::shared_ptr<ntci::Acceptor>& acceptor,
-                    ntca::AcceptContext*                   context,
-                    bsl::shared_ptr<ntci::StreamSocket>*   streamSocket,
                     ntca::AcceptOptions                    options);
 
     /// TODO
@@ -355,17 +341,11 @@ class Concurrent::Accept
     /// The acceptor.
     bsl::shared_ptr<ntci::Acceptor> d_acceptor;
 
-    /// The output context.
-    ntca::AcceptContext* d_context;
-
-    /// The output stream socket.
-    bsl::shared_ptr<ntci::StreamSocket>* d_streamSocket;
-
     /// The input options.
     ntca::AcceptOptions d_options;
 
-    /// The error.
-    ntsa::Error d_error;
+    /// The output result.
+    ntci::AcceptResult d_result;
 };
 
 /// Provide an awaiter for a accept operation.
@@ -385,10 +365,10 @@ class Concurrent::Accept::Awaiter
     bool await_ready() const noexcept;
 
     // TODO
-    void await_suspend(std::coroutine_handle<> coroutine) noexcept;
+    void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
     // TODO
-    ntsa::Error await_resume() const noexcept;
+    ntci::AcceptResult await_resume() const noexcept;
 
   private:
     /// Process a acceptance of the specified 'streamSocket' by the specified
@@ -417,7 +397,6 @@ class Concurrent::Send
 
     /// TODO
     explicit Send(const bsl::shared_ptr<ntci::Sender>& sender,
-                  ntca::SendContext*                   context,
                   const bsl::shared_ptr<bdlbb::Blob>&  data,
                   ntca::SendOptions                    options);
 
@@ -431,17 +410,14 @@ class Concurrent::Send
     /// The sender.
     bsl::shared_ptr<ntci::Sender> d_sender;
 
-    /// The output context.
-    ntca::SendContext* d_context;
-
     /// The input data.
-    bsl::shared_ptr<bdlbb::Blob> d_data;
+    ntsa::Data d_data;
 
     /// The input options.
     ntca::SendOptions d_options;
 
-    /// The error.
-    ntsa::Error d_error;
+    /// The output result.
+    ntci::SendResult d_result;
 };
 
 /// Provide an awaiter for a send operation.
@@ -461,10 +437,10 @@ class Concurrent::Send::Awaiter
     bool await_ready() const noexcept;
 
     // TODO
-    void await_suspend(std::coroutine_handle<> coroutine) noexcept;
+    void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
     // TODO
-    ntsa::Error await_resume() const noexcept;
+    ntci::SendResult await_resume() const noexcept;
 
   private:
     /// Process a transmission by the specified 'sender' according to the
@@ -491,8 +467,6 @@ class Concurrent::Receive
 
     /// TODO
     explicit Receive(const bsl::shared_ptr<ntci::Receiver>& receiver,
-                     ntca::ReceiveContext*                  context,
-                     bsl::shared_ptr<bdlbb::Blob>*          data,
                      ntca::ReceiveOptions                   options);
 
     /// TODO
@@ -505,17 +479,11 @@ class Concurrent::Receive
     /// The receiver.
     bsl::shared_ptr<ntci::Receiver> d_receiver;
 
-    /// The output context.
-    ntca::ReceiveContext* d_context;
-
-    /// The output data.
-    bsl::shared_ptr<bdlbb::Blob>* d_data;
-
     /// The input options.
     ntca::ReceiveOptions d_options;
 
-    /// The error.
-    ntsa::Error d_error;
+    /// The output result.
+    ntci::ReceiveResult d_result;
 };
 
 /// Provide an awaiter for a receive operation.
@@ -535,10 +503,10 @@ class Concurrent::Receive::Awaiter
     bool await_ready() const noexcept;
 
     // TODO
-    void await_suspend(std::coroutine_handle<> coroutine) noexcept;
+    void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
     // TODO
-    ntsa::Error await_resume() const noexcept;
+    ntci::ReceiveResult await_resume() const noexcept;
 
   private:
     /// Process a reception of the specified 'data' by the specified
@@ -596,7 +564,7 @@ class Concurrent::Close::Awaiter
     bool await_ready() const noexcept;
 
     // TODO
-    void await_suspend(std::coroutine_handle<> coroutine) noexcept;
+    void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
     // TODO
     void await_resume() const noexcept;
@@ -604,7 +572,7 @@ class Concurrent::Close::Awaiter
   private:
     /// Process the closure of the closable object. Resume the specified
     /// 'coroutine'.
-    void complete(std::coroutine_handle<> coroutine);
+    void complete(bsl::coroutine_handle<> coroutine);
 
     /// The awaitable.
     Concurrent::Close* d_awaitable;
