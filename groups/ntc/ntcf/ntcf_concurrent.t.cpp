@@ -320,6 +320,8 @@ class round_robin_scheduler
 
     schedule_operation schedule() noexcept
     {
+        BSLS_LOG_INFO("Scheduling coroutine\n");
+
         return schedule_operation{*this};
     }
 
@@ -502,6 +504,7 @@ class ConcurrentTest
     // TODO
     static ntsa::CoroutineTask<void> coVerifyApplication(
         bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::CoroutineTaskScheduler*    taskSwitcher,
         ntsa::Allocator                  allocator);
 
     // TODO
@@ -842,15 +845,17 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyStreamSocket(
 
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
     bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::CoroutineTaskScheduler*    taskSwitcher,
     ntsa::Allocator                  allocator)
 {
     ntccfg::Object scope("coVerifyApplication");
 
     ntsa::Error error;
 
-    ntsa::CoroutineTaskScheduler taskScheduler;
-
     std::vector<ntsa::CoroutineTask<void> > taskList;
+
+    ntsa::CoroutineTask<void> schedulerTask =
+        ntsa::CoroutineTaskSchedulerUtil::createTaskScheduler(taskSwitcher);
 
     // Create the listener socket and begin listening.
 
@@ -868,7 +873,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
 
     ntsa::CoroutineTask<void> listenerTask =
         coVerifyApplicationListener(configuration,
-                                    &taskScheduler,
+                                    taskSwitcher,
                                     listenerSocket,
                                     allocator);
 
@@ -884,19 +889,16 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
 
         ntsa::CoroutineTask<void> clientTask =
             coVerifyApplicationClient(configuration,
-                                      &taskScheduler,
+                                      taskSwitcher,
                                       streamSocket,
                                       allocator);
 
         taskList.emplace_back(bsl::move(clientTask));
     }
 
-    // Run all coroutines until complete.
-
-    ntsa::CoroutineTask<void> schedulerTask =
-        ntsa::CoroutineTaskSchedulerUtil::createTaskScheduler(&taskScheduler);
-
     taskList.emplace_back(bsl::move(schedulerTask));
+
+    // Run all coroutines until complete.
 
     co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(taskList));
 
@@ -912,6 +914,8 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
     ntsa::Allocator                       allocator)
 {
     ntccfg::Object scope("coVerifyApplicationListener");
+
+    // co_await taskSwitcher->schedule();
 
 #if 0
     BALL_LOG_DEBUG << "Starting listener coroutine on thread "
@@ -940,7 +944,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
 
         NTCF_CONCURRENT_TEST_LOG_SERVER_ACCEPT_COMPLETE(acceptResult);
 
-        // Enter a coroutine dedicated to the server stream socket.
+        // Create a coroutine dedicated to the server stream socket.
 
         ntsa::CoroutineTask<void> serverTask =
             coVerifyApplicationServer(configuration,
@@ -951,8 +955,8 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
         // taskSwitcher->emplace(bsl::move(serverTask));
         //
 
-        // co_await ntsa::CoroutineTaskSchedulerUtil::schedule_on(*taskSwitcher,
-        //                                                        serverTask);
+        // ntsa::CoroutineTaskSchedulerUtil::schedule_on(*taskSwitcher,
+        //                                               bsl::move(serverTask));
 
         // MRM: This serializes the processing of each connection.
         co_await serverTask;
@@ -975,6 +979,8 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
     ntccfg::Object scope("coVerifyApplicationClient");
 
     ntsa::Error error;
+
+    // co_await taskSwitcher->schedule();
 
     // Connect the client stream socket to the listener socket.
 
@@ -1036,6 +1042,8 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationServer(
     ntccfg::Object scope("coVerifyApplicationServer");
 
     ntsa::Error error;
+
+    // co_await taskSwitcher->schedule();
 
     // Receive data from the peer.
 
@@ -1134,7 +1142,10 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
     bsl::shared_ptr<ntci::Scheduler> scheduler;
     ntcf::System::getDefault(&scheduler);
 
-    ntsa::CoroutineTask<void> task = coVerifyApplication(scheduler, allocator);
+    ntsa::CoroutineTaskScheduler taskScheduler;
+
+    ntsa::CoroutineTask<void> task =
+        coVerifyApplication(scheduler, &taskScheduler, allocator);
     ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
 }
 
