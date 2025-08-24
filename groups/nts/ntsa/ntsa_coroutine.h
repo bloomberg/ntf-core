@@ -767,19 +767,6 @@ class CoroutineTaskResultEmpty
 template <typename RESULT>
 class CoroutineTaskResult
 {
-    /// Defines a type alias for the result type.
-    using ResultType = RESULT;
-
-    /// The result storage.
-    ntsa::CoroutineTaskResultValue<ResultType> d_storage;
-
-  private:
-    /// This class is not copy-constructable.
-    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
-
-    /// This class is not copy-assignable.
-    CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
-
   public:
     /// Create a new coroutine task result that is initially incomplete.
     CoroutineTaskResult();
@@ -787,7 +774,7 @@ class CoroutineTaskResult
     /// Create a new coroutine task result that is initally incomplete. Use
     /// specified 'allocator' to provide memory for the 'RESULT' object, if
     /// such a result object is created and is allocator-aware.
-    explicit CoroutineTaskResult(const ntsa::Allocator& allocator);
+    explicit CoroutineTaskResult(ntsa::Allocator allocator);
 
     /// Set the held exception to the specified 'exception'.  The behavior is
     /// undefined if this object already holds a value or exception.
@@ -799,7 +786,6 @@ class CoroutineTaskResult
     /// if this method is called more than once for this object.
     RESULT release();
 
-  public:
     /// Construct a held object of type 'RESULT' by implicit conversion from
     /// the specified 'arg' (forwarded).  This method participates in overload
     /// resolution only if that conversion is possible.  The behavior is
@@ -809,6 +795,26 @@ class CoroutineTaskResult
     /// Store the current exception so that it can be rethrown when 'release'
     /// is called.
     void unhandled_exception();
+
+  private:
+    /// This class is not copy-constructable.
+    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
+
+    /// This class is not move-constructable.
+    CoroutineTaskResult(CoroutineTaskResult&&) = delete;
+
+    /// This class is not copy-assignable.
+    CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
+
+    /// This class is not move-assignable.
+    CoroutineTaskResult& operator=(CoroutineTaskResult&&) = delete;
+
+  private:
+    /// Defines a type alias for the result type.
+    using ResultType = RESULT;
+
+    /// The result storage.
+    ntsa::CoroutineTaskResultValue<ResultType> d_storage;
 };
 
 /// @internal @brief
@@ -828,29 +834,13 @@ template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
 class CoroutineTaskResult<RESULT>
 {
-    /// Defines a type alias for the result type.
-    using ResultType = RESULT;
-
-    /// Defines a type alias for the dereferenced result type.
-    using ResultTypeDereference = bsl::remove_reference_t<RESULT>;
-
-    /// The result storage.
-    ntsa::CoroutineTaskResultAddress<ResultTypeDereference> d_storage;
-
-  private:
-    /// This class is not copy-constructable.
-    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
-
-    /// This class is not copy-assignable.
-    CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
-
   public:
     /// Create a new coroutine task result that is initially incomplete.
     CoroutineTaskResult();
 
     /// Create a new coroutine task result that is initally incomplete. The
     /// specified 'allocator' is ignored.
-    explicit CoroutineTaskResult(const ntsa::Allocator& allocator);
+    explicit CoroutineTaskResult(ntsa::Allocator allocator);
 
     /// Set the held exception to the specified 'exception'.  The behavior is
     /// undefined if this object already holds a reference
@@ -863,7 +853,6 @@ class CoroutineTaskResult<RESULT>
     /// object.
     RESULT release();
 
-  public:
     /// Construct a held reference by implicit conversion to 'RESULT' from the
     /// specified 'arg' (forwarded).  This method participates in overload
     /// resolution only if that conversion is possible.  The behavior is
@@ -873,6 +862,29 @@ class CoroutineTaskResult<RESULT>
     /// Store the current exception so that it can be rethrown when 'release'
     /// is called.
     void unhandled_exception();
+
+  private:
+    /// This class is not copy-constructable.
+    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
+
+    /// This class is not move-constructable.
+    CoroutineTaskResult(CoroutineTaskResult&&) = delete;
+
+    /// This class is not copy-assignable.
+    CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
+
+    /// This class is not move-assignable.
+    CoroutineTaskResult& operator=(CoroutineTaskResult&&) = delete;
+
+  private:
+    /// Defines a type alias for the result type.
+    using ResultType = RESULT;
+
+    /// Defines a type alias for the dereferenced result type.
+    using ResultTypeDereference = bsl::remove_reference_t<RESULT>;
+
+    /// The result storage.
+    ntsa::CoroutineTaskResultAddress<ResultTypeDereference> d_storage;
 };
 
 /// @internal @brief
@@ -893,26 +905,13 @@ template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 class CoroutineTaskResult<RESULT>
 {
-    /// Defines a type alias for the result type.
-    using ResultType = RESULT;
-
-    /// The result storage.
-    ntsa::CoroutineTaskResultEmpty d_storage;
-
-  private:
-    /// This class is not copy-constructable.
-    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
-
-    /// This class is not copy-assignable.
-    CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
-
   public:
     /// Create a new coroutine task result that is initially incomplete.
     CoroutineTaskResult();
 
     /// Create a new coroutine task result that is initally incomplete. The
     /// specified 'allocator' is ignored.
-    explicit CoroutineTaskResult(const ntsa::Allocator& allocator);
+    explicit CoroutineTaskResult(ntsa::Allocator allocator);
 
     /// Set the held exception to the specified 'exception'.  The behavior is
     /// undefined if this object already holds a value or
@@ -925,7 +924,6 @@ class CoroutineTaskResult<RESULT>
     /// for this object.
     void release();
 
-  public:
     /// Set the result of this object.  The behavior is undefined if this
     /// object already has a result or holds an exception.
     void return_void();
@@ -933,6 +931,26 @@ class CoroutineTaskResult<RESULT>
     /// Store the current exception so that it can be rethrown when 'release'
     /// is called.
     void unhandled_exception();
+
+  private:
+    /// This class is not copy-constructable.
+    CoroutineTaskResult(const CoroutineTaskResult&) = delete;
+
+    /// This class is not move-constructable.
+    CoroutineTaskResult(CoroutineTaskResult&&) = delete;
+
+    /// This class is not copy-assignable.
+    CoroutineTaskResult& operator=(const CoroutineTaskResult&) = delete;
+
+    /// This class is not move-assignable.
+    CoroutineTaskResult& operator=(CoroutineTaskResult&&) = delete;
+
+  private:
+    /// Defines a type alias for the result type.
+    using ResultType = RESULT;
+
+    /// The result storage.
+    ntsa::CoroutineTaskResultEmpty d_storage;
 };
 
 /// @internal @brief
@@ -1367,28 +1385,28 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 {
   public:
     /// Return a pointer to a maximally aligned block of memory having at least
-    /// the specified 'size', allocated using the specified 'alloc'.  This
+    /// the specified 'size', allocated using the specified 'allocator'.  This
     /// function is called implicitly to allocate the coroutine frame for a
     /// 'CoroutineTask' coroutine that is a non-member or static member
     /// function having 'bsl::allocator_arg_t' as its first parameter type;
-    /// additional arguments beyond 'alloc' are also passed implicitly, but
+    /// additional arguments beyond 'allocator' are also passed implicitly, but
     /// ignored.
     void* operator new(bsl::size_t size,
                        bsl::allocator_arg_t,
-                       bsl::convertible_to<ntsa::Allocator> auto&& alloc,
+                       bsl::convertible_to<ntsa::Allocator> auto&& allocator,
                        auto&&...);
 
     /// Return a pointer to a maximally aligned block of memory having at least
-    /// the specified 'size', allocated using the specified 'alloc'.  This
+    /// the specified 'size', allocated using the specified 'allocator'.  This
     /// function is called implicitly to allocate the coroutine frame for a
     /// 'CoroutineTask' coroutine that is a non-static member function having
     /// 'bsl::allocator_arg_t' as its first parameter type (not including the
     /// object parameter).  The object argument and additional arguments beyond
-    /// 'alloc' are also passed implicitly, but ignored.
+    /// 'allocator' are also passed implicitly, but ignored.
     void* operator new(bsl::size_t size,
                        auto&&,
                        bsl::allocator_arg_t,
-                       bsl::convertible_to<ntsa::Allocator> auto&& alloc,
+                       bsl::convertible_to<ntsa::Allocator> auto&& allocator,
                        auto&&...);
 
     /// Return a pointer to a maximally aligned block of memory having at least
@@ -1420,28 +1438,28 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     /// specified 'allocator'.
     explicit CoroutineTaskPromise(auto&&..., ntsa::Allocator allocator);
 
-    /// Create a new coroutine task promise that will use the specified 'alloc'
-    /// to provide memory for the result object if 'RESULT' is an
-    /// allocator-aware object type; otherwise, 'alloc' is ignored.  This
+    /// Create a new coroutine task promise that will use the specified
+    /// 'allocator' to provide memory for the result object if 'RESULT' is an
+    /// allocator-aware object type; otherwise, 'allocator' is ignored.  This
     /// function is called implicitly upon entry to a 'CoroutineTask' coroutine
     /// that is a non-member or static member function having
     /// 'bsl::allocator_arg_t' as its first parameter type; additional
-    /// arguments beyond 'alloc' are also passed implicitly, but ignored.
+    /// arguments beyond 'allocator' are also passed implicitly, but ignored.
     CoroutineTaskPromise(bsl::allocator_arg_t,
-                         bsl::convertible_to<ntsa::Allocator> auto&& alloc,
+                         bsl::convertible_to<ntsa::Allocator> auto&& allocator,
                          auto&&...);
 
-    /// Create a new coroutine task promise that will use the specified 'alloc'
-    /// to provide memory for the result object if 'RESULT' is an
-    /// allocator-aware object type; otherwise, 'alloc' is ignored.  This
+    /// Create a new coroutine task promise that will use the specified
+    /// 'allocator' to provide memory for the result object if 'RESULT' is an
+    /// allocator-aware object type; otherwise, 'allocator' is ignored.  This
     /// function is called implicitly upon entry to a 'CoroutineTask' coroutine
     /// that is a non-static member function having 'bsl::allocator_arg_t' as
     /// its first parameter type (not including the object parameter).  The
-    /// object argument and additional arguments beyond 'alloc' are also passed
-    /// implicitly, but ignored.
+    /// object argument and additional arguments beyond 'allocator' are also
+    /// passed implicitly, but ignored.
     CoroutineTaskPromise(auto&&,
                          bsl::allocator_arg_t,
-                         bsl::convertible_to<ntsa::Allocator> auto&& alloc,
+                         bsl::convertible_to<ntsa::Allocator> auto&& allocator,
                          auto&&...);
 
     /// Create a new coroutine task promise. This function is called implicitly
@@ -2786,8 +2804,8 @@ NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult()
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult(
-    const ntsa::Allocator& alloc)
-: d_storage(alloc.mechanism())
+    ntsa::Allocator allocator)
+: d_storage(allocator.mechanism())
 {
 }
 
@@ -2826,8 +2844,7 @@ NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult()
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE
-    CoroutineTaskResult<RESULT>::CoroutineTaskResult(const ntsa::Allocator&)
+NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult(ntsa::Allocator)
 : d_storage()
 {
 }
@@ -2872,8 +2889,7 @@ NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult()
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE
-    CoroutineTaskResult<RESULT>::CoroutineTaskResult(const ntsa::Allocator&)
+NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult(ntsa::Allocator)
 : d_storage()
 {
 }
@@ -3140,10 +3156,10 @@ template <typename RESULT>
 NTSCFG_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
     bsl::size_t size,
     bsl::allocator_arg_t,
-    bsl::convertible_to<ntsa::Allocator> auto&& alloc,
+    bsl::convertible_to<ntsa::Allocator> auto&& allocator,
     auto&&...)
 {
-    return CoroutineUtil::allocate(size, alloc);
+    return CoroutineUtil::allocate(size, allocator);
 }
 
 template <typename RESULT>
@@ -3151,10 +3167,10 @@ NTSCFG_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
     bsl::size_t size,
     auto&&,
     bsl::allocator_arg_t,
-    bsl::convertible_to<ntsa::Allocator> auto&& alloc,
+    bsl::convertible_to<ntsa::Allocator> auto&& allocator,
     auto&&...)
 {
-    return CoroutineUtil::allocate(size, alloc);
+    return CoroutineUtil::allocate(size, allocator);
 }
 
 template <typename RESULT>
@@ -3209,10 +3225,10 @@ NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     bsl::allocator_arg_t,
-    bsl::convertible_to<ntsa::Allocator> auto&& alloc,
+    bsl::convertible_to<ntsa::Allocator> auto&& allocator,
     auto&&...)
-: CoroutineTaskResult<RESULT>(static_cast<decltype(alloc)>(alloc))
-, d_context(static_cast<decltype(alloc)>(alloc))
+: CoroutineTaskResult<RESULT>(static_cast<decltype(allocator)>(allocator))
+, d_context(static_cast<decltype(allocator)>(allocator))
 {
     d_context.setCurrent(
         bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
@@ -3223,10 +3239,10 @@ template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     auto&&,
     bsl::allocator_arg_t,
-    bsl::convertible_to<ntsa::Allocator> auto&& alloc,
+    bsl::convertible_to<ntsa::Allocator> auto&& allocator,
     auto&&...)
-: CoroutineTaskResult<RESULT>(static_cast<decltype(alloc)>(alloc))
-, d_context(static_cast<decltype(alloc)>(alloc))
+: CoroutineTaskResult<RESULT>(static_cast<decltype(allocator)>(allocator))
+, d_context(static_cast<decltype(allocator)>(allocator))
 {
     d_context.setCurrent(
         bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
