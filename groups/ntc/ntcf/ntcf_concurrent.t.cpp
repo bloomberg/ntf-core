@@ -421,7 +421,7 @@ class RoundRobinSchedulerUtil
 
         ntsa::CoroutineTask<void> main = coTest(scheduler);
 
-        ntsa::CoroutineTaskUtil::synchronize(bsl::move(main));
+        ntsa::CoroutineUtil::synchronize(bsl::move(main));
     }
 };
 
@@ -1102,7 +1102,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyExecute)
     ntci::SchedulerStopGuard schedulerGuard(scheduler);
 
     ntsa::CoroutineTask<void> task = coVerifyExecute(scheduler, allocator);
-    ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+    ntsa::CoroutineUtil::synchronize(bsl::move(task));
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyDatagramSocket)
@@ -1116,7 +1116,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyDatagramSocket)
 
     ntsa::CoroutineTask<void> task =
         coVerifyDatagramSocket(scheduler, allocator);
-    ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+    ntsa::CoroutineUtil::synchronize(bsl::move(task));
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyStreamSocket)
@@ -1130,7 +1130,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyStreamSocket)
 
     ntsa::CoroutineTask<void> task =
         coVerifyStreamSocket(scheduler, allocator);
-    ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+    ntsa::CoroutineUtil::synchronize(bsl::move(task));
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
@@ -1146,7 +1146,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
 
     ntsa::CoroutineTask<void> task =
         coVerifyApplication(scheduler, &taskScheduler, allocator);
-    ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+    ntsa::CoroutineUtil::synchronize(bsl::move(task));
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifySandbox)
@@ -1160,7 +1160,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifySandbox)
     ntcf::System::getDefault(&scheduler);
 
     ntsa::CoroutineTask<void> task = coVerifySandbox(scheduler, allocator);
-    ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+    ntsa::CoroutineUtil::synchronize(bsl::move(task));
 #endif
 
     BALL_LOG_INFO << "Testing simple scheduler" << BALL_LOG_END;

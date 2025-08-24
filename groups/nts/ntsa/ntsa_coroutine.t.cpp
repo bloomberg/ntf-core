@@ -62,6 +62,9 @@ class CoroutineTest
   public:
     BALL_LOG_SET_CLASS_CATEGORY("NTSA.COROUTINE.TEST");
 
+    template <typename TYPE>
+    class AwaitableValue;
+
     // Describe a test operation's unique identifier.
     typedef int Token;
 
@@ -246,6 +249,65 @@ class CoroutineTest
 
     // TODO
     static void verifySandbox();
+};
+
+/// @internal @brief
+/// Provide an awaitable value that is immediately ready.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa
+template <typename T>
+struct CoroutineTest::AwaitableValue {
+    AwaitableValue(T value)
+    : d_value(std::move(value))
+    {
+    }
+
+    bool await_ready() const noexcept
+    {
+        return true;
+    }
+
+    void await_suspend(bsl::coroutine_handle<void>) const noexcept
+    {
+    }
+
+    T await_resume() noexcept
+    {
+        return std::move(d_value);
+    }
+
+    T d_value;
+};
+
+/// @internal @brief
+/// Provide an awaitable void that is immediately ready.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa
+template <>
+struct CoroutineTest::AwaitableValue<void> {
+    AwaitableValue()
+    {
+    }
+
+    bool await_ready() const noexcept
+    {
+        return true;
+    }
+
+    void await_suspend(bsl::coroutine_handle<void>) const noexcept
+    {
+    }
+
+    void await_resume() noexcept
+    {
+        return;
+    }
 };
 
 // Describe a scope.
@@ -1867,7 +1929,7 @@ ntsa::CoroutineTask<ntsa::Error> CoroutineTest::Mechanism::
 
     d_actionMap.emplace(token, action);
 
-    // error = ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+    // error = ntsa::CoroutineUtil::synchronize(bsl::move(task));
 #endif
 
     co_return ntsa::Error();
@@ -1886,7 +1948,7 @@ void ntsa::CoroutineTest::main(CoroutineTestFunction testFunction)
     ntsa::CoroutineTest::Scope function("main");
 
     ntsa::CoroutineTask<void> task = coMain(testFunction);
-    ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+    ntsa::CoroutineUtil::synchronize(bsl::move(task));
 }
 
 ntsa::CoroutineTask<void> ntsa::CoroutineTest::coMain(
@@ -2066,7 +2128,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyReturnInt()
 
     ntsa::CoroutineTask<int> task = coReturnIntLiteral(100);
 
-    int value = ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+    int value = ntsa::CoroutineUtil::synchronize(bsl::move(task));
 
     BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
 
@@ -2081,7 +2143,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyReturnIntChain()
 
     ntsa::CoroutineTask<int> task = coReturnIntChain(100, 200);
 
-    int value = ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+    int value = ntsa::CoroutineUtil::synchronize(bsl::move(task));
 
     BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
 
@@ -2160,7 +2222,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase4()
 
     ntsa::CoroutineTask<void> task = mechanism.hello();
 
-    ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+    ntsa::CoroutineUtil::synchronize(bsl::move(task));
 
     co_return;
 }
@@ -2202,7 +2264,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase6()
     ntsa::CoroutineTask<ntsa::Error> task =
         mechanism.executeCooperatively(&result, 0, parameters);
 
-    error = ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+    error = ntsa::CoroutineUtil::synchronize(bsl::move(task));
     NTSCFG_TEST_OK(error);
 
     NTSCFG_TEST_EQ(result.annotation(), "test");
@@ -2233,7 +2295,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifySandbox(
 {
     ntsa::CoroutineTest::Scope function("verifySandbox");
 
-    ntsa::AwaitableValue<int> awaitable(static_cast<int>(123));
+    ntsa::CoroutineTest::AwaitableValue<int> awaitable(static_cast<int>(123));
 
     int value = co_await awaitable;
 
@@ -2492,14 +2554,14 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
     {
         ntsa::CoroutineTask<void> t = coReturnVoid();
 
-        ntsa::CoroutineTaskUtil::synchronize(bsl::move(t));
+        ntsa::CoroutineUtil::synchronize(bsl::move(t));
     }
 
     {
         int                      e = returnInt();
         ntsa::CoroutineTask<int> t = coReturnInt();
 
-        int f = ntsa::CoroutineTaskUtil::synchronize(bsl::move(t));
+        int f = ntsa::CoroutineUtil::synchronize(bsl::move(t));
 
         NTSCFG_TEST_EQ(e, f);
     }
@@ -2508,7 +2570,7 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
         int&                      e = returnIntReference();
         ntsa::CoroutineTask<int&> t = coReturnIntReference();
 
-        int& f = ntsa::CoroutineTaskUtil::synchronize(bsl::move(t));
+        int& f = ntsa::CoroutineUtil::synchronize(bsl::move(t));
 
         NTSCFG_TEST_EQ(&e, &f);
     }
@@ -2517,7 +2579,7 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
         int&&                      e = returnIntReferenceMovable();
         ntsa::CoroutineTask<int&&> t = coReturnIntReferenceMovable();
 
-        int&& f = ntsa::CoroutineTaskUtil::synchronize(bsl::move(t));
+        int&& f = ntsa::CoroutineUtil::synchronize(bsl::move(t));
 
         NTSCFG_TEST_EQ(&e, &f);
     }
@@ -2617,7 +2679,7 @@ using namespace bsl;
 // TODO
 // ----------------------------------------------------------------------------
 // [ 1] CoroutineTask<>
-// [ 2] RESULT CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&&);
+// [ 2] RESULT CoroutineUtil::synchronize(CoroutineTask<RESULT>&&);
 // [ 3] CoroutineTask(CoroutineTask&&)
 // [ 4] `co_await` for CoroutineTask
 // ----------------------------------------------------------------------------
@@ -2667,7 +2729,7 @@ void aSsErT(bool condition, const char *message, int line)
 #ifdef BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY
 namespace {
 
-using Util = bdxa::CoroutineTaskUtil;
+using Util = bdxa::CoroutineUtil;
 
 
 
@@ -2698,13 +2760,13 @@ void doP3()
 // ----------------------------------------------------------------------------
 
 namespace test_case_2 {
-// Verify that `ntsa::CoroutineTaskUtil::synchronize` doesn't accept an lvalue of type
+// Verify that `ntsa::CoroutineUtil::synchronize` doesn't accept an lvalue of type
 // `CoroutineTask<RESULT>`.
 template <class RESULT = void>
 void doP4()
 {
     ASSERT(!(requires (bdxa::CoroutineTask<RESULT> task) {
-                 ntsa::CoroutineTaskUtil::synchronize(task);
+                 ntsa::CoroutineUtil::synchronize(task);
              }));
 }
 }  // close namespace test_case_4
@@ -2854,13 +2916,13 @@ int main(int argc, char *argv[])
                             EnforceVoid(), co_await coReturnValue<void>();
                             co_return true;
                         }();
-            ASSERT(ntsa::CoroutineTaskUtil::synchronize(bsl::move(task)));
+            ASSERT(ntsa::CoroutineUtil::synchronize(bsl::move(task)));
         }
         {
             auto task = []() -> CoroutineTask<int> {
                             co_return co_await coReturnValue<int>();
                         }();
-            ASSERT(getValue<int>() == ntsa::CoroutineTaskUtil::synchronize(bsl::move(task)));
+            ASSERT(getValue<int>() == ntsa::CoroutineUtil::synchronize(bsl::move(task)));
         }
         {
             auto task = []() -> CoroutineTask<int&> {
@@ -2874,7 +2936,7 @@ int main(int argc, char *argv[])
                         }();
 
             int&& expectedRef = getValue<int&&>();
-            int&& actualRef   = ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+            int&& actualRef   = ntsa::CoroutineUtil::synchronize(bsl::move(task));
             ASSERT(&expectedRef == &actualRef);
         }
 
@@ -2892,7 +2954,7 @@ int main(int argc, char *argv[])
                             }
                             co_return thrownValue;
                         }();
-            ASSERT(2 == ntsa::CoroutineTaskUtil::synchronize(bsl::move(task)));
+            ASSERT(2 == ntsa::CoroutineUtil::synchronize(bsl::move(task)));
         }
 #endif
 
@@ -2936,7 +2998,7 @@ int main(int argc, char *argv[])
             co_return 4;
         }();
         auto task2 = bsl::move(task);
-        ASSERT(4 == ntsa::CoroutineTaskUtil::synchronize(bsl::move(task2)));
+        ASSERT(4 == ntsa::CoroutineUtil::synchronize(bsl::move(task2)));
 
         ASSERT(!bsl::is_default_constructible_v<CoroutineTask<>>);
         ASSERT(!bsl::is_copy_constructible_v<CoroutineTask<>>);
@@ -2948,7 +3010,7 @@ int main(int argc, char *argv[])
       } break;
       case 2: {
         // --------------------------------------------------------------------
-        // `CoroutineTaskUtil::synchronize`
+        // `CoroutineUtil::synchronize`
         //
         // Concerns:
         // 1. The `synchronize` method waits for the `CoroutineTask` coroutine to
@@ -2978,7 +3040,7 @@ int main(int argc, char *argv[])
         //    ill formed when the argument is an lvalue.  (C-3)
         //
         // Testing:
-        //   RESULT CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&&);
+        //   RESULT CoroutineUtil::synchronize(CoroutineTask<RESULT>&&);
         // --------------------------------------------------------------------
 
         if (verbose) cout << "\n`synchronize`"
@@ -2989,12 +3051,12 @@ int main(int argc, char *argv[])
 
         // P-1
         ASSERT(
-             bsl::is_void_v<decltype(ntsa::CoroutineTaskUtil::synchronize(coReturnValue<void>()))>);
-        ASSERT(getValue<int>() == ntsa::CoroutineTaskUtil::synchronize(coReturnValue<int>()));
+             bsl::is_void_v<decltype(ntsa::CoroutineUtil::synchronize(coReturnValue<void>()))>);
+        ASSERT(getValue<int>() == ntsa::CoroutineUtil::synchronize(coReturnValue<int>()));
         ASSERT(&getValue<int&>() == &ntsa::SimplTaskUtil::synchronize(coReturnValue<int&>()));
         {
             int&& expectedRef = getValue<int&&>();
-            int&& actualRef   = ntsa::CoroutineTaskUtil::synchronize(coReturnValue<int&&>());
+            int&& actualRef   = ntsa::CoroutineUtil::synchronize(coReturnValue<int&&>());
             ASSERT(&expectedRef == &actualRef);
         }
 
@@ -3008,7 +3070,7 @@ int main(int argc, char *argv[])
             };
 
             try {
-                ntsa::CoroutineTaskUtil::synchronize(throwingCoro());
+                ntsa::CoroutineUtil::synchronize(throwingCoro());
             } catch (int ex) {
                 thrownValue = ex;
             }
@@ -3051,7 +3113,7 @@ int main(int argc, char *argv[])
             co_return 3;
         }();
 
-        ASSERT(3 == ntsa::CoroutineTaskUtil::synchronize(bsl::move(awaitingTask)));
+        ASSERT(3 == ntsa::CoroutineUtil::synchronize(bsl::move(awaitingTask)));
 
         // P-4
         doP4();
@@ -3085,7 +3147,7 @@ int main(int argc, char *argv[])
 #ifdef BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY
         auto task = []() -> bdxa::CoroutineTask<> { co_return; }();
         ASSERT((bsl::is_same_v<bdxa::CoroutineTask<void>, decltype(task)>));
-        ntsa::CoroutineTaskUtil::synchronize(bsl::move(task));
+        ntsa::CoroutineUtil::synchronize(bsl::move(task));
 #else
         cout << "Skipping breathing test before C++20...\n";
         ASSERT(true);

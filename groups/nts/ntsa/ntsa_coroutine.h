@@ -128,6 +128,49 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntsa {
 
+template <typename RESULT>
+class CoroutineTask;
+
+template <typename RESULT>
+class CoroutineTaskContext;
+
+template <typename RESULT>
+class CoroutineTaskPromise;
+
+template <typename RESULT>
+class CoroutineTaskPrologAwaitable;
+
+template <typename RESULT>
+class CoroutineTaskEpilogAwaitable;
+
+template <typename RESULT>
+class CoroutineTaskResultAwaitable;
+
+template <typename RESULT>
+class CoroutineGenerator;
+
+template <typename RESULT>
+class CoroutineGeneratorContext;
+
+template <typename RESULT>
+class CoroutineGeneratorPromise;
+
+template <typename RESULT>
+class CoroutineGeneratorPrologAwaitable;
+
+template <typename RESULT>
+class CoroutineGeneratorEpilogAwaitable;
+
+template <typename RESULT>
+class CoroutineGeneratorResultAwaitable;
+
+class CoroutineSynchronization;
+class CoroutineSynchronizationContext;
+class CoroutineSynchronizationPromise;
+class CoroutineSynchronizationPrologAwaitable;
+class CoroutineSynchronizationEpilogAwaitable;
+class CoroutineSynchronizationResultAwaitable;
+
 /// @internal @brief
 /// Provide meta functions for coroutines and awaiters.
 ///
@@ -150,32 +193,32 @@ class CoroutineMeta
         }
     };
 
-    template <typename T>
-    struct unwrap_reference {
-        using type = T;
+    template <typename TYPE>
+    struct UnwrapReference {
+        using type = TYPE;
     };
 
-    template <typename T>
-    struct unwrap_reference<std::reference_wrapper<T> > {
-        using type = T;
+    template <typename TYPE>
+    struct UnwrapReference<std::reference_wrapper<TYPE> > {
+        using type = TYPE;
     };
 
-    template <typename T>
-    using unwrap_reference_t = typename unwrap_reference<T>::type;
+    template <typename TYPE>
+    using UnwrapReferenceType = typename UnwrapReference<TYPE>::type;
 
-    template <typename T>
-    struct remove_rvalue_reference {
-        using type = T;
+    template <typename TYPE>
+    struct RemoveRvalueReference {
+        using type = TYPE;
     };
 
-    template <typename T>
-    struct remove_rvalue_reference<T&&> {
-        using type = T;
+    template <typename TYPE>
+    struct RemoveRvalueReference<TYPE&&> {
+        using type = TYPE;
     };
 
-    template <typename T>
-    using remove_rvalue_reference_t =
-        typename remove_rvalue_reference<T>::type;
+    template <typename TYPE>
+    using RemoveRvalueReferenceType =
+        typename RemoveRvalueReference<TYPE>::type;
 
     template <typename TYPE>
     struct IsCoroutineHandle : std::false_type {
@@ -209,312 +252,241 @@ class CoroutineMeta
         TYPE,
         std::void_t<decltype(std::declval<TYPE>().await_ready()),
                     decltype(std::declval<TYPE>().await_suspend(
-                        std::declval<bsl::coroutine_handle<> >())),
+                        std::declval<bsl::coroutine_handle<void> >())),
                     decltype(std::declval<TYPE>().await_resume())> >
-    : std::conjunction<
-          std::is_constructible<bool,
-                                decltype(std::declval<TYPE>().await_ready())>,
-          CoroutineMeta::IsValidReturnForAwaitSuspend<decltype(
-              std::declval<TYPE>().await_suspend(
-                  std::declval<bsl::coroutine_handle<> >()))>,
-          CoroutineMeta::IsValidReturnForAwaitResume<decltype(
-              std::declval<TYPE>().await_resume())> > {
+    : std::conjunction<CoroutineMeta::IsValidReturnForAwaitReady<decltype(
+                           std::declval<TYPE>().await_ready())>,
+                       CoroutineMeta::IsValidReturnForAwaitSuspend<decltype(
+                           std::declval<TYPE>().await_suspend(
+                               std::declval<bsl::coroutine_handle<void> >()))>,
+                       CoroutineMeta::IsValidReturnForAwaitResume<decltype(
+                           std::declval<TYPE>().await_resume())> > {
     };
 
-    template <typename T>
-    static auto get_awaiter_impl(T&& value, int)
-        noexcept(noexcept(static_cast<T&&>(value).operator co_await()))
-            -> decltype(static_cast<T&&>(value).operator co_await())
+    template <typename TYPE>
+    static auto getAwaiterImpl(TYPE&& value, int)
+        noexcept(noexcept(static_cast<TYPE&&>(value).operator co_await()))
+            -> decltype(static_cast<TYPE&&>(value).operator co_await())
     {
-        return static_cast<T&&>(value).operator co_await();
+        return static_cast<TYPE&&>(value).operator co_await();
     }
 
-    template <typename T>
-    static auto get_awaiter_impl(T&& value, long)
-        noexcept(noexcept(operator co_await(static_cast<T&&>(value))))
-            -> decltype(operator co_await(static_cast<T&&>(value)))
+    template <typename TYPE>
+    static auto getAwaiterImpl(TYPE&& value, long)
+        noexcept(noexcept(operator co_await(static_cast<TYPE&&>(value))))
+            -> decltype(operator co_await(static_cast<TYPE&&>(value)))
     {
-        return operator co_await(static_cast<T&&>(value));
+        return operator co_await(static_cast<TYPE&&>(value));
     }
 
-    template <typename T,
-              std::enable_if_t<CoroutineMeta::IsAwaiter<T&&>::value, int> = 0>
-    static T&& get_awaiter_impl(T&& value, CoroutineMeta::Any) noexcept
+    template <
+        typename TYPE,
+        std::enable_if_t<CoroutineMeta::IsAwaiter<TYPE&&>::value, int> = 0>
+    static TYPE&& getAwaiterImpl(TYPE&& value, CoroutineMeta::Any) noexcept
     {
-        return static_cast<T&&>(value);
+        return static_cast<TYPE&&>(value);
     }
 
-    template <typename T>
-    static auto get_awaiter(T&& value) noexcept(noexcept(
-        CoroutineMeta::get_awaiter_impl(static_cast<T&&>(value), 123)))
-        -> decltype(CoroutineMeta::get_awaiter_impl(static_cast<T&&>(value),
-                                                    123))
+    template <typename TYPE>
+    static auto getAwaiter(TYPE&& value) noexcept(noexcept(
+        CoroutineMeta::getAwaiterImpl(static_cast<TYPE&&>(value), 123)))
+        -> decltype(CoroutineMeta::getAwaiterImpl(static_cast<TYPE&&>(value),
+                                                  123))
     {
-        return CoroutineMeta::get_awaiter_impl(static_cast<T&&>(value), 123);
+        return CoroutineMeta::getAwaiterImpl(static_cast<TYPE&&>(value), 123);
     }
 
-    template <typename T, typename = std::void_t<> >
+    template <typename TYPE, typename = std::void_t<> >
     struct IsAwaitable : std::false_type {
     };
 
-    template <typename T>
-    struct IsAwaitable<
-        T,
-        std::void_t<decltype(CoroutineMeta::get_awaiter(std::declval<T>()))> >
-    : std::true_type {
+    template <typename TYPE>
+    struct IsAwaitable<TYPE,
+                       std::void_t<decltype(CoroutineMeta::getAwaiter(
+                           std::declval<TYPE>()))> > : std::true_type {
     };
 
-    template <typename T>
-    constexpr static bool IsAwaitableValue = IsAwaitable<T>::value;
+    template <typename TYPE>
+    constexpr static bool IsAwaitableValue = IsAwaitable<TYPE>::value;
 
     template <typename TYPE, typename = void>
-    struct awaitable_traits {
+    struct AwaitableTraits {
     };
 
-    template <typename T>
-    struct awaitable_traits<T,
-                            std::void_t<decltype(CoroutineMeta::get_awaiter(
-                                std::declval<T>()))> > {
-        using awaiter_t =
-            decltype(CoroutineMeta::get_awaiter(std::declval<T>()));
+    template <typename TYPE>
+    struct AwaitableTraits<TYPE,
+                           std::void_t<decltype(CoroutineMeta::getAwaiter(
+                               std::declval<TYPE>()))> > {
+        using AwaiterType =
+            decltype(CoroutineMeta::getAwaiter(std::declval<TYPE>()));
 
-        using await_result_t =
-            decltype(std::declval<awaiter_t>().await_resume());
+        using AwaitResultType =
+            decltype(std::declval<AwaiterType>().await_resume());
     };
 
-    template <typename FUNC, typename AWAITABLE>
-    class fmap_awaiter
+    template <typename FUNCTION, typename AWAITABLE>
+    class FunctionMapAwaiter
     {
-        using awaiter_t =
-            typename CoroutineMeta::awaitable_traits<AWAITABLE&&>::awaiter_t;
-        FUNC&&    m_func;
-        awaiter_t m_awaiter;
+        using AwaiterType =
+            typename CoroutineMeta::AwaitableTraits<AWAITABLE&&>::AwaiterType;
+
+        FUNCTION&&  m_function;
+        AwaiterType m_awaiter;
 
       public:
-        fmap_awaiter(FUNC&& func, AWAITABLE&& awaitable)
-            noexcept(std::is_nothrow_move_constructible_v<awaiter_t>&&
-                         noexcept(CoroutineMeta::get_awaiter(
+        FunctionMapAwaiter(FUNCTION&& function, AWAITABLE&& awaitable)
+            noexcept(std::is_nothrow_move_constructible_v<AwaiterType>&&
+                         noexcept(CoroutineMeta::getAwaiter(
                              static_cast<AWAITABLE&&>(awaitable))))
-        : m_func(static_cast<FUNC&&>(func))
+        : m_function(static_cast<FUNCTION&&>(function))
         , m_awaiter(
-              CoroutineMeta::get_awaiter(static_cast<AWAITABLE&&>(awaitable)))
+              CoroutineMeta::getAwaiter(static_cast<AWAITABLE&&>(awaitable)))
         {
         }
 
         decltype(auto) await_ready() noexcept(
-            noexcept(static_cast<awaiter_t&&>(m_awaiter).await_ready()))
+            noexcept(static_cast<AwaiterType&&>(m_awaiter).await_ready()))
         {
-            return static_cast<awaiter_t&&>(m_awaiter).await_ready();
+            return static_cast<AwaiterType&&>(m_awaiter).await_ready();
         }
 
         template <typename PROMISE>
         decltype(auto) await_suspend(std::coroutine_handle<PROMISE> coro)
-            noexcept(noexcept(static_cast<awaiter_t&&>(m_awaiter)
+            noexcept(noexcept(static_cast<AwaiterType&&>(m_awaiter)
                                   .await_suspend(std::move(coro))))
         {
-            return static_cast<awaiter_t&&>(m_awaiter).await_suspend(
+            return static_cast<AwaiterType&&>(m_awaiter).await_suspend(
                 std::move(coro));
         }
 
-        template <typename AWAIT_RESULT =
-                      decltype(std::declval<awaiter_t>().await_resume()),
-                  std::enable_if_t<std::is_void_v<AWAIT_RESULT>, int> = 0>
-        decltype(auto) await_resume()
-            noexcept(noexcept(std::invoke(static_cast<FUNC&&>(m_func))))
+        template <typename RESULT =
+                      decltype(std::declval<AwaiterType>().await_resume()),
+                  std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
+        decltype(auto) await_resume() noexcept(
+            noexcept(std::invoke(static_cast<FUNCTION&&>(m_function))))
         {
-            static_cast<awaiter_t&&>(m_awaiter).await_resume();
-            return std::invoke(static_cast<FUNC&&>(m_func));
+            static_cast<AwaiterType&&>(m_awaiter).await_resume();
+            return std::invoke(static_cast<FUNCTION&&>(m_function));
         }
 
-        template <typename AWAIT_RESULT =
-                      decltype(std::declval<awaiter_t>().await_resume()),
-                  std::enable_if_t<!std::is_void_v<AWAIT_RESULT>, int> = 0>
+        template <typename RESULT =
+                      decltype(std::declval<AwaiterType>().await_resume()),
+                  std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
         decltype(auto) await_resume() noexcept(noexcept(
-            std::invoke(static_cast<FUNC&&>(m_func),
-                        static_cast<awaiter_t&&>(m_awaiter).await_resume())))
+            std::invoke(static_cast<FUNCTION&&>(m_function),
+                        static_cast<AwaiterType&&>(m_awaiter).await_resume())))
         {
             return std::invoke(
-                static_cast<FUNC&&>(m_func),
-                static_cast<awaiter_t&&>(m_awaiter).await_resume());
+                static_cast<FUNCTION&&>(m_function),
+                static_cast<AwaiterType&&>(m_awaiter).await_resume());
         }
     };
 
-    template <typename FUNC, typename AWAITABLE>
-    class fmap_awaitable
+    template <typename FUNCTION, typename AWAITABLE>
+    class FunctionMapAwaitable
     {
-        static_assert(!std::is_lvalue_reference_v<FUNC>);
+        static_assert(!std::is_lvalue_reference_v<FUNCTION>);
         static_assert(!std::is_lvalue_reference_v<AWAITABLE>);
 
       public:
-        template <typename FUNC_ARG,
+        template <typename FUNCTION_ARG,
                   typename AWAITABLE_ARG,
                   std::enable_if_t<
-                      std::is_constructible_v<FUNC, FUNC_ARG&&> &&
+                      std::is_constructible_v<FUNCTION, FUNCTION_ARG&&> &&
                           std::is_constructible_v<AWAITABLE, AWAITABLE_ARG&&>,
                       int> = 0>
-        explicit fmap_awaitable(FUNC_ARG&& func, AWAITABLE_ARG&& awaitable)
-            noexcept(std::is_nothrow_constructible_v<FUNC, FUNC_ARG&&>&&
-                         std::is_nothrow_constructible_v<AWAITABLE,
-                                                         AWAITABLE_ARG&&>)
-        : m_func(static_cast<FUNC_ARG&&>(func))
+        explicit FunctionMapAwaitable(FUNCTION_ARG&&  function,
+                                      AWAITABLE_ARG&& awaitable)
+            noexcept(
+                std::is_nothrow_constructible_v<FUNCTION, FUNCTION_ARG&&>&&
+                    std::is_nothrow_constructible_v<AWAITABLE,
+                                                    AWAITABLE_ARG&&>)
+        : m_function(static_cast<FUNCTION_ARG&&>(function))
         , m_awaitable(static_cast<AWAITABLE_ARG&&>(awaitable))
         {
         }
 
         auto operator co_await() const&
         {
-            return fmap_awaiter<const FUNC&, const AWAITABLE&>(m_func,
-                                                               m_awaitable);
+            return FunctionMapAwaiter<const FUNCTION&, const AWAITABLE&>(
+                m_function,
+                m_awaitable);
         }
 
         auto operator co_await() &
         {
-            return fmap_awaiter<FUNC&, AWAITABLE&>(m_func, m_awaitable);
+            return FunctionMapAwaiter<FUNCTION&, AWAITABLE&>(m_function,
+                                                             m_awaitable);
         }
 
         auto operator co_await() &&
         {
-            return fmap_awaiter<FUNC&&, AWAITABLE&&>(
-                static_cast<FUNC&&>(m_func),
+            return FunctionMapAwaiter<FUNCTION&&, AWAITABLE&&>(
+                static_cast<FUNCTION&&>(m_function),
                 static_cast<AWAITABLE&&>(m_awaitable));
         }
 
       private:
-        FUNC      m_func;
+        FUNCTION  m_function;
         AWAITABLE m_awaitable;
     };
 
-    template <typename FUNC>
-    struct fmap_transform {
-        explicit fmap_transform(FUNC&& f)
-            noexcept(std::is_nothrow_move_constructible_v<FUNC>)
-        : func(std::forward<FUNC>(f))
+    template <typename FUNCTION>
+    struct FunctionMapTransform {
+        explicit FunctionMapTransform(FUNCTION&& f)
+            noexcept(std::is_nothrow_move_constructible_v<FUNCTION>)
+        : function(std::forward<FUNCTION>(f))
         {
         }
 
-        FUNC func;
+        FUNCTION function;
     };
 
     template <
-        typename FUNC,
+        typename FUNCTION,
         typename AWAITABLE,
         std::enable_if_t<CoroutineMeta::IsAwaitableValue<AWAITABLE>, int> = 0>
-    static auto fmap(FUNC&& func, AWAITABLE&& awaitable)
+    static auto functionMap(FUNCTION&& function, AWAITABLE&& awaitable)
     {
-        return CoroutineMeta::fmap_awaitable<
-            std::remove_cv_t<std::remove_reference_t<FUNC> >,
+        return CoroutineMeta::FunctionMapAwaitable<
+            std::remove_cv_t<std::remove_reference_t<FUNCTION> >,
             std::remove_cv_t<std::remove_reference_t<AWAITABLE> > >(
-            std::forward<FUNC>(func),
+            std::forward<FUNCTION>(function),
             std::forward<AWAITABLE>(awaitable));
     }
 
-    template <typename FUNC>
-    static auto fmap(FUNC&& func)
+    template <typename FUNCTION>
+    static auto functionMap(FUNCTION&& function)
     {
-        return fmap_transform<FUNC>{std::forward<FUNC>(func)};
+        return FunctionMapTransform<FUNCTION>{
+            std::forward<FUNCTION>(function)};
     }
 };
 
-template <typename T, typename FUNC>
-decltype(auto) operator|(T &&                                  value,
-                         CoroutineMeta::fmap_transform<FUNC>&& transform)
+template <typename TYPE, typename FUNCTION>
+decltype(
+    auto) operator|(TYPE &&                                         value,
+                    CoroutineMeta::FunctionMapTransform<FUNCTION>&& transform)
 {
-    // Use ADL for finding fmap() overload.
-    return fmap(std::forward<FUNC>(transform.func), std::forward<T>(value));
+    return functionMap(std::forward<FUNCTION>(transform.function),
+                       std::forward<TYPE>(value));
 }
 
-template <typename T, typename FUNC>
-decltype(auto) operator|(T &&                                       value,
-                         const CoroutineMeta::fmap_transform<FUNC>& transform)
+template <typename TYPE, typename FUNCTION>
+decltype(auto) operator|(TYPE && value,
+                         const CoroutineMeta::FunctionMapTransform<FUNCTION>&
+                             transform)
 {
-    // Use ADL for finding fmap() overload.
-    return fmap(transform.func, std::forward<T>(value));
+    return functionMap(transform.function, std::forward<TYPE>(value));
 }
 
-template <typename T, typename FUNC>
-decltype(auto) operator|(T &&                                 value,
-                         CoroutineMeta::fmap_transform<FUNC>& transform)
+template <typename TYPE, typename FUNCTION>
+decltype(
+    auto) operator|(TYPE &&                                        value,
+                    CoroutineMeta::FunctionMapTransform<FUNCTION>& transform)
 {
-    // Use ADL for finding fmap() overload.
-    return fmap(transform.func, std::forward<T>(value));
+    return functionMap(transform.function, std::forward<TYPE>(value));
 }
-
-/// @internal @brief
-/// Provide an awaitable value that is immediately ready.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntsa
-template <typename T>
-struct AwaitableValue {
-    AwaitableValue(T value)
-    : d_value(std::move(value))
-    {
-    }
-
-    bool await_ready() const noexcept
-    {
-        return true;
-    }
-
-    void await_suspend(bsl::coroutine_handle<>) const noexcept
-    {
-    }
-
-    T await_resume() noexcept
-    {
-        return std::move(d_value);
-    }
-
-    T d_value;
-};
-
-/// @internal @brief
-/// Provide an awaitable void that is immediately ready.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntsa
-template <>
-struct AwaitableValue<void> {
-    AwaitableValue()
-    {
-    }
-
-    bool await_ready() const noexcept
-    {
-        return true;
-    }
-
-    void await_suspend(bsl::coroutine_handle<>) const noexcept
-    {
-    }
-
-    void await_resume() noexcept
-    {
-        return;
-    }
-};
-
-template <typename RESULT>
-class CoroutineTask;
-
-template <typename RESULT>
-class CoroutineTaskContext;
-
-template <typename RESULT>
-class CoroutineTaskPromise;
-
-template <typename RESULT>
-class CoroutineTaskPrologAwaitable;
-
-template <typename RESULT>
-class CoroutineTaskEpilogAwaitable;
-
-template <typename RESULT>
-class CoroutineTaskResultAwaitable;
 
 /// Defines a type alias for a coroutine handle templation instantiation using
 /// the coroutine task's promise type.
@@ -961,25 +933,6 @@ class CoroutineTaskResult<RESULT>
     /// Store the current exception so that it can be rethrown when 'release'
     /// is called.
     void unhandled_exception();
-};
-
-/// This component-private class provides the implementation for allocation and
-/// deallocation of 'CoroutineTask' coroutine frames.
-class CoroutineTaskPromiseUtil
-{
-  public:
-    /// Defines a type alias for the allocator type.
-    using Allocator = ntsa::Allocator;
-
-    /// Return a pointer to a maximally aligned block of memory having at least
-    /// the specified 'size', allocated using the specified 'allocator'.
-    static void* allocate(bsl::size_t size, const Allocator& allocator);
-
-    /// Deallocate the block of memory pointed to by the specified 'ptr'.  The
-    /// behavior is undefined unless 'ptr' was returned by one of the
-    /// 'operator new' functions declared above and the specified 'size' equals
-    /// the 'size' argument that was passed to that 'operator new' function.
-    static void deallocate(void* ptr, bsl::size_t size);
 };
 
 /// @internal @brief
@@ -1616,8 +1569,255 @@ class CoroutineTask
     CoroutineTaskContext<RESULT>* d_context;
 
     /// Allow utilities to access private members of this class.
-    friend class CoroutineTaskUtil;
+    friend class CoroutineUtil;
 };
+
+// MRM: generator
+#if 0
+
+template <typename T>
+class generator_promise
+{
+  public:
+    using value_type     = std::remove_reference_t<T>;
+    using reference_type = std::conditional_t<std::is_reference_v<T>, T, T&>;
+    using pointer_type   = value_type*;
+
+    generator_promise() = default;
+
+    constexpr std::experimental::suspend_always initial_suspend()
+        const noexcept
+    {
+        return {};
+    }
+
+    constexpr std::experimental::suspend_always final_suspend() const noexcept
+    {
+        return {};
+    }
+
+    template <typename U                                                 = T,
+              std::enable_if_t<!std::is_rvalue_reference<U>::value, int> = 0>
+    std::experimental::suspend_always yield_value(
+        std::remove_reference_t<T>& value) noexcept
+    {
+        m_value = std::addressof(value);
+        return {};
+    }
+
+    std::experimental::suspend_always yield_value(
+        std::remove_reference_t<T>&& value) noexcept
+    {
+        m_value = std::addressof(value);
+        return {};
+    }
+
+    void unhandled_exception()
+    {
+        m_exception = std::current_exception();
+    }
+
+    void return_void()
+    {
+    }
+
+    reference_type value() const noexcept
+    {
+        return static_cast<reference_type>(*m_value);
+    }
+
+    // Don't allow any use of 'co_await' inside the generator coroutine.
+    template <typename U>
+    std::experimental::suspend_never await_transform(U&& value) = delete;
+
+    void rethrow_if_exception()
+    {
+        if (m_exception) {
+            std::rethrow_exception(m_exception);
+        }
+    }
+
+    generator<T> get_return_object() noexcept;
+
+  private:
+    pointer_type       m_value;
+    std::exception_ptr m_exception;
+};
+
+struct generator_sentinel {
+};
+
+template <typename T>
+class generator_iterator
+{
+    using coroutine_handle =
+        std::experimental::coroutine_handle<generator_promise<T> >;
+
+  public:
+    using iterator_category = std::input_iterator_tag;
+    // What type should we use for counting elements of a potentially infinite sequence?
+    using difference_type = std::ptrdiff_t;
+    using value_type      = typename generator_promise<T>::value_type;
+    using reference       = typename generator_promise<T>::reference_type;
+    using pointer         = typename generator_promise<T>::pointer_type;
+
+    // Iterator needs to be default-constructible to satisfy the Range concept.
+    generator_iterator() noexcept : m_coroutine(nullptr)
+    {
+    }
+
+    explicit generator_iterator(coroutine_handle coroutine) noexcept
+    : m_coroutine(coroutine)
+    {
+    }
+
+    friend bool operator==(const generator_iterator& it,
+                           generator_sentinel) noexcept
+    {
+        return !it.m_coroutine || it.m_coroutine.done();
+    }
+
+    friend bool operator!=(const generator_iterator& it,
+                           generator_sentinel        s) noexcept
+    {
+        return !(it == s);
+    }
+
+    friend bool operator==(generator_sentinel        s,
+                           const generator_iterator& it) noexcept
+    {
+        return (it == s);
+    }
+
+    friend bool operator!=(generator_sentinel        s,
+                           const generator_iterator& it) noexcept
+    {
+        return it != s;
+    }
+
+    generator_iterator& operator++()
+    {
+        m_coroutine.resume();
+        if (m_coroutine.done()) {
+            m_coroutine.promise().rethrow_if_exception();
+        }
+
+        return *this;
+    }
+
+    // Need to provide post-increment operator to implement the 'Range' concept.
+    void operator++(int)
+    {
+        (void)operator++();
+    }
+
+    reference operator*() const noexcept
+    {
+        return m_coroutine.promise().value();
+    }
+
+    pointer operator->() const noexcept
+    {
+        return std::addressof(operator*());
+    }
+
+  private:
+    coroutine_handle m_coroutine;
+};
+
+template <typename T>
+class [[nodiscard]] generator
+{
+  public:
+    using promise_type = detail::generator_promise<T>;
+    using iterator     = detail::generator_iterator<T>;
+
+    generator() noexcept : m_coroutine(nullptr)
+    {
+    }
+
+    generator(generator&& other) noexcept : m_coroutine(other.m_coroutine)
+    {
+        other.m_coroutine = nullptr;
+    }
+
+    generator(const generator& other) = delete;
+
+    ~generator()
+    {
+        if (m_coroutine) {
+            m_coroutine.destroy();
+        }
+    }
+
+    generator& operator=(generator other) noexcept
+    {
+        swap(other);
+        return *this;
+    }
+
+    iterator begin()
+    {
+        if (m_coroutine) {
+            m_coroutine.resume();
+            if (m_coroutine.done()) {
+                m_coroutine.promise().rethrow_if_exception();
+            }
+        }
+
+        return iterator{m_coroutine};
+    }
+
+    detail::generator_sentinel end() noexcept
+    {
+        return detail::generator_sentinel{};
+    }
+
+    void swap(generator& other) noexcept
+    {
+        std::swap(m_coroutine, other.m_coroutine);
+    }
+
+  private:
+    friend class detail::generator_promise<T>;
+
+    explicit generator(
+        std::experimental::coroutine_handle<promise_type> coroutine) noexcept
+    : m_coroutine(coroutine)
+    {
+    }
+
+    std::experimental::coroutine_handle<promise_type> m_coroutine;
+};
+
+template <typename T>
+generator<T> generator_promise<T>::get_return_object() noexcept
+{
+    using coroutine_handle =
+        std::experimental::coroutine_handle<generator_promise<T> >;
+    return generator<T>{coroutine_handle::from_promise(*this)};
+}
+
+// MRM
+#if 0
+template<typename T>
+void swap(generator<T>& a, generator<T>& b)
+{
+    a.swap(b);
+}
+
+
+template<typename FUNC, typename T>
+generator<std::invoke_result_t<FUNC&, typename generator<T>::iterator::reference>> fmap(FUNC func, generator<T> source)
+{
+    for (auto&& value : source)
+    {
+        co_yield std::invoke(func, static_cast<decltype(value)>(value));
+    }
+}
+#endif
+
+#endif  // MRM: generator
 
 /// @internal @brief
 /// Provide utilities for coroutine tasks.
@@ -1626,9 +1826,22 @@ class CoroutineTask
 /// This class is thread safe.
 ///
 /// @ingroup module_ntsa
-class CoroutineTaskUtil
+class CoroutineUtil
 {
   public:
+    /// Defines a type alias for the allocator type.
+    using Allocator = ntsa::Allocator;
+
+    /// Return a pointer to a maximally aligned block of memory having at least
+    /// the specified 'size', allocated using the specified 'allocator'.
+    static void* allocate(bsl::size_t size, const Allocator& allocator);
+
+    /// Deallocate the block of memory pointed to by the specified 'ptr'.  The
+    /// behavior is undefined unless 'ptr' was returned by one of the
+    /// 'operator new' functions declared above and the specified 'size' equals
+    /// the 'size' argument that was passed to that 'operator new' function.
+    static void deallocate(void* ptr, bsl::size_t size);
+
     /// Await the specified 'task' and block the calling thread until the
     /// coroutine referred to by 'task' has either returned or exited by
     /// throwing an exception.  Return the result of the coroutine, or else
@@ -1636,13 +1849,6 @@ class CoroutineTaskUtil
     template <typename RESULT>
     static RESULT synchronize(CoroutineTask<RESULT>&& task);
 };
-
-class CoroutineSynchronization;
-class CoroutineSynchronizationContext;
-class CoroutineSynchronizationPrologAwaitable;
-class CoroutineSynchronizationEpilogAwaitable;
-class CoroutineSynchronizationResultAwaitable;
-class CoroutineSynchronizationPromise;
 
 /// @internal @brief
 /// Provide state for a coroutine synchronization.
@@ -3007,7 +3213,7 @@ NTSCFG_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
     bsl::convertible_to<Alloc> auto&& alloc,
     auto&&...)
 {
-    return CoroutineTaskPromiseUtil::allocate(size, alloc);
+    return CoroutineUtil::allocate(size, alloc);
 }
 
 template <typename RESULT>
@@ -3018,7 +3224,7 @@ NTSCFG_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
     bsl::convertible_to<Alloc> auto&& alloc,
     auto&&...)
 {
-    return CoroutineTaskPromiseUtil::allocate(size, alloc);
+    return CoroutineUtil::allocate(size, alloc);
 }
 
 template <typename RESULT>
@@ -3026,7 +3232,7 @@ NTSCFG_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
     bsl::size_t size,
     auto&&...)
 {
-    return CoroutineTaskPromiseUtil::allocate(size, Alloc());
+    return CoroutineUtil::allocate(size, Alloc());
 }
 
 template <typename RESULT>
@@ -3034,7 +3240,7 @@ NTSCFG_INLINE void CoroutineTaskPromise<RESULT>::operator delete(
     void*       ptr,
     bsl::size_t size)
 {
-    CoroutineTaskPromiseUtil::deallocate(ptr, size);
+    CoroutineUtil::deallocate(ptr, size);
 }
 
 template <typename RESULT>
@@ -3211,9 +3417,13 @@ NTSCFG_INLINE ntsa::Allocator CoroutineTask<RESULT>::allocator() const
     }
 }
 
+// MRM: generator
+#if 0
+
+#endif  // MRM: generator
+
 template <typename RESULT>
-NTSCFG_INLINE RESULT
-CoroutineTaskUtil::synchronize(CoroutineTask<RESULT>&& task)
+NTSCFG_INLINE RESULT CoroutineUtil::synchronize(CoroutineTask<RESULT>&& task)
 {
     // The idea is to create an auxiliary coroutine that will resume the
     // 'CoroutineTask' for us, setting itself as the awaiter.  So that coroutine
@@ -3436,14 +3646,14 @@ NTSCFG_INLINE void* CoroutineSynchronizationPromise::operator new(
     bsl::size_t                      size,
     CoroutineSynchronizationContext* state)
 {
-    return CoroutineTaskPromiseUtil::allocate(size, state->allocator());
+    return CoroutineUtil::allocate(size, state->allocator());
 }
 
 NTSCFG_INLINE void CoroutineSynchronizationPromise::operator delete(
     void*       ptr,
     bsl::size_t size)
 {
-    CoroutineTaskPromiseUtil::deallocate(ptr, size);
+    CoroutineUtil::deallocate(ptr, size);
 }
 
 NTSCFG_INLINE
@@ -3550,8 +3760,8 @@ class CoroutineBarrierCounter
     }
 
   protected:
-    bsl::atomic<bsl::size_t> m_count;
-    bsl::coroutine_handle<>  m_awaitingCoroutine;
+    bsl::atomic<bsl::size_t>    m_count;
+    bsl::coroutine_handle<void> m_awaitingCoroutine;
 };
 
 template <>
@@ -4050,8 +4260,8 @@ class CoroutineBarrierUtil
 {
   private:
     template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMeta::awaitable_traits<
-                  AWAITABLE&&>::await_result_t,
+              typename RESULT = typename CoroutineMeta::AwaitableTraits<
+                  AWAITABLE&&>::AwaitResultType,
               std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
     static when_all_task<RESULT> make_when_all_task(AWAITABLE awaitable)
     {
@@ -4059,8 +4269,8 @@ class CoroutineBarrierUtil
     }
 
     template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMeta::awaitable_traits<
-                  AWAITABLE&&>::await_result_t,
+              typename RESULT = typename CoroutineMeta::AwaitableTraits<
+                  AWAITABLE&&>::AwaitResultType,
               std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
     static when_all_task<void> make_when_all_task(AWAITABLE awaitable)
     {
@@ -4068,8 +4278,8 @@ class CoroutineBarrierUtil
     }
 
     template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMeta::awaitable_traits<
-                  AWAITABLE&>::await_result_t,
+              typename RESULT = typename CoroutineMeta::AwaitableTraits<
+                  AWAITABLE&>::AwaitResultType,
               std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
     static when_all_task<RESULT> make_when_all_task(
         std::reference_wrapper<AWAITABLE> awaitable)
@@ -4078,8 +4288,8 @@ class CoroutineBarrierUtil
     }
 
     template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMeta::awaitable_traits<
-                  AWAITABLE&>::await_result_t,
+              typename RESULT = typename CoroutineMeta::AwaitableTraits<
+                  AWAITABLE&>::AwaitResultType,
               std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
     static when_all_task<void> make_when_all_task(
         std::reference_wrapper<AWAITABLE> awaitable)
@@ -4091,24 +4301,24 @@ class CoroutineBarrierUtil
     template <
         typename... AWAITABLES,
         std::enable_if_t<std::conjunction_v<CoroutineMeta::IsAwaitable<
-                             CoroutineMeta::unwrap_reference_t<
+                             CoroutineMeta::UnwrapReferenceType<
                                  std::remove_reference_t<AWAITABLES> > >...>,
                          int> = 0>
     [[nodiscard]]
     NTSCFG_INLINE static auto when_all_ready(AWAITABLES&&... awaitables)
     {
         return when_all_ready_awaitable<
-            std::tuple<when_all_task<typename CoroutineMeta::awaitable_traits<
-                CoroutineMeta::unwrap_reference_t<std::remove_reference_t<
-                    AWAITABLES> > >::await_result_t>...> >(
+            std::tuple<when_all_task<typename CoroutineMeta::AwaitableTraits<
+                CoroutineMeta::UnwrapReferenceType<std::remove_reference_t<
+                    AWAITABLES> > >::AwaitResultType>...> >(
             std::make_tuple(
                 make_when_all_task(std::forward<AWAITABLES>(awaitables))...));
     }
 
     template <
         typename AWAITABLE,
-        typename RESULT = typename CoroutineMeta::awaitable_traits<
-            CoroutineMeta::unwrap_reference_t<AWAITABLE> >::await_result_t>
+        typename RESULT = typename CoroutineMeta::AwaitableTraits<
+            CoroutineMeta::UnwrapReferenceType<AWAITABLE> >::AwaitResultType>
     [[nodiscard]]
     static auto when_all_ready(std::vector<AWAITABLE> awaitables)
     {
@@ -4130,12 +4340,12 @@ class CoroutineBarrierUtil
     template <
         typename... AWAITABLES,
         std::enable_if_t<std::conjunction_v<CoroutineMeta::IsAwaitable<
-                             CoroutineMeta::unwrap_reference_t<
+                             CoroutineMeta::UnwrapReferenceType<
                                  std::remove_reference_t<AWAITABLES> > >...>,
                          int> = 0>
     [[nodiscard]] static auto when_all(AWAITABLES&&... awaitables)
     {
-        return CoroutineMeta::fmap(
+        return CoroutineMeta::functionMap(
             [](auto&& taskTuple) {
                 return std::apply(
                     [](auto&&... tasks) {
@@ -4153,13 +4363,13 @@ class CoroutineBarrierUtil
 
     template <
         typename AWAITABLE,
-        typename RESULT = typename CoroutineMeta::awaitable_traits<
-            CoroutineMeta::unwrap_reference_t<AWAITABLE> >::await_result_t,
+        typename RESULT = typename CoroutineMeta::AwaitableTraits<
+            CoroutineMeta::UnwrapReferenceType<AWAITABLE> >::AwaitResultType,
         std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
     [[nodiscard]]
     static auto when_all(std::vector<AWAITABLE> awaitables)
     {
-        return CoroutineMeta::fmap(
+        return CoroutineMeta::functionMap(
             [](auto&& taskVector) {
                 for (auto& task : taskVector) {
                     task.result();
@@ -4170,8 +4380,8 @@ class CoroutineBarrierUtil
 
     template <
         typename AWAITABLE,
-        typename RESULT = typename CoroutineMeta::awaitable_traits<
-            CoroutineMeta::unwrap_reference_t<AWAITABLE> >::await_result_t,
+        typename RESULT = typename CoroutineMeta::AwaitableTraits<
+            CoroutineMeta::UnwrapReferenceType<AWAITABLE> >::AwaitResultType,
         std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
     [[nodiscard]]
     static auto when_all(std::vector<AWAITABLE> awaitables)
@@ -4181,7 +4391,7 @@ class CoroutineBarrierUtil
             std::reference_wrapper<std::remove_reference_t<RESULT> >,
             std::remove_reference_t<RESULT> >;
 
-        return CoroutineMeta::fmap(
+        return CoroutineMeta::functionMap(
             [](auto&& taskVector) {
                 std::vector<result_t> results;
                 results.reserve(taskVector.size());
