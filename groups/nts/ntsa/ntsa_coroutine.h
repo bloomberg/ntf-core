@@ -1010,10 +1010,10 @@ class CoroutineTaskContext : public CoroutineTaskResult<RESULT>
     bool isComplete() const;
 
   private:
-    /// This class is not copy-construtable.
+    /// This class is not copy-constructable.
     CoroutineTaskContext(const CoroutineTaskContext&) = delete;
 
-    /// This class is not move-construtable.
+    /// This class is not move-constructable.
     CoroutineTaskContext(CoroutineTaskContext&&) = delete;
 
     /// This class is not copy-assignable.
@@ -1125,10 +1125,10 @@ class CoroutineTaskPrologAwaitable
     void await_resume() const noexcept;
 
   private:
-    /// This class is not copy-construtable.
+    /// This class is not copy-constructable.
     CoroutineTaskPrologAwaitable(const CoroutineTaskPrologAwaitable&) = delete;
 
-    /// This class is not move-construtable.
+    /// This class is not move-constructable.
     CoroutineTaskPrologAwaitable(CoroutineTaskPrologAwaitable&&) = delete;
 
     /// This class is not copy-assignable.
@@ -1225,10 +1225,10 @@ class CoroutineTaskEpilogAwaitable
     void await_resume() noexcept;
 
   private:
-    /// This class is not copy-construtable.
+    /// This class is not copy-constructable.
     CoroutineTaskEpilogAwaitable(const CoroutineTaskEpilogAwaitable&) = delete;
 
-    /// This class is not move-construtable.
+    /// This class is not move-constructable.
     CoroutineTaskEpilogAwaitable(CoroutineTaskEpilogAwaitable&&) = delete;
 
     /// This class is not copy-assignable.
@@ -1328,10 +1328,10 @@ class CoroutineTaskResultAwaitable
     RESULT await_resume();
 
   private:
-    /// This class is not copy-construtable.
+    /// This class is not copy-constructable.
     CoroutineTaskResultAwaitable(const CoroutineTaskResultAwaitable&) = delete;
 
-    /// This class is not move-construtable.
+    /// This class is not move-constructable.
     CoroutineTaskResultAwaitable(CoroutineTaskResultAwaitable&&) = delete;
 
     /// This class is not copy-assignable.
