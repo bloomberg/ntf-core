@@ -938,7 +938,7 @@ class CoroutineTaskResult<RESULT>
 ///
 /// @ingroup module_ntsa
 template <typename RESULT>
-class CoroutineTaskContext
+class CoroutineTaskContext : public CoroutineTaskResult<RESULT>
 {
   public:
     /// Defines a type alias for the type of the task result.
@@ -993,9 +993,6 @@ class CoroutineTaskContext
 
     /// Resume the current activation frame.
     void resumeCurrent();
-
-    /// Release the result or throw an exception.
-    RESULT release();
 
     /// Destroy the current activation frame.
     void destroy();
@@ -1358,7 +1355,7 @@ class CoroutineTaskResultAwaitable
 ///
 /// @ingroup module_ntsa
 template <typename RESULT>
-class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
+class CoroutineTaskPromise : public CoroutineTaskContext<RESULT>
 {
   public:
     /// Return a pointer to a maximally aligned block of memory having at least
@@ -1469,10 +1466,6 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 
     /// This class is not move-assignable.
     CoroutineTaskPromise& operator=(CoroutineTaskPromise&&);
-
-  private:
-    /// The coroutine context.
-    CoroutineTaskContext<RESULT> d_context;
 };
 
 /// @internal @brief
@@ -2834,7 +2827,8 @@ NTSCFG_INLINE void CoroutineTaskResult<RESULT>::release()
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext()
-: d_current(nullptr)
+: CoroutineTaskResult<RESULT>()
+, d_current(nullptr)
 , d_awaiter(nullptr)
 , d_allocator()
 {
@@ -2843,7 +2837,8 @@ NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext()
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext(
     ntsa::Allocator allocator)
-: d_current(nullptr)
+: CoroutineTaskResult<RESULT>(allocator)
+, d_current(nullptr)
 , d_awaiter(nullptr)
 , d_allocator(allocator)
 {
@@ -2888,13 +2883,6 @@ NTSCFG_INLINE void CoroutineTaskContext<RESULT>::resumeCurrent()
 {
     BSLS_ASSERT(d_current.address() != nullptr);
     d_current.resume();
-}
-
-template <typename RESULT>
-NTSCFG_INLINE RESULT CoroutineTaskContext<RESULT>::release()
-{
-    BSLS_ASSERT(d_current.address() != nullptr);
-    return d_current.promise().release();
 }
 
 template <typename RESULT>
@@ -3100,10 +3088,9 @@ NTSCFG_INLINE void CoroutineTaskPromise<RESULT>::operator delete(
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise()
-: CoroutineTaskResult<RESULT>()
-, d_context()
+: CoroutineTaskContext<RESULT>()
 {
-    d_context.setCurrent(
+    this->setCurrent(
         bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
             *this));
 }
@@ -3111,10 +3098,9 @@ NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise()
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     ntsa::Allocator allocator)
-: CoroutineTaskResult<RESULT>(allocator.mechanism())
-, d_context(allocator)
+: CoroutineTaskContext<RESULT>(allocator)
 {
-    d_context.setCurrent(
+    this->setCurrent(
         bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
             *this));
 }
@@ -3123,10 +3109,9 @@ template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     auto&&...,
     ntsa::Allocator allocator)
-: CoroutineTaskResult<RESULT>(allocator.mechanism())
-, d_context(allocator)
+: CoroutineTaskContext<RESULT>(allocator)
 {
-    d_context.setCurrent(
+    this->setCurrent(
         bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
             *this));
 }
@@ -3136,10 +3121,9 @@ NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     bsl::allocator_arg_t,
     bsl::convertible_to<ntsa::Allocator> auto&& allocator,
     auto&&...)
-: CoroutineTaskResult<RESULT>(static_cast<decltype(allocator)>(allocator))
-, d_context(static_cast<decltype(allocator)>(allocator))
+: CoroutineTaskContext<RESULT>(static_cast<decltype(allocator)>(allocator))
 {
-    d_context.setCurrent(
+    this->setCurrent(
         bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
             *this));
 }
@@ -3150,20 +3134,18 @@ NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     bsl::allocator_arg_t,
     bsl::convertible_to<ntsa::Allocator> auto&& allocator,
     auto&&...)
-: CoroutineTaskResult<RESULT>(static_cast<decltype(allocator)>(allocator))
-, d_context(static_cast<decltype(allocator)>(allocator))
+: CoroutineTaskContext<RESULT>(static_cast<decltype(allocator)>(allocator))
 {
-    d_context.setCurrent(
+    this->setCurrent(
         bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
             *this));
 }
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(auto&&...)
-: CoroutineTaskResult<RESULT>()
-, d_context()
+: CoroutineTaskContext<RESULT>()
 {
-    d_context.setCurrent(
+    this->setCurrent(
         bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
             *this));
 }
@@ -3172,21 +3154,21 @@ template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPrologAwaitable<RESULT> CoroutineTaskPromise<
     RESULT>::initial_suspend()
 {
-    return CoroutineTaskPrologAwaitable<RESULT>(&d_context);
+    return CoroutineTaskPrologAwaitable<RESULT>(this);
 }
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskEpilogAwaitable<RESULT> CoroutineTaskPromise<
     RESULT>::final_suspend() noexcept
 {
-    return CoroutineTaskEpilogAwaitable<RESULT>(&d_context);
+    return CoroutineTaskEpilogAwaitable<RESULT>(this);
 }
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTask<RESULT> CoroutineTaskPromise<
     RESULT>::get_return_object()
 {
-    return CoroutineTask(&d_context);
+    return CoroutineTask(this);
 }
 
 template <typename RESULT>
