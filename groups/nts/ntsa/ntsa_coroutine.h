@@ -767,6 +767,9 @@ class CoroutineTaskResult
     /// such a result object is created and is allocator-aware.
     explicit CoroutineTaskResult(ntsa::Allocator allocator);
 
+    /// Destroy this object.
+    ~CoroutineTaskResult();
+
     /// Construct a held object of type 'RESULT' by implicit conversion from
     /// the specified 'arg' (forwarded).  This method participates in overload
     /// resolution only if that conversion is possible.  The behavior is
@@ -800,8 +803,37 @@ class CoroutineTaskResult
     /// Defines a type alias for the result type.
     using ResultType = RESULT;
 
-    /// The result storage.
-    ntsa::CoroutineTaskResultValue<ResultType> d_storage;
+    /// Enumerates the state of the value.
+    enum Selection {
+        /// The value is undefined.
+        e_UNDEFINED,
+
+        /// The value is complete.
+        e_SUCCESS,
+
+        /// An exception ocurrred.
+        e_FAILURE
+    };
+
+    /// Defines a type alias for the success type.
+    typedef ResultType SuccessType;
+
+    /// Defines a type alias for the failure type.
+    typedef std::exception_ptr FailureType;
+
+    /// The state of the value.
+    Selection d_selection;
+
+    union {
+        /// The success value.
+        bsls::ObjectBuffer<SuccessType> d_success;
+
+        /// The failure value.
+        bsls::ObjectBuffer<FailureType> d_failure;
+    };
+
+    /// The memory allocator.
+    ntsa::Allocator d_allocator;
 };
 
 /// @internal @brief
@@ -828,6 +860,9 @@ class CoroutineTaskResult<RESULT>
     /// Create a new coroutine task result that is initally incomplete. The
     /// specified 'allocator' is ignored.
     explicit CoroutineTaskResult(ntsa::Allocator allocator);
+
+    /// Destroy this object.
+    ~CoroutineTaskResult();
 
     /// Construct a held reference by implicit conversion to 'RESULT' from the
     /// specified 'arg' (forwarded).  This method participates in overload
@@ -865,8 +900,34 @@ class CoroutineTaskResult<RESULT>
     /// Defines a type alias for the dereferenced result type.
     using ResultTypeDereference = bsl::remove_reference_t<RESULT>;
 
-    /// The result storage.
-    ntsa::CoroutineTaskResultAddress<ResultTypeDereference> d_storage;
+    /// Enumerates the state of the value.
+    enum Selection {
+        /// The value is undefined.
+        e_UNDEFINED,
+
+        /// The value is complete.
+        e_SUCCESS,
+
+        /// An exception ocurrred.
+        e_FAILURE
+    };
+
+    /// Defines a type alias for the success type.
+    typedef ResultTypeDereference* SuccessType;
+
+    /// Defines a type alias for the failure type.
+    typedef std::exception_ptr FailureType;
+
+    /// The state of the value.
+    Selection d_selection;
+
+    union {
+        /// The success value.
+        bsls::ObjectBuffer<SuccessType> d_success;
+
+        /// The failure value.
+        bsls::ObjectBuffer<FailureType> d_failure;
+    };
 };
 
 /// @internal @brief
@@ -894,6 +955,9 @@ class CoroutineTaskResult<RESULT>
     /// Create a new coroutine task result that is initally incomplete. The
     /// specified 'allocator' is ignored.
     explicit CoroutineTaskResult(ntsa::Allocator allocator);
+
+    /// Destroy this object.
+    ~CoroutineTaskResult();
 
     /// Set the result of this object.  The behavior is undefined if this
     /// object already has a result or holds an exception.
@@ -923,11 +987,28 @@ class CoroutineTaskResult<RESULT>
     CoroutineTaskResult& operator=(CoroutineTaskResult&&) = delete;
 
   private:
-    /// Defines a type alias for the result type.
-    using ResultType = RESULT;
+    /// Enumerates the state of the value.
+    enum Selection {
+        /// The value is undefined.
+        e_UNDEFINED,
 
-    /// The result storage.
-    ntsa::CoroutineTaskResultEmpty d_storage;
+        /// The value is complete.
+        e_SUCCESS,
+
+        /// An exception ocurrred.
+        e_FAILURE
+    };
+
+    /// Defines a type alias for the failure type.
+    typedef std::exception_ptr FailureType;
+
+    /// The state of the value.
+    Selection d_selection;
+
+    union {
+        /// The failure value.
+        bsls::ObjectBuffer<FailureType> d_failure;
+    };
 };
 
 /// @internal @brief
@@ -2723,48 +2804,107 @@ NTSCFG_INLINE void CoroutineTaskResultEmpty::release()
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult()
-: d_storage()
+: d_selection(e_UNDEFINED)
+, d_allocator()
 {
 }
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult(
     ntsa::Allocator allocator)
-: d_storage(allocator.mechanism())
+: d_selection(e_UNDEFINED)
+, d_allocator(allocator)
 {
+}
+
+template <typename TYPE>
+NTSCFG_INLINE CoroutineTaskResult<TYPE>::~CoroutineTaskResult()
+{
+    if (d_selection == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
+    }
+    else if (d_selection == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
+    }
 }
 
 template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskResult<RESULT>::return_value(
     bsl::convertible_to<RESULT> auto&& arg)
 {
-    d_storage.setSuccess(bsl::move(arg));
+    if (d_selection == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
+    }
+    else if (d_selection == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
+    }
+
+    bslma::ConstructionUtil::destructiveMove(d_success.address(),
+                                             d_allocator,
+                                             &arg);
+
+    d_selection = e_SUCCESS;
 }
 
 template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskResult<RESULT>::unhandled_exception()
 {
-    d_storage.setFailure(bsl::current_exception());
+    bsl::exception_ptr exception = bsl::current_exception();
+
+    if (d_selection == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
+    }
+    else if (d_selection == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
+    }
+
+    bslma::ConstructionUtil::construct(d_failure.address(),
+                                       d_allocator,
+                                       exception);
+
+    d_selection = e_FAILURE;
 }
 
 template <typename RESULT>
 NTSCFG_INLINE RESULT CoroutineTaskResult<RESULT>::release()
 {
-    return d_storage.release();
+    if (d_selection == e_SUCCESS) {
+        return bsl::move(d_success.object());
+    }
+    else if (d_selection == e_FAILURE) {
+        std::rethrow_exception(d_failure.object());
+    }
+    else {
+        throw bsl::runtime_error("Coroutine task result not defined");
+    }
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
 NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult()
-: d_storage()
+: d_selection(e_UNDEFINED)
 {
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult(ntsa::Allocator)
-: d_storage()
+NTSCFG_INLINE
+    CoroutineTaskResult<RESULT>::CoroutineTaskResult(ntsa::Allocator allocator)
+: d_selection(e_UNDEFINED)
 {
+    NTSCFG_WARNING_UNUSED(allocator);
+}
+
+template <typename RESULT>
+NTSCFG_REQUIRE_REFERENCE(RESULT)
+NTSCFG_INLINE CoroutineTaskResult<RESULT>::~CoroutineTaskResult()
+{
+    if (d_selection == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
+    }
+    else if (d_selection == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
+    }
 }
 
 template <typename RESULT>
@@ -2772,57 +2912,116 @@ NTSCFG_REQUIRE_REFERENCE(RESULT)
 NTSCFG_INLINE void CoroutineTaskResult<RESULT>::return_value(
     bsl::convertible_to<RESULT> auto&& arg)
 {
+    if (d_selection == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
+    }
+    else if (d_selection == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
+    }
+
     RESULT r = static_cast<decltype(arg)>(arg);
-    d_storage.setSuccess(BSLS_UTIL_ADDRESSOF(r));
+    new (d_success.address()) SuccessType(BSLS_UTIL_ADDRESSOF(r));
+
+    d_selection = e_SUCCESS;
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
 NTSCFG_INLINE void CoroutineTaskResult<RESULT>::unhandled_exception()
 {
-    d_storage.setFailure(bsl::current_exception());
+    bsl::exception_ptr exception = bsl::current_exception();
+
+    if (d_selection == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
+    }
+    else if (d_selection == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
+    }
+
+    new (d_failure.address()) FailureType(exception);
+
+    d_selection = e_FAILURE;
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_REFERENCE(RESULT)
 NTSCFG_INLINE RESULT CoroutineTaskResult<RESULT>::release()
 {
-    return static_cast<RESULT>(*d_storage.release());
+    if (d_selection == e_SUCCESS) {
+        return static_cast<RESULT>(*d_success.object());
+    }
+    else if (d_selection == e_FAILURE) {
+        std::rethrow_exception(d_failure.object());
+    }
+    else {
+        throw bsl::runtime_error("Coroutine task result not defined");
+    }
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult()
-: d_storage()
+: d_selection(e_UNDEFINED)
 {
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE CoroutineTaskResult<RESULT>::CoroutineTaskResult(ntsa::Allocator)
-: d_storage()
+NTSCFG_INLINE
+    CoroutineTaskResult<RESULT>::CoroutineTaskResult(ntsa::Allocator allocator)
+: d_selection(e_UNDEFINED)
 {
+    NTSCFG_WARNING_UNUSED(allocator);
+}
+
+template <typename RESULT>
+NTSCFG_REQUIRE_VOID(RESULT)
+NTSCFG_INLINE CoroutineTaskResult<RESULT>::~CoroutineTaskResult()
+{
+    if (d_selection == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
+    }
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 NTSCFG_INLINE void CoroutineTaskResult<RESULT>::return_void()
 {
-    d_storage.setSuccess();
+    if (d_selection == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
+    }
+
+    d_selection = e_SUCCESS;
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 NTSCFG_INLINE void CoroutineTaskResult<RESULT>::unhandled_exception()
 {
-    d_storage.setFailure(bsl::current_exception());
+    bsl::exception_ptr exception = bsl::current_exception();
+
+    if (d_selection == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
+    }
+
+    new (d_failure.address()) FailureType(exception);
+
+    d_selection = e_FAILURE;
 }
 
 template <typename RESULT>
 NTSCFG_REQUIRE_VOID(RESULT)
 NTSCFG_INLINE void CoroutineTaskResult<RESULT>::release()
 {
-    return d_storage.release();
+    if (d_selection == e_SUCCESS) {
+        return;
+    }
+    else if (d_selection == e_FAILURE) {
+        std::rethrow_exception(d_failure.object());
+    }
+    else {
+        throw bsl::runtime_error("Coroutine task result not defined");
+    }
 }
 
 template <typename RESULT>
