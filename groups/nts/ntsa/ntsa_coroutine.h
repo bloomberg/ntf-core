@@ -978,27 +978,8 @@ class CoroutineTaskContext
     /// specified 'allocator'.
     explicit CoroutineTaskContext(ntsa::Allocator allocator);
 
-    /// Create a new coroutine task context having the same value as the
-    /// specified 'other' object.
-    CoroutineTaskContext(CoroutineTaskContext&& other) noexcept;
-
-    /// Create a new coroutine task context having the same value as the
-    /// specified 'other' object.
-    CoroutineTaskContext(const CoroutineTaskContext& other);
-
     /// Destroy this object.
     ~CoroutineTaskContext();
-
-    /// Assign the value of the specified 'other' object to this object. Return
-    /// a reference to this modifiable object.
-    CoroutineTaskContext& operator=(CoroutineTaskContext&& other) noexcept;
-
-    /// Assign the value of the specified 'other' object to this object. Return
-    /// a reference to this modifiable object.
-    CoroutineTaskContext& operator=(const CoroutineTaskContext& other);
-
-    /// Reset the value of this object to its value upon default construction.
-    void reset();
 
     /// Set the current activation frame to the specified 'current' activation
     /// frame.
@@ -1035,6 +1016,19 @@ class CoroutineTaskContext
 
     /// Return true if the task is complete, otherwise return false.
     bool isComplete() const;
+
+  private:
+    /// This class is not copy-construtable.
+    CoroutineTaskContext(const CoroutineTaskContext&) = delete;
+
+    /// This class is not move-construtable.
+    CoroutineTaskContext(CoroutineTaskContext&&) = delete;
+
+    /// This class is not copy-assignable.
+    CoroutineTaskContext& operator=(const CoroutineTaskContext&) = delete;
+
+    /// This class is not move-assignable.
+    CoroutineTaskContext& operator=(CoroutineTaskContext&&) = delete;
 
   private:
     /// The current activation frame.
@@ -1139,12 +1133,19 @@ class CoroutineTaskPrologAwaitable
     void await_resume() const noexcept;
 
   private:
-    /// This class is not copy-constructable.
+    /// This class is not copy-construtable.
     CoroutineTaskPrologAwaitable(const CoroutineTaskPrologAwaitable&) = delete;
+
+    /// This class is not move-construtable.
+    CoroutineTaskPrologAwaitable(CoroutineTaskPrologAwaitable&&) = delete;
 
     /// This class is not copy-assignable.
     CoroutineTaskPrologAwaitable& operator=(
         const CoroutineTaskPrologAwaitable&) = delete;
+
+    /// This class is not move-assignable.
+    CoroutineTaskPrologAwaitable& operator=(CoroutineTaskPrologAwaitable&&) =
+        delete;
 
   private:
     /// The coroutine context.
@@ -1232,12 +1233,19 @@ class CoroutineTaskEpilogAwaitable
     void await_resume() noexcept;
 
   private:
-    /// This class is not copy-constructable.
+    /// This class is not copy-construtable.
     CoroutineTaskEpilogAwaitable(const CoroutineTaskEpilogAwaitable&) = delete;
+
+    /// This class is not move-construtable.
+    CoroutineTaskEpilogAwaitable(CoroutineTaskEpilogAwaitable&&) = delete;
 
     /// This class is not copy-assignable.
     CoroutineTaskEpilogAwaitable& operator=(
         const CoroutineTaskEpilogAwaitable&) = delete;
+
+    /// This class is not move-assignable.
+    CoroutineTaskEpilogAwaitable& operator=(CoroutineTaskEpilogAwaitable&&) =
+        delete;
 
   private:
     /// The coroutine context.
@@ -1328,20 +1336,23 @@ class CoroutineTaskResultAwaitable
     RESULT await_resume();
 
   private:
-    /// This class is not copy-constructable.
+    /// This class is not copy-construtable.
     CoroutineTaskResultAwaitable(const CoroutineTaskResultAwaitable&) = delete;
+
+    /// This class is not move-construtable.
+    CoroutineTaskResultAwaitable(CoroutineTaskResultAwaitable&&) = delete;
 
     /// This class is not copy-assignable.
     CoroutineTaskResultAwaitable& operator=(
         const CoroutineTaskResultAwaitable&) = delete;
 
+    /// This class is not move-assignable.
+    CoroutineTaskResultAwaitable& operator=(CoroutineTaskResultAwaitable&&) =
+        delete;
+
   private:
     /// The coroutine context.
     CoroutineTaskContext<RESULT>* d_context;
-
-    template <typename OTHER_RESULT>
-    friend CoroutineTaskResultAwaitable<OTHER_RESULT> operator co_await(
-        CoroutineTask<OTHER_RESULT>&& task);
 };
 
 /// @internal @brief
@@ -1355,25 +1366,6 @@ template <typename RESULT>
 class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
 {
   public:
-    /// Defines a type alias for the type of the task result.
-    using Result = RESULT;
-
-    /// Defines a type alias for the type of the task context.
-    using Context = CoroutineTaskContext<Result>;
-
-    /// Defines a type alias for the type of the task promise.
-    using Promise = CoroutineTaskPromise<Result>;
-
-    /// Defines a type alias for the type of the task.
-    using Task = CoroutineTask<Result>;
-
-    /// Defines a type alias for the type of the allocator.
-    using Alloc = ntsa::Allocator;
-
-    /// Defines a type alias for this type.
-    using Self = CoroutineTaskPromise<Result>;
-
-  public:
     /// Return a pointer to a maximally aligned block of memory having at least
     /// the specified 'size', allocated using the specified 'alloc'.  This
     /// function is called implicitly to allocate the coroutine frame for a
@@ -1383,7 +1375,7 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     /// ignored.
     void* operator new(bsl::size_t size,
                        bsl::allocator_arg_t,
-                       bsl::convertible_to<Alloc> auto&& alloc,
+                       bsl::convertible_to<ntsa::Allocator> auto&& alloc,
                        auto&&...);
 
     /// Return a pointer to a maximally aligned block of memory having at least
@@ -1396,7 +1388,7 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     void* operator new(bsl::size_t size,
                        auto&&,
                        bsl::allocator_arg_t,
-                       bsl::convertible_to<Alloc> auto&& alloc,
+                       bsl::convertible_to<ntsa::Allocator> auto&& alloc,
                        auto&&...);
 
     /// Return a pointer to a maximally aligned block of memory having at least
@@ -1436,7 +1428,7 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     /// 'bsl::allocator_arg_t' as its first parameter type; additional
     /// arguments beyond 'alloc' are also passed implicitly, but ignored.
     CoroutineTaskPromise(bsl::allocator_arg_t,
-                         bsl::convertible_to<Alloc> auto&& alloc,
+                         bsl::convertible_to<ntsa::Allocator> auto&& alloc,
                          auto&&...);
 
     /// Create a new coroutine task promise that will use the specified 'alloc'
@@ -1449,7 +1441,7 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     /// implicitly, but ignored.
     CoroutineTaskPromise(auto&&,
                          bsl::allocator_arg_t,
-                         bsl::convertible_to<Alloc> auto&& alloc,
+                         bsl::convertible_to<ntsa::Allocator> auto&& alloc,
                          auto&&...);
 
     /// Create a new coroutine task promise. This function is called implicitly
@@ -1470,11 +1462,18 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
     /// '*this' as its promise object.
     CoroutineTask<RESULT> get_return_object();
 
-    /// Return the awaiter on the result of this promise.
-    bsl::coroutine_handle<void> awaiter() const noexcept;
+  private:
+    /// This class is not copy-constructable.
+    CoroutineTaskPromise(const CoroutineTaskPromise&);
 
-    /// Return the allocator.
-    ntsa::Allocator allocator() const;
+    /// This class is not move-constructable.
+    CoroutineTaskPromise(CoroutineTaskPromise&&);
+
+    /// This class is not copy-assignable.
+    CoroutineTaskPromise& operator=(const CoroutineTaskPromise&);
+
+    /// This class is not move-assignable.
+    CoroutineTaskPromise& operator=(CoroutineTaskPromise&&);
 
   private:
     /// The coroutine context.
@@ -1521,9 +1520,6 @@ class CoroutineTask
     using promise_type = CoroutineTaskPromise<RESULT>;
 
   public:
-    /// Create a new, uninitialized coroutine task.
-    CoroutineTask() noexcept;
-
     /// Create a new coroutine task with the specified 'context'.
     explicit CoroutineTask(CoroutineTaskContext<RESULT>* context) noexcept;
 
@@ -2929,57 +2925,8 @@ NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext(
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext(
-    CoroutineTaskContext&& other) noexcept : d_current(other.d_current),
-                                             d_awaiter(other.d_awaiter),
-                                             d_allocator(other.d_allocator)
-{
-    other.d_current = nullptr;
-    other.d_awaiter = nullptr;
-}
-
-template <typename RESULT>
-NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext(
-    const CoroutineTaskContext& other)
-: d_current(other.d_current)
-, d_awaiter(other.d_awaiter)
-{
-}
-
-template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskContext<RESULT>::~CoroutineTaskContext()
 {
-}
-
-template <typename RESULT>
-NTSCFG_INLINE CoroutineTaskContext<RESULT>& CoroutineTaskContext<
-    RESULT>::operator=(CoroutineTaskContext&& other) noexcept
-{
-    if (this != &other) {
-        d_current = other.d_current;
-        d_awaiter = other.d_awaiter;
-    }
-
-    return *this;
-}
-
-template <typename RESULT>
-NTSCFG_INLINE CoroutineTaskContext<RESULT>& CoroutineTaskContext<
-    RESULT>::operator=(const CoroutineTaskContext& other)
-{
-    if (this != &other) {
-        d_current = other.d_current;
-        d_awaiter = other.d_awaiter;
-    }
-
-    return *this;
-}
-
-template <typename RESULT>
-NTSCFG_INLINE void CoroutineTaskContext<RESULT>::reset()
-{
-    d_current = nullptr;
-    d_awaiter = nullptr;
 }
 
 template <typename RESULT>
@@ -3193,7 +3140,7 @@ template <typename RESULT>
 NTSCFG_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
     bsl::size_t size,
     bsl::allocator_arg_t,
-    bsl::convertible_to<Alloc> auto&& alloc,
+    bsl::convertible_to<ntsa::Allocator> auto&& alloc,
     auto&&...)
 {
     return CoroutineUtil::allocate(size, alloc);
@@ -3204,7 +3151,7 @@ NTSCFG_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
     bsl::size_t size,
     auto&&,
     bsl::allocator_arg_t,
-    bsl::convertible_to<Alloc> auto&& alloc,
+    bsl::convertible_to<ntsa::Allocator> auto&& alloc,
     auto&&...)
 {
     return CoroutineUtil::allocate(size, alloc);
@@ -3215,7 +3162,7 @@ NTSCFG_INLINE void* CoroutineTaskPromise<RESULT>::operator new(
     bsl::size_t size,
     auto&&...)
 {
-    return CoroutineUtil::allocate(size, Alloc());
+    return CoroutineUtil::allocate(size, ntsa::Allocator());
 }
 
 template <typename RESULT>
@@ -3231,7 +3178,9 @@ NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise()
 : CoroutineTaskResult<RESULT>()
 , d_context()
 {
-    d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
+    d_context.setCurrent(
+        bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
+            *this));
 }
 
 template <typename RESULT>
@@ -3240,7 +3189,9 @@ NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
 : CoroutineTaskResult<RESULT>(allocator.mechanism())
 , d_context(allocator)
 {
-    d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
+    d_context.setCurrent(
+        bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
+            *this));
 }
 
 template <typename RESULT>
@@ -3250,30 +3201,36 @@ NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
 : CoroutineTaskResult<RESULT>(allocator.mechanism())
 , d_context(allocator)
 {
-    d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
+    d_context.setCurrent(
+        bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
+            *this));
 }
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     bsl::allocator_arg_t,
-    bsl::convertible_to<Alloc> auto&& alloc,
+    bsl::convertible_to<ntsa::Allocator> auto&& alloc,
     auto&&...)
 : CoroutineTaskResult<RESULT>(static_cast<decltype(alloc)>(alloc))
 , d_context(static_cast<decltype(alloc)>(alloc))
 {
-    d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
+    d_context.setCurrent(
+        bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
+            *this));
 }
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     auto&&,
     bsl::allocator_arg_t,
-    bsl::convertible_to<Alloc> auto&& alloc,
+    bsl::convertible_to<ntsa::Allocator> auto&& alloc,
     auto&&...)
 : CoroutineTaskResult<RESULT>(static_cast<decltype(alloc)>(alloc))
 , d_context(static_cast<decltype(alloc)>(alloc))
 {
-    d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
+    d_context.setCurrent(
+        bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
+            *this));
 }
 
 template <typename RESULT>
@@ -3281,7 +3238,9 @@ NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(auto&&...)
 : CoroutineTaskResult<RESULT>()
 , d_context()
 {
-    d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
+    d_context.setCurrent(
+        bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >::from_promise(
+            *this));
 }
 
 template <typename RESULT>
@@ -3303,25 +3262,6 @@ NTSCFG_INLINE CoroutineTask<RESULT> CoroutineTaskPromise<
     RESULT>::get_return_object()
 {
     return CoroutineTask(&d_context);
-}
-
-template <typename RESULT>
-NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTaskPromise<
-    RESULT>::awaiter() const noexcept
-{
-    return d_context.awaiter();
-}
-
-template <typename RESULT>
-NTSCFG_INLINE ntsa::Allocator CoroutineTaskPromise<RESULT>::allocator() const
-{
-    return d_context.allocator();
-}
-
-template <typename RESULT>
-NTSCFG_INLINE CoroutineTask<RESULT>::CoroutineTask() noexcept
-: d_context(nullptr)
-{
 }
 
 template <typename RESULT>
