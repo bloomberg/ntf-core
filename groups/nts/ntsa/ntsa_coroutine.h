@@ -971,18 +971,12 @@ class CoroutineTaskContext
     /// Defines a type alias for this type.
     using Self = CoroutineTaskContext<Result>;
 
-    /// Create a new coroutine task context with the current and awaiter
-    /// frames initially uninitialized.
+    /// Create a new coroutine task context.
     CoroutineTaskContext();
 
-    /// Create a new coroutine task context referring to the specified
-    /// 'current' activation frame and the awaiter frame initially
-    /// uninitialized.
-    CoroutineTaskContext(CurrentFrame current);
-
-    /// Create a new coroutine task context referring to the specified
-    /// 'current' activation frame and 'awaiter' activation frame.
-    CoroutineTaskContext(CurrentFrame current, AwaiterFrame awaiter);
+    /// Create a new coroutine task context. Allocate memory using the
+    /// specified 'allocator'.
+    explicit CoroutineTaskContext(ntsa::Allocator allocator);
 
     /// Create a new coroutine task context having the same value as the
     /// specified 'other' object.
@@ -1048,6 +1042,9 @@ class CoroutineTaskContext
 
     /// The awaiter activation frame.
     AwaiterFrame d_awaiter;
+
+    /// The memory allocator.
+    ntsa::Allocator d_allocator;
 };
 
 /// Write a formatted, human-readable description of the specified 'object'
@@ -1482,9 +1479,6 @@ class CoroutineTaskPromise : public CoroutineTaskResult<RESULT>
   private:
     /// The coroutine context.
     CoroutineTaskContext<RESULT> d_context;
-
-    /// The memory allocator.
-    ntsa::Allocator d_allocator;
 };
 
 /// @internal @brief
@@ -2921,30 +2915,24 @@ template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext()
 : d_current(nullptr)
 , d_awaiter(nullptr)
+, d_allocator()
 {
 }
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext(
-    CurrentFrame current)
-: d_current(current)
+    ntsa::Allocator allocator)
+: d_current(nullptr)
 , d_awaiter(nullptr)
-{
-}
-
-template <typename RESULT>
-NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext(
-    CurrentFrame current,
-    AwaiterFrame awaiter)
-: d_current(current)
-, d_awaiter(awaiter)
+, d_allocator(allocator)
 {
 }
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskContext<RESULT>::CoroutineTaskContext(
     CoroutineTaskContext&& other) noexcept : d_current(other.d_current),
-                                             d_awaiter(other.d_awaiter)
+                                             d_awaiter(other.d_awaiter),
+                                             d_allocator(other.d_allocator)
 {
     other.d_current = nullptr;
     other.d_awaiter = nullptr;
@@ -3066,12 +3054,7 @@ NTSCFG_INLINE CoroutineTaskContext<RESULT>::AwaiterFrame CoroutineTaskContext<
 template <typename RESULT>
 NTSCFG_INLINE ntsa::Allocator CoroutineTaskContext<RESULT>::allocator() const
 {
-    if (d_current.address() != nullptr) {
-        return d_current.promise().allocator();
-    }
-    else {
-        return ntsa::Allocator();
-    }
+    return d_allocator;
 }
 
 template <typename RESULT>
@@ -3247,7 +3230,6 @@ template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise()
 : CoroutineTaskResult<RESULT>()
 , d_context()
-, d_allocator()
 {
     d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
 }
@@ -3256,8 +3238,7 @@ template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     ntsa::Allocator allocator)
 : CoroutineTaskResult<RESULT>(allocator.mechanism())
-, d_context()
-, d_allocator(allocator)
+, d_context(allocator)
 {
     d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
 }
@@ -3267,8 +3248,7 @@ NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     auto&&...,
     ntsa::Allocator allocator)
 : CoroutineTaskResult<RESULT>(allocator.mechanism())
-, d_context()
-, d_allocator(allocator)
+, d_context(allocator)
 {
     d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
 }
@@ -3279,8 +3259,7 @@ NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     bsl::convertible_to<Alloc> auto&& alloc,
     auto&&...)
 : CoroutineTaskResult<RESULT>(static_cast<decltype(alloc)>(alloc))
-, d_context()
-, d_allocator(static_cast<decltype(alloc)>(alloc))
+, d_context(static_cast<decltype(alloc)>(alloc))
 {
     d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
 }
@@ -3292,8 +3271,7 @@ NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(
     bsl::convertible_to<Alloc> auto&& alloc,
     auto&&...)
 : CoroutineTaskResult<RESULT>(static_cast<decltype(alloc)>(alloc))
-, d_context()
-, d_allocator(static_cast<decltype(alloc)>(alloc))
+, d_context(static_cast<decltype(alloc)>(alloc))
 {
     d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
 }
@@ -3302,7 +3280,6 @@ template <typename RESULT>
 NTSCFG_INLINE CoroutineTaskPromise<RESULT>::CoroutineTaskPromise(auto&&...)
 : CoroutineTaskResult<RESULT>()
 , d_context()
-, d_allocator()
 {
     d_context.setCurrent(bsl::coroutine_handle<Self>::from_promise(*this));
 }
@@ -3338,7 +3315,7 @@ NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTaskPromise<
 template <typename RESULT>
 NTSCFG_INLINE ntsa::Allocator CoroutineTaskPromise<RESULT>::allocator() const
 {
-    return d_allocator;
+    return d_context.allocator();
 }
 
 template <typename RESULT>
