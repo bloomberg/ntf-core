@@ -488,12 +488,6 @@ decltype(
     return functionMap(transform.function, std::forward<TYPE>(value));
 }
 
-/// Defines a type alias for a coroutine handle templation instantiation using
-/// the coroutine task's promise type.
-template <typename RESULT>
-using CoroutineTaskFrame =
-    bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >;
-
 /// @internal @brief
 /// Describe a coroutine task result stored by value.
 ///
@@ -1395,7 +1389,7 @@ class CoroutineTaskResultAwaitable
     /// remains suspended. If it returns true, the coroutine remains suspended.
     /// If it returns false, the coroutine is automatically destroyed. If it
     /// returns 'bsl::coroutine_handle', that coroutine is resumed.
-    CoroutineTaskFrame<RESULT> await_suspend(
+    bsl::coroutine_handle<CoroutineTaskPromise<RESULT> > await_suspend(
         bsl::coroutine_handle<void> coroutine);
 
     /// Return the result of the coroutine of 'd_promise', or rethrow the
@@ -3228,8 +3222,9 @@ NTSCFG_INLINE bool CoroutineTaskResultAwaitable<RESULT>::await_ready()
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTaskFrame<RESULT> CoroutineTaskResultAwaitable<
-    RESULT>::await_suspend(bsl::coroutine_handle<void> coroutine)
+NTSCFG_INLINE bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >
+              CoroutineTaskResultAwaitable<RESULT>::await_suspend(
+    bsl::coroutine_handle<void> coroutine)
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_SUSPEND("task", "result", *d_context, coroutine);
