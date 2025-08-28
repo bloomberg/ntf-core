@@ -769,31 +769,6 @@ template <typename RESULT>
 class CoroutineTaskContext : public CoroutineTaskResult<RESULT>
 {
   public:
-    /// Defines a type alias for the type of the task result.
-    using Result = RESULT;
-
-    /// Defines a type alias for the type of the task context.
-    using Context = CoroutineTaskContext<Result>;
-
-    /// Defines a type alias for the type of the task promise.
-    using Promise = CoroutineTaskPromise<Result>;
-
-    /// Defines a type alias for the type of the task.
-    using Task = CoroutineTask<Result>;
-
-    /// Defines a type alias for a coroutine whose promise is the type of the
-    /// task promise.
-    using CurrentFrame = bsl::coroutine_handle<Promise>;
-
-    /// Defines a type alias for a coroutine whose promise is type-erased.
-    using AwaiterFrame = bsl::coroutine_handle<void>;
-
-    /// Defines a type alias for the type of the allocator.
-    using Alloc = ntsa::Allocator;
-
-    /// Defines a type alias for this type.
-    using Self = CoroutineTaskContext<Result>;
-
     /// Create a new coroutine task context.
     CoroutineTaskContext();
 
@@ -806,11 +781,12 @@ class CoroutineTaskContext : public CoroutineTaskResult<RESULT>
 
     /// Set the current activation frame to the specified 'current' activation
     /// frame.
-    void setCurrent(CurrentFrame current);
+    void setCurrent(
+        bsl::coroutine_handle<CoroutineTaskPromise<RESULT> > current);
 
     /// Set the awaiter activation frame to the specified 'awaiter' activation
     /// frame.
-    void setAwaiter(AwaiterFrame awaiter);
+    void setAwaiter(bsl::coroutine_handle<void> awaiter);
 
     /// Return the promise of the current activation frame. The behavior is
     /// undefined unless the current activation frame is defined.
@@ -826,10 +802,10 @@ class CoroutineTaskContext : public CoroutineTaskResult<RESULT>
     void destroy();
 
     /// Return the current activation frame.
-    CurrentFrame current() const;
+    bsl::coroutine_handle<CoroutineTaskPromise<RESULT> > current() const;
 
     /// Return the awaiter activation frame.
-    AwaiterFrame awaiter() const;
+    bsl::coroutine_handle<void> awaiter() const;
 
     /// Return the allocator.
     ntsa::Allocator allocator() const;
@@ -852,10 +828,10 @@ class CoroutineTaskContext : public CoroutineTaskResult<RESULT>
 
   private:
     /// The current activation frame.
-    CurrentFrame d_current;
+    bsl::coroutine_handle<CoroutineTaskPromise<RESULT> > d_current;
 
     /// The awaiter activation frame.
-    AwaiterFrame d_awaiter;
+    bsl::coroutine_handle<void> d_awaiter;
 
     /// The memory allocator.
     ntsa::Allocator d_allocator;
@@ -1313,24 +1289,6 @@ template <typename RESULT>
 class CoroutineTask
 {
   public:
-    /// Defines a type alias for the type of the task result.
-    using Result = RESULT;
-
-    /// Defines a type alias for the type of the task context.
-    using Context = CoroutineTaskContext<Result>;
-
-    /// Defines a type alias for the type of the task promise.
-    using Promise = CoroutineTaskPromise<Result>;
-
-    /// Defines a type alias for the type of the task.
-    using Task = CoroutineTask<Result>;
-
-    /// Defines a type alias for the type of the allocator.
-    using Alloc = ntsa::Allocator;
-
-    /// Defines a type alias for this type.
-    using Self = CoroutineTask<Result>;
-
     /// Defines a type alias for the type of the task promise, as required
     /// by the coroutine compiler infrastructure.
     using promise_type = CoroutineTaskPromise<RESULT>;
@@ -1359,10 +1317,6 @@ class CoroutineTask
 
     /// Return the coroutine.
     bsl::coroutine_handle<void> coroutine() const;
-
-    // Invalidate the task so that its destructor does not destroy the
-    // coroutine frame.
-    void invalidate();
 
     /// Return the allocator.
     ntsa::Allocator allocator() const;
@@ -2407,14 +2361,14 @@ NTSCFG_INLINE CoroutineTaskContext<RESULT>::~CoroutineTaskContext()
 
 template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskContext<RESULT>::setCurrent(
-    CurrentFrame current)
+    bsl::coroutine_handle<CoroutineTaskPromise<RESULT> > current)
 {
     d_current = current;
 }
 
 template <typename RESULT>
 NTSCFG_INLINE void CoroutineTaskContext<RESULT>::setAwaiter(
-    AwaiterFrame awaiter)
+    bsl::coroutine_handle<void> awaiter)
 {
     d_awaiter = awaiter;
 }
@@ -2454,14 +2408,14 @@ NTSCFG_INLINE void CoroutineTaskContext<RESULT>::destroy()
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTaskContext<RESULT>::CurrentFrame CoroutineTaskContext<
-    RESULT>::current() const
+NTSCFG_INLINE bsl::coroutine_handle<CoroutineTaskPromise<RESULT> >
+              CoroutineTaskContext<RESULT>::current() const
 {
     return d_current;
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTaskContext<RESULT>::AwaiterFrame CoroutineTaskContext<
+NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTaskContext<
     RESULT>::awaiter() const
 {
     return d_awaiter;
@@ -2785,12 +2739,6 @@ NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTask<RESULT>::coroutine()
     const
 {
     return d_context->current();
-}
-
-template <typename RESULT>
-NTSCFG_INLINE void CoroutineTask<RESULT>::invalidate()
-{
-    d_context = nullptr;
 }
 
 template <typename RESULT>
