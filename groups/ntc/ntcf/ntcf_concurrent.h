@@ -40,6 +40,13 @@ namespace ntcf {
 /// @ingroup module_ntci_runtime
 class Concurrent
 {
+  private:
+    // Start the specified 'coroutine'.
+    static void start(bsl::coroutine_handle<void> coroutine);
+
+    // The log category.
+    BALL_LOG_SET_CLASS_CATEGORY("NTCF.CONCURRENT");
+
   public:
     /// Provide an awaitable for an execute operation.
     class Execute;
@@ -61,6 +68,10 @@ class Concurrent
 
     /// Initialize concurrent operations.
     static void initialize();
+
+    // Resume the specified 'coroutine' on the specified 'executor'.
+    static void spawn(const bsl::shared_ptr<ntci::Executor>& executor,
+                      bsl::coroutine_handle<void>            coroutine);
 
     /// Resume the current coroutine on the specified 'executor'.
     static ntcf::Concurrent::Execute resume(

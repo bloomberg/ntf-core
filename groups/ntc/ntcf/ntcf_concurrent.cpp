@@ -28,6 +28,23 @@ void Concurrent::initialize()
 {
 }
 
+void Concurrent::start(bsl::coroutine_handle<void> coroutine)
+{
+    BALL_LOG_DEBUG << "Spawned coroutine " << coroutine.address()
+                   << " resumption starting" << BALL_LOG_END;
+
+    coroutine.resume();
+
+    BALL_LOG_DEBUG << "Spawned coroutine " << coroutine.address()
+                   << " resumption complete" << BALL_LOG_END;
+}
+
+void Concurrent::spawn(const bsl::shared_ptr<ntci::Executor>& executor,
+                       bsl::coroutine_handle<void>            coroutine)
+{
+    executor->execute(NTCCFG_BIND(&Concurrent::start, coroutine));
+}
+
 ntcf::Concurrent::Execute Concurrent::resume(
     const bsl::shared_ptr<ntci::Executor>& executor)
 {
@@ -479,7 +496,9 @@ void Concurrent::Close::Awaiter::await_resume() const noexcept
 void Concurrent::Close::Awaiter::complete(
     bsl::coroutine_handle<void> coroutine)
 {
-    coroutine.resume();
+    if (coroutine.address() != nullptr && !coroutine.done()) {
+        coroutine.resume();
+    }
 }
 
 }  // close namespace ntcf

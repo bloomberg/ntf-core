@@ -1360,6 +1360,10 @@ class CoroutineTask
     /// Return the coroutine.
     bsl::coroutine_handle<void> coroutine() const;
 
+    // Invalidate the task so that its destructor does not destroy the
+    // coroutine frame.
+    void invalidate();
+
     /// Return the allocator.
     ntsa::Allocator allocator() const;
 
@@ -1654,6 +1658,40 @@ class CoroutineUtil
     /// rethrow the exception by which it exited.
     template <typename RESULT>
     static RESULT synchronize(CoroutineTask<RESULT>&& task);
+
+    class Spawner
+    {
+      public:
+        struct promise_type {
+            std::suspend_never initial_suspend()
+            {
+                return {};
+            }
+            std::suspend_never final_suspend() noexcept
+            {
+                return {};
+            }
+            Spawner get_return_object()
+            {
+                return Spawner();
+            }
+            void unhandled_exception()
+            {
+                std::terminate();
+            }
+            void return_void()
+            {
+            }
+            // I probably forget something which also doesn't do anything
+        };
+    };
+
+    static void spawn(auto awaiter)
+    {
+        [](auto awaiter) -> Spawner {
+            co_await std::move(awaiter);
+        }(std::move(awaiter));
+    }
 };
 
 /// @internal @brief
@@ -2747,6 +2785,12 @@ NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTask<RESULT>::coroutine()
     const
 {
     return d_context->current();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineTask<RESULT>::invalidate()
+{
+    d_context = nullptr;
 }
 
 template <typename RESULT>
