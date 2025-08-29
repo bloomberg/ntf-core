@@ -744,6 +744,124 @@ class CoroutineReturn<RESULT>
 };
 
 /// @internal @brief
+/// Describe a coroutine generator result stored by address.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa
+template <typename RESULT>
+class CoroutineYield
+{
+  public:
+    /// Defines a type alias for the value type.
+    using ValueType = std::remove_reference_t<RESULT>;
+
+    /// Defines a type alias for the reference type.
+    using ReferenceType =
+        std::conditional_t<std::is_reference_v<RESULT>, RESULT, RESULT&>;
+
+    /// Defines a type alias for a value type.
+    using PointerType = ValueType*;
+
+    /// Create a new coroutine yield that is initially incomplete.
+    CoroutineYield();
+
+    /// Destroy this object.
+    ~CoroutineYield();
+
+    // YYYY
+    template <
+        typename ARGUMENT = RESULT,
+        std::enable_if_t<!std::is_rvalue_reference<ARGUMENT>::value, int> = 0>
+    bsl::suspend_always yield_value(ValueType& value) noexcept
+    {
+        if (d_selection == e_SUCCESS) {
+            bslma::DestructionUtil::destroy(d_success.address());
+        }
+        else if (d_selection == e_FAILURE) {
+            bslma::DestructionUtil::destroy(d_failure.address());
+        }
+
+        new (d_success.address()) SuccessType(bsl::addressof(value));
+        d_selection = e_SUCCESS;
+
+        return {};
+    }
+
+    // MRM
+    bsl::suspend_always yield_value(ValueType&& value) noexcept
+    {
+        if (d_selection == e_SUCCESS) {
+            bslma::DestructionUtil::destroy(d_success.address());
+        }
+        else if (d_selection == e_FAILURE) {
+            bslma::DestructionUtil::destroy(d_failure.address());
+        }
+
+        new (d_success.address()) SuccessType(bsl::addressof(value));
+        d_selection = e_SUCCESS;
+
+        return {};
+    }
+
+    /// The behavior is undefined if this function is called.
+    void return_void();
+
+    /// Store the current exception so that it can be rethrown when 'release'
+    /// is called.
+    void unhandled_exception();
+
+    /// Return a 'RESULT' object that is move-initialized from the object held
+    /// by this object, if any; otherwise, rethrow the held exception, if any;
+    /// otherwise, the behavior is undefined.
+    ReferenceType release();
+
+  private:
+    /// This class is not copy-constructable.
+    CoroutineYield(const CoroutineYield&) = delete;
+
+    /// This class is not move-constructable.
+    CoroutineYield(CoroutineYield&&) = delete;
+
+    /// This class is not copy-assignable.
+    CoroutineYield& operator=(const CoroutineYield&) = delete;
+
+    /// This class is not move-assignable.
+    CoroutineYield& operator=(CoroutineYield&&) = delete;
+
+  private:
+    /// Enumerates the state of the value.
+    enum Selection {
+        /// The value is undefined.
+        e_UNDEFINED,
+
+        /// The value is complete.
+        e_SUCCESS,
+
+        /// An exception ocurrred.
+        e_FAILURE
+    };
+
+    /// Defines a type alias for the success type.
+    typedef PointerType SuccessType;
+
+    /// Defines a type alias for the failure type.
+    typedef std::exception_ptr FailureType;
+
+    /// The state of the value.
+    Selection d_selection;
+
+    union {
+        /// The success value.
+        bsls::ObjectBuffer<SuccessType> d_success;
+
+        /// The failure value.
+        bsls::ObjectBuffer<FailureType> d_failure;
+    };
+};
+
+/// @internal @brief
 /// Provide a coroutine task.
 ///
 /// @details
@@ -760,18 +878,23 @@ template <typename RESULT>
 class CoroutineTask
 {
   private:
-    /// Describe a coroutine task result.
-    class Result;
-
     /// Provide state for a coroutine task.
     class Context;
 
     /// Provide a promise type for a coroutine task.
     class Promise;
 
+    /// Provide an awaitable that is the result of the compiler calling
+    /// 'initial_suspend' on a coroutine task promise.
+    class Prolog;
+
+    /// Provide an awaitable that is the result of the compiler calling
+    /// 'final_suspend' on a coroutine task promise.
+    class Epilog;
+
     /// Provide an awaitable that is the result of 'co_await'-ing a
     /// coroutine task.
-    class ResultAwaitable;
+    class Caller;
 
   public:
     /// Defines a type alias for the type of the task promise, as required
@@ -795,10 +918,10 @@ class CoroutineTask
     CoroutineTask& operator=(CoroutineTask&& other) noexcept;
 
     /// Return the awaitable object that returns the result of the task.
-    ResultAwaitable operator co_await() const& noexcept;
+    Caller operator co_await() const& noexcept;
 
     /// Return the awaitable object that returns the result of the task.
-    ResultAwaitable operator co_await() const&& noexcept;
+    Caller operator co_await() const&& noexcept;
 
     /// Return the coroutine.
     bsl::coroutine_handle<void> coroutine() const;
@@ -833,61 +956,56 @@ class CoroutineTask<RESULT>::Context : public CoroutineReturn<RESULT>
 {
   public:
     /// Create a new coroutine task context.
-    Context();
+    Context() noexcept;
 
     /// Create a new coroutine task context. Allocate memory using the
     /// specified 'allocator'.
-    explicit Context(ntsa::Allocator allocator);
+    explicit Context(ntsa::Allocator allocator) noexcept;
 
     /// Destroy this object.
-    ~Context();
+    ~Context() noexcept;
 
     /// Set the current activation frame to the specified 'current' activation
     /// frame.
-    void setCurrent(
-        bsl::coroutine_handle<CoroutineTask<RESULT>::Promise> current);
+    void setCurrent(bsl::coroutine_handle<void> current) noexcept;
 
     /// Set the awaiter activation frame to the specified 'awaiter' activation
     /// frame.
-    void setAwaiter(bsl::coroutine_handle<void> awaiter);
-
-    /// Return the promise of the current activation frame. The behavior is
-    /// undefined unless the current activation frame is defined.
-    CoroutineTask<RESULT>::Promise& promise();
+    void setAwaiter(bsl::coroutine_handle<void> awaiter) noexcept;
 
     /// Resume the awaiter activation frame.
-    void resumeAwaiter();
+    void resumeAwaiter() noexcept;
 
     /// Resume the current activation frame.
-    void resumeCurrent();
+    void resumeCurrent() noexcept;
 
     /// Destroy the current activation frame.
-    void destroy();
+    void destroy() noexcept;
 
     /// Return the current activation frame.
-    bsl::coroutine_handle<CoroutineTask<RESULT>::Promise> current() const;
+    bsl::coroutine_handle<void> current() const noexcept;
 
     /// Return the awaiter activation frame.
-    bsl::coroutine_handle<void> awaiter() const;
+    bsl::coroutine_handle<void> awaiter() const noexcept;
 
     /// Return the allocator.
-    ntsa::Allocator allocator() const;
+    ntsa::Allocator allocator() const noexcept;
 
     /// Return true if the task is complete, otherwise return false.
-    bool isComplete() const;
+    bool isComplete() const noexcept;
 
     /// Write a formatted, human-readable description of the specified 'object'
     /// to the specified 'stream'. Return a reference to the modifiable
     /// 'stream'.
-    bsl::ostream& print(bsl::ostream& stream) const;
+    bsl::ostream& print(bsl::ostream& stream) const noexcept;
 
     /// Write a formatted, human-readable description of the specified 'object'
     /// to the specified 'stream'. Return a reference to the modifiable
     /// 'stream'.
     ///
-    /// @related ntsa::CoroutineTaskContext
+    /// @related ntsa::CoroutineTask<RESULT>Context
     friend bsl::ostream& operator<<(bsl::ostream&  stream,
-                                    const Context& object)
+                                    const Context& object) noexcept
     {
         return object.print(stream);
     }
@@ -907,7 +1025,7 @@ class CoroutineTask<RESULT>::Context : public CoroutineReturn<RESULT>
 
   private:
     /// The current activation frame.
-    bsl::coroutine_handle<CoroutineTask<RESULT>::Promise> d_current;
+    bsl::coroutine_handle<void> d_current;
 
     /// The awaiter activation frame.
     bsl::coroutine_handle<void> d_awaiter;
@@ -927,21 +1045,12 @@ template <typename RESULT>
 class CoroutineTask<RESULT>::Promise : public CoroutineTask<RESULT>::Context
 {
   public:
-    /// Provide an awaitable that is the result of the compiler calling
-    /// 'initial_suspend' on a coroutine task promise.
-    class Prolog;
-
-    /// Provide an awaitable that is the result of the compiler calling
-    /// 'final_suspend' on a coroutine task promise.
-    class Epilog;
-
     /// Return a pointer to a maximally aligned block of memory having at least
     /// the specified 'size', allocated using the specified 'allocator'.  This
     /// function is called implicitly to allocate the coroutine frame for a
-    /// 'CoroutineTask' coroutine that is a non-member or static member
-    /// function having 'bsl::allocator_arg_t' as its first parameter type;
-    /// additional arguments beyond 'allocator' are also passed implicitly, but
-    /// ignored.
+    /// coroutine that is a non-member or static member function having
+    /// 'bsl::allocator_arg_t' as its first parameter type; additional
+    /// arguments beyond 'allocator' are also passed implicitly, but ignored.
     void* operator new(bsl::size_t size,
                        bsl::allocator_arg_t,
                        bsl::convertible_to<ntsa::Allocator> auto&& allocator,
@@ -950,7 +1059,7 @@ class CoroutineTask<RESULT>::Promise : public CoroutineTask<RESULT>::Context
     /// Return a pointer to a maximally aligned block of memory having at least
     /// the specified 'size', allocated using the specified 'allocator'.  This
     /// function is called implicitly to allocate the coroutine frame for a
-    /// 'CoroutineTask' coroutine that is a non-static member function having
+    /// coroutine that is a non-static member function having
     /// 'bsl::allocator_arg_t' as its first parameter type (not including the
     /// object parameter).  The object argument and additional arguments beyond
     /// 'allocator' are also passed implicitly, but ignored.
@@ -963,18 +1072,18 @@ class CoroutineTask<RESULT>::Promise : public CoroutineTask<RESULT>::Context
     /// Return a pointer to a maximally aligned block of memory having at least
     /// the specified 'size', allocated using the currently installed default
     /// allocator.  This function is called implicitly to allocate the
-    /// coroutine frame for a 'CoroutineTask' coroutine whose parameter list
-    /// does not support explicit specification of the allocator.  The
-    /// parameters of the coroutine are implicitly passed to this function
-    /// after 'size', but ignored thereby.
+    /// coroutine frame for a coroutine whose parameter list does not support
+    /// explicit specification of the allocator.  The parameters of the
+    /// coroutine are implicitly passed to this function after 'size', but
+    /// ignored.
     void* operator new(bsl::size_t size, auto&&...);
 
-    /// Deallocate the block of memory pointed to by the specified 'ptr'.  The
-    /// behavior is undefined unless 'ptr' was returned by one of the 'operator
-    /// new' functions declared above and the specified 'size' equals the
-    /// 'size' argument that was passed to that 'operator new' function. This
-    /// function is called implicitly to deallocate the coroutine frame for a
-    /// 'CoroutineTask' coroutine.
+    /// Deallocate the block of memory at the specified 'address'.  The
+    /// behavior is undefined unless 'address' was returned by one of the
+    /// 'operator new' functions declared above and the specified 'size' equals
+    /// the 'size' argument that was passed to that 'operator new' function.
+    /// This function is called implicitly to deallocate the coroutine frame
+    /// for a coroutine.
     void operator delete(void* ptr, bsl::size_t size);
 
     /// Create a new coroutine task promise. Allocate memory using the default
@@ -989,46 +1098,32 @@ class CoroutineTask<RESULT>::Promise : public CoroutineTask<RESULT>::Context
     /// specified 'allocator'.
     explicit Promise(auto&&..., ntsa::Allocator allocator);
 
-    /// Create a new coroutine task promise that will use the specified
-    /// 'allocator' to provide memory for the result object if 'RESULT' is an
-    /// allocator-aware object type; otherwise, 'allocator' is ignored.  This
-    /// function is called implicitly upon entry to a 'CoroutineTask' coroutine
-    /// that is a non-member or static member function having
-    /// 'bsl::allocator_arg_t' as its first parameter type; additional
-    /// arguments beyond 'allocator' are also passed implicitly, but ignored.
+    /// Create a new coroutine task promise. Allocate memory using the
+    /// specified 'allocator'.
     Promise(bsl::allocator_arg_t,
             bsl::convertible_to<ntsa::Allocator> auto&& allocator,
             auto&&...);
 
-    /// Create a new coroutine task promise that will use the specified
-    /// 'allocator' to provide memory for the result object if 'RESULT' is an
-    /// allocator-aware object type; otherwise, 'allocator' is ignored.  This
-    /// function is called implicitly upon entry to a 'CoroutineTask' coroutine
-    /// that is a non-static member function having 'bsl::allocator_arg_t' as
-    /// its first parameter type (not including the object parameter).  The
-    /// object argument and additional arguments beyond 'allocator' are also
-    /// passed implicitly, but ignored.
+    /// Create a new coroutine task promise. Allocate memory using the
+    /// specified 'allocator'.
     Promise(auto&&,
             bsl::allocator_arg_t,
             bsl::convertible_to<ntsa::Allocator> auto&& allocator,
             auto&&...);
 
-    /// Create a new coroutine task promise. This function is called implicitly
-    /// upon entry to a 'CoroutineTask' coroutine that does not support
-    /// explicit specification of the allocator.  The coroutine's parameters
-    /// are passed to this function implicitly, but ignored thereby.
+    /// Create a new coroutine task promise. Allocate memory using the
+    /// default allocator.
     Promise(auto&&...);
 
-    /// Return an awaitable object that will suspend this coroutine.
-    Prolog initial_suspend();
+    /// Return an awaitable object that implements the the initial suspension
+    /// of the coroutine.
+    CoroutineTask<RESULT>::Prolog initial_suspend();
 
-    /// Return an awaitable object that, when awaited by a coroutine having
-    /// '*this' as its promise object, will resume the coroutine referred to by
-    /// 'd_awaiter'.
-    Epilog final_suspend() noexcept;
+    /// Return an awaitable object that implements the the final suspension
+    /// of the coroutine.
+    CoroutineTask<RESULT>::Epilog final_suspend() noexcept;
 
-    /// Return a 'CoroutineTask' object that refers to the coroutine that has
-    /// '*this' as its promise object.
+    /// Return the value to be returned from the coroutine.
     CoroutineTask<RESULT> get_return_object();
 
   private:
@@ -1078,19 +1173,19 @@ class CoroutineTask<RESULT>::Promise : public CoroutineTask<RESULT>::Context
 /// asynchronous operation. The return value of await_resume() becomes the
 /// result of the co_await expression.
 ///
-/// @note
-/// This class's behavior is similar to 'std::suspend_always'.
-///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntsa
 template <typename RESULT>
-class CoroutineTask<RESULT>::Promise::Prolog
+class CoroutineTask<RESULT>::Prolog
 {
   public:
     /// Create a new awaitable for the specified 'context'.
-    explicit Prolog(CoroutineTask<RESULT>::Context* context);
+    explicit Prolog(CoroutineTask<RESULT>::Context* context) noexcept;
+
+    /// Destroy this object.
+    ~Prolog() noexcept;
 
     /// Return false.
     ///
@@ -1179,11 +1274,14 @@ class CoroutineTask<RESULT>::Promise::Prolog
 ///
 /// @ingroup module_ntsa
 template <typename RESULT>
-class CoroutineTask<RESULT>::Promise::Epilog
+class CoroutineTask<RESULT>::Epilog
 {
   public:
     /// Create a new awaitable for the specified 'context'.
-    explicit Epilog(CoroutineTask<RESULT>::Context* context);
+    explicit Epilog(CoroutineTask<RESULT>::Context* context) noexcept;
+
+    /// Destroy this object.
+    ~Epilog() noexcept;
 
     /// Return false.
     ///
@@ -1272,11 +1370,14 @@ class CoroutineTask<RESULT>::Promise::Epilog
 ///
 /// @ingroup module_ntsa
 template <typename RESULT>
-class CoroutineTask<RESULT>::ResultAwaitable
+class CoroutineTask<RESULT>::Caller
 {
   public:
     /// Create a new awaitable for the specified 'context'.
-    explicit ResultAwaitable(CoroutineTask<RESULT>::Context* context);
+    explicit Caller(CoroutineTask<RESULT>::Context* context) noexcept;
+
+    /// Destroy this object.
+    ~Caller() noexcept;
 
     /// Return 'false'.
     ///
@@ -1285,12 +1386,11 @@ class CoroutineTask<RESULT>::ResultAwaitable
     /// infrastructure when awaiting. Return true if the awaited operation is
     /// already complete (causing 'await_suspend' to be skipped and
     /// 'await_resume' to be called immediately.
-    bool await_ready();
+    bool await_ready() noexcept;
 
-    /// Configure the coroutine of 'd_promise' so that it will resume the
-    /// specified 'awaiter' upon completion, then return a handle referring to
-    /// the coroutine of 'd_promise' refers to (causing it to be resumed).  The
-    /// behavior is undefined if 'awaiter' does not refer to a coroutine.
+    /// Remember the specified calling 'coroutine', so that it will be resumed
+    /// when this coroutine completes. Return the current coroutine so that
+    /// it will be resumed.
     ///
     /// @details
     /// This function is automatically called by the coroutine compiler
@@ -1301,8 +1401,8 @@ class CoroutineTask<RESULT>::ResultAwaitable
     /// remains suspended. If it returns true, the coroutine remains suspended.
     /// If it returns false, the coroutine is automatically destroyed. If it
     /// returns 'bsl::coroutine_handle', that coroutine is resumed.
-    bsl::coroutine_handle<CoroutineTask<RESULT>::Promise> await_suspend(
-        bsl::coroutine_handle<void> coroutine);
+    bsl::coroutine_handle<void> await_suspend(
+        bsl::coroutine_handle<void> coroutine) noexcept;
 
     /// Return the result of the coroutine of 'd_promise', or rethrow the
     /// exception by which that coroutine exited.
@@ -1312,25 +1412,27 @@ class CoroutineTask<RESULT>::ResultAwaitable
     /// infrastructure when the awaited operation completes and the coroutine
     /// is resumed. Return the result of the co_await expression, or rethrow
     /// the exception that occurred during the asynchronous operation, if any.
-    RESULT await_resume();
+    RESULT await_resume() noexcept;
 
   private:
     /// This class is not copy-constructable.
-    ResultAwaitable(const ResultAwaitable&) = delete;
+    Caller(const Caller&) = delete;
 
     /// This class is not move-constructable.
-    ResultAwaitable(ResultAwaitable&&) = delete;
+    Caller(Caller&&) = delete;
 
     /// This class is not copy-assignable.
-    ResultAwaitable& operator=(const ResultAwaitable&) = delete;
+    Caller& operator=(const Caller&) = delete;
 
     /// This class is not move-assignable.
-    ResultAwaitable& operator=(ResultAwaitable&&) = delete;
+    Caller& operator=(Caller&&) = delete;
 
   private:
     /// The coroutine context.
     CoroutineTask<RESULT>::Context* d_context;
 };
+
+#include "/Users/mmillett/bloomberg/ntf-core/docs/experimental/coroutine_wait.h"
 
 // MRM: generator
 #if 0
@@ -1588,6 +1690,25 @@ generator<std::invoke_result_t<FUNC&, typename generator<T>::iterator::reference
 /// @ingroup module_ntsa
 class CoroutineUtil
 {
+  private:
+    template <typename AWAITABLE,
+              typename RESULT = typename CoroutineMeta::AwaitableTraits<
+                  AWAITABLE&&>::AwaitResultType,
+              bsl::enable_if_t<!bsl::is_void_v<RESULT>, int> = 0>
+    static CoroutineWaiter<RESULT> createWaiter(AWAITABLE&& awaitable)
+    {
+        co_yield co_await bsl::forward<AWAITABLE>(awaitable);
+    }
+
+    template <typename AWAITABLE,
+              typename RESULT = typename CoroutineMeta::AwaitableTraits<
+                  AWAITABLE&&>::AwaitResultType,
+              bsl::enable_if_t<bsl::is_void_v<RESULT>, int> = 0>
+    static CoroutineWaiter<void> createWaiter(AWAITABLE&& awaitable)
+    {
+        co_await bsl::forward<AWAITABLE>(awaitable);
+    }
+
   public:
     /// Defines a type alias for the allocator type.
     using Allocator = ntsa::Allocator;
@@ -1641,6 +1762,19 @@ class CoroutineUtil
         [](auto awaiter) -> Spawner {
             co_await std::move(awaiter);
         }(std::move(awaiter));
+    }
+
+    template <typename AWAITABLE>
+    static auto sync_wait(AWAITABLE&& awaitable) ->
+        typename CoroutineMeta::AwaitableTraits<AWAITABLE&&>::AwaitResultType
+    {
+        auto task =
+            CoroutineUtil::createWaiter(bsl::forward<AWAITABLE>(awaitable));
+
+        task.resume();
+        task.wait();
+
+        return task.release();
     }
 };
 
@@ -2332,67 +2466,115 @@ NTSCFG_INLINE void CoroutineReturn<RESULT>::release()
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTask<RESULT>::Context::Context()
-: CoroutineReturn<RESULT>()
-, d_current(nullptr)
-, d_awaiter(nullptr)
-, d_allocator()
+NTSCFG_INLINE CoroutineYield<RESULT>::CoroutineYield()
+: d_selection(e_UNDEFINED)
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineYield<RESULT>::~CoroutineYield()
+{
+    if (d_selection == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
+    }
+    else if (d_selection == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
+    }
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineYield<RESULT>::return_void()
+{
+    BSLS_ASSERT_OPT(!"unreachable");
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineYield<RESULT>::unhandled_exception()
+{
+    bsl::exception_ptr exception = bsl::current_exception();
+
+    if (d_selection == e_SUCCESS) {
+        bslma::DestructionUtil::destroy(d_success.address());
+    }
+    else if (d_selection == e_FAILURE) {
+        bslma::DestructionUtil::destroy(d_failure.address());
+    }
+
+    new (d_failure.address()) FailureType(exception);
+
+    d_selection = e_FAILURE;
+}
+
+// YYYY
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineYield<RESULT>::ReferenceType CoroutineYield<
+    RESULT>::release()
+{
+    if (d_selection == e_SUCCESS) {
+        return static_cast<ReferenceType>(*d_success.object());
+    }
+    else if (d_selection == e_FAILURE) {
+        std::rethrow_exception(d_failure.object());
+    }
+    else {
+        throw bsl::runtime_error("Coroutine task result not defined");
+    }
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineTask<RESULT>::Context::Context() noexcept
+: CoroutineReturn<RESULT>(),
+  d_current(nullptr),
+  d_awaiter(nullptr),
+  d_allocator()
 {
 }
 
 template <typename RESULT>
 NTSCFG_INLINE CoroutineTask<RESULT>::Context::Context(
-    ntsa::Allocator allocator)
-: CoroutineReturn<RESULT>(allocator)
-, d_current(nullptr)
-, d_awaiter(nullptr)
-, d_allocator(allocator)
+    ntsa::Allocator allocator) noexcept : CoroutineReturn<RESULT>(allocator),
+                                          d_current(nullptr),
+                                          d_awaiter(nullptr),
+                                          d_allocator(allocator)
 {
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTask<RESULT>::Context::~Context()
+NTSCFG_INLINE CoroutineTask<RESULT>::Context::~Context() noexcept
 {
 }
 
 template <typename RESULT>
 NTSCFG_INLINE void CoroutineTask<RESULT>::Context::setCurrent(
-    bsl::coroutine_handle<CoroutineTask<RESULT>::Promise> current)
+    bsl::coroutine_handle<void> current) noexcept
 {
     d_current = current;
 }
 
 template <typename RESULT>
 NTSCFG_INLINE void CoroutineTask<RESULT>::Context::setAwaiter(
-    bsl::coroutine_handle<void> awaiter)
+    bsl::coroutine_handle<void> awaiter) noexcept
 {
     d_awaiter = awaiter;
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTask<RESULT>::Promise& CoroutineTask<
-    RESULT>::Context::promise()
-{
-    BSLS_ASSERT(d_current.address() != nullptr);
-    return d_current.promise();
-}
-
-template <typename RESULT>
-NTSCFG_INLINE void CoroutineTask<RESULT>::Context::resumeAwaiter()
+NTSCFG_INLINE void CoroutineTask<RESULT>::Context::resumeAwaiter() noexcept
 {
     BSLS_ASSERT(d_awaiter.address() != nullptr);
     d_awaiter.resume();
 }
 
 template <typename RESULT>
-NTSCFG_INLINE void CoroutineTask<RESULT>::Context::resumeCurrent()
+NTSCFG_INLINE void CoroutineTask<RESULT>::Context::resumeCurrent() noexcept
 {
     BSLS_ASSERT(d_current.address() != nullptr);
     d_current.resume();
 }
 
 template <typename RESULT>
-NTSCFG_INLINE void CoroutineTask<RESULT>::Context::destroy()
+NTSCFG_INLINE void CoroutineTask<RESULT>::Context::destroy() noexcept
 {
     NTSA_COROUTINE_LOG_CONTEXT();
 
@@ -2404,27 +2586,28 @@ NTSCFG_INLINE void CoroutineTask<RESULT>::Context::destroy()
 }
 
 template <typename RESULT>
-NTSCFG_INLINE bsl::coroutine_handle<typename CoroutineTask<RESULT>::Promise>
-              CoroutineTask<RESULT>::Context::current() const
+NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTask<
+    RESULT>::Context::current() const noexcept
 {
     return d_current;
 }
 
 template <typename RESULT>
 NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTask<
-    RESULT>::Context::awaiter() const
+    RESULT>::Context::awaiter() const noexcept
 {
     return d_awaiter;
 }
 
 template <typename RESULT>
-NTSCFG_INLINE ntsa::Allocator CoroutineTask<RESULT>::Context::allocator() const
+NTSCFG_INLINE ntsa::Allocator CoroutineTask<RESULT>::Context::allocator()
+    const noexcept
 {
     return d_allocator;
 }
 
 template <typename RESULT>
-NTSCFG_INLINE bool CoroutineTask<RESULT>::Context::isComplete() const
+NTSCFG_INLINE bool CoroutineTask<RESULT>::Context::isComplete() const noexcept
 {
     if (d_current.address() == 0) {
         return true;
@@ -2439,7 +2622,7 @@ NTSCFG_INLINE bool CoroutineTask<RESULT>::Context::isComplete() const
 
 template <typename RESULT>
 NTSCFG_INLINE bsl::ostream& CoroutineTask<RESULT>::Context::print(
-    bsl::ostream& stream) const
+    bsl::ostream& stream) const noexcept
 {
     stream << "[ current = " << d_current.address()
            << " awaiter = " << d_awaiter.address() << " ]";
@@ -2447,15 +2630,18 @@ NTSCFG_INLINE bsl::ostream& CoroutineTask<RESULT>::Context::print(
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTask<RESULT>::Promise::Prolog::Prolog(
-    CoroutineTask<RESULT>::Context* context)
-: d_context(context)
+NTSCFG_INLINE CoroutineTask<RESULT>::Prolog::Prolog(
+    CoroutineTask<RESULT>::Context* context) noexcept : d_context(context)
 {
 }
 
 template <typename RESULT>
-NTSCFG_INLINE bool CoroutineTask<RESULT>::Promise::Prolog::await_ready()
-    const noexcept
+NTSCFG_INLINE CoroutineTask<RESULT>::Prolog::~Prolog() noexcept
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE bool CoroutineTask<RESULT>::Prolog::await_ready() const noexcept
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_READY("task", "prolog", *d_context);
@@ -2464,7 +2650,7 @@ NTSCFG_INLINE bool CoroutineTask<RESULT>::Promise::Prolog::await_ready()
 }
 
 template <typename RESULT>
-NTSCFG_INLINE void CoroutineTask<RESULT>::Promise::Prolog::await_suspend(
+NTSCFG_INLINE void CoroutineTask<RESULT>::Prolog::await_suspend(
     bsl::coroutine_handle<void> coroutine) const noexcept
 {
     NTSA_COROUTINE_LOG_CONTEXT();
@@ -2474,23 +2660,25 @@ NTSCFG_INLINE void CoroutineTask<RESULT>::Promise::Prolog::await_suspend(
 }
 
 template <typename RESULT>
-NTSCFG_INLINE void CoroutineTask<RESULT>::Promise::Prolog::await_resume()
-    const noexcept
+NTSCFG_INLINE void CoroutineTask<RESULT>::Prolog::await_resume() const noexcept
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_RESUME("task", "prolog", *d_context);
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTask<RESULT>::Promise::Epilog::Epilog(
-    CoroutineTask<RESULT>::Context* context)
-: d_context(context)
+NTSCFG_INLINE CoroutineTask<RESULT>::Epilog::Epilog(
+    CoroutineTask<RESULT>::Context* context) noexcept : d_context(context)
 {
 }
 
 template <typename RESULT>
-NTSCFG_INLINE bool CoroutineTask<RESULT>::Promise::Epilog::await_ready()
-    noexcept
+NTSCFG_INLINE CoroutineTask<RESULT>::Epilog::~Epilog() noexcept
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE bool CoroutineTask<RESULT>::Epilog::await_ready() noexcept
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_READY("task", "epilog", *d_context);
@@ -2499,8 +2687,8 @@ NTSCFG_INLINE bool CoroutineTask<RESULT>::Promise::Epilog::await_ready()
 }
 
 template <typename RESULT>
-NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTask<RESULT>::Promise::
-    Epilog::await_suspend(bsl::coroutine_handle<void> coroutine) noexcept
+NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTask<RESULT>::Epilog::
+    await_suspend(bsl::coroutine_handle<void> coroutine) noexcept
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_SUSPEND("task", "epilog", *d_context, coroutine);
@@ -2511,22 +2699,25 @@ NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTask<RESULT>::Promise::
 }
 
 template <typename RESULT>
-NTSCFG_INLINE void CoroutineTask<RESULT>::Promise::Epilog::await_resume()
-    noexcept
+NTSCFG_INLINE void CoroutineTask<RESULT>::Epilog::await_resume() noexcept
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_RESUME("task", "epilog", *d_context);
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTask<RESULT>::ResultAwaitable::ResultAwaitable(
-    CoroutineTask<RESULT>::Context* context)
-: d_context(context)
+NTSCFG_INLINE CoroutineTask<RESULT>::Caller::Caller(
+    CoroutineTask<RESULT>::Context* context) noexcept : d_context(context)
 {
 }
 
 template <typename RESULT>
-NTSCFG_INLINE bool CoroutineTask<RESULT>::ResultAwaitable::await_ready()
+NTSCFG_INLINE CoroutineTask<RESULT>::Caller::~Caller() noexcept
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE bool CoroutineTask<RESULT>::Caller::await_ready() noexcept
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_READY("task", "result", *d_context);
@@ -2535,9 +2726,8 @@ NTSCFG_INLINE bool CoroutineTask<RESULT>::ResultAwaitable::await_ready()
 }
 
 template <typename RESULT>
-NTSCFG_INLINE bsl::coroutine_handle<typename CoroutineTask<RESULT>::Promise>
-              CoroutineTask<RESULT>::ResultAwaitable::await_suspend(
-    bsl::coroutine_handle<void> coroutine)
+NTSCFG_INLINE bsl::coroutine_handle<void> CoroutineTask<RESULT>::Caller::
+    await_suspend(bsl::coroutine_handle<void> coroutine) noexcept
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_SUSPEND("task", "result", *d_context, coroutine);
@@ -2548,7 +2738,7 @@ NTSCFG_INLINE bsl::coroutine_handle<typename CoroutineTask<RESULT>::Promise>
 }
 
 template <typename RESULT>
-NTSCFG_INLINE RESULT CoroutineTask<RESULT>::ResultAwaitable::await_resume()
+NTSCFG_INLINE RESULT CoroutineTask<RESULT>::Caller::await_resume() noexcept
 {
     NTSA_COROUTINE_LOG_CONTEXT();
     NTSA_COROUTINE_LOG_AWAIT_RESUME("task", "result", *d_context);
@@ -2658,17 +2848,17 @@ NTSCFG_INLINE CoroutineTask<RESULT>::Promise::Promise(auto&&...)
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTask<RESULT>::Promise::Prolog CoroutineTask<
+NTSCFG_INLINE CoroutineTask<RESULT>::Prolog CoroutineTask<
     RESULT>::Promise::initial_suspend()
 {
-    return CoroutineTask<RESULT>::Promise::Prolog(this);
+    return CoroutineTask<RESULT>::Prolog(this);
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTask<RESULT>::Promise::Epilog CoroutineTask<
+NTSCFG_INLINE CoroutineTask<RESULT>::Epilog CoroutineTask<
     RESULT>::Promise::final_suspend() noexcept
 {
-    return CoroutineTask<RESULT>::Promise::Epilog(this);
+    return CoroutineTask<RESULT>::Epilog(this);
 }
 
 template <typename RESULT>
@@ -2717,17 +2907,17 @@ NTSCFG_INLINE CoroutineTask<RESULT>& CoroutineTask<RESULT>::operator=(
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTask<RESULT>::ResultAwaitable CoroutineTask<
+NTSCFG_INLINE CoroutineTask<RESULT>::Caller CoroutineTask<
     RESULT>::operator co_await() const& noexcept
 {
-    return CoroutineTask<RESULT>::ResultAwaitable(d_context);
+    return CoroutineTask<RESULT>::Caller(d_context);
 }
 
 template <typename RESULT>
-NTSCFG_INLINE CoroutineTask<RESULT>::ResultAwaitable CoroutineTask<
+NTSCFG_INLINE CoroutineTask<RESULT>::Caller CoroutineTask<
     RESULT>::operator co_await() const&& noexcept
 {
-    return CoroutineTask<RESULT>::ResultAwaitable(d_context);
+    return CoroutineTask<RESULT>::Caller(d_context);
 }
 
 template <typename RESULT>
@@ -2779,6 +2969,8 @@ NTSCFG_INLINE RESULT CoroutineUtil::synchronize(CoroutineTask<RESULT>&& task)
 
     return task.d_context->release();
 }
+
+#include "/Users/mmillett/bloomberg/ntf-core/docs/experimental/coroutine_wait.cpp"
 
 NTSCFG_INLINE
 CoroutineSynchronizationContext::CoroutineSynchronizationContext(

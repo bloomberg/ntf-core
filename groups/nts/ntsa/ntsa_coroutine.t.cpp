@@ -258,9 +258,9 @@ class CoroutineTest
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntsa
-template <typename T>
+template <typename TYPE>
 struct CoroutineTest::AwaitableValue {
-    AwaitableValue(T value)
+    AwaitableValue(TYPE value)
     : d_value(std::move(value))
     {
     }
@@ -274,12 +274,12 @@ struct CoroutineTest::AwaitableValue {
     {
     }
 
-    T await_resume() noexcept
+    TYPE&& await_resume() noexcept
     {
         return std::move(d_value);
     }
 
-    T d_value;
+    TYPE d_value;
 };
 
 /// @internal @brief
@@ -1929,7 +1929,7 @@ ntsa::CoroutineTask<ntsa::Error> CoroutineTest::Mechanism::
 
     d_actionMap.emplace(token, action);
 
-    // error = ntsa::CoroutineUtil::synchronize(bsl::move(task));
+    // error = ntsa::CoroutineUtil::sync_wait(bsl::move(task));
 #endif
 
     co_return ntsa::Error();
@@ -1948,7 +1948,7 @@ void ntsa::CoroutineTest::main(CoroutineTestFunction testFunction)
     ntsa::CoroutineTest::Scope function("main");
 
     ntsa::CoroutineTask<void> task = coMain(testFunction);
-    ntsa::CoroutineUtil::synchronize(bsl::move(task));
+    ntsa::CoroutineUtil::sync_wait(bsl::move(task));
 }
 
 ntsa::CoroutineTask<void> ntsa::CoroutineTest::coMain(
@@ -2128,7 +2128,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyReturnInt()
 
     ntsa::CoroutineTask<int> task = coReturnIntLiteral(100);
 
-    int value = ntsa::CoroutineUtil::synchronize(bsl::move(task));
+    int value = ntsa::CoroutineUtil::sync_wait(bsl::move(task));
 
     BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
 
@@ -2143,7 +2143,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyReturnIntChain()
 
     ntsa::CoroutineTask<int> task = coReturnIntChain(100, 200);
 
-    int value = ntsa::CoroutineUtil::synchronize(bsl::move(task));
+    int value = ntsa::CoroutineUtil::sync_wait(bsl::move(task));
 
     BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
 
@@ -2222,7 +2222,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase4()
 
     ntsa::CoroutineTask<void> task = mechanism.hello();
 
-    ntsa::CoroutineUtil::synchronize(bsl::move(task));
+    ntsa::CoroutineUtil::sync_wait(bsl::move(task));
 
     co_return;
 }
@@ -2264,7 +2264,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase6()
     ntsa::CoroutineTask<ntsa::Error> task =
         mechanism.executeCooperatively(&result, 0, parameters);
 
-    error = ntsa::CoroutineUtil::synchronize(bsl::move(task));
+    error = ntsa::CoroutineUtil::sync_wait(bsl::move(task));
     NTSCFG_TEST_OK(error);
 
     NTSCFG_TEST_EQ(result.annotation(), "test");
@@ -2552,16 +2552,28 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
     ntsa::CoroutineTest::Scope function("verifyBasic");
 
     {
+        ntsa::CoroutineTest::AwaitableValue<void> awaitable;
+        ntsa::CoroutineUtil::sync_wait(bsl::move(awaitable));
+    }
+
+    {
+        ntsa::CoroutineTest::AwaitableValue<int> awaitable(123);
+
+        int value = ntsa::CoroutineUtil::sync_wait(bsl::move(awaitable));
+        NTSCFG_TEST_EQ(value, 123);
+    }
+
+    {
         ntsa::CoroutineTask<void> t = coReturnVoid();
 
-        ntsa::CoroutineUtil::synchronize(bsl::move(t));
+        ntsa::CoroutineUtil::sync_wait(bsl::move(t));
     }
 
     {
         int                      e = returnInt();
         ntsa::CoroutineTask<int> t = coReturnInt();
 
-        int f = ntsa::CoroutineUtil::synchronize(bsl::move(t));
+        int f = ntsa::CoroutineUtil::sync_wait(bsl::move(t));
 
         NTSCFG_TEST_EQ(e, f);
     }
@@ -2570,7 +2582,7 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
         int&                      e = returnIntReference();
         ntsa::CoroutineTask<int&> t = coReturnIntReference();
 
-        int& f = ntsa::CoroutineUtil::synchronize(bsl::move(t));
+        int& f = ntsa::CoroutineUtil::sync_wait(bsl::move(t));
 
         NTSCFG_TEST_EQ(&e, &f);
     }
@@ -2579,7 +2591,7 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
         int&&                      e = returnIntReferenceMovable();
         ntsa::CoroutineTask<int&&> t = coReturnIntReferenceMovable();
 
-        int&& f = ntsa::CoroutineUtil::synchronize(bsl::move(t));
+        int&& f = ntsa::CoroutineUtil::sync_wait(bsl::move(t));
 
         NTSCFG_TEST_EQ(&e, &f);
     }
@@ -2679,7 +2691,7 @@ using namespace bsl;
 // TODO
 // ----------------------------------------------------------------------------
 // [ 1] CoroutineTask<>
-// [ 2] RESULT CoroutineUtil::synchronize(CoroutineTask<RESULT>&&);
+// [ 2] RESULT CoroutineUtil::sync_wait(CoroutineTask<RESULT>&&);
 // [ 3] CoroutineTask(CoroutineTask&&)
 // [ 4] `co_await` for CoroutineTask
 // ----------------------------------------------------------------------------
@@ -2760,13 +2772,13 @@ void doP3()
 // ----------------------------------------------------------------------------
 
 namespace test_case_2 {
-// Verify that `ntsa::CoroutineUtil::synchronize` doesn't accept an lvalue of type
+// Verify that `ntsa::CoroutineUtil::sync_wait` doesn't accept an lvalue of type
 // `CoroutineTask<RESULT>`.
 template <class RESULT = void>
 void doP4()
 {
     ASSERT(!(requires (bdxa::CoroutineTask<RESULT> task) {
-                 ntsa::CoroutineUtil::synchronize(task);
+                 ntsa::CoroutineUtil::sync_wait(task);
              }));
 }
 }  // close namespace test_case_4
@@ -2849,14 +2861,14 @@ int main(int argc, char *argv[])
         //    instantiating the template, and another `CoroutineTask`, `T2`, that
         //    returns the same type, referring a coroutine that `co_await`s
         //    `T1` and `co_return` the result of the `co_await` expression.
-        //    Use `synchronize` to check that the result of `T2` is the expected
+        //    Use `sync_wait` to check that the result of `T2` is the expected
         //    pre-set value.  (C-1)
         //
         //    Note that the expected behavior is obtained only because a
         //    `CoroutineTask` coroutine returns control to the awaiter of the
         //    `CoroutineTask` upon completion of the coroutine.  The sequence of
         //    events is as follows:
-        //    1. `synchronize` awaits `T1`, resuming the coroutine;
+        //    1. `sync_wait` awaits `T1`, resuming the coroutine;
         //    2. The coroutine referred to by `T1` awaits `T2`, resuming the
         //       coroutine;
         //    3. The body of `T2` runs, and the coroutine executes the implicit
@@ -2864,21 +2876,21 @@ int main(int argc, char *argv[])
         //    4. The `await_suspend` method returns the coroutine handle of
         //       `T1`, causing it to be resumed;
         //    5. `T1` finishes executing the `co_await` expression and runs to
-        //       its final suspend point.  The coroutine in `synchronize` is then
+        //       its final suspend point.  The coroutine in `sync_wait` is then
         //       resumed like in step 4;
-        //    6. The coroutine in `synchronize` sets a flag and the wait
+        //    6. The coroutine in `sync_wait` sets a flag and the wait
         //       completes.
         //
         //    If `CoroutineTask` coroutines were programmed not to suspend at the
         //    final suspend point, then the following (undesired) sequence of
         //    events would occur:
-        //    1. `synchronize` awaits `T1`, resuming the coroutine;
+        //    1. `sync_wait` awaits `T1`, resuming the coroutine;
         //    2. The coroutine referred to by `T1` awaits `T2`, resuming the
         //       coroutine;
         //    3. `T2` runs to completion and returns;
         //    4. The `co_await T2` expression in the coroutine referred to by
         //       `T1` returns control to the resumer of that coroutine;
-        //    5. `synchronize` waits forever for the coroutine referred to by
+        //    5. `sync_wait` waits forever for the coroutine referred to by
         //       `T1` to complete.
         //
         //    If `CoroutineTask` coroutines were programmed to always suspend at
@@ -2888,7 +2900,7 @@ int main(int argc, char *argv[])
         // 2. Create a `CoroutineTask`, `T1`, referring to a coroutine that throws
         //    an exception, and another `CoroutineTask`, `T2`, that `co_await`s
         //    `T1` within a try-catch block and `co_return`s the caught value.
-        //    Use `synchronize` to verify that the result of `T2` is the expected
+        //    Use `sync_wait` to verify that the result of `T2` is the expected
         //    value.  (C-1)
         // 2. Use a requires-expression to verify that an lvalue of type
         //    `CoroutineTask` doesn't have a callable `await_ready` method or
@@ -2916,19 +2928,19 @@ int main(int argc, char *argv[])
                             EnforceVoid(), co_await coReturnValue<void>();
                             co_return true;
                         }();
-            ASSERT(ntsa::CoroutineUtil::synchronize(bsl::move(task)));
+            ASSERT(ntsa::CoroutineUtil::sync_wait(bsl::move(task)));
         }
         {
             auto task = []() -> CoroutineTask<int> {
                             co_return co_await coReturnValue<int>();
                         }();
-            ASSERT(getValue<int>() == ntsa::CoroutineUtil::synchronize(bsl::move(task)));
+            ASSERT(getValue<int>() == ntsa::CoroutineUtil::sync_wait(bsl::move(task)));
         }
         {
             auto task = []() -> CoroutineTask<int&> {
                             co_return co_await coReturnValue<int&>();
                         }();
-            ASSERT(&getValue<int&>() == &ntsa::SimplTaskUtil::synchronize(bsl::move(task)));
+            ASSERT(&getValue<int&>() == &ntsa::SimplTaskUtil::sync_wait(bsl::move(task)));
         }
         {
             auto task = []() -> CoroutineTask<int&&> {
@@ -2936,7 +2948,7 @@ int main(int argc, char *argv[])
                         }();
 
             int&& expectedRef = getValue<int&&>();
-            int&& actualRef   = ntsa::CoroutineUtil::synchronize(bsl::move(task));
+            int&& actualRef   = ntsa::CoroutineUtil::sync_wait(bsl::move(task));
             ASSERT(&expectedRef == &actualRef);
         }
 
@@ -2954,7 +2966,7 @@ int main(int argc, char *argv[])
                             }
                             co_return thrownValue;
                         }();
-            ASSERT(2 == ntsa::CoroutineUtil::synchronize(bsl::move(task)));
+            ASSERT(2 == ntsa::CoroutineUtil::sync_wait(bsl::move(task)));
         }
 #endif
 
@@ -2978,7 +2990,7 @@ int main(int argc, char *argv[])
         // Plan:
         // 1. Create a `CoroutineTask` coroutine and call it.  Then,
         //    move-construct a `CoroutineTask` object from the result of the call.
-        //    Finally, use `synchronize` to resume the coroutine through the
+        //    Finally, use `sync_wait` to resume the coroutine through the
         //    newly created `CoroutineTask` and verify that the expected result is
         //    obtained.  (C-1)
         // 2. Use the appropriate standard library traits to verify the
@@ -2998,7 +3010,7 @@ int main(int argc, char *argv[])
             co_return 4;
         }();
         auto task2 = bsl::move(task);
-        ASSERT(4 == ntsa::CoroutineUtil::synchronize(bsl::move(task2)));
+        ASSERT(4 == ntsa::CoroutineUtil::sync_wait(bsl::move(task2)));
 
         ASSERT(!bsl::is_default_constructible_v<CoroutineTask<>>);
         ASSERT(!bsl::is_copy_constructible_v<CoroutineTask<>>);
@@ -3010,40 +3022,40 @@ int main(int argc, char *argv[])
       } break;
       case 2: {
         // --------------------------------------------------------------------
-        // `CoroutineUtil::synchronize`
+        // `CoroutineUtil::sync_wait`
         //
         // Concerns:
-        // 1. The `synchronize` method waits for the `CoroutineTask` coroutine to
+        // 1. The `sync_wait` method waits for the `CoroutineTask` coroutine to
         //    complete, then returns the value or propagates the exception with
         //    which the coroutine exited.
         // 2. The thread on which the coroutine completes can be either the
         //    same thread or a different thread.
-        // 3. `synchronize` doesn't accept lvalues.
+        // 3. `sync_wait` doesn't accept lvalues.
         //
         // Plan:
         // 1. Create a coroutine template that returns `CoroutineTask` of the
         //    template argument, which can be an object type, void, lvalue
         //    reference, or rvalue reference.  Define this coroutine template
         //    to `co_return` a pre-set value of the specified return type.
-        //    Verify that in each case, the result of calling `synchronize` is
+        //    Verify that in each case, the result of calling `sync_wait` is
         //    the pre-set value of the specified type.  (C-1,2)
         // 2. Create a `CoroutineTask` coroutine that throws an exception.  Call
-        //    `synchronize` within a try-catch block and verify that the
-        //    expected exception was propagated from `synchronize`.  (C-1,2)
+        //    `sync_wait` within a try-catch block and verify that the
+        //    expected exception was propagated from `sync_wait`.  (C-1,2)
         // 3. Create an awaitable that will suspend the awaiter and signal a
         //    configured thread to resume the awaiter.  Create a `CoroutineTask`
         //    coroutine that will `co_await` such an awaitable.  Use
-        //    `synchronize` to verify that the calling thread obtains the value
+        //    `sync_wait` to verify that the calling thread obtains the value
         //    that is eventually returned by the `CoroutineTask` coroutine.
         //    (C-2)
-        // 4. Use a requires-expression to verify that a call to `synchronize` is
+        // 4. Use a requires-expression to verify that a call to `sync_wait` is
         //    ill formed when the argument is an lvalue.  (C-3)
         //
         // Testing:
-        //   RESULT CoroutineUtil::synchronize(CoroutineTask<RESULT>&&);
+        //   RESULT CoroutineUtil::sync_wait(CoroutineTask<RESULT>&&);
         // --------------------------------------------------------------------
 
-        if (verbose) cout << "\n`synchronize`"
+        if (verbose) cout << "\n`sync_wait`"
                              "\n===========\n";
 
 #ifdef BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY
@@ -3051,12 +3063,12 @@ int main(int argc, char *argv[])
 
         // P-1
         ASSERT(
-             bsl::is_void_v<decltype(ntsa::CoroutineUtil::synchronize(coReturnValue<void>()))>);
-        ASSERT(getValue<int>() == ntsa::CoroutineUtil::synchronize(coReturnValue<int>()));
-        ASSERT(&getValue<int&>() == &ntsa::SimplTaskUtil::synchronize(coReturnValue<int&>()));
+             bsl::is_void_v<decltype(ntsa::CoroutineUtil::sync_wait(coReturnValue<void>()))>);
+        ASSERT(getValue<int>() == ntsa::CoroutineUtil::sync_wait(coReturnValue<int>()));
+        ASSERT(&getValue<int&>() == &ntsa::SimplTaskUtil::sync_wait(coReturnValue<int&>()));
         {
             int&& expectedRef = getValue<int&&>();
-            int&& actualRef   = ntsa::CoroutineUtil::synchronize(coReturnValue<int&&>());
+            int&& actualRef   = ntsa::CoroutineUtil::sync_wait(coReturnValue<int&&>());
             ASSERT(&expectedRef == &actualRef);
         }
 
@@ -3070,7 +3082,7 @@ int main(int argc, char *argv[])
             };
 
             try {
-                ntsa::CoroutineUtil::synchronize(throwingCoro());
+                ntsa::CoroutineUtil::sync_wait(throwingCoro());
             } catch (int ex) {
                 thrownValue = ex;
             }
@@ -3113,7 +3125,7 @@ int main(int argc, char *argv[])
             co_return 3;
         }();
 
-        ASSERT(3 == ntsa::CoroutineUtil::synchronize(bsl::move(awaitingTask)));
+        ASSERT(3 == ntsa::CoroutineUtil::sync_wait(bsl::move(awaitingTask)));
 
         // P-4
         doP4();
@@ -3133,7 +3145,7 @@ int main(int argc, char *argv[])
         //
         // Plan:
         // 1. Create and call a `CoroutineTask<>` coroutine.  Verify that the
-        //    return type is `CoroutineTask<void>`, then call `synchronize` on that
+        //    return type is `CoroutineTask<void>`, then call `sync_wait` on that
         //    object.  (C-1)
         //
         // Testing:
@@ -3147,7 +3159,7 @@ int main(int argc, char *argv[])
 #ifdef BSLS_LIBRARYFEATURES_HAS_CPP20_BASELINE_LIBRARY
         auto task = []() -> bdxa::CoroutineTask<> { co_return; }();
         ASSERT((bsl::is_same_v<bdxa::CoroutineTask<void>, decltype(task)>));
-        ntsa::CoroutineUtil::synchronize(bsl::move(task));
+        ntsa::CoroutineUtil::sync_wait(bsl::move(task));
 #else
         cout << "Skipping breathing test before C++20...\n";
         ASSERT(true);
