@@ -753,7 +753,7 @@ class CoroutineReturn<RESULT>
 };
 
 /// @internal @brief
-/// Describe a coroutine generator result stored by address.
+/// Describe a coroutine generator yield stored by address.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -1441,6 +1441,8 @@ class CoroutineTask<RESULT>::Caller
     CoroutineTask<RESULT>::Context* d_context;
 };
 
+#include "/Users/mmillett/bloomberg/ntf-core/docs/experimental/coroutine_wait.h"
+
 // MRM: generator
 #if 0
 
@@ -1791,7 +1793,7 @@ class CoroutineWaiter<RESULT>::Context
     /// Yield the specified 'result'.
     CoroutineWaiter<RESULT>::Epilog yield_value(ReferenceType result) noexcept;
 
-    /// The behavior is undefined.
+    /// Return from the coroutine.
     void return_void() noexcept;
 
     /// Remember the current unhandled exception and rethrow it when the
@@ -1918,7 +1920,7 @@ class CoroutineWaiter<void>::Context
     /// Destroy this object.
     ~Context() noexcept;
 
-    /// The behavior is undefined.
+    /// Return from the coroutine.
     void return_void() noexcept;
 
     /// Remember the current unhandled exception and rethrow it when the
@@ -2366,7 +2368,6 @@ class CoroutineUtil
             void return_void()
             {
             }
-            // I probably forget something which also doesn't do anything
         };
     };
 
@@ -3091,6 +3092,8 @@ NTSCFG_INLINE ntsa::Allocator CoroutineTask<RESULT>::allocator() const
 
 #endif  // MRM: generator
 
+#include "/Users/mmillett/bloomberg/ntf-core/docs/experimental/coroutine_wait.cpp"
+
 template <typename RESULT>
 NTSCFG_INLINE CoroutineWaiter<RESULT>::Context::Context() noexcept
 : d_current(nullptr),
@@ -3133,7 +3136,6 @@ CoroutineWaiter<RESULT>::Epilog CoroutineWaiter<RESULT>::Context::yield_value(
 template <typename RESULT>
 void CoroutineWaiter<RESULT>::Context::return_void() noexcept
 {
-    BSLS_ASSERT_OPT(!"unreachable");
 }
 
 template <typename RESULT>

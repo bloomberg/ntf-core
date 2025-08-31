@@ -136,6 +136,10 @@ class CoroutineTest
     // Return the specified string 'value' by value.
     static String returnStringLiteral(const String& value);
 
+    // Return a generator of the Fibonacci sequence terminating at the
+    // specified 'ceiling'.
+    static ntsa::CoroutineGenerator<int> fibonacci(int ceiling);
+
     // Log the specified 'message'.
     static ntsa::CoroutineTask<void> coLog(bsl::size_t sleep,
                                            const char* message);
@@ -206,6 +210,9 @@ class CoroutineTest
     static ntsa::CoroutineTask<void> coVerifyBarrier();
 
     // TODO
+    static ntsa::CoroutineTask<void> coVerifyGenerator();
+
+    // TODO
     static ntsa::CoroutineTask<void> coVerifySandbox(
         ntsa::AllocatorArg,
         ntsa::Allocator allocator);
@@ -246,6 +253,9 @@ class CoroutineTest
 
     // TODO
     static void verifyBarrier();
+
+    // TODO
+    static void verifyGenerator();
 
     // TODO
     static void verifySandbox();
@@ -1999,6 +2009,31 @@ ntsa::CoroutineTest::String&& ntsa::CoroutineTest::
     return bsl::move(globalString);
 }
 
+ntsa::CoroutineGenerator<int> ntsa::CoroutineTest::fibonacci(int ceiling)
+{
+    for (unsigned i = 0; i < 3; ++i) {
+        co_yield i;
+    }
+
+#if 0
+    int j = 0;
+    int i = 1;
+
+    co_yield j;
+
+    if (ceiling > j) {
+        do {
+            co_yield i;
+
+            int tmp = i;
+
+            i += j;
+            j  = tmp;
+        } while (i <= ceiling);
+    }
+#endif
+}
+
 ntsa::CoroutineTest::String ntsa::CoroutineTest::returnStringLiteral(
     const ntsa::CoroutineTest::String& value)
 {
@@ -2289,11 +2324,31 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyBarrier()
     co_return;
 }
 
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyGenerator()
+{
+    ntsa::CoroutineTest::Scope function("coVerifyGenerator");
+
+    ntsa::CoroutineGenerator<int> generator = CoroutineTest::fibonacci(32);
+
+    while (true) {
+        bool has_value = generator.acquire();
+        if (!has_value) {
+            break;
+        }
+
+        int value = generator.release();
+
+        BALL_LOG_INFO << "Generator = " << value << BALL_LOG_END;
+    }
+
+    co_return;
+}
+
 ntsa::CoroutineTask<void> CoroutineTest::coVerifySandbox(
     ntsa::AllocatorArg,
     ntsa::Allocator allocator)
 {
-    ntsa::CoroutineTest::Scope function("verifySandbox");
+    ntsa::CoroutineTest::Scope function("coVerifySandbox");
 
     ntsa::CoroutineTest::AwaitableValue<int> awaitable(static_cast<int>(123));
 
@@ -2649,6 +2704,12 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBarrier)
 {
     ntsa::CoroutineTest::Scope function("verifyBarrier");
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyBarrier);
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyGenerator)
+{
+    ntsa::CoroutineTest::Scope function("verifyGenerator");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyGenerator);
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifySandbox)
