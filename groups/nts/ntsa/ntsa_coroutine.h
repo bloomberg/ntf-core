@@ -4777,9 +4777,9 @@ class CoroutineBarrierUtil
         typename RESULT = typename CoroutineMeta::AwaitableTraits<
             CoroutineMeta::UnwrapReferenceType<AWAITABLE> >::AwaitResultType>
     [[nodiscard]]
-    static auto when_all_ready(std::vector<AWAITABLE> awaitables)
+    static auto when_all_ready(bsl::vector<AWAITABLE> awaitables)
     {
-        std::vector<when_all_task<RESULT> > tasks;
+        bsl::vector<when_all_task<RESULT> > tasks;
 
         tasks.reserve(awaitables.size());
 
@@ -4787,7 +4787,7 @@ class CoroutineBarrierUtil
             tasks.emplace_back(make_when_all_task(std::move(awaitable)));
         }
 
-        return when_all_ready_awaitable<std::vector<when_all_task<RESULT> > >(
+        return when_all_ready_awaitable<bsl::vector<when_all_task<RESULT> > >(
             std::move(tasks));
     }
 
@@ -4824,7 +4824,7 @@ class CoroutineBarrierUtil
             CoroutineMeta::UnwrapReferenceType<AWAITABLE> >::AwaitResultType,
         std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
     [[nodiscard]]
-    static auto when_all(std::vector<AWAITABLE> awaitables)
+    static auto when_all(bsl::vector<AWAITABLE> awaitables)
     {
         return CoroutineMeta::functionMap(
             [](auto&& taskVector) {
@@ -4841,7 +4841,7 @@ class CoroutineBarrierUtil
             CoroutineMeta::UnwrapReferenceType<AWAITABLE> >::AwaitResultType,
         std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
     [[nodiscard]]
-    static auto when_all(std::vector<AWAITABLE> awaitables)
+    static auto when_all(bsl::vector<AWAITABLE> awaitables)
     {
         using result_t = std::conditional_t<
             std::is_lvalue_reference_v<RESULT>,
@@ -4850,7 +4850,7 @@ class CoroutineBarrierUtil
 
         return CoroutineMeta::functionMap(
             [](auto&& taskVector) {
-                std::vector<result_t> results;
+                bsl::vector<result_t> results;
                 results.reserve(taskVector.size());
                 for (auto& task : taskVector) {
                     if constexpr (std::is_rvalue_reference_v<decltype(

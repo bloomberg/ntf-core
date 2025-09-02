@@ -889,7 +889,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
 
     ntsa::Error error;
 
-    std::vector<ntsa::CoroutineTask<void> > taskList;
+    bsl::vector<ntsa::CoroutineTask<void> > taskList;
 
     // Create the listener socket and begin listening.
 
