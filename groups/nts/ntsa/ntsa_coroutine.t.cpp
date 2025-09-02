@@ -141,7 +141,7 @@ class CoroutineTest
     static ntsa::CoroutineGenerator<int> fibonacci(int ceiling);
 
     // Log the specified 'message'.
-    static ntsa::CoroutineTask<void> coLog(bsl::size_t sleep,
+    static ntsa::CoroutineTask<void> coLog(bsl::size_t order,
                                            const char* message);
 
     // Return an awaitable with a void result type.
@@ -207,7 +207,11 @@ class CoroutineTest
     // TODO
     static ntsa::CoroutineTask<void> coVerifyCase6();
 
-    static ntsa::CoroutineTask<void> coVerifyWhenAll();
+    // TODO
+    static ntsa::CoroutineTask<void> coVerifyWhenAllLegacy();
+
+    // TODO
+    static ntsa::CoroutineTask<void> coVerifyWhenAllModern();
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyGenerator();
@@ -252,7 +256,10 @@ class CoroutineTest
     static void verifyCase6();
 
     // TODO
-    static void verifyWhenAll();
+    static void verifyWhenAllLegacy();
+
+    // TODO
+    static void verifyWhenAllModern();
 
     // TODO
     static void verifyGenerator();
@@ -2047,11 +2054,26 @@ ntsa::CoroutineTest::String ntsa::CoroutineTest::returnStringLiteral(
     return copy;
 }
 
-ntsa::CoroutineTask<void> ntsa::CoroutineTest::coLog(bsl::size_t sleep,
+ntsa::CoroutineTask<void> ntsa::CoroutineTest::coLog(bsl::size_t order,
                                                      const char* message)
 {
-    bslmt::ThreadUtil::sleep(bsls::TimeInterval(static_cast<int>(sleep)));
-    BALL_LOG_DEBUG << message << BALL_LOG_END;
+    BALL_LOG_DEBUG << message << ": starting (" << order << ")"
+                   << BALL_LOG_END;
+
+    CoroutineTest::AwaitableValue<int> v1(123);
+    co_await                           v1;
+
+    bsls::TimeInterval duration;
+    duration.setTotalMilliseconds(order * 100);
+
+    bslmt::ThreadUtil::sleep(duration);
+
+    CoroutineTest::AwaitableValue<int> v2(456);
+    co_await                           v2;
+
+    BALL_LOG_DEBUG << message << ": complete (" << order << ")"
+                   << BALL_LOG_END;
+
     co_return;
 }
 
@@ -2309,17 +2331,32 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase6()
     co_return;
 }
 
-ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAll()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllLegacy()
 {
-    ntsa::CoroutineTask<void> task1 = CoroutineTest::coLog(4, "Coroutine 1");
-    ntsa::CoroutineTask<void> task2 = CoroutineTest::coLog(3, "Coroutine 2");
-    ntsa::CoroutineTask<void> task3 = CoroutineTest::coLog(2, "Coroutine 3");
-    ntsa::CoroutineTask<void> task4 = CoroutineTest::coLog(1, "Coroutine 4");
+    ntsa::CoroutineTask<void> t1 = CoroutineTest::coLog(4, "Coroutine 1");
+    ntsa::CoroutineTask<void> t2 = CoroutineTest::coLog(3, "Coroutine 2");
+    ntsa::CoroutineTask<void> t3 = CoroutineTest::coLog(2, "Coroutine 3");
+    ntsa::CoroutineTask<void> t4 = CoroutineTest::coLog(1, "Coroutine 4");
 
-    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(task1),
-                                                  bsl::move(task2),
-                                                  bsl::move(task3),
-                                                  bsl::move(task4));
+    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(t1),
+                                                  bsl::move(t2),
+                                                  bsl::move(t3),
+                                                  bsl::move(t4));
+
+    co_return;
+}
+
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllModern()
+{
+    ntsa::CoroutineTask<void> t1 = CoroutineTest::coLog(4, "Coroutine 1");
+    ntsa::CoroutineTask<void> t2 = CoroutineTest::coLog(3, "Coroutine 2");
+    ntsa::CoroutineTask<void> t3 = CoroutineTest::coLog(2, "Coroutine 3");
+    ntsa::CoroutineTask<void> t4 = CoroutineTest::coLog(1, "Coroutine 4");
+
+    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(t1),
+                                                  bsl::move(t2),
+                                                  bsl::move(t3),
+                                                  bsl::move(t4));
 
     co_return;
 }
@@ -2700,10 +2737,16 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyCase6)
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyCase6);
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyWhenAll)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyWhenAllLegacy)
 {
-    ntsa::CoroutineTest::Scope function("verifyWhenAll");
-    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyWhenAll);
+    ntsa::CoroutineTest::Scope function("verifyWhenAllLegacy");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyWhenAllLegacy);
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyWhenAllModern)
+{
+    ntsa::CoroutineTest::Scope function("verifyWhenAllModern");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyWhenAllModern);
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyGenerator)
