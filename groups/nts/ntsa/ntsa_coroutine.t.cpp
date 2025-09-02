@@ -49,9 +49,9 @@ BSLS_IDENT_RCSID(ntsa_coroutine_t_cpp, "$Id$ $CSID$")
 
 using namespace BloombergLP;
 
-#ifdef BSLS_PLATFORM_CMP_GNU
-#pragma GCC diagnostic ignored "-Wdangling-reference"
-#endif
+// #ifdef BSLS_PLATFORM_CMP_GNU
+// #pragma GCC diagnostic ignored "-Wdangling-reference"
+// #endif
 
 namespace BloombergLP {
 namespace ntsa {
