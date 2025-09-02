@@ -4713,21 +4713,6 @@ class when_all_task final
     coroutine_handle_t m_coroutine;
 };
 
-class CoroutineBarrierContext
-{
-  public:
-};
-
-class CoroutineBarrierPromise
-{
-  public:
-};
-
-class CoroutineBarrier
-{
-  public:
-};
-
 class CoroutineBarrierUtil
 {
   private:
