@@ -207,7 +207,7 @@ class CoroutineTest
     // TODO
     static ntsa::CoroutineTask<void> coVerifyCase6();
 
-    static ntsa::CoroutineTask<void> coVerifyBarrier();
+    static ntsa::CoroutineTask<void> coVerifyWhenAll();
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyGenerator();
@@ -252,7 +252,7 @@ class CoroutineTest
     static void verifyCase6();
 
     // TODO
-    static void verifyBarrier();
+    static void verifyWhenAll();
 
     // TODO
     static void verifyGenerator();
@@ -2309,7 +2309,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase6()
     co_return;
 }
 
-ntsa::CoroutineTask<void> CoroutineTest::coVerifyBarrier()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAll()
 {
     ntsa::CoroutineTask<void> task1 = CoroutineTest::coLog(4, "Coroutine 1");
     ntsa::CoroutineTask<void> task2 = CoroutineTest::coLog(3, "Coroutine 2");
@@ -2700,10 +2700,10 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyCase6)
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyCase6);
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBarrier)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyWhenAll)
 {
-    ntsa::CoroutineTest::Scope function("verifyBarrier");
-    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyBarrier);
+    ntsa::CoroutineTest::Scope function("verifyWhenAll");
+    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyWhenAll);
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyGenerator)

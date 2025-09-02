@@ -4193,6 +4193,10 @@ NTSCFG_INLINE ntsa::Allocator CoroutineWaiter<RESULT>::allocator() const
 
 // =========================== ALGORITHMS ====================================
 
+#include "/Users/mmillett/bloomberg/ntf-core/docs/experimental/coroutine_wait.h"
+
+#include "/Users/mmillett/bloomberg/ntf-core/docs/experimental/coroutine_wait.cpp"
+
 template <typename TASK_CONTAINER>
 class when_all_ready_awaitable;
 
