@@ -2517,7 +2517,7 @@ class CoroutineUtil
     }
 
     template <typename AWAITABLE>
-    static auto sync_wait(AWAITABLE&& awaitable) ->
+    static auto synchronize(AWAITABLE&& awaitable) ->
         typename CoroutineMeta::AwaitableTraits<AWAITABLE&&>::AwaitResultType
     {
         auto task =

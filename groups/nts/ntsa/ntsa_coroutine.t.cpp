@@ -1939,7 +1939,7 @@ ntsa::CoroutineTask<ntsa::Error> CoroutineTest::Mechanism::
 
     d_actionMap.emplace(token, action);
 
-    // error = ntsa::CoroutineUtil::sync_wait(bsl::move(task));
+    // error = ntsa::CoroutineUtil::synchronize(bsl::move(task));
 #endif
 
     co_return ntsa::Error();
@@ -1958,7 +1958,7 @@ void ntsa::CoroutineTest::main(CoroutineTestFunction testFunction)
     ntsa::CoroutineTest::Scope function("main");
 
     ntsa::CoroutineTask<void> task = coMain(testFunction);
-    ntsa::CoroutineUtil::sync_wait(bsl::move(task));
+    ntsa::CoroutineUtil::synchronize(bsl::move(task));
 }
 
 ntsa::CoroutineTask<void> ntsa::CoroutineTest::coMain(
@@ -2163,7 +2163,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyReturnInt()
 
     ntsa::CoroutineTask<int> task = coReturnIntLiteral(100);
 
-    int value = ntsa::CoroutineUtil::sync_wait(bsl::move(task));
+    int value = ntsa::CoroutineUtil::synchronize(bsl::move(task));
 
     BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
 
@@ -2178,7 +2178,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyReturnIntChain()
 
     ntsa::CoroutineTask<int> task = coReturnIntChain(100, 200);
 
-    int value = ntsa::CoroutineUtil::sync_wait(bsl::move(task));
+    int value = ntsa::CoroutineUtil::synchronize(bsl::move(task));
 
     BALL_LOG_DEBUG << "Value = " << value << BALL_LOG_END;
 
@@ -2257,7 +2257,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase4()
 
     ntsa::CoroutineTask<void> task = mechanism.hello();
 
-    ntsa::CoroutineUtil::sync_wait(bsl::move(task));
+    ntsa::CoroutineUtil::synchronize(bsl::move(task));
 
     co_return;
 }
@@ -2299,7 +2299,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase6()
     ntsa::CoroutineTask<ntsa::Error> task =
         mechanism.executeCooperatively(&result, 0, parameters);
 
-    error = ntsa::CoroutineUtil::sync_wait(bsl::move(task));
+    error = ntsa::CoroutineUtil::synchronize(bsl::move(task));
     NTSCFG_TEST_OK(error);
 
     NTSCFG_TEST_EQ(result.annotation(), "test");
@@ -2608,27 +2608,27 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
 
     {
         ntsa::CoroutineTest::AwaitableValue<void> awaitable;
-        ntsa::CoroutineUtil::sync_wait(bsl::move(awaitable));
+        ntsa::CoroutineUtil::synchronize(bsl::move(awaitable));
     }
 
     {
         ntsa::CoroutineTest::AwaitableValue<int> awaitable(123);
 
-        int value = ntsa::CoroutineUtil::sync_wait(bsl::move(awaitable));
+        int value = ntsa::CoroutineUtil::synchronize(bsl::move(awaitable));
         NTSCFG_TEST_EQ(value, 123);
     }
 
     {
         ntsa::CoroutineTask<void> t = coReturnVoid();
 
-        ntsa::CoroutineUtil::sync_wait(bsl::move(t));
+        ntsa::CoroutineUtil::synchronize(bsl::move(t));
     }
 
     {
         int                      e = returnInt();
         ntsa::CoroutineTask<int> t = coReturnInt();
 
-        int f = ntsa::CoroutineUtil::sync_wait(bsl::move(t));
+        int f = ntsa::CoroutineUtil::synchronize(bsl::move(t));
 
         NTSCFG_TEST_EQ(e, f);
     }
@@ -2637,7 +2637,7 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
         int&                      e = returnIntReference();
         ntsa::CoroutineTask<int&> t = coReturnIntReference();
 
-        int& f = ntsa::CoroutineUtil::sync_wait(bsl::move(t));
+        int& f = ntsa::CoroutineUtil::synchronize(bsl::move(t));
 
         NTSCFG_TEST_EQ(&e, &f);
     }
@@ -2646,7 +2646,7 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
         int&&                      e = returnIntReferenceMovable();
         ntsa::CoroutineTask<int&&> t = coReturnIntReferenceMovable();
 
-        int&& f = ntsa::CoroutineUtil::sync_wait(bsl::move(t));
+        int&& f = ntsa::CoroutineUtil::synchronize(bsl::move(t));
 
         NTSCFG_TEST_EQ(&e, &f);
     }
