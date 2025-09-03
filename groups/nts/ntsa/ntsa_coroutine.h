@@ -2967,7 +2967,7 @@ class CoroutineJoinAwaitable
     CoroutineJoinAwaitable& operator=(CoroutineJoinAwaitable&&) = delete;
 
   private:
-    bool suspend(std::coroutine_handle<void> awaitingCoroutine) noexcept;
+    bool suspend(std::coroutine_handle<void> coroutine) noexcept;
 
     void startup();
 
@@ -2985,90 +2985,54 @@ class CoroutineJoinAwaitable
 ///
 /// @ingroup module_ntsa_coroutine
 template <typename RESULT>
-class CoroutineJoinPromise final
+class CoroutineJoinPromise
 {
   public:
-    CoroutineJoinPromise() noexcept
-    {
-    }
+    /// Create a new coroutine join promise.
+    CoroutineJoinPromise() noexcept;
 
-    auto get_return_object() noexcept
-    {
-        return bsl::coroutine_handle<
-            CoroutineJoinPromise<RESULT> >::from_promise(*this);
-    }
+    /// Destroy this object.
+    ~CoroutineJoinPromise() noexcept;
 
-    std::suspend_always initial_suspend() noexcept
-    {
-        return {};
-    }
+    /// Return the return object of this coroutine.
+    auto get_return_object() noexcept;
 
-    auto final_suspend() noexcept
-    {
-        class completion_notifier
-        {
-          public:
-            bool await_ready() const noexcept
-            {
-                return false;
-            }
+    /// Suspend the coroutine.
+    std::suspend_always initial_suspend() noexcept;
 
-            void await_suspend(
-                bsl::coroutine_handle<CoroutineJoinPromise<RESULT> > coro)
-                const noexcept
-            {
-                coro.promise().d_counter->signal();
-            }
+    /// Signal the completion of a child coroutine.
+    auto final_suspend() noexcept;
 
-            void await_resume() const noexcept
-            {
-            }
-        };
+    /// Store the current exception.
+    void unhandled_exception() noexcept;
 
-        return completion_notifier();
-    }
+    /// Return void.
+    void return_void() noexcept;
 
-    void unhandled_exception() noexcept
-    {
-        d_exception = std::current_exception();
-    }
+    /// Store the specified 'result'.
+    auto yield_value(RESULT&& result) noexcept;
 
-    void return_void() noexcept
-    {
-        NTSCFG_UNREACHABLE();
-    }
+    /// Start the coroutine.
+    void start(CoroutineJoinCounter* counter) noexcept;
 
-    auto yield_value(RESULT&& result) noexcept
-    {
-        d_result = std::addressof(result);
-        return final_suspend();
-    }
+    /// Return the result.
+    RESULT& result() &;
 
-    void start(CoroutineJoinCounter* counter) noexcept
-    {
-        d_counter = counter;
-        bsl::coroutine_handle<CoroutineJoinPromise<RESULT> >::from_promise(
-            *this)
-            .resume();
-    }
+    /// Return the result.
+    RESULT&& result() &&;
 
-    RESULT& result() &
-    {
-        if (d_exception) {
-            std::rethrow_exception(d_exception);
-        }
+  private:
+    /// This class is not copy-constructable.
+    CoroutineJoinPromise(const CoroutineJoinPromise&) = delete;
 
-        return *d_result;
-    }
+    /// This class is not move-constructable.
+    CoroutineJoinPromise(CoroutineJoinPromise&&) = delete;
 
-    RESULT&& result() &&
-    {
-        if (d_exception) {
-            std::rethrow_exception(d_exception);
-        }
+    /// This class is not copy-assignable.
+    CoroutineJoinPromise& operator=(const CoroutineJoinPromise&) = delete;
 
-        return std::forward<RESULT>(*d_result);
-    }
+    /// This class is not move-assignable.
+    CoroutineJoinPromise& operator=(CoroutineJoinPromise&&) = delete;
 
   private:
     CoroutineJoinCounter*      d_counter;
@@ -3084,141 +3048,104 @@ class CoroutineJoinPromise final
 ///
 /// @ingroup module_ntsa_coroutine
 template <>
-class CoroutineJoinPromise<void> final
+class CoroutineJoinPromise<void>
 {
   public:
-    CoroutineJoinPromise() noexcept
-    {
-    }
+    /// Create a new coroutine join promise.
+    CoroutineJoinPromise() noexcept;
 
-    auto get_return_object() noexcept
-    {
-        return bsl::coroutine_handle<
-            CoroutineJoinPromise<void> >::from_promise(*this);
-    }
+    /// Destroy this object.
+    ~CoroutineJoinPromise() noexcept;
 
-    std::suspend_always initial_suspend() noexcept
-    {
-        return {};
-    }
+    /// Return the return object of this coroutine.
+    auto get_return_object() noexcept;
 
-    auto final_suspend() noexcept
-    {
-        class completion_notifier
-        {
-          public:
-            bool await_ready() const noexcept
-            {
-                return false;
-            }
+    /// Suspend the coroutine.
+    std::suspend_always initial_suspend() noexcept;
 
-            void await_suspend(
-                bsl::coroutine_handle<CoroutineJoinPromise<void> > coro)
-                const noexcept
-            {
-                coro.promise().d_counter->signal();
-            }
+    /// Signal the completion of a child coroutine.
+    auto final_suspend() noexcept;
 
-            void await_resume() const noexcept
-            {
-            }
-        };
+    /// Store the current exception.
+    void unhandled_exception() noexcept;
 
-        return completion_notifier{};
-    }
+    /// Return void.
+    void return_void() noexcept;
 
-    void unhandled_exception() noexcept
-    {
-        d_exception = std::current_exception();
-    }
+    /// Start the coroutine.
+    void start(CoroutineJoinCounter* counter) noexcept;
 
-    void return_void() noexcept
-    {
-    }
+    /// Return the result.
+    void result();
 
-    void start(CoroutineJoinCounter* counter) noexcept
-    {
-        d_counter = counter;
-        bsl::coroutine_handle<CoroutineJoinPromise<void> >::from_promise(*this)
-            .resume();
-    }
+  private:
+    /// This class is not copy-constructable.
+    CoroutineJoinPromise(const CoroutineJoinPromise&) = delete;
 
-    void result()
-    {
-        if (d_exception) {
-            std::rethrow_exception(d_exception);
-        }
-    }
+    /// This class is not move-constructable.
+    CoroutineJoinPromise(CoroutineJoinPromise&&) = delete;
+
+    /// This class is not copy-assignable.
+    CoroutineJoinPromise& operator=(const CoroutineJoinPromise&) = delete;
+
+    /// This class is not move-assignable.
+    CoroutineJoinPromise& operator=(CoroutineJoinPromise&&) = delete;
 
   private:
     CoroutineJoinCounter* d_counter;
     std::exception_ptr    d_exception;
 };
 
+/// @internal @brief
+/// Provide a join result.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_coroutine
 template <typename RESULT>
-class CoroutineJoin final
+class CoroutineJoin
 {
   public:
     using promise_type = CoroutineJoinPromise<RESULT>;
 
+    /// Create a new join.
     CoroutineJoin(bsl::coroutine_handle<CoroutineJoinPromise<RESULT> >
-                      coroutine) noexcept : d_coroutine(coroutine)
-    {
-    }
+                      coroutine) noexcept;
 
-    CoroutineJoin(CoroutineJoin&& other) noexcept
-    : d_coroutine(std::exchange(
-          other.d_coroutine,
-          bsl::coroutine_handle<CoroutineJoinPromise<RESULT> >()))
-    {
-    }
+    /// Create a new join whose coroutine handle is moved from the specified
+    /// 'other' object.
+    CoroutineJoin(CoroutineJoin&& other) noexcept;
 
-    ~CoroutineJoin()
-    {
-        if (d_coroutine) {
-            d_coroutine.destroy();
-        }
-    }
+    /// Destroy this object.
+    ~CoroutineJoin() noexcept;
 
-    CoroutineJoin(const CoroutineJoin&)            = delete;
+    /// Start the coroutine.
+    void start(CoroutineJoinCounter* counter) noexcept;
+
+    /// Return the result.
+    decltype(auto) result() &;
+
+    /// Return the result.
+    decltype(auto) result() &&;
+
+    /// Return the result, or, if the parameterized 'RESULT' is void, a value
+    /// of an "empty" type that is not void.
+    decltype(auto) non_void_result() &;
+
+    /// Return the result, or, if the parameterized 'RESULT' is void, a value
+    /// of an "empty" type that is not void.
+    decltype(auto) non_void_result() &&;
+
+  private:
+    /// This class is not copy-constructable.
+    CoroutineJoin(const CoroutineJoin&) = delete;
+
+    /// This class is not copy-assignable.
     CoroutineJoin& operator=(const CoroutineJoin&) = delete;
 
-    void start(CoroutineJoinCounter* counter) noexcept
-    {
-        d_coroutine.promise().start(counter);
-    }
-
-    decltype(auto) result() &
-    {
-        return d_coroutine.promise().result();
-    }
-
-    decltype(auto) result() &&
-    {
-        return std::move(d_coroutine.promise()).result();
-    }
-
-    decltype(auto) non_void_result() &
-    {
-        if constexpr (std::is_void_v<decltype(this->result())>) {
-            this->result();
-            return CoroutineMetaprogram::Nil();
-        }
-        else {
-            return this->result();
-        }
-    }
-
-    decltype(auto) non_void_result() &&
-    {
-        if constexpr (std::is_void_v<decltype(this->result())>) {
-            std::move(*this).result();
-            return CoroutineMetaprogram::Nil();
-        }
-        else {
-            return std::move(*this).result();
-        }
-    }
+    /// This class is not move-assignable.
+    CoroutineJoin& operator=(CoroutineJoin&&) = delete;
 
   private:
     bsl::coroutine_handle<CoroutineJoinPromise<RESULT> > d_coroutine;
@@ -5864,10 +5791,9 @@ template <typename CONTAINER>
             return m_awaitable.ready();
         }
 
-        bool await_suspend(
-            std::coroutine_handle<void> awaitingCoroutine) noexcept
+        bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
         {
-            return m_awaitable.suspend(awaitingCoroutine);
+            return m_awaitable.suspend(coroutine);
         }
 
         CONTAINER& await_resume() noexcept
@@ -5900,10 +5826,9 @@ template <typename CONTAINER>
             return m_awaitable.ready();
         }
 
-        bool await_suspend(
-            std::coroutine_handle<void> awaitingCoroutine) noexcept
+        bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
         {
-            return m_awaitable.suspend(awaitingCoroutine);
+            return m_awaitable.suspend(coroutine);
         }
 
         CONTAINER&& await_resume() noexcept
@@ -5920,11 +5845,11 @@ template <typename CONTAINER>
 
 template <typename CONTAINER>
 NTSCFG_INLINE bool CoroutineJoinAwaitable<CONTAINER>::suspend(
-    std::coroutine_handle<void> awaitingCoroutine) noexcept
+    std::coroutine_handle<void> coroutine) noexcept
 {
     this->startup();
 
-    return d_counter.suspend(awaitingCoroutine);
+    return d_counter.suspend(coroutine);
 }
 
 template <typename CONTAINER>
@@ -5939,6 +5864,246 @@ template <typename CONTAINER>
 NTSCFG_INLINE bool CoroutineJoinAwaitable<CONTAINER>::ready() const noexcept
 {
     return d_counter.ready();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineJoinPromise<RESULT>::CoroutineJoinPromise() noexcept
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineJoinPromise<RESULT>::~CoroutineJoinPromise() noexcept
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE auto CoroutineJoinPromise<RESULT>::get_return_object() noexcept
+{
+    return bsl::coroutine_handle<CoroutineJoinPromise<RESULT> >::from_promise(
+        *this);
+}
+
+template <typename RESULT>
+NTSCFG_INLINE std::suspend_always CoroutineJoinPromise<
+    RESULT>::initial_suspend() noexcept
+{
+    return {};
+}
+
+template <typename RESULT>
+NTSCFG_INLINE auto CoroutineJoinPromise<RESULT>::final_suspend() noexcept
+{
+    class Awaiter
+    {
+      public:
+        bool await_ready() const noexcept
+        {
+            return false;
+        }
+
+        void await_suspend(bsl::coroutine_handle<CoroutineJoinPromise<RESULT> >
+                               coroutine) const noexcept
+        {
+            coroutine.promise().d_counter->signal();
+        }
+
+        void await_resume() const noexcept
+        {
+        }
+    };
+
+    return Awaiter();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineJoinPromise<RESULT>::unhandled_exception() noexcept
+{
+    d_exception = std::current_exception();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineJoinPromise<RESULT>::return_void() noexcept
+{
+    NTSCFG_UNREACHABLE();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE auto CoroutineJoinPromise<RESULT>::yield_value(
+    RESULT&& result) noexcept
+{
+    d_result = std::addressof(result);
+    return final_suspend();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineJoinPromise<RESULT>::start(
+    CoroutineJoinCounter* counter) noexcept
+{
+    d_counter = counter;
+    bsl::coroutine_handle<CoroutineJoinPromise<RESULT> >::from_promise(*this)
+        .resume();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE RESULT& CoroutineJoinPromise<RESULT>::result() &
+{
+    if (d_exception) {
+        std::rethrow_exception(d_exception);
+    }
+
+    return *d_result;
+}
+
+template <typename RESULT>
+NTSCFG_INLINE RESULT&& CoroutineJoinPromise<RESULT>::result() &&
+{
+    if (d_exception) {
+        std::rethrow_exception(d_exception);
+    }
+
+    return std::forward<RESULT>(*d_result);
+}
+
+NTSCFG_INLINE
+CoroutineJoinPromise<void>::CoroutineJoinPromise() noexcept
+{
+}
+
+NTSCFG_INLINE
+CoroutineJoinPromise<void>::~CoroutineJoinPromise() noexcept
+{
+}
+
+NTSCFG_INLINE
+auto CoroutineJoinPromise<void>::get_return_object() noexcept
+{
+    return bsl::coroutine_handle<CoroutineJoinPromise<void> >::from_promise(
+        *this);
+}
+
+NTSCFG_INLINE
+std::suspend_always CoroutineJoinPromise<void>::initial_suspend() noexcept
+{
+    return {};
+}
+
+NTSCFG_INLINE
+auto CoroutineJoinPromise<void>::final_suspend() noexcept
+{
+    class Awaiter
+    {
+      public:
+        bool await_ready() const noexcept
+        {
+            return false;
+        }
+
+        void await_suspend(bsl::coroutine_handle<CoroutineJoinPromise<void> >
+                               coro) const noexcept
+        {
+            coro.promise().d_counter->signal();
+        }
+
+        void await_resume() const noexcept
+        {
+        }
+    };
+
+    return Awaiter{};
+}
+
+NTSCFG_INLINE
+void CoroutineJoinPromise<void>::unhandled_exception() noexcept
+{
+    d_exception = std::current_exception();
+}
+
+NTSCFG_INLINE
+void CoroutineJoinPromise<void>::return_void() noexcept
+{
+}
+
+NTSCFG_INLINE
+void CoroutineJoinPromise<void>::start(CoroutineJoinCounter* counter) noexcept
+{
+    d_counter = counter;
+    bsl::coroutine_handle<CoroutineJoinPromise<void> >::from_promise(*this)
+        .resume();
+}
+
+NTSCFG_INLINE
+void CoroutineJoinPromise<void>::result()
+{
+    if (d_exception) {
+        std::rethrow_exception(d_exception);
+    }
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineJoin<RESULT>::CoroutineJoin(
+    bsl::coroutine_handle<CoroutineJoinPromise<RESULT> > coroutine) noexcept
+: d_coroutine(coroutine)
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineJoin<RESULT>::CoroutineJoin(
+    CoroutineJoin&& other) noexcept
+: d_coroutine(
+      std::exchange(other.d_coroutine,
+                    bsl::coroutine_handle<CoroutineJoinPromise<RESULT> >()))
+{
+}
+
+template <typename RESULT>
+NTSCFG_INLINE CoroutineJoin<RESULT>::~CoroutineJoin() noexcept
+{
+    if (d_coroutine) {
+        d_coroutine.destroy();
+    }
+}
+
+template <typename RESULT>
+NTSCFG_INLINE void CoroutineJoin<RESULT>::start(
+    CoroutineJoinCounter* counter) noexcept
+{
+    d_coroutine.promise().start(counter);
+}
+
+template <typename RESULT>
+NTSCFG_INLINE decltype(auto) CoroutineJoin<RESULT>::result() &
+{
+    return d_coroutine.promise().result();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE decltype(auto) CoroutineJoin<RESULT>::result() &&
+{
+    return std::move(d_coroutine.promise()).result();
+}
+
+template <typename RESULT>
+NTSCFG_INLINE decltype(auto) CoroutineJoin<RESULT>::non_void_result() &
+{
+    if constexpr (std::is_void_v<decltype(this->result())>) {
+        this->result();
+        return CoroutineMetaprogram::Nil();
+    }
+    else {
+        return this->result();
+    }
+}
+
+template <typename RESULT>
+NTSCFG_INLINE decltype(auto) CoroutineJoin<RESULT>::non_void_result() &&
+{
+    if constexpr (std::is_void_v<decltype(this->result())>) {
+        std::move(*this).result();
+        return CoroutineMetaprogram::Nil();
+    }
+    else {
+        return std::move(*this).result();
+    }
 }
 
 }  // close package namespace
