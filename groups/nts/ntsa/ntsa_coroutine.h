@@ -2454,6 +2454,10 @@ class CoroutineWaiter<RESULT>::Epilog
     CoroutineWaiter<RESULT>::Context* d_context;
 };
 
+#include "/Users/mmillett/bloomberg/ntf-core/docs/experimental/coroutine_spawn.h"
+
+#include "/Users/mmillett/bloomberg/ntf-core/docs/experimental/coroutine_spawn.cpp"
+
 /// @internal @brief
 /// Provide utilities for coroutine tasks.
 ///
@@ -2464,6 +2468,8 @@ class CoroutineWaiter<RESULT>::Epilog
 class CoroutineUtil
 {
   private:
+    BALL_LOG_SET_CLASS_CATEGORY("NTSA.COROUTINE");
+
     template <typename AWAITABLE,
               typename RESULT = typename CoroutineMeta::AwaitableTraits<
                   AWAITABLE&&>::AwaitResultType,
@@ -2483,36 +2489,16 @@ class CoroutineUtil
     }
 
   public:
-    class Spawner
+    /// Spawn a detached coroutine that awaits the specified 'awaiter'.
+    /// Allocate memory using the specified 'allocator'.
+    static void spawn(auto awaiter, ntsa::Allocator allocator)
     {
-      public:
-        struct promise_type {
-            std::suspend_never initial_suspend()
-            {
-                return {};
-            }
-            std::suspend_never final_suspend() noexcept
-            {
-                return {};
-            }
-            Spawner get_return_object()
-            {
-                return Spawner();
-            }
-            void unhandled_exception()
-            {
-                std::terminate();
-            }
-            void return_void()
-            {
-            }
-        };
-    };
+        NTSCFG_WARNING_UNUSED(allocator);
 
-    static void spawn(auto awaiter)
-    {
-        [](auto awaiter) -> Spawner {
+        [](auto awaiter) -> CoroutineSpawn<void> {
+            BALL_LOG_INFO << "Spawn starting" << BALL_LOG_END;
             co_await std::move(awaiter);
+            BALL_LOG_INFO << "Spawn complete" << BALL_LOG_END;
         }(std::move(awaiter));
     }
 
@@ -4213,6 +4199,18 @@ class CoroutineBarrierCounter
     : m_count(count + 1),
       m_awaitingCoroutine(nullptr)
     {
+        BALL_LOG_SET_CATEGORY("NTSA.COROUTINE.COUNTER");
+
+        BALL_LOG_INFO << "CoroutineBarrierCounter " << this
+                      << ": ctor (count = " << count << ")" << BALL_LOG_END;
+    }
+
+    ~CoroutineBarrierCounter()
+    {
+        BALL_LOG_SET_CATEGORY("NTSA.COROUTINE.COUNTER");
+
+        BALL_LOG_INFO << "CoroutineBarrierCounter " << this << ": dtor"
+                      << BALL_LOG_END;
     }
 
     bool is_ready() const noexcept
@@ -4224,13 +4222,32 @@ class CoroutineBarrierCounter
 
     bool try_await(bsl::coroutine_handle<void> awaitingCoroutine) noexcept
     {
+        BALL_LOG_SET_CATEGORY("NTSA.COROUTINE.COUNTER");
+
         m_awaitingCoroutine = awaitingCoroutine;
-        return m_count.fetch_sub(1, bsl::memory_order_acq_rel) > 1;
+
+        const bsl::size_t oldCount =
+            m_count.fetch_sub(1, bsl::memory_order_acq_rel);
+
+        BALL_LOG_INFO << "CoroutineBarrierCounter " << this
+                      << ": try_await, oldCount = " << oldCount
+                      << BALL_LOG_END;
+
+        return oldCount > 1;
     }
 
     void notify_awaitable_completed() noexcept
     {
-        if (m_count.fetch_sub(1, bsl::memory_order_acq_rel) == 1) {
+        BALL_LOG_SET_CATEGORY("NTSA.COROUTINE.COUNTER");
+
+        const bsl::size_t oldCount =
+            m_count.fetch_sub(1, bsl::memory_order_acq_rel);
+
+        BALL_LOG_INFO << "CoroutineBarrierCounter " << this
+                      << ": notify_awaitable_completed, oldCount = "
+                      << oldCount << BALL_LOG_END;
+
+        if (oldCount == 1) {
             m_awaitingCoroutine.resume();
         }
     }
@@ -4367,7 +4384,7 @@ class when_all_ready_awaitable<std::tuple<TASKS...> >
     void start_tasks(std::integer_sequence<std::size_t, INDICES...>) noexcept
     {
         (void)std::initializer_list<int>{
-            (std::get<INDICES>(m_tasks).start(m_counter), 0)...};
+            (std::get<INDICES>(m_tasks).start(&m_counter), 0)...};
     }
 
     CoroutineBarrierCounter m_counter;
@@ -4470,7 +4487,7 @@ class when_all_ready_awaitable
     bool try_await(std::coroutine_handle<void> awaitingCoroutine) noexcept
     {
         for (auto&& task : m_tasks) {
-            task.start(m_counter);
+            task.start(&m_counter);
         }
 
         return m_counter.try_await(awaitingCoroutine);
@@ -4544,9 +4561,9 @@ class when_all_task_promise final
         return final_suspend();
     }
 
-    void start(CoroutineBarrierCounter& counter) noexcept
+    void start(CoroutineBarrierCounter* counter) noexcept
     {
-        m_counter = &counter;
+        m_counter = counter;
         coroutine_handle_t::from_promise(*this).resume();
     }
 
@@ -4627,9 +4644,9 @@ class when_all_task_promise<void> final
     {
     }
 
-    void start(CoroutineBarrierCounter& counter) noexcept
+    void start(CoroutineBarrierCounter* counter) noexcept
     {
-        m_counter = &counter;
+        m_counter = counter;
         coroutine_handle_t::from_promise(*this).resume();
     }
 
@@ -4709,7 +4726,7 @@ class when_all_task final
     template <typename TASK_CONTAINER>
     friend class when_all_ready_awaitable;
 
-    void start(CoroutineBarrierCounter& counter) noexcept
+    void start(CoroutineBarrierCounter* counter) noexcept
     {
         m_coroutine.promise().start(counter);
     }

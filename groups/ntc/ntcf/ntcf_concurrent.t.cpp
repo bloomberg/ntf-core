@@ -46,8 +46,8 @@ using namespace BloombergLP;
     do {                                                                      \
         BALL_LOG_INFO << "Client socket at " << (socket)->sourceEndpoint()    \
                       << " to " << (socket)->remoteEndpoint()                 \
-                      << " send complete: " << (result).event() << "\n"       \
-                      << bdlbb::BlobUtilHexDumper((data).get())               \
+                      << " TX complete: "                                     \
+                      << ConcurrentTest::Dumper((data).get())                 \
                       << BALL_LOG_END;                                        \
     } while (false)
 
@@ -55,8 +55,8 @@ using namespace BloombergLP;
     do {                                                                      \
         BALL_LOG_INFO << "Client socket at " << (socket)->sourceEndpoint()    \
                       << " to " << (socket)->remoteEndpoint()                 \
-                      << " receive complete: " << (result).event() << "\n"    \
-                      << bdlbb::BlobUtilHexDumper((result).data().get())      \
+                      << " RX complete: "                                     \
+                      << ConcurrentTest::Dumper((result).data().get())        \
                       << BALL_LOG_END;                                        \
     } while (false)
 
@@ -94,8 +94,8 @@ using namespace BloombergLP;
     do {                                                                      \
         BALL_LOG_INFO << "Server socket at " << (socket)->sourceEndpoint()    \
                       << " to " << (socket)->remoteEndpoint()                 \
-                      << " send complete: " << (result).event() << "\n"       \
-                      << bdlbb::BlobUtilHexDumper((data).get())               \
+                      << " TX complete: "                                     \
+                      << ConcurrentTest::Dumper((data).get())                 \
                       << BALL_LOG_END;                                        \
     } while (false)
 
@@ -103,8 +103,8 @@ using namespace BloombergLP;
     do {                                                                      \
         BALL_LOG_INFO << "Server socket at " << (socket)->sourceEndpoint()    \
                       << " to " << (socket)->remoteEndpoint()                 \
-                      << " receive complete: " << (result).event() << "\n"    \
-                      << bdlbb::BlobUtilHexDumper((result).data().get())      \
+                      << " TX complete: "                                     \
+                      << ConcurrentTest::Dumper((result).data().get())        \
                       << BALL_LOG_END;                                        \
     } while (false)
 
@@ -497,6 +497,26 @@ class ConcurrentTest
         ntsa::Endpoint endpoint;
     };
 
+    class Dumper
+    {
+        bdlbb::Blob* d_blob;
+
+      public:
+        explicit Dumper(bdlbb::Blob* blob)
+        : d_blob(blob)
+        {
+        }
+
+        friend bsl::ostream& operator<<(bsl::ostream& stream,
+                                        const Dumper& dumper)
+        {
+            NTSCFG_TEST_EQ(dumper.d_blob->length(), 1);
+            stream << static_cast<char>(
+                *dumper.d_blob->buffer(0).buffer().get());
+            return stream;
+        }
+    };
+
     // Create a new scheduler. Allocate memory using the specified 'allocator'.
     static bsl::shared_ptr<ntci::Scheduler> createScheduler(
         ntsa::Allocator allocator);
@@ -533,6 +553,7 @@ class ConcurrentTest
     static ntsa::CoroutineTask<void> coVerifyApplication(
         bsl::shared_ptr<ntci::Scheduler> scheduler,
         ntsa::CoroutineTaskScheduler*    taskSwitcher,
+        ntsa::AllocatorArg               allocatorType,
         ntsa::Allocator                  allocator);
 
     // TODO
@@ -540,6 +561,7 @@ class ConcurrentTest
         Configuration                         configuration,
         ntsa::CoroutineTaskScheduler*         taskSwitcher,
         bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
+        ntsa::AllocatorArg                    allocatorType,
         ntsa::Allocator                       allocator);
 
     // TODO
@@ -548,6 +570,7 @@ class ConcurrentTest
         ntsa::CoroutineTaskScheduler*       taskSwitcher,
         bsl::shared_ptr<ntci::StreamSocket> streamSocket,
         bsl::size_t                         index,
+        ntsa::AllocatorArg                  allocatorType,
         ntsa::Allocator                     allocator);
 
     // TODO
@@ -555,6 +578,7 @@ class ConcurrentTest
         Configuration                       configuration,
         ntsa::CoroutineTaskScheduler*       taskSwitcher,
         bsl::shared_ptr<ntci::StreamSocket> streamSocket,
+        ntsa::AllocatorArg                  allocatorType,
         ntsa::Allocator                     allocator);
 
     // TODO
@@ -883,6 +907,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyStreamSocket(
 ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
     bsl::shared_ptr<ntci::Scheduler> scheduler,
     ntsa::CoroutineTaskScheduler*    taskSwitcher,
+    ntsa::AllocatorArg               allocatorType,
     ntsa::Allocator                  allocator)
 {
     ntccfg::Object scope("coVerifyApplication");
@@ -909,6 +934,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
         coVerifyApplicationListener(configuration,
                                     taskSwitcher,
                                     listenerSocket,
+                                    allocatorType,
                                     allocator);
 
     taskList.emplace_back(bsl::move(listenerTask));
@@ -926,6 +952,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
                                       taskSwitcher,
                                       streamSocket,
                                       i + 1,
+                                      allocatorType,
                                       allocator);
 
         taskList.emplace_back(bsl::move(clientTask));
@@ -942,6 +969,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
     Configuration                         configuration,
     ntsa::CoroutineTaskScheduler*         taskSwitcher,
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
+    ntsa::AllocatorArg                    allocatorType,
     ntsa::Allocator                       allocator)
 {
     ntccfg::Object scope("coVerifyApplicationListener");
@@ -968,9 +996,10 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
             coVerifyApplicationServer(configuration,
                                       taskSwitcher,
                                       acceptResult.streamSocket(),
+                                      allocatorType,
                                       allocator);
 
-        ntsa::CoroutineUtil::spawn(bsl::move(serverTask));
+        ntsa::CoroutineUtil::spawn(bsl::move(serverTask), allocator);
     }
 
     // Close the listener socket.
@@ -986,6 +1015,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
     ntsa::CoroutineTaskScheduler*       taskSwitcher,
     bsl::shared_ptr<ntci::StreamSocket> streamSocket,
     bsl::size_t                         index,
+    ntsa::AllocatorArg                  allocatorType,
     ntsa::Allocator                     allocator)
 {
     ntccfg::Object scope("coVerifyApplicationClient");
@@ -1055,6 +1085,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationServer(
     Configuration                       configuration,
     ntsa::CoroutineTaskScheduler*       taskSwitcher,
     bsl::shared_ptr<ntci::StreamSocket> streamSocket,
+    ntsa::AllocatorArg                  allocatorType,
     ntsa::Allocator                     allocator)
 {
     ntccfg::Object scope("coVerifyApplicationServer");
@@ -1177,8 +1208,10 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
 
     ntsa::CoroutineTaskScheduler taskScheduler;
 
-    ntsa::CoroutineTask<void> task =
-        coVerifyApplication(scheduler, &taskScheduler, allocator);
+    ntsa::CoroutineTask<void> task = coVerifyApplication(scheduler,
+                                                         &taskScheduler,
+                                                         bsl::allocator_arg,
+                                                         allocator);
     ntsa::CoroutineUtil::synchronize(bsl::move(task));
 
     scheduler->shutdown();

@@ -208,10 +208,16 @@ class CoroutineTest
     static ntsa::CoroutineTask<void> coVerifyCase6();
 
     // TODO
-    static ntsa::CoroutineTask<void> coVerifyWhenAllLegacy();
+    static ntsa::CoroutineTask<void> coVerifyWhenAllLegacyTuple();
 
     // TODO
-    static ntsa::CoroutineTask<void> coVerifyWhenAllModern();
+    static ntsa::CoroutineTask<void> coVerifyWhenAllLegacyVector();
+
+    // TODO
+    static ntsa::CoroutineTask<void> coVerifyWhenAllModernTuple();
+
+    // TODO
+    static ntsa::CoroutineTask<void> coVerifyWhenAllModernVector();
 
     // TODO
     static ntsa::CoroutineTask<void> coVerifyGenerator();
@@ -256,10 +262,16 @@ class CoroutineTest
     static void verifyCase6();
 
     // TODO
-    static void verifyWhenAllLegacy();
+    static void verifyWhenAllLegacyTuple();
 
     // TODO
-    static void verifyWhenAllModern();
+    static void verifyWhenAllLegacyVector();
+
+    // TODO
+    static void verifyWhenAllModernTuple();
+
+    // TODO
+    static void verifyWhenAllModernVector();
 
     // TODO
     static void verifyGenerator();
@@ -2331,8 +2343,10 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyCase6()
     co_return;
 }
 
-ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllLegacy()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllLegacyTuple()
 {
+    ntsa::CoroutineTest::Scope function("coVerifyWhenAllLegacyTuple");
+
     ntsa::CoroutineTask<void> t1 = CoroutineTest::coLog(4, "Coroutine 1");
     ntsa::CoroutineTask<void> t2 = CoroutineTest::coLog(3, "Coroutine 2");
     ntsa::CoroutineTask<void> t3 = CoroutineTest::coLog(2, "Coroutine 3");
@@ -2346,8 +2360,30 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllLegacy()
     co_return;
 }
 
-ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllModern()
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllLegacyVector()
 {
+    ntsa::CoroutineTest::Scope function("coVerifyWhenAllLegacyVector");
+
+    ntsa::CoroutineTask<void> t1 = CoroutineTest::coLog(4, "Coroutine 1");
+    ntsa::CoroutineTask<void> t2 = CoroutineTest::coLog(3, "Coroutine 2");
+    ntsa::CoroutineTask<void> t3 = CoroutineTest::coLog(2, "Coroutine 3");
+    ntsa::CoroutineTask<void> t4 = CoroutineTest::coLog(1, "Coroutine 4");
+
+    bsl::vector<ntsa::CoroutineTask<void> > tasks;
+    tasks.emplace_back(bsl::move(t1));
+    tasks.emplace_back(bsl::move(t2));
+    tasks.emplace_back(bsl::move(t3));
+    tasks.emplace_back(bsl::move(t4));
+
+    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(tasks));
+
+    co_return;
+}
+
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllModernTuple()
+{
+    ntsa::CoroutineTest::Scope function("coVerifyWhenAllModernTuple");
+
     ntsa::CoroutineTask<void> t1 = CoroutineTest::coLog(4, "Coroutine 1");
     ntsa::CoroutineTask<void> t2 = CoroutineTest::coLog(3, "Coroutine 2");
     ntsa::CoroutineTask<void> t3 = CoroutineTest::coLog(2, "Coroutine 3");
@@ -2357,6 +2393,26 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllModern()
                                                   bsl::move(t2),
                                                   bsl::move(t3),
                                                   bsl::move(t4));
+
+    co_return;
+}
+
+ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllModernVector()
+{
+    ntsa::CoroutineTest::Scope function("coVerifyWhenAllModernVector");
+
+    ntsa::CoroutineTask<void> t1 = CoroutineTest::coLog(4, "Coroutine 1");
+    ntsa::CoroutineTask<void> t2 = CoroutineTest::coLog(3, "Coroutine 2");
+    ntsa::CoroutineTask<void> t3 = CoroutineTest::coLog(2, "Coroutine 3");
+    ntsa::CoroutineTask<void> t4 = CoroutineTest::coLog(1, "Coroutine 4");
+
+    bsl::vector<ntsa::CoroutineTask<void> > tasks;
+    tasks.emplace_back(bsl::move(t1));
+    tasks.emplace_back(bsl::move(t2));
+    tasks.emplace_back(bsl::move(t3));
+    tasks.emplace_back(bsl::move(t4));
+
+    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(tasks));
 
     co_return;
 }
@@ -2737,16 +2793,32 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyCase6)
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyCase6);
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyWhenAllLegacy)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyWhenAllLegacyTuple)
 {
-    ntsa::CoroutineTest::Scope function("verifyWhenAllLegacy");
-    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyWhenAllLegacy);
+    ntsa::CoroutineTest::Scope function("verifyWhenAllLegacyTuple");
+    ntsa::CoroutineTest::main(
+        &ntsa::CoroutineTest::coVerifyWhenAllLegacyTuple);
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyWhenAllModern)
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyWhenAllLegacyVector)
 {
-    ntsa::CoroutineTest::Scope function("verifyWhenAllModern");
-    ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyWhenAllModern);
+    ntsa::CoroutineTest::Scope function("verifyWhenAllLegacyVector");
+    ntsa::CoroutineTest::main(
+        &ntsa::CoroutineTest::coVerifyWhenAllLegacyVector);
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyWhenAllModernTuple)
+{
+    ntsa::CoroutineTest::Scope function("verifyWhenAllModernTuple");
+    ntsa::CoroutineTest::main(
+        &ntsa::CoroutineTest::coVerifyWhenAllModernTuple);
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyWhenAllModernVector)
+{
+    ntsa::CoroutineTest::Scope function("verifyWhenAllModernVector");
+    ntsa::CoroutineTest::main(
+        &ntsa::CoroutineTest::coVerifyWhenAllModernVector);
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyGenerator)
