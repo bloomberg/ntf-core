@@ -2782,7 +2782,14 @@ class CoroutineSpawn<RESULT>::Epilog
     CoroutineSpawn<RESULT>::Context* d_context;
 };
 
-// TODO
+/// @internal @brief
+/// Provide a counter mechanism to control the suspension and resumption of
+/// a coroutine awaiting a number of awaitables.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_coroutine
 class CoroutineJoinCounter
 {
   public:
@@ -2823,7 +2830,13 @@ class CoroutineJoinCounter
     bsl::coroutine_handle<void> d_waiter;
 };
 
-// Provide a join awaitable specialized for an empty tuple.
+/// @internal @brief
+/// Provide a join awaitable specialized for an empty tuple.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_coroutine
 template <>
 class CoroutineJoinAwaitable<std::tuple<> >
 {
@@ -2860,7 +2873,13 @@ class CoroutineJoinAwaitable<std::tuple<> >
     CoroutineJoinAwaitable& operator=(CoroutineJoinAwaitable&&) = delete;
 };
 
-// TODO
+/// @internal @brief
+/// Provide a join awaitable specialized for a tuple of task-like awaitables.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_coroutine
 template <typename... TASKS>
 class CoroutineJoinAwaitable<std::tuple<TASKS...> >
 {
