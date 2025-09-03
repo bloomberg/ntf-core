@@ -2352,10 +2352,10 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllLegacyTuple()
     ntsa::CoroutineTask<void> t3 = CoroutineTest::coLog(2, "Coroutine 3");
     ntsa::CoroutineTask<void> t4 = CoroutineTest::coLog(1, "Coroutine 4");
 
-    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(t1),
-                                                  bsl::move(t2),
-                                                  bsl::move(t3),
-                                                  bsl::move(t4));
+    co_await ntsa::CoroutineUtil::join(bsl::move(t1),
+                                       bsl::move(t2),
+                                       bsl::move(t3),
+                                       bsl::move(t4));
 
     co_return;
 }
@@ -2375,7 +2375,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllLegacyVector()
     tasks.emplace_back(bsl::move(t3));
     tasks.emplace_back(bsl::move(t4));
 
-    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(tasks));
+    co_await ntsa::CoroutineUtil::join(bsl::move(tasks));
 
     co_return;
 }
@@ -2389,10 +2389,10 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllModernTuple()
     ntsa::CoroutineTask<void> t3 = CoroutineTest::coLog(2, "Coroutine 3");
     ntsa::CoroutineTask<void> t4 = CoroutineTest::coLog(1, "Coroutine 4");
 
-    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(t1),
-                                                  bsl::move(t2),
-                                                  bsl::move(t3),
-                                                  bsl::move(t4));
+    co_await ntsa::CoroutineUtil::join(bsl::move(t1),
+                                       bsl::move(t2),
+                                       bsl::move(t3),
+                                       bsl::move(t4));
 
     co_return;
 }
@@ -2412,7 +2412,7 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifyWhenAllModernVector()
     tasks.emplace_back(bsl::move(t3));
     tasks.emplace_back(bsl::move(t4));
 
-    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(tasks));
+    co_await ntsa::CoroutineUtil::join(bsl::move(tasks));
 
     co_return;
 }

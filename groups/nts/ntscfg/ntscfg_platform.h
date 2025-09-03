@@ -138,10 +138,22 @@ namespace ntscfg {
 #define NTSCFG_NODISCARD BSLA_NODISCARD
 
 /// @internal @brief
+/// Fail to compile unless the caller reads the value of the return type.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_UNDISCARDABLE BSLA_NODISCARD
+
+/// @internal @brief
 /// The function never throws an exception.
 ///
 /// @ingroup module_ntscfg
 #define NTSCFG_NOEXCEPT BSLS_KEYWORD_NOEXCEPT
+
+/// @internal @brief
+/// The function never throws an exception.
+///
+/// @ingroup module_ntscfg
+#define NTSCFG_UNEXCEPTIONAL BSLS_KEYWORD_NOEXCEPT
 
 /// @internal @brief
 /// No other class may derive from this class.

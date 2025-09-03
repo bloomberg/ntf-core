@@ -437,10 +437,9 @@ class RoundRobinSchedulerUtil
         ntsa::CoroutineTask<void> taskScheduler =
             createTaskScheduler(scheduler);
 
-        co_await ntsa::CoroutineBarrierUtil::when_all(
-            bsl::move(taskA),
-            bsl::move(taskB),
-            bsl::move(taskScheduler));
+        co_await ntsa::CoroutineUtil::join(bsl::move(taskA),
+                                           bsl::move(taskB),
+                                           bsl::move(taskScheduler));
     }
 
     static void test()
@@ -493,7 +492,15 @@ class ConcurrentTest
     class Configuration
     {
       public:
+        Configuration()
+        : numConnections(1)
+        , numMessages(1)
+        , endpoint()
+        {
+        }
+
         bsl::size_t    numConnections;
+        bsl::size_t    numMessages;
         ntsa::Endpoint endpoint;
     };
 
@@ -924,6 +931,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
     Configuration configuration;
 
     configuration.numConnections = 9;
+    configuration.numMessages    = 100;
     configuration.endpoint       = listenerSocket->sourceEndpoint();
 
     NTCF_CONCURRENT_TEST_LOG_LISTENER_READY(configuration.endpoint);
@@ -960,7 +968,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
 
     // Run all coroutines until complete.
 
-    co_await ntsa::CoroutineBarrierUtil::when_all(bsl::move(taskList));
+    co_await ntsa::CoroutineUtil::join(bsl::move(taskList));
 
     co_return;
 }
@@ -1037,39 +1045,46 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationClient(
     NTCF_CONCURRENT_TEST_LOG_CLIENT_CONNECT_COMPLETE(streamSocket,
                                                      connectResult);
 
-    // Send data to the peer.
+    for (bsl::size_t tx = 0; tx < configuration.numMessages; ++tx) {
+        // Send data to the peer.
 
-    bsl::string sendText = bsl::to_string(index);
-    BSLS_ASSERT_OPT(index <= 9);
+        bsl::string sendText = bsl::to_string(index);
+        BSLS_ASSERT_OPT(index <= 9);
 
-    bsl::shared_ptr<bdlbb::Blob> sendData = streamSocket->createOutgoingBlob();
-    bdlbb::BlobUtil::append(sendData.get(), sendText.c_str(), sendText.size());
+        bsl::shared_ptr<bdlbb::Blob> sendData =
+            streamSocket->createOutgoingBlob();
 
-    ntca::SendOptions sendOptions;
-    ntci::SendResult  sendResult;
+        bdlbb::BlobUtil::append(sendData.get(),
+                                sendText.c_str(),
+                                sendText.size());
 
-    sendResult =
-        co_await ntcf::Concurrent::send(streamSocket, sendData, sendOptions);
+        ntca::SendOptions sendOptions;
+        ntci::SendResult  sendResult;
 
-    NTSCFG_TEST_OK(sendResult.event().context().error());
+        sendResult = co_await ntcf::Concurrent::send(streamSocket,
+                                                     sendData,
+                                                     sendOptions);
 
-    NTCF_CONCURRENT_TEST_LOG_CLIENT_SEND_COMPLETE(streamSocket,
-                                                  sendResult,
-                                                  sendData);
+        NTSCFG_TEST_OK(sendResult.event().context().error());
 
-    // Receive data from the peer.
+        NTCF_CONCURRENT_TEST_LOG_CLIENT_SEND_COMPLETE(streamSocket,
+                                                      sendResult,
+                                                      sendData);
 
-    ntca::ReceiveOptions receiveOptions;
-    ntci::ReceiveResult  receiveResult;
+        // Receive data from the peer.
 
-    receiveOptions.setSize(1);
+        ntca::ReceiveOptions receiveOptions;
+        ntci::ReceiveResult  receiveResult;
 
-    receiveResult =
-        co_await ntcf::Concurrent::receive(streamSocket, receiveOptions);
-    NTSCFG_TEST_OK(receiveResult.event().context().error());
+        receiveOptions.setSize(1);
 
-    NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(streamSocket,
-                                                     receiveResult);
+        receiveResult =
+            co_await ntcf::Concurrent::receive(streamSocket, receiveOptions);
+        NTSCFG_TEST_OK(receiveResult.event().context().error());
+
+        NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(streamSocket,
+                                                         receiveResult);
+    }
 
     // Close the socket.
 
@@ -1094,35 +1109,38 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationServer(
 
     NTCF_CONCURRENT_TEST_LOG_SERVER_COROUTINE(streamSocket, "starting");
 
-    // Receive data from the peer.
+    for (bsl::size_t tx = 0; tx < configuration.numMessages; ++tx) {
+        // Receive data from the peer.
 
-    ntca::ReceiveOptions receiveOptions;
-    ntci::ReceiveResult  receiveResult;
+        ntca::ReceiveOptions receiveOptions;
+        ntci::ReceiveResult  receiveResult;
 
-    receiveOptions.setSize(1);
+        receiveOptions.setSize(1);
 
-    receiveResult =
-        co_await ntcf::Concurrent::receive(streamSocket, receiveOptions);
-    NTSCFG_TEST_OK(receiveResult.event().context().error());
+        receiveResult =
+            co_await ntcf::Concurrent::receive(streamSocket, receiveOptions);
+        NTSCFG_TEST_OK(receiveResult.event().context().error());
 
-    NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(streamSocket,
-                                                     receiveResult);
+        NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(streamSocket,
+                                                         receiveResult);
 
-    // Send data to the peer.
+        // Send data to the peer.
 
-    bsl::shared_ptr<bdlbb::Blob> sendData = receiveResult.data();
+        bsl::shared_ptr<bdlbb::Blob> sendData = receiveResult.data();
 
-    ntca::SendOptions sendOptions;
-    ntci::SendResult  sendResult;
+        ntca::SendOptions sendOptions;
+        ntci::SendResult  sendResult;
 
-    sendResult =
-        co_await ntcf::Concurrent::send(streamSocket, sendData, sendOptions);
+        sendResult = co_await ntcf::Concurrent::send(streamSocket,
+                                                     sendData,
+                                                     sendOptions);
 
-    NTSCFG_TEST_OK(sendResult.event().context().error());
+        NTSCFG_TEST_OK(sendResult.event().context().error());
 
-    NTCF_CONCURRENT_TEST_LOG_SERVER_SEND_COMPLETE(streamSocket,
-                                                  sendResult,
-                                                  sendData);
+        NTCF_CONCURRENT_TEST_LOG_SERVER_SEND_COMPLETE(streamSocket,
+                                                      sendResult,
+                                                      sendData);
+    }
 
     // Close the socket.
 
