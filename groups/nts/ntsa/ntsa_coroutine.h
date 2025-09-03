@@ -3164,341 +3164,74 @@ class CoroutineUtil
     BALL_LOG_SET_CLASS_CATEGORY("NTSA.COROUTINE");
 
     template <typename FUNCTION, typename AWAITABLE>
-    class FunctionMapAwaiter
-    {
-        using AwaiterType = typename CoroutineMetaprogram::AwaitableTraits<
-            AWAITABLE&&>::AwaiterType;
-
-        FUNCTION&&  m_function;
-        AwaiterType m_awaiter;
-
-      public:
-        FunctionMapAwaiter(FUNCTION&& function, AWAITABLE&& awaitable)
-            noexcept(std::is_nothrow_move_constructible_v<AwaiterType>&&
-                         noexcept(CoroutineMetaprogram::getAwaiter(
-                             static_cast<AWAITABLE&&>(awaitable))))
-        : m_function(static_cast<FUNCTION&&>(function))
-        , m_awaiter(CoroutineMetaprogram::getAwaiter(
-              static_cast<AWAITABLE&&>(awaitable)))
-        {
-        }
-
-        decltype(auto) await_ready() noexcept(
-            noexcept(static_cast<AwaiterType&&>(m_awaiter).await_ready()))
-        {
-            return static_cast<AwaiterType&&>(m_awaiter).await_ready();
-        }
-
-        template <typename PROMISE>
-        decltype(auto) await_suspend(std::coroutine_handle<PROMISE> coro)
-            noexcept(noexcept(static_cast<AwaiterType&&>(m_awaiter)
-                                  .await_suspend(std::move(coro))))
-        {
-            return static_cast<AwaiterType&&>(m_awaiter).await_suspend(
-                std::move(coro));
-        }
-
-        template <typename RESULT =
-                      decltype(std::declval<AwaiterType>().await_resume()),
-                  std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
-        decltype(auto) await_resume() noexcept(
-            noexcept(std::invoke(static_cast<FUNCTION&&>(m_function))))
-        {
-            static_cast<AwaiterType&&>(m_awaiter).await_resume();
-            return std::invoke(static_cast<FUNCTION&&>(m_function));
-        }
-
-        template <typename RESULT =
-                      decltype(std::declval<AwaiterType>().await_resume()),
-                  std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
-        decltype(auto) await_resume() noexcept(noexcept(
-            std::invoke(static_cast<FUNCTION&&>(m_function),
-                        static_cast<AwaiterType&&>(m_awaiter).await_resume())))
-        {
-            return std::invoke(
-                static_cast<FUNCTION&&>(m_function),
-                static_cast<AwaiterType&&>(m_awaiter).await_resume());
-        }
-    };
+    class FunctionMapAwaiter;
 
     template <typename FUNCTION, typename AWAITABLE>
-    class FunctionMapAwaitable
-    {
-        static_assert(!std::is_lvalue_reference_v<FUNCTION>);
-        static_assert(!std::is_lvalue_reference_v<AWAITABLE>);
-
-      public:
-        template <typename FUNCTION_ARG,
-                  typename AWAITABLE_ARG,
-                  std::enable_if_t<
-                      std::is_constructible_v<FUNCTION, FUNCTION_ARG&&> &&
-                          std::is_constructible_v<AWAITABLE, AWAITABLE_ARG&&>,
-                      int> = 0>
-        explicit FunctionMapAwaitable(FUNCTION_ARG&&  function,
-                                      AWAITABLE_ARG&& awaitable)
-            noexcept(
-                std::is_nothrow_constructible_v<FUNCTION, FUNCTION_ARG&&>&&
-                    std::is_nothrow_constructible_v<AWAITABLE,
-                                                    AWAITABLE_ARG&&>)
-        : m_function(static_cast<FUNCTION_ARG&&>(function))
-        , m_awaitable(static_cast<AWAITABLE_ARG&&>(awaitable))
-        {
-        }
-
-        auto operator co_await() const&
-        {
-            return FunctionMapAwaiter<const FUNCTION&, const AWAITABLE&>(
-                m_function,
-                m_awaitable);
-        }
-
-        auto operator co_await() &
-        {
-            return FunctionMapAwaiter<FUNCTION&, AWAITABLE&>(m_function,
-                                                             m_awaitable);
-        }
-
-        auto operator co_await() &&
-        {
-            return FunctionMapAwaiter<FUNCTION&&, AWAITABLE&&>(
-                static_cast<FUNCTION&&>(m_function),
-                static_cast<AWAITABLE&&>(m_awaitable));
-        }
-
-      private:
-        FUNCTION  m_function;
-        AWAITABLE m_awaitable;
-    };
+    class FunctionMapAwaitable;
 
     template <typename FUNCTION>
-    struct FunctionMapTransform {
-        explicit FunctionMapTransform(FUNCTION&& f)
-            noexcept(std::is_nothrow_move_constructible_v<FUNCTION>)
-        : function(std::forward<FUNCTION>(f))
-        {
-        }
+    class FunctionMapTransform;
 
-        FUNCTION function;
-    };
-
-    template <
-        typename FUNCTION,
-        typename AWAITABLE,
-        std::enable_if_t<CoroutineMetaprogram::IsAwaitableValue<AWAITABLE>,
-                         int> = 0>
-    static auto functionMap(FUNCTION&& function, AWAITABLE&& awaitable)
-    {
-        return CoroutineUtil::FunctionMapAwaitable<
-            std::remove_cv_t<std::remove_reference_t<FUNCTION> >,
-            std::remove_cv_t<std::remove_reference_t<AWAITABLE> > >(
-            std::forward<FUNCTION>(function),
-            std::forward<AWAITABLE>(awaitable));
-    }
+    template <typename FUNCTION, typename AWAITABLE>
+    NTSCFG_UNDISCARDABLE static auto functionMap(FUNCTION&&  function,
+                                                 AWAITABLE&& awaitable);
 
     template <typename FUNCTION>
-    static auto functionMap(FUNCTION&& function)
-    {
-        return CoroutineUtil::FunctionMapTransform<FUNCTION>{
-            std::forward<FUNCTION>(function)};
-    }
+    NTSCFG_UNDISCARDABLE static auto functionMap(FUNCTION&& function);
 
     template <typename AWAITABLE,
               typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
-                  AWAITABLE&&>::AwaitResultType,
-              bsl::enable_if_t<!bsl::is_void_v<RESULT>, int> = 0>
+                  AWAITABLE&&>::AwaitResultType>
     NTSCFG_UNDISCARDABLE static CoroutineSynchronization<RESULT>
-    createSynchronization(AWAITABLE&& awaitable)
-    {
-        co_yield co_await bsl::forward<AWAITABLE>(awaitable);
-    }
+    createSynchronization(AWAITABLE&& awaitable);
 
     template <typename AWAITABLE,
               typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
-                  AWAITABLE&&>::AwaitResultType,
-              bsl::enable_if_t<bsl::is_void_v<RESULT>, int> = 0>
-    NTSCFG_UNDISCARDABLE static CoroutineSynchronization<void>
-    createSynchronization(AWAITABLE&& awaitable)
-    {
-        co_await bsl::forward<AWAITABLE>(awaitable);
-    }
-
-    template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
-                  AWAITABLE&&>::AwaitResultType,
-              std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
+                  AWAITABLE&&>::AwaitResultType>
     NTSCFG_UNDISCARDABLE static CoroutineJoin<RESULT> createJoin(
-        AWAITABLE awaitable)
-    {
-        co_yield co_await static_cast<AWAITABLE&&>(awaitable);
-    }
+        AWAITABLE awaitable);
 
     template <typename AWAITABLE,
               typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
-                  AWAITABLE&&>::AwaitResultType,
-              std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
-    NTSCFG_UNDISCARDABLE static CoroutineJoin<void> createJoin(
-        AWAITABLE awaitable)
-    {
-        co_await static_cast<AWAITABLE&&>(awaitable);
-    }
-
-    template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
-                  AWAITABLE&>::AwaitResultType,
-              std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
+                  AWAITABLE&>::AwaitResultType>
     NTSCFG_UNDISCARDABLE static CoroutineJoin<RESULT> createJoin(
-        std::reference_wrapper<AWAITABLE> awaitable)
-    {
-        co_yield co_await awaitable.get();
-    }
+        std::reference_wrapper<AWAITABLE> awaitable);
 
-    template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
-                  AWAITABLE&>::AwaitResultType,
-              std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
-    NTSCFG_UNDISCARDABLE static CoroutineJoin<void> createJoin(
-        std::reference_wrapper<AWAITABLE> awaitable)
-    {
-        co_await awaitable.get();
-    }
-
-    template <
-        typename... AWAITABLES,
-        std::enable_if_t<std::conjunction_v<CoroutineMetaprogram::IsAwaitable<
-                             CoroutineMetaprogram::UnwrapReferenceType<
-                                 std::remove_reference_t<AWAITABLES> > >...>,
-                         int> = 0>
+    template <typename... AWAITABLES>
     NTSCFG_UNDISCARDABLE static auto createJoinAwaitable(
-        AWAITABLES&&... awaitables)
-    {
-        return CoroutineJoinAwaitable<std::tuple<
-            CoroutineJoin<typename CoroutineMetaprogram::AwaitableTraits<
-                CoroutineMetaprogram::UnwrapReferenceType<
-                    std::remove_reference_t<AWAITABLES> > >::
-                              AwaitResultType>...> >(
-            std::make_tuple(
-                createJoin(std::forward<AWAITABLES>(awaitables))...));
-    }
+        AWAITABLES&&... awaitables);
 
     template <typename AWAITABLE,
               typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
                   CoroutineMetaprogram::UnwrapReferenceType<AWAITABLE> >::
                   AwaitResultType>
     NTSCFG_UNDISCARDABLE static auto createJoinAwaitable(
-        bsl::vector<AWAITABLE> awaitables)
-    {
-        bsl::vector<CoroutineJoin<RESULT> > tasks;
-
-        tasks.reserve(awaitables.size());
-
-        for (auto& awaitable : awaitables) {
-            tasks.emplace_back(createJoin(std::move(awaitable)));
-        }
-
-        return CoroutineJoinAwaitable<bsl::vector<CoroutineJoin<RESULT> > >(
-            std::move(tasks));
-    }
+        bsl::vector<AWAITABLE> awaitables);
 
   public:
     /// Spawn a detached coroutine that awaits the specified 'awaiter'.
     /// Allocate memory using the specified 'allocator'.
-    static void spawn(auto awaiter, ntsa::Allocator allocator)
-    {
-        NTSCFG_WARNING_UNUSED(allocator);
-
-        [](auto awaiter) -> CoroutineSpawn<void> {
-            co_await std::move(awaiter);
-        }(std::move(awaiter));
-    }
+    static void spawn(auto awaiter, ntsa::Allocator allocator);
 
     /// Block the current thread until awaiting the specified 'awaitable' is
     /// complete. Return the result of the awaitable.
     template <typename AWAITABLE>
     static auto synchronize(AWAITABLE&& awaitable) ->
         typename CoroutineMetaprogram::AwaitableTraits<
-            AWAITABLE&&>::AwaitResultType
-    {
-        auto task = CoroutineUtil::createSynchronization(
-            bsl::forward<AWAITABLE>(awaitable));
-
-        task.resume();
-        task.wait();
-
-        return task.release();
-    }
+            AWAITABLE&&>::AwaitResultType;
 
     /// Return an awaitable that when awaited completes when each of the
     /// specified 'awaitable' is complete.
-    template <
-        typename... AWAITABLES,
-        std::enable_if_t<std::conjunction_v<CoroutineMetaprogram::IsAwaitable<
-                             CoroutineMetaprogram::UnwrapReferenceType<
-                                 std::remove_reference_t<AWAITABLES> > >...>,
-                         int> = 0>
-    NTSCFG_UNDISCARDABLE static auto join(AWAITABLES&&... awaitables)
-    {
-        return CoroutineUtil::functionMap(
-            [](auto&& taskTuple) {
-                return std::apply(
-                    [](auto&&... tasks) {
-                        return std::make_tuple(
-                            static_cast<decltype(tasks)>(tasks)
-                                .non_void_result()...);
-                    },
-                    static_cast<decltype(taskTuple)>(taskTuple));
-            },
-            createJoinAwaitable(std::forward<AWAITABLES>(awaitables)...));
-    }
+    template <typename... AWAITABLES>
+    NTSCFG_UNDISCARDABLE static auto join(AWAITABLES&&... awaitables);
 
     /// Return an awaitable that when awaited completes when each of the
     /// specified 'awaitable' is complete.
     template <typename AWAITABLE,
               typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
                   CoroutineMetaprogram::UnwrapReferenceType<AWAITABLE> >::
-                  AwaitResultType,
-              std::enable_if_t<std::is_void_v<RESULT>, int> = 0>
-    NTSCFG_UNDISCARDABLE static auto join(bsl::vector<AWAITABLE> awaitables)
-    {
-        return CoroutineUtil::functionMap(
-            [](auto&& taskVector) {
-                for (auto& task : taskVector) {
-                    task.result();
-                }
-            },
-            createJoinAwaitable(std::move(awaitables)));
-    }
-
-    /// Return an awaitable that when awaited completes when each of the
-    /// specified 'awaitable' is complete.
-    template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
-                  CoroutineMetaprogram::UnwrapReferenceType<AWAITABLE> >::
-                  AwaitResultType,
-              std::enable_if_t<!std::is_void_v<RESULT>, int> = 0>
-    NTSCFG_UNDISCARDABLE static auto join(bsl::vector<AWAITABLE> awaitables)
-    {
-        using result_t = std::conditional_t<
-            std::is_lvalue_reference_v<RESULT>,
-            std::reference_wrapper<std::remove_reference_t<RESULT> >,
-            std::remove_reference_t<RESULT> >;
-
-        return CoroutineUtil::functionMap(
-            [](auto&& taskVector) {
-                bsl::vector<result_t> results;
-                results.reserve(taskVector.size());
-                for (auto& task : taskVector) {
-                    if constexpr (std::is_rvalue_reference_v<decltype(
-                                      taskVector)>) {
-                        results.emplace_back(std::move(task).result());
-                    }
-                    else {
-                        results.emplace_back(task.result());
-                    }
-                }
-                return results;
-            },
-            createJoinAwaitable(std::move(awaitables)));
-    }
+                  AwaitResultType>
+    NTSCFG_UNDISCARDABLE static auto join(bsl::vector<AWAITABLE> awaitables);
 };
 
 template <typename RESULT>
@@ -6103,6 +5836,313 @@ NTSCFG_INLINE decltype(auto) CoroutineJoin<RESULT>::non_void_result() &&
     }
     else {
         return std::move(*this).result();
+    }
+}
+
+template <typename FUNCTION, typename AWAITABLE>
+class CoroutineUtil::FunctionMapAwaiter
+{
+    using AwaiterType = typename CoroutineMetaprogram::AwaitableTraits<
+        AWAITABLE&&>::AwaiterType;
+
+    FUNCTION&&  m_function;
+    AwaiterType m_awaiter;
+
+  public:
+    FunctionMapAwaiter(FUNCTION&& function, AWAITABLE&& awaitable) noexcept;
+
+    decltype(auto) await_ready() noexcept;
+
+    template <typename PROMISE>
+    decltype(auto)
+        await_suspend(std::coroutine_handle<PROMISE> coroutine) noexcept;
+
+    decltype(auto) await_resume() noexcept;
+};
+
+template <typename FUNCTION, typename AWAITABLE>
+class CoroutineUtil::FunctionMapAwaitable
+{
+    static_assert(!std::is_lvalue_reference_v<FUNCTION>);
+    static_assert(!std::is_lvalue_reference_v<AWAITABLE>);
+
+  public:
+    template <typename FUNCTION_ARG, typename AWAITABLE_ARG>
+    explicit FunctionMapAwaitable(FUNCTION_ARG&&  function,
+                                  AWAITABLE_ARG&& awaitable) noexcept;
+
+    auto operator co_await() const& noexcept;
+    auto operator co_await() & noexcept;
+    auto operator co_await() && noexcept;
+
+  private:
+    FUNCTION  m_function;
+    AWAITABLE m_awaitable;
+};
+
+template <typename FUNCTION>
+class CoroutineUtil::FunctionMapTransform
+{
+  public:
+    explicit FunctionMapTransform(FUNCTION&& f)
+        noexcept(std::is_nothrow_move_constructible_v<FUNCTION>);
+
+    FUNCTION function;
+};
+
+template <typename FUNCTION, typename AWAITABLE>
+NTSCFG_INLINE CoroutineUtil::FunctionMapAwaiter<FUNCTION, AWAITABLE>::
+    FunctionMapAwaiter(FUNCTION&& function, AWAITABLE&& awaitable) noexcept
+: m_function(static_cast<FUNCTION&&>(function)),
+  m_awaiter(
+      CoroutineMetaprogram::getAwaiter(static_cast<AWAITABLE&&>(awaitable)))
+{
+}
+
+template <typename FUNCTION, typename AWAITABLE>
+NTSCFG_INLINE decltype(auto)
+    CoroutineUtil::FunctionMapAwaiter<FUNCTION, AWAITABLE>::await_ready()
+        noexcept
+{
+    return static_cast<AwaiterType&&>(m_awaiter).await_ready();
+}
+
+template <typename FUNCTION, typename AWAITABLE>
+template <typename PROMISE>
+NTSCFG_INLINE decltype(auto)
+    CoroutineUtil::FunctionMapAwaiter<FUNCTION, AWAITABLE>::await_suspend(
+        std::coroutine_handle<PROMISE> coroutine) noexcept
+{
+    return static_cast<AwaiterType&&>(m_awaiter).await_suspend(
+        std::move(coroutine));
+}
+
+template <typename FUNCTION, typename AWAITABLE>
+NTSCFG_INLINE decltype(auto)
+    CoroutineUtil::FunctionMapAwaiter<FUNCTION, AWAITABLE>::await_resume()
+        noexcept
+{
+    if constexpr (std::is_void_v<decltype(
+                      std::declval<AwaiterType>().await_resume())>)
+    {
+        static_cast<AwaiterType&&>(m_awaiter).await_resume();
+        return std::invoke(static_cast<FUNCTION&&>(m_function));
+    }
+    else {
+        return std::invoke(
+            static_cast<FUNCTION&&>(m_function),
+            static_cast<AwaiterType&&>(m_awaiter).await_resume());
+    }
+}
+
+template <typename FUNCTION, typename AWAITABLE>
+template <typename FUNCTION_ARG, typename AWAITABLE_ARG>
+NTSCFG_INLINE CoroutineUtil::FunctionMapAwaitable<FUNCTION, AWAITABLE>::
+    FunctionMapAwaitable(FUNCTION_ARG&&  function,
+                         AWAITABLE_ARG&& awaitable) noexcept
+: m_function(static_cast<FUNCTION_ARG&&>(function)),
+  m_awaitable(static_cast<AWAITABLE_ARG&&>(awaitable))
+{
+}
+
+template <typename FUNCTION, typename AWAITABLE>
+NTSCFG_INLINE auto CoroutineUtil::FunctionMapAwaitable<FUNCTION, AWAITABLE>::
+operator co_await() const& noexcept
+{
+    return FunctionMapAwaiter<const FUNCTION&, const AWAITABLE&>(m_function,
+                                                                 m_awaitable);
+}
+
+template <typename FUNCTION, typename AWAITABLE>
+    NTSCFG_INLINE auto CoroutineUtil::
+        FunctionMapAwaitable<FUNCTION, AWAITABLE>::operator co_await() &
+    noexcept
+{
+    return FunctionMapAwaiter<FUNCTION&, AWAITABLE&>(m_function, m_awaitable);
+}
+
+template <typename FUNCTION, typename AWAITABLE>
+    NTSCFG_INLINE auto CoroutineUtil::
+        FunctionMapAwaitable<FUNCTION, AWAITABLE>::operator co_await() &&
+    noexcept
+{
+    return FunctionMapAwaiter<FUNCTION&&, AWAITABLE&&>(
+        static_cast<FUNCTION&&>(m_function),
+        static_cast<AWAITABLE&&>(m_awaitable));
+}
+
+template <typename FUNCTION>
+NTSCFG_INLINE CoroutineUtil::FunctionMapTransform<
+    FUNCTION>::FunctionMapTransform(FUNCTION&& f)
+    noexcept(std::is_nothrow_move_constructible_v<FUNCTION>)
+: function(std::forward<FUNCTION>(f))
+{
+}
+
+template <typename FUNCTION, typename AWAITABLE>
+NTSCFG_UNDISCARDABLE NTSCFG_INLINE auto CoroutineUtil::functionMap(
+    FUNCTION&&  function,
+    AWAITABLE&& awaitable)
+{
+    return CoroutineUtil::FunctionMapAwaitable<
+        std::remove_cv_t<std::remove_reference_t<FUNCTION> >,
+        std::remove_cv_t<std::remove_reference_t<AWAITABLE> > >(
+        std::forward<FUNCTION>(function),
+        std::forward<AWAITABLE>(awaitable));
+}
+
+template <typename FUNCTION>
+NTSCFG_UNDISCARDABLE NTSCFG_INLINE auto CoroutineUtil::functionMap(
+    FUNCTION&& function)
+{
+    return CoroutineUtil::FunctionMapTransform<FUNCTION>{
+        std::forward<FUNCTION>(function)};
+}
+
+template <typename AWAITABLE, typename RESULT>
+NTSCFG_UNDISCARDABLE NTSCFG_INLINE CoroutineSynchronization<RESULT>
+CoroutineUtil::createSynchronization(AWAITABLE&& awaitable)
+{
+    if constexpr (std::is_void_v<RESULT>) {
+        co_await bsl::forward<AWAITABLE>(awaitable);
+    }
+    else {
+        co_yield co_await bsl::forward<AWAITABLE>(awaitable);
+    }
+}
+
+template <typename AWAITABLE, typename RESULT>
+NTSCFG_UNDISCARDABLE NTSCFG_INLINE CoroutineJoin<RESULT> CoroutineUtil::
+    createJoin(AWAITABLE awaitable)
+{
+    if constexpr (std::is_void_v<RESULT>) {
+        co_await static_cast<AWAITABLE&&>(awaitable);
+    }
+    else {
+        co_yield co_await static_cast<AWAITABLE&&>(awaitable);
+    }
+}
+
+template <typename AWAITABLE, typename RESULT>
+NTSCFG_UNDISCARDABLE NTSCFG_INLINE CoroutineJoin<RESULT> CoroutineUtil::
+    createJoin(std::reference_wrapper<AWAITABLE> awaitable)
+{
+    if constexpr (std::is_void_v<RESULT>) {
+        co_await awaitable.get();
+    }
+    else {
+        co_yield co_await awaitable.get();
+    }
+}
+
+template <typename... AWAITABLES>
+NTSCFG_UNDISCARDABLE NTSCFG_INLINE auto CoroutineUtil::createJoinAwaitable(
+    AWAITABLES&&... awaitables)
+{
+    return CoroutineJoinAwaitable<std::tuple<
+        CoroutineJoin<typename CoroutineMetaprogram::AwaitableTraits<
+            CoroutineMetaprogram::UnwrapReferenceType<std::remove_reference_t<
+                AWAITABLES> > >::AwaitResultType>...> >(
+        std::make_tuple(createJoin(std::forward<AWAITABLES>(awaitables))...));
+}
+
+template <typename AWAITABLE, typename RESULT>
+NTSCFG_UNDISCARDABLE NTSCFG_INLINE auto CoroutineUtil::createJoinAwaitable(
+    bsl::vector<AWAITABLE> awaitables)
+{
+    bsl::vector<CoroutineJoin<RESULT> > tasks;
+
+    tasks.reserve(awaitables.size());
+
+    for (auto& awaitable : awaitables) {
+        tasks.emplace_back(createJoin(std::move(awaitable)));
+    }
+
+    return CoroutineJoinAwaitable<bsl::vector<CoroutineJoin<RESULT> > >(
+        std::move(tasks));
+}
+
+NTSCFG_INLINE
+void CoroutineUtil::spawn(auto awaiter, ntsa::Allocator allocator)
+{
+    NTSCFG_WARNING_UNUSED(allocator);
+
+    [](auto awaiter) -> CoroutineSpawn<void> {
+        co_await std::move(awaiter);
+    }(std::move(awaiter));
+}
+
+template <typename AWAITABLE>
+NTSCFG_INLINE auto CoroutineUtil::synchronize(AWAITABLE&& awaitable) ->
+    typename CoroutineMetaprogram::AwaitableTraits<
+        AWAITABLE&&>::AwaitResultType
+{
+    auto task = CoroutineUtil::createSynchronization(
+        bsl::forward<AWAITABLE>(awaitable));
+
+    task.resume();
+    task.wait();
+
+    return task.release();
+}
+
+template <typename... AWAITABLES>
+NTSCFG_UNDISCARDABLE NTSCFG_INLINE auto CoroutineUtil::join(
+    AWAITABLES&&... awaitables)
+{
+    if constexpr (std::conjunction_v<CoroutineMetaprogram::IsAwaitable<
+                      CoroutineMetaprogram::UnwrapReferenceType<
+                          std::remove_reference_t<AWAITABLES> > >...>)
+    {
+        return CoroutineUtil::functionMap(
+            [](auto&& taskTuple) {
+                return std::apply(
+                    [](auto&&... tasks) {
+                        return std::make_tuple(
+                            static_cast<decltype(tasks)>(tasks)
+                                .non_void_result()...);
+                    },
+                    static_cast<decltype(taskTuple)>(taskTuple));
+            },
+            createJoinAwaitable(std::forward<AWAITABLES>(awaitables)...));
+    }
+}
+
+template <typename AWAITABLE, typename RESULT>
+NTSCFG_UNDISCARDABLE NTSCFG_INLINE auto CoroutineUtil::join(
+    bsl::vector<AWAITABLE> awaitables)
+{
+    if constexpr (std::is_void_v<RESULT>) {
+        return CoroutineUtil::functionMap(
+            [](auto&& taskVector) {
+                for (auto& task : taskVector) {
+                    task.result();
+                }
+            },
+            createJoinAwaitable(std::move(awaitables)));
+    }
+    else {
+        using ResultType = std::conditional_t<
+            std::is_lvalue_reference_v<RESULT>,
+            std::reference_wrapper<std::remove_reference_t<RESULT> >,
+            std::remove_reference_t<RESULT> >;
+
+        return CoroutineUtil::functionMap(
+            [](auto&& taskVector) {
+                bsl::vector<ResultType> results;
+                results.reserve(taskVector.size());
+                for (auto& task : taskVector) {
+                    if constexpr (std::is_rvalue_reference_v<decltype(
+                                      taskVector)>) {
+                        results.emplace_back(std::move(task).result());
+                    }
+                    else {
+                        results.emplace_back(task.result());
+                    }
+                }
+                return results;
+            },
+            createJoinAwaitable(std::move(awaitables)));
     }
 }
 
