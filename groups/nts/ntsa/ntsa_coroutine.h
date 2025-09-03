@@ -2786,71 +2786,78 @@ class CoroutineSpawn<RESULT>::Epilog
 class CoroutineJoinCounter
 {
   public:
-    explicit CoroutineJoinCounter(std::size_t count) noexcept
-    : d_count(count + 1),
-      d_awaiterCoroutine(nullptr)
-    {
-    }
+    /// Create a new join counter for the specified 'count' number of
+    /// awaitables.
+    explicit CoroutineJoinCounter(std::size_t count) noexcept;
 
-    ~CoroutineJoinCounter()
-    {
-    }
+    /// Destroy this object.
+    ~CoroutineJoinCounter() noexcept;
 
-    bool ready() const noexcept
-    {
-        return static_cast<bool>(d_awaiterCoroutine);
-    }
+    /// Remember the specified 'waiter' to it can be later resumed. Return
+    /// true if more awaitables are expected to become first suspended,
+    /// otherwise return false.
+    bool suspend(bsl::coroutine_handle<void> waiter) noexcept;
 
-    bool suspend(bsl::coroutine_handle<void> awaitingCoroutine) noexcept
-    {
-        d_awaiterCoroutine = awaitingCoroutine;
+    /// Resume the waiter.
+    void signal() noexcept;
 
-        const bsl::size_t oldCount =
-            d_count.fetch_sub(1, bsl::memory_order_acq_rel);
+    /// Return true if at least one awaitable has become suspended, otherwise
+    /// return false.
+    bool ready() const noexcept;
 
-        return oldCount > 1;
-    }
+  private:
+    /// This class is not copy-constructable.
+    CoroutineJoinCounter(const CoroutineJoinCounter&) = delete;
 
-    void signal() noexcept
-    {
-        const bsl::size_t oldCount =
-            d_count.fetch_sub(1, bsl::memory_order_acq_rel);
+    /// This class is not move-constructable.
+    CoroutineJoinCounter(CoroutineJoinCounter&&) = delete;
 
-        if (oldCount == 1) {
-            d_awaiterCoroutine.resume();
-        }
-    }
+    /// This class is not copy-assignable.
+    CoroutineJoinCounter& operator=(const CoroutineJoinCounter&) = delete;
 
-  protected:
+    /// This class is not move-assignable.
+    CoroutineJoinCounter& operator=(CoroutineJoinCounter&&) = delete;
+
+  private:
     bsl::atomic<bsl::size_t>    d_count;
-    bsl::coroutine_handle<void> d_awaiterCoroutine;
+    bsl::coroutine_handle<void> d_waiter;
 };
 
-// TODO
+// Provide a join awaitable specialized for an empty tuple.
 template <>
 class CoroutineJoinAwaitable<std::tuple<> >
 {
   public:
-    constexpr CoroutineJoinAwaitable() noexcept
-    {
-    }
-    explicit constexpr CoroutineJoinAwaitable(std::tuple<>) noexcept
-    {
-    }
+    /// Create a new join awaitable.
+    CoroutineJoinAwaitable() noexcept;
 
-    constexpr bool await_ready() const noexcept
-    {
-        return true;
-    }
+    /// Create a anew join awaitable for the specified empty tuple.
+    explicit CoroutineJoinAwaitable(std::tuple<>) noexcept;
 
-    void await_suspend(std::coroutine_handle<void>) noexcept
-    {
-    }
+    /// Destroy this object.
+    ~CoroutineJoinAwaitable() noexcept;
 
-    std::tuple<> await_resume() const noexcept
-    {
-        return {};
-    }
+    /// Return true.
+    bool await_ready() const noexcept;
+
+    /// Do nothing.
+    void await_suspend(std::coroutine_handle<void>) noexcept;
+
+    /// Return the empty tuple.
+    std::tuple<> await_resume() const noexcept;
+
+  private:
+    /// This class is not copy-constructable.
+    CoroutineJoinAwaitable(const CoroutineJoinAwaitable&) = delete;
+
+    /// This class is not move-constructable.
+    CoroutineJoinAwaitable(CoroutineJoinAwaitable&&) = delete;
+
+    /// This class is not copy-assignable.
+    CoroutineJoinAwaitable& operator=(const CoroutineJoinAwaitable&) = delete;
+
+    /// This class is not move-assignable.
+    CoroutineJoinAwaitable& operator=(CoroutineJoinAwaitable&&) = delete;
 };
 
 // TODO
@@ -3074,16 +3081,14 @@ template <typename RESULT>
 class CoroutineJoinPromise final
 {
   public:
-    using coroutine_handle_t =
-        bsl::coroutine_handle<CoroutineJoinPromise<RESULT> >;
-
     CoroutineJoinPromise() noexcept
     {
     }
 
     auto get_return_object() noexcept
     {
-        return coroutine_handle_t::from_promise(*this);
+        return bsl::coroutine_handle<
+            CoroutineJoinPromise<RESULT> >::from_promise(*this);
     }
 
     std::suspend_always initial_suspend() noexcept
@@ -3101,7 +3106,9 @@ class CoroutineJoinPromise final
                 return false;
             }
 
-            void await_suspend(coroutine_handle_t coro) const noexcept
+            void await_suspend(
+                bsl::coroutine_handle<CoroutineJoinPromise<RESULT> > coro)
+                const noexcept
             {
                 coro.promise().d_counter->signal();
             }
@@ -3111,7 +3118,7 @@ class CoroutineJoinPromise final
             }
         };
 
-        return completion_notifier{};
+        return completion_notifier();
     }
 
     void unhandled_exception() noexcept
@@ -3137,7 +3144,9 @@ class CoroutineJoinPromise final
     void start(CoroutineJoinCounter* counter) noexcept
     {
         d_counter = counter;
-        coroutine_handle_t::from_promise(*this).resume();
+        bsl::coroutine_handle<CoroutineJoinPromise<RESULT> >::from_promise(
+            *this)
+            .resume();
     }
 
     RESULT& result() &
@@ -3169,16 +3178,14 @@ template <>
 class CoroutineJoinPromise<void> final
 {
   public:
-    using coroutine_handle_t =
-        bsl::coroutine_handle<CoroutineJoinPromise<void> >;
-
     CoroutineJoinPromise() noexcept
     {
     }
 
     auto get_return_object() noexcept
     {
-        return coroutine_handle_t::from_promise(*this);
+        return bsl::coroutine_handle<
+            CoroutineJoinPromise<void> >::from_promise(*this);
     }
 
     std::suspend_always initial_suspend() noexcept
@@ -3196,7 +3203,9 @@ class CoroutineJoinPromise<void> final
                 return false;
             }
 
-            void await_suspend(coroutine_handle_t coro) const noexcept
+            void await_suspend(
+                bsl::coroutine_handle<CoroutineJoinPromise<void> > coro)
+                const noexcept
             {
                 coro.promise().d_counter->signal();
             }
@@ -3221,7 +3230,8 @@ class CoroutineJoinPromise<void> final
     void start(CoroutineJoinCounter* counter) noexcept
     {
         d_counter = counter;
-        coroutine_handle_t::from_promise(*this).resume();
+        bsl::coroutine_handle<CoroutineJoinPromise<void> >::from_promise(*this)
+            .resume();
     }
 
     void result()
@@ -3242,15 +3252,15 @@ class CoroutineJoin final
   public:
     using promise_type = CoroutineJoinPromise<RESULT>;
 
-    using coroutine_handle_t = typename promise_type::coroutine_handle_t;
-
-    CoroutineJoin(coroutine_handle_t coroutine) noexcept
-    : d_coroutine(coroutine)
+    CoroutineJoin(bsl::coroutine_handle<CoroutineJoinPromise<RESULT> >
+                      coroutine) noexcept : d_coroutine(coroutine)
     {
     }
 
     CoroutineJoin(CoroutineJoin&& other) noexcept
-    : d_coroutine(std::exchange(other.d_coroutine, coroutine_handle_t{}))
+    : d_coroutine(std::exchange(
+          other.d_coroutine,
+          bsl::coroutine_handle<CoroutineJoinPromise<RESULT> >()))
     {
     }
 
@@ -3278,7 +3288,7 @@ class CoroutineJoin final
     {
         if constexpr (std::is_void_v<decltype(this->result())>) {
             this->result();
-            return CoroutineMetaprogram::Nil{};
+            return CoroutineMetaprogram::Nil();
         }
         else {
             return this->result();
@@ -3289,7 +3299,7 @@ class CoroutineJoin final
     {
         if constexpr (std::is_void_v<decltype(this->result())>) {
             std::move(*this).result();
-            return CoroutineMetaprogram::Nil{};
+            return CoroutineMetaprogram::Nil();
         }
         else {
             return std::move(*this).result();
@@ -3305,7 +3315,7 @@ class CoroutineJoin final
         d_coroutine.promise().start(counter);
     }
 
-    coroutine_handle_t d_coroutine;
+    bsl::coroutine_handle<CoroutineJoinPromise<RESULT> > d_coroutine;
 };
 
 /// @internal @brief
@@ -5710,6 +5720,81 @@ NTSCFG_INLINE ntsa::Allocator CoroutineSpawn<RESULT>::allocator() const
     else {
         return ntsa::Allocator();
     }
+}
+
+NTSCFG_INLINE
+CoroutineJoinCounter::CoroutineJoinCounter(std::size_t count) noexcept
+: d_count(count + 1),
+  d_waiter(nullptr)
+{
+}
+
+NTSCFG_INLINE
+CoroutineJoinCounter::~CoroutineJoinCounter() noexcept
+{
+}
+
+NTSCFG_INLINE
+bool CoroutineJoinCounter::suspend(bsl::coroutine_handle<void> waiter) noexcept
+{
+    d_waiter = waiter;
+
+    const bsl::size_t previous =
+        d_count.fetch_sub(1, bsl::memory_order_acq_rel);
+
+    return previous > 1;
+}
+
+NTSCFG_INLINE
+void CoroutineJoinCounter::signal() noexcept
+{
+    const bsl::size_t previous =
+        d_count.fetch_sub(1, bsl::memory_order_acq_rel);
+
+    if (previous == 1) {
+        d_waiter.resume();
+    }
+}
+
+NTSCFG_INLINE
+bool CoroutineJoinCounter::ready() const noexcept
+{
+    return static_cast<bool>(d_waiter);
+}
+
+NTSCFG_INLINE
+CoroutineJoinAwaitable<std::tuple<> >::CoroutineJoinAwaitable() noexcept
+{
+}
+
+NTSCFG_INLINE
+CoroutineJoinAwaitable<std::tuple<> >::CoroutineJoinAwaitable(
+    std::tuple<>) noexcept
+{
+}
+
+NTSCFG_INLINE
+CoroutineJoinAwaitable<std::tuple<> >::~CoroutineJoinAwaitable() noexcept
+{
+}
+
+NTSCFG_INLINE
+bool CoroutineJoinAwaitable<std::tuple<> >::await_ready() const noexcept
+{
+    return true;
+}
+
+NTSCFG_INLINE
+void CoroutineJoinAwaitable<std::tuple<> >::await_suspend(
+    std::coroutine_handle<void>) noexcept
+{
+}
+
+NTSCFG_INLINE
+std::tuple<> CoroutineJoinAwaitable<std::tuple<> >::await_resume()
+    const noexcept
+{
+    return {};
 }
 
 }  // close package namespace
