@@ -2458,30 +2458,30 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyMeta)
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsCoroutineHandle<void>::value;
+            ntsa::CoroutineMetaprogram::IsCoroutineHandle<void>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsCoroutineHandle<bool>::value;
+            ntsa::CoroutineMetaprogram::IsCoroutineHandle<bool>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsCoroutineHandle<int>::value;
+            ntsa::CoroutineMetaprogram::IsCoroutineHandle<int>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsCoroutineHandle<bsl::string>::value;
+            ntsa::CoroutineMetaprogram::IsCoroutineHandle<bsl::string>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
-        constexpr bool result = ntsa::CoroutineMeta::IsCoroutineHandle<
+        constexpr bool result = ntsa::CoroutineMetaprogram::IsCoroutineHandle<
             bsl::coroutine_handle<void> >::value;
         NTSCFG_TEST_TRUE(result);
     }
@@ -2490,32 +2490,34 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyMeta)
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitReady<void>::value;
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitReady<
+                void>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitReady<bool>::value;
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitReady<
+                bool>::value;
         NTSCFG_TEST_TRUE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitReady<int>::value;
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitReady<int>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitReady<
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitReady<
                 bsl::string>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitReady<
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitReady<
                 bsl::coroutine_handle<void> >::value;
         NTSCFG_TEST_FALSE(result);
     }
@@ -2524,32 +2526,35 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyMeta)
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitSuspend<void>::value;
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitSuspend<
+                void>::value;
         NTSCFG_TEST_TRUE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitSuspend<bool>::value;
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitSuspend<
+                bool>::value;
         NTSCFG_TEST_TRUE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitSuspend<int>::value;
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitSuspend<
+                int>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitSuspend<
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitSuspend<
                 bsl::string>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitSuspend<
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitSuspend<
                 bsl::coroutine_handle<void> >::value;
         NTSCFG_TEST_TRUE(result);
     }
@@ -2558,32 +2563,35 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyMeta)
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitResume<void>::value;
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitResume<
+                void>::value;
         NTSCFG_TEST_TRUE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitResume<bool>::value;
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitResume<
+                bool>::value;
         NTSCFG_TEST_TRUE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitResume<int>::value;
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitResume<
+                int>::value;
         NTSCFG_TEST_TRUE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitResume<
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitResume<
                 bsl::string>::value;
         NTSCFG_TEST_TRUE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsValidReturnForAwaitResume<
+            ntsa::CoroutineMetaprogram::IsValidReturnForAwaitResume<
                 bsl::coroutine_handle<void> >::value;
         NTSCFG_TEST_TRUE(result);
     }
@@ -2591,28 +2599,31 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyMeta)
     // IsAwaiter
 
     {
-        constexpr bool result = ntsa::CoroutineMeta::IsAwaiter<void>::value;
-        NTSCFG_TEST_FALSE(result);
-    }
-
-    {
-        constexpr bool result = ntsa::CoroutineMeta::IsAwaiter<bool>::value;
-        NTSCFG_TEST_FALSE(result);
-    }
-
-    {
-        constexpr bool result = ntsa::CoroutineMeta::IsAwaiter<int>::value;
+        constexpr bool result =
+            ntsa::CoroutineMetaprogram::IsAwaiter<void>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsAwaiter<bsl::string>::value;
+            ntsa::CoroutineMetaprogram::IsAwaiter<bool>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
-        constexpr bool result = ntsa::CoroutineMeta::IsAwaiter<
+        constexpr bool result =
+            ntsa::CoroutineMetaprogram::IsAwaiter<int>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result =
+            ntsa::CoroutineMetaprogram::IsAwaiter<bsl::string>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result = ntsa::CoroutineMetaprogram::IsAwaiter<
             bsl::coroutine_handle<void> >::value;
         NTSCFG_TEST_FALSE(result);
     }
@@ -2655,20 +2666,20 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyMeta)
     };
 
     {
-        constexpr bool result =
-            ntsa::CoroutineMeta::IsAwaiter<TestAwaiterIncomplete1>::value;
+        constexpr bool result = ntsa::CoroutineMetaprogram::IsAwaiter<
+            TestAwaiterIncomplete1>::value;
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        constexpr bool result = ntsa::CoroutineMetaprogram::IsAwaiter<
+            TestAwaiterIncomplete2>::value;
         NTSCFG_TEST_FALSE(result);
     }
 
     {
         constexpr bool result =
-            ntsa::CoroutineMeta::IsAwaiter<TestAwaiterIncomplete2>::value;
-        NTSCFG_TEST_FALSE(result);
-    }
-
-    {
-        constexpr bool result =
-            ntsa::CoroutineMeta::IsAwaiter<TestAwaiter>::value;
+            ntsa::CoroutineMetaprogram::IsAwaiter<TestAwaiter>::value;
         NTSCFG_TEST_TRUE(result);
     }
 }

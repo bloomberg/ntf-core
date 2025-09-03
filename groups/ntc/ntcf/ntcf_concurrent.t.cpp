@@ -468,9 +468,10 @@ class CoroutineTaskSchedulerUtil
 
     template <typename SCHEDULER, typename AWAITABLE>
     static auto schedule_on(SCHEDULER& scheduler, AWAITABLE awaitable)
-        -> ntsa::CoroutineTask<ntsa::CoroutineMeta::RemoveRvalueReferenceType<
-            typename ntsa::CoroutineMeta::AwaitableTraits<
-                AWAITABLE>::AwaitResultType> >
+        -> ntsa::CoroutineTask<
+            ntsa::CoroutineMetaprogram::RemoveRvalueReferenceType<
+                typename ntsa::CoroutineMetaprogram::AwaitableTraits<
+                    AWAITABLE>::AwaitResultType> >
     {
         co_await           scheduler.schedule();
         co_return co_await std::move(awaitable);
