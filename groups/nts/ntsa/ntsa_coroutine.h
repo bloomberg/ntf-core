@@ -2884,218 +2884,106 @@ template <typename... TASKS>
 class CoroutineJoinAwaitable<std::tuple<TASKS...> >
 {
   public:
+    /// Create a new coroutine join awaitable for the specified 'tasks'.
     explicit CoroutineJoinAwaitable(TASKS&&... tasks) noexcept(
-        std::conjunction_v<std::is_nothrow_move_constructible<TASKS>...>)
-    : d_counter(sizeof...(TASKS))
-    , m_tasks(std::move(tasks)...)
-    {
-    }
+        std::conjunction_v<std::is_nothrow_move_constructible<TASKS>...>);
 
+    /// Create a new coroutine join awaitable for the specified 'tasks'.
     explicit CoroutineJoinAwaitable(std::tuple<TASKS...>&& tasks)
-        noexcept(std::is_nothrow_move_constructible_v<std::tuple<TASKS...> >)
-    : d_counter(sizeof...(TASKS))
-    , m_tasks(std::move(tasks))
-    {
-    }
+        noexcept(std::is_nothrow_move_constructible_v<std::tuple<TASKS...> >);
 
-    CoroutineJoinAwaitable(CoroutineJoinAwaitable&& other) noexcept
-    : d_counter(sizeof...(TASKS)),
-      m_tasks(std::move(other.m_tasks))
-    {
-    }
+    /// Create a new coroutine join awaitable for the tasks moved from the
+    /// specified 'other' awaitable.
+    CoroutineJoinAwaitable(CoroutineJoinAwaitable&& other) noexcept;
 
-    auto operator co_await() & noexcept
-    {
-        struct awaiter {
-            awaiter(CoroutineJoinAwaitable& awaitable) noexcept
-            : m_awaitable(awaitable)
-            {
-            }
+    /// Destroy this object.
+    ~CoroutineJoinAwaitable();
 
-            bool await_ready() const noexcept
-            {
-                return m_awaitable.ready();
-            }
+    /// Await the completion of each task-like awaitable.
+    auto operator co_await() & noexcept;
 
-            bool await_suspend(
-                std::coroutine_handle<void> awaitingCoroutine) noexcept
-            {
-                return m_awaitable.suspend(awaitingCoroutine);
-            }
-
-            std::tuple<TASKS...>& await_resume() noexcept
-            {
-                return m_awaitable.m_tasks;
-            }
-
-          private:
-            CoroutineJoinAwaitable& m_awaitable;
-        };
-
-        return awaiter{*this};
-    }
-
-    auto operator co_await() && noexcept
-    {
-        struct awaiter {
-            awaiter(CoroutineJoinAwaitable& awaitable) noexcept
-            : m_awaitable(awaitable)
-            {
-            }
-
-            bool await_ready() const noexcept
-            {
-                return m_awaitable.ready();
-            }
-
-            bool await_suspend(
-                std::coroutine_handle<void> awaitingCoroutine) noexcept
-            {
-                return m_awaitable.suspend(awaitingCoroutine);
-            }
-
-            std::tuple<TASKS...>&& await_resume() noexcept
-            {
-                return std::move(m_awaitable.m_tasks);
-            }
-
-          private:
-            CoroutineJoinAwaitable& m_awaitable;
-        };
-
-        return awaiter{*this};
-    }
+    /// Await the completion of each task-like awaitable.
+    auto operator co_await() && noexcept;
 
   private:
-    bool ready() const noexcept
-    {
-        return d_counter.ready();
-    }
+    /// This class is not copy-constructable.
+    CoroutineJoinAwaitable(const CoroutineJoinAwaitable&) = delete;
 
-    bool suspend(std::coroutine_handle<void> awaitingCoroutine) noexcept
-    {
-        start_tasks(
-            std::make_integer_sequence<std::size_t, sizeof...(TASKS)>{});
-        return d_counter.suspend(awaitingCoroutine);
-    }
+    /// This class is not copy-assignable.
+    CoroutineJoinAwaitable& operator=(const CoroutineJoinAwaitable&) = delete;
+
+    /// This class is not move-assignable.
+    CoroutineJoinAwaitable& operator=(CoroutineJoinAwaitable&&) = delete;
+
+  private:
+    bool suspend(std::coroutine_handle<void> coroutine) noexcept;
 
     template <std::size_t... INDICES>
-    void start_tasks(std::integer_sequence<std::size_t, INDICES...>) noexcept
-    {
-        (void)std::initializer_list<int>{
-            (std::get<INDICES>(m_tasks).start(&d_counter), 0)...};
-    }
+    void startup(std::integer_sequence<std::size_t, INDICES...>) noexcept;
 
+    bool ready() const noexcept;
+
+  private:
     CoroutineJoinCounter d_counter;
     std::tuple<TASKS...> m_tasks;
 };
 
-// TODO
-template <typename TASK_CONTAINER>
+/// @internal @brief
+/// Provide a join awaitable specialized for a vector of task-like awaitables.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_coroutine
+template <typename CONTAINER>
 class CoroutineJoinAwaitable
 {
   public:
-    explicit CoroutineJoinAwaitable(TASK_CONTAINER&& tasks) noexcept
-    : d_counter(tasks.size()),
-      m_tasks(std::forward<TASK_CONTAINER>(tasks))
-    {
-    }
+    /// Create a new coroutine join awaitable for the specified 'tasks'.
+    explicit CoroutineJoinAwaitable(CONTAINER&& tasks) noexcept;
 
+    /// Create a new coroutine join awaitable for the tasks moved from the
+    /// specified 'other' awaitable.
     CoroutineJoinAwaitable(CoroutineJoinAwaitable&& other)
-        noexcept(std::is_nothrow_move_constructible_v<TASK_CONTAINER>)
-    : d_counter(other.m_tasks.size())
-    , m_tasks(std::move(other.m_tasks))
-    {
-    }
+        noexcept(std::is_nothrow_move_constructible_v<CONTAINER>);
 
-    CoroutineJoinAwaitable(const CoroutineJoinAwaitable&)            = delete;
-    CoroutineJoinAwaitable& operator=(const CoroutineJoinAwaitable&) = delete;
+    /// Destroy this object.
+    ~CoroutineJoinAwaitable();
 
-    auto operator co_await() & noexcept
-    {
-        class awaiter
-        {
-          public:
-            awaiter(CoroutineJoinAwaitable& awaitable)
-            : m_awaitable(awaitable)
-            {
-            }
+    /// Await the completion of each task-like awaitable.
+    auto operator co_await() & noexcept;
 
-            bool await_ready() const noexcept
-            {
-                return m_awaitable.ready();
-            }
-
-            bool await_suspend(
-                std::coroutine_handle<void> awaitingCoroutine) noexcept
-            {
-                return m_awaitable.suspend(awaitingCoroutine);
-            }
-
-            TASK_CONTAINER& await_resume() noexcept
-            {
-                return m_awaitable.m_tasks;
-            }
-
-          private:
-            CoroutineJoinAwaitable& m_awaitable;
-        };
-
-        return awaiter{*this};
-    }
-
-    auto operator co_await() && noexcept
-    {
-        class awaiter
-        {
-          public:
-            awaiter(CoroutineJoinAwaitable& awaitable)
-            : m_awaitable(awaitable)
-            {
-            }
-
-            bool await_ready() const noexcept
-            {
-                return m_awaitable.ready();
-            }
-
-            bool await_suspend(
-                std::coroutine_handle<void> awaitingCoroutine) noexcept
-            {
-                return m_awaitable.suspend(awaitingCoroutine);
-            }
-
-            TASK_CONTAINER&& await_resume() noexcept
-            {
-                return std::move(m_awaitable.m_tasks);
-            }
-
-          private:
-            CoroutineJoinAwaitable& m_awaitable;
-        };
-
-        return awaiter{*this};
-    }
+    /// Await the completion of each task-like awaitable.
+    auto operator co_await() && noexcept;
 
   private:
-    bool ready() const noexcept
-    {
-        return d_counter.ready();
-    }
+    /// This class is not copy-constructable.
+    CoroutineJoinAwaitable(const CoroutineJoinAwaitable&) = delete;
 
-    bool suspend(std::coroutine_handle<void> awaitingCoroutine) noexcept
-    {
-        for (auto&& task : m_tasks) {
-            task.start(&d_counter);
-        }
+    /// This class is not copy-assignable.
+    CoroutineJoinAwaitable& operator=(const CoroutineJoinAwaitable&) = delete;
 
-        return d_counter.suspend(awaitingCoroutine);
-    }
+    /// This class is not move-assignable.
+    CoroutineJoinAwaitable& operator=(CoroutineJoinAwaitable&&) = delete;
+
+  private:
+    bool suspend(std::coroutine_handle<void> awaitingCoroutine) noexcept;
+
+    void startup();
+
+    bool ready() const noexcept;
 
     CoroutineJoinCounter d_counter;
-    TASK_CONTAINER       m_tasks;
+    CONTAINER            m_tasks;
 };
 
+/// @internal @brief
+/// Provide a join promise.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_coroutine
 template <typename RESULT>
 class CoroutineJoinPromise final
 {
@@ -3147,16 +3035,12 @@ class CoroutineJoinPromise final
 
     void return_void() noexcept
     {
-        // We should have either suspended at co_yield point or
-        // an exception was thrown before running off the end of
-        // the coroutine.
-
         NTSCFG_UNREACHABLE();
     }
 
     auto yield_value(RESULT&& result) noexcept
     {
-        m_result = std::addressof(result);
+        d_result = std::addressof(result);
         return final_suspend();
     }
 
@@ -3174,7 +3058,7 @@ class CoroutineJoinPromise final
             std::rethrow_exception(d_exception);
         }
 
-        return *m_result;
+        return *d_result;
     }
 
     RESULT&& result() &&
@@ -3183,16 +3067,22 @@ class CoroutineJoinPromise final
             std::rethrow_exception(d_exception);
         }
 
-        return std::forward<RESULT>(*m_result);
+        return std::forward<RESULT>(*d_result);
     }
 
   private:
     CoroutineJoinCounter*      d_counter;
     std::exception_ptr         d_exception;
-    std::add_pointer_t<RESULT> m_result;
+    std::add_pointer_t<RESULT> d_result;
 };
 
-// TODO
+/// @internal @brief
+/// Provide a join promise specialized to return void.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntsa_coroutine
 template <>
 class CoroutineJoinPromise<void> final
 {
@@ -3293,6 +3183,11 @@ class CoroutineJoin final
     CoroutineJoin(const CoroutineJoin&)            = delete;
     CoroutineJoin& operator=(const CoroutineJoin&) = delete;
 
+    void start(CoroutineJoinCounter* counter) noexcept
+    {
+        d_coroutine.promise().start(counter);
+    }
+
     decltype(auto) result() &
     {
         return d_coroutine.promise().result();
@@ -3326,14 +3221,6 @@ class CoroutineJoin final
     }
 
   private:
-    template <typename TASK_CONTAINER>
-    friend class CoroutineJoinAwaitable;
-
-    void start(CoroutineJoinCounter* counter) noexcept
-    {
-        d_coroutine.promise().start(counter);
-    }
-
     bsl::coroutine_handle<CoroutineJoinPromise<RESULT> > d_coroutine;
 };
 
@@ -5814,6 +5701,244 @@ std::tuple<> CoroutineJoinAwaitable<std::tuple<> >::await_resume()
     const noexcept
 {
     return {};
+}
+
+template <typename... TASKS>
+NTSCFG_INLINE CoroutineJoinAwaitable<
+    std::tuple<TASKS...> >::CoroutineJoinAwaitable(TASKS&&... tasks)
+    noexcept(std::conjunction_v<std::is_nothrow_move_constructible<TASKS>...>)
+: d_counter(sizeof...(TASKS))
+, m_tasks(std::move(tasks)...)
+{
+}
+
+template <typename... TASKS>
+NTSCFG_INLINE CoroutineJoinAwaitable<std::tuple<TASKS...> >::
+    CoroutineJoinAwaitable(std::tuple<TASKS...>&& tasks)
+        noexcept(std::is_nothrow_move_constructible_v<std::tuple<TASKS...> >)
+: d_counter(sizeof...(TASKS))
+, m_tasks(std::move(tasks))
+{
+}
+
+template <typename... TASKS>
+NTSCFG_INLINE CoroutineJoinAwaitable<std::tuple<TASKS...> >::
+    CoroutineJoinAwaitable(CoroutineJoinAwaitable&& other) noexcept
+: d_counter(sizeof...(TASKS)),
+  m_tasks(std::move(other.m_tasks))
+{
+}
+
+template <typename... TASKS>
+NTSCFG_INLINE CoroutineJoinAwaitable<
+    std::tuple<TASKS...> >::~CoroutineJoinAwaitable()
+{
+}
+
+template <typename... TASKS>
+    NTSCFG_INLINE auto CoroutineJoinAwaitable<
+        std::tuple<TASKS...> >::operator co_await() &
+    noexcept
+{
+    struct Awaiter {
+        Awaiter(CoroutineJoinAwaitable& awaitable) noexcept
+        : m_awaitable(awaitable)
+        {
+        }
+
+        bool await_ready() const noexcept
+        {
+            return m_awaitable.ready();
+        }
+
+        bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
+        {
+            return m_awaitable.suspend(coroutine);
+        }
+
+        std::tuple<TASKS...>& await_resume() noexcept
+        {
+            return m_awaitable.m_tasks;
+        }
+
+      private:
+        CoroutineJoinAwaitable& m_awaitable;
+    };
+
+    return Awaiter{*this};
+}
+
+template <typename... TASKS>
+    NTSCFG_INLINE auto CoroutineJoinAwaitable<
+        std::tuple<TASKS...> >::operator co_await() &&
+    noexcept
+{
+    struct Awaiter {
+        Awaiter(CoroutineJoinAwaitable& awaitable) noexcept
+        : m_awaitable(awaitable)
+        {
+        }
+
+        bool await_ready() const noexcept
+        {
+            return m_awaitable.ready();
+        }
+
+        bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
+        {
+            return m_awaitable.suspend(coroutine);
+        }
+
+        std::tuple<TASKS...>&& await_resume() noexcept
+        {
+            return std::move(m_awaitable.m_tasks);
+        }
+
+      private:
+        CoroutineJoinAwaitable& m_awaitable;
+    };
+
+    return Awaiter{*this};
+}
+
+template <typename... TASKS>
+NTSCFG_INLINE bool CoroutineJoinAwaitable<std::tuple<TASKS...> >::suspend(
+    std::coroutine_handle<void> coroutine) noexcept
+{
+    this->startup(std::make_integer_sequence<std::size_t, sizeof...(TASKS)>{});
+
+    return d_counter.suspend(coroutine);
+}
+
+template <typename... TASKS>
+template <std::size_t... INDICES>
+NTSCFG_INLINE void CoroutineJoinAwaitable<std::tuple<TASKS...> >::startup(
+    std::integer_sequence<std::size_t, INDICES...>) noexcept
+{
+    (void)std::initializer_list<int>{
+        (std::get<INDICES>(m_tasks).start(&d_counter), 0)...};
+}
+
+template <typename... TASKS>
+NTSCFG_INLINE bool CoroutineJoinAwaitable<std::tuple<TASKS...> >::ready()
+    const noexcept
+{
+    return d_counter.ready();
+}
+
+template <typename CONTAINER>
+NTSCFG_INLINE CoroutineJoinAwaitable<CONTAINER>::CoroutineJoinAwaitable(
+    CONTAINER&& tasks) noexcept : d_counter(tasks.size()),
+                                  m_tasks(std::forward<CONTAINER>(tasks))
+{
+}
+
+template <typename CONTAINER>
+NTSCFG_INLINE CoroutineJoinAwaitable<CONTAINER>::CoroutineJoinAwaitable(
+    CoroutineJoinAwaitable&& other)
+    noexcept(std::is_nothrow_move_constructible_v<CONTAINER>)
+: d_counter(other.m_tasks.size())
+, m_tasks(std::move(other.m_tasks))
+{
+}
+
+template <typename CONTAINER>
+NTSCFG_INLINE CoroutineJoinAwaitable<CONTAINER>::~CoroutineJoinAwaitable()
+{
+}
+
+template <typename CONTAINER>
+    NTSCFG_INLINE auto CoroutineJoinAwaitable<CONTAINER>::operator co_await() &
+    noexcept
+{
+    class Awaiter
+    {
+      public:
+        Awaiter(CoroutineJoinAwaitable& awaitable)
+        : m_awaitable(awaitable)
+        {
+        }
+
+        bool await_ready() const noexcept
+        {
+            return m_awaitable.ready();
+        }
+
+        bool await_suspend(
+            std::coroutine_handle<void> awaitingCoroutine) noexcept
+        {
+            return m_awaitable.suspend(awaitingCoroutine);
+        }
+
+        CONTAINER& await_resume() noexcept
+        {
+            return m_awaitable.m_tasks;
+        }
+
+      private:
+        CoroutineJoinAwaitable& m_awaitable;
+    };
+
+    return Awaiter{*this};
+}
+
+template <typename CONTAINER>
+    NTSCFG_INLINE auto CoroutineJoinAwaitable<
+        CONTAINER>::operator co_await() &&
+    noexcept
+{
+    class Awaiter
+    {
+      public:
+        Awaiter(CoroutineJoinAwaitable& awaitable)
+        : m_awaitable(awaitable)
+        {
+        }
+
+        bool await_ready() const noexcept
+        {
+            return m_awaitable.ready();
+        }
+
+        bool await_suspend(
+            std::coroutine_handle<void> awaitingCoroutine) noexcept
+        {
+            return m_awaitable.suspend(awaitingCoroutine);
+        }
+
+        CONTAINER&& await_resume() noexcept
+        {
+            return std::move(m_awaitable.m_tasks);
+        }
+
+      private:
+        CoroutineJoinAwaitable& m_awaitable;
+    };
+
+    return Awaiter{*this};
+}
+
+template <typename CONTAINER>
+NTSCFG_INLINE bool CoroutineJoinAwaitable<CONTAINER>::suspend(
+    std::coroutine_handle<void> awaitingCoroutine) noexcept
+{
+    this->startup();
+
+    return d_counter.suspend(awaitingCoroutine);
+}
+
+template <typename CONTAINER>
+NTSCFG_INLINE void CoroutineJoinAwaitable<CONTAINER>::startup()
+{
+    for (auto&& task : m_tasks) {
+        task.start(&d_counter);
+    }
+}
+
+template <typename CONTAINER>
+NTSCFG_INLINE bool CoroutineJoinAwaitable<CONTAINER>::ready() const noexcept
+{
+    return d_counter.ready();
 }
 
 }  // close package namespace
