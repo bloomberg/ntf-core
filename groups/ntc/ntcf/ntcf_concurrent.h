@@ -40,156 +40,93 @@ namespace ntcf {
 /// @ingroup module_ntci_runtime
 class Concurrent
 {
-  private:
-    // Start the specified 'coroutine'.
-    static void start(bsl::coroutine_handle<void> coroutine);
-
-    // The log category.
-    BALL_LOG_SET_CLASS_CATEGORY("NTCF.CONCURRENT");
-
   public:
-    /// Provide an awaitable for an execute operation.
+    /// Provide an awaitable for an execute operation, which when awaited,
+    /// resumes the awaiting coroutine on an I/O thread.
     class Execute;
 
-    /// Provide an awaitable for a connect operation.
+    /// Provide an awaitable for a connect operation, which when awaited,
+    /// returns the 'ntci::ConnectResult' that is the asynchronous result of
+    /// the connect operation.
     class Connect;
 
-    /// Provide an awaitable for a accept operation.
+    /// Provide an awaitable for a accept operation, which when awaited,
+    /// returns the 'ntci::AcceptResult' that is the asynchronous result of
+    /// the accept operation.
     class Accept;
 
-    /// Provide an awaitable for a send operation.
+    /// Provide an awaitable for a send operation, which when awaited,
+    /// returns the 'ntci::SendResult' that is the asynchronous result of
+    /// the send operation.
     class Send;
 
-    /// Provide an awaitable for a receive operation.
+    /// Provide an awaitable for a receive operation, which when awaited,
+    /// returns the 'ntci::ReceiveResult' that is the asynchronous result of
+    /// the receive operation.
     class Receive;
 
-    /// Provide an awaitable for a close operation.
+    /// Provide an awaitable for a close operation, which when awaited, returns
+    /// void and indicates the closable object has been asynchronously closed.
     class Close;
 
-    /// Initialize concurrent operations.
-    static void initialize();
-
-    // Resume the specified 'coroutine' on the specified 'executor'.
-    static void spawn(const bsl::shared_ptr<ntci::Executor>& executor,
-                      bsl::coroutine_handle<void>            coroutine);
-
-    /// Resume the current coroutine on the specified 'executor'.
+    /// Resume the current coroutine on the specified 'executor'. Return an
+    /// awaitable, which when awaited resumes the awaiting coroutine on the
+    /// 'executor' thread.
     static ntcf::Concurrent::Execute resume(
         const bsl::shared_ptr<ntci::Executor>& executor);
 
-    /// Connect to the specified 'endpoint' according to the specified
-    /// 'options'. Resume the current coroutine on this object's strand,
-    /// if any, when the connection is established or an error occurs.
-    /// Return the awaitable error.
+    /// Connect the specified 'connector' to the specified 'endpoint' according
+    /// to the specified 'options'. Return an awaitable, which when awaited,
+    /// returns the 'ntci::ConnectResult' that is the asynchronous result of
+    /// this operation.
     static ntcf::Concurrent::Connect connect(
         const bsl::shared_ptr<ntci::Connector>& connector,
         const ntsa::Endpoint&                   endpoint,
         const ntca::ConnectOptions&             options);
 
-    /// Connect to the resolution of the specified 'name' according to the
-    /// specified 'options'. Resume the current coroutine on this
-    /// object's strand, if any, when the connection is established or an
-    /// error occurs. Return the awaitable error.
+    /// Connect the specified 'connector' to the resolution of the specified
+    /// 'name' according to the specified 'options'. Return an awaitable, which
+    /// when awaited, returns the 'ntci::ConnectResult' that is the
+    /// asynchronous result of this operation.
     static ntcf::Concurrent::Connect connect(
         const bsl::shared_ptr<ntci::Connector>& connector,
         const bsl::string&                      name,
         const ntca::ConnectOptions&             options);
 
-    /// Dequeue a connection from the backlog according to the specified
-    /// 'options'. If the accept queue is not empty, synchronously pop the
-    /// front of the accept queue into an internally allocated stream socket
-    /// and resume the current coroutine on the objects's strand, if any, with
-    /// that stream socket. Otherwise, queue the accept operation and
-    /// asynchronously accept connections from the backlog onto the accept
-    /// queue as connections in the backlog become accepted, at the configured
-    /// accept rate limit, if any, up to the accept queue high watermark. When
-    /// the accept queue becomes non-empty, synchronously pop the front of the
-    /// accept queue into an internally allocated stream socket and resume the
-    /// current corouting on the objects' strand, if any, with that stream
-    /// socket. After satisfying any queued accept operations, when the accept
-    /// queue is asynchronously filled up to the accept queue low watermark,
-    /// announce an accept queue low watermark event. When asynchronously
-    /// enqueuing connections onto the accept queue causes the accept queue
-    /// high watermark to become breached, stop asynchronously accepting
-    /// connections from the backlog onto the accept queue and announce an
-    /// accept queue high watermark event. Return the awaitable error, notably
-    /// 'ntsa::Error::e_WOULD_BLOCK' if neither the accept queue nor the
-    /// backlog is non-empty. All other errors indicate no more connections
-    /// have been accepted at this time or will become accepted in the future.
+    /// Dequeue a connection from the backlog of the specified 'acceptor'
+    /// according to the specified 'options'. Return an awaitable, which when
+    /// awaited, returns the 'ntci::AcceptResult' that is the asynchronous
+    /// result of this operation.
     static ntcf::Concurrent::Accept accept(
         const bsl::shared_ptr<ntci::Acceptor>& acceptor,
         const ntca::AcceptOptions&             options);
 
-    /// Enqueue the specified 'data' for transmission according to the
-    /// specified 'options'. If the write queue is empty and the write rate
-    /// limit, if any, is not exceeded, synchronously copy the 'data' to the
-    /// socket send buffer. Otherwise, if the write queue is not empty, or the
-    /// write rate limit, if any, is exceeded, or the socket send buffer has
-    /// insufficient capacity to store the entirety of the 'data', enqueue the
-    /// remainder of the 'data' not copied to the socket send buffer onto the
-    /// write queue and asynchronously copy the write queue to the socket send
-    /// buffer as capacity in the socket send buffer becomes available, at the
-    /// configured write rate limit, if any, according to the priorities of the
-    /// individual write operations on the write queue. The integrity of the
-    /// entire sequence of the 'data' is always preserved when transmitting the
-    /// data stream, even when other data is sent concurrently by different
-    /// threads, although the order of transmission of the entirety of the
-    /// 'data' in relation to other transmitted data is unspecified. If
-    /// enqueuing the 'data' onto the write queue causes the write queue high
-    /// watermark to become breached, announce a write queue high watermark
-    /// event but continue to queue the 'data' for transmission. After a write
-    /// queue high watermark event is announced, announce a write queue low
-    /// watermark event when the write queue is subsequently and asynchronously
-    /// drained down to the write queue low watermark. A write queue high
-    /// watermark event must be first announced before a write queue low
-    /// watermark event will be announced, and thereafter a write queue low
-    /// watermark event must be announced before a subsequent write queue high
-    /// watermark event will be announced. When the 'data' has been completely
-    /// copied to the send buffer, resume the current coroutine on this
-    /// object's strand, if any. Return the awaitable error, notably
-    /// 'ntsa::Error::e_WOULD_BLOCK' if the size of the write queue has already
-    /// breached the write queue high watermark. All other errors indicate the
-    /// socket is incapable of transmitting data at this time or any time in
-    /// the future.
+    /// Enqueue the specified 'data' for transmission by the specified 'sender'
+    /// according to the specified 'options'. Return an awaitable, which when
+    /// awaited, returns the 'ntci::SendResult' that is the asynchronous result
+    /// of this operation.
     static ntcf::Concurrent::Send send(
         const bsl::shared_ptr<ntci::Sender>& sender,
         const bsl::shared_ptr<bdlbb::Blob>&  data,
         const ntca::SendOptions&             options);
 
-    /// Dequeue received data according to the specified 'options'. If the read
-    /// queue has sufficient size to satisfy the read operation, synchronously
-    /// copy the read queue into an internally allocated data structure and
-    /// resume the current coroutine on this object's strand, if any, with that
-    /// data structure. Otherwise, queue the read operation and asynchronously
-    /// copy the socket receive buffer onto the read queue as data in the
-    /// socket receive buffer becomes available, at the configured read rate
-    /// limit, if any, up to the read queue high watermark. When the read queue
-    /// is asynchronously filled to a sufficient size to satisfy the read
-    /// operation, synchronously copy the read queue into an internally
-    /// allocated data structure and resume the current coroutine on this
-    /// object's strand, if any, with that data structure. After satisfying any
-    /// queued read operations, when the read queue is asynchronously filled up
-    /// to the read queue low watermark, announce a read queue low watermark
-    /// event. When asynchronously enqueuing data onto the read queue causes
-    /// the read queue high watermark to become breached, stop asynchronously
-    /// copying the socket receive buffer to the read queue and announce a read
-    /// queue high watermark event. Return the awaitable error, notably
-    /// 'ntsa::Error::e_WOULD_BLOCK' if neither the read queue nor the socket
-    /// receive buffer has sufficient size to synchronously satisfy the read
-    /// operation, or 'ntsa::Error::e_EOF' if the read queue is empty and the
-    /// socket receive buffer has been shut down. All other errors indicate no
-    /// more received data is available at this time or will become available
-    /// in the future.
+    /// Dequeue received data from the specified 'receiver' according to the
+    /// specified 'options'. Return an awaitable, which when awaited, returns
+    /// the 'ntci::ReceiveResult' that is the asynchronous result of this
+    /// operation.
     static ntcf::Concurrent::Receive receive(
         const bsl::shared_ptr<ntci::Receiver>& receiver,
         const ntca::ReceiveOptions&            options);
 
-    /// Close the specified 'closable' object. Return the awaitable "void".
+    /// Close the specified 'closable' object. Return an awaitable, which when
+    /// awaited, indicates the 'closable' object has been asyncrhonously
+    /// closed.
     static ntcf::Concurrent::Close close(
         const bsl::shared_ptr<ntci::Closable>& closable);
 
-    /// Clean up the resources required by all concurrent operations.
-    static void exit();
+  private:
+    // The log category.
+    BALL_LOG_SET_CLASS_CATEGORY("NTCF.CONCURRENT");
 };
 
 /// Provide an awaitable for an execute operation.
@@ -201,14 +138,28 @@ class Concurrent
 class Concurrent::Execute
 {
   public:
-    /// TODO
+    /// Provide an awaiter for an execute operation.
     class Awaiter;
 
-    /// TODO
+    /// Create a new awaitable that, when awaited, resumes the awaiting
+    /// coroutine on one of the threads managed by the specified 'executor'.
     explicit Execute(const bsl::shared_ptr<ntci::Executor>& executor);
 
-    /// TODO
+    /// Await the completion of the operation. Return the awaiter.
     Awaiter operator co_await();
+
+  private:
+    /// This class is not copy-constructable.
+    Execute(const Execute&) = delete;
+
+    /// This class is not move-constructable.
+    Execute(Execute&&) = delete;
+
+    /// This class is not copy-assignable.
+    Execute& operator=(const Execute&) = delete;
+
+    /// This class is not move-assignable.
+    Execute& operator=(Execute&&) = delete;
 
   private:
     /// Allow the associated awaiter to access this class's private data.
@@ -231,14 +182,28 @@ class Concurrent::Execute::Awaiter
     /// 'awaitable'.
     explicit Awaiter(Concurrent::Execute* awaitable) noexcept;
 
-    // TODO
+    /// Return false to suspend the awaiting coroutine.
     bool await_ready() const noexcept;
 
-    // TODO
+    /// Initiate the asynchronous operation and resume the specified
+    /// 'coroutine' when the operation asynchronously completes or fails.
     void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
-    // TODO
+    /// Return the asynchronous result.
     void await_resume() const noexcept;
+
+  private:
+    /// This class is not copy-constructable.
+    Awaiter(const Awaiter&) = delete;
+
+    /// This class is not move-constructable.
+    Awaiter(Awaiter&&) = delete;
+
+    /// This class is not copy-assignable.
+    Awaiter& operator=(const Awaiter&) = delete;
+
+    /// This class is not move-assignable.
+    Awaiter& operator=(Awaiter&&) = delete;
 
   private:
     /// Resume the specified 'coroutine'.
@@ -257,21 +222,37 @@ class Concurrent::Execute::Awaiter
 class Concurrent::Connect
 {
   public:
-    /// TODO
+    /// Provide an awaiter for a connect operation.
     class Awaiter;
 
-    /// TODO
+    /// Create a new awaitable that, when awaited, connects the 'connector'
+    /// to the specified 'endpoint' according to the specified 'options'.
     explicit Connect(const bsl::shared_ptr<ntci::Connector>& connector,
                      const ntsa::Endpoint&                   endpoint,
                      ntca::ConnectOptions                    options);
 
-    /// TODO
+    /// Create a new awaitable that, when awaited, connects the 'connector'
+    /// to the resolution of the specified 'name' according to the specified
+    /// 'options'.
     explicit Connect(const bsl::shared_ptr<ntci::Connector>& connector,
                      const bsl::string&                      name,
                      ntca::ConnectOptions                    options);
 
-    /// TODO
+    /// Await the completion of the operation. Return the awaiter.
     Awaiter operator co_await();
+
+  private:
+    /// This class is not copy-constructable.
+    Connect(const Connect&) = delete;
+
+    /// This class is not move-constructable.
+    Connect(Connect&&) = delete;
+
+    /// This class is not copy-assignable.
+    Connect& operator=(const Connect&) = delete;
+
+    /// This class is not move-assignable.
+    Connect& operator=(Connect&&) = delete;
 
   private:
     /// Allow the associated awaiter to access this class's private data.
@@ -306,14 +287,28 @@ class Concurrent::Connect::Awaiter
     /// 'awaitable'.
     explicit Awaiter(Concurrent::Connect* awaitable) noexcept;
 
-    // TODO
+    /// Return false to suspend the awaiting coroutine.
     bool await_ready() const noexcept;
 
-    // TODO
+    /// Initiate the asynchronous operation and resume the specified
+    /// 'coroutine' when the operation asynchronously completes or fails.
     void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
-    // TODO
+    /// Return the asynchronous result.
     ntci::ConnectResult await_resume() const noexcept;
+
+  private:
+    /// This class is not copy-constructable.
+    Awaiter(const Awaiter&) = delete;
+
+    /// This class is not move-constructable.
+    Awaiter(Awaiter&&) = delete;
+
+    /// This class is not copy-assignable.
+    Awaiter& operator=(const Awaiter&) = delete;
+
+    /// This class is not move-assignable.
+    Awaiter& operator=(Awaiter&&) = delete;
 
   private:
     /// Process a transmission by the specified 'connector' according to the
@@ -335,15 +330,30 @@ class Concurrent::Connect::Awaiter
 class Concurrent::Accept
 {
   public:
-    /// TODO
+    /// Provide an awaiter for a accept operation.
     class Awaiter;
 
-    /// TODO
+    /// Create a new awaitable that, when awaited, dequeues a stream socket
+    /// from the specified 'acceptor' backlog according to the specified
+    /// 'options'.
     explicit Accept(const bsl::shared_ptr<ntci::Acceptor>& acceptor,
                     ntca::AcceptOptions                    options);
 
-    /// TODO
+    /// Await the completion of the operation. Return the awaiter.
     Awaiter operator co_await();
+
+  private:
+    /// This class is not copy-constructable.
+    Accept(const Accept&) = delete;
+
+    /// This class is not move-constructable.
+    Accept(Accept&&) = delete;
+
+    /// This class is not copy-assignable.
+    Accept& operator=(const Accept&) = delete;
+
+    /// This class is not move-assignable.
+    Accept& operator=(Accept&&) = delete;
 
   private:
     /// Allow the associated awaiter to access this class's private data.
@@ -372,14 +382,28 @@ class Concurrent::Accept::Awaiter
     /// 'awaitable'.
     explicit Awaiter(Concurrent::Accept* awaitable) noexcept;
 
-    // TODO
+    /// Return false to suspend the awaiting coroutine.
     bool await_ready() const noexcept;
 
-    // TODO
+    /// Initiate the asynchronous operation and resume the specified
+    /// 'coroutine' when the operation asynchronously completes or fails.
     void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
-    // TODO
+    /// Return the asynchronous result.
     ntci::AcceptResult await_resume() const noexcept;
+
+  private:
+    /// This class is not copy-constructable.
+    Awaiter(const Awaiter&) = delete;
+
+    /// This class is not move-constructable.
+    Awaiter(Awaiter&&) = delete;
+
+    /// This class is not copy-assignable.
+    Awaiter& operator=(const Awaiter&) = delete;
+
+    /// This class is not move-assignable.
+    Awaiter& operator=(Awaiter&&) = delete;
 
   private:
     /// Process a acceptance of the specified 'streamSocket' by the specified
@@ -403,16 +427,31 @@ class Concurrent::Accept::Awaiter
 class Concurrent::Send
 {
   public:
-    /// TODO
+    /// Provide an awaiter for a send operation.
     class Awaiter;
 
-    /// TODO
+    /// Create a new awaitable that, when awaited, enqueues the specified
+    /// 'data' for transmission through the specified 'sender' according to the
+    /// specified 'options'.
     explicit Send(const bsl::shared_ptr<ntci::Sender>& sender,
                   const bsl::shared_ptr<bdlbb::Blob>&  data,
                   ntca::SendOptions                    options);
 
-    /// TODO
+    /// Await the completion of the operation. Return the awaiter.
     Awaiter operator co_await();
+
+  private:
+    /// This class is not copy-constructable.
+    Send(const Send&) = delete;
+
+    /// This class is not move-constructable.
+    Send(Send&&) = delete;
+
+    /// This class is not copy-assignable.
+    Send& operator=(const Send&) = delete;
+
+    /// This class is not move-assignable.
+    Send& operator=(Send&&) = delete;
 
   private:
     /// Allow the associated awaiter to access this class's private data.
@@ -444,14 +483,28 @@ class Concurrent::Send::Awaiter
     /// 'awaitable'.
     explicit Awaiter(Concurrent::Send* awaitable) noexcept;
 
-    // TODO
+    /// Return false to suspend the awaiting coroutine.
     bool await_ready() const noexcept;
 
-    // TODO
+    /// Initiate the asynchronous operation and resume the specified
+    /// 'coroutine' when the operation asynchronously completes or fails.
     void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
-    // TODO
+    /// Return the asynchronous result.
     ntci::SendResult await_resume() const noexcept;
+
+  private:
+    /// This class is not copy-constructable.
+    Awaiter(const Awaiter&) = delete;
+
+    /// This class is not move-constructable.
+    Awaiter(Awaiter&&) = delete;
+
+    /// This class is not copy-assignable.
+    Awaiter& operator=(const Awaiter&) = delete;
+
+    /// This class is not move-assignable.
+    Awaiter& operator=(Awaiter&&) = delete;
 
   private:
     /// Process a transmission by the specified 'sender' according to the
@@ -473,15 +526,29 @@ class Concurrent::Send::Awaiter
 class Concurrent::Receive
 {
   public:
-    /// TODO
+    /// Provide an awaiter for a receive operation.
     class Awaiter;
 
-    /// TODO
+    /// Create a new awaitable that, when awaited, dequeues received data from
+    /// the specified 'receiver' according to the specified 'options'.
     explicit Receive(const bsl::shared_ptr<ntci::Receiver>& receiver,
                      ntca::ReceiveOptions                   options);
 
-    /// TODO
+    /// Await the completion of the operation. Return the awaiter.
     Awaiter operator co_await();
+
+  private:
+    /// This class is not copy-constructable.
+    Receive(const Receive&) = delete;
+
+    /// This class is not move-constructable.
+    Receive(Receive&&) = delete;
+
+    /// This class is not copy-assignable.
+    Receive& operator=(const Receive&) = delete;
+
+    /// This class is not move-assignable.
+    Receive& operator=(Receive&&) = delete;
 
   private:
     /// Allow the associated awaiter to access this class's private data.
@@ -510,14 +577,28 @@ class Concurrent::Receive::Awaiter
     /// 'awaitable'.
     explicit Awaiter(Concurrent::Receive* awaitable) noexcept;
 
-    // TODO
+    /// Return false to suspend the awaiting coroutine.
     bool await_ready() const noexcept;
 
-    // TODO
+    /// Initiate the asynchronous operation and resume the specified
+    /// 'coroutine' when the operation asynchronously completes or fails.
     void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
-    // TODO
+    /// Return the asynchronous result.
     ntci::ReceiveResult await_resume() const noexcept;
+
+  private:
+    /// This class is not copy-constructable.
+    Awaiter(const Awaiter&) = delete;
+
+    /// This class is not move-constructable.
+    Awaiter(Awaiter&&) = delete;
+
+    /// This class is not copy-assignable.
+    Awaiter& operator=(const Awaiter&) = delete;
+
+    /// This class is not move-assignable.
+    Awaiter& operator=(Awaiter&&) = delete;
 
   private:
     /// Process a reception of the specified 'data' by the specified
@@ -541,14 +622,28 @@ class Concurrent::Receive::Awaiter
 class Concurrent::Close
 {
   public:
-    /// TODO
+    /// Provide an awaiter for a close operation.
     class Awaiter;
 
-    /// TODO
+    /// Create a new awaitable that, when awaited, closes the specified
+    /// 'closable' object.
     explicit Close(const bsl::shared_ptr<ntci::Closable>& closable);
 
-    /// TODO
+    /// Await the completion of the operation. Return the awaiter.
     Awaiter operator co_await();
+
+  private:
+    /// This class is not copy-constructable.
+    Close(const Close&) = delete;
+
+    /// This class is not move-constructable.
+    Close(Close&&) = delete;
+
+    /// This class is not copy-assignable.
+    Close& operator=(const Close&) = delete;
+
+    /// This class is not move-assignable.
+    Close& operator=(Close&&) = delete;
 
   private:
     /// Allow the associated awaiter to access this class's private data.
@@ -571,14 +666,28 @@ class Concurrent::Close::Awaiter
     /// 'awaitable'.
     explicit Awaiter(Concurrent::Close* awaitable) noexcept;
 
-    // TODO
+    /// Return false to suspend the awaiting coroutine.
     bool await_ready() const noexcept;
 
-    // TODO
+    /// Initiate the asynchronous operation and resume the specified
+    /// 'coroutine' when the operation asynchronously completes or fails.
     void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
 
-    // TODO
+    /// Return the asynchronous result.
     void await_resume() const noexcept;
+
+  private:
+    /// This class is not copy-constructable.
+    Awaiter(const Awaiter&) = delete;
+
+    /// This class is not move-constructable.
+    Awaiter(Awaiter&&) = delete;
+
+    /// This class is not copy-assignable.
+    Awaiter& operator=(const Awaiter&) = delete;
+
+    /// This class is not move-assignable.
+    Awaiter& operator=(Awaiter&&) = delete;
 
   private:
     /// Process the closure of the closable object. Resume the specified

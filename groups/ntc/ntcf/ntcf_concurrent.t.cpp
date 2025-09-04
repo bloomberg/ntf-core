@@ -126,360 +126,6 @@ using namespace BloombergLP;
     } while (false)
 
 namespace BloombergLP {
-namespace ntsa {
-
-struct CoroutineHandleSchedulerTask {
-    struct promise_type {
-        std::suspend_always initial_suspend() noexcept
-        {
-            return {};
-        }
-
-        std::suspend_always final_suspend() noexcept
-        {
-            return {};
-        }
-
-        CoroutineHandleSchedulerTask get_return_object()
-        {
-            std::coroutine_handle<promise_type> coroutine =
-                std::coroutine_handle<promise_type>::from_promise(*this);
-
-            return CoroutineHandleSchedulerTask(coroutine);
-        }
-
-        void return_void()
-        {
-        }
-
-        void unhandled_exception()
-        {
-        }
-    };
-
-    explicit CoroutineHandleSchedulerTask(
-        std::coroutine_handle<promise_type> handle)
-    : handle(handle)
-    {
-    }
-
-    auto get_handle()
-    {
-        return handle;
-    }
-
-    std::coroutine_handle<promise_type> handle;
-};
-
-class CoroutineHandleSchedulerSimple
-{
-    bsl::queue<bsl::coroutine_handle<void> > d_tasks;
-
-  public:
-    void emplace(bsl::coroutine_handle<void> task)
-    {
-        BSLS_ASSERT(task.address() != 0);
-        d_tasks.push(task);
-    }
-
-    void schedule()
-    {
-        while (!d_tasks.empty()) {
-            bsl::coroutine_handle<void> task = d_tasks.front();
-            d_tasks.pop();
-
-            task.resume();
-
-            if (!task.done()) {
-                d_tasks.push(task);
-            }
-            else {
-                task.destroy();
-            }
-        }
-    }
-
-    auto suspend()
-    {
-        return std::suspend_always{};
-    }
-};
-
-class CoroutineTaskSchedulerSimple
-{
-    bsl::queue<ntsa::Task<void> > d_tasks;
-
-  public:
-    void emplace(ntsa::Task<void>&& task)
-    {
-        d_tasks.push(bsl::move(task));
-    }
-
-    void schedule()
-    {
-        while (!d_tasks.empty()) {
-            ntsa::Task<void> task = bsl::move(d_tasks.front());
-            d_tasks.pop();
-
-            task.coroutine().resume();
-
-            if (!task.coroutine().done()) {
-                d_tasks.push(bsl::move(task));
-            }
-        }
-    }
-};
-
-class CoroutineHandleSchedulerTest
-{
-  public:
-    static std::suspend_always suspend()
-    {
-        return std::suspend_always();
-    }
-
-    static CoroutineHandleSchedulerTask createTaskA()
-    {
-        std::cout << "Task A starting\n";
-        co_await CoroutineHandleSchedulerTest::suspend();
-        std::cout << "Task A resuming - 1\n";
-        co_await CoroutineHandleSchedulerTest::suspend();
-        std::cout << "Task A resuming - 2\n";
-        co_await CoroutineHandleSchedulerTest::suspend();
-        std::cout << "Task A resuming - 3\n";
-        co_await CoroutineHandleSchedulerTest::suspend();
-        std::cout << "Task A complete\n";
-    }
-
-    static CoroutineHandleSchedulerTask createTaskB()
-    {
-        std::cout << "Task B starting\n";
-        co_await CoroutineHandleSchedulerTest::suspend();
-        std::cout << "Task B resuming - 1\n";
-        co_await CoroutineHandleSchedulerTest::suspend();
-        std::cout << "Task B resuming - 2\n";
-        co_await CoroutineHandleSchedulerTest::suspend();
-        std::cout << "Task B resuming - 3\n";
-        co_await CoroutineHandleSchedulerTest::suspend();
-        std::cout << "Task B complete\n";
-    }
-
-    static void test()
-    {
-        std::cout << '\n';
-
-        CoroutineHandleSchedulerSimple sch;
-
-        sch.emplace(createTaskA().get_handle());
-        sch.emplace(createTaskB().get_handle());
-
-        std::cout << "Start scheduling...\n";
-
-        sch.schedule();
-
-        std::cout << '\n';
-    }
-};
-
-/// This is a scheduler class that schedules coroutines in a round-robin
-/// fashion once N coroutines have been scheduled to it.
-///
-/// Only supports access from a single thread at a time so
-///
-/// This implementation was inspired by Gor Nishanov's CppCon 2018 talk
-/// about nano-coroutines.
-///
-/// The implementation relies on symmetric transfer and noop_coroutine()
-/// and so only works with a relatively recent version of Clang and does
-/// not yet work with MSVC.
-template <size_t N>
-class round_robin_scheduler
-{
-    static_assert(N >= 2,
-                  "Round robin scheduler must be configured to support at "
-                  "least two coroutines");
-
-    class schedule_operation
-    {
-      public:
-        explicit schedule_operation(round_robin_scheduler& s) noexcept
-        : m_scheduler(s)
-        {
-        }
-
-        bool await_ready() noexcept
-        {
-            return false;
-        }
-
-        bsl::coroutine_handle<void> await_suspend(
-            bsl::coroutine_handle<void> awaitingCoroutine) noexcept
-        {
-            return m_scheduler.exchange_next(awaitingCoroutine);
-        }
-
-        void await_resume() noexcept
-        {
-        }
-
-      private:
-        round_robin_scheduler& m_scheduler;
-    };
-
-    friend class schedule_operation;
-
-  public:
-    round_robin_scheduler() noexcept : m_index(0),
-                                       m_noop(std::noop_coroutine())
-    {
-        for (size_t i = 0; i < N - 1; ++i) {
-            m_coroutines[i] = m_noop;
-        }
-    }
-
-    ~round_robin_scheduler()
-    {
-        // All tasks should have been joined before calling destructor.
-        BSLS_ASSERT(
-            std::all_of(m_coroutines.begin(), m_coroutines.end(), [&](auto h) {
-                return h == m_noop;
-            }));
-    }
-
-    schedule_operation schedule() noexcept
-    {
-        BSLS_LOG_INFO("Scheduling coroutine\n");
-
-        return schedule_operation{*this};
-    }
-
-    /// Resume any queued coroutines until there are no more coroutines.
-    void drain() noexcept
-    {
-        size_t countRemaining = N - 1;
-        do {
-            auto nextToResume = exchange_next(m_noop);
-            if (nextToResume != m_noop) {
-                nextToResume.resume();
-                countRemaining = N - 1;
-            }
-            else {
-                --countRemaining;
-            }
-        } while (countRemaining > 0);
-    }
-
-  private:
-    bsl::coroutine_handle<void> exchange_next(
-        bsl::coroutine_handle<void> coroutine) noexcept
-    {
-        auto coroutineToResume =
-            std::exchange(m_coroutines[m_index], coroutine);
-        m_index = m_index < (N - 2) ? m_index + 1 : 0;
-        return coroutineToResume;
-    }
-
-    size_t                                         m_index;
-    const bsl::coroutine_handle<void>              m_noop;
-    std::array<bsl::coroutine_handle<void>, N - 1> m_coroutines;
-};
-
-class RoundRobinSchedulerUtil
-{
-  public:
-    static ntsa::Task<void> createTaskA(round_robin_scheduler<32>& scheduler)
-    {
-        std::cout << "Task A starting\n";
-        co_await scheduler.schedule();
-        std::cout << "Task A resuming - 1\n";
-        co_await scheduler.schedule();
-        std::cout << "Task A resuming - 2\n";
-        co_await scheduler.schedule();
-        std::cout << "Task A resuming - 3\n";
-        co_await scheduler.schedule();
-        std::cout << "Task A complete\n";
-
-        co_return;
-    }
-
-    static ntsa::Task<void> createTaskB(round_robin_scheduler<32>& scheduler)
-    {
-        std::cout << "Task B starting\n";
-        co_await scheduler.schedule();
-        std::cout << "Task B resuming - 1\n";
-        co_await scheduler.schedule();
-        std::cout << "Task B resuming - 2\n";
-        co_await scheduler.schedule();
-        std::cout << "Task B resuming - 3\n";
-        co_await scheduler.schedule();
-        std::cout << "Task B complete\n";
-
-        co_return;
-    }
-
-    static ntsa::Task<void> createTaskScheduler(
-        round_robin_scheduler<32>& scheduler)
-    {
-        std::cout << "Drain starting" << std::endl;
-        scheduler.drain();
-        std::cout << "Drain complete" << std::endl;
-        co_return;
-    }
-
-    static ntsa::Task<void> coTest(round_robin_scheduler<32>& scheduler)
-    {
-        ntsa::Task<void> taskA = createTaskA(scheduler);
-        ntsa::Task<void> taskB = createTaskB(scheduler);
-
-        ntsa::Task<void> taskScheduler = createTaskScheduler(scheduler);
-
-        co_await ntsa::Coroutine::join(bsl::move(taskA),
-                                       bsl::move(taskB),
-                                       bsl::move(taskScheduler));
-    }
-
-    static void test()
-    {
-        round_robin_scheduler<32> scheduler;
-
-        ntsa::Task<void> main = coTest(scheduler);
-
-        ntsa::Coroutine::synchronize(bsl::move(main));
-    }
-};
-
-typedef round_robin_scheduler<64> CoroutineTaskScheduler;
-
-class CoroutineTaskSchedulerUtil
-{
-  public:
-    static ntsa::Task<void> createTaskScheduler(
-        CoroutineTaskScheduler* scheduler)
-    {
-        std::cout << "Drain starting" << std::endl;
-        scheduler->drain();
-        std::cout << "Drain complete" << std::endl;
-        co_return;
-    }
-
-#if 0
-    template <typename SCHEDULER, typename AWAITABLE>
-    static auto schedule_on(SCHEDULER& scheduler, AWAITABLE awaitable)
-        -> ntsa::Task<
-            ntsa::CoroutineMetaprogram::RemoveRvalueReferenceType<
-                typename ntsa::CoroutineMetaprogram::AwaitableTraits<
-                    AWAITABLE>::AwaitResultType> >
-    {
-        co_await           scheduler.schedule();
-        co_return co_await std::move(awaitable);
-    }
-#endif
-};
-
-}  // close namespace ntsa
-}  // close namespace BloombergLP
-
-namespace BloombergLP {
 namespace ntcf {
 
 // Provide tests for 'ntcf::Concurrent'.
@@ -527,6 +173,12 @@ class ConcurrentTest
     static bsl::shared_ptr<ntci::Scheduler> createScheduler(
         ntsa::Allocator allocator);
 
+    // Create a new scheduler with the specified 'configuration'. Allocate
+    // memory using the specified 'allocator'.
+    static bsl::shared_ptr<ntci::Scheduler> createScheduler(
+        const ntca::SchedulerConfig& configuration,
+        ntsa::Allocator              allocator);
+
     // Create a new listener socket bound to any available ephemeral port at
     // the loopback address and begin listening. Allocate memory using the
     // specified 'allocator'.
@@ -561,14 +213,12 @@ class ConcurrentTest
     // TODO
     static ntsa::Task<void> coVerifyApplication(
         bsl::shared_ptr<ntci::Scheduler> scheduler,
-        ntsa::CoroutineTaskScheduler*    taskSwitcher,
         ntsa::AllocatorArg               allocatorTag,
         ntsa::Allocator                  allocator);
 
     // TODO
     static ntsa::Task<void> coVerifyApplicationListener(
         Configuration                         configuration,
-        ntsa::CoroutineTaskScheduler*         taskSwitcher,
         bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
         ntsa::AllocatorArg                    allocatorTag,
         ntsa::Allocator                       allocator);
@@ -576,7 +226,6 @@ class ConcurrentTest
     // TODO
     static ntsa::Task<void> coVerifyApplicationClient(
         Configuration                       configuration,
-        ntsa::CoroutineTaskScheduler*       taskSwitcher,
         bsl::shared_ptr<ntci::StreamSocket> streamSocket,
         bsl::size_t                         index,
         ntsa::AllocatorArg                  allocatorTag,
@@ -585,31 +234,22 @@ class ConcurrentTest
     // TODO
     static ntsa::Task<void> coVerifyApplicationServer(
         Configuration                       configuration,
-        ntsa::CoroutineTaskScheduler*       taskSwitcher,
         bsl::shared_ptr<ntci::StreamSocket> streamSocket,
         ntsa::AllocatorArg                  allocatorTag,
         ntsa::Allocator                     allocator);
 
-    // TODO
-    static ntsa::Task<void> coVerifySandbox(
-        bsl::shared_ptr<ntci::Scheduler> scheduler,
-        ntsa::Allocator                  allocator);
-
   public:
-    // TODO
+    // Verify a coroutine can be resume on an scheduler's I/O thread.
     static void verifyExecute();
 
-    // TODO
+    // Verify datagram socket awaitables.
     static void verifyDatagramSocket();
 
-    // TODO
+    // Verify stream socket awaitables.
     static void verifyStreamSocket();
 
-    // TODO
+    // Verify a sample application.
     static void verifyApplication();
-
-    // TODO
-    static void verifySandbox();
 };
 
 bsl::shared_ptr<ntci::Scheduler> ConcurrentTest::createScheduler(
@@ -625,6 +265,21 @@ bsl::shared_ptr<ntci::Scheduler> ConcurrentTest::createScheduler(
 
     bsl::shared_ptr<ntci::Scheduler> scheduler =
         ntcf::System::createScheduler(schedulerConfig, allocator.mechanism());
+
+    error = scheduler->start();
+    NTSCFG_TEST_OK(error);
+
+    return scheduler;
+}
+
+bsl::shared_ptr<ntci::Scheduler> ConcurrentTest::createScheduler(
+    const ntca::SchedulerConfig& configuration,
+    ntsa::Allocator              allocator)
+{
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::System::createScheduler(configuration, allocator.mechanism());
 
     error = scheduler->start();
     NTSCFG_TEST_OK(error);
@@ -918,7 +573,6 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
 
 ntsa::Task<void> ConcurrentTest::coVerifyApplication(
     bsl::shared_ptr<ntci::Scheduler> scheduler,
-    ntsa::CoroutineTaskScheduler*    taskSwitcher,
     ntsa::AllocatorArg               allocatorTag,
     ntsa::Allocator                  allocator)
 {
@@ -944,7 +598,6 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplication(
     // Create a coroutine dedicated to the listener socket.
 
     ntsa::Task<void> listenerTask = coVerifyApplicationListener(configuration,
-                                                                taskSwitcher,
                                                                 listenerSocket,
                                                                 allocatorTag,
                                                                 allocator);
@@ -960,7 +613,6 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplication(
         // Create a coroutine dedicated to the client stream socket.
 
         ntsa::Task<void> clientTask = coVerifyApplicationClient(configuration,
-                                                                taskSwitcher,
                                                                 streamSocket,
                                                                 i + 1,
                                                                 allocatorTag,
@@ -978,7 +630,6 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplication(
 
 ntsa::Task<void> ConcurrentTest::coVerifyApplicationListener(
     Configuration                         configuration,
-    ntsa::CoroutineTaskScheduler*         taskSwitcher,
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
     ntsa::AllocatorArg                    allocatorTag,
     ntsa::Allocator                       allocator)
@@ -1005,7 +656,6 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationListener(
 
         ntsa::Task<void> serverTask =
             coVerifyApplicationServer(configuration,
-                                      taskSwitcher,
                                       acceptResult.streamSocket(),
                                       allocatorTag,
                                       allocator);
@@ -1023,7 +673,6 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationListener(
 
 ntsa::Task<void> ConcurrentTest::coVerifyApplicationClient(
     Configuration                       configuration,
-    ntsa::CoroutineTaskScheduler*       taskSwitcher,
     bsl::shared_ptr<ntci::StreamSocket> streamSocket,
     bsl::size_t                         index,
     ntsa::AllocatorArg                  allocatorTag,
@@ -1101,7 +750,6 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationClient(
 
 ntsa::Task<void> ConcurrentTest::coVerifyApplicationServer(
     Configuration                       configuration,
-    ntsa::CoroutineTaskScheduler*       taskSwitcher,
     bsl::shared_ptr<ntci::StreamSocket> streamSocket,
     ntsa::AllocatorArg                  allocatorTag,
     ntsa::Allocator                     allocator)
@@ -1155,16 +803,6 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationServer(
     co_return;
 }
 
-ntsa::Task<void> ConcurrentTest::coVerifySandbox(
-    bsl::shared_ptr<ntci::Scheduler> scheduler,
-    ntsa::Allocator                  allocator)
-{
-    NTCCFG_WARNING_UNUSED(scheduler);
-    NTCCFG_WARNING_UNUSED(allocator);
-
-    co_return;
-}
-
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyExecute)
 {
     ntccfg::Object scope("verifyExecute");
@@ -1178,6 +816,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyExecute)
 
     ntsa::Task<void> task =
         coVerifyExecute(scheduler, bsl::allocator_arg, allocator);
+
     ntsa::Coroutine::synchronize(bsl::move(task));
 }
 
@@ -1187,11 +826,14 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyDatagramSocket)
 
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
 
-    bsl::shared_ptr<ntci::Scheduler> scheduler;
-    ntcf::System::getDefault(&scheduler);
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::ConcurrentTest::createScheduler(allocator);
+
+    ntci::SchedulerStopGuard schedulerGuard(scheduler);
 
     ntsa::Task<void> task =
         coVerifyDatagramSocket(scheduler, bsl::allocator_arg, allocator);
+
     ntsa::Coroutine::synchronize(bsl::move(task));
 }
 
@@ -1201,8 +843,10 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyStreamSocket)
 
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
 
-    bsl::shared_ptr<ntci::Scheduler> scheduler;
-    ntcf::System::getDefault(&scheduler);
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::ConcurrentTest::createScheduler(allocator);
+
+    ntci::SchedulerStopGuard schedulerGuard(scheduler);
 
     ntsa::Task<void> task =
         coVerifyStreamSocket(scheduler, bsl::allocator_arg, allocator);
@@ -1221,43 +865,14 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
     schedulerConfig.setMaxThreads(4);
 
     bsl::shared_ptr<ntci::Scheduler> scheduler =
-        ntcf::System::createScheduler(schedulerConfig, allocator.mechanism());
+        ntcf::ConcurrentTest::createScheduler(schedulerConfig, allocator);
 
-    scheduler->start();
+    ntci::SchedulerStopGuard schedulerGuard(scheduler);
 
-    ntsa::CoroutineTaskScheduler taskScheduler;
+    ntsa::Task<void> task =
+        coVerifyApplication(scheduler, bsl::allocator_arg, allocator);
 
-    ntsa::Task<void> task = coVerifyApplication(scheduler,
-                                                &taskScheduler,
-                                                bsl::allocator_arg,
-                                                allocator);
     ntsa::Coroutine::synchronize(bsl::move(task));
-
-    scheduler->shutdown();
-    scheduler->linger();
-}
-
-NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifySandbox)
-{
-#if 0
-    ntccfg::Object scope("verifySandbox");
-
-    ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
-
-    bsl::shared_ptr<ntci::Scheduler> scheduler;
-    ntcf::System::getDefault(&scheduler);
-
-    ntsa::Task<void> task = coVerifySandbox(scheduler, allocator);
-    ntsa::Coroutine::synchronize(bsl::move(task));
-#endif
-
-    BALL_LOG_INFO << "Testing simple scheduler" << BALL_LOG_END;
-
-    ntsa::CoroutineHandleSchedulerTest::test();
-
-    BALL_LOG_INFO << "Testing round-robin scheduler" << BALL_LOG_END;
-
-    ntsa::RoundRobinSchedulerUtil::test();
 }
 
 }  // close namespace ntcf
