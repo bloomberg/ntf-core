@@ -2454,6 +2454,8 @@ ntsa::CoroutineTask<void> CoroutineTest::coVerifySandbox(
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyMeta)
 {
+    // The metaprogramming facilities are now private.
+#if 0
     // IsCoroutineHandle
 
     {
@@ -2682,6 +2684,7 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyMeta)
             ntsa::CoroutineMetaprogram::IsAwaiter<TestAwaiter>::value;
         NTSCFG_TEST_TRUE(result);
     }
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyPrerequisites)

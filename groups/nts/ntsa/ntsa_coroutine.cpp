@@ -28,8 +28,8 @@ BSLS_IDENT_RCSID(ntsa_coroutine_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntsa {
 
-void* CoroutineFrame::allocate(bsl::size_t            size,
-                               const ntsa::Allocator& allocator)
+void* CoroutineUtil::CoroutineFrame::allocate(bsl::size_t            size,
+                                              const ntsa::Allocator& allocator)
 {
     NTSA_COROUTINE_LOG_CONTEXT();
 
@@ -49,7 +49,7 @@ void* CoroutineFrame::allocate(bsl::size_t            size,
     return buf;
 }
 
-void CoroutineFrame::free(void* ptr, bsl::size_t size)
+void CoroutineUtil::CoroutineFrame::free(void* ptr, bsl::size_t size)
 {
     NTSA_COROUTINE_LOG_CONTEXT();
 

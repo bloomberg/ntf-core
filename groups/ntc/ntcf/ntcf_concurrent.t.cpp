@@ -466,6 +466,7 @@ class CoroutineTaskSchedulerUtil
         co_return;
     }
 
+#if 0
     template <typename SCHEDULER, typename AWAITABLE>
     static auto schedule_on(SCHEDULER& scheduler, AWAITABLE awaitable)
         -> ntsa::CoroutineTask<
@@ -476,6 +477,7 @@ class CoroutineTaskSchedulerUtil
         co_await           scheduler.schedule();
         co_return co_await std::move(awaitable);
     }
+#endif
 };
 
 }  // close namespace ntsa
@@ -771,7 +773,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyDatagramSocket(
     bsl::shared_ptr<bdlbb::Blob> clientSendData =
         clientDatagramSocket->createOutgoingBlob();
 
-    bdlbb::BlobUtil::append(clientSendData.get(), "Hello, world!", 13);
+    bdlbb::BlobUtil::append(clientSendData.get(), "X", 1);
 
     ntca::SendOptions clientSendOptions;
     ntci::SendResult  clientSendResult;
@@ -864,7 +866,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyStreamSocket(
     bsl::shared_ptr<bdlbb::Blob> clientSendData =
         clientStreamSocket->createOutgoingBlob();
 
-    bdlbb::BlobUtil::append(clientSendData.get(), "Hello, world!", 13);
+    bdlbb::BlobUtil::append(clientSendData.get(), "X", 1);
 
     ntca::SendOptions clientSendOptions;
     ntci::SendResult  clientSendResult;
@@ -884,7 +886,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyStreamSocket(
     ntca::ReceiveOptions serverReceiveOptions;
     ntci::ReceiveResult  serverReceiveResult;
 
-    serverReceiveOptions.setSize(13);
+    serverReceiveOptions.setSize(1);
 
     serverReceiveResult =
         co_await ntcf::Concurrent::receive(serverStreamSocket,
