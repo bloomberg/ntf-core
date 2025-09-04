@@ -151,7 +151,7 @@ class Coroutine
     /// This class is thread safe.
     ///
     /// @ingroup module_ntsa_coroutine
-    class CoroutineMetaprogram
+    class Compiler
     {
       public:
         /// Describe type with no value.
@@ -210,7 +210,7 @@ class Coroutine
         struct IsValidReturnForAwaitSuspend
         : std::disjunction<std::is_void<TYPE>,
                            std::is_same<TYPE, bool>,
-                           CoroutineMetaprogram::IsCoroutineHandle<TYPE> > {
+                           Compiler::IsCoroutineHandle<TYPE> > {
         };
 
         template <typename TYPE>
@@ -229,12 +229,12 @@ class Coroutine
                             std::declval<bsl::coroutine_handle<void> >())),
                         decltype(std::declval<TYPE>().await_resume())> >
         : std::conjunction<
-              CoroutineMetaprogram::IsValidReturnForAwaitReady<decltype(
+              Compiler::IsValidReturnForAwaitReady<decltype(
                   std::declval<TYPE>().await_ready())>,
-              CoroutineMetaprogram::IsValidReturnForAwaitSuspend<decltype(
+              Compiler::IsValidReturnForAwaitSuspend<decltype(
                   std::declval<TYPE>().await_suspend(
                       std::declval<bsl::coroutine_handle<void> >()))>,
-              CoroutineMetaprogram::IsValidReturnForAwaitResume<decltype(
+              Compiler::IsValidReturnForAwaitResume<decltype(
                   std::declval<TYPE>().await_resume())> > {
         };
 
@@ -257,10 +257,8 @@ class Coroutine
 
         template <
             typename TYPE,
-            std::enable_if_t<CoroutineMetaprogram::IsAwaiter<TYPE&&>::value,
-                             int> = 0>
-        static TYPE&& getAwaiterImpl(TYPE&& value,
-                                     CoroutineMetaprogram::Any) noexcept
+            std::enable_if_t<Compiler::IsAwaiter<TYPE&&>::value, int> = 0>
+        static TYPE&& getAwaiterImpl(TYPE&& value, Compiler::Any) noexcept
         {
             return static_cast<TYPE&&>(value);
         }
@@ -268,15 +266,11 @@ class Coroutine
       public:
         template <typename TYPE>
         static auto getAwaiter(TYPE&& value) noexcept(noexcept(
-            CoroutineMetaprogram::getAwaiterImpl(static_cast<TYPE&&>(value),
-                                                 123)))
-            -> decltype(CoroutineMetaprogram::getAwaiterImpl(
-                static_cast<TYPE&&>(value),
-                123))
+            Compiler::getAwaiterImpl(static_cast<TYPE&&>(value), 123)))
+            -> decltype(Compiler::getAwaiterImpl(static_cast<TYPE&&>(value),
+                                                 123))
         {
-            return CoroutineMetaprogram::getAwaiterImpl(
-                static_cast<TYPE&&>(value),
-                123);
+            return Compiler::getAwaiterImpl(static_cast<TYPE&&>(value), 123);
         }
 
         template <typename TYPE, typename = std::void_t<> >
@@ -286,8 +280,8 @@ class Coroutine
         template <typename TYPE>
         struct IsAwaitable<
             TYPE,
-            std::void_t<decltype(CoroutineMetaprogram::getAwaiter(
-                std::declval<TYPE>()))> > : std::true_type {
+            std::void_t<decltype(Compiler::getAwaiter(std::declval<TYPE>()))> >
+        : std::true_type {
         };
 
         template <typename TYPE>
@@ -298,12 +292,11 @@ class Coroutine
         };
 
         template <typename TYPE>
-        struct AwaitableTraits<
-            TYPE,
-            std::void_t<decltype(
-                CoroutineMetaprogram::getAwaiter(std::declval<TYPE>()))> > {
-            using AwaiterType = decltype(
-                CoroutineMetaprogram::getAwaiter(std::declval<TYPE>()));
+        struct AwaitableTraits<TYPE,
+                               std::void_t<decltype(Compiler::getAwaiter(
+                                   std::declval<TYPE>()))> > {
+            using AwaiterType =
+                decltype(Compiler::getAwaiter(std::declval<TYPE>()));
 
             using AwaitResultType =
                 decltype(std::declval<AwaiterType>().await_resume());
@@ -350,19 +343,19 @@ class Coroutine
     NTSCFG_UNDISCARDABLE static auto functionMap(FUNCTION&& function);
 
     template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
+              typename RESULT = typename Compiler::AwaitableTraits<
                   AWAITABLE&&>::AwaitResultType>
     NTSCFG_UNDISCARDABLE static CoroutineSynchronization<RESULT>
     createSynchronization(AWAITABLE&& awaitable);
 
     template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
+              typename RESULT = typename Compiler::AwaitableTraits<
                   AWAITABLE&&>::AwaitResultType>
     NTSCFG_UNDISCARDABLE static CoroutineJoin<RESULT> createJoin(
         AWAITABLE awaitable);
 
     template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
+              typename RESULT = typename Compiler::AwaitableTraits<
                   AWAITABLE&>::AwaitResultType>
     NTSCFG_UNDISCARDABLE static CoroutineJoin<RESULT> createJoin(
         std::reference_wrapper<AWAITABLE> awaitable);
@@ -372,9 +365,8 @@ class Coroutine
         AWAITABLES&&... awaitables);
 
     template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
-                  CoroutineMetaprogram::UnwrapReferenceType<AWAITABLE> >::
-                  AwaitResultType>
+              typename RESULT = typename Compiler::AwaitableTraits<
+                  Compiler::UnwrapReferenceType<AWAITABLE> >::AwaitResultType>
     NTSCFG_UNDISCARDABLE static auto createJoinAwaitable(
         bsl::vector<AWAITABLE> awaitables);
 
@@ -396,8 +388,7 @@ class Coroutine
     /// complete. Return the result of the awaitable.
     template <typename AWAITABLE>
     static auto synchronize(AWAITABLE&& awaitable) ->
-        typename CoroutineMetaprogram::AwaitableTraits<
-            AWAITABLE&&>::AwaitResultType;
+        typename Compiler::AwaitableTraits<AWAITABLE&&>::AwaitResultType;
 
     /// Return an awaitable that when awaited completes when each of the
     /// specified 'awaitable' is complete.
@@ -407,9 +398,8 @@ class Coroutine
     /// Return an awaitable that when awaited completes when each of the
     /// specified 'awaitable' is complete.
     template <typename AWAITABLE,
-              typename RESULT = typename CoroutineMetaprogram::AwaitableTraits<
-                  CoroutineMetaprogram::UnwrapReferenceType<AWAITABLE> >::
-                  AwaitResultType>
+              typename RESULT = typename Compiler::AwaitableTraits<
+                  Compiler::UnwrapReferenceType<AWAITABLE> >::AwaitResultType>
     NTSCFG_UNDISCARDABLE static auto join(bsl::vector<AWAITABLE> awaitables);
 };
 
@@ -417,8 +407,8 @@ class Coroutine
 template <typename FUNCTION, typename AWAITABLE>
 class Coroutine::FunctionMapAwaiter
 {
-    using AwaiterType = typename CoroutineMetaprogram::AwaitableTraits<
-        AWAITABLE&&>::AwaiterType;
+    using AwaiterType =
+        typename Compiler::AwaitableTraits<AWAITABLE&&>::AwaiterType;
 
     FUNCTION&&  m_function;
     AwaiterType m_awaiter;
@@ -1964,8 +1954,7 @@ template <typename FUNCTION, typename AWAITABLE>
 NTSCFG_INLINE Coroutine::FunctionMapAwaiter<FUNCTION, AWAITABLE>::
     FunctionMapAwaiter(FUNCTION&& function, AWAITABLE&& awaitable) noexcept
 : m_function(static_cast<FUNCTION&&>(function)),
-  m_awaiter(
-      CoroutineMetaprogram::getAwaiter(static_cast<AWAITABLE&&>(awaitable)))
+  m_awaiter(Compiler::getAwaiter(static_cast<AWAITABLE&&>(awaitable)))
 {
 }
 
@@ -3596,7 +3585,7 @@ NTSCFG_INLINE decltype(
 {
     if constexpr (std::is_void_v<decltype(this->result())>) {
         this->result();
-        return CoroutineMetaprogram::Nil();
+        return Compiler::Nil();
     }
     else {
         return this->result();
@@ -3609,7 +3598,7 @@ NTSCFG_INLINE decltype(
 {
     if constexpr (std::is_void_v<decltype(this->result())>) {
         std::move(*this).result();
-        return CoroutineMetaprogram::Nil();
+        return Compiler::Nil();
     }
     else {
         return std::move(*this).result();
@@ -3658,10 +3647,9 @@ template <typename... AWAITABLES>
 NTSCFG_UNDISCARDABLE NTSCFG_INLINE auto Coroutine::createJoinAwaitable(
     AWAITABLES&&... awaitables)
 {
-    return CoroutineJoinAwaitable<std::tuple<
-        CoroutineJoin<typename CoroutineMetaprogram::AwaitableTraits<
-            CoroutineMetaprogram::UnwrapReferenceType<std::remove_reference_t<
-                AWAITABLES> > >::AwaitResultType>...> >(
+    return CoroutineJoinAwaitable<std::tuple<CoroutineJoin<
+        typename Compiler::AwaitableTraits<Compiler::UnwrapReferenceType<
+            std::remove_reference_t<AWAITABLES> > >::AwaitResultType>...> >(
         std::make_tuple(createJoin(std::forward<AWAITABLES>(awaitables))...));
 }
 
@@ -6145,8 +6133,7 @@ void Coroutine::spawn(auto awaiter, ntsa::Allocator allocator)
 
 template <typename AWAITABLE>
 NTSCFG_INLINE auto Coroutine::synchronize(AWAITABLE&& awaitable) ->
-    typename CoroutineMetaprogram::AwaitableTraits<
-        AWAITABLE&&>::AwaitResultType
+    typename Compiler::AwaitableTraits<AWAITABLE&&>::AwaitResultType
 {
     auto task =
         Coroutine::createSynchronization(bsl::forward<AWAITABLE>(awaitable));
@@ -6161,8 +6148,8 @@ template <typename... AWAITABLES>
 NTSCFG_UNDISCARDABLE NTSCFG_INLINE auto Coroutine::join(
     AWAITABLES&&... awaitables)
 {
-    if constexpr (std::conjunction_v<CoroutineMetaprogram::IsAwaitable<
-                      CoroutineMetaprogram::UnwrapReferenceType<
+    if constexpr (std::conjunction_v<
+                      Compiler::IsAwaitable<Compiler::UnwrapReferenceType<
                           std::remove_reference_t<AWAITABLES> > >...>)
     {
         return Coroutine::functionMap(
