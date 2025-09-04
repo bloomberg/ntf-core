@@ -543,23 +543,26 @@ class ConcurrentTest
     // TODO
     static ntsa::Task<void> coVerifyExecute(
         bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::AllocatorArg               allocatorTag,
         ntsa::Allocator                  allocator);
 
     // TODO
     static ntsa::Task<void> coVerifyDatagramSocket(
         bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::AllocatorArg               allocatorTag,
         ntsa::Allocator                  allocator);
 
     // TODO
     static ntsa::Task<void> coVerifyStreamSocket(
         bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::AllocatorArg               allocatorTag,
         ntsa::Allocator                  allocator);
 
     // TODO
     static ntsa::Task<void> coVerifyApplication(
         bsl::shared_ptr<ntci::Scheduler> scheduler,
         ntsa::CoroutineTaskScheduler*    taskSwitcher,
-        ntsa::AllocatorArg               allocatorType,
+        ntsa::AllocatorArg               allocatorTag,
         ntsa::Allocator                  allocator);
 
     // TODO
@@ -567,7 +570,7 @@ class ConcurrentTest
         Configuration                         configuration,
         ntsa::CoroutineTaskScheduler*         taskSwitcher,
         bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
-        ntsa::AllocatorArg                    allocatorType,
+        ntsa::AllocatorArg                    allocatorTag,
         ntsa::Allocator                       allocator);
 
     // TODO
@@ -576,7 +579,7 @@ class ConcurrentTest
         ntsa::CoroutineTaskScheduler*       taskSwitcher,
         bsl::shared_ptr<ntci::StreamSocket> streamSocket,
         bsl::size_t                         index,
-        ntsa::AllocatorArg                  allocatorType,
+        ntsa::AllocatorArg                  allocatorTag,
         ntsa::Allocator                     allocator);
 
     // TODO
@@ -584,7 +587,7 @@ class ConcurrentTest
         Configuration                       configuration,
         ntsa::CoroutineTaskScheduler*       taskSwitcher,
         bsl::shared_ptr<ntci::StreamSocket> streamSocket,
-        ntsa::AllocatorArg                  allocatorType,
+        ntsa::AllocatorArg                  allocatorTag,
         ntsa::Allocator                     allocator);
 
     // TODO
@@ -676,6 +679,7 @@ bsl::shared_ptr<ntci::StreamSocket> ConcurrentTest::createStreamSocket(
 
 ntsa::Task<void> ConcurrentTest::coVerifyExecute(
     bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::AllocatorArg               allocatorTag,
     ntsa::Allocator                  allocator)
 {
     ntccfg::Object scope("coVerifyExecute");
@@ -695,6 +699,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyExecute(
 
 ntsa::Task<void> ConcurrentTest::coVerifyDatagramSocket(
     bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::AllocatorArg               allocatorTag,
     ntsa::Allocator                  allocator)
 {
     ntccfg::Object scope("coVerifyDatagramSocket");
@@ -812,6 +817,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyDatagramSocket(
 
 ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::AllocatorArg               allocatorTag,
     ntsa::Allocator                  allocator)
 {
     ntccfg::Object scope("coVerifyStreamSocket");
@@ -913,7 +919,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
 ntsa::Task<void> ConcurrentTest::coVerifyApplication(
     bsl::shared_ptr<ntci::Scheduler> scheduler,
     ntsa::CoroutineTaskScheduler*    taskSwitcher,
-    ntsa::AllocatorArg               allocatorType,
+    ntsa::AllocatorArg               allocatorTag,
     ntsa::Allocator                  allocator)
 {
     ntccfg::Object scope("coVerifyApplication");
@@ -940,7 +946,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplication(
     ntsa::Task<void> listenerTask = coVerifyApplicationListener(configuration,
                                                                 taskSwitcher,
                                                                 listenerSocket,
-                                                                allocatorType,
+                                                                allocatorTag,
                                                                 allocator);
 
     taskList.emplace_back(bsl::move(listenerTask));
@@ -957,7 +963,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplication(
                                                                 taskSwitcher,
                                                                 streamSocket,
                                                                 i + 1,
-                                                                allocatorType,
+                                                                allocatorTag,
                                                                 allocator);
 
         taskList.emplace_back(bsl::move(clientTask));
@@ -974,7 +980,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationListener(
     Configuration                         configuration,
     ntsa::CoroutineTaskScheduler*         taskSwitcher,
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
-    ntsa::AllocatorArg                    allocatorType,
+    ntsa::AllocatorArg                    allocatorTag,
     ntsa::Allocator                       allocator)
 {
     ntccfg::Object scope("coVerifyApplicationListener");
@@ -1001,7 +1007,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationListener(
             coVerifyApplicationServer(configuration,
                                       taskSwitcher,
                                       acceptResult.streamSocket(),
-                                      allocatorType,
+                                      allocatorTag,
                                       allocator);
 
         ntsa::Coroutine::spawn(bsl::move(serverTask), allocator);
@@ -1020,7 +1026,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationClient(
     ntsa::CoroutineTaskScheduler*       taskSwitcher,
     bsl::shared_ptr<ntci::StreamSocket> streamSocket,
     bsl::size_t                         index,
-    ntsa::AllocatorArg                  allocatorType,
+    ntsa::AllocatorArg                  allocatorTag,
     ntsa::Allocator                     allocator)
 {
     ntccfg::Object scope("coVerifyApplicationClient");
@@ -1097,7 +1103,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationServer(
     Configuration                       configuration,
     ntsa::CoroutineTaskScheduler*       taskSwitcher,
     bsl::shared_ptr<ntci::StreamSocket> streamSocket,
-    ntsa::AllocatorArg                  allocatorType,
+    ntsa::AllocatorArg                  allocatorTag,
     ntsa::Allocator                     allocator)
 {
     ntccfg::Object scope("coVerifyApplicationServer");
@@ -1170,7 +1176,8 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyExecute)
 
     ntci::SchedulerStopGuard schedulerGuard(scheduler);
 
-    ntsa::Task<void> task = coVerifyExecute(scheduler, allocator);
+    ntsa::Task<void> task =
+        coVerifyExecute(scheduler, bsl::allocator_arg, allocator);
     ntsa::Coroutine::synchronize(bsl::move(task));
 }
 
@@ -1183,7 +1190,8 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyDatagramSocket)
     bsl::shared_ptr<ntci::Scheduler> scheduler;
     ntcf::System::getDefault(&scheduler);
 
-    ntsa::Task<void> task = coVerifyDatagramSocket(scheduler, allocator);
+    ntsa::Task<void> task =
+        coVerifyDatagramSocket(scheduler, bsl::allocator_arg, allocator);
     ntsa::Coroutine::synchronize(bsl::move(task));
 }
 
@@ -1196,7 +1204,8 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyStreamSocket)
     bsl::shared_ptr<ntci::Scheduler> scheduler;
     ntcf::System::getDefault(&scheduler);
 
-    ntsa::Task<void> task = coVerifyStreamSocket(scheduler, allocator);
+    ntsa::Task<void> task =
+        coVerifyStreamSocket(scheduler, bsl::allocator_arg, allocator);
     ntsa::Coroutine::synchronize(bsl::move(task));
 }
 
@@ -1205,9 +1214,6 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
     ntccfg::Object scope("verifyApplication");
 
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
-
-    // bsl::shared_ptr<ntci::Scheduler> scheduler;
-    // ntcf::System::getDefault(&scheduler);
 
     ntca::SchedulerConfig schedulerConfig;
     schedulerConfig.setThreadName("test");
