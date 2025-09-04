@@ -437,9 +437,9 @@ class RoundRobinSchedulerUtil
         ntsa::CoroutineTask<void> taskScheduler =
             createTaskScheduler(scheduler);
 
-        co_await ntsa::CoroutineUtil::join(bsl::move(taskA),
-                                           bsl::move(taskB),
-                                           bsl::move(taskScheduler));
+        co_await ntsa::Coroutine::join(bsl::move(taskA),
+                                       bsl::move(taskB),
+                                       bsl::move(taskScheduler));
     }
 
     static void test()
@@ -448,7 +448,7 @@ class RoundRobinSchedulerUtil
 
         ntsa::CoroutineTask<void> main = coTest(scheduler);
 
-        ntsa::CoroutineUtil::synchronize(bsl::move(main));
+        ntsa::Coroutine::synchronize(bsl::move(main));
     }
 };
 
@@ -971,7 +971,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplication(
 
     // Run all coroutines until complete.
 
-    co_await ntsa::CoroutineUtil::join(bsl::move(taskList));
+    co_await ntsa::Coroutine::join(bsl::move(taskList));
 
     co_return;
 }
@@ -1010,7 +1010,7 @@ ntsa::CoroutineTask<void> ConcurrentTest::coVerifyApplicationListener(
                                       allocatorType,
                                       allocator);
 
-        ntsa::CoroutineUtil::spawn(bsl::move(serverTask), allocator);
+        ntsa::Coroutine::spawn(bsl::move(serverTask), allocator);
     }
 
     // Close the listener socket.
@@ -1177,7 +1177,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyExecute)
     ntci::SchedulerStopGuard schedulerGuard(scheduler);
 
     ntsa::CoroutineTask<void> task = coVerifyExecute(scheduler, allocator);
-    ntsa::CoroutineUtil::synchronize(bsl::move(task));
+    ntsa::Coroutine::synchronize(bsl::move(task));
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyDatagramSocket)
@@ -1191,7 +1191,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyDatagramSocket)
 
     ntsa::CoroutineTask<void> task =
         coVerifyDatagramSocket(scheduler, allocator);
-    ntsa::CoroutineUtil::synchronize(bsl::move(task));
+    ntsa::Coroutine::synchronize(bsl::move(task));
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyStreamSocket)
@@ -1205,7 +1205,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyStreamSocket)
 
     ntsa::CoroutineTask<void> task =
         coVerifyStreamSocket(scheduler, allocator);
-    ntsa::CoroutineUtil::synchronize(bsl::move(task));
+    ntsa::Coroutine::synchronize(bsl::move(task));
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
@@ -1233,7 +1233,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
                                                          &taskScheduler,
                                                          bsl::allocator_arg,
                                                          allocator);
-    ntsa::CoroutineUtil::synchronize(bsl::move(task));
+    ntsa::Coroutine::synchronize(bsl::move(task));
 
     scheduler->shutdown();
     scheduler->linger();
@@ -1250,7 +1250,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifySandbox)
     ntcf::System::getDefault(&scheduler);
 
     ntsa::CoroutineTask<void> task = coVerifySandbox(scheduler, allocator);
-    ntsa::CoroutineUtil::synchronize(bsl::move(task));
+    ntsa::Coroutine::synchronize(bsl::move(task));
 #endif
 
     BALL_LOG_INFO << "Testing simple scheduler" << BALL_LOG_END;
