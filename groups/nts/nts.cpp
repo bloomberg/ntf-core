@@ -20,7 +20,9 @@
 
 #include <ntsa_abstract.cpp>
 #include <ntsa_adapter.cpp>
+#include <ntsa_allocator.cpp>
 #include <ntsa_buffer.cpp>
+#include <ntsa_coroutine.cpp>
 #include <ntsa_data.cpp>
 #include <ntsa_datatype.cpp>
 #include <ntsa_distinguishedname.cpp>

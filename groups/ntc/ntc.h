@@ -171,11 +171,15 @@ BSLS_IDENT("$Id: $")
 #include <ntci_callback.h>
 #include <ntci_cancellation.h>
 #include <ntci_chronology.h>
+#include <ntci_clock.h>
 #include <ntci_closable.h>
 #include <ntci_closecallback.h>
 #include <ntci_closecallbackfactory.h>
 #include <ntci_closefuture.h>
 #include <ntci_closeresult.h>
+#include <ntci_compression.h>
+#include <ntci_compressiondriver.h>
+#include <ntci_concurrent.h>
 #include <ntci_connectcallback.h>
 #include <ntci_connectcallbackfactory.h>
 #include <ntci_connectfuture.h>
@@ -267,5 +271,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_upgradecallbackfactory.h>
 #include <ntci_user.h>
 #include <ntci_waiter.h>
+
+#include <ntcf_system.h>
 
 #endif

@@ -30,7 +30,9 @@ BSLS_IDENT("$Id: $")
 
 #include <ntsa_abstract.h>
 #include <ntsa_adapter.h>
+#include <ntsa_allocator.h>
 #include <ntsa_buffer.h>
+#include <ntsa_coroutine.h>
 #include <ntsa_data.h>
 #include <ntsa_datatype.h>
 #include <ntsa_distinguishedname.h>

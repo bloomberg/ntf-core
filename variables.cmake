@@ -606,6 +606,18 @@ if (NOT DEFINED NTF_BUILD_WITH_OPENSSL)
     endif()
 endif()
 
+if (NOT DEFINED NTF_BUILD_WITH_COROUTINES)
+    if (DEFINED NTF_CONFIGURE_WITH_COROUTINES)
+        set(NTF_BUILD_WITH_COROUTINES
+            ${NTF_CONFIGURE_WITH_COROUTINES} CACHE INTERNAL "")
+    elseif (DEFINED ENV{NTF_CONFIGURE_WITH_COROUTINES})
+        set(NTF_BUILD_WITH_COROUTINES
+            $ENV{NTF_CONFIGURE_WITH_COROUTINES} CACHE INTERNAL "")
+    else()
+        set(NTF_BUILD_WITH_COROUTINES FALSE CACHE INTERNAL "")
+    endif()
+endif()
+
 if (NOT DEFINED NTF_BUILD_WITH_TIMESTAMPING)
     if (DEFINED NTF_CONFIGURE_WITH_TIMESTAMPING)
         set(NTF_BUILD_WITH_TIMESTAMPING
@@ -1081,6 +1093,12 @@ if (${NTF_BUILD_WITH_OPENSSL})
     message(STATUS "NTF: Building with OpenSSL:                     yes")
 else()
     message(STATUS "NTF: Building with OpenSSL:                     no")
+endif()
+
+if (${NTF_BUILD_WITH_COROUTINES})
+    message(STATUS "NTF: Building with coroutines:                  yes")
+else()
+    message(STATUS "NTF: Building with coroutines:                  no")
 endif()
 
 if (${NTF_BUILD_WITH_TIMESTAMPING})

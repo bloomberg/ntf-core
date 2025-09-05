@@ -12,6 +12,7 @@ ntci_bindresult
 ntci_callback
 ntci_cancellation
 ntci_clock
+ntci_concurrent
 ntci_connector
 ntci_connectcallback
 ntci_connectcallbackfactory

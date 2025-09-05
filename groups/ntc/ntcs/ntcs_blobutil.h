@@ -83,6 +83,11 @@ struct BlobUtil {
     /// removed.
     static void trim(const bsl::shared_ptr<bdlbb::Blob>& blob);
 
+    /// Append all data buffers from the specified 'source' blob to the
+    /// specified 'destination' blob.
+    static void append(bdlbb::Blob*                        destination,
+                       const bsl::shared_ptr<bdlbb::Blob>& source);
+
     /// Append the specified 'size' number of bytes from the start of the
     /// specified 'source' blob to the specified 'destination' blob.
     static void append(bdlbb::Blob*       destination,
@@ -186,6 +191,15 @@ void BlobUtil::trim(const bsl::shared_ptr<bdlbb::Blob>& blob)
 }
 
 NTCCFG_INLINE
+void BlobUtil::append(bdlbb::Blob*                        destination,
+                      const bsl::shared_ptr<bdlbb::Blob>& source)
+{
+    if (source) {
+        bdlbb::BlobUtil::append(destination, *source);
+    }
+}
+
+NTCCFG_INLINE
 void BlobUtil::append(bdlbb::Blob*       destination,
                       const bdlbb::Blob& source,
                       bsl::size_t        size)
@@ -234,10 +248,9 @@ void BlobUtil::append(bdlbb::Blob* destination,
                       const void*  source,
                       bsl::size_t  size)
 {
-    bdlbb::BlobUtil::append(
-        destination, 
-        reinterpret_cast<const char*>(source), 
-        NTCCFG_WARNING_NARROW(int, size));
+    bdlbb::BlobUtil::append(destination,
+                            reinterpret_cast<const char*>(source),
+                            NTCCFG_WARNING_NARROW(int, size));
 }
 
 NTCCFG_INLINE
@@ -245,10 +258,9 @@ void BlobUtil::append(const bsl::shared_ptr<bdlbb::Blob>& destination,
                       const void*                         source,
                       bsl::size_t                         size)
 {
-    bdlbb::BlobUtil::append(
-        destination.get(), 
-        reinterpret_cast<const char*>(source), 
-        NTCCFG_WARNING_NARROW(int, size));
+    bdlbb::BlobUtil::append(destination.get(),
+                            reinterpret_cast<const char*>(source),
+                            NTCCFG_WARNING_NARROW(int, size));
 }
 
 NTCCFG_INLINE
