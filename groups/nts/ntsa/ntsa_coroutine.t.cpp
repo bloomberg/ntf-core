@@ -96,37 +96,17 @@ class CoroutineTest
     // Return a coroutine executing the specified 'function'.
     static ntsa::Task<void> coMain(CoroutineTestFunction testFunction);
 
-    // A variable with no meaning except that its address is returned by some
-    // of the `returnInt` functions.
-    static int globalInt;
-
-    // A variable with no meaning except that its address is returned by some
-    // of the `returnString` functions.
-    static String globalString;
-
     // Return void.
     static void returnVoid();
 
     // Return an integer by value.
     static int returnInt();
 
-    // Return a reference to an integer.
-    static int& returnIntReference();
-
-    // Return a reference to a movable integer.
-    static int&& returnIntReferenceMovable();
-
     // Return the specified integer 'value' by value.
     static int returnIntLiteral(int value);
 
     // Return a string by value.
     static String returnString();
-
-    // Return a reference to a string.
-    static String& returnStringReference();
-
-    // Return a reference to a movable string.
-    static String&& returnStringReferenceMovable();
 
     // Return the specified string 'value' by value.
     static String returnStringLiteral(const String& value);
@@ -143,12 +123,6 @@ class CoroutineTest
     // Return an awaitable with an integer result type.
     static ntsa::Task<int> coReturnInt();
 
-    // Return an awaitable with a reference to an integer result type.
-    static ntsa::Task<int&> coReturnIntReference();
-
-    // Return an awaitable with a reference to a movable integer result type.
-    static ntsa::Task<int&&> coReturnIntReferenceMovable();
-
     // Return an awaitable with an integer result type whose value is the
     // specified 'value'.
     static ntsa::Task<int> coReturnIntLiteral(int value);
@@ -159,12 +133,6 @@ class CoroutineTest
 
     // Return an awaitable with a string result type.
     static ntsa::Task<String> coReturnString();
-
-    // Return an awaitable with a reference to a string result type.
-    static ntsa::Task<String&> coReturnStringReference();
-
-    // Return an awaitable with a reference to a movable string result type.
-    static ntsa::Task<String&&> coReturnStringReferenceMovable();
 
     // Return an awaitable with a string result type whose value is the
     // specified 'value'.
@@ -1935,9 +1903,6 @@ ntsa::Error CoroutineTest::Mechanism::cancel(int token)
     return ntsa::Error();
 }
 
-int                         ntsa::CoroutineTest::globalInt;
-ntsa::CoroutineTest::String ntsa::CoroutineTest::globalString;
-
 void ntsa::CoroutineTest::main(CoroutineTestFunction testFunction)
 {
     ntsa::CoroutineTest::Scope function("main");
@@ -1963,16 +1928,6 @@ int ntsa::CoroutineTest::returnInt()
     return 1;
 }
 
-int& ntsa::CoroutineTest::returnIntReference()
-{
-    return globalInt;
-}
-
-int&& ntsa::CoroutineTest::returnIntReferenceMovable()
-{
-    return bsl::move(globalInt);
-}
-
 int ntsa::CoroutineTest::returnIntLiteral(int value)
 {
     return value;
@@ -1981,17 +1936,6 @@ int ntsa::CoroutineTest::returnIntLiteral(int value)
 ntsa::CoroutineTest::String ntsa::CoroutineTest::returnString()
 {
     return ntsa::CoroutineTest::String();
-}
-
-ntsa::CoroutineTest::String& ntsa::CoroutineTest::returnStringReference()
-{
-    return globalString;
-}
-
-ntsa::CoroutineTest::String&& ntsa::CoroutineTest::
-    returnStringReferenceMovable()
-{
-    return bsl::move(globalString);
 }
 
 ntsa::Generator<int> ntsa::CoroutineTest::coGenerateInt()
@@ -2047,16 +1991,6 @@ ntsa::Task<int> ntsa::CoroutineTest::coReturnInt()
     co_return returnInt();
 }
 
-ntsa::Task<int&> ntsa::CoroutineTest::coReturnIntReference()
-{
-    co_return returnIntReference();
-}
-
-ntsa::Task<int&&> ntsa::CoroutineTest::coReturnIntReferenceMovable()
-{
-    co_return returnIntReferenceMovable();
-}
-
 ntsa::Task<int> ntsa::CoroutineTest::coReturnIntLiteral(int value)
 {
     co_return returnIntLiteral(value);
@@ -2081,18 +2015,6 @@ ntsa::Task<int> ntsa::CoroutineTest::coReturnIntChain(int lhs, int rhs)
 ntsa::Task<ntsa::CoroutineTest::String> ntsa::CoroutineTest::coReturnString()
 {
     co_return returnString();
-}
-
-ntsa::Task<ntsa::CoroutineTest::String&> ntsa::CoroutineTest::
-    coReturnStringReference()
-{
-    co_return returnStringReference();
-}
-
-ntsa::Task<ntsa::CoroutineTest::String&&> ntsa::CoroutineTest::
-    coReturnStringReferenceMovable()
-{
-    co_return returnStringReferenceMovable();
 }
 
 ntsa::Task<ntsa::CoroutineTest::String> ntsa::CoroutineTest::
@@ -2171,9 +2093,6 @@ ntsa::Task<void> CoroutineTest::coVerifyReturnString()
 {
     ntsa::CoroutineTest::Scope function("coVerifyReturnString");
 
-    // MRM: The temporary passed to 'coReturnStringLiteral' seems to be
-    // destroyed.
-
 #if 0
     // This doesn't work (the parameter temporary is destroyed too early).
     ntsa::Task<ntsa::CoroutineTest::String> task =
@@ -2198,9 +2117,6 @@ ntsa::Task<void> CoroutineTest::coVerifyReturnString()
 ntsa::Task<void> CoroutineTest::coVerifyReturnStringChain()
 {
     ntsa::CoroutineTest::Scope function("coVerifyReturnStringChain");
-
-    // MRM: The temporary passed to 'coReturnStringLiteral' seems to be
-    // destroyed.
 
 #if 0
     // This doesn't work (the parameter temporary is destroyed too early).
@@ -2595,24 +2511,6 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
         int f = ntsa::Coroutine::synchronize(bsl::move(t));
 
         NTSCFG_TEST_EQ(e, f);
-    }
-
-    {
-        int&             e = returnIntReference();
-        ntsa::Task<int&> t = coReturnIntReference();
-
-        int& f = ntsa::Coroutine::synchronize(bsl::move(t));
-
-        NTSCFG_TEST_EQ(&e, &f);
-    }
-
-    {
-        int&&             e = returnIntReferenceMovable();
-        ntsa::Task<int&&> t = coReturnIntReferenceMovable();
-
-        int&& f = ntsa::Coroutine::synchronize(bsl::move(t));
-
-        NTSCFG_TEST_EQ(&e, &f);
     }
 }
 

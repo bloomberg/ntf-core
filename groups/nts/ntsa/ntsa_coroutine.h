@@ -71,10 +71,10 @@ BSLS_IDENT("$Id: $")
 #endif
 
 /// Require the parameterized template 'TYPE' is void.
-#define NTSCFG_REQUIRE_VOID(TYPE) requires bsl::is_void_v<TYPE>
+#define NTSCFG_REQUIRE_VOID(TYPE) requires(bsl::is_void_v<TYPE>)
 
 /// Require the parameterized template 'TYPE' is a reference, of any kind.
-#define NTSCFG_REQUIRE_REFERENCE(TYPE) requires bsl::is_reference_v<TYPE>
+#define NTSCFG_REQUIRE_REFERENCE(TYPE) requires(bsl::is_reference_v<TYPE>)
 
 #ifdef BSLS_PLATFORM_CMP_CLANG
 #define NTSA_COROUTINE_FUNCTION __PRETTY_FUNCTION__
@@ -1673,12 +1673,10 @@ class Coroutine::JoinAwaitable<std::tuple<TASKS...> >
 {
   public:
     /// Create a new coroutine join awaitable for the specified 'tasks'.
-    explicit JoinAwaitable(TASKS&&... tasks) noexcept(
-        std::conjunction_v<std::is_nothrow_move_constructible<TASKS>...>);
+    explicit JoinAwaitable(TASKS&&... tasks) noexcept;
 
     /// Create a new coroutine join awaitable for the specified 'tasks'.
-    explicit JoinAwaitable(std::tuple<TASKS...>&& tasks)
-        noexcept(std::is_nothrow_move_constructible_v<std::tuple<TASKS...> >);
+    explicit JoinAwaitable(std::tuple<TASKS...>&& tasks) noexcept;
 
     /// Create a new coroutine join awaitable for the tasks moved from the
     /// specified 'other' awaitable.
@@ -1732,8 +1730,7 @@ class Coroutine::JoinAwaitable
 
     /// Create a new coroutine join awaitable for the tasks moved from the
     /// specified 'other' awaitable.
-    JoinAwaitable(JoinAwaitable&& other)
-        noexcept(std::is_nothrow_move_constructible_v<CONTAINER>);
+    JoinAwaitable(JoinAwaitable&& other) noexcept;
 
     /// Destroy this object.
     ~JoinAwaitable();
@@ -3076,8 +3073,7 @@ std::tuple<> Coroutine::JoinAwaitable<std::tuple<> >::await_resume()
 
 template <typename... TASKS>
 NTSCFG_INLINE Coroutine::JoinAwaitable<std::tuple<TASKS...> >::JoinAwaitable(
-    TASKS&&... tasks)
-    noexcept(std::conjunction_v<std::is_nothrow_move_constructible<TASKS>...>)
+    TASKS&&... tasks) noexcept
 : d_counter(sizeof...(TASKS))
 , d_tasks(std::move(tasks)...)
 {
@@ -3085,8 +3081,7 @@ NTSCFG_INLINE Coroutine::JoinAwaitable<std::tuple<TASKS...> >::JoinAwaitable(
 
 template <typename... TASKS>
 NTSCFG_INLINE Coroutine::JoinAwaitable<std::tuple<TASKS...> >::JoinAwaitable(
-    std::tuple<TASKS...>&& tasks)
-    noexcept(std::is_nothrow_move_constructible_v<std::tuple<TASKS...> >)
+    std::tuple<TASKS...>&& tasks) noexcept
 : d_counter(sizeof...(TASKS))
 , d_tasks(std::move(tasks))
 {
@@ -3202,8 +3197,7 @@ NTSCFG_INLINE Coroutine::JoinAwaitable<CONTAINER>::JoinAwaitable(
 
 template <typename CONTAINER>
 NTSCFG_INLINE Coroutine::JoinAwaitable<CONTAINER>::JoinAwaitable(
-    JoinAwaitable&& other)
-    noexcept(std::is_nothrow_move_constructible_v<CONTAINER>)
+    JoinAwaitable&& other) noexcept
 : d_counter(other.d_tasks.size())
 , d_tasks(std::move(other.d_tasks))
 {
@@ -3701,100 +3695,6 @@ class Coroutine::Return
 };
 
 /// @internal @brief
-/// Describe a coroutine task result stored by reference.
-///
-/// @details
-/// This component-private class template initially holds no value and is
-/// eventually set to hold either the result value of a coroutine task or a an
-/// exception, if the coroutine was exited by an exception. This partial
-/// specialization is used when 'RESULT' is a reference type of any kind.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntsa_coroutine
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-class Coroutine::Return<RESULT>
-{
-  public:
-    /// Create a new coroutine task result that is initially incomplete.
-    Return();
-
-    /// Create a new coroutine task result that is initally incomplete. The
-    /// specified 'allocator' is ignored.
-    explicit Return(ntsa::Allocator allocator);
-
-    /// Destroy this object.
-    ~Return();
-
-    /// Construct a held reference by implicit conversion to 'RESULT' from the
-    /// specified 'arg' (forwarded).  This method participates in overload
-    /// resolution only if that conversion is possible.  The behavior is
-    /// undefined if this object already holds a reference or exception.
-    void return_value(bsl::convertible_to<RESULT> auto&& arg);
-
-    /// Store the current exception so that it can be rethrown when 'release'
-    /// is called.
-    void unhandled_exception();
-
-    /// Return the held reference, if any; otherwise, rethrow the held
-    /// exception, if any; otherwise, the behavior is undefined.  The behavior
-    /// is also undefined if this method is called more than once for this
-    /// object.
-    RESULT release();
-
-  private:
-    /// This class is not copy-constructable.
-    Return(const Return&) = delete;
-
-    /// This class is not move-constructable.
-    Return(Return&&) = delete;
-
-    /// This class is not copy-assignable.
-    Return& operator=(const Return&) = delete;
-
-    /// This class is not move-assignable.
-    Return& operator=(Return&&) = delete;
-
-  private:
-    /// Defines a type alias for the result type.
-    using ResultType = RESULT;
-
-    /// Defines a type alias for the dereferenced result type.
-    using ResultTypeDereference = bsl::remove_reference_t<RESULT>;
-
-    /// Enumerates the state of the value.
-    enum Selection {
-        /// The value is undefined.
-        e_UNDEFINED,
-
-        /// The value is complete.
-        e_SUCCESS,
-
-        /// An exception ocurrred.
-        e_FAILURE
-    };
-
-    /// Defines a type alias for the success type.
-    typedef ResultTypeDereference* SuccessType;
-
-    /// Defines a type alias for the failure type.
-    typedef std::exception_ptr FailureType;
-
-    /// The state of the value.
-    Selection d_selection;
-
-    union {
-        /// The success value.
-        bsls::ObjectBuffer<SuccessType> d_success;
-
-        /// The failure value.
-        bsls::ObjectBuffer<FailureType> d_failure;
-    };
-};
-
-/// @internal @brief
 /// Describe a coroutine task result that is void.
 ///
 /// @details
@@ -3808,9 +3708,8 @@ class Coroutine::Return<RESULT>
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntsa_coroutine
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-class Coroutine::Return<RESULT>
+template <>
+class Coroutine::Return<void>
 {
   public:
     /// Create a new coroutine task result that is initially incomplete.
@@ -3873,6 +3772,9 @@ class Coroutine::Return<RESULT>
         /// The failure value.
         bsls::ObjectBuffer<FailureType> d_failure;
     };
+
+    /// The memory allocator.
+    ntsa::Allocator d_allocator;
 };
 
 /// @internal @brief
@@ -5028,111 +4930,27 @@ NTSCFG_INLINE RESULT Coroutine::Return<RESULT>::release()
     }
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::Return()
+NTSCFG_INLINE Coroutine::Return<void>::Return()
 : d_selection(e_UNDEFINED)
+, d_allocator()
 {
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::Return(ntsa::Allocator allocator)
+NTSCFG_INLINE Coroutine::Return<void>::Return(ntsa::Allocator allocator)
 : d_selection(e_UNDEFINED)
+, d_allocator(allocator)
 {
     NTSCFG_WARNING_UNUSED(allocator);
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::~Return()
-{
-    if (d_selection == e_SUCCESS) {
-        bslma::DestructionUtil::destroy(d_success.address());
-    }
-    else if (d_selection == e_FAILURE) {
-        bslma::DestructionUtil::destroy(d_failure.address());
-    }
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE void Coroutine::Return<RESULT>::return_value(
-    bsl::convertible_to<RESULT> auto&& arg)
-{
-    if (d_selection == e_SUCCESS) {
-        bslma::DestructionUtil::destroy(d_success.address());
-    }
-    else if (d_selection == e_FAILURE) {
-        bslma::DestructionUtil::destroy(d_failure.address());
-    }
-
-    RESULT r = static_cast<decltype(arg)>(arg);
-    new (d_success.address()) SuccessType(BSLS_UTIL_ADDRESSOF(r));
-
-    d_selection = e_SUCCESS;
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE void Coroutine::Return<RESULT>::unhandled_exception()
-{
-    bsl::exception_ptr exception = bsl::current_exception();
-
-    if (d_selection == e_SUCCESS) {
-        bslma::DestructionUtil::destroy(d_success.address());
-    }
-    else if (d_selection == e_FAILURE) {
-        bslma::DestructionUtil::destroy(d_failure.address());
-    }
-
-    new (d_failure.address()) FailureType(exception);
-
-    d_selection = e_FAILURE;
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE RESULT Coroutine::Return<RESULT>::release()
-{
-    if (d_selection == e_SUCCESS) {
-        return static_cast<RESULT>(*d_success.object());
-    }
-    else if (d_selection == e_FAILURE) {
-        std::rethrow_exception(d_failure.object());
-    }
-    else {
-        throw bsl::runtime_error("Coroutine task result not defined");
-    }
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::Return()
-: d_selection(e_UNDEFINED)
-{
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::Return(ntsa::Allocator allocator)
-: d_selection(e_UNDEFINED)
-{
-    NTSCFG_WARNING_UNUSED(allocator);
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::~Return()
+NTSCFG_INLINE Coroutine::Return<void>::~Return()
 {
     if (d_selection == e_FAILURE) {
         bslma::DestructionUtil::destroy(d_failure.address());
     }
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE void Coroutine::Return<RESULT>::return_void()
+NTSCFG_INLINE void Coroutine::Return<void>::return_void()
 {
     if (d_selection == e_FAILURE) {
         bslma::DestructionUtil::destroy(d_failure.address());
@@ -5141,9 +4959,7 @@ NTSCFG_INLINE void Coroutine::Return<RESULT>::return_void()
     d_selection = e_SUCCESS;
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE void Coroutine::Return<RESULT>::unhandled_exception()
+NTSCFG_INLINE void Coroutine::Return<void>::unhandled_exception()
 {
     bsl::exception_ptr exception = bsl::current_exception();
 
@@ -5156,9 +4972,7 @@ NTSCFG_INLINE void Coroutine::Return<RESULT>::unhandled_exception()
     d_selection = e_FAILURE;
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE void Coroutine::Return<RESULT>::release()
+NTSCFG_INLINE void Coroutine::Return<void>::release()
 {
     if (d_selection == e_SUCCESS) {
         return;
