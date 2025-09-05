@@ -133,6 +133,10 @@ IF NOT DEFINED NTF_CONFIGURE_WITH_OPENSSL (
     set NTF_CONFIGURE_WITH_OPENSSL=1
 )
 
+IF NOT DEFINED NTF_CONFIGURE_WITH_COROUTINES (
+    set NTF_CONFIGURE_WITH_COROUTINES=0
+)
+
 IF NOT DEFINED NTF_CONFIGURE_WITH_TIMESTAMPING (
     set NTF_CONFIGURE_WITH_TIMESTAMPING=0
 )
@@ -374,6 +378,9 @@ if not "%1"=="" (
         set NTF_CONFIGURE_WITH_OPENSSL=1
     )
 
+    if "%1"=="--with-coroutines" (
+        set NTF_CONFIGURE_WITH_COROUTINES=1
+    )
     if "%1"=="--with-dynamic-load-balancing" (
         set NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=1
     )
@@ -516,6 +523,9 @@ if not "%1"=="" (
         set NTF_CONFIGURE_WITH_OPENSSL=0
     )
 
+    if "%1"=="--without-coroutines" (
+        set NTF_CONFIGURE_WITH_COROUTINES=0
+    )
     if "%1"=="--without-dynamic-load-balancing" (
         set NTF_CONFIGURE_WITH_DYNAMIC_LOAD_BALANCING=0
     )

@@ -71,10 +71,10 @@ BSLS_IDENT("$Id: $")
 #endif
 
 /// Require the parameterized template 'TYPE' is void.
-#define NTSCFG_REQUIRE_VOID(TYPE) requires bsl::is_void_v<TYPE>
+#define NTSCFG_REQUIRE_VOID(TYPE) requires(bsl::is_void_v<TYPE>)
 
 /// Require the parameterized template 'TYPE' is a reference, of any kind.
-#define NTSCFG_REQUIRE_REFERENCE(TYPE) requires bsl::is_reference_v<TYPE>
+#define NTSCFG_REQUIRE_REFERENCE(TYPE) requires(bsl::is_reference_v<TYPE>)
 
 #ifdef BSLS_PLATFORM_CMP_CLANG
 #define NTSA_COROUTINE_FUNCTION __PRETTY_FUNCTION__
@@ -406,8 +406,8 @@ class Coroutine::FunctionMapAwaiter
     using AwaiterType =
         typename Compiler::AwaitableTraits<AWAITABLE&&>::AwaiterType;
 
-    FUNCTION&&  m_function;
-    AwaiterType m_awaiter;
+    FUNCTION&&  d_function;
+    AwaiterType d_awaiter;
 
   public:
     FunctionMapAwaiter(FUNCTION&& function, AWAITABLE&& awaitable) noexcept;
@@ -438,8 +438,8 @@ class Coroutine::FunctionMapAwaitable
     auto operator co_await() && noexcept;
 
   private:
-    FUNCTION  m_function;
-    AWAITABLE m_awaitable;
+    FUNCTION  d_function;
+    AWAITABLE d_awaitable;
 };
 
 /// @internal @brief TODO
@@ -1673,12 +1673,10 @@ class Coroutine::JoinAwaitable<std::tuple<TASKS...> >
 {
   public:
     /// Create a new coroutine join awaitable for the specified 'tasks'.
-    explicit JoinAwaitable(TASKS&&... tasks) noexcept(
-        std::conjunction_v<std::is_nothrow_move_constructible<TASKS>...>);
+    explicit JoinAwaitable(TASKS&&... tasks) noexcept;
 
     /// Create a new coroutine join awaitable for the specified 'tasks'.
-    explicit JoinAwaitable(std::tuple<TASKS...>&& tasks)
-        noexcept(std::is_nothrow_move_constructible_v<std::tuple<TASKS...> >);
+    explicit JoinAwaitable(std::tuple<TASKS...>&& tasks) noexcept;
 
     /// Create a new coroutine join awaitable for the tasks moved from the
     /// specified 'other' awaitable.
@@ -1713,7 +1711,7 @@ class Coroutine::JoinAwaitable<std::tuple<TASKS...> >
 
   private:
     JoinCounter          d_counter;
-    std::tuple<TASKS...> m_tasks;
+    std::tuple<TASKS...> d_tasks;
 };
 
 /// @internal @brief
@@ -1732,8 +1730,7 @@ class Coroutine::JoinAwaitable
 
     /// Create a new coroutine join awaitable for the tasks moved from the
     /// specified 'other' awaitable.
-    JoinAwaitable(JoinAwaitable&& other)
-        noexcept(std::is_nothrow_move_constructible_v<CONTAINER>);
+    JoinAwaitable(JoinAwaitable&& other) noexcept;
 
     /// Destroy this object.
     ~JoinAwaitable();
@@ -1762,7 +1759,7 @@ class Coroutine::JoinAwaitable
     bool ready() const noexcept;
 
     JoinCounter d_counter;
-    CONTAINER   m_tasks;
+    CONTAINER   d_tasks;
 };
 
 /// @internal @brief
@@ -1943,8 +1940,8 @@ class Coroutine::Join
 template <typename FUNCTION, typename AWAITABLE>
 NTSCFG_INLINE Coroutine::FunctionMapAwaiter<FUNCTION, AWAITABLE>::
     FunctionMapAwaiter(FUNCTION&& function, AWAITABLE&& awaitable) noexcept
-: m_function(static_cast<FUNCTION&&>(function)),
-  m_awaiter(Compiler::getAwaiter(static_cast<AWAITABLE&&>(awaitable)))
+: d_function(static_cast<FUNCTION&&>(function)),
+  d_awaiter(Compiler::getAwaiter(static_cast<AWAITABLE&&>(awaitable)))
 {
 }
 
@@ -1952,7 +1949,7 @@ template <typename FUNCTION, typename AWAITABLE>
 NTSCFG_INLINE decltype(auto)
     Coroutine::FunctionMapAwaiter<FUNCTION, AWAITABLE>::await_ready() noexcept
 {
-    return static_cast<AwaiterType&&>(m_awaiter).await_ready();
+    return static_cast<AwaiterType&&>(d_awaiter).await_ready();
 }
 
 template <typename FUNCTION, typename AWAITABLE>
@@ -1961,7 +1958,7 @@ NTSCFG_INLINE decltype(auto)
     Coroutine::FunctionMapAwaiter<FUNCTION, AWAITABLE>::await_suspend(
         std::coroutine_handle<PROMISE> coroutine) noexcept
 {
-    return static_cast<AwaiterType&&>(m_awaiter).await_suspend(
+    return static_cast<AwaiterType&&>(d_awaiter).await_suspend(
         std::move(coroutine));
 }
 
@@ -1972,13 +1969,13 @@ NTSCFG_INLINE decltype(auto)
     if constexpr (std::is_void_v<decltype(
                       std::declval<AwaiterType>().await_resume())>)
     {
-        static_cast<AwaiterType&&>(m_awaiter).await_resume();
-        return std::invoke(static_cast<FUNCTION&&>(m_function));
+        static_cast<AwaiterType&&>(d_awaiter).await_resume();
+        return std::invoke(static_cast<FUNCTION&&>(d_function));
     }
     else {
         return std::invoke(
-            static_cast<FUNCTION&&>(m_function),
-            static_cast<AwaiterType&&>(m_awaiter).await_resume());
+            static_cast<FUNCTION&&>(d_function),
+            static_cast<AwaiterType&&>(d_awaiter).await_resume());
     }
 }
 
@@ -1987,8 +1984,8 @@ template <typename FUNCTION_ARG, typename AWAITABLE_ARG>
 NTSCFG_INLINE Coroutine::FunctionMapAwaitable<FUNCTION, AWAITABLE>::
     FunctionMapAwaitable(FUNCTION_ARG&&  function,
                          AWAITABLE_ARG&& awaitable) noexcept
-: m_function(static_cast<FUNCTION_ARG&&>(function)),
-  m_awaitable(static_cast<AWAITABLE_ARG&&>(awaitable))
+: d_function(static_cast<FUNCTION_ARG&&>(function)),
+  d_awaitable(static_cast<AWAITABLE_ARG&&>(awaitable))
 {
 }
 
@@ -1996,8 +1993,8 @@ template <typename FUNCTION, typename AWAITABLE>
 NTSCFG_INLINE auto Coroutine::FunctionMapAwaitable<FUNCTION, AWAITABLE>::
 operator co_await() const& noexcept
 {
-    return FunctionMapAwaiter<const FUNCTION&, const AWAITABLE&>(m_function,
-                                                                 m_awaitable);
+    return FunctionMapAwaiter<const FUNCTION&, const AWAITABLE&>(d_function,
+                                                                 d_awaitable);
 }
 
 template <typename FUNCTION, typename AWAITABLE>
@@ -2005,7 +2002,7 @@ template <typename FUNCTION, typename AWAITABLE>
     operator co_await() &
     noexcept
 {
-    return FunctionMapAwaiter<FUNCTION&, AWAITABLE&>(m_function, m_awaitable);
+    return FunctionMapAwaiter<FUNCTION&, AWAITABLE&>(d_function, d_awaitable);
 }
 
 template <typename FUNCTION, typename AWAITABLE>
@@ -2014,8 +2011,8 @@ template <typename FUNCTION, typename AWAITABLE>
     noexcept
 {
     return FunctionMapAwaiter<FUNCTION&&, AWAITABLE&&>(
-        static_cast<FUNCTION&&>(m_function),
-        static_cast<AWAITABLE&&>(m_awaitable));
+        static_cast<FUNCTION&&>(d_function),
+        static_cast<AWAITABLE&&>(d_awaitable));
 }
 
 template <typename FUNCTION>
@@ -3076,26 +3073,24 @@ std::tuple<> Coroutine::JoinAwaitable<std::tuple<> >::await_resume()
 
 template <typename... TASKS>
 NTSCFG_INLINE Coroutine::JoinAwaitable<std::tuple<TASKS...> >::JoinAwaitable(
-    TASKS&&... tasks)
-    noexcept(std::conjunction_v<std::is_nothrow_move_constructible<TASKS>...>)
+    TASKS&&... tasks) noexcept
 : d_counter(sizeof...(TASKS))
-, m_tasks(std::move(tasks)...)
+, d_tasks(std::move(tasks)...)
 {
 }
 
 template <typename... TASKS>
 NTSCFG_INLINE Coroutine::JoinAwaitable<std::tuple<TASKS...> >::JoinAwaitable(
-    std::tuple<TASKS...>&& tasks)
-    noexcept(std::is_nothrow_move_constructible_v<std::tuple<TASKS...> >)
+    std::tuple<TASKS...>&& tasks) noexcept
 : d_counter(sizeof...(TASKS))
-, m_tasks(std::move(tasks))
+, d_tasks(std::move(tasks))
 {
 }
 
 template <typename... TASKS>
 NTSCFG_INLINE Coroutine::JoinAwaitable<std::tuple<TASKS...> >::JoinAwaitable(
     JoinAwaitable&& other) noexcept : d_counter(sizeof...(TASKS)),
-                                      m_tasks(std::move(other.m_tasks))
+                                      d_tasks(std::move(other.d_tasks))
 {
 }
 
@@ -3110,27 +3105,27 @@ template <typename... TASKS>
     noexcept
 {
     struct Awaiter {
-        Awaiter(JoinAwaitable& awaitable) noexcept : m_awaitable(awaitable)
+        Awaiter(JoinAwaitable& awaitable) noexcept : d_awaitable(awaitable)
         {
         }
 
         bool await_ready() const noexcept
         {
-            return m_awaitable.ready();
+            return d_awaitable.ready();
         }
 
         bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
         {
-            return m_awaitable.suspend(coroutine);
+            return d_awaitable.suspend(coroutine);
         }
 
         std::tuple<TASKS...>& await_resume() noexcept
         {
-            return m_awaitable.m_tasks;
+            return d_awaitable.d_tasks;
         }
 
       private:
-        JoinAwaitable& m_awaitable;
+        JoinAwaitable& d_awaitable;
     };
 
     return Awaiter{*this};
@@ -3142,27 +3137,27 @@ template <typename... TASKS>
     noexcept
 {
     struct Awaiter {
-        Awaiter(JoinAwaitable& awaitable) noexcept : m_awaitable(awaitable)
+        Awaiter(JoinAwaitable& awaitable) noexcept : d_awaitable(awaitable)
         {
         }
 
         bool await_ready() const noexcept
         {
-            return m_awaitable.ready();
+            return d_awaitable.ready();
         }
 
         bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
         {
-            return m_awaitable.suspend(coroutine);
+            return d_awaitable.suspend(coroutine);
         }
 
         std::tuple<TASKS...>&& await_resume() noexcept
         {
-            return std::move(m_awaitable.m_tasks);
+            return std::move(d_awaitable.d_tasks);
         }
 
       private:
-        JoinAwaitable& m_awaitable;
+        JoinAwaitable& d_awaitable;
     };
 
     return Awaiter{*this};
@@ -3183,7 +3178,7 @@ NTSCFG_INLINE void Coroutine::JoinAwaitable<std::tuple<TASKS...> >::startup(
     std::integer_sequence<std::size_t, INDICES...>) noexcept
 {
     (void)std::initializer_list<int>{
-        (std::get<INDICES>(m_tasks).start(&d_counter), 0)...};
+        (std::get<INDICES>(d_tasks).start(&d_counter), 0)...};
 }
 
 template <typename... TASKS>
@@ -3196,16 +3191,15 @@ NTSCFG_INLINE bool Coroutine::JoinAwaitable<std::tuple<TASKS...> >::ready()
 template <typename CONTAINER>
 NTSCFG_INLINE Coroutine::JoinAwaitable<CONTAINER>::JoinAwaitable(
     CONTAINER&& tasks) noexcept : d_counter(tasks.size()),
-                                  m_tasks(std::forward<CONTAINER>(tasks))
+                                  d_tasks(std::forward<CONTAINER>(tasks))
 {
 }
 
 template <typename CONTAINER>
 NTSCFG_INLINE Coroutine::JoinAwaitable<CONTAINER>::JoinAwaitable(
-    JoinAwaitable&& other)
-    noexcept(std::is_nothrow_move_constructible_v<CONTAINER>)
-: d_counter(other.m_tasks.size())
-, m_tasks(std::move(other.m_tasks))
+    JoinAwaitable&& other) noexcept
+: d_counter(other.d_tasks.size())
+, d_tasks(std::move(other.d_tasks))
 {
 }
 
@@ -3223,27 +3217,27 @@ template <typename CONTAINER>
     {
       public:
         Awaiter(JoinAwaitable& awaitable)
-        : m_awaitable(awaitable)
+        : d_awaitable(awaitable)
         {
         }
 
         bool await_ready() const noexcept
         {
-            return m_awaitable.ready();
+            return d_awaitable.ready();
         }
 
         bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
         {
-            return m_awaitable.suspend(coroutine);
+            return d_awaitable.suspend(coroutine);
         }
 
         CONTAINER& await_resume() noexcept
         {
-            return m_awaitable.m_tasks;
+            return d_awaitable.d_tasks;
         }
 
       private:
-        JoinAwaitable& m_awaitable;
+        JoinAwaitable& d_awaitable;
     };
 
     return Awaiter{*this};
@@ -3258,27 +3252,27 @@ template <typename CONTAINER>
     {
       public:
         Awaiter(JoinAwaitable& awaitable)
-        : m_awaitable(awaitable)
+        : d_awaitable(awaitable)
         {
         }
 
         bool await_ready() const noexcept
         {
-            return m_awaitable.ready();
+            return d_awaitable.ready();
         }
 
         bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
         {
-            return m_awaitable.suspend(coroutine);
+            return d_awaitable.suspend(coroutine);
         }
 
         CONTAINER&& await_resume() noexcept
         {
-            return std::move(m_awaitable.m_tasks);
+            return std::move(d_awaitable.d_tasks);
         }
 
       private:
-        JoinAwaitable& m_awaitable;
+        JoinAwaitable& d_awaitable;
     };
 
     return Awaiter{*this};
@@ -3296,7 +3290,7 @@ NTSCFG_INLINE bool Coroutine::JoinAwaitable<CONTAINER>::suspend(
 template <typename CONTAINER>
 NTSCFG_INLINE void Coroutine::JoinAwaitable<CONTAINER>::startup()
 {
-    for (auto&& task : m_tasks) {
+    for (auto&& task : d_tasks) {
         task.start(&d_counter);
     }
 }
@@ -3701,100 +3695,6 @@ class Coroutine::Return
 };
 
 /// @internal @brief
-/// Describe a coroutine task result stored by reference.
-///
-/// @details
-/// This component-private class template initially holds no value and is
-/// eventually set to hold either the result value of a coroutine task or a an
-/// exception, if the coroutine was exited by an exception. This partial
-/// specialization is used when 'RESULT' is a reference type of any kind.
-///
-/// @par Thread Safety
-/// This class is not thread safe.
-///
-/// @ingroup module_ntsa_coroutine
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-class Coroutine::Return<RESULT>
-{
-  public:
-    /// Create a new coroutine task result that is initially incomplete.
-    Return();
-
-    /// Create a new coroutine task result that is initally incomplete. The
-    /// specified 'allocator' is ignored.
-    explicit Return(ntsa::Allocator allocator);
-
-    /// Destroy this object.
-    ~Return();
-
-    /// Construct a held reference by implicit conversion to 'RESULT' from the
-    /// specified 'arg' (forwarded).  This method participates in overload
-    /// resolution only if that conversion is possible.  The behavior is
-    /// undefined if this object already holds a reference or exception.
-    void return_value(bsl::convertible_to<RESULT> auto&& arg);
-
-    /// Store the current exception so that it can be rethrown when 'release'
-    /// is called.
-    void unhandled_exception();
-
-    /// Return the held reference, if any; otherwise, rethrow the held
-    /// exception, if any; otherwise, the behavior is undefined.  The behavior
-    /// is also undefined if this method is called more than once for this
-    /// object.
-    RESULT release();
-
-  private:
-    /// This class is not copy-constructable.
-    Return(const Return&) = delete;
-
-    /// This class is not move-constructable.
-    Return(Return&&) = delete;
-
-    /// This class is not copy-assignable.
-    Return& operator=(const Return&) = delete;
-
-    /// This class is not move-assignable.
-    Return& operator=(Return&&) = delete;
-
-  private:
-    /// Defines a type alias for the result type.
-    using ResultType = RESULT;
-
-    /// Defines a type alias for the dereferenced result type.
-    using ResultTypeDereference = bsl::remove_reference_t<RESULT>;
-
-    /// Enumerates the state of the value.
-    enum Selection {
-        /// The value is undefined.
-        e_UNDEFINED,
-
-        /// The value is complete.
-        e_SUCCESS,
-
-        /// An exception ocurrred.
-        e_FAILURE
-    };
-
-    /// Defines a type alias for the success type.
-    typedef ResultTypeDereference* SuccessType;
-
-    /// Defines a type alias for the failure type.
-    typedef std::exception_ptr FailureType;
-
-    /// The state of the value.
-    Selection d_selection;
-
-    union {
-        /// The success value.
-        bsls::ObjectBuffer<SuccessType> d_success;
-
-        /// The failure value.
-        bsls::ObjectBuffer<FailureType> d_failure;
-    };
-};
-
-/// @internal @brief
 /// Describe a coroutine task result that is void.
 ///
 /// @details
@@ -3808,9 +3708,8 @@ class Coroutine::Return<RESULT>
 /// This class is not thread safe.
 ///
 /// @ingroup module_ntsa_coroutine
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-class Coroutine::Return<RESULT>
+template <>
+class Coroutine::Return<void>
 {
   public:
     /// Create a new coroutine task result that is initially incomplete.
@@ -3873,6 +3772,9 @@ class Coroutine::Return<RESULT>
         /// The failure value.
         bsls::ObjectBuffer<FailureType> d_failure;
     };
+
+    /// The memory allocator.
+    ntsa::Allocator d_allocator;
 };
 
 /// @internal @brief
@@ -5028,111 +4930,27 @@ NTSCFG_INLINE RESULT Coroutine::Return<RESULT>::release()
     }
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::Return()
+NTSCFG_INLINE Coroutine::Return<void>::Return()
 : d_selection(e_UNDEFINED)
+, d_allocator()
 {
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::Return(ntsa::Allocator allocator)
+NTSCFG_INLINE Coroutine::Return<void>::Return(ntsa::Allocator allocator)
 : d_selection(e_UNDEFINED)
+, d_allocator(allocator)
 {
     NTSCFG_WARNING_UNUSED(allocator);
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::~Return()
-{
-    if (d_selection == e_SUCCESS) {
-        bslma::DestructionUtil::destroy(d_success.address());
-    }
-    else if (d_selection == e_FAILURE) {
-        bslma::DestructionUtil::destroy(d_failure.address());
-    }
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE void Coroutine::Return<RESULT>::return_value(
-    bsl::convertible_to<RESULT> auto&& arg)
-{
-    if (d_selection == e_SUCCESS) {
-        bslma::DestructionUtil::destroy(d_success.address());
-    }
-    else if (d_selection == e_FAILURE) {
-        bslma::DestructionUtil::destroy(d_failure.address());
-    }
-
-    RESULT r = static_cast<decltype(arg)>(arg);
-    new (d_success.address()) SuccessType(BSLS_UTIL_ADDRESSOF(r));
-
-    d_selection = e_SUCCESS;
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE void Coroutine::Return<RESULT>::unhandled_exception()
-{
-    bsl::exception_ptr exception = bsl::current_exception();
-
-    if (d_selection == e_SUCCESS) {
-        bslma::DestructionUtil::destroy(d_success.address());
-    }
-    else if (d_selection == e_FAILURE) {
-        bslma::DestructionUtil::destroy(d_failure.address());
-    }
-
-    new (d_failure.address()) FailureType(exception);
-
-    d_selection = e_FAILURE;
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_REFERENCE(RESULT)
-NTSCFG_INLINE RESULT Coroutine::Return<RESULT>::release()
-{
-    if (d_selection == e_SUCCESS) {
-        return static_cast<RESULT>(*d_success.object());
-    }
-    else if (d_selection == e_FAILURE) {
-        std::rethrow_exception(d_failure.object());
-    }
-    else {
-        throw bsl::runtime_error("Coroutine task result not defined");
-    }
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::Return()
-: d_selection(e_UNDEFINED)
-{
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::Return(ntsa::Allocator allocator)
-: d_selection(e_UNDEFINED)
-{
-    NTSCFG_WARNING_UNUSED(allocator);
-}
-
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE Coroutine::Return<RESULT>::~Return()
+NTSCFG_INLINE Coroutine::Return<void>::~Return()
 {
     if (d_selection == e_FAILURE) {
         bslma::DestructionUtil::destroy(d_failure.address());
     }
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE void Coroutine::Return<RESULT>::return_void()
+NTSCFG_INLINE void Coroutine::Return<void>::return_void()
 {
     if (d_selection == e_FAILURE) {
         bslma::DestructionUtil::destroy(d_failure.address());
@@ -5141,9 +4959,7 @@ NTSCFG_INLINE void Coroutine::Return<RESULT>::return_void()
     d_selection = e_SUCCESS;
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE void Coroutine::Return<RESULT>::unhandled_exception()
+NTSCFG_INLINE void Coroutine::Return<void>::unhandled_exception()
 {
     bsl::exception_ptr exception = bsl::current_exception();
 
@@ -5156,9 +4972,7 @@ NTSCFG_INLINE void Coroutine::Return<RESULT>::unhandled_exception()
     d_selection = e_FAILURE;
 }
 
-template <typename RESULT>
-NTSCFG_REQUIRE_VOID(RESULT)
-NTSCFG_INLINE void Coroutine::Return<RESULT>::release()
+NTSCFG_INLINE void Coroutine::Return<void>::release()
 {
     if (d_selection == e_SUCCESS) {
         return;
