@@ -1845,13 +1845,15 @@ CoroutineTest::Mechanism::Awaiter CoroutineTest::Mechanism::schedule()
 
 ntsa::Task<void> CoroutineTest::Mechanism::hello()
 {
-    bsl::cout << "Scheduling on thread " << bslmt::ThreadUtil::selfIdAsUint64()
-              << bsl::endl;
+    BALL_LOG_INFO << "Scheduling on thread " 
+                  << bslmt::ThreadUtil::selfIdAsUint64()
+                  << BALL_LOG_END;
 
     co_await this->schedule();
 
-    bsl::cout << "Executing on thread " << bslmt::ThreadUtil::selfIdAsUint64()
-              << bsl::endl;
+    BALL_LOG_INFO << "Executing on thread " 
+                  << bslmt::ThreadUtil::selfIdAsUint64()
+                  << BALL_LOG_END;
 }
 
 ntsa::Error CoroutineTest::Mechanism::execute(Result*           result,
