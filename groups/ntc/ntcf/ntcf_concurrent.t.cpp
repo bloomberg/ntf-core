@@ -19,9 +19,6 @@
 BSLS_IDENT_RCSID(ntcf_concurrent_t_cpp, "$Id$ $CSID$")
 
 #include <ntcf_concurrent.h>
-#include <ntcf_test.h>
-
-#include <bsl_queue.h>
 
 using namespace BloombergLP;
 
@@ -53,11 +50,20 @@ using namespace BloombergLP;
 
 #define NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(socket, result)      \
     do {                                                                      \
-        BALL_LOG_INFO << "Client socket at " << (socket)->sourceEndpoint()    \
-                      << " to " << (socket)->remoteEndpoint()                 \
-                      << " RX complete: "                                     \
-                      << ConcurrentTest::Dumper((result).data().get())        \
-                      << BALL_LOG_END;                                        \
+        if (!(result).event().context().error()) {                            \
+            BALL_LOG_INFO << "Client socket at "                              \
+                          << (socket)->sourceEndpoint() << " to "             \
+                          << (socket)->remoteEndpoint() << " RX complete: "   \
+                          << ConcurrentTest::Dumper((result).data().get())    \
+                          << BALL_LOG_END;                                    \
+        }                                                                     \
+        else {                                                                \
+            BALL_LOG_INFO << "Client socket at "                              \
+                          << (socket)->sourceEndpoint() << " to "             \
+                          << (socket)->remoteEndpoint()                       \
+                          << " RX complete: " << (result).event().context()   \
+                          << BALL_LOG_END;                                    \
+        }                                                                     \
     } while (false)
 
 #define NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED(socket)                        \
@@ -101,17 +107,33 @@ using namespace BloombergLP;
 
 #define NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(socket, result)      \
     do {                                                                      \
-        BALL_LOG_INFO << "Server socket at " << (socket)->sourceEndpoint()    \
-                      << " to " << (socket)->remoteEndpoint()                 \
-                      << " TX complete: "                                     \
-                      << ConcurrentTest::Dumper((result).data().get())        \
-                      << BALL_LOG_END;                                        \
+        if (!(result).event().context().error()) {                            \
+            BALL_LOG_INFO << "Server socket at "                              \
+                          << (socket)->sourceEndpoint() << " to "             \
+                          << (socket)->remoteEndpoint() << " RX complete: "   \
+                          << ConcurrentTest::Dumper((result).data().get())    \
+                          << BALL_LOG_END;                                    \
+        }                                                                     \
+        else {                                                                \
+            BALL_LOG_INFO << "Server socket at "                              \
+                          << (socket)->sourceEndpoint() << " to "             \
+                          << (socket)->remoteEndpoint()                       \
+                          << " RX complete: " << (result).event().context()   \
+                          << BALL_LOG_END;                                    \
+        }                                                                     \
     } while (false)
 
 #define NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED(socket)                        \
     do {                                                                      \
         BALL_LOG_INFO << "Server socket at " << (socket)->sourceEndpoint()    \
                       << " to " << (socket)->remoteEndpoint() << " closed"    \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_LISTENER_BIND_COMPLETE(socket, result)       \
+    do {                                                                      \
+        BALL_LOG_INFO << "Listener socket at " << (socket)->sourceEndpoint()  \
+                      << " bind complete: " << (result).event()               \
                       << BALL_LOG_END;                                        \
     } while (false)
 
@@ -479,15 +501,51 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
 
     ntsa::Error error;
 
-    // Create the listener socket and begin listening.
+    // Create a listener socket.
+
+    ntca::ListenerSocketOptions listenerSocketOptions;
+
+    listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    listenerSocketOptions.setKeepHalfOpen(true);
 
     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
-        ntcf::ConcurrentTest::createListenerSocket(scheduler, allocator);
+        scheduler->createListenerSocket(listenerSocketOptions,
+                                        allocator.mechanism());
+
+    error = listenerSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    // Bind the listener socket to any available ephemeral port on the
+    // loopback device.
+
+    ntca::BindOptions bindOptions;
+    ntci::BindResult  bindResult;
+
+    bindResult = co_await ntcf::Concurrent::bind(
+        listenerSocket,
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        bindOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_LISTENER_BIND_COMPLETE(listenerSocket,
+                                                    bindResult);
+
+    NTSCFG_TEST_OK(bindResult.event().context().error());
+
+    // Begin listening.
+
+    error = listenerSocket->listen();
+    NTSCFG_TEST_OK(error);
 
     // Create a client stream socket.
 
+    ntca::StreamSocketOptions clientStreamSocketOptions;
+
+    clientStreamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    clientStreamSocketOptions.setKeepHalfOpen(true);
+
     bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket =
-        ntcf::ConcurrentTest::createStreamSocket(scheduler, allocator);
+        scheduler->createStreamSocket(clientStreamSocketOptions,
+                                      allocator.mechanism());
 
     // Connect the client stream socket to the listener socket.
 
@@ -498,10 +556,11 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
         co_await ntcf::Concurrent::connect(clientStreamSocket,
                                            listenerSocket->sourceEndpoint(),
                                            clientConnectOptions);
-    NTSCFG_TEST_OK(clientConnectResult.event().context().error());
 
     NTCF_CONCURRENT_TEST_LOG_CLIENT_CONNECT_COMPLETE(clientStreamSocket,
                                                      clientConnectResult);
+
+    NTSCFG_TEST_OK(clientConnectResult.event().context().error());
 
     // Accept the server stream socket from the listener socket.
 
@@ -510,13 +569,14 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
 
     serverAcceptResult =
         co_await ntcf::Concurrent::accept(listenerSocket, serverAcceptOptions);
-    NTSCFG_TEST_OK(serverAcceptResult.event().context().error());
 
     bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket =
         serverAcceptResult.streamSocket();
 
     NTCF_CONCURRENT_TEST_LOG_SERVER_ACCEPT_COMPLETE(serverStreamSocket,
                                                     serverAcceptResult);
+
+    NTSCFG_TEST_OK(serverAcceptResult.event().context().error());
 
     // Send data from the client stream socket to the server stream socket.
 
@@ -531,13 +591,14 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     clientSendResult = co_await ntcf::Concurrent::send(clientStreamSocket,
                                                        clientSendData,
                                                        clientSendOptions);
-    NTSCFG_TEST_OK(clientSendResult.event().context().error());
 
     NTCF_CONCURRENT_TEST_LOG_CLIENT_SEND_COMPLETE(clientStreamSocket,
                                                   clientSendResult,
                                                   clientSendData);
 
-    // Receive data at the server datagram socket from the client datagram
+    NTSCFG_TEST_OK(clientSendResult.event().context().error());
+
+    // Receive data at the server stream socket from the client stream
     // socket.
 
     ntca::ReceiveOptions serverReceiveOptions;
@@ -548,10 +609,84 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     serverReceiveResult =
         co_await ntcf::Concurrent::receive(serverStreamSocket,
                                            serverReceiveOptions);
-    NTSCFG_TEST_OK(serverReceiveResult.event().context().error());
 
     NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(serverStreamSocket,
                                                      serverReceiveResult);
+
+    NTSCFG_TEST_OK(serverReceiveResult.event().context().error());
+
+    // Send data from the server stream socket to the client stream socket.
+
+    bsl::shared_ptr<bdlbb::Blob> serverSendData = serverReceiveResult.data();
+
+    ntca::SendOptions serverSendOptions;
+    ntci::SendResult  serverSendResult;
+
+    serverSendResult = co_await ntcf::Concurrent::send(serverStreamSocket,
+                                                       serverSendData,
+                                                       serverSendOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_SERVER_SEND_COMPLETE(serverStreamSocket,
+                                                  servertSendResult,
+                                                  serverSendData);
+
+    NTSCFG_TEST_OK(serverSendResult.event().context().error());
+
+    // Receive data at the client stream socket from the server stream socket.
+
+    ntca::ReceiveOptions clientReceiveOptions;
+    ntci::ReceiveResult  clientReceiveResult;
+
+    clientReceiveOptions.setSize(1);
+
+    clientReceiveResult =
+        co_await ntcf::Concurrent::receive(clientStreamSocket,
+                                           clientReceiveOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(clientStreamSocket,
+                                                     clientReceiveResult);
+
+    NTSCFG_TEST_OK(clientReceiveResult.event().context().error());
+
+    // Shutdown transmission from the client socket to initiate the graceful
+    // shutdown of the connection.
+
+    error = clientStreamSocket->shutdown(ntsa::ShutdownType::e_SEND,
+                                         ntsa::ShutdownMode::e_GRACEFUL);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the server stream socket and notice the client stream
+    // socket has shut down the connection.
+
+    serverReceiveResult =
+        co_await ntcf::Concurrent::receive(serverStreamSocket,
+                                           serverReceiveOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(serverStreamSocket,
+                                                     serverReceiveResult);
+
+    NTSCFG_TEST_EQ(serverReceiveResult.event().context().error(),
+                   ntsa::Error(ntsa::Error::e_EOF));
+
+    // Shutdown transmission from the server socket to complete the
+    // graceful shutdown of the connection.
+
+    error = serverStreamSocket->shutdown(ntsa::ShutdownType::e_SEND,
+                                         ntsa::ShutdownMode::e_GRACEFUL);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the client stream socket and notice the server stream
+    // socket has shut down the connection.
+
+    clientReceiveResult =
+        co_await ntcf::Concurrent::receive(clientStreamSocket,
+                                           clientReceiveOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(clientStreamSocket,
+                                                     clientReceiveResult);
+
+    NTSCFG_TEST_EQ(clientReceiveResult.event().context().error(),
+                   ntsa::Error(ntsa::Error::e_EOF));
 
     // Close the client stream socket.
 

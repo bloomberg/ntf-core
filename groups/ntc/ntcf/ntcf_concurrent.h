@@ -45,6 +45,11 @@ class Concurrent
     /// resumes the awaiting coroutine on an I/O thread.
     class Execute;
 
+    // Provide an awaitable for a bind operation, which when awaited,
+    /// returns the 'ntci::BindResult' that is the asynchronous result of
+    /// the bind operation.
+    class Bind;
+
     /// Provide an awaitable for a connect operation, which when awaited,
     /// returns the 'ntci::ConnectResult' that is the asynchronous result of
     /// the connect operation.
@@ -74,6 +79,24 @@ class Concurrent
     /// 'executor' thread.
     static ntcf::Concurrent::Execute resume(
         const bsl::shared_ptr<ntci::Executor>& executor);
+
+    /// Bind the specified 'bindable' object to the specified 'endpoint'
+    /// according to the specified 'options'. Return an awaitable, which when
+    /// awaited, returns the 'ntci::BindResult' that is the asynchronous result
+    /// of this operation.
+    static ntcf::Concurrent::Bind bind(
+        const bsl::shared_ptr<ntci::Bindable>& bindable,
+        const ntsa::Endpoint&                  endpoint,
+        const ntca::BindOptions&               options);
+
+    /// Bind the specified 'bindable' object to the resolution of the specified
+    /// 'name' according to the specified 'options'. Return an awaitable, which
+    /// when awaited, returns the 'ntci::BindResult' that is the asynchronous
+    /// result of this operation.
+    static ntcf::Concurrent::Bind bind(
+        const bsl::shared_ptr<ntci::Bindable>& bindable,
+        const bsl::string&                     name,
+        const ntca::BindOptions&               options);
 
     /// Connect the specified 'connector' to the specified 'endpoint' according
     /// to the specified 'options'. Return an awaitable, which when awaited,
@@ -211,6 +234,114 @@ class Concurrent::Execute::Awaiter
 
     /// The awaitable.
     Concurrent::Execute* d_awaitable;
+};
+
+/// Provide an awaitable for a bind operation.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntci_runtime
+class Concurrent::Bind
+{
+  public:
+    /// Provide an awaiter for a bind operation.
+    class Awaiter;
+
+    /// Create a new awaitable that, when awaited, binds the 'bindable' object
+    /// to the specified 'endpoint' according to the specified 'options'.
+    explicit Bind(const bsl::shared_ptr<ntci::Bindable>& bindable,
+                  const ntsa::Endpoint&                  endpoint,
+                  ntca::BindOptions                      options);
+
+    /// Create a new awaitable that, when awaited, binds the 'bindable' object
+    /// to the resolution of the specified 'name' according to the specified
+    /// 'options'.
+    explicit Bind(const bsl::shared_ptr<ntci::Bindable>& bindable,
+                  const bsl::string&                     name,
+                  ntca::BindOptions                      options);
+
+    /// Await the completion of the operation. Return the awaiter.
+    Awaiter operator co_await();
+
+  private:
+    /// This class is not copy-constructable.
+    Bind(const Bind&) = delete;
+
+    /// This class is not move-constructable.
+    Bind(Bind&&) = delete;
+
+    /// This class is not copy-assignable.
+    Bind& operator=(const Bind&) = delete;
+
+    /// This class is not move-assignable.
+    Bind& operator=(Bind&&) = delete;
+
+  private:
+    /// Allow the associated awaiter to access this class's private data.
+    friend class Awaiter;
+
+    /// The bindable.
+    bsl::shared_ptr<ntci::Bindable> d_bindable;
+
+    /// The input endpoint.
+    ntsa::Endpoint d_endpoint;
+
+    /// The input name.
+    bsl::string d_name;
+
+    /// The input options.
+    ntca::BindOptions d_options;
+
+    /// The output result.
+    ntci::BindResult d_result;
+};
+
+/// Provide an awaiter for a bind operation.
+///
+/// @par Thread Safety
+/// This class is thread safe.
+///
+/// @ingroup module_ntci_runtime
+class Concurrent::Bind::Awaiter
+{
+  public:
+    /// Create a new awaiter that is the result of 'co_await'-ing the specified
+    /// 'awaitable'.
+    explicit Awaiter(Concurrent::Bind* awaitable) noexcept;
+
+    /// Return false to suspend the awaiting coroutine.
+    bool await_ready() const noexcept;
+
+    /// Initiate the asynchronous operation and resume the specified
+    /// 'coroutine' when the operation asynchronously completes or fails.
+    void await_suspend(bsl::coroutine_handle<> coroutine) noexcept;
+
+    /// Return the asynchronous result.
+    ntci::BindResult await_resume() const noexcept;
+
+  private:
+    /// This class is not copy-constructable.
+    Awaiter(const Awaiter&) = delete;
+
+    /// This class is not move-constructable.
+    Awaiter(Awaiter&&) = delete;
+
+    /// This class is not copy-assignable.
+    Awaiter& operator=(const Awaiter&) = delete;
+
+    /// This class is not move-assignable.
+    Awaiter& operator=(Awaiter&&) = delete;
+
+  private:
+    /// Process a transmission by the specified 'bindable' according to the
+    /// specified 'event'. Resume the specified 'coroutine'.
+    void complete(const bsl::shared_ptr<ntci::Bindable>& bindable,
+                  const ntca::BindEvent&                 event,
+                  bsl::coroutine_handle<void>            coroutine);
+
+    /// The awaitable.
+    Concurrent::Bind* d_awaitable;
 };
 
 /// Provide an awaitable for a connect operation.

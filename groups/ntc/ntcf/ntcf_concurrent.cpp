@@ -30,6 +30,22 @@ ntcf::Concurrent::Execute Concurrent::resume(
     return Concurrent::Execute(executor);
 }
 
+ntcf::Concurrent::Bind Concurrent::bind(
+    const bsl::shared_ptr<ntci::Bindable>& bindable,
+    const ntsa::Endpoint&                  endpoint,
+    const ntca::BindOptions&               options)
+{
+    return Concurrent::Bind(bindable, endpoint, options);
+}
+
+ntcf::Concurrent::Bind Concurrent::bind(
+    const bsl::shared_ptr<ntci::Bindable>& bindable,
+    const bsl::string&                     name,
+    const ntca::BindOptions&               options)
+{
+    return Concurrent::Bind(bindable, name, options);
+}
+
 ntcf::Concurrent::Connect Concurrent::connect(
     const bsl::shared_ptr<ntci::Connector>& connector,
     const ntsa::Endpoint&                   endpoint,
@@ -108,6 +124,100 @@ void Concurrent::Execute::Awaiter::await_resume() const noexcept
 void Concurrent::Execute::Awaiter::complete(
     bsl::coroutine_handle<void> coroutine)
 {
+    coroutine.resume();
+}
+
+Concurrent::Bind::Bind(const bsl::shared_ptr<ntci::Bindable>& bindable,
+                       const ntsa::Endpoint&                  endpoint,
+                       ntca::BindOptions                      options)
+: d_bindable(bindable)
+, d_endpoint(endpoint)
+, d_name()
+, d_options(options)
+, d_result()
+{
+}
+
+Concurrent::Bind::Bind(const bsl::shared_ptr<ntci::Bindable>& bindable,
+                       const bsl::string&                     name,
+                       ntca::BindOptions                      options)
+: d_bindable(bindable)
+, d_endpoint()
+, d_name(name)
+, d_options(options)
+, d_result()
+{
+}
+
+Concurrent::Bind::Awaiter Concurrent::Bind::operator co_await()
+{
+    return Concurrent::Bind::Awaiter(this);
+}
+
+Concurrent::Bind::Awaiter::Awaiter(Concurrent::Bind* awaitable) noexcept
+: d_awaitable(awaitable)
+{
+}
+
+bool Concurrent::Bind::Awaiter::await_ready() const noexcept
+{
+    return false;
+}
+
+void Concurrent::Bind::Awaiter::await_suspend(
+    bsl::coroutine_handle<void> coroutine) noexcept
+{
+    ntsa::Error error;
+
+    ntci::BindCallback bindCallback =
+        d_awaitable->d_bindable->createBindCallback(
+            NTCCFG_BIND(&Concurrent::Bind::Awaiter::complete,
+                        this,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        NTCCFG_BIND_PLACEHOLDER_2,
+                        coroutine));
+
+    if (!d_awaitable->d_name.empty()) {
+        error = d_awaitable->d_bindable->bind(d_awaitable->d_name,
+                                              d_awaitable->d_options,
+                                              bindCallback);
+    }
+    else {
+        error = d_awaitable->d_bindable->bind(d_awaitable->d_endpoint,
+                                              d_awaitable->d_options,
+                                              bindCallback);
+    }
+
+    if (error) {
+        ntca::BindContext context;
+        context.setError(error);
+
+        ntca::BindEvent event;
+        event.setType(ntca::BindEventType::e_ERROR);
+        event.setContext(context);
+
+        d_awaitable->d_result.setBindable(d_awaitable->d_bindable);
+        d_awaitable->d_result.setEvent(event);
+
+        coroutine.resume();
+    }
+}
+
+ntci::BindResult Concurrent::Bind::Awaiter::await_resume() const noexcept
+{
+    return d_awaitable->d_result;
+}
+
+void Concurrent::Bind::Awaiter::complete(
+    const bsl::shared_ptr<ntci::Bindable>& bindable,
+    const ntca::BindEvent&                 event,
+    bsl::coroutine_handle<void>            coroutine)
+{
+    BSLS_ASSERT(bindable == d_awaitable->d_bindable);
+
+    d_awaitable->d_result.setBindable(bindable);
+    d_awaitable->d_result.setEvent(event);
+
     coroutine.resume();
 }
 
