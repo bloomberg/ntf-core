@@ -18,7 +18,9 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntcf_concurrent_t_cpp, "$Id$ $CSID$")
 
-#include <ntcf_concurrent.h>
+#include <ntci_concurrent.h>
+
+#include <ntcf_system.h>
 
 using namespace BloombergLP;
 
@@ -150,10 +152,10 @@ using namespace BloombergLP;
 namespace BloombergLP {
 namespace ntcf {
 
-// Provide tests for 'ntcf::Concurrent'.
+// Provide tests for 'ntci::Concurrent'.
 class ConcurrentTest
 {
-    BALL_LOG_SET_CLASS_CATEGORY("NTCF.CONCURRENT");
+    BALL_LOG_SET_CLASS_CATEGORY("NTCI.CONCURRENT");
 
     // Describe the configurable parameters of the application simulation.
     class Configuration
@@ -365,7 +367,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyExecute(
                    << bslmt::ThreadUtil::selfIdAsUint64() << BALL_LOG_END;
 
     for (bsl::size_t i = 0; i < 8; ++i) {
-        co_await ntcf::Concurrent::resume(scheduler);
+        co_await ntci::Concurrent::resume(scheduler);
 
         BALL_LOG_DEBUG << "Resuming on thread "
                        << bslmt::ThreadUtil::selfIdAsUint64() << BALL_LOG_END;
@@ -422,7 +424,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyDatagramSocket(
     ntca::ConnectOptions clientConnectOptions;
     ntci::ConnectResult  clientConnectResult;
 
-    clientConnectResult = co_await ntcf::Concurrent::connect(
+    clientConnectResult = co_await ntci::Concurrent::connect(
         clientDatagramSocket,
         serverDatagramSocket->sourceEndpoint(),
         clientConnectOptions);
@@ -437,7 +439,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyDatagramSocket(
     ntca::ConnectOptions serverConnectOptions;
     ntci::ConnectResult  serverConnectResult;
 
-    serverConnectResult = co_await ntcf::Concurrent::connect(
+    serverConnectResult = co_await ntci::Concurrent::connect(
         serverDatagramSocket,
         clientDatagramSocket->sourceEndpoint(),
         ntca::ConnectOptions());
@@ -456,7 +458,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyDatagramSocket(
     ntca::SendOptions clientSendOptions;
     ntci::SendResult  clientSendResult;
 
-    clientSendResult = co_await ntcf::Concurrent::send(clientDatagramSocket,
+    clientSendResult = co_await ntci::Concurrent::send(clientDatagramSocket,
                                                        clientSendData,
                                                        clientSendOptions);
     NTSCFG_TEST_OK(clientSendResult.event().context().error());
@@ -472,7 +474,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyDatagramSocket(
     ntci::ReceiveResult  serverReceiveResult;
 
     serverReceiveResult =
-        co_await ntcf::Concurrent::receive(serverDatagramSocket,
+        co_await ntci::Concurrent::receive(serverDatagramSocket,
                                            serverReceiveOptions);
     NTSCFG_TEST_OK(serverReceiveResult.event().context().error());
 
@@ -481,12 +483,12 @@ ntsa::Task<void> ConcurrentTest::coVerifyDatagramSocket(
 
     // Close the client datagram socket.
 
-    co_await ntcf::Concurrent::close(clientDatagramSocket);
+    co_await ntci::Concurrent::close(clientDatagramSocket);
     NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED(clientDatagramSocket);
 
     // Close the server datagram socket.
 
-    co_await ntcf::Concurrent::close(serverDatagramSocket);
+    co_await ntci::Concurrent::close(serverDatagramSocket);
     NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED(serverDatagramSocket);
 
     co_return;
@@ -521,7 +523,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     ntca::BindOptions bindOptions;
     ntci::BindResult  bindResult;
 
-    bindResult = co_await ntcf::Concurrent::bind(
+    bindResult = co_await ntci::Concurrent::bind(
         listenerSocket,
         ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
         bindOptions);
@@ -553,7 +555,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     ntci::ConnectResult  clientConnectResult;
 
     clientConnectResult =
-        co_await ntcf::Concurrent::connect(clientStreamSocket,
+        co_await ntci::Concurrent::connect(clientStreamSocket,
                                            listenerSocket->sourceEndpoint(),
                                            clientConnectOptions);
 
@@ -568,7 +570,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     ntci::AcceptResult  serverAcceptResult;
 
     serverAcceptResult =
-        co_await ntcf::Concurrent::accept(listenerSocket, serverAcceptOptions);
+        co_await ntci::Concurrent::accept(listenerSocket, serverAcceptOptions);
 
     bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket =
         serverAcceptResult.streamSocket();
@@ -588,7 +590,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     ntca::SendOptions clientSendOptions;
     ntci::SendResult  clientSendResult;
 
-    clientSendResult = co_await ntcf::Concurrent::send(clientStreamSocket,
+    clientSendResult = co_await ntci::Concurrent::send(clientStreamSocket,
                                                        clientSendData,
                                                        clientSendOptions);
 
@@ -607,7 +609,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     serverReceiveOptions.setSize(1);
 
     serverReceiveResult =
-        co_await ntcf::Concurrent::receive(serverStreamSocket,
+        co_await ntci::Concurrent::receive(serverStreamSocket,
                                            serverReceiveOptions);
 
     NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(serverStreamSocket,
@@ -622,7 +624,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     ntca::SendOptions serverSendOptions;
     ntci::SendResult  serverSendResult;
 
-    serverSendResult = co_await ntcf::Concurrent::send(serverStreamSocket,
+    serverSendResult = co_await ntci::Concurrent::send(serverStreamSocket,
                                                        serverSendData,
                                                        serverSendOptions);
 
@@ -640,7 +642,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     clientReceiveOptions.setSize(1);
 
     clientReceiveResult =
-        co_await ntcf::Concurrent::receive(clientStreamSocket,
+        co_await ntci::Concurrent::receive(clientStreamSocket,
                                            clientReceiveOptions);
 
     NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(clientStreamSocket,
@@ -659,7 +661,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     // socket has shut down the connection.
 
     serverReceiveResult =
-        co_await ntcf::Concurrent::receive(serverStreamSocket,
+        co_await ntci::Concurrent::receive(serverStreamSocket,
                                            serverReceiveOptions);
 
     NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(serverStreamSocket,
@@ -679,7 +681,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
     // socket has shut down the connection.
 
     clientReceiveResult =
-        co_await ntcf::Concurrent::receive(clientStreamSocket,
+        co_await ntci::Concurrent::receive(clientStreamSocket,
                                            clientReceiveOptions);
 
     NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(clientStreamSocket,
@@ -690,17 +692,17 @@ ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
 
     // Close the client stream socket.
 
-    co_await ntcf::Concurrent::close(clientStreamSocket);
+    co_await ntci::Concurrent::close(clientStreamSocket);
     NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED(clientStreamSocket);
 
     // Close the server stream socket.
 
-    co_await ntcf::Concurrent::close(serverStreamSocket);
+    co_await ntci::Concurrent::close(serverStreamSocket);
     NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED(serverStreamSocket);
 
     // Close the listener socket.
 
-    co_await ntcf::Concurrent::close(listenerSocket);
+    co_await ntci::Concurrent::close(listenerSocket);
     NTCF_CONCURRENT_TEST_LOG_LISTENER_CLOSED();
 
     co_return;
@@ -780,7 +782,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationListener(
         ntci::AcceptResult  acceptResult;
 
         acceptResult =
-            co_await ntcf::Concurrent::accept(listenerSocket, acceptOptions);
+            co_await ntci::Concurrent::accept(listenerSocket, acceptOptions);
         NTSCFG_TEST_OK(acceptResult.event().context().error());
 
         NTCF_CONCURRENT_TEST_LOG_SERVER_ACCEPT_COMPLETE(
@@ -800,7 +802,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationListener(
 
     // Close the listener socket.
 
-    co_await ntcf::Concurrent::close(listenerSocket);
+    co_await ntci::Concurrent::close(listenerSocket);
     NTCF_CONCURRENT_TEST_LOG_LISTENER_CLOSED();
 
     co_return;
@@ -824,7 +826,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationClient(
     ntca::ConnectOptions connectOptions;
     ntci::ConnectResult  connectResult;
 
-    connectResult = co_await ntcf::Concurrent::connect(streamSocket,
+    connectResult = co_await ntci::Concurrent::connect(streamSocket,
                                                        configuration.endpoint,
                                                        connectOptions);
     NTSCFG_TEST_OK(connectResult.event().context().error());
@@ -848,7 +850,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationClient(
         ntca::SendOptions sendOptions;
         ntci::SendResult  sendResult;
 
-        sendResult = co_await ntcf::Concurrent::send(streamSocket,
+        sendResult = co_await ntci::Concurrent::send(streamSocket,
                                                      sendData,
                                                      sendOptions);
 
@@ -866,7 +868,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationClient(
         receiveOptions.setSize(1);
 
         receiveResult =
-            co_await ntcf::Concurrent::receive(streamSocket, receiveOptions);
+            co_await ntci::Concurrent::receive(streamSocket, receiveOptions);
         NTSCFG_TEST_OK(receiveResult.event().context().error());
 
         NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(streamSocket,
@@ -875,7 +877,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationClient(
 
     // Close the socket.
 
-    co_await ntcf::Concurrent::close(streamSocket);
+    co_await ntci::Concurrent::close(streamSocket);
     NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED(streamSocket);
 
     NTCF_CONCURRENT_TEST_LOG_CLIENT_COROUTINE(streamSocket, "complete");
@@ -904,7 +906,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationServer(
         receiveOptions.setSize(1);
 
         receiveResult =
-            co_await ntcf::Concurrent::receive(streamSocket, receiveOptions);
+            co_await ntci::Concurrent::receive(streamSocket, receiveOptions);
         NTSCFG_TEST_OK(receiveResult.event().context().error());
 
         NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(streamSocket,
@@ -917,7 +919,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationServer(
         ntca::SendOptions sendOptions;
         ntci::SendResult  sendResult;
 
-        sendResult = co_await ntcf::Concurrent::send(streamSocket,
+        sendResult = co_await ntci::Concurrent::send(streamSocket,
                                                      sendData,
                                                      sendOptions);
 
@@ -930,7 +932,7 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationServer(
 
     // Close the socket.
 
-    co_await ntcf::Concurrent::close(streamSocket);
+    co_await ntci::Concurrent::close(streamSocket);
     NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED(streamSocket);
 
     NTCF_CONCURRENT_TEST_LOG_SERVER_COROUTINE(streamSocket, "complete");

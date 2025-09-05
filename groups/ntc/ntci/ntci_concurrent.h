@@ -45,6 +45,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_listenersocket.h>
 #include <ntci_receiver.h>
 #include <ntci_receiveresult.h>
+#include <ntci_scheduler.h>
 #include <ntci_sender.h>
 #include <ntci_sendresult.h>
 #include <ntci_streamsocket.h>
@@ -63,6 +64,188 @@ namespace ntci {
 ///
 /// @par Thread Safety
 /// This class is thread safe.
+///
+/// @par Usage Example
+/// This example illustrates how to listen for connections, connect a socket,
+/// accept a socket, exchange data between those two sockets, gracefully shut
+/// down each socket and detect the shutdown of each peer, then close each
+/// socket. Note that all operations execute asynchronously, but are awaited
+/// upon in a coroutine allowing these operations to execute concurrently
+/// with other operations.
+///
+/// First, get the default scheduler.
+///
+///     ntsa::Error error;
+///
+///     bsl::shared_ptr<ntci::Scheduler> scheduler;
+///     ntcf::System::getDefault(&scheduler);
+///
+/// Next, create a listener socket.
+///
+///     ntca::ListenerSocketOptions listenerSocketOptions;
+///
+///     listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+///     listenerSocketOptions.setKeepHalfOpen(true);
+///
+///     bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+///         scheduler->createListenerSocket(listenerSocketOptions);
+///
+///     error = listenerSocket->open();
+///     BSLS_ASSERT(!error);
+///
+/// Then, bind the listener socket to any available ephemeral port on the
+/// loopback device.
+///
+///     ntca::BindOptions bindOptions;
+///     ntci::BindResult  bindResult;
+///
+///     bindResult = co_await ntci::Concurrent::bind(
+///         listenerSocket,
+///         ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+///         bindOptions);
+///
+///     BSLS_ASSERT(!bindResult.event().context().error());
+///
+///     // Begin listening.
+///
+///     error = listenerSocket->listen();
+///     BSLS_ASSERT(!error);
+///
+/// Now, create a client stream socket.
+///
+///     ntca::StreamSocketOptions streamSocketOptions;
+///
+///     streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+///     streamSocketOptions.setKeepHalfOpen(true);
+///
+///     bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket =
+///         scheduler->createStreamSocket(streamSocketOptions);
+///
+/// Next, connect the client stream socket to the listener socket.
+///
+///     ntca::ConnectOptions clientConnectOptions;
+///     ntci::ConnectResult  clientConnectResult;
+///
+///     clientConnectResult = co_await ntci::Concurrent::connect(
+///         clientStreamSocket,
+///         listenerSocket->sourceEndpoint(),
+///         clientConnectOptions);
+///
+///     BSLS_ASSERT(!clientConnectResult.event().context().error());
+///
+/// Now, accept the server stream socket from the listener socket.
+///
+///     ntca::AcceptOptions serverAcceptOptions;
+///     ntci::AcceptResult  serverAcceptResult;
+///
+///     serverAcceptResult = co_await ntci::Concurrent::accept(
+///         listenerSocket,
+///         serverAcceptOptions);
+///
+///     bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket =
+///         serverAcceptResult.streamSocket();
+///
+///     BSLS_ASSERT(!serverAcceptResult.event().context().error());
+///
+/// Next, send data from the client stream socket to the server stream socket.
+///
+///     bsl::shared_ptr<bdlbb::Blob> clientSendData =
+///         clientStreamSocket->createOutgoingBlob();
+///
+///     bdlbb::BlobUtil::append(clientSendData.get(), "Hello, world!", 13);
+///
+///     ntca::SendOptions clientSendOptions;
+///     ntci::SendResult  clientSendResult;
+///
+///     clientSendResult = co_await ntci::Concurrent::send(
+///         clientStreamSocket,
+///         clientSendData,
+///         clientSendOptions);
+///
+///     BSLS_ASSERT(!clientSendResult.event().context().error());
+///
+/// Then, receive data at the server stream socket from the client stream
+/// socket.
+///
+///     ntca::ReceiveOptions serverReceiveOptions;
+///     ntci::ReceiveResult  serverReceiveResult;
+///
+///     serverReceiveOptions.setSize(13);
+///
+///     serverReceiveResult = co_await ntci::Concurrent::receive(
+///         serverStreamSocket,
+///         serverReceiveOptions);
+///
+///     BSLS_ASSERT(!serverReceiveResult.event().context().error());
+///
+/// Next, send data from the server stream socket to the client stream socket.
+///
+///     bsl::shared_ptr<bdlbb::Blob> serverSendData =
+///         serverReceiveResult.data();
+///
+///     ntca::SendOptions serverSendOptions;
+///     ntci::SendResult  serverSendResult;
+///
+///     serverSendResult = co_await ntci::Concurrent::send(
+///         serverStreamSocket,
+///         serverSendData,
+///         serverSendOptions);
+///
+///     BSLS_ASSERT(!serverSendResult.event().context().error());
+///
+/// Then, receive data at the client stream socket from the server stream
+/// socket.
+///
+///     ntca::ReceiveOptions clientReceiveOptions;
+///     ntci::ReceiveResult  clientReceiveResult;
+///
+///     clientReceiveOptions.setSize(13);
+///
+///     clientReceiveResult = co_await ntci::Concurrent::receive(
+///         clientStreamSocket,
+///         clientReceiveOptions);
+///
+///     BSLS_ASSERT(!clientReceiveResult.event().context().error());
+///
+/// Next, shutdown transmission from the client socket to initiate the graceful
+/// shutdown of the connection.
+///
+///     error = clientStreamSocket->shutdown(ntsa::ShutdownType::e_SEND,
+///                                          ntsa::ShutdownMode::e_GRACEFUL);
+///     BSLS_ASSERT(!error);
+///
+/// Then, receive data at the server stream socket and notice the client stream
+/// socket has shut down the connection.
+///
+///     serverReceiveResult = co_await ntci::Concurrent::receive(
+///         serverStreamSocket,
+///         serverReceiveOptions);
+///
+///     BSLS_ASSERT(serverReceiveResult.event().context().error() ==
+///                 ntsa::Error(ntsa::Error::e_EOF));
+///
+/// Next, shutdown transmission from the server socket to complete the
+/// graceful shutdown of the connection.
+///
+///     error = serverStreamSocket->shutdown(ntsa::ShutdownType::e_SEND,
+///                                          ntsa::ShutdownMode::e_GRACEFUL);
+///     BSLS_ASSERT(!error);
+///
+/// Then, receive data at the client stream socket and notice the server stream
+/// socket has shut down the connection.
+///
+///     clientReceiveResult = co_await ntci::Concurrent::receive(
+///         clientStreamSocket,
+///         clientReceiveOptions);
+///
+///     BSLS_ASSERT(clientReceiveResult.event().context().error() ==
+///                 ntsa::Error(ntsa::Error::e_EOF));
+///
+/// Finally, close the client and serverstream socket and the listener socket.
+///
+///     co_await ntci::Concurrent::close(clientStreamSocket);
+///     co_await ntci::Concurrent::close(serverStreamSocket);
+///     co_await ntci::Concurrent::close(listenerSocket);
 ///
 /// @ingroup module_ntci_runtime
 class Concurrent
