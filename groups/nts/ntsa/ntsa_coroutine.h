@@ -406,8 +406,8 @@ class Coroutine::FunctionMapAwaiter
     using AwaiterType =
         typename Compiler::AwaitableTraits<AWAITABLE&&>::AwaiterType;
 
-    FUNCTION&&  m_function;
-    AwaiterType m_awaiter;
+    FUNCTION&&  d_function;
+    AwaiterType d_awaiter;
 
   public:
     FunctionMapAwaiter(FUNCTION&& function, AWAITABLE&& awaitable) noexcept;
@@ -438,8 +438,8 @@ class Coroutine::FunctionMapAwaitable
     auto operator co_await() && noexcept;
 
   private:
-    FUNCTION  m_function;
-    AWAITABLE m_awaitable;
+    FUNCTION  d_function;
+    AWAITABLE d_awaitable;
 };
 
 /// @internal @brief TODO
@@ -1713,7 +1713,7 @@ class Coroutine::JoinAwaitable<std::tuple<TASKS...> >
 
   private:
     JoinCounter          d_counter;
-    std::tuple<TASKS...> m_tasks;
+    std::tuple<TASKS...> d_tasks;
 };
 
 /// @internal @brief
@@ -1762,7 +1762,7 @@ class Coroutine::JoinAwaitable
     bool ready() const noexcept;
 
     JoinCounter d_counter;
-    CONTAINER   m_tasks;
+    CONTAINER   d_tasks;
 };
 
 /// @internal @brief
@@ -1943,8 +1943,8 @@ class Coroutine::Join
 template <typename FUNCTION, typename AWAITABLE>
 NTSCFG_INLINE Coroutine::FunctionMapAwaiter<FUNCTION, AWAITABLE>::
     FunctionMapAwaiter(FUNCTION&& function, AWAITABLE&& awaitable) noexcept
-: m_function(static_cast<FUNCTION&&>(function)),
-  m_awaiter(Compiler::getAwaiter(static_cast<AWAITABLE&&>(awaitable)))
+: d_function(static_cast<FUNCTION&&>(function)),
+  d_awaiter(Compiler::getAwaiter(static_cast<AWAITABLE&&>(awaitable)))
 {
 }
 
@@ -1952,7 +1952,7 @@ template <typename FUNCTION, typename AWAITABLE>
 NTSCFG_INLINE decltype(auto)
     Coroutine::FunctionMapAwaiter<FUNCTION, AWAITABLE>::await_ready() noexcept
 {
-    return static_cast<AwaiterType&&>(m_awaiter).await_ready();
+    return static_cast<AwaiterType&&>(d_awaiter).await_ready();
 }
 
 template <typename FUNCTION, typename AWAITABLE>
@@ -1961,7 +1961,7 @@ NTSCFG_INLINE decltype(auto)
     Coroutine::FunctionMapAwaiter<FUNCTION, AWAITABLE>::await_suspend(
         std::coroutine_handle<PROMISE> coroutine) noexcept
 {
-    return static_cast<AwaiterType&&>(m_awaiter).await_suspend(
+    return static_cast<AwaiterType&&>(d_awaiter).await_suspend(
         std::move(coroutine));
 }
 
@@ -1972,13 +1972,13 @@ NTSCFG_INLINE decltype(auto)
     if constexpr (std::is_void_v<decltype(
                       std::declval<AwaiterType>().await_resume())>)
     {
-        static_cast<AwaiterType&&>(m_awaiter).await_resume();
-        return std::invoke(static_cast<FUNCTION&&>(m_function));
+        static_cast<AwaiterType&&>(d_awaiter).await_resume();
+        return std::invoke(static_cast<FUNCTION&&>(d_function));
     }
     else {
         return std::invoke(
-            static_cast<FUNCTION&&>(m_function),
-            static_cast<AwaiterType&&>(m_awaiter).await_resume());
+            static_cast<FUNCTION&&>(d_function),
+            static_cast<AwaiterType&&>(d_awaiter).await_resume());
     }
 }
 
@@ -1987,8 +1987,8 @@ template <typename FUNCTION_ARG, typename AWAITABLE_ARG>
 NTSCFG_INLINE Coroutine::FunctionMapAwaitable<FUNCTION, AWAITABLE>::
     FunctionMapAwaitable(FUNCTION_ARG&&  function,
                          AWAITABLE_ARG&& awaitable) noexcept
-: m_function(static_cast<FUNCTION_ARG&&>(function)),
-  m_awaitable(static_cast<AWAITABLE_ARG&&>(awaitable))
+: d_function(static_cast<FUNCTION_ARG&&>(function)),
+  d_awaitable(static_cast<AWAITABLE_ARG&&>(awaitable))
 {
 }
 
@@ -1996,8 +1996,8 @@ template <typename FUNCTION, typename AWAITABLE>
 NTSCFG_INLINE auto Coroutine::FunctionMapAwaitable<FUNCTION, AWAITABLE>::
 operator co_await() const& noexcept
 {
-    return FunctionMapAwaiter<const FUNCTION&, const AWAITABLE&>(m_function,
-                                                                 m_awaitable);
+    return FunctionMapAwaiter<const FUNCTION&, const AWAITABLE&>(d_function,
+                                                                 d_awaitable);
 }
 
 template <typename FUNCTION, typename AWAITABLE>
@@ -2005,7 +2005,7 @@ template <typename FUNCTION, typename AWAITABLE>
     operator co_await() &
     noexcept
 {
-    return FunctionMapAwaiter<FUNCTION&, AWAITABLE&>(m_function, m_awaitable);
+    return FunctionMapAwaiter<FUNCTION&, AWAITABLE&>(d_function, d_awaitable);
 }
 
 template <typename FUNCTION, typename AWAITABLE>
@@ -2014,8 +2014,8 @@ template <typename FUNCTION, typename AWAITABLE>
     noexcept
 {
     return FunctionMapAwaiter<FUNCTION&&, AWAITABLE&&>(
-        static_cast<FUNCTION&&>(m_function),
-        static_cast<AWAITABLE&&>(m_awaitable));
+        static_cast<FUNCTION&&>(d_function),
+        static_cast<AWAITABLE&&>(d_awaitable));
 }
 
 template <typename FUNCTION>
@@ -3079,7 +3079,7 @@ NTSCFG_INLINE Coroutine::JoinAwaitable<std::tuple<TASKS...> >::JoinAwaitable(
     TASKS&&... tasks)
     noexcept(std::conjunction_v<std::is_nothrow_move_constructible<TASKS>...>)
 : d_counter(sizeof...(TASKS))
-, m_tasks(std::move(tasks)...)
+, d_tasks(std::move(tasks)...)
 {
 }
 
@@ -3088,14 +3088,14 @@ NTSCFG_INLINE Coroutine::JoinAwaitable<std::tuple<TASKS...> >::JoinAwaitable(
     std::tuple<TASKS...>&& tasks)
     noexcept(std::is_nothrow_move_constructible_v<std::tuple<TASKS...> >)
 : d_counter(sizeof...(TASKS))
-, m_tasks(std::move(tasks))
+, d_tasks(std::move(tasks))
 {
 }
 
 template <typename... TASKS>
 NTSCFG_INLINE Coroutine::JoinAwaitable<std::tuple<TASKS...> >::JoinAwaitable(
     JoinAwaitable&& other) noexcept : d_counter(sizeof...(TASKS)),
-                                      m_tasks(std::move(other.m_tasks))
+                                      d_tasks(std::move(other.d_tasks))
 {
 }
 
@@ -3110,27 +3110,27 @@ template <typename... TASKS>
     noexcept
 {
     struct Awaiter {
-        Awaiter(JoinAwaitable& awaitable) noexcept : m_awaitable(awaitable)
+        Awaiter(JoinAwaitable& awaitable) noexcept : d_awaitable(awaitable)
         {
         }
 
         bool await_ready() const noexcept
         {
-            return m_awaitable.ready();
+            return d_awaitable.ready();
         }
 
         bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
         {
-            return m_awaitable.suspend(coroutine);
+            return d_awaitable.suspend(coroutine);
         }
 
         std::tuple<TASKS...>& await_resume() noexcept
         {
-            return m_awaitable.m_tasks;
+            return d_awaitable.d_tasks;
         }
 
       private:
-        JoinAwaitable& m_awaitable;
+        JoinAwaitable& d_awaitable;
     };
 
     return Awaiter{*this};
@@ -3142,27 +3142,27 @@ template <typename... TASKS>
     noexcept
 {
     struct Awaiter {
-        Awaiter(JoinAwaitable& awaitable) noexcept : m_awaitable(awaitable)
+        Awaiter(JoinAwaitable& awaitable) noexcept : d_awaitable(awaitable)
         {
         }
 
         bool await_ready() const noexcept
         {
-            return m_awaitable.ready();
+            return d_awaitable.ready();
         }
 
         bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
         {
-            return m_awaitable.suspend(coroutine);
+            return d_awaitable.suspend(coroutine);
         }
 
         std::tuple<TASKS...>&& await_resume() noexcept
         {
-            return std::move(m_awaitable.m_tasks);
+            return std::move(d_awaitable.d_tasks);
         }
 
       private:
-        JoinAwaitable& m_awaitable;
+        JoinAwaitable& d_awaitable;
     };
 
     return Awaiter{*this};
@@ -3183,7 +3183,7 @@ NTSCFG_INLINE void Coroutine::JoinAwaitable<std::tuple<TASKS...> >::startup(
     std::integer_sequence<std::size_t, INDICES...>) noexcept
 {
     (void)std::initializer_list<int>{
-        (std::get<INDICES>(m_tasks).start(&d_counter), 0)...};
+        (std::get<INDICES>(d_tasks).start(&d_counter), 0)...};
 }
 
 template <typename... TASKS>
@@ -3196,7 +3196,7 @@ NTSCFG_INLINE bool Coroutine::JoinAwaitable<std::tuple<TASKS...> >::ready()
 template <typename CONTAINER>
 NTSCFG_INLINE Coroutine::JoinAwaitable<CONTAINER>::JoinAwaitable(
     CONTAINER&& tasks) noexcept : d_counter(tasks.size()),
-                                  m_tasks(std::forward<CONTAINER>(tasks))
+                                  d_tasks(std::forward<CONTAINER>(tasks))
 {
 }
 
@@ -3204,8 +3204,8 @@ template <typename CONTAINER>
 NTSCFG_INLINE Coroutine::JoinAwaitable<CONTAINER>::JoinAwaitable(
     JoinAwaitable&& other)
     noexcept(std::is_nothrow_move_constructible_v<CONTAINER>)
-: d_counter(other.m_tasks.size())
-, m_tasks(std::move(other.m_tasks))
+: d_counter(other.d_tasks.size())
+, d_tasks(std::move(other.d_tasks))
 {
 }
 
@@ -3223,27 +3223,27 @@ template <typename CONTAINER>
     {
       public:
         Awaiter(JoinAwaitable& awaitable)
-        : m_awaitable(awaitable)
+        : d_awaitable(awaitable)
         {
         }
 
         bool await_ready() const noexcept
         {
-            return m_awaitable.ready();
+            return d_awaitable.ready();
         }
 
         bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
         {
-            return m_awaitable.suspend(coroutine);
+            return d_awaitable.suspend(coroutine);
         }
 
         CONTAINER& await_resume() noexcept
         {
-            return m_awaitable.m_tasks;
+            return d_awaitable.d_tasks;
         }
 
       private:
-        JoinAwaitable& m_awaitable;
+        JoinAwaitable& d_awaitable;
     };
 
     return Awaiter{*this};
@@ -3258,27 +3258,27 @@ template <typename CONTAINER>
     {
       public:
         Awaiter(JoinAwaitable& awaitable)
-        : m_awaitable(awaitable)
+        : d_awaitable(awaitable)
         {
         }
 
         bool await_ready() const noexcept
         {
-            return m_awaitable.ready();
+            return d_awaitable.ready();
         }
 
         bool await_suspend(std::coroutine_handle<void> coroutine) noexcept
         {
-            return m_awaitable.suspend(coroutine);
+            return d_awaitable.suspend(coroutine);
         }
 
         CONTAINER&& await_resume() noexcept
         {
-            return std::move(m_awaitable.m_tasks);
+            return std::move(d_awaitable.d_tasks);
         }
 
       private:
-        JoinAwaitable& m_awaitable;
+        JoinAwaitable& d_awaitable;
     };
 
     return Awaiter{*this};
@@ -3296,7 +3296,7 @@ NTSCFG_INLINE bool Coroutine::JoinAwaitable<CONTAINER>::suspend(
 template <typename CONTAINER>
 NTSCFG_INLINE void Coroutine::JoinAwaitable<CONTAINER>::startup()
 {
-    for (auto&& task : m_tasks) {
+    for (auto&& task : d_tasks) {
         task.start(&d_counter);
     }
 }
