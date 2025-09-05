@@ -24,14 +24,15 @@ BSLS_IDENT_RCSID(ntcf_system_t_cpp, "$Id$ $CSID$")
 #include <ntccfg_config.h>
 #include <ntccfg_platform.h>
 #include <ntcd_datautil.h>
+#include <ntci_concurrent.h>
 #include <ntci_log.h>
 #include <ntcs_blobutil.h>
 #include <ntcs_datapool.h>
 #include <ntcs_ratelimiter.h>
 #include <ntcscm_version.h>
 #include <ntcu_datagramsocketeventqueue.h>
-#include <ntcu_streamsocketeventqueue.h>
 #include <ntcu_listenersocketeventqueue.h>
+#include <ntcu_streamsocketeventqueue.h>
 #include <ntsa_adapter.h>
 #include <ntsa_endpoint.h>
 #include <ntsa_ipaddress.h>
@@ -381,16 +382,16 @@ class SystemTest
         bslma::Allocator*                       allocator);
 
     static void concernDatagramSocketRelease(
-            const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-            bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernStreamSocketHandleTransfer(
         const bsl::shared_ptr<ntci::Scheduler>& scheduler,
         bslma::Allocator*                       allocator);
 
     static void concernDatagramSocketHandleTransfer(
-            const bsl::shared_ptr<ntci::Scheduler>& scheduler,
-            bslma::Allocator*                       allocator);
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
 
     static void concernInterfaceFunctionAndTimerDistribution(
         const bsl::shared_ptr<ntci::Scheduler>& scheduler,
@@ -512,14 +513,14 @@ class SystemTest
     // Verify that a TLS session can be downgraded abortively, i.e. not
     // proceeding through the TLS shutdown sequence (this requires both sides
     // to operate into a state where they expect to be able to simply and
-    // reliably stop speaking TLS and start speaking plaintext again, as 
+    // reliably stop speaking TLS and start speaking plaintext again, as
     // some supported applications do.)
     static void verifyTlsDowngradeAbortively();
 
     // Verify that a TLS session can be downgraded abortively, i.e. not
     // proceeding through the TLS shutdown sequence (this requires both sides
     // to operate into a state where they expect to be able to simply and
-    // reliably stop speaking TLS and start speaking plaintext again, as 
+    // reliably stop speaking TLS and start speaking plaintext again, as
     // some supported applications do.) Furthermore, ensure that a sort of
     // application protocol that notifies the peer that an abortively downgrade
     // should occur can be sent in ciphertext followed by a message in clear
@@ -5478,9 +5479,9 @@ void SystemTest::ResolverUtil::processGetIpAddressResult(
             for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
                 const ntsa::IpAddress& ipAddress = ipAddressList[i];
                 NTCI_LOG_STREAM_DEBUG << "The domain name '"
-                                     << event.context().domainName()
-                                     << "' has resolved to " << ipAddress
-                                     << NTCI_LOG_STREAM_END;
+                                      << event.context().domainName()
+                                      << "' has resolved to " << ipAddress
+                                      << NTCI_LOG_STREAM_END;
             }
         }
         else {
@@ -5513,9 +5514,9 @@ void SystemTest::ResolverUtil::processGetDomainNameResult(
         }
         else {
             NTCI_LOG_STREAM_DEBUG << "The IP address '"
-                                 << event.context().ipAddress()
-                                 << "' is not assigned to any domain name"
-                                 << NTCI_LOG_STREAM_END;
+                                  << event.context().ipAddress()
+                                  << "' is not assigned to any domain name"
+                                  << NTCI_LOG_STREAM_END;
         }
     }
 
@@ -5538,9 +5539,9 @@ void SystemTest::ResolverUtil::processGetPortResult(
             for (bsl::size_t i = 0; i < portList.size(); ++i) {
                 ntsa::Port port = portList[i];
                 NTCI_LOG_STREAM_DEBUG << "The service name '"
-                                     << event.context().serviceName()
-                                     << "' has resolved to port " << port
-                                     << NTCI_LOG_STREAM_END;
+                                      << event.context().serviceName()
+                                      << "' has resolved to port " << port
+                                      << NTCI_LOG_STREAM_END;
             }
         }
         else {
@@ -5567,13 +5568,13 @@ void SystemTest::ResolverUtil::processGetServiceNameResult(
     if (event.type() == ntca::GetServiceNameEventType::e_COMPLETE) {
         if (!serviceName.empty()) {
             NTCI_LOG_STREAM_DEBUG << "The port " << event.context().port()
-                                 << " has resolved to the service name '"
-                                 << serviceName << "'" << NTCI_LOG_STREAM_END;
+                                  << " has resolved to the service name '"
+                                  << serviceName << "'" << NTCI_LOG_STREAM_END;
         }
         else {
             NTCI_LOG_STREAM_DEBUG << "The port '" << event.context().port()
-                                 << "' is not assigned to any service name"
-                                 << NTCI_LOG_STREAM_END;
+                                  << "' is not assigned to any service name"
+                                  << NTCI_LOG_STREAM_END;
         }
     }
 
@@ -5676,7 +5677,7 @@ void SystemTest::CloseUtil::processConnect(
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_STREAM_DEBUG << "Processing connect event = " << event
-                         << NTCI_LOG_STREAM_END;
+                          << NTCI_LOG_STREAM_END;
 
     // BSLS_ASSERT(event.type() == ntca::ConnectEventType::e_COMPLETE);
     semaphore->post();
@@ -6388,9 +6389,9 @@ void SystemTest::concern(const ConcernCallback& concernCallback,
 #endif
 
                 BSLS_LOG_DEBUG("Testing driver %s (%s), zero-copy: %s",
-                              driverType.c_str(),
-                              (dynamicLoadBalancing ? "dynamic" : "static"),
-                              (forceZeroCopy ? "enabled" : "disabled"));
+                               driverType.c_str(),
+                               (dynamicLoadBalancing ? "dynamic" : "static"),
+                               (forceZeroCopy ? "enabled" : "disabled"));
 
                 ntca::SchedulerConfig schedulerConfig;
                 schedulerConfig.setDriverName(driverType);
@@ -6446,11 +6447,10 @@ void SystemTest::concernDataExchange(
 
 #endif
 
-    const bool ENCRYPTION[] = {
-        false
+    const bool ENCRYPTION[] = {false
 #if NTCF_SYSTEM_TEST_BUILD_WITH_TLS
-        ,
-        true
+                               ,
+                               true
 #endif
     };
 
@@ -6492,8 +6492,8 @@ void SystemTest::concernDataExchange(
                        addressFamilyList.size())
         {
             BSLS_LOG_DEBUG("Testing encryption %d address family %d",
-                          (int)(encryption),
-                          (int)(addressFamilyList[addressFamilyIndex]));
+                           (int)(encryption),
+                           (int)(addressFamilyList[addressFamilyIndex]));
 
             test::TransferParameters parameters;
 
@@ -6663,20 +6663,21 @@ void SystemTest::concernClose(
     // when implicitly binding the socket as its opened.
 
     {
-        bsl::shared_ptr<ntsi::DatagramSocket> basicDatagramSocket = 
+        bsl::shared_ptr<ntsi::DatagramSocket> basicDatagramSocket =
             ntsf::System::createDatagramSocket(allocator);
 
-        error = basicDatagramSocket->open(
-            ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        error =
+            basicDatagramSocket->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
         NTSCFG_TEST_OK(error);
 
-        error = basicDatagramSocket->bindAny(
-            ntsa::Transport::e_UDP_IPV4_DATAGRAM, false);
+        error =
+            basicDatagramSocket->bindAny(ntsa::Transport::e_UDP_IPV4_DATAGRAM,
+                                         false);
         NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint basicDatagramSocketEndpoint;
-        error = basicDatagramSocket->sourceEndpoint(
-            &basicDatagramSocketEndpoint);
+        error =
+            basicDatagramSocket->sourceEndpoint(&basicDatagramSocketEndpoint);
         NTSCFG_TEST_OK(error);
 
         ntca::DatagramSocketOptions datagramSocketOptions;
@@ -6698,20 +6699,21 @@ void SystemTest::concernClose(
     // when explicitly binding the socket after it is opened.
 
     {
-        bsl::shared_ptr<ntsi::DatagramSocket> basicDatagramSocket = 
+        bsl::shared_ptr<ntsi::DatagramSocket> basicDatagramSocket =
             ntsf::System::createDatagramSocket(allocator);
 
-        error = basicDatagramSocket->open(
-            ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        error =
+            basicDatagramSocket->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
         NTSCFG_TEST_OK(error);
 
-        error = basicDatagramSocket->bindAny(
-            ntsa::Transport::e_UDP_IPV4_DATAGRAM, false);
+        error =
+            basicDatagramSocket->bindAny(ntsa::Transport::e_UDP_IPV4_DATAGRAM,
+                                         false);
         NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint basicDatagramSocketEndpoint;
-        error = basicDatagramSocket->sourceEndpoint(
-            &basicDatagramSocketEndpoint);
+        error =
+            basicDatagramSocket->sourceEndpoint(&basicDatagramSocketEndpoint);
         NTSCFG_TEST_OK(error);
 
         ntca::DatagramSocketOptions datagramSocketOptions;
@@ -6728,8 +6730,9 @@ void SystemTest::concernClose(
         ntca::BindOptions bindOptions;
         ntci::BindFuture  bindFuture;
 
-        error = datagramSocket->bind(
-            basicDatagramSocketEndpoint, bindOptions, bindFuture);
+        error = datagramSocket->bind(basicDatagramSocketEndpoint,
+                                     bindOptions,
+                                     bindFuture);
         if (error) {
             NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
         }
@@ -6737,7 +6740,7 @@ void SystemTest::concernClose(
             ntci::BindResult bindResult;
             error = bindFuture.wait(&bindResult);
             NTSCFG_TEST_OK(error);
-            NTSCFG_TEST_EQ(bindResult.event().context().error(), 
+            NTSCFG_TEST_EQ(bindResult.event().context().error(),
                            ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
         }
 
@@ -6786,7 +6789,7 @@ void SystemTest::concernClose(
 
         bslmt::Semaphore      semaphore;
         ntci::ConnectCallback connectCallback =
-        streamSocket->createConnectCallback(
+            streamSocket->createConnectCallback(
                 NTCCFG_BIND(&test::CloseUtil::processConnect,
                             NTCCFG_BIND_PLACEHOLDER_1,
                             NTCCFG_BIND_PLACEHOLDER_2,
@@ -6809,19 +6812,18 @@ void SystemTest::concernClose(
     // when implicitly binding the socket as its opened.
 
     {
-        bsl::shared_ptr<ntsi::StreamSocket> basicStreamSocket = 
+        bsl::shared_ptr<ntsi::StreamSocket> basicStreamSocket =
             ntsf::System::createStreamSocket(allocator);
 
         error = basicStreamSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
         NTSCFG_TEST_OK(error);
 
-        error = basicStreamSocket->bindAny(
-            ntsa::Transport::e_TCP_IPV4_STREAM, false);
+        error = basicStreamSocket->bindAny(ntsa::Transport::e_TCP_IPV4_STREAM,
+                                           false);
         NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint basicStreamSocketEndpoint;
-        error = basicStreamSocket->sourceEndpoint(
-            &basicStreamSocketEndpoint);
+        error = basicStreamSocket->sourceEndpoint(&basicStreamSocketEndpoint);
         NTSCFG_TEST_OK(error);
 
         ntca::StreamSocketOptions streamSocketOptions;
@@ -6842,19 +6844,18 @@ void SystemTest::concernClose(
     // when explicitly binding the socket after it is opened.
 
     {
-        bsl::shared_ptr<ntsi::StreamSocket> basicStreamSocket = 
+        bsl::shared_ptr<ntsi::StreamSocket> basicStreamSocket =
             ntsf::System::createStreamSocket(allocator);
 
         error = basicStreamSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
         NTSCFG_TEST_OK(error);
 
-        error = basicStreamSocket->bindAny(
-            ntsa::Transport::e_TCP_IPV4_STREAM, false);
+        error = basicStreamSocket->bindAny(ntsa::Transport::e_TCP_IPV4_STREAM,
+                                           false);
         NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint basicStreamSocketEndpoint;
-        error = basicStreamSocket->sourceEndpoint(
-            &basicStreamSocketEndpoint);
+        error = basicStreamSocket->sourceEndpoint(&basicStreamSocketEndpoint);
         NTSCFG_TEST_OK(error);
 
         ntca::StreamSocketOptions streamSocketOptions;
@@ -6870,8 +6871,9 @@ void SystemTest::concernClose(
         ntca::BindOptions bindOptions;
         ntci::BindFuture  bindFuture;
 
-        error = streamSocket->bind(
-            basicStreamSocketEndpoint, bindOptions, bindFuture);
+        error = streamSocket->bind(basicStreamSocketEndpoint,
+                                   bindOptions,
+                                   bindFuture);
         if (error) {
             NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
         }
@@ -6879,13 +6881,13 @@ void SystemTest::concernClose(
             ntci::BindResult bindResult;
             error = bindFuture.wait(&bindResult);
             NTSCFG_TEST_OK(error);
-            NTSCFG_TEST_EQ(bindResult.event().context().error(), 
+            NTSCFG_TEST_EQ(bindResult.event().context().error(),
                            ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
         }
 
         ntci::StreamSocketCloseGuard closeGuard(streamSocket);
     }
-    
+
     // Test closing a listener socket immediately after creating it, without
     // either opening or connecting it.
 
@@ -6918,19 +6920,20 @@ void SystemTest::concernClose(
     // when implicitly binding the socket as its opened.
 
     {
-        bsl::shared_ptr<ntsi::ListenerSocket> basicListenerSocket = 
+        bsl::shared_ptr<ntsi::ListenerSocket> basicListenerSocket =
             ntsf::System::createListenerSocket(allocator);
 
         error = basicListenerSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
         NTSCFG_TEST_OK(error);
 
-        error = basicListenerSocket->bindAny(
-            ntsa::Transport::e_TCP_IPV4_STREAM, false);
+        error =
+            basicListenerSocket->bindAny(ntsa::Transport::e_TCP_IPV4_STREAM,
+                                         false);
         NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint basicListenerSocketEndpoint;
-        error = basicListenerSocket->sourceEndpoint(
-            &basicListenerSocketEndpoint);
+        error =
+            basicListenerSocket->sourceEndpoint(&basicListenerSocketEndpoint);
         NTSCFG_TEST_OK(error);
 
         ntca::ListenerSocketOptions listenerSocketOptions;
@@ -6951,19 +6954,20 @@ void SystemTest::concernClose(
     // when explicitly binding the socket after it is opened.
 
     {
-        bsl::shared_ptr<ntsi::ListenerSocket> basicListenerSocket = 
+        bsl::shared_ptr<ntsi::ListenerSocket> basicListenerSocket =
             ntsf::System::createListenerSocket(allocator);
 
         error = basicListenerSocket->open(ntsa::Transport::e_TCP_IPV4_STREAM);
         NTSCFG_TEST_OK(error);
 
-        error = basicListenerSocket->bindAny(
-            ntsa::Transport::e_TCP_IPV4_STREAM, false);
+        error =
+            basicListenerSocket->bindAny(ntsa::Transport::e_TCP_IPV4_STREAM,
+                                         false);
         NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint basicListenerSocketEndpoint;
-        error = basicListenerSocket->sourceEndpoint(
-            &basicListenerSocketEndpoint);
+        error =
+            basicListenerSocket->sourceEndpoint(&basicListenerSocketEndpoint);
         NTSCFG_TEST_OK(error);
 
         ntca::ListenerSocketOptions listenerSocketOptions;
@@ -6979,8 +6983,9 @@ void SystemTest::concernClose(
         ntca::BindOptions bindOptions;
         ntci::BindFuture  bindFuture;
 
-        error = listenerSocket->bind(
-            basicListenerSocketEndpoint, bindOptions, bindFuture);
+        error = listenerSocket->bind(basicListenerSocketEndpoint,
+                                     bindOptions,
+                                     bindFuture);
         if (error) {
             NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
         }
@@ -6988,7 +6993,7 @@ void SystemTest::concernClose(
             ntci::BindResult bindResult;
             error = bindFuture.wait(&bindResult);
             NTSCFG_TEST_OK(error);
-            NTSCFG_TEST_EQ(bindResult.event().context().error(), 
+            NTSCFG_TEST_EQ(bindResult.event().context().error(),
                            ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE));
         }
 
@@ -7000,26 +7005,28 @@ class SystemTestResolutionSession : public ntci::StreamSocketSession
 {
     bslmt::Barrier* d_barrier_p;
 
-public:
+  public:
     // Create a new stream socket session.
     explicit SystemTestResolutionSession(bslmt::Barrier* barrier)
-    : d_barrier_p(barrier) 
-    {}
+    : d_barrier_p(barrier)
+    {
+    }
 
     // Destroy this object.
-    ~SystemTestResolutionSession() BSLS_KEYWORD_OVERRIDE {}
+    ~SystemTestResolutionSession() BSLS_KEYWORD_OVERRIDE
+    {
+    }
 
     // Process the condition that a connection is initiated.
     void processConnectInitiated(
         const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-        const ntca::ConnectEvent&                  event)
-        BSLS_KEYWORD_OVERRIDE
+        const ntca::ConnectEvent&                  event) BSLS_KEYWORD_OVERRIDE
     {
         NTCI_LOG_CONTEXT();
 
-        NTCI_LOG_STREAM_DEBUG << "Connect event " << event 
+        NTCI_LOG_STREAM_DEBUG << "Connect event " << event
                               << NTCI_LOG_STREAM_END;
-                              
+
         d_barrier_p->wait();
         d_barrier_p->wait();
     }
@@ -7032,7 +7039,7 @@ void SystemTest::concernConnectInitiateEndpointAndClose(
     // Concern: Closing sockets immediately after a connection is initiated to
     // a name.
 
-    #if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -7067,8 +7074,8 @@ void SystemTest::concernConnectInitiateEndpointAndClose(
 
     const ntci::ConnectCallback connectCallback;
 
-    error = streamSocket->connect(connectEndpoint, 
-                                  connectOptions, 
+    error = streamSocket->connect(connectEndpoint,
+                                  connectOptions,
                                   connectCallback);
     NTSCFG_TEST_OK(error);
 
@@ -7076,7 +7083,7 @@ void SystemTest::concernConnectInitiateEndpointAndClose(
 
     ntci::CloseFuture closeFuture;
     streamSocket->close(closeFuture);
-    
+
     barrier.wait();
 
     ntci::CloseResult closeResult;
@@ -7091,7 +7098,7 @@ void SystemTest::concernConnectInitiateNameAndClose(
     // Concern: Closing sockets immediately after a connection is initiated to
     // a name.
 
-    #if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -7126,14 +7133,15 @@ void SystemTest::concernConnectInitiateNameAndClose(
 
     const ntci::ConnectCallback connectCallback;
 
-    error = streamSocket->connect(connectName, connectOptions, connectCallback);
+    error =
+        streamSocket->connect(connectName, connectOptions, connectCallback);
     NTSCFG_TEST_OK(error);
 
     barrier.wait();
 
     ntci::CloseFuture closeFuture;
     streamSocket->close(closeFuture);
-    
+
     barrier.wait();
 
     ntci::CloseResult closeResult;
@@ -9675,7 +9683,7 @@ void SystemTest::concernConnectLimitPassive(bslma::Allocator* allocator)
     NTSCFG_TEST_OK(error);
 
     bsl::shared_ptr<ntcu::ListenerSocketEventQueue> listenerSocketEventQueue;
-    listenerSocketEventQueue.createInplace(NTSCFG_TEST_ALLOCATOR, 
+    listenerSocketEventQueue.createInplace(NTSCFG_TEST_ALLOCATOR,
                                            NTSCFG_TEST_ALLOCATOR);
 
     // Create a listener socket and begin listening.
@@ -11633,14 +11641,14 @@ void SystemTest::concernStreamSocketRelease(
     NTSCFG_TEST_EQ(clientHandle1, clientHandle0);
 
     ntsa::Endpoint clientSourceEndpoint1;
-    error = ntsf::System::getSourceEndpoint(&clientSourceEndpoint1,
-                                            clientHandle1);
+    error =
+        ntsf::System::getSourceEndpoint(&clientSourceEndpoint1, clientHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(clientSourceEndpoint1, clientSourceEndpoint0);
 
     ntsa::Endpoint clientRemoteEndpoint1;
-    error = ntsf::System::getRemoteEndpoint(&clientRemoteEndpoint1,
-                                            clientHandle1);
+    error =
+        ntsf::System::getRemoteEndpoint(&clientRemoteEndpoint1, clientHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(clientRemoteEndpoint1, clientRemoteEndpoint0);
 
@@ -11649,14 +11657,14 @@ void SystemTest::concernStreamSocketRelease(
     NTSCFG_TEST_EQ(serverHandle1, serverHandle0);
 
     ntsa::Endpoint serverSourceEndpoint1;
-    error = ntsf::System::getSourceEndpoint(&serverSourceEndpoint1,
-                                            serverHandle1);
+    error =
+        ntsf::System::getSourceEndpoint(&serverSourceEndpoint1, serverHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(serverSourceEndpoint1, serverSourceEndpoint0);
 
     ntsa::Endpoint serverRemoteEndpoint1;
-    error = ntsf::System::getRemoteEndpoint(&serverRemoteEndpoint1,
-                                            serverHandle1);
+    error =
+        ntsf::System::getRemoteEndpoint(&serverRemoteEndpoint1, serverHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(serverRemoteEndpoint1, serverRemoteEndpoint0);
 
@@ -11694,7 +11702,7 @@ void SystemTest::concernDatagramSocketRelease(
     serverSocketOptions.setTransport(transport);
     serverSocketOptions.setSourceEndpoint(SystemTest::any(transport));
 
-    bsl::shared_ptr<ntci::DatagramSocket> serverSocket = 
+    bsl::shared_ptr<ntci::DatagramSocket> serverSocket =
         scheduler->createDatagramSocket(serverSocketOptions, allocator);
 
     error = serverSocket->open();
@@ -11706,7 +11714,7 @@ void SystemTest::concernDatagramSocketRelease(
     clientSocketOptions.setTransport(transport);
     clientSocketOptions.setSourceEndpoint(SystemTest::any(transport));
 
-    bsl::shared_ptr<ntci::DatagramSocket> clientSocket = 
+    bsl::shared_ptr<ntci::DatagramSocket> clientSocket =
         scheduler->createDatagramSocket(clientSocketOptions, allocator);
 
     error = clientSocket->open();
@@ -11715,10 +11723,9 @@ void SystemTest::concernDatagramSocketRelease(
     // Connect the client datagram socket to the server.
 
     ntci::ConnectFuture clientConnectFuture;
-    error = clientSocket->connect(
-        serverSocket->sourceEndpoint(),
-        ntca::ConnectOptions(),
-        clientConnectFuture);
+    error = clientSocket->connect(serverSocket->sourceEndpoint(),
+                                  ntca::ConnectOptions(),
+                                  clientConnectFuture);
     NTSCFG_TEST_OK(error);
 
     ntci::ConnectResult clientConnectResult;
@@ -11729,10 +11736,9 @@ void SystemTest::concernDatagramSocketRelease(
     // Connect the server datagram socket to the client.
 
     ntci::ConnectFuture serverConnectFuture;
-    error = serverSocket->connect(
-        clientSocket->sourceEndpoint(),
-        ntca::ConnectOptions(),
-        serverConnectFuture);
+    error = serverSocket->connect(clientSocket->sourceEndpoint(),
+                                  ntca::ConnectOptions(),
+                                  serverConnectFuture);
     NTSCFG_TEST_OK(error);
 
     ntci::ConnectResult serverConnectResult;
@@ -11785,14 +11791,14 @@ void SystemTest::concernDatagramSocketRelease(
     NTSCFG_TEST_EQ(clientHandle1, clientHandle0);
 
     ntsa::Endpoint clientSourceEndpoint1;
-    error = ntsf::System::getSourceEndpoint(&clientSourceEndpoint1,
-                                            clientHandle1);
+    error =
+        ntsf::System::getSourceEndpoint(&clientSourceEndpoint1, clientHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(clientSourceEndpoint1, clientSourceEndpoint0);
 
     ntsa::Endpoint clientRemoteEndpoint1;
-    error = ntsf::System::getRemoteEndpoint(&clientRemoteEndpoint1,
-                                            clientHandle1);
+    error =
+        ntsf::System::getRemoteEndpoint(&clientRemoteEndpoint1, clientHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(clientRemoteEndpoint1, clientRemoteEndpoint0);
 
@@ -11801,14 +11807,14 @@ void SystemTest::concernDatagramSocketRelease(
     NTSCFG_TEST_EQ(serverHandle1, serverHandle0);
 
     ntsa::Endpoint serverSourceEndpoint1;
-    error = ntsf::System::getSourceEndpoint(&serverSourceEndpoint1,
-                                            serverHandle1);
+    error =
+        ntsf::System::getSourceEndpoint(&serverSourceEndpoint1, serverHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(serverSourceEndpoint1, serverSourceEndpoint0);
 
     ntsa::Endpoint serverRemoteEndpoint1;
-    error = ntsf::System::getRemoteEndpoint(&serverRemoteEndpoint1,
-                                            serverHandle1);
+    error =
+        ntsf::System::getRemoteEndpoint(&serverRemoteEndpoint1, serverHandle1);
     NTSCFG_TEST_OK(error);
     NTSCFG_TEST_EQ(serverRemoteEndpoint1, serverRemoteEndpoint0);
 
@@ -11829,8 +11835,7 @@ void SystemTest::concernStreamSocketHandleTransfer(
 
     ntsa::Error error;
 
-    const ntsa::Transport::Value transport =
-        ntsa::Transport::e_LOCAL_STREAM;
+    const ntsa::Transport::Value transport = ntsa::Transport::e_LOCAL_STREAM;
 
     // Create a "domestic" socket to be exported.
 
@@ -11838,15 +11843,15 @@ void SystemTest::concernStreamSocketHandleTransfer(
     error = ntsf::System::createStreamSocket(&domesticSocket, transport);
     NTSCFG_TEST_ASSERT(!error);
 
-    error = ntsf::System::bind(
-        domesticSocket,
-        ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-        false);
+    error =
+        ntsf::System::bind(domesticSocket,
+                           ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+                           false);
     NTSCFG_TEST_ASSERT(!error);
 
     ntsa::Endpoint domesticSourceEndpoint;
     error = ntsf::System::getSourceEndpoint(&domesticSourceEndpoint,
-                                             domesticSocket);
+                                            domesticSocket);
     NTSCFG_TEST_ASSERT(!error);
 
     // Create a listener socket.
@@ -11915,8 +11920,7 @@ void SystemTest::concernStreamSocketHandleTransfer(
     // Send the domestic socket from the client to the server.
 
     ntca::SendOptions sendOptions;
-    sendOptions.setForeignHandle
-    (domesticSocket);
+    sendOptions.setForeignHandle(domesticSocket);
 
     bdlbb::Blob sendData(clientSocket->outgoingBlobBufferFactory().get());
     bdlbb::BlobUtil::append(&sendData, "Hello, world!", 13);
@@ -11945,18 +11949,18 @@ void SystemTest::concernStreamSocketHandleTransfer(
     NTSCFG_TEST_OK(receiveResult.event().context().error());
 
     NTSCFG_TEST_EQ(receiveResult.data()->length(), sendData.length());
-    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*receiveResult.data(), sendData), 
+    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*receiveResult.data(), sendData),
                    0);
 
     NTSCFG_TEST_TRUE(
         receiveResult.event().context().foreignHandle().has_value());
 
-    ntsa::Handle foreignSocket = 
+    ntsa::Handle foreignSocket =
         receiveResult.event().context().foreignHandle().value();
 
     ntsa::Endpoint foreignSourceEndpoint;
-    error = ntsf::System::getSourceEndpoint(&foreignSourceEndpoint,
-                                            foreignSocket);
+    error =
+        ntsf::System::getSourceEndpoint(&foreignSourceEndpoint, foreignSocket);
     NTSCFG_TEST_ASSERT(!error);
 
     // Ensure the foreign socket handle has a different value than the domestic
@@ -12010,8 +12014,7 @@ void SystemTest::concernDatagramSocketHandleTransfer(
 
     ntsa::Error error;
 
-    const ntsa::Transport::Value transport =
-        ntsa::Transport::e_LOCAL_DATAGRAM;
+    const ntsa::Transport::Value transport = ntsa::Transport::e_LOCAL_DATAGRAM;
 
     // Create a "domestic" socket to be exported.
 
@@ -12019,15 +12022,15 @@ void SystemTest::concernDatagramSocketHandleTransfer(
     error = ntsf::System::createDatagramSocket(&domesticSocket, transport);
     NTSCFG_TEST_ASSERT(!error);
 
-    error = ntsf::System::bind(
-        domesticSocket,
-        ntsa::Endpoint(ntsa::LocalName::generateUnique()),
-        false);
+    error =
+        ntsf::System::bind(domesticSocket,
+                           ntsa::Endpoint(ntsa::LocalName::generateUnique()),
+                           false);
     NTSCFG_TEST_ASSERT(!error);
 
     ntsa::Endpoint domesticSourceEndpoint;
     error = ntsf::System::getSourceEndpoint(&domesticSourceEndpoint,
-                                             domesticSocket);
+                                            domesticSocket);
     NTSCFG_TEST_ASSERT(!error);
 
     // Create a datagram socket to act as a server.
@@ -12036,7 +12039,7 @@ void SystemTest::concernDatagramSocketHandleTransfer(
     serverSocketOptions.setTransport(transport);
     serverSocketOptions.setSourceEndpoint(SystemTest::any(transport));
 
-    bsl::shared_ptr<ntci::DatagramSocket> serverSocket = 
+    bsl::shared_ptr<ntci::DatagramSocket> serverSocket =
         scheduler->createDatagramSocket(serverSocketOptions, allocator);
 
     error = serverSocket->open();
@@ -12048,7 +12051,7 @@ void SystemTest::concernDatagramSocketHandleTransfer(
     clientSocketOptions.setTransport(transport);
     clientSocketOptions.setSourceEndpoint(SystemTest::any(transport));
 
-    bsl::shared_ptr<ntci::DatagramSocket> clientSocket = 
+    bsl::shared_ptr<ntci::DatagramSocket> clientSocket =
         scheduler->createDatagramSocket(clientSocketOptions, allocator);
 
     error = clientSocket->open();
@@ -12086,22 +12089,22 @@ void SystemTest::concernDatagramSocketHandleTransfer(
     NTSCFG_TEST_OK(receiveResult.event().context().error());
 
     NTSCFG_TEST_EQ(receiveResult.data()->length(), sendData.length());
-    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*receiveResult.data(), sendData), 
+    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*receiveResult.data(), sendData),
                    0);
 
     NTSCFG_TEST_TRUE(receiveResult.event().context().endpoint().has_value());
-    NTSCFG_TEST_EQ(receiveResult.event().context().endpoint().value(), 
+    NTSCFG_TEST_EQ(receiveResult.event().context().endpoint().value(),
                    clientSocket->sourceEndpoint());
 
     NTSCFG_TEST_TRUE(
         receiveResult.event().context().foreignHandle().has_value());
 
-    ntsa::Handle foreignSocket = 
+    ntsa::Handle foreignSocket =
         receiveResult.event().context().foreignHandle().value();
 
     ntsa::Endpoint foreignSourceEndpoint;
-    error = ntsf::System::getSourceEndpoint(&foreignSourceEndpoint,
-                                            foreignSocket);
+    error =
+        ntsf::System::getSourceEndpoint(&foreignSourceEndpoint, foreignSocket);
     NTSCFG_TEST_ASSERT(!error);
 
     // Ensure the foreign socket handle has a different value than the domestic
@@ -13340,19 +13343,20 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyClose)
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectInitiateEndpointAndClose)
 {
-    test::concern(
-        &test::concernConnectInitiateEndpointAndClose, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernConnectInitiateEndpointAndClose,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectInitiateNameAndClose)
 {
-    test::concern(
-        &test::concernConnectInitiateNameAndClose, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernConnectInitiateNameAndClose,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectEndpointAndShutdown)
 {
-    test::concern(&test::concernConnectEndpointAndShutdown, NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernConnectEndpointAndShutdown,
+                  NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyConnectEndpoint1)
@@ -13629,14 +13633,12 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyListenerSocketAcceptClose)
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketRelease)
 {
-    test::concern(&test::concernStreamSocketRelease,
-                  NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernStreamSocketRelease, NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyDatagramSocketRelease)
 {
-    test::concern(&test::concernDatagramSocketRelease,
-                  NTSCFG_TEST_ALLOCATOR);
+    test::concern(&test::concernDatagramSocketRelease, NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyStreamSocketHandleTransfer)
@@ -14903,18 +14905,18 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 
-        // TODO: There is a bug somewhere between encoding the resource, 
-        // writing it to a file, then reading it out again. Likely from 
+        // TODO: There is a bug somewhere between encoding the resource,
+        // writing it to a file, then reading it out again. Likely from
         // mishandling "text mode" translation of newlines in an inconsistent
         // fashion.
 
-        bsl::ofstream serverFileStream(serverFile.path().c_str(), 
+        bsl::ofstream serverFileStream(serverFile.path().c_str(),
                                        bsl::ios_base::out);
         NTSCFG_TEST_TRUE(serverFileStream);
 
         serverFileStream << serverFileContent;
         NTSCFG_TEST_TRUE(serverFileStream);
- 
+
         serverFileStream.flush();
 
 #else
@@ -14923,9 +14925,9 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsIntermediateCAFromSingleFile)
         NTSCFG_TEST_OK(error);
 
 #endif
-        
+
         BSLS_LOG_TRACE("Using server resource:\n%s",
-                      serverFileContent.c_str());
+                       serverFileContent.c_str());
     }
 
     ntca::EncryptionServerOptions encryptionServerOptions;
@@ -15363,8 +15365,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortively)
                         NTCCFG_BIND_PLACEHOLDER_1,
                         NTCCFG_BIND_PLACEHOLDER_2));
 
-        error = clientSocket->send(
-            clientData, ntca::SendOptions(), sendCallback);
+        error =
+            clientSocket->send(clientData, ntca::SendOptions(), sendCallback);
         NTSCFG_TEST_OK(error);
 
         semaphore.wait();
@@ -15398,8 +15400,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortively)
 
     // Downgrade the client.
 
-    NTCI_LOG_STREAM_DEBUG << "Downgrading client abortively" 
-                         << NTCI_LOG_STREAM_END;
+    NTCI_LOG_STREAM_DEBUG << "Downgrading client abortively"
+                          << NTCI_LOG_STREAM_END;
 
     {
         ntca::DowngradeOptions downgradeOptions;
@@ -15423,20 +15425,20 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortively)
 
     {
         ntca::DowngradeEvent downgradeEvent;
-        error = clientSocketEventQueue->wait(
-            &downgradeEvent,
-            ntca::DowngradeEventType::e_COMPLETE);
+        error =
+            clientSocketEventQueue->wait(&downgradeEvent,
+                                         ntca::DowngradeEventType::e_COMPLETE);
     }
 
     // Downgrade the server.
 
-    NTCI_LOG_STREAM_DEBUG << "Downgrading server abortively" 
+    NTCI_LOG_STREAM_DEBUG << "Downgrading server abortively"
                           << NTCI_LOG_STREAM_END;
 
     {
         ntca::DowngradeOptions downgradeOptions;
         downgradeOptions.setAbortive(true);
-        
+
         error = serverSocket->downgrade(downgradeOptions);
         NTSCFG_TEST_OK(error);
     }
@@ -15455,9 +15457,9 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortively)
 
     {
         ntca::DowngradeEvent downgradeEvent;
-        error = serverSocketEventQueue->wait(
-            &downgradeEvent,
-            ntca::DowngradeEventType::e_COMPLETE);
+        error =
+            serverSocketEventQueue->wait(&downgradeEvent,
+                                         ntca::DowngradeEventType::e_COMPLETE);
     }
 
     // Communicate in plaintext.
@@ -15476,8 +15478,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortively)
                         NTCCFG_BIND_PLACEHOLDER_1,
                         NTCCFG_BIND_PLACEHOLDER_2));
 
-        error = clientSocket->send(
-            clientData, ntca::SendOptions(), sendCallback);
+        error =
+            clientSocket->send(clientData, ntca::SendOptions(), sendCallback);
         NTSCFG_TEST_OK(error);
 
         semaphore.wait();
@@ -15757,9 +15759,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
     error = serverSocket->registerSession(serverSocketEventQueue);
     NTSCFG_TEST_FALSE(error);
 
-    for (bsl::size_t iteration = 0; 
-                     iteration < k_NUM_ITERATIONS; 
-                   ++iteration) 
+    for (bsl::size_t iteration = 0; iteration < k_NUM_ITERATIONS; ++iteration)
     {
         const bool forceReadingAcrossDowngrade = iteration % 2 != 0;
 
@@ -15776,8 +15776,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
                             NTCCFG_BIND_PLACEHOLDER_2));
 
         error = serverSocket->upgrade(encryptionServer,
-                                    serverUpgradeOptions,
-                                    serverUpgradeCallback);
+                                      serverUpgradeOptions,
+                                      serverUpgradeCallback);
         NTSCFG_TEST_OK(error);
 
         // Upgrade the client socket to TLS.
@@ -15794,8 +15794,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
                             NTCCFG_BIND_PLACEHOLDER_2));
 
         error = clientSocket->upgrade(encryptionClient,
-                                    clientUpgradeOptions,
-                                    clientUpgradeCallback);
+                                      clientUpgradeOptions,
+                                      clientUpgradeCallback);
         NTSCFG_TEST_OK(error);
 
         // Wait for the client socket and server socket to complete upgrading
@@ -15818,8 +15818,9 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
                             NTCCFG_BIND_PLACEHOLDER_1,
                             NTCCFG_BIND_PLACEHOLDER_2));
 
-            error = clientSocket->send(
-                clientReady, ntca::SendOptions(), sendCallback);
+            error = clientSocket->send(clientReady,
+                                       ntca::SendOptions(),
+                                       sendCallback);
             NTSCFG_TEST_OK(error);
 
             semaphore.wait();
@@ -15858,8 +15859,8 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
             // and the "ALIVE" message in plaintext: we want the client to
             // receive both ciphertext and plaintext in one system call.
 
-            clientSocket->applyFlowControl(ntca::FlowControlType::e_RECEIVE, 
-                                          ntca::FlowControlMode::e_IMMEDIATE);
+            clientSocket->applyFlowControl(ntca::FlowControlType::e_RECEIVE,
+                                           ntca::FlowControlMode::e_IMMEDIATE);
         }
 
         // Send a "SHIFT" message in ciphertext from the server to the client
@@ -15879,8 +15880,9 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
                             NTCCFG_BIND_PLACEHOLDER_1,
                             NTCCFG_BIND_PLACEHOLDER_2));
 
-            error = serverSocket->send(
-                serverShift, ntca::SendOptions(), sendCallback);
+            error = serverSocket->send(serverShift,
+                                       ntca::SendOptions(),
+                                       sendCallback);
             NTSCFG_TEST_OK(error);
 
             semaphore.wait();
@@ -15888,13 +15890,13 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
 
         // Downgrade the server.
 
-        NTCI_LOG_STREAM_DEBUG << "Downgrading server abortively" 
+        NTCI_LOG_STREAM_DEBUG << "Downgrading server abortively"
                               << NTCI_LOG_STREAM_END;
 
         {
             ntca::DowngradeOptions downgradeOptions;
             downgradeOptions.setAbortive(true);
-            
+
             error = serverSocket->downgrade(downgradeOptions);
             NTSCFG_TEST_OK(error);
         }
@@ -15909,7 +15911,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
                 ntca::DowngradeEventType::e_INITIATED);
         }
 
-        // Wait for the server socket to notice the downgrade from TLS is 
+        // Wait for the server socket to notice the downgrade from TLS is
         // complete.
 
         {
@@ -15919,7 +15921,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
                 ntca::DowngradeEventType::e_COMPLETE);
         }
 
-        // Send an "ALIVE" in plaintext from the server to the client that 
+        // Send an "ALIVE" in plaintext from the server to the client that
         // represents an some subsequent plaintext communication.
 
         bdlbb::Blob serverAlive(
@@ -15934,20 +15936,21 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
                             NTCCFG_BIND_PLACEHOLDER_1,
                             NTCCFG_BIND_PLACEHOLDER_2));
 
-            error = serverSocket->send(
-                serverAlive, ntca::SendOptions(), sendCallback);
+            error = serverSocket->send(serverAlive,
+                                       ntca::SendOptions(),
+                                       sendCallback);
             NTSCFG_TEST_OK(error);
 
             semaphore.wait();
         }
 
         if (forceReadingAcrossDowngrade) {
-            // Wait to allow the operating system to fill the the client 
+            // Wait to allow the operating system to fill the the client
             // socket's receive buffer.
 
             bsls::TimeInterval sleepDuration;
             sleepDuration.setTotalMilliseconds(100);
-            
+
             bslmt::ThreadUtil::sleep(sleepDuration);
 
             // Begin reading from the client's socket receive buffer again.
@@ -15984,7 +15987,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
 
         // Downgrade the client.
 
-        NTCI_LOG_STREAM_DEBUG << "Downgrading client abortively" 
+        NTCI_LOG_STREAM_DEBUG << "Downgrading client abortively"
                               << NTCI_LOG_STREAM_END;
 
         {
@@ -16005,7 +16008,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
                 ntca::DowngradeEventType::e_INITIATED);
         }
 
-        // Wait for the client socket to notice the downgrade from TLS is 
+        // Wait for the client socket to notice the downgrade from TLS is
         // complete.
 
         {
@@ -16056,8 +16059,9 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
                             NTCCFG_BIND_PLACEHOLDER_1,
                             NTCCFG_BIND_PLACEHOLDER_2));
 
-            error = clientSocket->send(
-                clientFinal, ntca::SendOptions(), sendCallback);
+            error = clientSocket->send(clientFinal,
+                                       ntca::SendOptions(),
+                                       sendCallback);
             NTSCFG_TEST_OK(error);
 
             semaphore.wait();
@@ -16088,8 +16092,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
 
         // Ensure the data received matches the data sent.
 
-        NTSCFG_TEST_EQ(
-            bdlbb::BlobUtil::compare(serverFinal, clientFinal), 0);
+        NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(serverFinal, clientFinal), 0);
     }
 
     // Close the client socket.
@@ -16118,6 +16121,993 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
     interface->shutdown();
     interface->linger();
 }
+
+#if NTC_BUILD_WITH_COROUTINES
+
+#define NTCF_CONCURRENT_TEST_LOG_CLIENT_COROUTINE(socket, milestone)          \
+    do {                                                                      \
+        BALL_LOG_INFO << "Client socket at " << (socket)->sourceEndpoint()    \
+                      << " to " << (socket)->remoteEndpoint()                 \
+                      << " coroutine " << (milestone) << BALL_LOG_END;        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_CLIENT_CONNECT_COMPLETE(socket, result)      \
+    do {                                                                      \
+        BALL_LOG_INFO << "Client socket at " << (socket)->sourceEndpoint()    \
+                      << " to " << (socket)->remoteEndpoint()                 \
+                      << " connect complete: " << (result).event()            \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_CLIENT_SEND_COMPLETE(socket, result, data)   \
+    do {                                                                      \
+        BALL_LOG_INFO << "Client socket at " << (socket)->sourceEndpoint()    \
+                      << " to " << (socket)->remoteEndpoint()                 \
+                      << " TX complete: "                                     \
+                      << ConcurrentTest::Dumper((data).get())                 \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(socket, result)      \
+    do {                                                                      \
+        if (!(result).event().context().error()) {                            \
+            BALL_LOG_INFO << "Client socket at "                              \
+                          << (socket)->sourceEndpoint() << " to "             \
+                          << (socket)->remoteEndpoint() << " RX complete: "   \
+                          << ConcurrentTest::Dumper((result).data().get())    \
+                          << BALL_LOG_END;                                    \
+        }                                                                     \
+        else {                                                                \
+            BALL_LOG_INFO << "Client socket at "                              \
+                          << (socket)->sourceEndpoint() << " to "             \
+                          << (socket)->remoteEndpoint()                       \
+                          << " RX complete: " << (result).event().context()   \
+                          << BALL_LOG_END;                                    \
+        }                                                                     \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED(socket)                        \
+    do {                                                                      \
+        BALL_LOG_INFO << "Client socket at " << (socket)->sourceEndpoint()    \
+                      << " to " << (socket)->remoteEndpoint() << " closed"    \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_SERVER_COROUTINE(socket, milestone)          \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server socket at " << (socket)->sourceEndpoint()    \
+                      << " to " << (socket)->remoteEndpoint()                 \
+                      << " coroutine " << (milestone) << BALL_LOG_END;        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_SERVER_CONNECT_COMPLETE(socket, result)      \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server socket at " << (socket)->sourceEndpoint()    \
+                      << " to " << (socket)->remoteEndpoint()                 \
+                      << " connect complete: " << (result).event()            \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_SERVER_ACCEPT_COMPLETE(socket, result)       \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server socket at " << (socket)->sourceEndpoint()    \
+                      << " to " << (socket)->remoteEndpoint()                 \
+                      << " accept complete: " << (result).event()             \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_SERVER_SEND_COMPLETE(socket, result, data)   \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server socket at " << (socket)->sourceEndpoint()    \
+                      << " to " << (socket)->remoteEndpoint()                 \
+                      << " TX complete: "                                     \
+                      << ConcurrentTest::Dumper((data).get())                 \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(socket, result)      \
+    do {                                                                      \
+        if (!(result).event().context().error()) {                            \
+            BALL_LOG_INFO << "Server socket at "                              \
+                          << (socket)->sourceEndpoint() << " to "             \
+                          << (socket)->remoteEndpoint() << " RX complete: "   \
+                          << ConcurrentTest::Dumper((result).data().get())    \
+                          << BALL_LOG_END;                                    \
+        }                                                                     \
+        else {                                                                \
+            BALL_LOG_INFO << "Server socket at "                              \
+                          << (socket)->sourceEndpoint() << " to "             \
+                          << (socket)->remoteEndpoint()                       \
+                          << " RX complete: " << (result).event().context()   \
+                          << BALL_LOG_END;                                    \
+        }                                                                     \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED(socket)                        \
+    do {                                                                      \
+        BALL_LOG_INFO << "Server socket at " << (socket)->sourceEndpoint()    \
+                      << " to " << (socket)->remoteEndpoint() << " closed"    \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_LISTENER_BIND_COMPLETE(socket, result)       \
+    do {                                                                      \
+        BALL_LOG_INFO << "Listener socket at " << (socket)->sourceEndpoint()  \
+                      << " bind complete: " << (result).event()               \
+                      << BALL_LOG_END;                                        \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_LISTENER_READY(endpoint)                     \
+    do {                                                                      \
+        BALL_LOG_DEBUG << "Listening at " << (endpoint) << BALL_LOG_END;      \
+    } while (false)
+
+#define NTCF_CONCURRENT_TEST_LOG_LISTENER_CLOSED()                            \
+    do {                                                                      \
+        BALL_LOG_INFO << "Listener socket closed" << BALL_LOG_END;            \
+    } while (false)
+
+// Provide tests for 'ntci::Concurrent'.
+class ConcurrentTest
+{
+    BALL_LOG_SET_CLASS_CATEGORY("NTCI.CONCURRENT");
+
+    // Describe the configurable parameters of the application simulation.
+    class Configuration
+    {
+      public:
+        Configuration()
+        : numConnections(1)
+        , numMessages(1)
+        , endpoint()
+        {
+        }
+
+        bsl::size_t    numConnections;
+        bsl::size_t    numMessages;
+        ntsa::Endpoint endpoint;
+    };
+
+    class Dumper
+    {
+        bdlbb::Blob* d_blob;
+
+      public:
+        explicit Dumper(bdlbb::Blob* blob)
+        : d_blob(blob)
+        {
+        }
+
+        friend bsl::ostream& operator<<(bsl::ostream& stream,
+                                        const Dumper& dumper)
+        {
+            NTSCFG_TEST_EQ(dumper.d_blob->length(), 1);
+            stream << static_cast<char>(
+                *dumper.d_blob->buffer(0).buffer().get());
+            return stream;
+        }
+    };
+
+    // Create a new scheduler. Allocate memory using the specified 'allocator'.
+    static bsl::shared_ptr<ntci::Scheduler> createScheduler(
+        ntsa::Allocator allocator);
+
+    // Create a new scheduler with the specified 'configuration'. Allocate
+    // memory using the specified 'allocator'.
+    static bsl::shared_ptr<ntci::Scheduler> createScheduler(
+        const ntca::SchedulerConfig& configuration,
+        ntsa::Allocator              allocator);
+
+    // Create a new listener socket bound to any available ephemeral port at
+    // the loopback address and begin listening. Allocate memory using the
+    // specified 'allocator'.
+    static bsl::shared_ptr<ntci::ListenerSocket> createListenerSocket(
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        ntsa::Allocator                         allocator);
+
+    // Create a new stream socket. Allocate memory using the specified
+    // 'allocator'.
+    static bsl::shared_ptr<ntci::StreamSocket> createStreamSocket(
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        ntsa::Allocator                         allocator);
+
+    // TODO
+    static ntsa::Task<void> coVerifyExecute(
+        bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::AllocatorArg               allocatorTag,
+        ntsa::Allocator                  allocator);
+
+    // TODO
+    static ntsa::Task<void> coVerifyDatagramSocket(
+        bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::AllocatorArg               allocatorTag,
+        ntsa::Allocator                  allocator);
+
+    // TODO
+    static ntsa::Task<void> coVerifyStreamSocket(
+        bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::AllocatorArg               allocatorTag,
+        ntsa::Allocator                  allocator);
+
+    // TODO
+    static ntsa::Task<void> coVerifyApplication(
+        bsl::shared_ptr<ntci::Scheduler> scheduler,
+        ntsa::AllocatorArg               allocatorTag,
+        ntsa::Allocator                  allocator);
+
+    // TODO
+    static ntsa::Task<void> coVerifyApplicationListener(
+        Configuration                         configuration,
+        bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
+        ntsa::AllocatorArg                    allocatorTag,
+        ntsa::Allocator                       allocator);
+
+    // TODO
+    static ntsa::Task<void> coVerifyApplicationClient(
+        Configuration                       configuration,
+        bsl::shared_ptr<ntci::StreamSocket> streamSocket,
+        bsl::size_t                         index,
+        ntsa::AllocatorArg                  allocatorTag,
+        ntsa::Allocator                     allocator);
+
+    // TODO
+    static ntsa::Task<void> coVerifyApplicationServer(
+        Configuration                       configuration,
+        bsl::shared_ptr<ntci::StreamSocket> streamSocket,
+        ntsa::AllocatorArg                  allocatorTag,
+        ntsa::Allocator                     allocator);
+
+  public:
+    // Verify a coroutine can be resume on an scheduler's I/O thread.
+    static void verifyExecute();
+
+    // Verify datagram socket awaitables.
+    static void verifyDatagramSocket();
+
+    // Verify stream socket awaitables.
+    static void verifyStreamSocket();
+
+    // Verify a sample application.
+    static void verifyApplication();
+};
+
+bsl::shared_ptr<ntci::Scheduler> ConcurrentTest::createScheduler(
+    ntsa::Allocator allocator)
+{
+    ntsa::Error error;
+
+    ntca::SchedulerConfig schedulerConfig;
+
+    schedulerConfig.setThreadName("test");
+    schedulerConfig.setMinThreads(4);
+    schedulerConfig.setMaxThreads(4);
+
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::System::createScheduler(schedulerConfig, allocator.mechanism());
+
+    error = scheduler->start();
+    NTSCFG_TEST_OK(error);
+
+    return scheduler;
+}
+
+bsl::shared_ptr<ntci::Scheduler> ConcurrentTest::createScheduler(
+    const ntca::SchedulerConfig& configuration,
+    ntsa::Allocator              allocator)
+{
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::System::createScheduler(configuration, allocator.mechanism());
+
+    error = scheduler->start();
+    NTSCFG_TEST_OK(error);
+
+    return scheduler;
+}
+
+bsl::shared_ptr<ntci::ListenerSocket> ConcurrentTest::createListenerSocket(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    ntsa::Allocator                         allocator)
+{
+    ntsa::Error error;
+
+    ntca::ListenerSocketOptions listenerSocketOptions;
+
+    listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    listenerSocketOptions.setKeepHalfOpen(true);
+
+    listenerSocketOptions.setSourceEndpoint(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+        scheduler->createListenerSocket(listenerSocketOptions,
+                                        allocator.mechanism());
+
+    error = listenerSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    error = listenerSocket->listen();
+    NTSCFG_TEST_OK(error);
+
+    return listenerSocket;
+}
+
+bsl::shared_ptr<ntci::StreamSocket> ConcurrentTest::createStreamSocket(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    ntsa::Allocator                         allocator)
+{
+    ntsa::Error error;
+
+    ntca::StreamSocketOptions streamSocketOptions;
+
+    streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    streamSocketOptions.setKeepHalfOpen(true);
+
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket =
+        scheduler->createStreamSocket(streamSocketOptions,
+                                      allocator.mechanism());
+
+    return streamSocket;
+}
+
+ntsa::Task<void> ConcurrentTest::coVerifyExecute(
+    bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::AllocatorArg               allocatorTag,
+    ntsa::Allocator                  allocator)
+{
+    ntccfg::Object scope("coVerifyExecute");
+
+    BALL_LOG_DEBUG << "Starting on thread "
+                   << bslmt::ThreadUtil::selfIdAsUint64() << BALL_LOG_END;
+
+    for (bsl::size_t i = 0; i < 8; ++i) {
+        co_await ntci::Concurrent::resume(scheduler);
+
+        BALL_LOG_DEBUG << "Resuming on thread "
+                       << bslmt::ThreadUtil::selfIdAsUint64() << BALL_LOG_END;
+    }
+
+    co_return;
+}
+
+ntsa::Task<void> ConcurrentTest::coVerifyDatagramSocket(
+    bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::AllocatorArg               allocatorTag,
+    ntsa::Allocator                  allocator)
+{
+    ntccfg::Object scope("coVerifyDatagramSocket");
+
+    ntsa::Error error;
+
+    // Create a client datagram socket.
+
+    ntca::DatagramSocketOptions clientDatagramSocketOptions;
+
+    clientDatagramSocketOptions.setTransport(
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+    clientDatagramSocketOptions.setSourceEndpoint(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
+
+    bsl::shared_ptr<ntci::DatagramSocket> clientDatagramSocket =
+        scheduler->createDatagramSocket(clientDatagramSocketOptions,
+                                        allocator.mechanism());
+
+    error = clientDatagramSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    // Create a server datagram socket.
+
+    ntca::DatagramSocketOptions serverDatagramSocketOptions;
+
+    serverDatagramSocketOptions.setTransport(
+        ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+
+    serverDatagramSocketOptions.setSourceEndpoint(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
+
+    bsl::shared_ptr<ntci::DatagramSocket> serverDatagramSocket =
+        scheduler->createDatagramSocket(serverDatagramSocketOptions,
+                                        allocator.mechanism());
+
+    error = serverDatagramSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    // Connect the client datagram socket to the server datagram socket.
+
+    ntca::ConnectOptions clientConnectOptions;
+    ntci::ConnectResult  clientConnectResult;
+
+    clientConnectResult = co_await ntci::Concurrent::connect(
+        clientDatagramSocket,
+        serverDatagramSocket->sourceEndpoint(),
+        clientConnectOptions);
+
+    NTSCFG_TEST_OK(clientConnectResult.event().context().error());
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CONNECT_COMPLETE(clientDatagramSocket,
+                                                     clientConnectResult);
+
+    // Connect the server datagram socket to the client datagram socket.
+
+    ntca::ConnectOptions serverConnectOptions;
+    ntci::ConnectResult  serverConnectResult;
+
+    serverConnectResult = co_await ntci::Concurrent::connect(
+        serverDatagramSocket,
+        clientDatagramSocket->sourceEndpoint(),
+        ntca::ConnectOptions());
+    NTSCFG_TEST_OK(serverConnectResult.event().context().error());
+
+    NTCF_CONCURRENT_TEST_LOG_SERVER_CONNECT_COMPLETE(serverDatagramSocket,
+                                                     serverConnectResult);
+
+    // Send data from the client datagram socket to the server datagram socket.
+
+    bsl::shared_ptr<bdlbb::Blob> clientSendData =
+        clientDatagramSocket->createOutgoingBlob();
+
+    bdlbb::BlobUtil::append(clientSendData.get(), "X", 1);
+
+    ntca::SendOptions clientSendOptions;
+    ntci::SendResult  clientSendResult;
+
+    clientSendResult = co_await ntci::Concurrent::send(clientDatagramSocket,
+                                                       clientSendData,
+                                                       clientSendOptions);
+    NTSCFG_TEST_OK(clientSendResult.event().context().error());
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_SEND_COMPLETE(clientDatagramSocket,
+                                                  clientSendResult,
+                                                  clientSendData);
+
+    // Receive data at the server datagram socket from the client datagram
+    // socket.
+
+    ntca::ReceiveOptions serverReceiveOptions;
+    ntci::ReceiveResult  serverReceiveResult;
+
+    serverReceiveResult =
+        co_await ntci::Concurrent::receive(serverDatagramSocket,
+                                           serverReceiveOptions);
+    NTSCFG_TEST_OK(serverReceiveResult.event().context().error());
+
+    NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(serverDatagramSocket,
+                                                     serverReceiveResult);
+
+    // Close the client datagram socket.
+
+    co_await ntci::Concurrent::close(clientDatagramSocket);
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED(clientDatagramSocket);
+
+    // Close the server datagram socket.
+
+    co_await ntci::Concurrent::close(serverDatagramSocket);
+    NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED(serverDatagramSocket);
+
+    co_return;
+}
+
+ntsa::Task<void> ConcurrentTest::coVerifyStreamSocket(
+    bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::AllocatorArg               allocatorTag,
+    ntsa::Allocator                  allocator)
+{
+    ntccfg::Object scope("coVerifyStreamSocket");
+
+    ntsa::Error error;
+
+    // Create a listener socket.
+
+    ntca::ListenerSocketOptions listenerSocketOptions;
+
+    listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    listenerSocketOptions.setKeepHalfOpen(true);
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+        scheduler->createListenerSocket(listenerSocketOptions,
+                                        allocator.mechanism());
+
+    error = listenerSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    // Bind the listener socket to any available ephemeral port on the
+    // loopback device.
+
+    ntca::BindOptions bindOptions;
+    ntci::BindResult  bindResult;
+
+    bindResult = co_await ntci::Concurrent::bind(
+        listenerSocket,
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        bindOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_LISTENER_BIND_COMPLETE(listenerSocket,
+                                                    bindResult);
+
+    NTSCFG_TEST_OK(bindResult.event().context().error());
+
+    // Begin listening.
+
+    error = listenerSocket->listen();
+    NTSCFG_TEST_OK(error);
+
+    // Create a client stream socket.
+
+    ntca::StreamSocketOptions clientStreamSocketOptions;
+
+    clientStreamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+    clientStreamSocketOptions.setKeepHalfOpen(true);
+
+    bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket =
+        scheduler->createStreamSocket(clientStreamSocketOptions,
+                                      allocator.mechanism());
+
+    // Connect the client stream socket to the listener socket.
+
+    ntca::ConnectOptions clientConnectOptions;
+    ntci::ConnectResult  clientConnectResult;
+
+    clientConnectResult =
+        co_await ntci::Concurrent::connect(clientStreamSocket,
+                                           listenerSocket->sourceEndpoint(),
+                                           clientConnectOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CONNECT_COMPLETE(clientStreamSocket,
+                                                     clientConnectResult);
+
+    NTSCFG_TEST_OK(clientConnectResult.event().context().error());
+
+    // Accept the server stream socket from the listener socket.
+
+    ntca::AcceptOptions serverAcceptOptions;
+    ntci::AcceptResult  serverAcceptResult;
+
+    serverAcceptResult =
+        co_await ntci::Concurrent::accept(listenerSocket, serverAcceptOptions);
+
+    bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket =
+        serverAcceptResult.streamSocket();
+
+    NTCF_CONCURRENT_TEST_LOG_SERVER_ACCEPT_COMPLETE(serverStreamSocket,
+                                                    serverAcceptResult);
+
+    NTSCFG_TEST_OK(serverAcceptResult.event().context().error());
+
+    // Send data from the client stream socket to the server stream socket.
+
+    bsl::shared_ptr<bdlbb::Blob> clientSendData =
+        clientStreamSocket->createOutgoingBlob();
+
+    bdlbb::BlobUtil::append(clientSendData.get(), "X", 1);
+
+    ntca::SendOptions clientSendOptions;
+    ntci::SendResult  clientSendResult;
+
+    clientSendResult = co_await ntci::Concurrent::send(clientStreamSocket,
+                                                       clientSendData,
+                                                       clientSendOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_SEND_COMPLETE(clientStreamSocket,
+                                                  clientSendResult,
+                                                  clientSendData);
+
+    NTSCFG_TEST_OK(clientSendResult.event().context().error());
+
+    // Receive data at the server stream socket from the client stream
+    // socket.
+
+    ntca::ReceiveOptions serverReceiveOptions;
+    ntci::ReceiveResult  serverReceiveResult;
+
+    serverReceiveOptions.setSize(1);
+
+    serverReceiveResult =
+        co_await ntci::Concurrent::receive(serverStreamSocket,
+                                           serverReceiveOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(serverStreamSocket,
+                                                     serverReceiveResult);
+
+    NTSCFG_TEST_OK(serverReceiveResult.event().context().error());
+
+    // Send data from the server stream socket to the client stream socket.
+
+    bsl::shared_ptr<bdlbb::Blob> serverSendData = serverReceiveResult.data();
+
+    ntca::SendOptions serverSendOptions;
+    ntci::SendResult  serverSendResult;
+
+    serverSendResult = co_await ntci::Concurrent::send(serverStreamSocket,
+                                                       serverSendData,
+                                                       serverSendOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_SERVER_SEND_COMPLETE(serverStreamSocket,
+                                                  servertSendResult,
+                                                  serverSendData);
+
+    NTSCFG_TEST_OK(serverSendResult.event().context().error());
+
+    // Receive data at the client stream socket from the server stream socket.
+
+    ntca::ReceiveOptions clientReceiveOptions;
+    ntci::ReceiveResult  clientReceiveResult;
+
+    clientReceiveOptions.setSize(1);
+
+    clientReceiveResult =
+        co_await ntci::Concurrent::receive(clientStreamSocket,
+                                           clientReceiveOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(clientStreamSocket,
+                                                     clientReceiveResult);
+
+    NTSCFG_TEST_OK(clientReceiveResult.event().context().error());
+
+    // Shutdown transmission from the client socket to initiate the graceful
+    // shutdown of the connection.
+
+    error = clientStreamSocket->shutdown(ntsa::ShutdownType::e_SEND,
+                                         ntsa::ShutdownMode::e_GRACEFUL);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the server stream socket and notice the client stream
+    // socket has shut down the connection.
+
+    serverReceiveResult =
+        co_await ntci::Concurrent::receive(serverStreamSocket,
+                                           serverReceiveOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(serverStreamSocket,
+                                                     serverReceiveResult);
+
+    NTSCFG_TEST_EQ(serverReceiveResult.event().context().error(),
+                   ntsa::Error(ntsa::Error::e_EOF));
+
+    // Shutdown transmission from the server socket to complete the
+    // graceful shutdown of the connection.
+
+    error = serverStreamSocket->shutdown(ntsa::ShutdownType::e_SEND,
+                                         ntsa::ShutdownMode::e_GRACEFUL);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the client stream socket and notice the server stream
+    // socket has shut down the connection.
+
+    clientReceiveResult =
+        co_await ntci::Concurrent::receive(clientStreamSocket,
+                                           clientReceiveOptions);
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(clientStreamSocket,
+                                                     clientReceiveResult);
+
+    NTSCFG_TEST_EQ(clientReceiveResult.event().context().error(),
+                   ntsa::Error(ntsa::Error::e_EOF));
+
+    // Close the client stream socket.
+
+    co_await ntci::Concurrent::close(clientStreamSocket);
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED(clientStreamSocket);
+
+    // Close the server stream socket.
+
+    co_await ntci::Concurrent::close(serverStreamSocket);
+    NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED(serverStreamSocket);
+
+    // Close the listener socket.
+
+    co_await ntci::Concurrent::close(listenerSocket);
+    NTCF_CONCURRENT_TEST_LOG_LISTENER_CLOSED();
+
+    co_return;
+}
+
+ntsa::Task<void> ConcurrentTest::coVerifyApplication(
+    bsl::shared_ptr<ntci::Scheduler> scheduler,
+    ntsa::AllocatorArg               allocatorTag,
+    ntsa::Allocator                  allocator)
+{
+    ntccfg::Object scope("coVerifyApplication");
+
+    ntsa::Error error;
+
+    bsl::vector<ntsa::Task<void> > taskList;
+
+    // Create the listener socket and begin listening.
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket =
+        ntcf::ConcurrentTest::createListenerSocket(scheduler, allocator);
+
+    Configuration configuration;
+
+    configuration.numConnections = 9;
+    configuration.numMessages    = 100;
+    configuration.endpoint       = listenerSocket->sourceEndpoint();
+
+    NTCF_CONCURRENT_TEST_LOG_LISTENER_READY(configuration.endpoint);
+
+    // Create a coroutine dedicated to the listener socket.
+
+    ntsa::Task<void> listenerTask = coVerifyApplicationListener(configuration,
+                                                                listenerSocket,
+                                                                allocatorTag,
+                                                                allocator);
+
+    taskList.emplace_back(bsl::move(listenerTask));
+
+    for (bsl::size_t i = 0; i < configuration.numConnections; ++i) {
+        // Create a client stream socket.
+
+        bsl::shared_ptr<ntci::StreamSocket> streamSocket =
+            ntcf::ConcurrentTest::createStreamSocket(scheduler, allocator);
+
+        // Create a coroutine dedicated to the client stream socket.
+
+        ntsa::Task<void> clientTask = coVerifyApplicationClient(configuration,
+                                                                streamSocket,
+                                                                i + 1,
+                                                                allocatorTag,
+                                                                allocator);
+
+        taskList.emplace_back(bsl::move(clientTask));
+    }
+
+    // Run all coroutines until complete.
+
+    co_await ntsa::Coroutine::join(bsl::move(taskList));
+
+    co_return;
+}
+
+ntsa::Task<void> ConcurrentTest::coVerifyApplicationListener(
+    Configuration                         configuration,
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket,
+    ntsa::AllocatorArg                    allocatorTag,
+    ntsa::Allocator                       allocator)
+{
+    ntccfg::Object scope("coVerifyApplicationListener");
+
+    ntsa::Error error;
+
+    for (bsl::size_t i = 0; i < configuration.numConnections; ++i) {
+        // Accept a server stream socket from the listener socket.
+
+        ntca::AcceptOptions acceptOptions;
+        ntci::AcceptResult  acceptResult;
+
+        acceptResult =
+            co_await ntci::Concurrent::accept(listenerSocket, acceptOptions);
+        NTSCFG_TEST_OK(acceptResult.event().context().error());
+
+        NTCF_CONCURRENT_TEST_LOG_SERVER_ACCEPT_COMPLETE(
+            acceptResult.streamSocket(),
+            acceptResult);
+
+        // Create a coroutine dedicated to the server stream socket.
+
+        ntsa::Task<void> serverTask =
+            coVerifyApplicationServer(configuration,
+                                      acceptResult.streamSocket(),
+                                      allocatorTag,
+                                      allocator);
+
+        ntsa::Coroutine::spawn(bsl::move(serverTask), allocator);
+    }
+
+    // Close the listener socket.
+
+    co_await ntci::Concurrent::close(listenerSocket);
+    NTCF_CONCURRENT_TEST_LOG_LISTENER_CLOSED();
+
+    co_return;
+}
+
+ntsa::Task<void> ConcurrentTest::coVerifyApplicationClient(
+    Configuration                       configuration,
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket,
+    bsl::size_t                         index,
+    ntsa::AllocatorArg                  allocatorTag,
+    ntsa::Allocator                     allocator)
+{
+    ntccfg::Object scope("coVerifyApplicationClient");
+
+    ntsa::Error error;
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_COROUTINE(streamSocket, "starting");
+
+    // Connect the client stream socket to the listener socket.
+
+    ntca::ConnectOptions connectOptions;
+    ntci::ConnectResult  connectResult;
+
+    connectResult = co_await ntci::Concurrent::connect(streamSocket,
+                                                       configuration.endpoint,
+                                                       connectOptions);
+    NTSCFG_TEST_OK(connectResult.event().context().error());
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CONNECT_COMPLETE(streamSocket,
+                                                     connectResult);
+
+    for (bsl::size_t tx = 0; tx < configuration.numMessages; ++tx) {
+        // Send data to the peer.
+
+        bsl::string sendText = bsl::to_string(index);
+        BSLS_ASSERT_OPT(index <= 9);
+
+        bsl::shared_ptr<bdlbb::Blob> sendData =
+            streamSocket->createOutgoingBlob();
+
+        bdlbb::BlobUtil::append(sendData.get(),
+                                sendText.c_str(),
+                                sendText.size());
+
+        ntca::SendOptions sendOptions;
+        ntci::SendResult  sendResult;
+
+        sendResult = co_await ntci::Concurrent::send(streamSocket,
+                                                     sendData,
+                                                     sendOptions);
+
+        NTSCFG_TEST_OK(sendResult.event().context().error());
+
+        NTCF_CONCURRENT_TEST_LOG_CLIENT_SEND_COMPLETE(streamSocket,
+                                                      sendResult,
+                                                      sendData);
+
+        // Receive data from the peer.
+
+        ntca::ReceiveOptions receiveOptions;
+        ntci::ReceiveResult  receiveResult;
+
+        receiveOptions.setSize(1);
+
+        receiveResult =
+            co_await ntci::Concurrent::receive(streamSocket, receiveOptions);
+        NTSCFG_TEST_OK(receiveResult.event().context().error());
+
+        NTCF_CONCURRENT_TEST_LOG_CLIENT_RECEIVE_COMPLETE(streamSocket,
+                                                         receiveResult);
+    }
+
+    // Close the socket.
+
+    co_await ntci::Concurrent::close(streamSocket);
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_CLOSED(streamSocket);
+
+    NTCF_CONCURRENT_TEST_LOG_CLIENT_COROUTINE(streamSocket, "complete");
+
+    co_return;
+}
+
+ntsa::Task<void> ConcurrentTest::coVerifyApplicationServer(
+    Configuration                       configuration,
+    bsl::shared_ptr<ntci::StreamSocket> streamSocket,
+    ntsa::AllocatorArg                  allocatorTag,
+    ntsa::Allocator                     allocator)
+{
+    ntccfg::Object scope("coVerifyApplicationServer");
+
+    ntsa::Error error;
+
+    NTCF_CONCURRENT_TEST_LOG_SERVER_COROUTINE(streamSocket, "starting");
+
+    for (bsl::size_t tx = 0; tx < configuration.numMessages; ++tx) {
+        // Receive data from the peer.
+
+        ntca::ReceiveOptions receiveOptions;
+        ntci::ReceiveResult  receiveResult;
+
+        receiveOptions.setSize(1);
+
+        receiveResult =
+            co_await ntci::Concurrent::receive(streamSocket, receiveOptions);
+        NTSCFG_TEST_OK(receiveResult.event().context().error());
+
+        NTCF_CONCURRENT_TEST_LOG_SERVER_RECEIVE_COMPLETE(streamSocket,
+                                                         receiveResult);
+
+        // Send data to the peer.
+
+        bsl::shared_ptr<bdlbb::Blob> sendData = receiveResult.data();
+
+        ntca::SendOptions sendOptions;
+        ntci::SendResult  sendResult;
+
+        sendResult = co_await ntci::Concurrent::send(streamSocket,
+                                                     sendData,
+                                                     sendOptions);
+
+        NTSCFG_TEST_OK(sendResult.event().context().error());
+
+        NTCF_CONCURRENT_TEST_LOG_SERVER_SEND_COMPLETE(streamSocket,
+                                                      sendResult,
+                                                      sendData);
+    }
+
+    // Close the socket.
+
+    co_await ntci::Concurrent::close(streamSocket);
+    NTCF_CONCURRENT_TEST_LOG_SERVER_CLOSED(streamSocket);
+
+    NTCF_CONCURRENT_TEST_LOG_SERVER_COROUTINE(streamSocket, "complete");
+
+    co_return;
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyExecute)
+{
+    ntccfg::Object scope("verifyExecute");
+
+    ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
+
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::ConcurrentTest::createScheduler(allocator);
+
+    ntci::SchedulerStopGuard schedulerGuard(scheduler);
+
+    ntsa::Task<void> task =
+        coVerifyExecute(scheduler, bsl::allocator_arg, allocator);
+
+    ntsa::Coroutine::synchronize(bsl::move(task));
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyDatagramSocket)
+{
+    ntccfg::Object scope("verifyDatagramSocket");
+
+    ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
+
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::ConcurrentTest::createScheduler(allocator);
+
+    ntci::SchedulerStopGuard schedulerGuard(scheduler);
+
+    ntsa::Task<void> task =
+        coVerifyDatagramSocket(scheduler, bsl::allocator_arg, allocator);
+
+    ntsa::Coroutine::synchronize(bsl::move(task));
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyStreamSocket)
+{
+    ntccfg::Object scope("verifyStreamSocket");
+
+    ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
+
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::ConcurrentTest::createScheduler(allocator);
+
+    ntci::SchedulerStopGuard schedulerGuard(scheduler);
+
+    ntsa::Task<void> task =
+        coVerifyStreamSocket(scheduler, bsl::allocator_arg, allocator);
+    ntsa::Coroutine::synchronize(bsl::move(task));
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
+{
+    ntccfg::Object scope("verifyApplication");
+
+    ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
+
+    ntca::SchedulerConfig schedulerConfig;
+    schedulerConfig.setThreadName("test");
+    schedulerConfig.setMinThreads(4);
+    schedulerConfig.setMaxThreads(4);
+
+    bsl::shared_ptr<ntci::Scheduler> scheduler =
+        ntcf::ConcurrentTest::createScheduler(schedulerConfig, allocator);
+
+    ntci::SchedulerStopGuard schedulerGuard(scheduler);
+
+    ntsa::Task<void> task =
+        coVerifyApplication(scheduler, bsl::allocator_arg, allocator);
+
+    ntsa::Coroutine::synchronize(bsl::move(task));
+}
+
+#endif
 
 }  // close namespace ntcf
 }  // close namespace BloombergLP

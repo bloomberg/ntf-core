@@ -998,7 +998,6 @@ if (${NTF_BUILD_WITH_NTC})
     )
 
     ntf_component(NAME ntcf_api)
-    ntf_component(NAME ntcf_concurrent)
     ntf_component(NAME ntcf_system)
     ntf_component(NAME ntcf_test)
 

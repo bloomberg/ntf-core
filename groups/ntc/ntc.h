@@ -273,6 +273,5 @@ BSLS_IDENT("$Id: $")
 #include <ntci_waiter.h>
 
 #include <ntcf_system.h>
-#include <ntcf_concurrent.h>
 
 #endif

@@ -424,7 +424,6 @@
 // ntcf
 
 #include <ntcf_api.cpp>
-#include <ntcf_concurrent.cpp>
 #include <ntcf_system.cpp>
 #include <ntcf_test.cpp>
 
