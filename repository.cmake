@@ -970,6 +970,7 @@ function (ntf_target_options_common_prolog target)
     ntf_ufid_string_has(UFID ${ufid} FLAG "static" OUTPUT is_static)
 
     ntf_repository_toolchain_link_static_get(OUTPUT link_static)
+    ntf_repository_toolchain_link_wpo_get(OUTPUT link_wpo)
 
     set_property(TARGET ${target} PROPERTY COMPILE_DEFINITIONS "")
     set_property(TARGET ${target} PROPERTY COMPILE_OPTIONS "")
@@ -1071,6 +1072,11 @@ function (ntf_target_options_common_prolog target)
             else()
                 ntf_target_build_option(
                     TARGET ${target} COMPILE LINK VALUE -fPIC)
+            endif()
+
+            if (${link_wpo})
+                ntf_target_build_option(
+                    TARGET ${target} COMPILE LINK VALUE -fwhole-program)
             endif()
 
             ntf_target_build_option(
@@ -1259,9 +1265,9 @@ function (ntf_target_options_common_prolog target)
 
         if (${is_opt} AND ${is_dbg})
             ntf_target_build_option(
-                TARGET ${target} COMPILE VALUE /Ox /GL /GS- /Gs-)
+                TARGET ${target} COMPILE VALUE /Ox /GS- /Gs-)
             ntf_target_build_option(
-                TARGET ${target} LINK VALUE /DEBUG:FULL /OPT:REF /LTCG)
+                TARGET ${target} LINK VALUE /DEBUG:FULL /OPT:REF)
         elseif(${is_dbg})
             ntf_target_build_option(
                 TARGET ${target} COMPILE VALUE /Od /RTC1)
@@ -1269,9 +1275,16 @@ function (ntf_target_options_common_prolog target)
                 TARGET ${target} LINK VALUE /DEBUG:FULL /OPT:NOREF)
         elseif(${is_opt})
             ntf_target_build_option(
-                TARGET ${target} COMPILE VALUE /Ox /GL /GS- /Gs-)
+                TARGET ${target} COMPILE VALUE /Ox /GS- /Gs-)
             ntf_target_build_option(
-                TARGET ${target} LINK VALUE /DEBUG:NONE /OPT:REF /LTCG)
+                TARGET ${target} LINK VALUE /DEBUG:NONE /OPT:REF)
+        endif()
+
+        if (${link_wpo})
+            ntf_target_build_option(
+                TARGET ${target} COMPILE VALUE /GL)
+            ntf_target_build_option(
+                TARGET ${target} LINK VALUE /LTCG)
         endif()
 
         # Force the redefinition of multiple symbols to work around the
@@ -1861,6 +1874,7 @@ function (ntf_target_options)
 
     ntf_repository_build_coverage_get(OUTPUT measure_coverage)
     ntf_repository_toolchain_link_static_get(OUTPUT link_static)
+    ntf_repository_toolchain_link_wpo_get(OUTPUT link_wpo)
 
     ntf_target_options_common_prolog(${target})
 
@@ -2142,7 +2156,26 @@ function (ntf_executable)
         endif()
     else()
         string(REPLACE "m_" "" target_undecorated "${target}")
-        cmake_path(APPEND main_path ${target_path} "${target_undecorated}.m.cpp")
+
+        cmake_path(
+            APPEND
+            main_path_undecorated
+            ${target_path}
+            "${target_undecorated}.m.cpp")
+
+        cmake_path(
+            APPEND
+            main_path_decorated
+            ${target_path}
+            "${target}.m.cpp")
+
+        if (EXISTS "${main_path_undecorated}")
+            set(main_path "${main_path_undecorated}")
+        elseif (EXISTS "${main_path_decorated}")
+            set(main_path "${main_path_decorated}")
+        else()
+            ntf_die("Target '${target}' main does not exist")
+        endif()
     endif()
 
     if (VERBOSE)
@@ -5535,6 +5568,37 @@ function (ntf_repository_toolchain_link_static_get)
     endif()
 endfunction()
 
+# Set the "toolchain_link_wpo" variable scoped to a repository.
+#
+# VALUE  - The variable value.
+function (ntf_repository_toolchain_link_wpo_set)
+    cmake_parse_arguments(
+        ARG "" "VALUE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_VALUE})
+
+    ntf_repository_variable_set(
+        VARIABLE "toolchain_link_wpo" VALUE ${ARG_VALUE})
+endfunction()
+
+# Get the "toolchain_link_wpo" variable scoped to a repository.
+#
+# OUTPUT - The variable set in the parent scope.
+function (ntf_repository_toolchain_link_wpo_get)
+    cmake_parse_arguments(
+        ARG "" "OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_OUTPUT})
+
+    ntf_repository_variable_get(VARIABLE "toolchain_link_wpo" OUTPUT result)
+
+    if ("${result}" STREQUAL "")
+        set(${ARG_OUTPUT} FALSE PARENT_SCOPE)
+    else()
+        set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
+    endif()
+endfunction()
+
 # Set the "toolchain_compiler_name" variable scoped to a repository.
 #
 # VALUE  - The variable value.
@@ -6407,6 +6471,23 @@ function (ntf_repository_enable_link_static flag)
     else()
         if (${flag})
             ntf_die("Static linking is not supported on this platform")
+        endif()
+    endif()
+endfunction()
+
+# Enable or disable whole-program optimization and link-time code generation,
+# if supported by the platform.
+function (ntf_repository_enable_link_wpo flag)
+    if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" OR
+       "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+        if (${flag})
+            ntf_repository_toolchain_link_wpo_set(VALUE TRUE)
+        else()
+            ntf_repository_toolchain_link_wpo_set(VALUE FALSE)
+        endif()
+    else()
+        if (${flag})
+            ntf_die("Whole program optimization is not supported on this platform")
         endif()
     endif()
 endfunction()
@@ -8349,7 +8430,7 @@ Libs.private:${target_libs_string}\n\
         endif()
 
     endif()
-    
+
 endfunction()
 
 
@@ -8428,11 +8509,11 @@ function (ntf_target_install_rule)
 
     if (${install_multiconfig})
         ntf_target_install_traits_get_alternate_ufid_list(
-            TARGET 
+            TARGET
                 ${target}
-            UFID 
+            UFID
                 ${install_ufid}
-            OUTPUT 
+            OUTPUT
                 alternate_install_ufid_list
         )
     else()
@@ -8808,7 +8889,7 @@ Libs.private:${target_libs_string}\n\
             endif()
         endforeach()
     endif()
-    
+
 endfunction()
 
 
