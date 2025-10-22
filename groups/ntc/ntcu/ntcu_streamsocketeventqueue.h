@@ -57,7 +57,7 @@ class StreamSocketEventQueue : public ntci::StreamSocketSession,
         // This enumeration defines the constants used by this class.
 
         /// The total number of stream socket event types.
-        k_NUM_EVENT_TYPES = 6
+        k_NUM_EVENT_TYPES = 7
     };
 
     ntccfg::ConditionMutex        d_mutex;
@@ -82,9 +82,18 @@ class StreamSocketEventQueue : public ntci::StreamSocketSession,
         BSLS_KEYWORD_OVERRIDE;
 
     /// Process the closure of the specified 'streamSocket'.
-    void processStreamSocketClosed(
-        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket)
-        BSLS_KEYWORD_OVERRIDE;
+    void processStreamSocketClosed(const bsl::shared_ptr<ntci::StreamSocket>&
+                                       streamSocket) BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the condition that a connection is initiated.
+    void processConnectInitiated(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ConnectEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the condition that a connection is complete.
+    void processConnectComplete(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ConnectEvent& event) BSLS_KEYWORD_OVERRIDE;
 
     /// Process the condition that read queue flow control has been relaxed:
     /// the socket receive buffer is being automatically copied to the read
@@ -199,6 +208,10 @@ class StreamSocketEventQueue : public ntci::StreamSocketSession,
 
     /// Return true if the user is interested in events of the specified
     /// 'type', otherwise return false.
+    bool want(ntca::ConnectEventType::Value type) const;
+
+    /// Return true if the user is interested in events of the specified
+    /// 'type', otherwise return false.
     bool want(ntca::ReadQueueEventType::Value type) const;
 
     /// Return true if the user is interested in events of the specified
@@ -233,6 +246,9 @@ class StreamSocketEventQueue : public ntci::StreamSocketSession,
     void show(ntca::StreamSocketEventType::Value type);
 
     /// Gain interest in events of the specified 'type'.
+    void show(ntca::ConnectEventType::Value type);
+
+    /// Gain interest in events of the specified 'type'.
     void show(ntca::ReadQueueEventType::Value type);
 
     /// Gain interest in events of the specified 'type'.
@@ -252,6 +268,9 @@ class StreamSocketEventQueue : public ntci::StreamSocketSession,
 
     /// Lose interest in all events of the specified 'type'.
     void hide(ntca::StreamSocketEventType::Value type);
+
+    /// Lose interest in events of the specified 'type'.
+    void hide(ntca::ConnectEventType::Value type);
 
     /// Lose interest in events of the specified 'type'.
     void hide(ntca::ReadQueueEventType::Value type);
@@ -277,6 +296,27 @@ class StreamSocketEventQueue : public ntci::StreamSocketSession,
     /// the error.
     ntsa::Error wait(ntca::StreamSocketEvent*  result,
                      const bsls::TimeInterval& timeout);
+
+    /// Wait for any connect event to occur and load the result into the
+    /// specified 'result'. Return the error.
+    ntsa::Error wait(ntca::ConnectEvent* result);
+
+    /// Wait for any connect event to occur or until the specified 'timeout',
+    /// in absolute time since the Unix epoch, elapses. Return the error.
+    ntsa::Error wait(ntca::ConnectEvent*       result,
+                     const bsls::TimeInterval& timeout);
+
+    /// Wait for a connect event of the specified 'type' to occur and load the
+    /// result into the specified 'result'. Return the error.
+    ntsa::Error wait(ntca::ConnectEvent*           result,
+                     ntca::ConnectEventType::Value type);
+
+    /// Wait for a connect event of the specified 'type' to occur or until the
+    /// specified 'timeout', in absolute time since the Unix epoch, elapses.
+    /// Return the error.
+    ntsa::Error wait(ntca::ConnectEvent*           result,
+                     ntca::ConnectEventType::Value type,
+                     const bsls::TimeInterval&     timeout);
 
     /// Wait for any read queue event to occur and load the result into
     /// the specified 'result'. Return the error.

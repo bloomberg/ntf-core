@@ -99,6 +99,80 @@ void Dispatch::announceClosed(
     }
 }
 
+void Dispatch::announceConnectInitiated(
+    const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+    const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+    const ntca::ConnectEvent&                           event,
+    const bsl::shared_ptr<ntci::Strand>&                destination,
+    const bsl::shared_ptr<ntci::Strand>&                source,
+    const bsl::shared_ptr<ntci::Executor>&              executor,
+    bool                                                defer,
+    ntccfg::Mutex*                                      mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
+        ntccfg::UnLockGuard                          guard(mutex);
+        sessionGuard->processConnectInitiated(socket, event);
+    }
+    else if (destination) {
+        destination->execute(
+            NTCCFG_BIND(&ntci::DatagramSocketSession::processConnectInitiated,
+                        session,
+                        socket,
+                        event));
+    }
+    else {
+        executor->execute(
+            NTCCFG_BIND(&ntci::DatagramSocketSession::processConnectInitiated,
+                        session,
+                        socket,
+                        event));
+    }
+}
+
+void Dispatch::announceConnectComplete(
+    const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
+    const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
+    const ntca::ConnectEvent&                           event,
+    const bsl::shared_ptr<ntci::Strand>&                destination,
+    const bsl::shared_ptr<ntci::Strand>&                source,
+    const bsl::shared_ptr<ntci::Executor>&              executor,
+    bool                                                defer,
+    ntccfg::Mutex*                                      mutex)
+{
+    if (!session) {
+        return;
+    }
+
+    if (NTCCFG_LIKELY(!defer &&
+                      ntci::Strand::passthrough(destination, source)))
+    {
+        bsl::shared_ptr<ntci::DatagramSocketSession> sessionGuard = session;
+        ntccfg::UnLockGuard                          guard(mutex);
+        sessionGuard->processConnectComplete(socket, event);
+    }
+    else if (destination) {
+        destination->execute(
+            NTCCFG_BIND(&ntci::DatagramSocketSession::processConnectComplete,
+                        session,
+                        socket,
+                        event));
+    }
+    else {
+        executor->execute(
+            NTCCFG_BIND(&ntci::DatagramSocketSession::processConnectComplete,
+                        session,
+                        socket,
+                        event));
+    }
+}
+
 void Dispatch::announceReadQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::DatagramSocketSession>& session,
     const bsl::shared_ptr<ntci::DatagramSocket>&        socket,
@@ -1442,18 +1516,18 @@ void Dispatch::announceConnectInitiated(
         sessionGuard->processConnectInitiated(socket, event);
     }
     else if (destination) {
-        destination->execute(NTCCFG_BIND(
-            &ntci::StreamSocketSession::processConnectInitiated,
-            session,
-            socket,
-            event));
+        destination->execute(
+            NTCCFG_BIND(&ntci::StreamSocketSession::processConnectInitiated,
+                        session,
+                        socket,
+                        event));
     }
     else {
-        executor->execute(NTCCFG_BIND(
-            &ntci::StreamSocketSession::processConnectInitiated,
-            session,
-            socket,
-            event));
+        executor->execute(
+            NTCCFG_BIND(&ntci::StreamSocketSession::processConnectInitiated,
+                        session,
+                        socket,
+                        event));
     }
 }
 
@@ -1479,18 +1553,18 @@ void Dispatch::announceConnectComplete(
         sessionGuard->processConnectComplete(socket, event);
     }
     else if (destination) {
-        destination->execute(NTCCFG_BIND(
-            &ntci::StreamSocketSession::processConnectComplete,
-            session,
-            socket,
-            event));
+        destination->execute(
+            NTCCFG_BIND(&ntci::StreamSocketSession::processConnectComplete,
+                        session,
+                        socket,
+                        event));
     }
     else {
-        executor->execute(NTCCFG_BIND(
-            &ntci::StreamSocketSession::processConnectComplete,
-            session,
-            socket,
-            event));
+        executor->execute(
+            NTCCFG_BIND(&ntci::StreamSocketSession::processConnectComplete,
+                        session,
+                        socket,
+                        event));
     }
 }
 

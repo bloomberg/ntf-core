@@ -163,18 +163,17 @@ void StreamSocketSession::processDowngradeInitiated(
     NTCCFG_WARNING_UNUSED(event);
 }
 
-
 void StreamSocketSession::processDowngradeReceive(
-        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-        const ntca::DowngradeEvent&                event)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::DowngradeEvent&                event)
 {
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);
 }
 
 void StreamSocketSession::processDowngradeSend(
-        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
-        const ntca::DowngradeEvent&                event)
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::DowngradeEvent&                event)
 {
     NTCCFG_WARNING_UNUSED(streamSocket);
     NTCCFG_WARNING_UNUSED(event);

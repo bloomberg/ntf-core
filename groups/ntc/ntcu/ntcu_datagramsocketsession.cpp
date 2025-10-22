@@ -39,6 +39,22 @@ DatagramSocketSession::~DatagramSocketSession()
 {
 }
 
+void DatagramSocketSession::processConnectInitiated(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ConnectEvent&                    event)
+{
+    BSLS_ASSERT(event.type() == ntca::ConnectEventType::e_INITIATED);
+    d_callback(datagramSocket, ntca::DatagramSocketEvent(event));
+}
+
+void DatagramSocketSession::processConnectComplete(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ConnectEvent&                    event)
+{
+    BSLS_ASSERT(event.type() == ntca::ConnectEventType::e_COMPLETE);
+    d_callback(datagramSocket, ntca::DatagramSocketEvent(event));
+}
+
 void DatagramSocketSession::processReadQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const ntca::ReadQueueEvent&                  event)
@@ -120,6 +136,22 @@ void DatagramSocketSession::processWriteQueueDiscarded(
     const ntca::WriteQueueEvent&                 event)
 {
     BSLS_ASSERT(event.type() == ntca::WriteQueueEventType::e_DISCARDED);
+    d_callback(datagramSocket, ntca::DatagramSocketEvent(event));
+}
+
+void DatagramSocketSession::processDowngradeInitiated(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::DowngradeEvent&                  event)
+{
+    BSLS_ASSERT(event.type() == ntca::DowngradeEventType::e_INITIATED);
+    d_callback(datagramSocket, ntca::DatagramSocketEvent(event));
+}
+
+void DatagramSocketSession::processDowngradeComplete(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::DowngradeEvent&                  event)
+{
+    BSLS_ASSERT(event.type() == ntca::DowngradeEventType::e_COMPLETE);
     d_callback(datagramSocket, ntca::DatagramSocketEvent(event));
 }
 

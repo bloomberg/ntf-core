@@ -21,12 +21,12 @@ BSLS_IDENT_RCSID(ntcr_datagramsocket_cpp, "$Id$ $CSID$")
 #include <ntccfg_limits.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcs_monitorable.h>
 #include <ntcs_async.h>
 #include <ntcs_blobbufferutil.h>
 #include <ntcs_blobutil.h>
 #include <ntcs_compat.h>
 #include <ntcs_dispatch.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_plugin.h>
 #include <ntcu_datagramsocketsession.h>
 #include <ntcu_datagramsocketutil.h>
@@ -239,8 +239,7 @@ void DatagramSocket::processSocketReadable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
-    if (NTCCFG_UNLIKELY(d_detachState.mode() ==
-                        ntcs::DetachMode::e_INITIATED))
+    if (NTCCFG_UNLIKELY(d_detachState.mode() == ntcs::DetachMode::e_INITIATED))
     {
         return;
     }
@@ -297,8 +296,7 @@ void DatagramSocket::processSocketWritable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
-    if (NTCCFG_UNLIKELY(d_detachState.mode() ==
-                        ntcs::DetachMode::e_INITIATED))
+    if (NTCCFG_UNLIKELY(d_detachState.mode() == ntcs::DetachMode::e_INITIATED))
     {
         return;
     }
@@ -353,8 +351,7 @@ void DatagramSocket::processSocketError(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
-    if (NTCCFG_UNLIKELY(d_detachState.mode() ==
-                        ntcs::DetachMode::e_INITIATED))
+    if (NTCCFG_UNLIKELY(d_detachState.mode() == ntcs::DetachMode::e_INITIATED))
     {
         return;
     }
@@ -763,9 +760,8 @@ void DatagramSocket::processSendDeadlineTimer(
         ntci::SendCallback callback;
         ntca::SendContext  context;
 
-        bool becameEmpty = d_sendQueue.removeEntryId(&callback,
-                                                     &context,
-                                                     entryId);
+        bool becameEmpty =
+            d_sendQueue.removeEntryId(&callback, &context, entryId);
         if (becameEmpty) {
             this->privateApplyFlowControl(self,
                                           ntca::FlowControlType::e_SEND,
@@ -1347,8 +1343,7 @@ void DatagramSocket::privateShutdownSequenceComplete(
 
     if (lock) {
         d_mutex.lock();
-        BSLS_ASSERT(d_detachState.mode() ==
-                    ntcs::DetachMode::e_INITIATED);
+        BSLS_ASSERT(d_detachState.mode() == ntcs::DetachMode::e_INITIATED);
         d_detachState.setMode(ntcs::DetachMode::e_IDLE);
     }
     else {
@@ -1400,7 +1395,7 @@ void DatagramSocket::privateShutdownSequenceComplete(
         NTCR_DATAGRAMSOCKET_LOG_SHUTDOWN_SEND();
 
         typedef bsl::pair<ntca::SendContext, ntci::SendCallback>
-        SendContextCallback;
+            SendContextCallback;
 
         bsl::vector<SendContextCallback> callbackVector;
 
@@ -1418,8 +1413,8 @@ void DatagramSocket::privateShutdownSequenceComplete(
                     const ntcq::ZeroCopyEntry& entry = zeroCopyEntryVector[i];
                     if (entry.callback()) {
                         callbackVector.push_back(
-                            SendContextCallback(
-                                entry.context(), entry.callback()));
+                            SendContextCallback(entry.context(),
+                                                entry.callback()));
                     }
                 }
             }
@@ -1433,8 +1428,8 @@ void DatagramSocket::privateShutdownSequenceComplete(
                         sendQueueEntryVector[i];
                     if (entry.callback()) {
                         callbackVector.push_back(
-                            SendContextCallback(
-                                entry.context(), entry.callback()));
+                            SendContextCallback(entry.context(),
+                                                entry.callback()));
                     }
                 }
             }
@@ -1875,8 +1870,7 @@ bool DatagramSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
-            BSLS_ASSERT(d_detachState.mode() !=
-                        ntcs::DetachMode::e_INITIATED);
+            BSLS_ASSERT(d_detachState.mode() != ntcs::DetachMode::e_INITIATED);
             const ntsa::Error error =
                 reactorRef->detachSocket(self, detachCallback);
             if (NTCCFG_UNLIKELY(error)) {
@@ -2332,7 +2326,8 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
     }
-    else if (!endpoint.isNull() && endpoint.value() != d_systemRemoteEndpoint) {
+    else if (!endpoint.isNull() && endpoint.value() != d_systemRemoteEndpoint)
+    {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -2431,7 +2426,8 @@ ntsa::Error DatagramSocket::privateEnqueueSendBuffer(
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
     }
-    else if (!endpoint.isNull() && endpoint.value() != d_systemRemoteEndpoint) {
+    else if (!endpoint.isNull() && endpoint.value() != d_systemRemoteEndpoint)
+    {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
@@ -2512,9 +2508,8 @@ ntsa::Error DatagramSocket::privateDequeueReceiveBuffer(
     }
     else {
         bsl::shared_ptr<bdlbb::Blob> deflatedData;
-        error = this->privateDequeueReceiveBufferRaw(self,
-                                                     context,
-                                                     &deflatedData);
+        error =
+            this->privateDequeueReceiveBufferRaw(self, context, &deflatedData);
         if (error) {
             return error;
         }
@@ -2539,9 +2534,9 @@ ntsa::Error DatagramSocket::privateDequeueReceiveBuffer(
 }
 
 ntsa::Error DatagramSocket::privateDequeueReceiveBufferRaw(
-        const bsl::shared_ptr<DatagramSocket>& self,
-        ntsa::ReceiveContext*                  context,
-        bsl::shared_ptr<bdlbb::Blob>*          data)
+    const bsl::shared_ptr<DatagramSocket>& self,
+    ntsa::ReceiveContext*                  context,
+    bsl::shared_ptr<bdlbb::Blob>*          data)
 {
     NTCI_LOG_CONTEXT();
 
@@ -2830,9 +2825,9 @@ ntsa::Error DatagramSocket::privateOpen(
 
     if (d_options.compressionConfig().has_value()) {
         if (d_options.compressionConfig().value().type() !=
-            ntca::CompressionType::e_UNDEFINED &&
+                ntca::CompressionType::e_UNDEFINED &&
             d_options.compressionConfig().value().type() !=
-            ntca::CompressionType::e_NONE)
+                ntca::CompressionType::e_NONE)
         {
             bsl::shared_ptr<ntci::CompressionDriver> compressionDriver;
             error = ntcs::Plugin::lookupCompressionDriver(&compressionDriver);
@@ -2850,7 +2845,7 @@ ntsa::Error DatagramSocket::privateOpen(
                 return error;
             }
 
-            d_sendDeflater_sp = compression;
+            d_sendDeflater_sp    = compression;
             d_receiveInflater_sp = compression;
         }
     }
@@ -3031,6 +3026,7 @@ void DatagramSocket::processRemoteEndpointResolution(
     }
     else {
         connectContext.setName(getEndpointEvent.context().authority());
+        connectContext.setEndpoint(endpoint);
 
         if (getEndpointEvent.context().latency() != bsls::TimeInterval()) {
             connectContext.setLatency(getEndpointEvent.context().latency());
@@ -3059,8 +3055,8 @@ void DatagramSocket::processRemoteEndpointResolution(
                                              d_options.reuseAddress());
 
                 if (!error) {
-                    error = d_socket_sp->sourceEndpoint(
-                        &d_systemSourceEndpoint);
+                    error =
+                        d_socket_sp->sourceEndpoint(&d_systemSourceEndpoint);
                     d_publicSourceEndpoint = d_systemSourceEndpoint;
                 }
             }
@@ -3081,10 +3077,30 @@ void DatagramSocket::processRemoteEndpointResolution(
         d_publicRemoteEndpoint = d_systemRemoteEndpoint;
     }
 
+    if (d_session_sp) {
+        ntca::ConnectEvent connectEvent;
+        connectEvent.setType(ntca::ConnectEventType::e_INITIATED);
+        connectEvent.setContext(connectContext);
+
+        const bool defer = !connectOptions.recurse();
+
+        ntcs::Dispatch::announceConnectInitiated(d_session_sp,
+                                                 self,
+                                                 connectEvent,
+                                                 d_sessionStrand_sp,
+                                                 ntci::Strand::unknown(),
+                                                 self,
+                                                 defer,
+                                                 &d_mutex);
+
+        if (d_shutdownState.initiated()) {
+            return;
+        }
+    }
+
     ntca::ConnectEvent connectEvent;
     if (!error) {
         connectEvent.setType(ntca::ConnectEventType::e_COMPLETE);
-        connectContext.setEndpoint(d_systemSourceEndpoint);
     }
     else {
         connectEvent.setType(ntca::ConnectEventType::e_ERROR);
@@ -3092,6 +3108,23 @@ void DatagramSocket::processRemoteEndpointResolution(
     }
 
     connectEvent.setContext(connectContext);
+
+    if (d_session_sp) {
+        const bool defer = !connectOptions.recurse();
+
+        ntcs::Dispatch::announceConnectComplete(d_session_sp,
+                                                self,
+                                                connectEvent,
+                                                d_sessionStrand_sp,
+                                                ntci::Strand::unknown(),
+                                                self,
+                                                defer,
+                                                &d_mutex);
+
+        if (d_shutdownState.initiated()) {
+            return;
+        }
+    }
 
     if (connectCallback) {
         const bool defer = !connectOptions.recurse();
@@ -3105,9 +3138,8 @@ void DatagramSocket::processRemoteEndpointResolution(
     }
 }
 
-void DatagramSocket::privateClose(
-    const bsl::shared_ptr<DatagramSocket>& self,
-    const ntci::CloseCallback&             callback)
+void DatagramSocket::privateClose(const bsl::shared_ptr<DatagramSocket>& self,
+                                  const ntci::CloseCallback& callback)
 {
     NTCI_LOG_CONTEXT();
 
@@ -3511,14 +3543,55 @@ ntsa::Error DatagramSocket::connect(const ntsa::Endpoint&        endpoint,
 
     d_receiveOptions.hideEndpoint();
 
-    if (callback) {
+    if (d_session_sp) {
         ntca::ConnectContext connectContext;
         connectContext.setEndpoint(d_systemRemoteEndpoint);
 
         ntca::ConnectEvent connectEvent;
-        connectEvent.setType(ntca::ConnectEventType::e_COMPLETE);
+        connectEvent.setType(ntca::ConnectEventType::e_INITIATED);
         connectEvent.setContext(connectContext);
 
+        const bool defer = !options.recurse();
+
+        ntcs::Dispatch::announceConnectInitiated(d_session_sp,
+                                                 self,
+                                                 connectEvent,
+                                                 d_sessionStrand_sp,
+                                                 ntci::Strand::unknown(),
+                                                 self,
+                                                 defer,
+                                                 &d_mutex);
+
+        if (d_shutdownState.initiated()) {
+            return ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
+        }
+    }
+
+    ntca::ConnectContext connectContext;
+    connectContext.setEndpoint(d_systemRemoteEndpoint);
+
+    ntca::ConnectEvent connectEvent;
+    connectEvent.setType(ntca::ConnectEventType::e_COMPLETE);
+    connectEvent.setContext(connectContext);
+
+    if (d_session_sp) {
+        const bool defer = !options.recurse();
+
+        ntcs::Dispatch::announceConnectComplete(d_session_sp,
+                                                self,
+                                                connectEvent,
+                                                d_sessionStrand_sp,
+                                                ntci::Strand::unknown(),
+                                                self,
+                                                defer,
+                                                &d_mutex);
+
+        if (d_shutdownState.initiated()) {
+            return ntsa::Error(ntsa::Error::e_CONNECTION_DEAD);
+        }
+    }
+
+    if (callback) {
         const bool defer = !options.recurse();
 
         callback.dispatch(self,
@@ -3668,8 +3741,8 @@ ntsa::Error DatagramSocket::send(const bdlbb::Blob&        data,
     }
 
     if (NTCCFG_LIKELY(!d_sendDeflater_sp)) {
-        return this->privateSend(
-            self, data, state, options, context, callback);
+        return this
+            ->privateSend(self, data, state, options, context, callback);
     }
     else {
         ntca::DeflateOptions deflateOptions;
@@ -3770,8 +3843,8 @@ ntsa::Error DatagramSocket::send(const ntsa::Data&         data,
     }
 
     if (NTCCFG_LIKELY(!d_sendDeflater_sp)) {
-        return this->privateSend(
-            self, data, state, options, context, callback);
+        return this
+            ->privateSend(self, data, state, options, context, callback);
     }
     else {
         ntca::DeflateOptions deflateOptions;
@@ -4281,7 +4354,7 @@ ntsa::Error DatagramSocket::setZeroCopyThreshold(bsl::size_t value)
 }
 
 ntsa::Error DatagramSocket::setWriteDeflater(
-        const bsl::shared_ptr<ntci::Compression>& compression)
+    const bsl::shared_ptr<ntci::Compression>& compression)
 {
     LockGuard lock(&d_mutex);
 
@@ -4447,7 +4520,7 @@ ntsa::Error DatagramSocket::setWriteQueueWatermarks(bsl::size_t lowWatermark,
 }
 
 ntsa::Error DatagramSocket::setReadInflater(
-        const bsl::shared_ptr<ntci::Compression>& compression)
+    const bsl::shared_ptr<ntci::Compression>& compression)
 {
     LockGuard lock(&d_mutex);
 
@@ -4749,9 +4822,8 @@ ntsa::Error DatagramSocket::cancel(const ntca::SendToken& token)
     ntci::SendCallback callback;
     ntca::SendContext  context;
 
-    bool becameEmpty = d_sendQueue.removeEntryToken(&callback,
-                                                    &context,
-                                                    token);
+    bool becameEmpty =
+        d_sendQueue.removeEntryToken(&callback, &context, token);
 
     if (becameEmpty) {
         this->privateApplyFlowControl(self,
@@ -4845,12 +4917,12 @@ ntsa::Error DatagramSocket::release(ntsa::Handle* result)
 ntsa::Error DatagramSocket::release(ntsa::Handle*              result,
                                     const ntci::CloseFunction& callback)
 {
-    return this->release(
-        result, this->createCloseCallback(callback, d_allocator_p));
+    return this->release(result,
+                         this->createCloseCallback(callback, d_allocator_p));
 }
 
 ntsa::Error DatagramSocket::release(ntsa::Handle*              result,
-                                  const ntci::CloseCallback& callback)
+                                    const ntci::CloseCallback& callback)
 {
     bsl::shared_ptr<DatagramSocket> self = this->getSelf(this);
 

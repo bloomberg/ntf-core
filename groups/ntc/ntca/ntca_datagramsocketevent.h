@@ -46,6 +46,7 @@ namespace ntca {
 class DatagramSocketEvent
 {
     union {
+        bsls::ObjectBuffer<ntca::ConnectEvent>    d_connectEvent;
         bsls::ObjectBuffer<ntca::ReadQueueEvent>  d_readQueueEvent;
         bsls::ObjectBuffer<ntca::WriteQueueEvent> d_writeQueueEvent;
         bsls::ObjectBuffer<ntca::DowngradeEvent>  d_downgradeEvent;
@@ -62,6 +63,13 @@ class DatagramSocketEvent
     /// 'basicAllocator' is 0, the currently installed default allocator is
     /// used.
     explicit DatagramSocketEvent(bslma::Allocator* basicAllocator = 0);
+
+    /// Create a new datagram socket have initially represented by the
+    /// specified 'connectEvent'. Optionally specify a 'basicAllocator'
+    /// used to supply memory. If 'basicAllocator' is 0, the currently
+    /// installed default allocator is used.
+    explicit DatagramSocketEvent(const ntca::ConnectEvent& connectEvent,
+                                 bslma::Allocator*         basicAllocator = 0);
 
     /// Create a new datagram socket have initially represented by the
     /// specified 'readQueueEvent'. Optionally specify a 'basicAllocator'
@@ -112,6 +120,11 @@ class DatagramSocketEvent
     /// Return a reference to this modifiable object.
     DatagramSocketEvent& operator=(const DatagramSocketEvent& other);
 
+    /// Make the representation of this object a connect event having the
+    /// same value as the specified 'other' object.  Return the reference
+    /// to this modifiable object.
+    DatagramSocketEvent& operator=(const ntca::ConnectEvent& other);
+
     /// Make the representation of this object a read queue event having the
     /// same value as the specified 'other' object.  Return the reference
     /// to this modifiable object.
@@ -143,6 +156,16 @@ class DatagramSocketEvent
 
     /// Make the representation of this object match the specified 'type'.
     void make(ntca::DatagramSocketEventType::Value type);
+
+    /// Make the representation of this object a connect event having a
+    /// default value.  Return the reference to the modifiable object
+    /// represented as a read queue event.
+    ntca::ConnectEvent& makeConnectEvent();
+
+    /// Make the representation of this object a read queue event having the
+    /// same value as the specified 'other' object.  Return the reference to
+    /// the modifiable object represented as a read queue event.
+    ntca::ConnectEvent& makeConnectEvent(const ntca::ConnectEvent& other);
 
     /// Make the representation of this object a read queue event having a
     /// default value.  Return the reference to the modifiable object
@@ -198,6 +221,11 @@ class DatagramSocketEvent
     /// the modifiable object represented as an error event.
     ntca::ErrorEvent& makeErrorEvent(const ntca::ErrorEvent& other);
 
+    /// Return the non-modifiable reference to the object represented as a
+    /// connect event. The behavior is undefined unless 'isConnectEvent()' is
+    /// true.
+    const ntca::ConnectEvent& connectEvent() const;
+
     /// Return the non-modifiable reference to the object represented as
     /// an read queue event. The behavior is undefined unless
     /// 'isReadQueueEvent()' is true.
@@ -229,6 +257,10 @@ class DatagramSocketEvent
     /// Return true if the datagram socket event type is undefined, otherwise
     /// return false.
     bool isUndefined() const;
+
+    /// Return true if the datagram socket event type is a connect event,
+    /// otherwise return false.
+    bool isConnectEvent() const;
 
     /// Return true if the datagram socket event type is a read queue event,
     /// otherwise return false.
@@ -345,7 +377,10 @@ void hashAppend(HASH_ALGORITHM& algorithm, const DatagramSocketEvent& value)
 {
     using bslh::hashAppend;
 
-    if (value.isReadQueueEvent()) {
+    if (value.isConnectEvent()) {
+        hashAppend(algorithm, value.connectEvent());
+    }
+    else if (value.isReadQueueEvent()) {
         hashAppend(algorithm, value.readQueueEvent());
     }
     else if (value.isWriteQueueEvent()) {

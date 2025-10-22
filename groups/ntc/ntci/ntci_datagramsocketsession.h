@@ -19,18 +19,24 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_connectevent.h>
+#include <ntca_downgradeevent.h>
 #include <ntca_errorevent.h>
 #include <ntca_readqueueevent.h>
 #include <ntca_shutdownevent.h>
+#include <ntca_upgradeevent.h>
 #include <ntca_writequeueevent.h>
 #include <ntccfg_platform.h>
+#include <ntci_encryptioncertificate.h>
 #include <ntci_strand.h>
 #include <ntcscm_version.h>
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
 #include <ntsa_shutdownorigin.h>
+#include <ntsa_shutdowntype.h>
 #include <bdlbb_blob.h>
 #include <bsl_memory.h>
+#include <bsl_string.h>
 
 namespace BloombergLP {
 namespace ntci {
@@ -50,6 +56,16 @@ class DatagramSocketSession
   public:
     /// Destroy this object.
     virtual ~DatagramSocketSession();
+
+    /// Process the condition that a connection is initiated.
+    virtual void processConnectInitiated(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ConnectEvent&                    event);
+
+    /// Process the condition that a connection is complete.
+    virtual void processConnectComplete(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ConnectEvent&                    event);
 
     /// Process the condition that read queue flow control has been relaxed:
     /// the socket receive buffer is being automatically copied to the read
@@ -145,6 +161,29 @@ class DatagramSocketSession
     virtual void processWriteQueueRateLimitRelaxed(
         const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
         const ntca::WriteQueueEvent&                 event);
+
+    /// Process the initiation of a downgrade from encrypted to unencrypted
+    /// communication.
+    virtual void processDowngradeInitiated(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::DowngradeEvent&                  event);
+
+    /// Process the socket being shut down for reading encryption
+    /// communication.
+    virtual void processDowngradeReceive(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::DowngradeEvent&                  event);
+
+    /// Process the socket being shut down for writing encrypted communication.
+    virtual void processDowngradeSend(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::DowngradeEvent&                  event);
+
+    /// Process the completion of a downgrade from encrypted to unencrypted
+    /// communication.
+    virtual void processDowngradeComplete(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::DowngradeEvent&                  event);
 
     /// Process the initiation of the shutdown sequence from the specified
     /// 'origin'.

@@ -66,6 +66,16 @@ class StreamSocketSession : public ntci::StreamSocketSession
     /// Destroy this object.
     ~StreamSocketSession() BSLS_KEYWORD_OVERRIDE;
 
+    /// Process the condition that a connection is initiated.
+    void processConnectInitiated(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ConnectEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the condition that a connection is complete.
+    void processConnectComplete(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const ntca::ConnectEvent& event) BSLS_KEYWORD_OVERRIDE;
+
     /// Process the condition that read queue flow control has been relaxed:
     /// the socket receive buffer is being automatically copied to the read
     /// queue.

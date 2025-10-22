@@ -30,8 +30,10 @@ int DatagramSocketEventType::fromInt(DatagramSocketEventType::Value* result,
 {
     switch (number) {
     case DatagramSocketEventType::e_UNDEFINED:
+    case DatagramSocketEventType::e_CONNECT:
     case DatagramSocketEventType::e_READ_QUEUE:
     case DatagramSocketEventType::e_WRITE_QUEUE:
+    case DatagramSocketEventType::e_DOWNGRADE:
     case DatagramSocketEventType::e_SHUTDOWN:
     case DatagramSocketEventType::e_ERROR:
         *result = static_cast<DatagramSocketEventType::Value>(number);
@@ -46,6 +48,10 @@ int DatagramSocketEventType::fromString(DatagramSocketEventType::Value* result,
 {
     if (bdlb::String::areEqualCaseless(string, "UNDEFINED")) {
         *result = e_UNDEFINED;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "CONNECT")) {
+        *result = e_CONNECT;
         return 0;
     }
     if (bdlb::String::areEqualCaseless(string, "READ_QUEUE")) {
@@ -78,6 +84,9 @@ const char* DatagramSocketEventType::toString(
     switch (value) {
     case e_UNDEFINED: {
         return "UNDEFINED";
+    } break;
+    case e_CONNECT: {
+        return "CONNECT";
     } break;
     case e_READ_QUEUE: {
         return "READ_QUEUE";

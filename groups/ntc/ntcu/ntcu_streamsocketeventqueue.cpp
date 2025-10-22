@@ -32,23 +32,19 @@ BSLS_IDENT_RCSID(ntcu_streamsocketeventqueue_cpp, "$Id$ $CSID$")
 #define NTCU_STREAMSOCKETEVENTQUEUE_TIMEOUT -1
 #endif
 
-#define NTCU_STREAMSOCKETEVENTQUEUE_LOG_MANAGER_ESTABLISHED(                  \
-        streamSocket)                                                         \
+#define NTCU_STREAMSOCKETEVENTQUEUE_LOG_MANAGER_ESTABLISHED(streamSocket)     \
     do {                                                                      \
-        NTCI_LOG_STREAM_DEBUG                                                 \
-            << "Stream socket at " << (streamSocket)->sourceEndpoint()        \
-            << " to " << (streamSocket)->remoteEndpoint()                     \
-            << " is established"                                              \
-            << NTCI_LOG_STREAM_END;                                           \
+        NTCI_LOG_STREAM_DEBUG << "Stream socket at "                          \
+                              << (streamSocket)->sourceEndpoint() << " to "   \
+                              << (streamSocket)->remoteEndpoint()             \
+                              << " is established" << NTCI_LOG_STREAM_END;    \
     } while (false)
 
-#define NTCU_STREAMSOCKETEVENTQUEUE_LOG_MANAGER_CLOSED(                       \
-        streamSocket)                                                         \
+#define NTCU_STREAMSOCKETEVENTQUEUE_LOG_MANAGER_CLOSED(streamSocket)          \
     do {                                                                      \
         NTCI_LOG_STREAM_DEBUG                                                 \
             << "Stream socket at " << (streamSocket)->sourceEndpoint()        \
-            << " to " << (streamSocket)->remoteEndpoint()                     \
-            << " is closed"                                                   \
+            << " to " << (streamSocket)->remoteEndpoint() << " is closed"     \
             << NTCI_LOG_STREAM_END;                                           \
     } while (false)
 
@@ -56,10 +52,8 @@ BSLS_IDENT_RCSID(ntcu_streamsocketeventqueue_cpp, "$Id$ $CSID$")
     do {                                                                      \
         NTCI_LOG_STREAM_DEBUG                                                 \
             << "Stream socket at " << (streamSocket)->sourceEndpoint()        \
-            << " to " << (streamSocket)->remoteEndpoint()                     \
-            << " announced "                                                  \
-            << (category)                                                     \
-            << " event " << (event) << NTCI_LOG_STREAM_END;                   \
+            << " to " << (streamSocket)->remoteEndpoint() << " announced "    \
+            << (category) << " event " << (event) << NTCI_LOG_STREAM_END;     \
     } while (false)
 
 namespace BloombergLP {
@@ -89,6 +83,46 @@ void StreamSocketEventQueue::processStreamSocketClosed(
 
     BSLS_ASSERT_OPT(d_established);
     d_established = false;
+}
+
+void StreamSocketEventQueue::processConnectInitiated(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ConnectEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "connect", event);
+
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    BSLS_ASSERT(event.type() == ntca::ConnectEventType::e_INITIATED);
+
+    if (!d_closed && this->want(event.type())) {
+        d_queue.push_back(ntca::StreamSocketEvent(event));
+        d_condition.signal();
+    }
+}
+
+void StreamSocketEventQueue::processConnectComplete(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ConnectEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCU_STREAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "connect", event);
+
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    BSLS_ASSERT(event.type() == ntca::ConnectEventType::e_COMPLETE);
+
+    if (!d_closed && this->want(event.type())) {
+        d_queue.push_back(ntca::StreamSocketEvent(event));
+        d_condition.signal();
+    }
 }
 
 void StreamSocketEventQueue::processReadQueueFlowControlRelaxed(
@@ -438,6 +472,24 @@ const bsl::shared_ptr<ntci::Strand>& StreamSocketEventQueue::strand() const
     return d_strand_sp;
 }
 
+bool StreamSocketEventQueue::want(ntca::ConnectEventType::Value type) const
+{
+    BSLS_ASSERT_OPT(static_cast<int>(ntca::StreamSocketEventType::e_CONNECT) <
+                    k_NUM_EVENT_TYPES);
+
+    const bsl::uint32_t interest =
+        d_interest[static_cast<int>(ntca::StreamSocketEventType::e_CONNECT)];
+
+    const bsl::uint32_t mask =
+        static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
+
+    if ((interest & mask) != 0) {
+        return true;
+    }
+
+    return false;
+}
+
 bool StreamSocketEventQueue::want(ntca::ReadQueueEventType::Value type) const
 {
     BSLS_ASSERT_OPT(
@@ -566,6 +618,14 @@ void StreamSocketEventQueue::show(ntca::StreamSocketEventType::Value type)
     d_interest[type] = mask;
 }
 
+void StreamSocketEventQueue::show(ntca::ConnectEventType::Value type)
+{
+    const bsl::uint32_t mask =
+        static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
+
+    d_interest[ntca::StreamSocketEventType::e_CONNECT] |= mask;
+}
+
 void StreamSocketEventQueue::show(ntca::ReadQueueEventType::Value type)
 {
     const bsl::uint32_t mask =
@@ -618,6 +678,14 @@ void StreamSocketEventQueue::hide(ntca::StreamSocketEventType::Value type)
     BSLS_ASSERT_OPT(static_cast<int>(type) < k_NUM_EVENT_TYPES);
 
     d_interest[type] = 0;
+}
+
+void StreamSocketEventQueue::hide(ntca::ConnectEventType::Value type)
+{
+    const bsl::uint32_t mask =
+        static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
+
+    d_interest[ntca::StreamSocketEventType::e_CONNECT] &= ~mask;
 }
 
 void StreamSocketEventQueue::hide(ntca::ReadQueueEventType::Value type)
@@ -704,6 +772,126 @@ ntsa::Error StreamSocketEventQueue::wait(ntca::StreamSocketEvent*  result,
     d_queue.pop_front();
 
     return ntsa::Error();
+}
+
+ntsa::Error StreamSocketEventQueue::wait(ntca::ConnectEvent* result)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            d_condition.wait(&d_mutex);
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::StreamSocketEvent& event = *it;
+            if (event.isConnectEvent()) {
+                *result = event.connectEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
+}
+
+ntsa::Error StreamSocketEventQueue::wait(ntca::ConnectEvent*       result,
+                                         const bsls::TimeInterval& timeout)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            int rc = d_condition.timedWait(&d_mutex, timeout);
+            if (rc == 0) {
+                break;
+            }
+            else if (rc == NTCU_STREAMSOCKETEVENTQUEUE_TIMEOUT) {
+                return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+            }
+            else {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::StreamSocketEvent& event = *it;
+            if (event.isConnectEvent()) {
+                *result = event.connectEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
+}
+
+ntsa::Error StreamSocketEventQueue::wait(ntca::ConnectEvent*           result,
+                                         ntca::ConnectEventType::Value type)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            d_condition.wait(&d_mutex);
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::StreamSocketEvent& event = *it;
+            if (event.isConnectEvent() && event.connectEvent().type() == type)
+            {
+                *result = event.connectEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
+}
+
+ntsa::Error StreamSocketEventQueue::wait(ntca::ConnectEvent*           result,
+                                         ntca::ConnectEventType::Value type,
+                                         const bsls::TimeInterval&     timeout)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            int rc = d_condition.timedWait(&d_mutex, timeout);
+            if (rc == 0) {
+                break;
+            }
+            else if (rc == NTCU_STREAMSOCKETEVENTQUEUE_TIMEOUT) {
+                return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+            }
+            else {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::StreamSocketEvent& event = *it;
+            if (event.isConnectEvent() && event.connectEvent().type() == type)
+            {
+                *result = event.connectEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
 }
 
 ntsa::Error StreamSocketEventQueue::wait(ntca::ReadQueueEvent* result)

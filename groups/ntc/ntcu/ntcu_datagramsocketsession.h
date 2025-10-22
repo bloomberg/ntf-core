@@ -67,6 +67,16 @@ class DatagramSocketSession : public ntci::DatagramSocketSession
     /// Destroy this object.
     ~DatagramSocketSession() BSLS_KEYWORD_OVERRIDE;
 
+    /// Process the condition that a connection is initiated.
+    void processConnectInitiated(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ConnectEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the condition that a connection is complete.
+    void processConnectComplete(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ConnectEvent& event) BSLS_KEYWORD_OVERRIDE;
+
     /// Process the condition that read queue flow control has been relaxed:
     /// the socket receive buffer is being automatically copied to the read
     /// queue.
@@ -137,6 +147,18 @@ class DatagramSocketSession : public ntci::DatagramSocketSession
     void processWriteQueueDiscarded(
         const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
         const ntca::WriteQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the initiation of a downgrade from encrypted to unencrypted
+    /// communication.
+    void processDowngradeInitiated(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::DowngradeEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the completion of a downgrade from encrypted to unencrypted
+    /// communication.
+    void processDowngradeComplete(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::DowngradeEvent& event) BSLS_KEYWORD_OVERRIDE;
 
     /// Process the initiation of the shutdown sequence from the specified
     /// 'origin'.

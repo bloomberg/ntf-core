@@ -38,6 +38,9 @@ struct DatagramSocketEventType {
         // The datagram socket event type is undefined.
         e_UNDEFINED = 0,
 
+        /// The datagram socket event type is a connect event.
+        e_CONNECT = 6,
+
         // The datagram socket event type is a read queue event.
         e_READ_QUEUE = 1,
 

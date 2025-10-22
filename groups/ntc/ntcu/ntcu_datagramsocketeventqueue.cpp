@@ -32,19 +32,100 @@ BSLS_IDENT_RCSID(ntcu_datagramsocketeventqueue_cpp, "$Id$ $CSID$")
 #define NTCU_DATAGRAMSOCKETEVENTQUEUE_TIMEOUT -1
 #endif
 
-#define NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(                              \
-        datagramSocket, category, event)                                      \
+#define NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_MANAGER_ESTABLISHED(streamSocket)   \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG << "Datagram socket at "                        \
+                              << (streamSocket)->sourceEndpoint() << " to "   \
+                              << (streamSocket)->remoteEndpoint()             \
+                              << " is established" << NTCI_LOG_STREAM_END;    \
+    } while (false)
+
+#define NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_MANAGER_CLOSED(streamSocket)        \
+    do {                                                                      \
+        NTCI_LOG_STREAM_DEBUG                                                 \
+            << "Datagram socket at " << (streamSocket)->sourceEndpoint()      \
+            << " to " << (streamSocket)->remoteEndpoint() << " is closed"     \
+            << NTCI_LOG_STREAM_END;                                           \
+    } while (false)
+
+#define NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket,               \
+                                                category,                     \
+                                                event)                        \
     do {                                                                      \
         NTCI_LOG_STREAM_DEBUG                                                 \
             << "Datagram socket at " << (datagramSocket)->sourceEndpoint()    \
-            << " to " << (datagramSocket)->remoteEndpoint()                   \
-            << " announced "                                                  \
-            << (category)                                                     \
-            << " event " << (event) << NTCI_LOG_STREAM_END;                   \
+            << " to " << (datagramSocket)->remoteEndpoint() << " announced "  \
+            << (category) << " event " << (event) << NTCI_LOG_STREAM_END;     \
     } while (false)
 
 namespace BloombergLP {
 namespace ntcu {
+
+void DatagramSocketEventQueue::processDatagramSocketEstablished(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_MANAGER_ESTABLISHED(datagramSocket);
+
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    BSLS_ASSERT_OPT(!d_established);
+    d_established = true;
+}
+
+void DatagramSocketEventQueue::processDatagramSocketClosed(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_MANAGER_CLOSED(datagramSocket);
+
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    BSLS_ASSERT_OPT(d_established);
+    d_established = false;
+}
+
+void DatagramSocketEventQueue::processConnectInitiated(
+    const bsl::shared_ptr<ntci::DatagramSocket>& streamSocket,
+    const ntca::ConnectEvent&                    event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "connect", event);
+
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    BSLS_ASSERT(event.type() == ntca::ConnectEventType::e_INITIATED);
+
+    if (!d_closed && this->want(event.type())) {
+        d_queue.push_back(ntca::DatagramSocketEvent(event));
+        d_condition.signal();
+    }
+}
+
+void DatagramSocketEventQueue::processConnectComplete(
+    const bsl::shared_ptr<ntci::DatagramSocket>& streamSocket,
+    const ntca::ConnectEvent&                    event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "connect", event);
+
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    BSLS_ASSERT(event.type() == ntca::ConnectEventType::e_COMPLETE);
+
+    if (!d_closed && this->want(event.type())) {
+        d_queue.push_back(ntca::DatagramSocketEvent(event));
+        d_condition.signal();
+    }
+}
 
 void DatagramSocketEventQueue::processReadQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
@@ -54,8 +135,9 @@ void DatagramSocketEventQueue::processReadQueueFlowControlRelaxed(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
-        datagramSocket, "read queue", event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket,
+                                            "read queue",
+                                            event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -76,8 +158,9 @@ void DatagramSocketEventQueue::processReadQueueFlowControlApplied(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
-        datagramSocket, "read queue", event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket,
+                                            "read queue",
+                                            event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -98,8 +181,9 @@ void DatagramSocketEventQueue::processReadQueueLowWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
-        datagramSocket, "read queue", event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket,
+                                            "read queue",
+                                            event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -119,8 +203,9 @@ void DatagramSocketEventQueue::processReadQueueHighWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
-        datagramSocket, "read queue", event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket,
+                                            "read queue",
+                                            event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -140,8 +225,9 @@ void DatagramSocketEventQueue::processReadQueueDiscarded(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
-        datagramSocket, "read queue", event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket,
+                                            "read queue",
+                                            event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -161,8 +247,9 @@ void DatagramSocketEventQueue::processWriteQueueFlowControlRelaxed(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
-        datagramSocket, "write queue", event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket,
+                                            "write queue",
+                                            event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -183,8 +270,9 @@ void DatagramSocketEventQueue::processWriteQueueFlowControlApplied(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
-        datagramSocket, "write queue", event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket,
+                                            "write queue",
+                                            event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -205,8 +293,9 @@ void DatagramSocketEventQueue::processWriteQueueLowWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
-        datagramSocket, "write queue", event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket,
+                                            "write queue",
+                                            event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -226,8 +315,9 @@ void DatagramSocketEventQueue::processWriteQueueHighWatermark(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
-        datagramSocket, "write queue", event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket,
+                                            "write queue",
+                                            event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
@@ -247,12 +337,53 @@ void DatagramSocketEventQueue::processWriteQueueDiscarded(
 
     NTCI_LOG_CONTEXT();
 
-    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(
-        datagramSocket, "write queue", event);
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(datagramSocket,
+                                            "write queue",
+                                            event);
 
     ntccfg::ConditionMutexGuard lock(&d_mutex);
 
     BSLS_ASSERT(event.type() == ntca::WriteQueueEventType::e_DISCARDED);
+
+    if (!d_closed && this->want(event.type())) {
+        d_queue.push_back(ntca::DatagramSocketEvent(event));
+        d_condition.signal();
+    }
+}
+
+void DatagramSocketEventQueue::processDowngradeInitiated(
+    const bsl::shared_ptr<ntci::DatagramSocket>& streamSocket,
+    const ntca::DowngradeEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "downgrade", event);
+
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    BSLS_ASSERT(event.type() == ntca::DowngradeEventType::e_INITIATED);
+
+    if (!d_closed && this->want(event.type())) {
+        d_queue.push_back(ntca::DatagramSocketEvent(event));
+        d_condition.signal();
+    }
+}
+
+void DatagramSocketEventQueue::processDowngradeComplete(
+    const bsl::shared_ptr<ntci::DatagramSocket>& streamSocket,
+    const ntca::DowngradeEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(streamSocket);
+
+    NTCI_LOG_CONTEXT();
+
+    NTCU_DATAGRAMSOCKETEVENTQUEUE_LOG_EVENT(streamSocket, "downgrade", event);
+
+    ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+    BSLS_ASSERT(event.type() == ntca::DowngradeEventType::e_COMPLETE);
 
     if (!d_closed && this->want(event.type())) {
         d_queue.push_back(ntca::DatagramSocketEvent(event));
@@ -363,6 +494,25 @@ const bsl::shared_ptr<ntci::Strand>& DatagramSocketEventQueue::strand() const
     return d_strand_sp;
 }
 
+bool DatagramSocketEventQueue::want(ntca::ConnectEventType::Value type) const
+{
+    BSLS_ASSERT_OPT(
+        static_cast<int>(ntca::DatagramSocketEventType::e_CONNECT) <
+        k_NUM_EVENT_TYPES);
+
+    const bsl::uint32_t interest =
+        d_interest[static_cast<int>(ntca::DatagramSocketEventType::e_CONNECT)];
+
+    const bsl::uint32_t mask =
+        static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
+
+    if ((interest & mask) != 0) {
+        return true;
+    }
+
+    return false;
+}
+
 bool DatagramSocketEventQueue::want(ntca::ReadQueueEventType::Value type) const
 {
     BSLS_ASSERT_OPT(
@@ -391,6 +541,25 @@ bool DatagramSocketEventQueue::want(
 
     const bsl::uint32_t interest = d_interest[static_cast<int>(
         ntca::DatagramSocketEventType::e_WRITE_QUEUE)];
+
+    const bsl::uint32_t mask =
+        static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
+
+    if ((interest & mask) != 0) {
+        return true;
+    }
+
+    return false;
+}
+
+bool DatagramSocketEventQueue::want(ntca::DowngradeEventType::Value type) const
+{
+    BSLS_ASSERT_OPT(
+        static_cast<int>(ntca::DatagramSocketEventType::e_DOWNGRADE) <
+        k_NUM_EVENT_TYPES);
+
+    const bsl::uint32_t interest = d_interest[static_cast<int>(
+        ntca::DatagramSocketEventType::e_DOWNGRADE)];
 
     const bsl::uint32_t mask =
         static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
@@ -444,6 +613,7 @@ DatagramSocketEventQueue::DatagramSocketEventQueue(
 : d_mutex()
 , d_condition()
 , d_queue(basicAllocator)
+, d_established(false)
 , d_closed(false)
 , d_strand_sp(ntci::Strand::unspecified())
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -473,6 +643,14 @@ void DatagramSocketEventQueue::show(ntca::DatagramSocketEventType::Value type)
     d_interest[type] = mask;
 }
 
+void DatagramSocketEventQueue::show(ntca::ConnectEventType::Value type)
+{
+    const bsl::uint32_t mask =
+        static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
+
+    d_interest[ntca::DatagramSocketEventType::e_CONNECT] |= mask;
+}
+
 void DatagramSocketEventQueue::show(ntca::ReadQueueEventType::Value type)
 {
     const bsl::uint32_t mask =
@@ -487,6 +665,14 @@ void DatagramSocketEventQueue::show(ntca::WriteQueueEventType::Value type)
         static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
 
     d_interest[ntca::DatagramSocketEventType::e_WRITE_QUEUE] |= mask;
+}
+
+void DatagramSocketEventQueue::show(ntca::DowngradeEventType::Value type)
+{
+    const bsl::uint32_t mask =
+        static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
+
+    d_interest[ntca::DatagramSocketEventType::e_DOWNGRADE] |= mask;
 }
 
 void DatagramSocketEventQueue::show(ntca::ShutdownEventType::Value type)
@@ -519,6 +705,14 @@ void DatagramSocketEventQueue::hide(ntca::DatagramSocketEventType::Value type)
     d_interest[type] = 0;
 }
 
+void DatagramSocketEventQueue::hide(ntca::ConnectEventType::Value type)
+{
+    const bsl::uint32_t mask =
+        static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
+
+    d_interest[ntca::DatagramSocketEventType::e_CONNECT] &= ~mask;
+}
+
 void DatagramSocketEventQueue::hide(ntca::ReadQueueEventType::Value type)
 {
     const bsl::uint32_t mask =
@@ -533,6 +727,14 @@ void DatagramSocketEventQueue::hide(ntca::WriteQueueEventType::Value type)
         static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
 
     d_interest[ntca::DatagramSocketEventType::e_WRITE_QUEUE] &= ~mask;
+}
+
+void DatagramSocketEventQueue::hide(ntca::DowngradeEventType::Value type)
+{
+    const bsl::uint32_t mask =
+        static_cast<bsl::uint32_t>(1 << static_cast<int>(type));
+
+    d_interest[ntca::DatagramSocketEventType::e_DOWNGRADE] &= ~mask;
 }
 
 void DatagramSocketEventQueue::hide(ntca::ShutdownEventType::Value type)
@@ -595,6 +797,126 @@ ntsa::Error DatagramSocketEventQueue::wait(ntca::DatagramSocketEvent* result,
     d_queue.pop_front();
 
     return ntsa::Error();
+}
+
+ntsa::Error DatagramSocketEventQueue::wait(ntca::ConnectEvent* result)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            d_condition.wait(&d_mutex);
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::DatagramSocketEvent& event = *it;
+            if (event.isConnectEvent()) {
+                *result = event.connectEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
+}
+
+ntsa::Error DatagramSocketEventQueue::wait(ntca::ConnectEvent*       result,
+                                           const bsls::TimeInterval& timeout)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            int rc = d_condition.timedWait(&d_mutex, timeout);
+            if (rc == 0) {
+                break;
+            }
+            else if (rc == NTCU_DATAGRAMSOCKETEVENTQUEUE_TIMEOUT) {
+                return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+            }
+            else {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::DatagramSocketEvent& event = *it;
+            if (event.isConnectEvent()) {
+                *result = event.connectEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
+}
+
+ntsa::Error DatagramSocketEventQueue::wait(ntca::ConnectEvent* result,
+                                           ntca::ConnectEventType::Value type)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            d_condition.wait(&d_mutex);
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::DatagramSocketEvent& event = *it;
+            if (event.isConnectEvent() && event.connectEvent().type() == type)
+            {
+                *result = event.connectEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
+}
+
+ntsa::Error DatagramSocketEventQueue::wait(ntca::ConnectEvent* result,
+                                           ntca::ConnectEventType::Value type,
+                                           const bsls::TimeInterval& timeout)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            int rc = d_condition.timedWait(&d_mutex, timeout);
+            if (rc == 0) {
+                break;
+            }
+            else if (rc == NTCU_DATAGRAMSOCKETEVENTQUEUE_TIMEOUT) {
+                return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+            }
+            else {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::DatagramSocketEvent& event = *it;
+            if (event.isConnectEvent() && event.connectEvent().type() == type)
+            {
+                *result = event.connectEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
 }
 
 ntsa::Error DatagramSocketEventQueue::wait(ntca::ReadQueueEvent* result)
@@ -838,6 +1160,130 @@ ntsa::Error DatagramSocketEventQueue::wait(
                 event.writeQueueEvent().type() == type)
             {
                 *result = event.writeQueueEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
+}
+
+ntsa::Error DatagramSocketEventQueue::wait(ntca::DowngradeEvent* result)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            d_condition.wait(&d_mutex);
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::DatagramSocketEvent& event = *it;
+            if (event.isDowngradeEvent()) {
+                *result = event.downgradeEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
+}
+
+ntsa::Error DatagramSocketEventQueue::wait(ntca::DowngradeEvent*     result,
+                                           const bsls::TimeInterval& timeout)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            int rc = d_condition.timedWait(&d_mutex, timeout);
+            if (rc == 0) {
+                break;
+            }
+            else if (rc == NTCU_DATAGRAMSOCKETEVENTQUEUE_TIMEOUT) {
+                return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+            }
+            else {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::DatagramSocketEvent& event = *it;
+            if (event.isDowngradeEvent()) {
+                *result = event.downgradeEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
+}
+
+ntsa::Error DatagramSocketEventQueue::wait(
+    ntca::DowngradeEvent*           result,
+    ntca::DowngradeEventType::Value type)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            d_condition.wait(&d_mutex);
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::DatagramSocketEvent& event = *it;
+            if (event.isDowngradeEvent() &&
+                event.downgradeEvent().type() == type)
+            {
+                *result = event.downgradeEvent();
+                d_queue.erase(it);
+                return ntsa::Error();
+            }
+        }
+    }
+}
+
+ntsa::Error DatagramSocketEventQueue::wait(
+    ntca::DowngradeEvent*           result,
+    ntca::DowngradeEventType::Value type,
+    const bsls::TimeInterval&       timeout)
+{
+    while (true) {
+        ntccfg::ConditionMutexGuard lock(&d_mutex);
+
+        while (!d_closed && d_queue.empty()) {
+            int rc = d_condition.timedWait(&d_mutex, timeout);
+            if (rc == 0) {
+                break;
+            }
+            else if (rc == NTCU_DATAGRAMSOCKETEVENTQUEUE_TIMEOUT) {
+                return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+            }
+            else {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+
+        if (d_closed) {
+            return ntsa::Error(ntsa::Error::e_CANCELLED);
+        }
+
+        for (Queue::iterator it = d_queue.begin(); it != d_queue.end(); ++it) {
+            const ntca::DatagramSocketEvent& event = *it;
+            if (event.isDowngradeEvent() &&
+                event.downgradeEvent().type() == type)
+            {
+                *result = event.downgradeEvent();
                 d_queue.erase(it);
                 return ntsa::Error();
             }
