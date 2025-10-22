@@ -33,6 +33,15 @@ DatagramSocketEvent::DatagramSocketEvent(bslma::Allocator* basicAllocator)
 }
 
 DatagramSocketEvent::DatagramSocketEvent(
+    const ntca::ConnectEvent& connectEvent,
+    bslma::Allocator*         basicAllocator)
+: d_type(ntca::DatagramSocketEventType::e_CONNECT)
+, d_allocator_p(bslma::Default::allocator(basicAllocator))
+{
+    new (d_connectEvent.buffer()) ntca::ConnectEvent(connectEvent);
+}
+
+DatagramSocketEvent::DatagramSocketEvent(
     const ntca::ReadQueueEvent& readQueueEvent,
     bslma::Allocator*           basicAllocator)
 : d_type(ntca::DatagramSocketEventType::e_READ_QUEUE)
@@ -82,7 +91,11 @@ DatagramSocketEvent::DatagramSocketEvent(const DatagramSocketEvent& original,
 : d_type(original.d_type)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    if (original.isReadQueueEvent()) {
+    if (original.isConnectEvent()) {
+        new (d_connectEvent.buffer())
+            ntca::ConnectEvent(original.connectEvent());
+    }
+    else if (original.isReadQueueEvent()) {
         new (d_readQueueEvent.buffer())
             ntca::ReadQueueEvent(original.readQueueEvent());
     }
@@ -118,7 +131,10 @@ DatagramSocketEvent& DatagramSocketEvent::operator=(
 
     this->reset();
 
-    if (other.isReadQueueEvent()) {
+    if (other.isConnectEvent()) {
+        new (d_connectEvent.buffer()) ntca::ConnectEvent(other.connectEvent());
+    }
+    else if (other.isReadQueueEvent()) {
         new (d_readQueueEvent.buffer())
             ntca::ReadQueueEvent(other.readQueueEvent());
     }
@@ -141,6 +157,13 @@ DatagramSocketEvent& DatagramSocketEvent::operator=(
 
     d_type = other.type();
 
+    return *this;
+}
+
+DatagramSocketEvent& DatagramSocketEvent::operator=(
+    const ntca::ConnectEvent& other)
+{
+    this->makeConnectEvent(other);
     return *this;
 }
 
@@ -181,7 +204,11 @@ DatagramSocketEvent& DatagramSocketEvent::operator=(
 
 void DatagramSocketEvent::reset()
 {
-    if (isReadQueueEvent()) {
+    if (isConnectEvent()) {
+        typedef ntca::ConnectEvent Type;
+        d_connectEvent.object().~Type();
+    }
+    else if (isReadQueueEvent()) {
         typedef ntca::ReadQueueEvent Type;
         d_readQueueEvent.object().~Type();
     }
@@ -208,6 +235,9 @@ void DatagramSocketEvent::reset()
 void DatagramSocketEvent::make(ntca::DatagramSocketEventType::Value type)
 {
     switch (type) {
+    case ntca::DatagramSocketEventType::e_CONNECT:
+        new (d_connectEvent.buffer()) ntca::ConnectEvent();
+        break;
     case ntca::DatagramSocketEventType::e_READ_QUEUE:
         new (d_readQueueEvent.buffer()) ntca::ReadQueueEvent();
         break;
@@ -228,6 +258,35 @@ void DatagramSocketEvent::make(ntca::DatagramSocketEventType::Value type)
     }
 
     d_type = type;
+}
+
+ntca::ConnectEvent& DatagramSocketEvent::makeConnectEvent()
+{
+    if (isConnectEvent()) {
+        d_connectEvent.object().reset();
+    }
+    else {
+        reset();
+        new (d_connectEvent.buffer()) ntca::ConnectEvent();
+        d_type = ntca::DatagramSocketEventType::e_CONNECT;
+    }
+
+    return d_connectEvent.object();
+}
+
+ntca::ConnectEvent& DatagramSocketEvent::makeConnectEvent(
+    const ntca::ConnectEvent& other)
+{
+    if (isConnectEvent()) {
+        d_connectEvent.object() = other;
+    }
+    else {
+        reset();
+        new (d_connectEvent.buffer()) ntca::ConnectEvent(other);
+        d_type = ntca::DatagramSocketEventType::e_CONNECT;
+    }
+
+    return d_connectEvent.object();
 }
 
 ntca::ReadQueueEvent& DatagramSocketEvent::makeReadQueueEvent()
@@ -376,6 +435,12 @@ ntca::ErrorEvent& DatagramSocketEvent::makeErrorEvent(
     return d_errorEvent.object();
 }
 
+const ntca::ConnectEvent& DatagramSocketEvent::connectEvent() const
+{
+    BSLS_ASSERT(d_type == ntca::DatagramSocketEventType::e_CONNECT);
+    return d_connectEvent.object();
+}
+
 const ntca::ReadQueueEvent& DatagramSocketEvent::readQueueEvent() const
 {
     BSLS_ASSERT(d_type == ntca::DatagramSocketEventType::e_READ_QUEUE);
@@ -416,6 +481,11 @@ bool DatagramSocketEvent::isUndefined() const
     return d_type == ntca::DatagramSocketEventType::e_UNDEFINED;
 }
 
+bool DatagramSocketEvent::isConnectEvent() const
+{
+    return d_type == ntca::DatagramSocketEventType::e_CONNECT;
+}
+
 bool DatagramSocketEvent::isReadQueueEvent() const
 {
     return d_type == ntca::DatagramSocketEventType::e_READ_QUEUE;
@@ -447,7 +517,10 @@ bool DatagramSocketEvent::equals(const DatagramSocketEvent& other) const
         return false;
     }
 
-    if (isReadQueueEvent()) {
+    if (isConnectEvent()) {
+        return d_connectEvent.object().equals(other.connectEvent());
+    }
+    else if (isReadQueueEvent()) {
         return d_readQueueEvent.object().equals(other.readQueueEvent());
     }
     else if (isWriteQueueEvent()) {
@@ -473,7 +546,10 @@ bool DatagramSocketEvent::less(const DatagramSocketEvent& other) const
         return false;
     }
 
-    if (isReadQueueEvent()) {
+    if (isConnectEvent()) {
+        return d_connectEvent.object().less(other.connectEvent());
+    }
+    else if (isReadQueueEvent()) {
         return d_readQueueEvent.object().less(other.readQueueEvent());
     }
     else if (isWriteQueueEvent()) {
@@ -493,33 +569,30 @@ bool DatagramSocketEvent::less(const DatagramSocketEvent& other) const
     }
 }
 
-bsl::ostream& DatagramSocketEvent::print(bsl::ostream& datagram,
+bsl::ostream& DatagramSocketEvent::print(bsl::ostream& stream,
                                          int           level,
                                          int           spacesPerLevel) const
 {
-    if (isReadQueueEvent()) {
-        return d_readQueueEvent.object().print(datagram,
-                                               level,
-                                               spacesPerLevel);
+    if (isConnectEvent()) {
+        return d_connectEvent.object().print(stream, level, spacesPerLevel);
+    }
+    else if (isReadQueueEvent()) {
+        return d_readQueueEvent.object().print(stream, level, spacesPerLevel);
     }
     else if (isWriteQueueEvent()) {
-        return d_writeQueueEvent.object().print(datagram,
-                                                level,
-                                                spacesPerLevel);
+        return d_writeQueueEvent.object().print(stream, level, spacesPerLevel);
     }
     else if (isDowngradeEvent()) {
-        return d_downgradeEvent.object().print(datagram,
-                                               level,
-                                               spacesPerLevel);
+        return d_downgradeEvent.object().print(stream, level, spacesPerLevel);
     }
     else if (isShutdownEvent()) {
-        return d_shutdownEvent.object().print(datagram, level, spacesPerLevel);
+        return d_shutdownEvent.object().print(stream, level, spacesPerLevel);
     }
     else if (isErrorEvent()) {
-        return d_errorEvent.object().print(datagram, level, spacesPerLevel);
+        return d_errorEvent.object().print(stream, level, spacesPerLevel);
     }
     else {
-        return datagram << "UNDEFINED";
+        return stream << "UNDEFINED";
     }
 }
 

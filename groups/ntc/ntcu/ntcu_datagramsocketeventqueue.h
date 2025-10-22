@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_datagramsocketevent.h>
 #include <ntccfg_platform.h>
 #include <ntci_datagramsocket.h>
+#include <ntci_datagramsocketmanager.h>
 #include <ntci_datagramsocketsession.h>
 #include <ntci_strand.h>
 #include <ntcscm_version.h>
@@ -46,27 +47,23 @@ namespace ntcu {
 /// This class is thread safe.
 ///
 /// @ingroup module_ntcu
-class DatagramSocketEventQueue : public ntci::DatagramSocketSession
+class DatagramSocketEventQueue : public ntci::DatagramSocketSession,
+                                 public ntci::DatagramSocketManager
 {
     /// Define a type alias for a queue of events.
     typedef bsl::list<ntca::DatagramSocketEvent> Queue;
-
-    /// Define a type alias for a mutex.
-    typedef ntccfg::Mutex Mutex;
-
-    /// Define a type alias for a mutex lock guard.
-    typedef ntccfg::LockGuard LockGuard;
 
     enum Constant {
         // This enumeration defines the constants used by this class.
 
         /// The total number of datagram socket event types.
-        k_NUM_EVENT_TYPES = 6
+        k_NUM_EVENT_TYPES = 7
     };
 
     ntccfg::ConditionMutex        d_mutex;
     ntccfg::Condition             d_condition;
     Queue                         d_queue;
+    bool                          d_established;
     bsl::uint32_t                 d_interest[k_NUM_EVENT_TYPES];
     bool                          d_closed;
     bsl::shared_ptr<ntci::Strand> d_strand_sp;
@@ -79,6 +76,27 @@ class DatagramSocketEventQueue : public ntci::DatagramSocketSession
         BSLS_KEYWORD_DELETED;
 
   private:
+    /// Process the establishment of the specified 'datagramSocket'. Return
+    /// the application protocol of the 'datagramSocket'.
+    void processDatagramSocketEstablished(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket)
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the closure of the specified 'datagramSocket'.
+    void processDatagramSocketClosed(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket)
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the condition that a connection is initiated.
+    void processConnectInitiated(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ConnectEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the condition that a connection is complete.
+    void processConnectComplete(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::ConnectEvent& event) BSLS_KEYWORD_OVERRIDE;
+
     /// Process the condition that read queue flow control has been relaxed:
     /// the socket receive buffer is being automatically copied to the read
     /// queue.
@@ -150,6 +168,18 @@ class DatagramSocketEventQueue : public ntci::DatagramSocketSession
         const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
         const ntca::WriteQueueEvent& event) BSLS_KEYWORD_OVERRIDE;
 
+    /// Process the initiation of a downgrade from encrypted to unencrypted
+    /// communication.
+    void processDowngradeInitiated(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::DowngradeEvent& event) BSLS_KEYWORD_OVERRIDE;
+
+    /// Process the completion of a downgrade from encrypted to unencrypted
+    /// communication.
+    void processDowngradeComplete(
+        const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+        const ntca::DowngradeEvent& event) BSLS_KEYWORD_OVERRIDE;
+
     /// Process the initiation of the shutdown sequence from the specified
     /// 'origin'.
     void processShutdownInitiated(
@@ -181,11 +211,19 @@ class DatagramSocketEventQueue : public ntci::DatagramSocketSession
 
     /// Return true if the user is interested in events of the specified
     /// 'type', otherwise return false.
+    bool want(ntca::ConnectEventType::Value type) const;
+
+    /// Return true if the user is interested in events of the specified
+    /// 'type', otherwise return false.
     bool want(ntca::ReadQueueEventType::Value type) const;
 
     /// Return true if the user is interested in events of the specified
     /// 'type', otherwise return false.
     bool want(ntca::WriteQueueEventType::Value type) const;
+
+    /// Return true if the user is interested in events of the specified
+    /// 'type', otherwise return false.
+    bool want(ntca::DowngradeEventType::Value type) const;
 
     /// Return true if the user is interested in events of the specified
     /// 'type', otherwise return false.
@@ -211,10 +249,16 @@ class DatagramSocketEventQueue : public ntci::DatagramSocketSession
     void show(ntca::DatagramSocketEventType::Value type);
 
     /// Gain interest in events of the specified 'type'.
+    void show(ntca::ConnectEventType::Value type);
+
+    /// Gain interest in events of the specified 'type'.
     void show(ntca::ReadQueueEventType::Value type);
 
     /// Gain interest in events of the specified 'type'.
     void show(ntca::WriteQueueEventType::Value type);
+
+    /// Gain interest in events of the specified 'type'.
+    void show(ntca::DowngradeEventType::Value type);
 
     /// Gain interest in events of the specified 'type'.
     void show(ntca::ShutdownEventType::Value type);
@@ -229,10 +273,16 @@ class DatagramSocketEventQueue : public ntci::DatagramSocketSession
     void hide(ntca::DatagramSocketEventType::Value type);
 
     /// Lose interest in events of the specified 'type'.
+    void hide(ntca::ConnectEventType::Value type);
+
+    /// Lose interest in events of the specified 'type'.
     void hide(ntca::ReadQueueEventType::Value type);
 
     /// Lose interest in events of the specified 'type'.
     void hide(ntca::WriteQueueEventType::Value type);
+
+    /// Lose interest in events of the specified 'type'.
+    void hide(ntca::DowngradeEventType::Value type);
 
     /// Lose interest in events of the specified 'type'.
     void hide(ntca::ShutdownEventType::Value type);
@@ -249,6 +299,27 @@ class DatagramSocketEventQueue : public ntci::DatagramSocketSession
     /// the error.
     ntsa::Error wait(ntca::DatagramSocketEvent* result,
                      const bsls::TimeInterval&  timeout);
+
+    /// Wait for any connect event to occur and load the result into the
+    /// specified 'result'. Return the error.
+    ntsa::Error wait(ntca::ConnectEvent* result);
+
+    /// Wait for any connect event to occur or until the specified 'timeout',
+    /// in absolute time since the Unix epoch, elapses. Return the error.
+    ntsa::Error wait(ntca::ConnectEvent*       result,
+                     const bsls::TimeInterval& timeout);
+
+    /// Wait for a connect event of the specified 'type' to occur and load the
+    /// result into the specified 'result'. Return the error.
+    ntsa::Error wait(ntca::ConnectEvent*           result,
+                     ntca::ConnectEventType::Value type);
+
+    /// Wait for a connect event of the specified 'type' to occur or until the
+    /// specified 'timeout', in absolute time since the Unix epoch, elapses.
+    /// Return the error.
+    ntsa::Error wait(ntca::ConnectEvent*           result,
+                     ntca::ConnectEventType::Value type,
+                     const bsls::TimeInterval&     timeout);
 
     /// Wait for any read queue event to occur and load the result into
     /// the specified 'result'. Return the error.
@@ -293,6 +364,28 @@ class DatagramSocketEventQueue : public ntci::DatagramSocketSession
     ntsa::Error wait(ntca::WriteQueueEvent*           result,
                      ntca::WriteQueueEventType::Value type,
                      const bsls::TimeInterval&        timeout);
+
+    /// Wait for any downgrade event to occur and load the result into
+    /// the specified 'result'. Return the error.
+    ntsa::Error wait(ntca::DowngradeEvent* result);
+
+    /// Wait for any downgrade event to occur or until the specified
+    /// 'timeout', in absolute time since the Unix epoch, elapses. Return
+    /// the error.
+    ntsa::Error wait(ntca::DowngradeEvent*     result,
+                     const bsls::TimeInterval& timeout);
+
+    /// Wait for a downgrade event of the specified 'type' to occur and
+    /// load the result into the specified 'result'. Return the error.
+    ntsa::Error wait(ntca::DowngradeEvent*           result,
+                     ntca::DowngradeEventType::Value type);
+
+    /// Wait for a downgrade event of the specified 'type' to occur or
+    /// until the specified 'timeout', in absolute time since the Unix
+    /// epoch, elapses. Return the error.
+    ntsa::Error wait(ntca::DowngradeEvent*           result,
+                     ntca::DowngradeEventType::Value type,
+                     const bsls::TimeInterval&       timeout);
 
     /// Wait for any shutdown event to occur and load the result into
     /// the specified 'result'. Return the error.

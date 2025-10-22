@@ -105,6 +105,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     bool                                         d_sendPending;
     bool                                         d_sendGreedily;
     ntci::SendCallback                           d_sendComplete;
+    ntsa::ReceiveOptions                         d_receiveOptions;
     ntcq::ReceiveQueue                           d_receiveQueue;
     bsl::shared_ptr<ntci::Compression>           d_receiveInflater_sp;
     bsl::shared_ptr<ntci::RateLimiter>           d_receiveRateLimiter_sp;
@@ -842,9 +843,8 @@ class DatagramSocket : public ntci::DatagramSocket,
 
     /// Set the write deflater to the specified 'compression' technique. Return
     /// the error.
-    ntsa::Error setWriteDeflater(
-        const bsl::shared_ptr<ntci::Compression>& compression) 
-        BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error setWriteDeflater(const bsl::shared_ptr<ntci::Compression>&
+                                     compression) BSLS_KEYWORD_OVERRIDE;
 
     /// Set the write queue low watermark to the specified 'lowWatermark'.
     /// Return the error.
@@ -869,9 +869,8 @@ class DatagramSocket : public ntci::DatagramSocket,
 
     /// Set the read inflater to the specified 'compression' technique. Return
     /// the error.
-    ntsa::Error setReadInflater(
-        const bsl::shared_ptr<ntci::Compression>& compression)
-        BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error setReadInflater(const bsl::shared_ptr<ntci::Compression>&
+                                    compression) BSLS_KEYWORD_OVERRIDE;
 
     /// Set the read queue low watermark to the specified 'lowWatermark'.
     /// Return the error.
@@ -952,7 +951,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// socket handle into the specified 'result', and close this object.
     /// Return the result. Note that the caller has the responsibility for
     /// closing '*result'. Also note that this function automatically closes
-    /// this object, but neither shuts down nor closes '*result'. 
+    /// this object, but neither shuts down nor closes '*result'.
     ntsa::Error release(ntsa::Handle* result) BSLS_KEYWORD_OVERRIDE;
 
     /// Release the underlying socket from ownership by this object, load the
@@ -964,9 +963,9 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// '*result'. Also tote that callbacks created by this object will
     /// automatically be invoked on this object's strand unless an explicit
     /// strand is specified at the time the callback is created.
-    ntsa::Error release(ntsa::Handle*              result, 
-                        const ntci::CloseFunction& callback) 
-                        BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error release(ntsa::Handle*              result,
+                        const ntci::CloseFunction& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Release the underlying socket from ownership by this object, load the
     /// socket handle into the specified 'result', close this object, and
@@ -978,8 +977,8 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// automatically be invoked on this object's strand unless an explicit
     /// strand is specified at the time the callback is created.
     ntsa::Error release(ntsa::Handle*              result,
-                        const ntci::CloseCallback& callback) 
-                        BSLS_KEYWORD_OVERRIDE;
+                        const ntci::CloseCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Close the datagram socket.
     void close() BSLS_KEYWORD_OVERRIDE;

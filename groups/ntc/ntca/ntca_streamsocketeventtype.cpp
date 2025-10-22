@@ -30,6 +30,7 @@ int StreamSocketEventType::fromInt(StreamSocketEventType::Value* result,
 {
     switch (number) {
     case StreamSocketEventType::e_UNDEFINED:
+    case StreamSocketEventType::e_CONNECT:
     case StreamSocketEventType::e_READ_QUEUE:
     case StreamSocketEventType::e_WRITE_QUEUE:
     case StreamSocketEventType::e_DOWNGRADE:
@@ -47,6 +48,10 @@ int StreamSocketEventType::fromString(StreamSocketEventType::Value* result,
 {
     if (bdlb::String::areEqualCaseless(string, "UNDEFINED")) {
         *result = e_UNDEFINED;
+        return 0;
+    }
+    if (bdlb::String::areEqualCaseless(string, "CONNECT")) {
+        *result = e_CONNECT;
         return 0;
     }
     if (bdlb::String::areEqualCaseless(string, "READ_QUEUE")) {
@@ -78,6 +83,9 @@ const char* StreamSocketEventType::toString(StreamSocketEventType::Value value)
     switch (value) {
     case e_UNDEFINED: {
         return "UNDEFINED";
+    } break;
+    case e_CONNECT: {
+        return "CONNECT";
     } break;
     case e_READ_QUEUE: {
         return "READ_QUEUE";

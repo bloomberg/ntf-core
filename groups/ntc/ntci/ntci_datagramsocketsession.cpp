@@ -27,6 +27,22 @@ DatagramSocketSession::~DatagramSocketSession()
 {
 }
 
+void DatagramSocketSession::processConnectInitiated(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ConnectEvent&                    event)
+{
+    NTCCFG_WARNING_UNUSED(datagramSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void DatagramSocketSession::processConnectComplete(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::ConnectEvent&                    event)
+{
+    NTCCFG_WARNING_UNUSED(datagramSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
 void DatagramSocketSession::processReadQueueFlowControlRelaxed(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const ntca::ReadQueueEvent&                  event)
@@ -134,6 +150,38 @@ void DatagramSocketSession::processWriteQueueRateLimitApplied(
 void DatagramSocketSession::processWriteQueueRateLimitRelaxed(
     const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
     const ntca::WriteQueueEvent&                 event)
+{
+    NTCCFG_WARNING_UNUSED(datagramSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void DatagramSocketSession::processDowngradeInitiated(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::DowngradeEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(datagramSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void DatagramSocketSession::processDowngradeReceive(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::DowngradeEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(datagramSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void DatagramSocketSession::processDowngradeSend(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::DowngradeEvent&                  event)
+{
+    NTCCFG_WARNING_UNUSED(datagramSocket);
+    NTCCFG_WARNING_UNUSED(event);
+}
+
+void DatagramSocketSession::processDowngradeComplete(
+    const bsl::shared_ptr<ntci::DatagramSocket>& datagramSocket,
+    const ntca::DowngradeEvent&                  event)
 {
     NTCCFG_WARNING_UNUSED(datagramSocket);
     NTCCFG_WARNING_UNUSED(event);

@@ -39,22 +39,38 @@ StreamSocketSession::~StreamSocketSession()
 {
 }
 
+void StreamSocketSession::processConnectInitiated(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ConnectEvent&                  event)
+{
+    BSLS_ASSERT(event.type() == ntca::ConnectEventType::e_INITIATED);
+    d_callback(streamSocket, ntca::StreamSocketEvent(event));
+}
+
+void StreamSocketSession::processConnectComplete(
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+    const ntca::ConnectEvent&                  event)
+{
+    BSLS_ASSERT(event.type() == ntca::ConnectEventType::e_COMPLETE);
+    d_callback(streamSocket, ntca::StreamSocketEvent(event));
+}
+
 void StreamSocketSession::processReadQueueFlowControlRelaxed(
-    const bsl::shared_ptr<ntci::StreamSocket>& datagramSocket,
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::ReadQueueEvent&                event)
 {
     BSLS_ASSERT(event.type() ==
                 ntca::ReadQueueEventType::e_FLOW_CONTROL_RELAXED);
-    d_callback(datagramSocket, ntca::StreamSocketEvent(event));
+    d_callback(streamSocket, ntca::StreamSocketEvent(event));
 }
 
 void StreamSocketSession::processReadQueueFlowControlApplied(
-    const bsl::shared_ptr<ntci::StreamSocket>& datagramSocket,
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::ReadQueueEvent&                event)
 {
     BSLS_ASSERT(event.type() ==
                 ntca::ReadQueueEventType::e_FLOW_CONTROL_APPLIED);
-    d_callback(datagramSocket, ntca::StreamSocketEvent(event));
+    d_callback(streamSocket, ntca::StreamSocketEvent(event));
 }
 
 void StreamSocketSession::processReadQueueLowWatermark(
@@ -82,21 +98,21 @@ void StreamSocketSession::processReadQueueDiscarded(
 }
 
 void StreamSocketSession::processWriteQueueFlowControlRelaxed(
-    const bsl::shared_ptr<ntci::StreamSocket>& datagramSocket,
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::WriteQueueEvent&               event)
 {
     BSLS_ASSERT(event.type() ==
                 ntca::WriteQueueEventType::e_FLOW_CONTROL_RELAXED);
-    d_callback(datagramSocket, ntca::StreamSocketEvent(event));
+    d_callback(streamSocket, ntca::StreamSocketEvent(event));
 }
 
 void StreamSocketSession::processWriteQueueFlowControlApplied(
-    const bsl::shared_ptr<ntci::StreamSocket>& datagramSocket,
+    const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
     const ntca::WriteQueueEvent&               event)
 {
     BSLS_ASSERT(event.type() ==
                 ntca::WriteQueueEventType::e_FLOW_CONTROL_APPLIED);
-    d_callback(datagramSocket, ntca::StreamSocketEvent(event));
+    d_callback(streamSocket, ntca::StreamSocketEvent(event));
 }
 
 void StreamSocketSession::processWriteQueueLowWatermark(
