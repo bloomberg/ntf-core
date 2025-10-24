@@ -39,6 +39,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_sendcontext.h>
 #include <ntsa_sendoptions.h>
 #include <ntsa_shutdowntype.h>
+#include <ntsa_socketinfo.h>
 #include <ntsi_descriptor.h>
 #include <bdlbb_blob.h>
 #include <bslmt_threadutil.h>
@@ -47,6 +48,7 @@ BSLS_IDENT("$Id: $")
 #include <bsl_list.h>
 #include <bsl_memory.h>
 #include <bsl_string.h>
+#include <bsl_vector.h>
 
 namespace BloombergLP {
 namespace ntci {
@@ -179,12 +181,16 @@ class Proactor : public ntci::Driver, public ntci::ProactorPool
     /// proactor, or 0 if no such thread has been set.
     virtual bsl::size_t threadIndex() const = 0;
 
-    /// Return true if the reactor has no pending deferred functors no
+    /// Return true if the proactor has no pending deferred functors no
     /// pending timers, and no registered sockets, otherwise return false.
     virtual bool empty() const = 0;
 
     /// Return the data pool.
     virtual const bsl::shared_ptr<ntci::DataPool>& dataPool() const = 0;
+
+    /// Append the specified 'result' the information describing the
+    /// state of each socket attached to the proactor.
+    virtual void getInfo(bsl::vector<ntsa::SocketInfo>* result) const;
 };
 
 }  // close package namespace

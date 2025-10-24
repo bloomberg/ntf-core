@@ -51,5 +51,10 @@ const bsl::shared_ptr<ntci::Strand>& ReactorSocket::strand() const
     return ntci::Strand::unspecified();
 }
 
+void ReactorSocket::getInfo(ntsa::SocketInfo* result) const
+{
+    result->reset();
+}
+
 }  // close package namespace
 }  // close enterprise namespace

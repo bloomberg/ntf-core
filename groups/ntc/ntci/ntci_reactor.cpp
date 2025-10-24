@@ -71,5 +71,10 @@ ntsa::Error Reactor::detachSocket(ntsa::Handle                        handle,
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+void Reactor::getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+{
+    NTCCFG_WARNING_UNUSED(result);
+}
+
 }  // close package namespace
 }  // close enterprise namespace

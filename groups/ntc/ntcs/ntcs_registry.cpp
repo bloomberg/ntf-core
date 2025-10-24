@@ -169,6 +169,19 @@ bool RegistryEntry::announceDetached(
     return process;
 }
 
+void RegistryEntry::getInfo(ntsa::SocketInfo* result) const
+{
+    if (d_reactorSocket_sp) {
+        d_reactorSocket_sp->getInfo(result);
+    }
+    else {
+        result->reset();
+
+        result->setDescriptor(d_handle);
+        result->setTransport(ntsa::Transport::e_UNDEFINED);
+    }
+}
+
 RegistryEntryCatalog::RegistryEntryCatalog(bslma::Allocator* basicAllocator)
 : d_object("ntcs::RegistryEntryCatalog")
 , d_mutex()

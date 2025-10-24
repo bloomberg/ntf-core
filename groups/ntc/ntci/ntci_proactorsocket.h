@@ -25,6 +25,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_error.h>
 #include <ntsa_receivecontext.h>
 #include <ntsa_sendcontext.h>
+#include <ntsa_socketinfo.h>
 #include <ntsi_descriptor.h>
 #include <ntsi_streamsocket.h>
 
@@ -122,6 +123,10 @@ class ProactorSocket : public ntci::ProactorSocketBase, public ntsi::Descriptor
 
     /// Return the transport used by the socket.
     virtual ntsa::Transport::Value transport() const;
+
+    /// Load into the specified 'result' the information describing the
+    /// state of this socket.
+    virtual void getInfo(ntsa::SocketInfo* result) const;
 };
 
 NTCCFG_INLINE

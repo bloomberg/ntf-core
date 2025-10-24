@@ -25,7 +25,10 @@ namespace ntsa {
 
 bool SocketInfo::equals(const SocketInfo& other) const
 {
-    return d_transport == other.d_transport &&
+    return d_descriptor == other.d_descriptor &&
+           d_threadId == other.d_threadId &&
+           d_creationTime == other.d_creationTime &&
+           d_transport == other.d_transport &&
            d_sourceEndpoint == other.d_sourceEndpoint &&
            d_remoteEndpoint == other.d_remoteEndpoint &&
            d_state == other.d_state &&
@@ -36,6 +39,30 @@ bool SocketInfo::equals(const SocketInfo& other) const
 
 bool SocketInfo::less(const SocketInfo& other) const
 {
+    if (d_descriptor < other.d_descriptor) {
+        return true;
+    }
+
+    if (other.d_descriptor < d_descriptor) {
+        return false;
+    }
+
+    if (d_threadId < other.d_threadId) {
+        return true;
+    }
+
+    if (other.d_threadId < d_threadId) {
+        return false;
+    }
+
+    if (d_creationTime < other.d_creationTime) {
+        return true;
+    }
+
+    if (other.d_creationTime < d_creationTime) {
+        return false;
+    }
+
     if (d_transport < other.d_transport) {
         return true;
     }
@@ -93,6 +120,19 @@ bsl::ostream& SocketInfo::print(bsl::ostream& stream,
 {
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
+
+    if (d_descriptor.has_value()) {
+        printer.printAttribute("descriptor", d_descriptor.value());
+    }
+
+    if (d_threadId.has_value()) {
+        printer.printAttribute("threadId", d_threadId.value());
+    }
+
+    if (d_creationTime.has_value()) {
+        printer.printAttribute("creationTime", d_creationTime.value());
+    }
+
     printer.printAttribute("transport", d_transport);
     printer.printAttribute("sourceEndpoint", d_sourceEndpoint);
     printer.printAttribute("remoteEndpoint", d_remoteEndpoint);

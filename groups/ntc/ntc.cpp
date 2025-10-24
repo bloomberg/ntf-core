@@ -221,6 +221,7 @@
 #include <ntci_getportcallbackfactory.cpp>
 #include <ntci_getservicenamecallback.cpp>
 #include <ntci_getservicenamecallbackfactory.cpp>
+#include <ntci_interactable.cpp>
 #include <ntci_identifiable.cpp>
 #include <ntci_interface.cpp>
 #include <ntci_invoker.cpp>
@@ -304,6 +305,7 @@
 #include <ntcs_global.cpp>
 #include <ntcs_globalallocator.cpp>
 #include <ntcs_globalexecutor.cpp>
+#include <ntcs_interactable.cpp>
 #include <ntcs_interest.cpp>
 #include <ntcs_leakybucket.cpp>
 #include <ntcs_memorymap.cpp>

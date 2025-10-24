@@ -86,5 +86,10 @@ ntsa::Transport::Value ProactorSocket::transport() const
     return ntsa::Transport::e_UNDEFINED;
 }
 
+void ProactorSocket::getInfo(ntsa::SocketInfo* result) const
+{
+    result->reset();
+}
+
 }  // close package namespace
 }  // close enterprise namespace

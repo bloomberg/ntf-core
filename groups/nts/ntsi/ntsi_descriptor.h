@@ -19,7 +19,9 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntsa_error.h>
 #include <ntsa_handle.h>
+#include <ntsa_socketinfo.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
 #include <bsls_platform.h>
@@ -33,10 +35,10 @@ namespace ntsi {
 /// Provide an object implemented by a system handle.
 ///
 /// @details
-/// Provide an abstract mechanism that represents an object
-/// implemented by an operating system handle. The operating system handle that
-/// implements the object can be accessed in order to perform system calls on
-/// that handle that are not abstracted by this library.
+/// Provide an abstract mechanism that represents an object implemented by an
+/// operating system handle. The operating system handle that implements the
+/// object can be accessed in order to perform system calls on that handle that
+/// are not abstracted by this library.
 ///
 /// @par Thread Safety
 /// This class is thread safe.

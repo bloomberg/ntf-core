@@ -27,6 +27,7 @@ BSLS_IDENT_RCSID(ntcf_system_cpp, "$Id$ $CSID$")
 #include <ntcs_compat.h>
 #include <ntcs_datapool.h>
 #include <ntcs_global.h>
+#include <ntcs_interactable.h>
 #include <ntcs_metrics.h>
 #include <ntcs_monitorable.h>
 #include <ntcs_plugin.h>
@@ -2709,6 +2710,48 @@ ntsa::Error System::decodeKey(bsl::shared_ptr<ntci::EncryptionKey>*  result,
                                        source,
                                        options,
                                        basicAllocator);
+}
+
+void System::enableInteractableRegistry(bslma::Allocator* basicAllocator)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::InteractableUtil::enableInteractableRegistry(basicAllocator);
+}
+
+void System::disableInteractableRegistry()
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::InteractableUtil::disableInteractableRegistry();
+}
+
+void System::registerInteractable(
+    const bsl::shared_ptr<ntci::Interactable>& interactable)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::InteractableUtil::registerInteractable(interactable);
+}
+
+void System::deregisterInteractable(
+    const bsl::shared_ptr<ntci::Interactable>& interactable)
+{
+    ntsa::Error error;
+
+    error = ntcf::System::initialize();
+    BSLS_ASSERT_OPT(!error);
+
+    ntcs::InteractableUtil::deregisterInteractable(interactable);
 }
 
 void System::enableMonitorableRegistry(

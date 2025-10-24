@@ -20,11 +20,15 @@
 BSLS_IDENT("$Id: $")
 
 #include <ntsa_endpoint.h>
+#include <ntsa_handle.h>
 #include <ntsa_socketstate.h>
 #include <ntsa_transport.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
+#include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
+#include <bslmt_threadutil.h>
+#include <bsls_timeinterval.h>
 #include <bsl_iosfwd.h>
 
 namespace BloombergLP {
@@ -38,6 +42,16 @@ namespace ntsa {
 ///
 /// @par Attributes
 /// This class is composed of the following attributes.
+///
+/// @li @b descriptor:
+/// The socket file descriptor, if known.
+///
+/// @li @b threadId:
+/// The thread ID assigned to perform I/O for this socket, if statically
+/// load-balanced and known.
+///
+/// @li @b creationTime:
+/// The creation time of the socket, if known.
 ///
 /// @li @b transport:
 /// The transport used by the socket.
@@ -72,13 +86,16 @@ namespace ntsa {
 /// @ingroup module_ntsa_system
 class SocketInfo
 {
-    ntsa::Transport::Value   d_transport;
-    ntsa::Endpoint           d_sourceEndpoint;
-    ntsa::Endpoint           d_remoteEndpoint;
-    ntsa::SocketState::Value d_state;
-    bsl::size_t              d_sendQueueSize;
-    bsl::size_t              d_receiveQueueSize;
-    bsl::uint32_t            d_userId;
+    bdlb::NullableValue<ntsa::Handle>       d_descriptor;
+    bdlb::NullableValue<bsl::uint64_t>      d_threadId;
+    bdlb::NullableValue<bsls::TimeInterval> d_creationTime;
+    ntsa::Transport::Value                  d_transport;
+    ntsa::Endpoint                          d_sourceEndpoint;
+    ntsa::Endpoint                          d_remoteEndpoint;
+    ntsa::SocketState::Value                d_state;
+    bsl::size_t                             d_sendQueueSize;
+    bsl::size_t                             d_receiveQueueSize;
+    bsl::uint32_t                           d_userId;
 
   public:
     /// Create a new socket status.
@@ -98,6 +115,16 @@ class SocketInfo
     /// Reset the value of this object to its value upon default
     /// construction.
     void reset();
+
+    /// Set the socket descriptor to the specified 'value'.
+    void setDescriptor(ntsa::Handle value);
+
+    /// Set the thread ID of the thread assigned to perform I/O for the socket
+    /// to the specified 'value'.
+    void setThreadId(bsl::uint64_t value);
+
+    /// Set the creation time of the socket to the specified 'value'.
+    void setCreationTime(const bsls::TimeInterval& value);
 
     /// Set the transport to the specified 'transport'.
     void setTransport(ntsa::Transport::Value value);
@@ -119,6 +146,16 @@ class SocketInfo
 
     /// Set the user ID to the specified 'value'.
     void setUserId(bsl::uint32_t value);
+
+    /// Return the socket descriptor, if known.
+    const bdlb::NullableValue<ntsa::Handle>& descriptor() const;
+
+    /// Return the thread ID of the thread assigned to perform I/O for the
+    /// socket, if known and the thread is statically load-balanced.
+    const bdlb::NullableValue<bsl::uint64_t>& threadId() const;
+
+    /// Return the creation time of the socket, if known.
+    const bdlb::NullableValue<bsls::TimeInterval>& creationTime() const;
 
     /// Return the transport.
     ntsa::Transport::Value transport() const;
@@ -208,7 +245,10 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SocketInfo& value);
 
 NTSCFG_INLINE
 SocketInfo::SocketInfo()
-: d_transport(ntsa::Transport::e_UNDEFINED)
+: d_descriptor()
+, d_threadId()
+, d_creationTime()
+, d_transport(ntsa::Transport::e_UNDEFINED)
 , d_sourceEndpoint()
 , d_remoteEndpoint()
 , d_state(ntsa::SocketState::e_UNDEFINED)
@@ -220,7 +260,10 @@ SocketInfo::SocketInfo()
 
 NTSCFG_INLINE
 SocketInfo::SocketInfo(const SocketInfo& original)
-: d_transport(original.d_transport)
+: d_descriptor(original.d_descriptor)
+, d_threadId(original.d_threadId)
+, d_creationTime(original.d_creationTime)
+, d_transport(original.d_transport)
 , d_sourceEndpoint(original.d_sourceEndpoint)
 , d_remoteEndpoint(original.d_remoteEndpoint)
 , d_state(original.d_state)
@@ -239,6 +282,9 @@ NTSCFG_INLINE
 SocketInfo& SocketInfo::operator=(const SocketInfo& other)
 {
     if (this != &other) {
+        d_descriptor       = other.d_descriptor;
+        d_threadId         = other.d_threadId;
+        d_creationTime     = other.d_creationTime;
         d_transport        = other.d_transport;
         d_sourceEndpoint   = other.d_sourceEndpoint;
         d_remoteEndpoint   = other.d_remoteEndpoint;
@@ -254,6 +300,9 @@ SocketInfo& SocketInfo::operator=(const SocketInfo& other)
 NTSCFG_INLINE
 void SocketInfo::reset()
 {
+    d_descriptor.reset();
+    d_threadId.reset();
+    d_creationTime.reset();
     d_transport = ntsa::Transport::e_UNDEFINED;
     d_sourceEndpoint.reset();
     d_remoteEndpoint.reset();
@@ -261,6 +310,24 @@ void SocketInfo::reset()
     d_sendQueueSize    = 0;
     d_receiveQueueSize = 0;
     d_userId           = 0;
+}
+
+NTSCFG_INLINE
+void SocketInfo::setDescriptor(ntsa::Handle value)
+{
+    d_descriptor = value;
+}
+
+NTSCFG_INLINE
+void SocketInfo::setThreadId(bsl::uint64_t value)
+{
+    d_threadId = value;
+}
+
+NTSCFG_INLINE
+void SocketInfo::setCreationTime(const bsls::TimeInterval& value)
+{
+    d_creationTime = value;
 }
 
 NTSCFG_INLINE
@@ -303,6 +370,24 @@ NTSCFG_INLINE
 void SocketInfo::setUserId(bsl::uint32_t value)
 {
     d_userId = value;
+}
+
+NTSCFG_INLINE
+const bdlb::NullableValue<ntsa::Handle>& SocketInfo::descriptor() const
+{
+    return d_descriptor;
+}
+
+NTSCFG_INLINE
+const bdlb::NullableValue<bsl::uint64_t>& SocketInfo::threadId() const
+{
+    return d_threadId;
+}
+
+NTSCFG_INLINE
+const bdlb::NullableValue<bsls::TimeInterval>& SocketInfo::creationTime() const
+{
+    return d_creationTime;
 }
 
 NTSCFG_INLINE
@@ -376,6 +461,9 @@ void hashAppend(HASH_ALGORITHM& algorithm, const SocketInfo& value)
 {
     using bslh::hashAppend;
 
+    hashAppend(algorithm, value.descriptor());
+    hashAppend(algorithm, value.threadId());
+    hashAppend(algorithm, value.creationTime());
     hashAppend(algorithm, value.transport());
     hashAppend(algorithm, value.sourceEndpoint());
     hashAppend(algorithm, value.remoteEndpoint());

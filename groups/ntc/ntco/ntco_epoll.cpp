@@ -704,6 +704,11 @@ class Epoll : public ntci::Reactor,
 
     /// Return the name of the driver.
     const char* name() const BSLS_KEYWORD_OVERRIDE;
+
+    /// Append the specified 'result' the information describing the
+    /// state of each socket attached to the reactor.
+    void getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+        BSLS_KEYWORD_OVERRIDE;
 };
 
 /// This struct describes the context of a waiter.
@@ -2060,8 +2065,8 @@ ntsa::Error Epoll::hideNotifications(
             return this->update(entry->handle(), interest, e_EXCLUDE);
         }
         else {
-            if (interest.wantReadableOrWritable())
-            {  //wantReadableOrWritableOrError?
+            if (interest
+                    .wantReadableOrWritable()) {  //wantReadableOrWritableOrError?
                 return this->update(entry->handle(), interest, e_EXCLUDE);
             }
             else {
@@ -3084,6 +3089,11 @@ const bsl::shared_ptr<bdlbb::BlobBufferFactory>& Epoll::
 const char* Epoll::name() const
 {
     return "EPOLL";
+}
+
+void Epoll::getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+{
+    d_registry.getInfo(result, d_controllerDescriptorHandle);
 }
 
 EpollFactory::EpollFactory(bslma::Allocator* basicAllocator)

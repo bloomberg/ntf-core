@@ -46,6 +46,7 @@ BSLS_IDENT_RCSID(ntcf_system_t_cpp, "$Id$ $CSID$")
 #include <ntsi_datagramsocket.h>
 #include <ntsi_streamsocket.h>
 #include <ntsu_adapterutil.h>
+#include <bdlt_iso8601util.h>
 
 using namespace BloombergLP;
 
@@ -397,6 +398,12 @@ class SystemTest
         const bsl::shared_ptr<ntci::Scheduler>& scheduler,
         bslma::Allocator*                       allocator);
 
+    static void concernInterfaceSocketInfo(
+        const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+        bslma::Allocator*                       allocator);
+
+    BALL_LOG_SET_CLASS_CATEGORY("NTCF.SYSTEM.TEST");
+
   public:
     static void verifyBasicThreadUsage();
 
@@ -488,6 +495,7 @@ class SystemTest
     static void verifyDatagramSocketHandleTransfer();
 
     static void verifyInterfaceFunctionAndTimerDistribution();
+    static void verifyInterfaceSocketInfo();
 
     static void verifyDefaultExecutors();
     static void verifyDefaultInterfaces();
@@ -12186,6 +12194,240 @@ void SystemTest::concernInterfaceFunctionAndTimerDistribution(
     NTCI_LOG_DEBUG("Test complete");
 }
 
+void SystemTest::concernInterfaceSocketInfo(
+    const bsl::shared_ptr<ntci::Scheduler>& scheduler,
+    bslma::Allocator*                       allocator)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_STREAM_DEBUG << "Verifying scheduler config "
+                          << scheduler->configuration() << NTCI_LOG_STREAM_END;
+
+    ntsa::Error error;
+
+    // Create a client datagram socket.
+
+    bsl::shared_ptr<ntci::DatagramSocket> clientDatagramSocket;
+    {
+        ntca::DatagramSocketOptions datagramSocketOptions;
+        datagramSocketOptions.setTransport(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        datagramSocketOptions.setSourceEndpoint(ntsa::Endpoint(
+            ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
+        datagramSocketOptions.setReuseAddress(false);
+
+        clientDatagramSocket =
+            scheduler->createDatagramSocket(datagramSocketOptions, allocator);
+    }
+
+    ntci::DatagramSocketCloseGuard clientDatagramSocketGuard(
+        clientDatagramSocket);
+
+    error = clientDatagramSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    // Create a server datagram socket.
+
+    bsl::shared_ptr<ntci::DatagramSocket> serverDatagramSocket;
+    {
+        ntca::DatagramSocketOptions datagramSocketOptions;
+        datagramSocketOptions.setTransport(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        datagramSocketOptions.setSourceEndpoint(ntsa::Endpoint(
+            ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
+        datagramSocketOptions.setReuseAddress(false);
+
+        serverDatagramSocket =
+            scheduler->createDatagramSocket(datagramSocketOptions, allocator);
+    }
+
+    ntci::DatagramSocketCloseGuard serverDatagramSocketGuard(
+        serverDatagramSocket);
+
+    error = serverDatagramSocket->open();
+    NTSCFG_TEST_OK(error);
+
+    // Connect the client datagram socket to the server datagram socket.
+
+    {
+        ntca::ConnectOptions connectOptions;
+        ntci::ConnectFuture  connectFuture;
+
+        error = clientDatagramSocket->connect(
+            serverDatagramSocket->sourceEndpoint(),
+            connectOptions,
+            connectFuture);
+        NTSCFG_TEST_OK(error);
+
+        ntci::ConnectResult connectResult;
+        error = connectFuture.wait(&connectResult);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(connectResult.event().isComplete());
+    }
+
+    // Connect the server datagram socket to the client datagram socket.
+
+    {
+        ntca::ConnectOptions connectOptions;
+        ntci::ConnectFuture  connectFuture;
+
+        error = serverDatagramSocket->connect(
+            clientDatagramSocket->sourceEndpoint(),
+            connectOptions,
+            connectFuture);
+        NTSCFG_TEST_OK(error);
+
+        ntci::ConnectResult connectResult;
+        error = connectFuture.wait(&connectResult);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(connectResult.event().isComplete());
+    }
+
+    // Create listener socket.
+
+    bsl::shared_ptr<ntci::ListenerSocket> listenerSocket;
+    {
+        ntca::ListenerSocketOptions listenerSocketOptions;
+        listenerSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+        listenerSocketOptions.setSourceEndpoint(ntsa::Endpoint(
+            ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)));
+
+        listenerSocket =
+            scheduler->createListenerSocket(listenerSocketOptions, allocator);
+    }
+
+    ntci::ListenerSocketCloseGuard listenerSocketGuard(listenerSocket);
+
+    // Begin listening.
+
+    error = listenerSocket->listen();
+    NTSCFG_TEST_OK(error);
+
+    error = listenerSocket->relaxFlowControl(ntca::FlowControlType::e_RECEIVE);
+    NTSCFG_TEST_OK(error);
+
+    // Create a client stream socket.
+
+    bsl::shared_ptr<ntci::StreamSocket> clientStreamSocket;
+    {
+        ntca::StreamSocketOptions streamSocketOptions;
+        streamSocketOptions.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        clientStreamSocket =
+            scheduler->createStreamSocket(streamSocketOptions, allocator);
+    }
+
+    ntci::StreamSocketCloseGuard clientStreamSocketGuard(clientStreamSocket);
+
+    // Connect the client stream socket to the listening socket.
+
+    {
+        ntca::ConnectOptions connectOptions;
+        ntci::ConnectFuture  connectFuture;
+
+        error = clientStreamSocket->connect(listenerSocket->sourceEndpoint(),
+                                            connectOptions,
+                                            connectFuture);
+        NTSCFG_TEST_OK(error);
+
+        ntci::ConnectResult connectResult;
+        error = connectFuture.wait(&connectResult);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(connectResult.event().isComplete());
+    }
+
+    // Accept the stream socket.
+
+    bsl::shared_ptr<ntci::StreamSocket> serverStreamSocket;
+    {
+        ntca::AcceptOptions acceptOptions;
+        ntci::AcceptFuture  acceptFuture;
+
+        error = listenerSocket->accept(acceptOptions, acceptFuture);
+        NTSCFG_TEST_OK(error);
+
+        ntci::AcceptResult acceptResult;
+        error = acceptFuture.wait(&acceptResult);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_TRUE(acceptResult.event().isComplete());
+
+        serverStreamSocket = acceptResult.streamSocket();
+    }
+
+    ntci::StreamSocketCloseGuard serverStreamSocketGuard(serverStreamSocket);
+
+    bsl::vector<ntsa::SocketInfo> socketInfoVector;
+    scheduler->getInfo(&socketInfoVector);
+
+    bsl::size_t numSockets = scheduler->numSockets();
+    NTSCFG_TEST_EQ(numSockets, socketInfoVector.size());
+
+    bsl::string socketInfoReport;
+    {
+        bsl::stringstream stream;
+
+        stream << bsl::setw(28) << bsl::left << "Since";
+        stream << bsl::setw(12) << bsl::left << "Descriptor";
+        stream << bsl::setw(16) << bsl::left << "Thread";
+        stream << bsl::setw(22) << bsl::left << "Transport";
+        stream << bsl::setw(24) << bsl::left << "SourceEndpoint";
+        stream << bsl::setw(24) << bsl::left << "RemoteEndpoint";
+        stream << bsl::setw(16) << bsl::left << "State";
+        stream << bsl::setw(16) << bsl::right << "TxQueueSize";
+        stream << bsl::setw(16) << bsl::right << "RxQueueSize";
+        stream << bsl::setw(12) << bsl::right << "User";
+
+        for (bsl::size_t i = 0; i < socketInfoVector.size(); ++i) {
+            const ntsa::SocketInfo& socketInfo = socketInfoVector[i];
+
+            stream << '\n';
+
+            bsl::string creationTime;
+            if (socketInfo.creationTime().has_value()) {
+                bdlt::Datetime dateTime =
+                    bdlt::EpochUtil::convertFromTimeInterval(
+                        socketInfo.creationTime().value());
+
+                bdlt::Iso8601Util::generate(&creationTime, dateTime);
+            }
+            else {
+                creationTime = "NULL";
+            }
+
+            stream << bsl::setw(28) << bsl::left << creationTime;
+            stream << bsl::setw(12) << bsl::left << socketInfo.descriptor();
+            stream << bsl::setw(16) << bsl::left << socketInfo.threadId();
+
+            stream << bsl::setw(22) << bsl::left << socketInfo.transport();
+
+            stream << bsl::setw(24) << bsl::left
+                   << socketInfo.sourceEndpoint();
+
+            stream << bsl::setw(24) << bsl::left
+                   << socketInfo.remoteEndpoint();
+
+            stream << bsl::setw(16) << bsl::left << socketInfo.state();
+
+            stream << bsl::setw(16) << bsl::right
+                   << socketInfo.sendQueueSize();
+
+            stream << bsl::setw(16) << bsl::right
+                   << socketInfo.receiveQueueSize();
+
+            stream << bsl::setw(12) << bsl::right << socketInfo.userId();
+        }
+
+        stream << '\n';
+        stream.flush();
+
+        socketInfoReport = stream.str();
+    }
+
+    BALL_LOG_INFO << "Socket info report:\n"
+                  << socketInfoReport << BALL_LOG_END;
+}
+
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyBasicThreadUsage)
 {
     ntsa::Error      error;
@@ -13658,6 +13900,11 @@ NTSCFG_TEST_FUNCTION(
 {
     test::concern(&test::concernInterfaceFunctionAndTimerDistribution,
                   NTSCFG_TEST_ALLOCATOR);
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyInterfaceSocketInfo)
+{
+    test::concern(&test::concernInterfaceSocketInfo, NTSCFG_TEST_ALLOCATOR);
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyDefaultExecutors)

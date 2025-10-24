@@ -147,6 +147,7 @@ class StreamSocket : public ntci::StreamSocket,
     ntci::UpgradeCallback                      d_upgradeCallback;
     bsl::shared_ptr<ntci::Timer>               d_upgradeTimer_sp;
     bool                                       d_upgradeInProgress;
+    bsls::TimeInterval                         d_creationTime;
     ntca::StreamSocketOptions                  d_options;
     bool                                       d_retryConnect;
     ntcs::DetachState                          d_detachState;
@@ -249,10 +250,11 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Execute the second part of connection failure processing when the
     /// socket is detached. See also "privateFailConnect"
-    void privateFailConnectComplete(const bsl::shared_ptr<StreamSocket>& self,
-                                 const ntci::ConnectCallback& connectCallback,
-                                 const ntca::ConnectEvent&    connectEvent,
-                                 bool                         defer);
+    void privateFailConnectComplete(
+        const bsl::shared_ptr<StreamSocket>& self,
+        const ntci::ConnectCallback&         connectCallback,
+        const ntca::ConnectEvent&            connectEvent,
+        bool                                 defer);
 
     /// Process the failure of the upgrade attempt. The behavior is
     /// undefined unless 'd_mutex' is locked.
@@ -414,23 +416,21 @@ class StreamSocket : public ntci::StreamSocket,
     /// 'options'. When the 'data' is entirely copied to the send buffer,
     /// invoke the specified 'callback' on the callback's strand, if any.
     /// Return the error.
-    ntsa::Error privateSendEncrypted(
-                                const bsl::shared_ptr<StreamSocket>& self,
-                                const bdlbb::Blob&                   data,
-                                const ntca::SendOptions&             options,
-                                const ntca::SendContext&             context,
-                                const ntci::SendCallback&            callback);
+    ntsa::Error privateSendEncrypted(const bsl::shared_ptr<StreamSocket>& self,
+                                     const bdlbb::Blob&                   data,
+                                     const ntca::SendOptions&  options,
+                                     const ntca::SendContext&  context,
+                                     const ntci::SendCallback& callback);
 
     /// Send the encryption of the specified 'data' according to the specified
     /// 'options'. When the 'data' is entirely copied to the send buffer,
     /// invoke the specified 'callback' on the callback's strand, if any.
     /// Return the error.
-    ntsa::Error privateSendEncrypted(
-                                const bsl::shared_ptr<StreamSocket>& self,
-                                const ntsa::Data&                    data,
-                                const ntca::SendOptions&             options,
-                                const ntca::SendContext&             context,
-                                const ntci::SendCallback&            callback);
+    ntsa::Error privateSendEncrypted(const bsl::shared_ptr<StreamSocket>& self,
+                                     const ntsa::Data&                    data,
+                                     const ntca::SendOptions&  options,
+                                     const ntca::SendContext&  context,
+                                     const ntci::SendCallback& callback);
 
     /// Return true if the proactor socket has stream semantics, otherwise
     /// return false.
@@ -1113,9 +1113,8 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Set the write deflater to the specified 'compression' technique. Return
     /// the error.
-    ntsa::Error setWriteDeflater(
-        const bsl::shared_ptr<ntci::Compression>& compression) 
-        BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error setWriteDeflater(const bsl::shared_ptr<ntci::Compression>&
+                                     compression) BSLS_KEYWORD_OVERRIDE;
 
     /// Set the write queue low watermark to the specified 'lowWatermark'.
     /// Return the error.
@@ -1140,9 +1139,8 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Set the read inflater to the specified 'compression' technique. Return
     /// the error.
-    ntsa::Error setReadInflater(
-        const bsl::shared_ptr<ntci::Compression>& compression)
-        BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error setReadInflater(const bsl::shared_ptr<ntci::Compression>&
+                                    compression) BSLS_KEYWORD_OVERRIDE;
 
     /// Set the read queue low watermark to the specified 'lowWatermark'.
     /// Return the error.
@@ -1196,8 +1194,8 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Downgrade the stream socket from encrypted to unencrypted. Return
     /// the error.
-    ntsa::Error downgrade(const ntca::DowngradeOptions& options) 
-                BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error downgrade(const ntca::DowngradeOptions& options)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Shutdown the stream socket in the specified 'direction' according
     /// to the specified 'mode' of shutdown. Return the error.
@@ -1208,7 +1206,7 @@ class StreamSocket : public ntci::StreamSocket,
     /// socket handle into the specified 'result', and close this object.
     /// Return the result. Note that the caller has the responsibility for
     /// closing '*result'. Also note that this function automatically closes
-    /// this object, but neither shuts down nor closes '*result'. 
+    /// this object, but neither shuts down nor closes '*result'.
     ntsa::Error release(ntsa::Handle* result) BSLS_KEYWORD_OVERRIDE;
 
     /// Release the underlying socket from ownership by this object, load the
@@ -1220,9 +1218,9 @@ class StreamSocket : public ntci::StreamSocket,
     /// '*result'. Also tote that callbacks created by this object will
     /// automatically be invoked on this object's strand unless an explicit
     /// strand is specified at the time the callback is created.
-    ntsa::Error release(ntsa::Handle*              result, 
-                        const ntci::CloseFunction& callback) 
-                        BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error release(ntsa::Handle*              result,
+                        const ntci::CloseFunction& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Release the underlying socket from ownership by this object, load the
     /// socket handle into the specified 'result', close this object, and
@@ -1234,8 +1232,8 @@ class StreamSocket : public ntci::StreamSocket,
     /// automatically be invoked on this object's strand unless an explicit
     /// strand is specified at the time the callback is created.
     ntsa::Error release(ntsa::Handle*              result,
-                        const ntci::CloseCallback& callback) 
-                        BSLS_KEYWORD_OVERRIDE;
+                        const ntci::CloseCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Close the stream socket.
     void close() BSLS_KEYWORD_OVERRIDE;
@@ -1406,6 +1404,10 @@ class StreamSocket : public ntci::StreamSocket,
     /// Return the outgoing blob buffer factory.
     const bsl::shared_ptr<bdlbb::BlobBufferFactory>& outgoingBlobBufferFactory()
         const BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' the information describing the
+    /// state of this socket.
+    void getInfo(ntsa::SocketInfo* result) const BSLS_KEYWORD_OVERRIDE;
 };
 
 }  // close package namespace

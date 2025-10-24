@@ -21,11 +21,11 @@ BSLS_IDENT_RCSID(ntcr_interface_cpp, "$Id$ $CSID$")
 #include <ntccfg_limits.h>
 #include <ntcdns_resolver.h>
 #include <ntci_log.h>
-#include <ntcs_monitorable.h>
 #include <ntcr_datagramsocket.h>
 #include <ntcr_listenersocket.h>
 #include <ntcr_streamsocket.h>
 #include <ntcs_compat.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_plugin.h>
 #include <ntcs_ratelimiter.h>
 #include <ntcs_strand.h>
@@ -618,7 +618,7 @@ ntsa::Error Interface::start()
 
     bsl::shared_ptr<ntci::Resolver> resolver;
 
-    if (d_runState.testAndSwap(k_RUN_STATE_STOPPED, k_RUN_STATE_STARTED) != 
+    if (d_runState.testAndSwap(k_RUN_STATE_STOPPED, k_RUN_STATE_STARTED) !=
         k_RUN_STATE_STOPPED)
     {
         return ntsa::Error();
@@ -675,7 +675,7 @@ void Interface::shutdown()
 
     NTCI_LOG_CONTEXT_GUARD_OWNER(d_config.metricName().c_str());
 
-    if (d_runState.testAndSwap(k_RUN_STATE_STARTED, k_RUN_STATE_STOPPING) != 
+    if (d_runState.testAndSwap(k_RUN_STATE_STARTED, k_RUN_STATE_STOPPING) !=
         k_RUN_STATE_STARTED)
     {
         return;
@@ -1778,6 +1778,63 @@ bool Interface::lookupByThreadIndex(bsl::shared_ptr<ntci::Executor>* result,
     }
 
     return false;
+}
+
+
+bsl::size_t Interface::numSockets() const
+{
+    ReactorVector reactorVector;
+    {
+        LockGuard lock(&d_mutex);
+        reactorVector = d_reactorVector;
+    }
+
+    bsl::size_t numSockets = 0;
+
+    const bsl::size_t numReactors = d_reactorVector.size();
+
+    for (bsl::size_t i = 0; i < numReactors; ++i) {
+        const bsl::shared_ptr<ntci::Reactor>& reactor = d_reactorVector[i];
+        numSockets += reactor->numSockets();
+    }
+
+    return numSockets;
+}
+
+bsl::size_t Interface::numTimers() const
+{
+    ReactorVector reactorVector;
+    {
+        LockGuard lock(&d_mutex);
+        reactorVector = d_reactorVector;
+    }
+
+    bsl::size_t numTimers = 0;
+
+    const bsl::size_t numReactors = d_reactorVector.size();
+
+    for (bsl::size_t i = 0; i < numReactors; ++i) {
+        const bsl::shared_ptr<ntci::Reactor>& reactor = d_reactorVector[i];
+        numTimers += reactor->numTimers();
+    }
+
+    return numTimers;
+}
+
+void Interface::getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+{
+    ReactorVector reactorVector;
+    {
+        LockGuard lock(&d_mutex);
+        reactorVector = d_reactorVector;
+    }
+
+    const bsl::size_t numReactors = d_reactorVector.size();
+
+    for (bsl::size_t i = 0; i < numReactors; ++i) {
+        const bsl::shared_ptr<ntci::Reactor>& reactor = d_reactorVector[i];
+        reactor->getInfo(result);
+    }
 }
 
 const bsl::shared_ptr<bdlbb::BlobBufferFactory>& Interface::

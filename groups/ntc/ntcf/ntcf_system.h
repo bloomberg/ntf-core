@@ -1066,6 +1066,30 @@ struct System {
         const ntca::EncryptionResourceOptions& options,
         bslma::Allocator*                      basicAllocator = 0);
 
+    /// Set the default interactable object registry to a default
+    /// implementation with the and enable the registration of interactable
+    /// objects with that default registry. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator is 0, the
+    /// global allocator is used.
+    static void enableInteractableRegistry(
+        bslma::Allocator* basicAllocator = 0);
+
+    /// Disable the registration of interactable objects with the default
+    /// registry and unset the default interactable object registry, if any.
+    static void disableInteractableRegistry();
+
+    /// Add the specified 'interactable' object to the default interactable
+    /// object registry, if a default interactable object registry has been
+    /// enabled.
+    static void registerInteractable(
+        const bsl::shared_ptr<ntci::Interactable>& interactable);
+
+    /// Remove the specified 'interactable' object from the default
+    /// interactable object registry, if a default interactable object
+    /// registry has been enabled.
+    static void deregisterInteractable(
+        const bsl::shared_ptr<ntci::Interactable>& interactable);
+
     /// Set the default monitorable object registry to an object with the
     /// specified 'configuration' and enable the registration of monitorable
     /// objects with that default registry. Optionally specify a

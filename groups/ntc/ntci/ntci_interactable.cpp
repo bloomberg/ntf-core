@@ -13,21 +13,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ntci_proactor.h>
+#include <ntci_interactable.h>
 
 #include <bsls_ident.h>
-BSLS_IDENT_RCSID(ntci_proactor_cpp, "$Id$ $CSID$")
+BSLS_IDENT_RCSID(ntci_interactable_cpp, "$Id$ $CSID$")
 
 namespace BloombergLP {
 namespace ntci {
 
-Proactor::~Proactor()
+Interactable::~Interactable()
 {
 }
 
-void Proactor::getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+ntsa::Error Interactable::interact(bsl::string*       output,
+                                   const bsl::string& command)
 {
-    NTCCFG_WARNING_UNUSED(result);
+    NTCCFG_WARNING_UNUSED(command);
+
+    output->clear();
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
+InteractableRegistry::~InteractableRegistry()
+{
 }
 
 }  // close package namespace
