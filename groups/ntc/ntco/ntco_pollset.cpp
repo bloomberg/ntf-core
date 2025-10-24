@@ -662,6 +662,11 @@ class Pollset : public ntci::Reactor,
 
     const char* name() const BSLS_KEYWORD_OVERRIDE;
     // Return the name of the driver.
+
+    /// Append the specified 'result' the information describing the
+    /// state of each socket attached to the reactor.
+    void getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+        BSLS_KEYWORD_OVERRIDE;
 };
 
 struct Pollset::Result {
@@ -2928,6 +2933,11 @@ const bsl::shared_ptr<bdlbb::BlobBufferFactory>& Pollset::
 const char* Pollset::name() const
 {
     return "POLLSET";
+}
+
+void Pollset::getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+{
+    d_registry.getInfo(result, d_controllerDescriptorHandle);
 }
 
 PollsetFactory::PollsetFactory(bslma::Allocator* basicAllocator)

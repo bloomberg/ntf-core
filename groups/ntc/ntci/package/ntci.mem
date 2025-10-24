@@ -59,6 +59,7 @@ ntci_getservicenamecallbackfactory
 ntci_getendpointcallback
 ntci_getendpointcallbackfactory
 ntci_identifiable
+ntci_interactable
 ntci_invoker
 ntci_interface
 ntci_listenersocket

@@ -672,6 +672,11 @@ class Poll : public ntci::Reactor,
 
     /// Return the name of the driver.
     const char* name() const BSLS_KEYWORD_OVERRIDE;
+
+    /// Append the specified 'result' the information describing the
+    /// state of each socket attached to the reactor.
+    void getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+        BSLS_KEYWORD_OVERRIDE;
 };
 
 /// This struct describes the context of a waiter.
@@ -3135,6 +3140,11 @@ const bsl::shared_ptr<bdlbb::BlobBufferFactory>& Poll::
 const char* Poll::name() const
 {
     return "POLL";
+}
+
+void Poll::getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+{
+    d_registry.getInfo(result, d_controllerDescriptorHandle);
 }
 
 PollFactory::PollFactory(bslma::Allocator* basicAllocator)

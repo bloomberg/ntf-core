@@ -23,14 +23,15 @@ BSLS_IDENT_RCSID(ntcr_listenersocket_cpp, "$Id$ $CSID$")
 #include <ntccfg_limits.h>
 #include <ntci_log.h>
 #include <ntci_monitorable.h>
-#include <ntcs_monitorable.h>
 #include <ntcs_async.h>
 #include <ntcs_compat.h>
 #include <ntcs_dispatch.h>
+#include <ntcs_monitorable.h>
 #include <ntcu_listenersocketsession.h>
 #include <ntcu_listenersocketutil.h>
 #include <ntsf_system.h>
 #include <ntsi_streamsocket.h>
+#include <ntsu_socketoptionutil.h>
 #include <bdlf_bind.h>
 #include <bdls_pathutil.h>
 #include <bdlt_currenttime.h>
@@ -162,8 +163,7 @@ void ListenerSocket::processSocketReadable(const ntca::ReactorEvent& event)
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
 
-    if (NTCCFG_UNLIKELY(d_detachState.mode() ==
-                        ntcs::DetachMode::e_INITIATED))
+    if (NTCCFG_UNLIKELY(d_detachState.mode() == ntcs::DetachMode::e_INITIATED))
     {
         return;
     }
@@ -640,13 +640,11 @@ void ListenerSocket::privateShutdownSequenceComplete(
 
     if (lock) {
         d_mutex.lock();
-        BSLS_ASSERT(d_detachState.mode() ==
-                    ntcs::DetachMode::e_INITIATED);
+        BSLS_ASSERT(d_detachState.mode() == ntcs::DetachMode::e_INITIATED);
         d_detachState.setMode(ntcs::DetachMode::e_IDLE);
     }
     else {
-        BSLS_ASSERT(d_detachState.mode() !=
-                    ntcs::DetachMode::e_INITIATED);
+        BSLS_ASSERT(d_detachState.mode() != ntcs::DetachMode::e_INITIATED);
     }
 
     // Second, handle socket shutdown.
@@ -1017,8 +1015,7 @@ bool ListenerSocket::privateCloseFlowControl(
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
         if (reactorRef) {
-            BSLS_ASSERT(d_detachState.mode() !=
-                        ntcs::DetachMode::e_INITIATED);
+            BSLS_ASSERT(d_detachState.mode() != ntcs::DetachMode::e_INITIATED);
             ntsa::Error error = reactorRef->detachSocket(self, detachCallback);
             if (error) {
                 return false;
@@ -1476,7 +1473,7 @@ ntsa::Error ListenerSocket::privateOpen(
     d_systemHandle         = handle;
     d_systemSourceEndpoint = sourceEndpoint;
     d_publicHandle         = handle;
-    d_publicSourceEndpoint = sourceEndpoint; 
+    d_publicSourceEndpoint = sourceEndpoint;
     d_socket_sp            = listenerSocket;
 
     NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
@@ -1572,9 +1569,8 @@ void ListenerSocket::processSourceEndpointResolution(
     }
 }
 
-void ListenerSocket::privateClose(
-    const bsl::shared_ptr<ListenerSocket>& self,
-    const ntci::CloseCallback&             callback)
+void ListenerSocket::privateClose(const bsl::shared_ptr<ListenerSocket>& self,
+                                  const ntci::CloseCallback& callback)
 {
     NTCI_LOG_CONTEXT();
 
@@ -1668,6 +1664,7 @@ ListenerSocket::ListenerSocket(
 , d_acceptBackoffTimer_sp()
 , d_acceptGreedily(NTCCFG_DEFAULT_LISTENER_SOCKET_ACCEPT_GREEDILY)
 , d_oneShot(reactor->oneShot())
+, d_creationTime(bdlt::CurrentTime::now())
 , d_options(options)
 , d_detachState()
 , d_closeCallback(bslma::Default::allocator(basicAllocator))
@@ -2605,18 +2602,18 @@ ntsa::Error ListenerSocket::release(ntsa::Handle* result)
     return this->release(result, ntci::CloseCallback());
 }
 
-ntsa::Error ListenerSocket::release(ntsa::Handle*              result, 
+ntsa::Error ListenerSocket::release(ntsa::Handle*              result,
                                     const ntci::CloseFunction& callback)
 {
-    return this->release(
-        result, this->createCloseCallback(callback, d_allocator_p));
+    return this->release(result,
+                         this->createCloseCallback(callback, d_allocator_p));
 }
 
 ntsa::Error ListenerSocket::release(ntsa::Handle*              result,
-                                  const ntci::CloseCallback& callback)
+                                    const ntci::CloseCallback& callback)
 {
     bsl::shared_ptr<ListenerSocket> self = this->getSelf(this);
-    
+
     LockGuard lock(&d_mutex);
 
     *result = ntsa::k_INVALID_HANDLE;
@@ -2835,6 +2832,68 @@ const bsl::shared_ptr<bdlbb::BlobBufferFactory>& ListenerSocket::
     outgoingBlobBufferFactory() const
 {
     return d_outgoingBufferFactory_sp;
+}
+
+void ListenerSocket::getInfo(ntsa::SocketInfo* result) const
+{
+    result->reset();
+
+    ntsa::Handle           descriptor = ntsa::k_INVALID_HANDLE;
+    ntsa::Transport::Value transport  = ntsa::Transport::e_UNDEFINED;
+    ntsa::Endpoint         sourceEndpoint;
+    ntsa::Endpoint         remoteEndpoint;
+    bsl::size_t            sendQueueSize    = 0;
+    bsl::size_t            receiveQueueSize = 0;
+
+    bslmt::ThreadUtil::Handle threadHandle =
+        bslmt::ThreadUtil::invalidHandle();
+
+    ntsa::SocketState::Value socketState = ntsa::SocketState::e_UNDEFINED;
+
+    descriptor = d_publicHandle;
+    transport  = d_transport;
+
+    d_publicSourceEndpoint.load(&sourceEndpoint);
+
+    {
+        LockGuard lock(&d_mutex);
+
+        if (d_shutdownState.completed()) {
+            socketState = ntsa::SocketState::e_CLOSED;
+        }
+        else if (d_shutdownState.initiated()) {
+            socketState = ntsa::SocketState::e_CLOSING;
+        }
+        else {
+            socketState = ntsa::SocketState::e_LISTEN;
+        }
+    }
+
+    ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+    if (reactorRef) {
+        threadHandle = reactorRef->threadHandle();
+    }
+
+    if (!bslmt::ThreadUtil::areEqual(threadHandle,
+                                     bslmt::ThreadUtil::invalidHandle()))
+    {
+        bslmt::ThreadUtil::Id threadId =
+            bslmt::ThreadUtil::handleToId(threadHandle);
+
+        bsl::uint64_t threadIdValue = static_cast<bsl::uint64_t>(
+            bslmt::ThreadUtil::idAsUint64(threadId));
+
+        result->setThreadId(threadIdValue);
+    }
+
+    result->setDescriptor(descriptor);
+    result->setCreationTime(d_creationTime);
+    result->setTransport(transport);
+    result->setSourceEndpoint(sourceEndpoint);
+    result->setRemoteEndpoint(remoteEndpoint);
+    result->setState(socketState);
+    result->setSendQueueSize(sendQueueSize);
+    result->setReceiveQueueSize(receiveQueueSize);
 }
 
 }  // close package namespace

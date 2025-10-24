@@ -286,6 +286,10 @@ class RegistryEntry
     /// Atomically decrement number of threads working on the entry and return
     /// resulting value.
     unsigned int decrementProcessCounter();
+
+    /// Load into the specified 'result' the information describing the
+    /// state of this socket.
+    void getInfo(ntsa::SocketInfo* result) const;
 };
 
 /// @internal @brief
@@ -424,6 +428,11 @@ class RegistryEntryCatalog
     /// undefined if 'callback' invokes any public member function of this
     /// object.
     void forEach(const ForEachCallback& callback);
+
+    /// Append the specified 'result' the information describing the
+    /// state of each socket attached to the reactor.
+    void getInfo(bsl::vector<ntsa::SocketInfo>* result,
+                 ntsa::Handle                   controller) const;
 };
 
 NTCCFG_INLINE
@@ -1375,6 +1384,34 @@ void RegistryEntryCatalog::forEach(const ForEachCallback& callback)
         bsl::shared_ptr<ntcs::RegistryEntry> entry_sp = d_vector[index];
         if (entry_sp) {
             callback(entry_sp);
+        }
+    }
+}
+
+NTCCFG_INLINE
+void RegistryEntryCatalog::getInfo(bsl::vector<ntsa::SocketInfo>* result,
+                                   ntsa::Handle controller) const
+{
+    Vector vector;
+    {
+        LockGuard lock(&d_mutex);
+        vector = d_vector;
+    }
+
+    const bsl::size_t size = vector.size();
+
+    const bsl::size_t controllerIndex = static_cast<bsl::size_t>(controller);
+
+    for (bsl::size_t index = 0; index < size; ++index) {
+        if (index == controllerIndex) {
+            continue;
+        }
+
+        bsl::shared_ptr<ntcs::RegistryEntry> entry_sp = vector[index];
+        if (entry_sp) {
+            ntsa::SocketInfo socketInfo;
+            entry_sp->getInfo(&socketInfo);
+            result->push_back(socketInfo);
         }
     }
 }

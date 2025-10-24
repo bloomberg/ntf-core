@@ -660,6 +660,11 @@ class Kqueue : public ntci::Reactor,
 
     const char* name() const BSLS_KEYWORD_OVERRIDE;
     // Return the name of the driver.
+
+    /// Append the specified 'result' the information describing the
+    /// state of each socket attached to the reactor.
+    void getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+        BSLS_KEYWORD_OVERRIDE;
 };
 
 struct Kqueue::Result {
@@ -2735,6 +2740,11 @@ const bsl::shared_ptr<bdlbb::BlobBufferFactory>& Kqueue::
 const char* Kqueue::name() const
 {
     return "KQUEUE";
+}
+
+void Kqueue::getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+{
+    d_registry.getInfo(result, d_controllerDescriptorHandle);
 }
 
 KqueueFactory::KqueueFactory(bslma::Allocator* basicAllocator)

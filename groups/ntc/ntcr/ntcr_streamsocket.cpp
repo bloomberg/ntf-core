@@ -5315,6 +5315,7 @@ StreamSocket::StreamSocket(
 , d_deferredCalls(bslma::Default::allocator(basicAllocator))
 , d_totalBytesSent(0)
 , d_totalBytesReceived(0)
+, d_creationTime(bdlt::CurrentTime::now())
 , d_options(options)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -7684,6 +7685,99 @@ const bsl::shared_ptr<bdlbb::BlobBufferFactory>& StreamSocket::
     outgoingBlobBufferFactory() const
 {
     return d_outgoingBufferFactory_sp;
+}
+
+void StreamSocket::getInfo(ntsa::SocketInfo* result) const
+{
+    result->reset();
+
+    ntsa::Handle           descriptor = ntsa::k_INVALID_HANDLE;
+    ntsa::Transport::Value transport  = ntsa::Transport::e_UNDEFINED;
+    ntsa::Endpoint         sourceEndpoint;
+    ntsa::Endpoint         remoteEndpoint;
+    bsl::size_t            sendQueueSize    = 0;
+    bsl::size_t            receiveQueueSize = 0;
+
+    bslmt::ThreadUtil::Handle threadHandle =
+        bslmt::ThreadUtil::invalidHandle();
+
+    ntsa::SocketState::Value socketState = ntsa::SocketState::e_UNDEFINED;
+
+    descriptor = d_publicHandle;
+    transport  = d_transport;
+
+    d_publicSourceEndpoint.load(&sourceEndpoint);
+    d_publicRemoteEndpoint.load(&remoteEndpoint);
+
+    {
+        LockGuard lock(&d_mutex);
+
+        sendQueueSize    = d_sendQueue.size();
+        receiveQueueSize = d_receiveQueue.size();
+
+        if (d_shutdownState.completed()) {
+            socketState = ntsa::SocketState::e_CLOSED;
+        }
+        else if (d_shutdownState.initiated()) {
+            socketState = ntsa::SocketState::e_CLOSING;
+        }
+        else if (d_connectInProgress) {
+            socketState = ntsa::SocketState::e_SYN_SENT;
+        }
+        else {
+            socketState = ntsa::SocketState::e_ESTABLISHED;
+        }
+    }
+
+    ntcs::ObserverRef<ntci::Reactor> reactorRef(&d_reactor);
+    if (reactorRef) {
+        threadHandle = reactorRef->threadHandle();
+    }
+
+    if (descriptor != ntsa::k_INVALID_HANDLE &&
+        socketState == ntsa::SocketState::e_ESTABLISHED)
+    {
+        bsl::size_t sendBufferSize = 0;
+        ntsu::SocketOptionUtil::getSendBufferSize(&sendBufferSize, descriptor);
+
+        bsl::size_t sendBufferRemaining = 0;
+        ntsu::SocketOptionUtil::getSendBufferRemaining(&sendBufferRemaining,
+                                                       descriptor);
+
+        bsl::size_t sendBufferFilled = 0;
+        if (sendBufferSize > sendBufferRemaining) {
+            sendBufferFilled = sendBufferSize - sendBufferRemaining;
+        }
+
+        bsl::size_t receiveBufferAvailable = 0;
+        ntsu::SocketOptionUtil::getReceiveBufferAvailable(
+            &receiveBufferAvailable,
+            descriptor);
+
+        sendQueueSize    += sendBufferFilled;
+        receiveQueueSize += receiveBufferAvailable;
+    }
+
+    if (!bslmt::ThreadUtil::areEqual(threadHandle,
+                                     bslmt::ThreadUtil::invalidHandle()))
+    {
+        bslmt::ThreadUtil::Id threadId =
+            bslmt::ThreadUtil::handleToId(threadHandle);
+
+        bsl::uint64_t threadIdValue = static_cast<bsl::uint64_t>(
+            bslmt::ThreadUtil::idAsUint64(threadId));
+
+        result->setThreadId(threadIdValue);
+    }
+
+    result->setDescriptor(descriptor);
+    result->setCreationTime(d_creationTime);
+    result->setTransport(transport);
+    result->setSourceEndpoint(sourceEndpoint);
+    result->setRemoteEndpoint(remoteEndpoint);
+    result->setState(socketState);
+    result->setSendQueueSize(sendQueueSize);
+    result->setReceiveQueueSize(receiveQueueSize);
 }
 
 }  // close package namespace

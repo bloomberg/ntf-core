@@ -626,6 +626,11 @@ class Devpoll : public ntci::Reactor,
 
     const char* name() const BSLS_KEYWORD_OVERRIDE;
     // Return the name of the driver.
+
+    /// Append the specified 'result' the information describing the
+    /// state of each socket attached to the reactor.
+    void getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+        BSLS_KEYWORD_OVERRIDE;
 };
 
 struct Devpoll::Result {
@@ -2848,6 +2853,11 @@ const bsl::shared_ptr<bdlbb::BlobBufferFactory>& Devpoll::
 const char* Devpoll::name() const
 {
     return "DEVPOLL";
+}
+
+void Devpoll::getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+{
+    d_registry.getInfo(result, d_controllerDescriptorHandle);
 }
 
 DevpollFactory::DevpollFactory(bslma::Allocator* basicAllocator)

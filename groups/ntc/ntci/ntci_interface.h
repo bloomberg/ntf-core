@@ -309,6 +309,16 @@ class Interface : public ntci::DatagramSocketFactory,
     virtual bool lookupByThreadIndex(bsl::shared_ptr<ntci::Executor>* result,
                                      bsl::size_t threadIndex) const = 0;
 
+    /// Append the specified 'result' the information describing the
+    /// state of each socket managed by the scheduler.
+    virtual void getInfo(bsl::vector<ntsa::SocketInfo>* result) const = 0;
+
+    /// Return the number of sockets currently being monitored.
+    virtual bsl::size_t numSockets() const = 0;
+
+    /// Return the number of timers currently being monitored.
+    virtual bsl::size_t numTimers() const = 0;
+
     /// Return the current elapsed time since the Unix epoch.
     virtual bsls::TimeInterval currentTime() const = 0;
 

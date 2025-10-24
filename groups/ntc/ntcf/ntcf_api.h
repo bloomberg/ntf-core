@@ -173,12 +173,12 @@ BSLS_IDENT("$Id: $")
 #include <ntci_closefuture.h>
 #include <ntci_closeresult.h>
 #include <ntci_compression.h>
+#include <ntci_concurrent.h>
 #include <ntci_connectcallback.h>
 #include <ntci_connectcallbackfactory.h>
 #include <ntci_connectfuture.h>
 #include <ntci_connector.h>
 #include <ntci_connectresult.h>
-#include <ntci_concurrent.h>
 #include <ntci_datagramsocket.h>
 #include <ntci_datagramsocketfactory.h>
 #include <ntci_datagramsocketmanager.h>
@@ -210,6 +210,7 @@ BSLS_IDENT("$Id: $")
 #include <ntci_getservicenamecallback.h>
 #include <ntci_getservicenamecallbackfactory.h>
 #include <ntci_identifiable.h>
+#include <ntci_interactable.h>
 #include <ntci_interface.h>
 #include <ntci_invoker.h>
 #include <ntci_listenersocket.h>

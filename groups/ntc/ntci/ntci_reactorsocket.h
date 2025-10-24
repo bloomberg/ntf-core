@@ -25,6 +25,7 @@ BSLS_IDENT("$Id: $")
 #include <ntcscm_version.h>
 #include <ntsa_error.h>
 #include <ntsa_notificationqueue.h>
+#include <ntsa_socketinfo.h>
 #include <ntsi_descriptor.h>
 #include <bsl_memory.h>
 
@@ -94,6 +95,10 @@ class ReactorSocket : public ntci::ReactorSocketBase, public ntsi::Descriptor
 
     /// Return the strand on which this object's functions should be called.
     virtual const bsl::shared_ptr<ntci::Strand>& strand() const;
+
+    /// Load into the specified 'result' the information describing the
+    /// state of this socket.
+    virtual void getInfo(ntsa::SocketInfo* result) const;
 };
 
 NTCCFG_INLINE

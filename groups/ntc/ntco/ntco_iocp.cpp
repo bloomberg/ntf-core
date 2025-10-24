@@ -625,6 +625,11 @@ class Iocp : public ntci::Proactor,
 
     const char* name() const BSLS_KEYWORD_OVERRIDE;
     // Return the name of the driver.
+
+    /// Append the specified 'result' the information describing the
+    /// state of each socket attached to the reactor.
+    void getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+        BSLS_KEYWORD_OVERRIDE;
 };
 
 struct Iocp::Result {
@@ -2870,7 +2875,29 @@ const bsl::shared_ptr<bdlbb::BlobBufferFactory>& Iocp::
 
 const char* Iocp::name() const
 {
-    return "EXAMPLE";
+    return "IOCP";
+}
+
+void Iocp::getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+{
+    ProactorSocketMap proactorSocketMap;
+    {
+        LockGuard lockGuard(&d_proactorSocketMapMutex);
+        proactorSocketMap = d_proactorSocketMap;
+    }
+
+    for (ProactorSocketMap::const_iterator it = proactorSocketMap.begin();
+         it != proactorSocketMap.end();
+         ++it)
+    {
+        const bsl::shared_ptr<ntci::ProactorSocket>& proactorSocket =
+            it->second;
+
+        ntsa::SocketInfo socketInfo;
+        proactorSocket->getInfo(&socketInfo);
+
+        result->push_back(socketInfo);
+    }
 }
 
 IocpFactory::IocpFactory(bslma::Allocator* basicAllocator)

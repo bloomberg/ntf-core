@@ -4896,6 +4896,11 @@ class IoRing : public ntci::Proactor,
 
     // Return the name of the driver.
     const char* name() const BSLS_KEYWORD_OVERRIDE;
+
+    /// Append the specified 'result' the information describing the
+    /// state of each socket attached to the reactor.
+    void getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+        BSLS_KEYWORD_OVERRIDE;
 };
 
 void IoRing::interruptComplete()
@@ -6431,6 +6436,28 @@ const bsl::shared_ptr<bdlbb::BlobBufferFactory>& IoRing::
 const char* IoRing::name() const
 {
     return "IORING";
+}
+
+void IoRing::getInfo(bsl::vector<ntsa::SocketInfo>* result) const
+{
+    ContextMap contextMap;
+    {
+        LockGuard lockGuard(&d_contextMapMutex);
+        contextMap = d_contextMap;
+    }
+
+    for (ContextMap::const_iterator it = contextMap.begin();
+         it != contextMap.end();
+         ++it)
+    {
+        const bsl::shared_ptr<ntci::ProactorSocket>& proactorSocket =
+            it->first;
+
+        ntsa::SocketInfo socketInfo;
+        proactorSocket->getInfo(&socketInfo);
+
+        result->push_back(socketInfo);
+    }
 }
 
 IoRingFactory::IoRingFactory(bslma::Allocator* basicAllocator)

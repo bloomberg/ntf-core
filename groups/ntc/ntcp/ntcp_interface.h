@@ -69,10 +69,10 @@ class Interface : public ntci::Interface,
     /// Enumerates the constants used by this implementation.
     enum Constant {
         /// The object is stopped.
-        k_RUN_STATE_STOPPED  = 0,
+        k_RUN_STATE_STOPPED = 0,
 
         /// The object is started.
-        k_RUN_STATE_STARTED  = 1,
+        k_RUN_STATE_STARTED = 1,
 
         /// The object is stopping.
         k_RUN_STATE_STOPPING = 2
@@ -569,6 +569,17 @@ class Interface : public ntci::Interface,
     /// thread exists, and false otherwise.
     bool lookupByThreadIndex(bsl::shared_ptr<ntci::Executor>* result,
                              bsl::size_t threadIndex) const
+        BSLS_KEYWORD_OVERRIDE;
+
+    /// Return the number of sockets currently being monitored.
+    bsl::size_t numSockets() const BSLS_KEYWORD_OVERRIDE;
+
+    /// Return the number of timers currently being monitored.
+    bsl::size_t numTimers() const BSLS_KEYWORD_OVERRIDE;
+
+    /// Append the specified 'result' the information describing the
+    /// state of each socket managed by the scheduler.
+    void getInfo(bsl::vector<ntsa::SocketInfo>* result) const
         BSLS_KEYWORD_OVERRIDE;
 
     /// Return the incoming blob buffer factory.

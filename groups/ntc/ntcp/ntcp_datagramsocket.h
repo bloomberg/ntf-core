@@ -114,6 +114,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     bool                                         d_receiveGreedily;
     bsl::shared_ptr<bdlbb::Blob>                 d_receiveBlob_sp;
     bsl::size_t                                  d_maxDatagramSize;
+    bsls::TimeInterval                           d_creationTime;
     ntca::DatagramSocketOptions                  d_options;
     ntcs::DetachState                            d_detachState;
     bsl::function<void()>                        d_deferredCall;
@@ -1131,6 +1132,10 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// Return the outgoing blob buffer factory.
     const bsl::shared_ptr<bdlbb::BlobBufferFactory>& outgoingBlobBufferFactory()
         const BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' the information describing the
+    /// state of this socket.
+    void getInfo(ntsa::SocketInfo* result) const BSLS_KEYWORD_OVERRIDE;
 };
 
 }  // close package namespace

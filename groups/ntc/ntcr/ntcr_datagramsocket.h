@@ -130,6 +130,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     ntci::Executor::FunctorSequence              d_deferredCalls;
     bsl::size_t                                  d_totalBytesSent;
     bsl::size_t                                  d_totalBytesReceived;
+    bsls::TimeInterval                           d_creationTime;
     ntca::DatagramSocketOptions                  d_options;
     bslma::Allocator*                            d_allocator_p;
 
@@ -359,8 +360,8 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// and allocate sufficient capacity buffers to store the maximum
     /// datagram size. The behavior is undefined unless 'd_mutex' is locked.
     void privateAllocateReceiveBlob(
-            const bsl::shared_ptr<DatagramSocket>& self,
-            bsl::shared_ptr<bdlbb::Blob>*          data);
+        const bsl::shared_ptr<DatagramSocket>& self,
+        bsl::shared_ptr<bdlbb::Blob>*          data);
 
     /// Rearm the interest in the writability of the socket in the reactor,
     /// if necessary. The behavior is undefined unless 'd_mutex' is locked.
@@ -939,9 +940,8 @@ class DatagramSocket : public ntci::DatagramSocket,
 
     /// Set the write deflater to the specified 'compression' technique. Return
     /// the error.
-    ntsa::Error setWriteDeflater(
-        const bsl::shared_ptr<ntci::Compression>& compression) 
-        BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error setWriteDeflater(const bsl::shared_ptr<ntci::Compression>&
+                                     compression) BSLS_KEYWORD_OVERRIDE;
 
     /// Set the write queue low watermark to the specified 'lowWatermark'.
     /// Return the error.
@@ -966,9 +966,8 @@ class DatagramSocket : public ntci::DatagramSocket,
 
     /// Set the read inflater to the specified 'compression' technique. Return
     /// the error.
-    ntsa::Error setReadInflater(
-        const bsl::shared_ptr<ntci::Compression>& compression)
-        BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error setReadInflater(const bsl::shared_ptr<ntci::Compression>&
+                                    compression) BSLS_KEYWORD_OVERRIDE;
 
     /// Set the read queue low watermark to the specified 'lowWatermark'.
     /// Return the error.
@@ -1061,7 +1060,7 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// socket handle into the specified 'result', and close this object.
     /// Return the result. Note that the caller has the responsibility for
     /// closing '*result'. Also note that this function automatically closes
-    /// this object, but neither shuts down nor closes '*result'. 
+    /// this object, but neither shuts down nor closes '*result'.
     ntsa::Error release(ntsa::Handle* result) BSLS_KEYWORD_OVERRIDE;
 
     /// Release the underlying socket from ownership by this object, load the
@@ -1073,9 +1072,9 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// '*result'. Also tote that callbacks created by this object will
     /// automatically be invoked on this object's strand unless an explicit
     /// strand is specified at the time the callback is created.
-    ntsa::Error release(ntsa::Handle*              result, 
-                        const ntci::CloseFunction& callback) 
-                        BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error release(ntsa::Handle*              result,
+                        const ntci::CloseFunction& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Release the underlying socket from ownership by this object, load the
     /// socket handle into the specified 'result', close this object, and
@@ -1087,8 +1086,8 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// automatically be invoked on this object's strand unless an explicit
     /// strand is specified at the time the callback is created.
     ntsa::Error release(ntsa::Handle*              result,
-                        const ntci::CloseCallback& callback) 
-                        BSLS_KEYWORD_OVERRIDE;
+                        const ntci::CloseCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Close the datagram socket.
     void close() BSLS_KEYWORD_OVERRIDE;
@@ -1241,6 +1240,10 @@ class DatagramSocket : public ntci::DatagramSocket,
     /// Return the outgoing blob buffer factory.
     const bsl::shared_ptr<bdlbb::BlobBufferFactory>& outgoingBlobBufferFactory()
         const BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' the information describing the
+    /// state of this socket.
+    void getInfo(ntsa::SocketInfo* result) const BSLS_KEYWORD_OVERRIDE;
 };
 
 }  // close package namespace

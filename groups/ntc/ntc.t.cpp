@@ -291,6 +291,7 @@
 #include <ntcs_global.t.cpp>
 #include <ntcs_globalallocator.t.cpp>
 #include <ntcs_globalexecutor.t.cpp>
+#include <ntcs_interactable.t.cpp>
 #include <ntcs_interest.t.cpp>
 #include <ntcs_leakybucket.t.cpp>
 #include <ntcs_memorymap.t.cpp>

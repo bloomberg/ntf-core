@@ -39,6 +39,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
 #include <ntsa_notificationqueue.h>
+#include <ntsa_socketinfo.h>
 #include <ntsi_descriptor.h>
 #include <bdlbb_blob.h>
 #include <bdls_filesystemutil.h>
@@ -48,6 +49,7 @@ BSLS_IDENT("$Id: $")
 #include <bsl_list.h>
 #include <bsl_memory.h>
 #include <bsl_string.h>
+#include <bsl_vector.h>
 
 namespace BloombergLP {
 namespace ntci {
@@ -640,6 +642,10 @@ class Reactor : public ntci::Driver, public ntci::ReactorPool
     /// Return true if the reactor supports notifications of the socket,
     /// otherwise return false
     virtual bool supportsNotifications() const;
+
+    /// Append the specified 'result' the information describing the
+    /// state of each socket attached to the reactor.
+    virtual void getInfo(bsl::vector<ntsa::SocketInfo>* result) const;
 };
 
 NTCCFG_INLINE

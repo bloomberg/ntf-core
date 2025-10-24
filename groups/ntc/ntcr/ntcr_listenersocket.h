@@ -101,6 +101,7 @@ class ListenerSocket : public ntci::ListenerSocket,
     bsl::shared_ptr<ntci::Timer>                 d_acceptBackoffTimer_sp;
     bool                                         d_acceptGreedily;
     const bool                                   d_oneShot;
+    bsls::TimeInterval                           d_creationTime;
     ntca::ListenerSocketOptions                  d_options;
     ntcs::DetachState                            d_detachState;
     ntci::CloseCallback                          d_closeCallback;
@@ -534,7 +535,7 @@ class ListenerSocket : public ntci::ListenerSocket,
     /// socket handle into the specified 'result', and close this object.
     /// Return the result. Note that the caller has the responsibility for
     /// closing '*result'. Also note that this function automatically closes
-    /// this object, but neither shuts down nor closes '*result'. 
+    /// this object, but neither shuts down nor closes '*result'.
     ntsa::Error release(ntsa::Handle* result) BSLS_KEYWORD_OVERRIDE;
 
     /// Release the underlying socket from ownership by this object, load the
@@ -546,9 +547,9 @@ class ListenerSocket : public ntci::ListenerSocket,
     /// '*result'. Also tote that callbacks created by this object will
     /// automatically be invoked on this object's strand unless an explicit
     /// strand is specified at the time the callback is created.
-    ntsa::Error release(ntsa::Handle*              result, 
-                        const ntci::CloseFunction& callback) 
-                        BSLS_KEYWORD_OVERRIDE;
+    ntsa::Error release(ntsa::Handle*              result,
+                        const ntci::CloseFunction& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Release the underlying socket from ownership by this object, load the
     /// socket handle into the specified 'result', close this object, and
@@ -560,8 +561,8 @@ class ListenerSocket : public ntci::ListenerSocket,
     /// automatically be invoked on this object's strand unless an explicit
     /// strand is specified at the time the callback is created.
     ntsa::Error release(ntsa::Handle*              result,
-                        const ntci::CloseCallback& callback) 
-                        BSLS_KEYWORD_OVERRIDE;
+                        const ntci::CloseCallback& callback)
+        BSLS_KEYWORD_OVERRIDE;
 
     /// Close the listener socket.
     void close() BSLS_KEYWORD_OVERRIDE;
@@ -693,6 +694,10 @@ class ListenerSocket : public ntci::ListenerSocket,
     /// Return the outgoing blob buffer factory.
     const bsl::shared_ptr<bdlbb::BlobBufferFactory>& outgoingBlobBufferFactory()
         const BSLS_KEYWORD_OVERRIDE;
+
+    /// Load into the specified 'result' the information describing the
+    /// state of this socket.
+    void getInfo(ntsa::SocketInfo* result) const BSLS_KEYWORD_OVERRIDE;
 };
 
 }  // close package namespace
