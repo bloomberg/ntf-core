@@ -692,11 +692,11 @@ struct SocketUtil {
     static ntsa::Error waitUntilReadable(ntsa::Handle              socket,
                                          const bsls::TimeInterval& timeout);
 
-    /// Wait indefinitely until the specified 'socket' is readable. Return
+    /// Wait indefinitely until the specified 'socket' is writable. Return
     /// the error.
     static ntsa::Error waitUntilWritable(ntsa::Handle socket);
 
-    /// Wait until the specified 'socket' is readable or the specified
+    /// Wait until the specified 'socket' is writable or the specified
     /// absolute 'timeout' elapses. Return the error.
     static ntsa::Error waitUntilWritable(ntsa::Handle              socket,
                                          const bsls::TimeInterval& timeout);
