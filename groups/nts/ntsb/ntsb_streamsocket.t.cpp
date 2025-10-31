@@ -32,11 +32,15 @@ namespace ntsb {
 class StreamSocketTest
 {
   public:
-    // TODO
-    static void verifyCase1();
+    // Verify sending and receiving data using basic, contiguous buffers.
+    static void verifyBufferIo();
 
-    // TODO
-    static void verifyCase2();
+    // Verify sending and receiving data using vector I/O and the
+    // scatter/gather paradigm.
+    static void verifyVectorIo();
+
+    // Verify importing sockets.
+    static void verifyImport();
 
   private:
     /// Test the implementations of the specified 'client' and 'server'
@@ -102,7 +106,7 @@ class StreamSocketTest
                             bdlbb::Blob* serverData);
 };
 
-NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyCase1)
+NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyBufferIo)
 {
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
@@ -118,7 +122,8 @@ NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyCase1)
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransportLoopback(ntsa::Transport::e_LOCAL_STREAM))
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
+            ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
@@ -154,7 +159,7 @@ NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyCase1)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyCase2)
+NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyVectorIo)
 {
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
@@ -170,7 +175,8 @@ NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyCase2)
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransportLoopback(ntsa::Transport::e_LOCAL_STREAM))
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
+            ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
@@ -203,6 +209,81 @@ NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyCase2)
             NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
         }
         NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsb::StreamSocketTest::verifyImport)
+{
+    ntsa::Error error;
+
+    // Ensure importing stream sockets is successful.
+
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
+            ntsa::Transport::e_TCP_IPV4_STREAM))
+    {
+        ntsa::Handle clientHandle = ntsa::k_INVALID_HANDLE;
+        ntsa::Handle serverHandle = ntsa::k_INVALID_HANDLE;
+
+        error = ntsu::SocketUtil::pair(&clientHandle,
+                                       &serverHandle,
+                                       ntsa::Transport::e_TCP_IPV4_STREAM);
+        NTSCFG_TEST_OK(error);
+
+        bsl::shared_ptr<ntsb::StreamSocket> clientSocket;
+        clientSocket.createInplace(NTSCFG_TEST_ALLOCATOR);
+
+        error = clientSocket->acquire(clientHandle);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(clientSocket->handle(), clientHandle);
+
+        bsl::shared_ptr<ntsb::StreamSocket> serverSocket;
+        serverSocket.createInplace(NTSCFG_TEST_ALLOCATOR);
+
+        error = serverSocket->acquire(serverHandle);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serverSocket->handle(), serverHandle);
+
+        ntsa::Handle releasedClientHandle = clientSocket->release();
+        NTSCFG_TEST_EQ(releasedClientHandle, clientHandle);
+        NTSCFG_TEST_EQ(clientSocket->handle(), ntsa::k_INVALID_HANDLE);
+
+        ntsa::Handle releasedServerHandle = serverSocket->release();
+        NTSCFG_TEST_EQ(releasedServerHandle, serverHandle);
+        NTSCFG_TEST_EQ(serverSocket->handle(), ntsa::k_INVALID_HANDLE);
+
+        ntsu::SocketUtil::close(clientHandle);
+        ntsu::SocketUtil::close(serverHandle);
+    }
+
+    // Ensure importing datagram sockets fails.
+
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM))
+    {
+        ntsa::Handle clientHandle = ntsa::k_INVALID_HANDLE;
+        ntsa::Handle serverHandle = ntsa::k_INVALID_HANDLE;
+
+        error = ntsu::SocketUtil::pair(&clientHandle,
+                                       &serverHandle,
+                                       ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        NTSCFG_TEST_OK(error);
+
+        bsl::shared_ptr<ntsb::StreamSocket> clientSocket;
+        clientSocket.createInplace(NTSCFG_TEST_ALLOCATOR);
+
+        error = clientSocket->acquire(clientHandle);
+        NTSCFG_TEST_TRUE(error);
+        NTSCFG_TEST_EQ(clientSocket->handle(), ntsa::k_INVALID_HANDLE);
+
+        bsl::shared_ptr<ntsb::StreamSocket> serverSocket;
+        serverSocket.createInplace(NTSCFG_TEST_ALLOCATOR);
+
+        error = serverSocket->acquire(serverHandle);
+        NTSCFG_TEST_TRUE(error);
+        NTSCFG_TEST_EQ(clientSocket->handle(), ntsa::k_INVALID_HANDLE);
+
+        ntsu::SocketUtil::close(clientHandle);
+        ntsu::SocketUtil::close(serverHandle);
     }
 }
 

@@ -61,7 +61,19 @@ ntsa::Error DatagramSocket::open(ntsa::Transport::Value transport)
 
 ntsa::Error DatagramSocket::acquire(ntsa::Handle handle)
 {
+    ntsa::Error error;
+
     if (d_handle != ntsa::k_INVALID_HANDLE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bool isDatagram = false;
+    error           = ntsu::SocketOptionUtil::isDatagram(&isDatagram, handle);
+    if (error) {
+        return error;
+    }
+
+    if (!isDatagram) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 

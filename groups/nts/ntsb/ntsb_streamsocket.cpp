@@ -61,7 +61,19 @@ ntsa::Error StreamSocket::open(ntsa::Transport::Value transport)
 
 ntsa::Error StreamSocket::acquire(ntsa::Handle handle)
 {
+    ntsa::Error error;
+
     if (d_handle != ntsa::k_INVALID_HANDLE) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    bool isStream = false;
+    error         = ntsu::SocketOptionUtil::isStream(&isStream, handle);
+    if (error) {
+        return error;
+    }
+
+    if (!isStream) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 

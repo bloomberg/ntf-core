@@ -33,11 +33,15 @@ namespace ntsb {
 class DatagramSocketTest
 {
   public:
-    // TODO
-    static void verifyCase1();
+    // Verify sending and receiving data using basic, contiguous buffers.
+    static void verifyBufferIo();
 
-    // TODO
-    static void verifyCase2();
+    // Verify sending and receiving data using vector I/O and the
+    // scatter/gather paradigm.
+    static void verifyVectorIo();
+
+    // Verify importing sockets.
+    static void verifyImport();
 
   private:
     /// Test the implementations of the specified 'client' and 'server'
@@ -103,7 +107,7 @@ class DatagramSocketTest
 // address of the peer.
 #define NTSB_DATAGRAMSOCKETTESTER_SENDTO_RECEIVEFROM 0
 
-NTSCFG_TEST_FUNCTION(ntsb::DatagramSocketTest::verifyCase1)
+NTSCFG_TEST_FUNCTION(ntsb::DatagramSocketTest::verifyBufferIo)
 {
     // Concern: Datagram socket buffer I/O
     // Plan:
@@ -154,7 +158,7 @@ NTSCFG_TEST_FUNCTION(ntsb::DatagramSocketTest::verifyCase1)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsb::DatagramSocketTest::verifyCase2)
+NTSCFG_TEST_FUNCTION(ntsb::DatagramSocketTest::verifyVectorIo)
 {
     // Concern: Datagram socket vector I/O
     // Plan:
@@ -202,6 +206,81 @@ NTSCFG_TEST_FUNCTION(ntsb::DatagramSocketTest::verifyCase2)
             NTSCFG_TEST_EQ(error, ntsa::Error::e_OK);
         }
         NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsb::DatagramSocketTest::verifyImport)
+{
+    ntsa::Error error;
+
+    // Ensure importing datagram sockets is successful.
+
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
+            ntsa::Transport::e_UDP_IPV4_DATAGRAM))
+    {
+        ntsa::Handle clientHandle = ntsa::k_INVALID_HANDLE;
+        ntsa::Handle serverHandle = ntsa::k_INVALID_HANDLE;
+
+        error = ntsu::SocketUtil::pair(&clientHandle,
+                                       &serverHandle,
+                                       ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        NTSCFG_TEST_OK(error);
+
+        bsl::shared_ptr<ntsb::DatagramSocket> clientSocket;
+        clientSocket.createInplace(NTSCFG_TEST_ALLOCATOR);
+
+        error = clientSocket->acquire(clientHandle);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(clientSocket->handle(), clientHandle);
+
+        bsl::shared_ptr<ntsb::DatagramSocket> serverSocket;
+        serverSocket.createInplace(NTSCFG_TEST_ALLOCATOR);
+
+        error = serverSocket->acquire(serverHandle);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(serverSocket->handle(), serverHandle);
+
+        ntsa::Handle releasedClientHandle = clientSocket->release();
+        NTSCFG_TEST_EQ(releasedClientHandle, clientHandle);
+        NTSCFG_TEST_EQ(clientSocket->handle(), ntsa::k_INVALID_HANDLE);
+
+        ntsa::Handle releasedServerHandle = serverSocket->release();
+        NTSCFG_TEST_EQ(releasedServerHandle, serverHandle);
+        NTSCFG_TEST_EQ(serverSocket->handle(), ntsa::k_INVALID_HANDLE);
+
+        ntsu::SocketUtil::close(clientHandle);
+        ntsu::SocketUtil::close(serverHandle);
+    }
+
+    // Ensure importing stream sockets fails.
+
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
+            ntsa::Transport::e_TCP_IPV4_STREAM))
+    {
+        ntsa::Handle clientHandle = ntsa::k_INVALID_HANDLE;
+        ntsa::Handle serverHandle = ntsa::k_INVALID_HANDLE;
+
+        error = ntsu::SocketUtil::pair(&clientHandle,
+                                       &serverHandle,
+                                       ntsa::Transport::e_TCP_IPV4_STREAM);
+        NTSCFG_TEST_OK(error);
+
+        bsl::shared_ptr<ntsb::DatagramSocket> clientSocket;
+        clientSocket.createInplace(NTSCFG_TEST_ALLOCATOR);
+
+        error = clientSocket->acquire(clientHandle);
+        NTSCFG_TEST_TRUE(error);
+        NTSCFG_TEST_EQ(clientSocket->handle(), ntsa::k_INVALID_HANDLE);
+
+        bsl::shared_ptr<ntsb::DatagramSocket> serverSocket;
+        serverSocket.createInplace(NTSCFG_TEST_ALLOCATOR);
+
+        error = serverSocket->acquire(serverHandle);
+        NTSCFG_TEST_TRUE(error);
+        NTSCFG_TEST_EQ(clientSocket->handle(), ntsa::k_INVALID_HANDLE);
+
+        ntsu::SocketUtil::close(clientHandle);
+        ntsu::SocketUtil::close(serverHandle);
     }
 }
 
@@ -397,9 +476,9 @@ void DatagramSocketTest::sendString(
         ntsa::Error error = client->send(&context, data, options);
 
         if (error) {
-            BSLS_LOG_TRACE("Sender error %s, dataSize = %zu", 
-                          error.text().c_str(),
-                          (bsl::size_t)(data.size()));
+            BSLS_LOG_TRACE("Sender error %s, dataSize = %zu",
+                           error.text().c_str(),
+                           (bsl::size_t)(data.size()));
             if (error == ntsa::Error::e_LIMIT) {
                 continue;
             }
@@ -520,9 +599,9 @@ void DatagramSocketTest::sendBlob(
         ntsa::Error error = client->send(&context, *clientData, options);
 
         if (error) {
-            BSLS_LOG_TRACE("Sender error %s, dataSize = %zu", 
-                          error.text().c_str(), 
-                          (bsl::size_t)(clientData->length()));
+            BSLS_LOG_TRACE("Sender error %s, dataSize = %zu",
+                           error.text().c_str(),
+                           (bsl::size_t)(clientData->length()));
             if (error == ntsa::Error::e_LIMIT) {
                 continue;
             }
