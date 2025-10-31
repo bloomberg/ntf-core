@@ -284,10 +284,11 @@ namespace ntca {
 /// collected.
 ///
 /// @li @b socketMetrics:
-/// The flag that indicates driver metrics should be collected.
+/// The flag that indicates socket metrics should be collected.
 ///
 /// @li @b socketMetricsPerHandle:
-/// The flag that indicates socket metrics per handle should be collected.
+/// The flag that indicates socket metrics per handle (i.e. descriptor) should
+/// be collected.
 ///
 /// @li @b resolverEnabled:
 /// The flag that indicates this interface should run an asynchronous resolver.
@@ -333,7 +334,7 @@ class InterfaceConfig
     typedef bdlb::NullableValue<ntca::SerializationConfig>
         NullableSerializationConfig;
 
-private:
+  private:
     bsl::string                 d_driverName;
     bsl::string                 d_metricName;
     bsl::string                 d_threadName;
