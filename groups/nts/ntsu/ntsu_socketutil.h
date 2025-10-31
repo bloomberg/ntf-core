@@ -683,21 +683,23 @@ struct SocketUtil {
     static ntsa::Error remoteEndpoint(ntsa::Endpoint* result,
                                       ntsa::Handle    socket);
 
-    /// Wait indefinitely until the specified 'socket' is readable. Return
-    /// the error.
+    /// Wait indefinitely until the specified 'socket' is readable or the
+    /// wait is interrupted by a signal. Return the error.
     static ntsa::Error waitUntilReadable(ntsa::Handle socket);
 
-    /// Wait until the specified 'socket' is readable or the specified
-    /// absolute 'timeout' elapses. Return the error.
+    /// Wait until the specified 'socket' is readable or the wait is
+    /// interrupted by a signal or the specified absolute 'timeout' elapses.
+    /// Return the error.
     static ntsa::Error waitUntilReadable(ntsa::Handle              socket,
                                          const bsls::TimeInterval& timeout);
 
-    /// Wait indefinitely until the specified 'socket' is readable. Return
-    /// the error.
+    /// Wait indefinitely until the specified 'socket' is writable or the
+    /// wait is interrupted by a signal. Return the error.
     static ntsa::Error waitUntilWritable(ntsa::Handle socket);
 
-    /// Wait until the specified 'socket' is readable or the specified
-    /// absolute 'timeout' elapses. Return the error.
+    /// Wait until the specified 'socket' is writable or the wait is
+    /// interrupted by a signal or the specified absolute 'timeout' elapses.
+    /// Return the error.
     static ntsa::Error waitUntilWritable(ntsa::Handle              socket,
                                          const bsls::TimeInterval& timeout);
 
