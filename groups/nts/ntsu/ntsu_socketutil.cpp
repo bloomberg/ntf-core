@@ -3129,22 +3129,33 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         control.initialize(&msg);
     }
 
-    bsl::size_t size     = string->size();
-    bsl::size_t capacity = string->capacity() - size;
-    void*       data     = string->data() + size;
+    const bsl::size_t originalSize     = string->size();
+    const bsl::size_t originalCapacity = string->capacity();
 
-    if (capacity == 0) {
+    bsl::size_t receiveBufferSize = originalCapacity - originalSize;
+
+    if (receiveBufferSize == 0) {
         return ntsa::Error::invalid();
     }
 
+    if (options.maxBytes() > 0) {
+        if (receiveBufferSize > options.maxBytes()) {
+            receiveBufferSize = options.maxBytes();
+        }
+    }
+
+    string->resize(originalSize + receiveBufferSize);
+
+    void* receiveBufferData = string->data() + originalSize;
+
     struct iovec iovec;
-    iovec.iov_base = data;
-    iovec.iov_len  = capacity;
+    iovec.iov_base = receiveBufferData;
+    iovec.iov_len  = receiveBufferSize;
 
     msg.msg_iov    = &iovec;
     msg.msg_iovlen = 1;
 
-    context->setBytesReceivable(capacity);
+    context->setBytesReceivable(receiveBufferSize);
 
     ssize_t recvmsgResult =
         ::recvmsg(socket, &msg, NTSU_SOCKETUTIL_RECVMSG_FLAGS);
@@ -3155,6 +3166,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                          errno);
 
     if (recvmsgResult < 0) {
+        string->resize(originalSize);
         return ntsa::Error(errno);
     }
 
@@ -3172,7 +3184,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
     }
 
     context->setBytesReceived(recvmsgResult);
-    string->resize(size + recvmsgResult);
+    string->resize(originalSize + recvmsgResult);
 
     return ntsa::Error();
 }
@@ -5433,7 +5445,7 @@ ntsa::Error SocketUtil::bind(const ntsa::Endpoint& endpoint,
     ntsa::Error error;
 
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
-    const bool  isLocal = endpoint.isLocal();
+    const bool isLocal = endpoint.isLocal();
 #else
     const bool isLocal = false;
 #endif

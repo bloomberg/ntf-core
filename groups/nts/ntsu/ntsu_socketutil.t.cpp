@@ -21,10 +21,10 @@ BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
 #include <ntsu_socketutil.h>
 
 #include <ntsu_adapterutil.h>
+#include <ntsu_resolverutil.h>
 #include <ntsu_socketoptionutil.h>
 #include <ntsu_socketutil.h>
 #include <ntsu_timestamputil.h>
-#include <ntsu_resolverutil.h>
 
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #ifdef NTDDI_VERSION
@@ -160,6 +160,12 @@ class SocketUtilTest
         ntsa::Handle           client,
         bslma::Allocator*      allocator);
 
+    static void testStreamSocketTransmissionString(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
+
     static void testStreamSocketTransmissionBlobWithControlMsg(
         ntsa::Transport::Value transport,
         ntsa::Handle           server,
@@ -173,16 +179,16 @@ class SocketUtilTest
         bslma::Allocator*      allocator);
 
     static void testStreamSocketTransmissionWithControlMsgCoalesced(
-            ntsa::Transport::Value transport,
-            ntsa::Handle           server,
-            ntsa::Handle           client,
-            bslma::Allocator*      allocator);
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
 
     static void testStreamSocketTransmissionWithControlMsgChunked(
-            ntsa::Transport::Value transport,
-            ntsa::Handle           server,
-            ntsa::Handle           client,
-            bslma::Allocator*      allocator);
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        ntsa::Handle           client,
+        bslma::Allocator*      allocator);
 
     static void testStreamSocketTransmissionFile(
         ntsa::Transport::Value transport,
@@ -215,6 +221,14 @@ class SocketUtilTest
         bslma::Allocator*      allocator);
 
     static void testDatagramSocketTransmissionBlob(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTransmissionString(
         ntsa::Transport::Value transport,
         ntsa::Handle           server,
         const ntsa::Endpoint&  serverEndpoint,
@@ -301,116 +315,133 @@ class SocketUtilTest
         bslma::Allocator*      allocator);
 
   public:
-    // TODO
-    static void verifyCase1();
+    // Verify basic operations on stream sockets.
+    static void verifyStreamSocketBasic();
 
-    // TODO
-    static void verifyCase2();
+    // Verify basic operations on datagram sockets.
+    static void verifyDatagramSocketBasic();
 
-    // TODO
-    static void verifyCase3();
+    // Verify stream socket transmission: single buffer.
+    static void verifyStreamSocketTxSingleBuffer();
 
-    // TODO
-    static void verifyCase4();
+    // Verify stream socket transmission: multiple buffers.
+    static void verifyStreamSocketTxMultipleBuffers();
 
-    // TODO
-    static void verifyCase5();
+    // Verify stream socket transmission: blob.
+    static void verifyStreamSocketTxBlob();
 
-    // TODO
-    static void verifyCase6();
+    // Verify stream socket transmission: string.
+    static void verifyStreamSocketTxString();
 
-    // TODO
-    static void verifyCase7();
+    // Verify stream socket transmission: file.
+    static void verifyStreamSocketTxFile();
 
-    // TODO
-    static void verifyCase8();
+    // Verify datagram socket transmission: single buffer.
+    static void verifyDatagramSocketTxSingleBuffer();
 
-    // TODO
-    static void verifyCase9();
+    // Verify datagram socket transmission: multiple buffers.
+    static void verifyDatagramSocketTxMultipleBuffers();
 
-    // TODO
-    static void verifyCase10();
+    // Verify datagram socket transmission: blob.
+    static void verifyDatagramSocketTxBlob();
 
-    // TODO
-    static void verifyCase11();
+    // Verify datagram socket transmission: string.
+    static void verifyDatagramSocketTxString();
 
-    // TODO
-    static void verifyCase12();
+    // Verify datagram socket transmission: single message.
+    static void verifyDatagramSocketTxSingleMessage();
 
-    // TODO
-    static void verifyCase13();
+    // Verify datagram socket transmission: multiple messages.
+    static void verifyDatagramSocketTxMultipleMessages();
 
-    // TODO
-    static void verifyCase14();
+    // Verify setting the listener socket backlog depth up to the maximum
+    // supported depth.
+    static void verifyListenerSocketMaximumBacklog();
 
-    // TODO
-    static void verifyCase15();
+    // Verify duplicating socket handles.
+    static void verifyDescriptorDuplication();
 
-    // TODO
-    static void verifyCase16();
+    // Verify binding datagram sockets and the observed characteristics of
+    // how local names are automatically assigned to datagram sockets during
+    // their operation, if not explicitly bound.
+    static void verifyDatagramSocketBinding();
 
-    // TODO
-    static void verifyCase17();
+    // Verify binding stream sockets and the observed characteristics of
+    // how local names are automatically assigned to datagram sockets during
+    // their operation, if not explicitly bound.
+    static void verifyStreamSocketBinding();
 
-    // TODO
-    static void verifyCase18();
+    // Verify listing system sockets opened in the current process.
+    static void verifyList();
 
-    // TODO
-    static void verifyCase19();
+    // Verify the creation of stream socket pairs.
+    static void verifyStreamSocketPairs();
 
-    // TODO
-    static void verifyCase20();
+    // Verify the creation of datagram socket pairs.
+    static void verifyDatagramSocketPairs();
 
-    // TODO
-    static void verifyCase21();
+    // Verify datagram socket transmission with control data: single buffer.
+    static void verifyDatagramSocketControlSingleBuffer();
 
-    // TODO
-    static void verifyCase22();
+    // Verify datagram socket transmission with control data: blobs.
+    static void verifyDatagramSocketControlBlob();
 
-    // TODO
-    static void verifyCase23();
+    // Verify datagram socket transmission with control data: dropped.
+    static void verifyDatagramSocketControlDropped();
 
-    // TODO
-    static void verifyCase24();
+    // Verify stream socket transmission with control data: single buffer.
+    static void verifyStreamSocketControlSingleBuffer();
 
-    // TODO
-    static void verifyCase24b();
+    // Verify stream socket transmission with control data: blobs.
+    static void verifyStreamSocketControlBlob();
 
-    // TODO
-    static void verifyCase24c();
+    // Verify stream socket transmission with control data: dropped.
+    static void verifyStreamSocketControlDropped();
 
-    // TODO
-    static void verifyCase25();
+    // Verify stream socket transmission with control data: coalesced.
+    static void verifyStreamSocketControlCoalesced();
 
-    // TODO
-    static void verifyCase26();
+    // Verify stream socket transmission with control data: chunked.
+    static void verifyStreamSocketControlChunked();
 
-    // TODO
-    static void verifyCase27();
+    // Verify that an incoming software timestamp and a file handle
+    // can be simultaneously retrieved from one control message.
+    static void verifyDatagramSocketControlTimestampingDescriptorBundle();
 
-    // TODO
-    static void verifyCase28();
+    // Verify detection of a open file descriptor that is a socket.
+    static void verifyIsSocket();
 
-    // TODO
-    static void verifyCase29();
+    // Verify datagram socket zero-copy transmissions.
+    static void verifyDatagramSocketZeroCopy();
 
-    // TODO
-    static void verifyCase30();
+    // Verify stream socket zero-copy transmissions.
+    static void verifyStreamSocketZeroCopy();
 
-    // TODO
-    static void verifyCase31();
+    // Verify datagram socket packet timestamping.
+    static void verifyDatagramSocketTimestamping();
 
-    // TODO
-    static void verifyCase32();
+    // Verify stream socket packet timestamping.
+    static void verifyStreamSocketTimestamping();
 
-    // TODO
-    static void verifyCase33();
+    // Verify datagram socket zero-copy transmissions with packet timestamping.
+    static void verifyDatagramSocketZeroCopyTimestamping();
 
-    // TODO
-    static void verifyCase34();
+    // Verify stream socket zero-copy transmissions with packet timestamping.
+    static void verifyStreamSocketZeroCopyTimestamping();
 
-    // TODO
-    static void verifyCase35();
+    // Verify that datagram sockets configured in a blocking mode attempting to
+    // read data from the socket error queue does not lead to a blocking
+    // receive system call.
+    static void verifyDatagramSocketErrorQueueBlocking();
+
+    // Verify that stream sockets configured in a blocking mode attempting to
+    // read data from the socket error queue does not lead to a blocking
+    // receive system call.
+    static void verifyStreamSocketErrorQueueBlocking();
+
+    // Verify how the operating system reports the result of accepting a
+    // socket whose peer has already closed the connection.
+    static void verifyListenerSocketAcceptingClosedConnections();
 };
 
 /// Provide a in-core storage of bytes.
@@ -584,7 +615,7 @@ void SocketUtilTest::executeStreamSocketTest(
     }
 
     if (ntsu::AdapterUtil::supportsTransportLoopback(
-        ntsa::Transport::e_LOCAL_STREAM))
+            ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
@@ -597,59 +628,59 @@ void SocketUtilTest::executeStreamSocketTest(
 
         ntsa::Handle listener;
         error = ntsu::SocketUtil::create(&listener, transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         if (transport == ntsa::Transport::e_TCP_IPV4_STREAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                 false,
                 listener);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_TCP_IPV6_STREAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                 false,
                 listener);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_STREAM) {
             ntsa::LocalName localName;
             error = ntsa::LocalName::generateUnique(&localName);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
                                            false,
                                            listener);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else {
             NTSCFG_TEST_TRUE(false);
         }
 
         error = ntsu::SocketUtil::listen(1, listener);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Create a blocking socket for the client, then connect that socket to
         // the listener socket's local endpoint.
 
         ntsa::Handle client;
         error = ntsu::SocketUtil::create(&client, transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint listenerEndpoint;
         error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::connect(listenerEndpoint, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Create a blocking socket for the server by accepting the connection
         // made to the listener socket.
 
         ntsa::Handle server;
         error = ntsu::SocketUtil::accept(&server, listener);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Execute the test.
 
@@ -658,7 +689,7 @@ void SocketUtilTest::executeStreamSocketTest(
         // Shutdown writing by the client socket.
 
         error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Dequeue incoming data received by the server socket, and observe
         // that zero bytes are successfully dequeued, indicating the client
@@ -673,7 +704,7 @@ void SocketUtilTest::executeStreamSocketTest(
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
@@ -682,7 +713,7 @@ void SocketUtilTest::executeStreamSocketTest(
         // Shutdown writing by the server socket.
 
         error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Dequeue incoming data received by the client socket, and observe
         // that zero bytes are successfully dequeued, indicating the server
@@ -697,7 +728,7 @@ void SocketUtilTest::executeStreamSocketTest(
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
@@ -706,13 +737,13 @@ void SocketUtilTest::executeStreamSocketTest(
         // Close each socket.
 
         error = ntsu::SocketUtil::close(listener);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 }
 
@@ -754,31 +785,31 @@ void SocketUtilTest::executeDatagramSocketTest(
 
         ntsa::Handle server;
         error = ntsu::SocketUtil::create(&server, transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         if (transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                 false,
                 server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                 false,
                 server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
             ntsa::LocalName localName;
             error = ntsa::LocalName::generateUnique(&localName);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
                                            false,
                                            server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else {
             NTSCFG_TEST_TRUE(false);
@@ -786,38 +817,38 @@ void SocketUtilTest::executeDatagramSocketTest(
 
         ntsa::Endpoint serverEndpoint;
         error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Create a blocking socket for the client and bind it to any port on
         // the loopback address.
 
         ntsa::Handle client;
         error = ntsu::SocketUtil::create(&client, transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         if (transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                 false,
                 client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                 false,
                 client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
             ntsa::LocalName localName;
             error = ntsa::LocalName::generateUnique(&localName);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
                                            false,
                                            client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else {
             NTSCFG_TEST_TRUE(false);
@@ -825,7 +856,7 @@ void SocketUtilTest::executeDatagramSocketTest(
 
         ntsa::Endpoint clientEndpoint;
         error = ntsu::SocketUtil::sourceEndpoint(&clientEndpoint, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Execute the test.
 
@@ -839,10 +870,10 @@ void SocketUtilTest::executeDatagramSocketTest(
         // Close each socket.
 
         error = ntsu::SocketUtil::close(client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 }
 
@@ -873,7 +904,7 @@ void SocketUtilTest::testStreamSocketTransmissionSingleBuffer(
         ntsa::Data data(ntsa::ConstBuffer(clientBuffer, sizeof clientBuffer));
 
         error = ntsu::SocketUtil::send(&context, data, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == sizeof clientBuffer);
         NTSCFG_TEST_ASSERT(context.bytesSent() == sizeof clientBuffer);
@@ -889,7 +920,7 @@ void SocketUtilTest::testStreamSocketTransmissionSingleBuffer(
             ntsa::MutableBuffer(serverBuffer, sizeof serverBuffer));
 
         error = ntsu::SocketUtil::receive(&context, &data, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == sizeof serverBuffer);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == sizeof serverBuffer);
@@ -923,18 +954,18 @@ void SocketUtilTest::testStreamSocketTransmissionSingleBufferWithControlMsg(
 
     ntsa::Handle domesticSocket;
     error = ntsu::SocketUtil::create(&domesticSocket, transport);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::bind(
         ntsa::Endpoint(ntsa::LocalName::generateUnique()),
         false,
         domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     ntsa::Endpoint domesticSourceEndpoint;
     error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
                                              domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     // Enqueue outgoing data to transmit by the client socket.
 
@@ -947,7 +978,7 @@ void SocketUtilTest::testStreamSocketTransmissionSingleBufferWithControlMsg(
         ntsa::Data data(ntsa::ConstBuffer(clientBuffer, sizeof clientBuffer));
 
         error = ntsu::SocketUtil::send(&context, data, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == sizeof clientBuffer);
         NTSCFG_TEST_ASSERT(context.bytesSent() == sizeof clientBuffer);
@@ -965,7 +996,7 @@ void SocketUtilTest::testStreamSocketTransmissionSingleBufferWithControlMsg(
             ntsa::MutableBuffer(serverBuffer, sizeof serverBuffer));
 
         error = ntsu::SocketUtil::receive(&context, &data, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == sizeof serverBuffer);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == sizeof serverBuffer);
@@ -979,15 +1010,15 @@ void SocketUtilTest::testStreamSocketTransmissionSingleBufferWithControlMsg(
         error =
             ntsu::SocketUtil::sourceEndpoint(&foreignSourceEndpoint,
                                              context.foreignHandle().value());
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
 
         error = ntsu::SocketUtil::close(domesticSocket);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(context.foreignHandle().value());
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 }
 
@@ -1035,7 +1066,7 @@ void SocketUtilTest::testStreamSocketTransmissionMultipleBuffers(
         ntsa::Data data(ntsa::ConstBufferPtrArray(clientBufferArray, 3));
 
         error = ntsu::SocketUtil::send(&context, data, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
@@ -1050,7 +1081,7 @@ void SocketUtilTest::testStreamSocketTransmissionMultipleBuffers(
         ntsa::Data data(ntsa::MutableBufferPtrArray(serverBufferArray, 3));
 
         error = ntsu::SocketUtil::receive(&context, &data, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
@@ -1096,7 +1127,7 @@ void SocketUtilTest::testStreamSocketTransmissionBlob(
         ntsa::SendOptions options;
 
         error = ntsu::SocketUtil::send(&context, clientBlob, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
@@ -1110,7 +1141,7 @@ void SocketUtilTest::testStreamSocketTransmissionBlob(
 
         error =
             ntsu::SocketUtil::receive(&context, &serverBlob, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
@@ -1118,6 +1149,67 @@ void SocketUtilTest::testStreamSocketTransmissionBlob(
         NTSCFG_TEST_ASSERT(serverBlob.length() == 9);
         NTSCFG_TEST_ASSERT(bdlbb::BlobUtil::compare(serverBlob, clientBlob) ==
                            0);
+    }
+}
+
+void SocketUtilTest::testStreamSocketTransmissionString(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    ntsa::Handle           client,
+    bslma::Allocator*      allocator)
+{
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << ": send/recv (string)"
+                          << NTSCFG_TEST_LOG_END;
+
+    ntsa::Error error;
+
+    char DATA[] = "123456789";
+
+    bsl::string clientString(DATA, allocator);
+
+    NTSCFG_TEST_EQ(clientString.size(), 9);
+    NTSCFG_TEST_GE(clientString.capacity(), 9);
+
+    bsl::string serverString(allocator);
+    serverString.reserve(sizeof DATA - 1);
+
+    NTSCFG_TEST_EQ(serverString.size(), 0);
+    NTSCFG_TEST_GE(serverString.capacity(), 9);
+
+    // Enqueue outgoing data to transmit by the client socket.
+
+    {
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        error =
+            ntsu::SocketUtil::send(&context, clientString, options, client);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 9);
+        NTSCFG_TEST_EQ(context.bytesSent(), 9);
+    }
+
+    // Dequeue incoming data received by the server socket.
+
+    {
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        options.setMaxBytes(9);
+
+        error = ntsu::SocketUtil::receive(&context,
+                                          &serverString,
+                                          options,
+                                          server);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 9);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 9);
+
+        NTSCFG_TEST_EQ(serverString.size(), 9);
+        NTSCFG_TEST_GE(serverString.capacity(), 9);
+        NTSCFG_TEST_EQ(serverString, clientString);
     }
 }
 
@@ -1150,18 +1242,18 @@ void SocketUtilTest::testStreamSocketTransmissionBlobWithControlMsg(
 
     ntsa::Handle domesticSocket;
     error = ntsu::SocketUtil::create(&domesticSocket, transport);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::bind(
         ntsa::Endpoint(ntsa::LocalName::generateUnique()),
         false,
         domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     ntsa::Endpoint domesticSourceEndpoint;
     error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
                                              domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     // Enqueue outgoing data to transmit by the client socket.
 
@@ -1172,7 +1264,7 @@ void SocketUtilTest::testStreamSocketTransmissionBlobWithControlMsg(
         options.setForeignHandle(domesticSocket);
 
         error = ntsu::SocketUtil::send(&context, clientBlob, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
@@ -1188,7 +1280,7 @@ void SocketUtilTest::testStreamSocketTransmissionBlobWithControlMsg(
 
         error =
             ntsu::SocketUtil::receive(&context, &serverBlob, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
@@ -1203,15 +1295,15 @@ void SocketUtilTest::testStreamSocketTransmissionBlobWithControlMsg(
         error =
             ntsu::SocketUtil::sourceEndpoint(&foreignSourceEndpoint,
                                              context.foreignHandle().value());
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
 
         error = ntsu::SocketUtil::close(domesticSocket);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(context.foreignHandle().value());
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 }
 
@@ -1237,18 +1329,18 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgDropped(
 
     ntsa::Handle domesticSocket;
     error = ntsu::SocketUtil::create(&domesticSocket, transport);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::bind(
         ntsa::Endpoint(ntsa::LocalName::generateUnique()),
         false,
         domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     ntsa::Endpoint domesticSourceEndpoint;
     error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
                                              domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     for (bsl::size_t iteration = 0; iteration < 2; ++iteration) {
         NTSCFG_TEST_LOG_DEBUG << "Testing iteration " << iteration
@@ -1273,7 +1365,7 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgDropped(
 
             error =
                 ntsu::SocketUtil::send(&context, clientBlob, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
             NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
@@ -1293,7 +1385,7 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgDropped(
                                               &serverBlob,
                                               options,
                                               server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
             NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
@@ -1314,7 +1406,7 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgDropped(
                 // retrievable with a subsequent call to 'recvmsg'.
 
                 error = ntsu::SocketUtil::close(domesticSocket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
             }
         }
     }
@@ -1338,18 +1430,14 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
 
     ntsa::Error error;
 
-    enum {
-        k_NUM_TRANSMISSIONS = 4,
-        k_TRANSMISSION_SIZE = 10
-    };
+    enum { k_NUM_TRANSMISSIONS = 4, k_TRANSMISSION_SIZE = 10 };
 
     BSLMF_ASSERT(k_NUM_TRANSMISSIONS % 2 == 0);
 
     for (bsl::size_t variation = 0; variation < 2; ++variation) {
         const bool exportHandles = (variation % 2 == 0);
 
-        NTSCFG_TEST_LOG_DEBUG << "Testing "
-                              << transport
+        NTSCFG_TEST_LOG_DEBUG << "Testing " << transport
                               << ": writev/readv (blob) "
                               << "with ancillary data potentially coalesced "
                               << "(export sockets: " << exportHandles << ")"
@@ -1379,9 +1467,9 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
                 NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint domesticSourceEndpoint;
-                error = ntsu::SocketUtil::sourceEndpoint(
-                    &domesticSourceEndpoint,
-                    domesticSocket);
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
+                                                     domesticSocket);
                 NTSCFG_TEST_OK(error);
 
                 domesticSourceEndpointVector.push_back(domesticSourceEndpoint);
@@ -1404,12 +1492,12 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
                 options.setForeignHandle(domesticSocketVector[i]);
             }
 
-            error = ntsu::SocketUtil::send(
-                &context,
-                sendBuffer + (k_TRANSMISSION_SIZE * i),
-                k_TRANSMISSION_SIZE,
-                options,
-                client);
+            error =
+                ntsu::SocketUtil::send(&context,
+                                       sendBuffer + (k_TRANSMISSION_SIZE * i),
+                                       k_TRANSMISSION_SIZE,
+                                       options,
+                                       client);
             NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_EQ(context.bytesSendable(), 10);
@@ -1418,8 +1506,8 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
 
         bslmt::ThreadUtil::sleep(bsls::TimeInterval(3));
 
-        const bsl::size_t numReceives = exportHandles ?
-            (k_NUM_TRANSMISSIONS) : (k_NUM_TRANSMISSIONS / 2);
+        const bsl::size_t numReceives =
+            exportHandles ? (k_NUM_TRANSMISSIONS) : (k_NUM_TRANSMISSIONS / 2);
 
         bsl::size_t totalBytesReceived = 0;
 
@@ -1435,28 +1523,26 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
             bsl::memset(receiveBuffer, 0, sizeof receiveBuffer);
 
             error = ntsu::SocketUtil::receive(&context,
-                                            receiveBuffer,
-                                            sizeof receiveBuffer,
-                                            options,
-                                            server);
+                                              receiveBuffer,
+                                              sizeof receiveBuffer,
+                                              options,
+                                              server);
             NTSCFG_TEST_OK(error);
 
             if (exportHandles) {
                 NTSCFG_TEST_EQ(context.bytesReceived(), k_TRANSMISSION_SIZE);
                 NTSCFG_TEST_EQ(
-                    bsl::memcmp(
-                        receiveBuffer,
-                        sendBuffer + (k_TRANSMISSION_SIZE * i),
-                        k_TRANSMISSION_SIZE),
+                    bsl::memcmp(receiveBuffer,
+                                sendBuffer + (k_TRANSMISSION_SIZE * i),
+                                k_TRANSMISSION_SIZE),
                     0);
             }
             else {
                 NTSCFG_TEST_EQ(context.bytesReceived(), sizeof receiveBuffer);
                 NTSCFG_TEST_EQ(
-                    bsl::memcmp(
-                        receiveBuffer,
-                        sendBuffer + (sizeof receiveBuffer * i),
-                        sizeof receiveBuffer),
+                    bsl::memcmp(receiveBuffer,
+                                sendBuffer + (sizeof receiveBuffer * i),
+                                sizeof receiveBuffer),
                     0);
             }
 
@@ -1468,11 +1554,12 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgCoalesced(
                 ntsa::Handle foreignSocket = context.foreignHandle().value();
 
                 ntsa::Endpoint foreignSourceEndpoint;
-                error = ntsu::SocketUtil::sourceEndpoint(&foreignSourceEndpoint,
-                                                        foreignSocket);
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&foreignSourceEndpoint,
+                                                     foreignSocket);
                 NTSCFG_TEST_OK(error);
                 NTSCFG_TEST_EQ(foreignSourceEndpoint,
-                            domesticSourceEndpointVector[i]);
+                               domesticSourceEndpointVector[i]);
             }
         }
 
@@ -1506,19 +1593,14 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgChunked(
 
     ntsa::Error error;
 
-    enum {
-        k_NUM_TRANSMISSIONS = 4,
-        k_TRANSMISSION_SIZE = 10
-    };
+    enum { k_NUM_TRANSMISSIONS = 4, k_TRANSMISSION_SIZE = 10 };
 
     BSLMF_ASSERT(k_NUM_TRANSMISSIONS % 2 == 0);
 
-    NTSCFG_TEST_LOG_DEBUG << "Testing "
-                            << transport
-                            << ": writev/readv (blob) "
-                            << "with ancillary data potentially chunked "
-                            << "(export sockets: 1)"
-                            << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport
+                          << ": writev/readv (blob) "
+                          << "with ancillary data potentially chunked "
+                          << "(export sockets: 1)" << NTSCFG_TEST_LOG_END;
 
     bsl::vector<ntsa::Handle> domesticSocketVector;
     domesticSocketVector.reserve(k_NUM_TRANSMISSIONS);
@@ -1543,9 +1625,8 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgChunked(
         NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint domesticSourceEndpoint;
-        error = ntsu::SocketUtil::sourceEndpoint(
-            &domesticSourceEndpoint,
-            domesticSocket);
+        error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
+                                                 domesticSocket);
         NTSCFG_TEST_OK(error);
 
         domesticSourceEndpointVector.push_back(domesticSourceEndpoint);
@@ -1565,12 +1646,11 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgChunked(
 
         options.setForeignHandle(domesticSocketVector[i]);
 
-        error = ntsu::SocketUtil::send(
-            &context,
-            sendBuffer + (k_TRANSMISSION_SIZE * i),
-            k_TRANSMISSION_SIZE,
-            options,
-            client);
+        error = ntsu::SocketUtil::send(&context,
+                                       sendBuffer + (k_TRANSMISSION_SIZE * i),
+                                       k_TRANSMISSION_SIZE,
+                                       options,
+                                       client);
         NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(context.bytesSendable(), 10);
@@ -1599,10 +1679,9 @@ void SocketUtilTest::testStreamSocketTransmissionWithControlMsgChunked(
 
         NTSCFG_TEST_EQ(context.bytesReceived(), k_TRANSMISSION_SIZE / 2);
         NTSCFG_TEST_EQ(
-            bsl::memcmp(
-                receiveBuffer,
-                sendBuffer + ((k_TRANSMISSION_SIZE / 2) * i),
-                k_TRANSMISSION_SIZE / 2),
+            bsl::memcmp(receiveBuffer,
+                        sendBuffer + ((k_TRANSMISSION_SIZE / 2) * i),
+                        k_TRANSMISSION_SIZE / 2),
             0);
 
         totalBytesReceived += context.bytesReceived();
@@ -1741,7 +1820,7 @@ void SocketUtilTest::testStreamSocketTransmissionFile(
                            ntsa::Transport::toString(transport),
                            error.text().c_str());
         }
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
@@ -1755,7 +1834,7 @@ void SocketUtilTest::testStreamSocketTransmissionFile(
 
         error =
             ntsu::SocketUtil::receive(&context, &serverBlob, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
@@ -1816,7 +1895,7 @@ void SocketUtilTest::testDatagramSocketTransmissionSingleBuffer(
         ntsa::Data data(ntsa::ConstBuffer(clientBuffer, sizeof clientBuffer));
 
         error = ntsu::SocketUtil::send(&context, data, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == sizeof clientBuffer);
         NTSCFG_TEST_ASSERT(context.bytesSent() == sizeof clientBuffer);
@@ -1832,7 +1911,7 @@ void SocketUtilTest::testDatagramSocketTransmissionSingleBuffer(
             ntsa::MutableBuffer(serverBuffer, sizeof serverBuffer));
 
         error = ntsu::SocketUtil::receive(&context, &data, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == sizeof serverBuffer);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == sizeof serverBuffer);
@@ -1871,18 +1950,18 @@ void SocketUtilTest::testDatagramSocketTransmissionSingleBufferWithControlMsg(
 
     ntsa::Handle domesticSocket;
     error = ntsu::SocketUtil::create(&domesticSocket, transport);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::bind(
         ntsa::Endpoint(ntsa::LocalName::generateUnique()),
         false,
         domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     ntsa::Endpoint domesticSourceEndpoint;
     error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
                                              domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     // Enqueue outgoing data to transmit by the client socket.
 
@@ -1896,7 +1975,7 @@ void SocketUtilTest::testDatagramSocketTransmissionSingleBufferWithControlMsg(
         ntsa::Data data(ntsa::ConstBuffer(clientBuffer, sizeof clientBuffer));
 
         error = ntsu::SocketUtil::send(&context, data, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == sizeof clientBuffer);
         NTSCFG_TEST_ASSERT(context.bytesSent() == sizeof clientBuffer);
@@ -1914,7 +1993,7 @@ void SocketUtilTest::testDatagramSocketTransmissionSingleBufferWithControlMsg(
             ntsa::MutableBuffer(serverBuffer, sizeof serverBuffer));
 
         error = ntsu::SocketUtil::receive(&context, &data, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == sizeof serverBuffer);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == sizeof serverBuffer);
@@ -1931,15 +2010,15 @@ void SocketUtilTest::testDatagramSocketTransmissionSingleBufferWithControlMsg(
         error =
             ntsu::SocketUtil::sourceEndpoint(&foreignSourceEndpoint,
                                              context.foreignHandle().value());
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
 
         error = ntsu::SocketUtil::close(domesticSocket);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(context.foreignHandle().value());
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 }
 
@@ -1992,7 +2071,7 @@ void SocketUtilTest::testDatagramSocketTransmissionMultipleBuffers(
         ntsa::Data data(ntsa::ConstBufferPtrArray(clientBufferArray, 3));
 
         error = ntsu::SocketUtil::send(&context, data, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
@@ -2007,7 +2086,7 @@ void SocketUtilTest::testDatagramSocketTransmissionMultipleBuffers(
         ntsa::Data data(ntsa::MutableBufferPtrArray(serverBufferArray, 3));
 
         error = ntsu::SocketUtil::receive(&context, &data, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
@@ -2060,7 +2139,7 @@ void SocketUtilTest::testDatagramSocketTransmissionBlob(
         options.setEndpoint(serverEndpoint);
 
         error = ntsu::SocketUtil::send(&context, clientBlob, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
@@ -2074,7 +2153,7 @@ void SocketUtilTest::testDatagramSocketTransmissionBlob(
 
         error =
             ntsu::SocketUtil::receive(&context, &serverBlob, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
@@ -2085,6 +2164,75 @@ void SocketUtilTest::testDatagramSocketTransmissionBlob(
         NTSCFG_TEST_ASSERT(serverBlob.length() == 9);
         NTSCFG_TEST_ASSERT(bdlbb::BlobUtil::compare(serverBlob, clientBlob) ==
                            0);
+    }
+}
+
+void SocketUtilTest::testDatagramSocketTransmissionString(
+    ntsa::Transport::Value transport,
+    ntsa::Handle           server,
+    const ntsa::Endpoint&  serverEndpoint,
+    ntsa::Handle           client,
+    const ntsa::Endpoint&  clientEndpoint,
+    bslma::Allocator*      allocator)
+{
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport
+                          << ": sendto/recvfrom (string)"
+                          << NTSCFG_TEST_LOG_END;
+
+    ntsa::Error error;
+
+    char DATA[] = "123456789";
+
+    bsl::string clientString(DATA, allocator);
+
+    NTSCFG_TEST_EQ(clientString.size(), 9);
+    NTSCFG_TEST_GE(clientString.capacity(), 9);
+
+    bsl::string serverString(allocator);
+    serverString.reserve(sizeof DATA - 1);
+
+    NTSCFG_TEST_EQ(serverString.size(), 0);
+    NTSCFG_TEST_GE(serverString.capacity(), 9);
+
+    // Enqueue outgoing data to transmit by the client socket.
+
+    {
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setEndpoint(serverEndpoint);
+
+        error =
+            ntsu::SocketUtil::send(&context, clientString, options, client);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSendable(), 9);
+        NTSCFG_TEST_EQ(context.bytesSent(), 9);
+    }
+
+    // Dequeue incoming data received by the server socket.
+
+    {
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        options.setMaxBytes(9);
+
+        error = ntsu::SocketUtil::receive(&context,
+                                          &serverString,
+                                          options,
+                                          server);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceivable(), 9);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 9);
+
+        NTSCFG_TEST_TRUE(context.endpoint().has_value());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientEndpoint);
+
+        NTSCFG_TEST_EQ(serverString.size(), 9);
+        NTSCFG_TEST_GE(serverString.capacity(), 9);
+        NTSCFG_TEST_EQ(serverString, clientString);
     }
 }
 
@@ -2119,18 +2267,18 @@ void SocketUtilTest::testDatagramSocketTransmissionBlobWithControlMsg(
 
     ntsa::Handle domesticSocket;
     error = ntsu::SocketUtil::create(&domesticSocket, transport);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::bind(
         ntsa::Endpoint(ntsa::LocalName::generateUnique()),
         false,
         domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     ntsa::Endpoint domesticSourceEndpoint;
     error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
                                              domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     // Enqueue outgoing data to transmit by the client socket.
 
@@ -2142,7 +2290,7 @@ void SocketUtilTest::testDatagramSocketTransmissionBlobWithControlMsg(
         options.setForeignHandle(domesticSocket);
 
         error = ntsu::SocketUtil::send(&context, clientBlob, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
@@ -2158,7 +2306,7 @@ void SocketUtilTest::testDatagramSocketTransmissionBlobWithControlMsg(
 
         error =
             ntsu::SocketUtil::receive(&context, &serverBlob, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
@@ -2176,15 +2324,15 @@ void SocketUtilTest::testDatagramSocketTransmissionBlobWithControlMsg(
         error =
             ntsu::SocketUtil::sourceEndpoint(&foreignSourceEndpoint,
                                              context.foreignHandle().value());
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
 
         error = ntsu::SocketUtil::close(domesticSocket);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(context.foreignHandle().value());
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 }
 
@@ -2212,18 +2360,18 @@ void SocketUtilTest::testDatagramSocketTransmissionWithControlMsgDropped(
 
     ntsa::Handle domesticSocket;
     error = ntsu::SocketUtil::create(&domesticSocket, transport);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::bind(
         ntsa::Endpoint(ntsa::LocalName::generateUnique()),
         false,
         domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     ntsa::Endpoint domesticSourceEndpoint;
     error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
                                              domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     for (bsl::size_t iteration = 0; iteration < 2; ++iteration) {
         NTSCFG_TEST_LOG_DEBUG << "Testing iteration " << iteration
@@ -2250,7 +2398,7 @@ void SocketUtilTest::testDatagramSocketTransmissionWithControlMsgDropped(
 
             error =
                 ntsu::SocketUtil::send(&context, clientBlob, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
             NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
@@ -2270,7 +2418,7 @@ void SocketUtilTest::testDatagramSocketTransmissionWithControlMsgDropped(
                                               &serverBlob,
                                               options,
                                               server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
             NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
@@ -2294,7 +2442,7 @@ void SocketUtilTest::testDatagramSocketTransmissionWithControlMsgDropped(
                 // retrievable with a subsequent call to 'recvmsg'.
 
                 error = ntsu::SocketUtil::close(domesticSocket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
             }
         }
     }
@@ -2355,7 +2503,7 @@ void SocketUtilTest::testDatagramSocketTransmissionSingleMessage(
 
         error = ntsu::SocketUtil::send(
             &context, clientMessage, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesSent() == 9);
@@ -2369,7 +2517,7 @@ void SocketUtilTest::testDatagramSocketTransmissionSingleMessage(
 
         error = ntsu::SocketUtil::receive(
             &context, &serverMessage, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 9);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 9);
@@ -2486,7 +2634,7 @@ void SocketUtilTest::testDatagramSocketTransmissionMultipleMessages(
             return;
         }
 
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(numBytesSendable == NUM_MESSAGES * 9);
         NTSCFG_TEST_ASSERT(numBytesSent == NUM_MESSAGES * 9);
@@ -2520,7 +2668,7 @@ void SocketUtilTest::testDatagramSocketTransmissionMultipleMessages(
             return;
         }
 
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(numBytesReceivable == NUM_MESSAGES * 9);
         NTSCFG_TEST_ASSERT(numBytesReceived == NUM_MESSAGES * 9);
@@ -3288,13 +3436,8 @@ void SocketUtilTest::testDatagramSocketReceiveNotifications(
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketBasic)
 {
-    // Concern: Stream socket breathing test, which also serves as the
-    // usage example.
-    //
-    // Plan:
-
     ntsa::Error error;
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
@@ -3311,7 +3454,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransportLoopback(ntsa::Transport::e_LOCAL_STREAM))
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
+            ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
@@ -3324,83 +3468,83 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
 
         ntsa::Handle listener;
         error = ntsu::SocketUtil::create(&listener, transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         if (transport == ntsa::Transport::e_TCP_IPV4_STREAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                 false,
                 listener);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_TCP_IPV6_STREAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                 false,
                 listener);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_STREAM) {
             ntsa::LocalName localName;
             error = ntsa::LocalName::generateUnique(&localName);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
                                            false,
                                            listener);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else {
             NTSCFG_TEST_TRUE(false);
         }
 
         error = ntsu::SocketUtil::listen(1, listener);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Create a blocking socket for the client, then connect that socket to
         // the listener socket's local endpoint.
 
         ntsa::Handle client;
         error = ntsu::SocketUtil::create(&client, transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint listenerEndpoint;
         error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::connect(listenerEndpoint, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Create a blocking socket for the server by accepting the connection
         // made to the listener socket.
 
         ntsa::Handle server;
         error = ntsu::SocketUtil::accept(&server, listener);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Get the client source and remote endpoints.
 
         ntsa::Endpoint clientSourceEndpoint;
         error =
             ntsu::SocketUtil::sourceEndpoint(&clientSourceEndpoint, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint clientRemoteEndpoint;
         error =
             ntsu::SocketUtil::remoteEndpoint(&clientRemoteEndpoint, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Get the server source and remote endpoints.
 
         ntsa::Endpoint serverSourceEndpoint;
         error =
             ntsu::SocketUtil::sourceEndpoint(&serverSourceEndpoint, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint serverRemoteEndpoint;
         error =
             ntsu::SocketUtil::remoteEndpoint(&serverRemoteEndpoint, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         if (NTSCFG_TEST_VERBOSITY > 3) {
             bsl::cout << "Listener at " << listenerEndpoint << bsl::endl;
@@ -3422,7 +3566,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
             ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
 
             error = ntsu::SocketUtil::send(&context, data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -3439,7 +3583,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
@@ -3456,7 +3600,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
             ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
 
             error = ntsu::SocketUtil::send(&context, data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -3473,7 +3617,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
@@ -3483,7 +3627,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
         // Shutdown writing by the client socket.
 
         error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Dequeue incoming data received by the server socket, and observe
         // that zero bytes are successfully dequeued, indicating the client
@@ -3498,7 +3642,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
@@ -3507,7 +3651,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
         // Shutdown writing by the server socket.
 
         error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Dequeue incoming data received by the client socket, and observe
         // that zero bytes are successfully dequeued, indicating the server
@@ -3522,7 +3666,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
@@ -3531,23 +3675,18 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase1)
         // Close each socket.
 
         error = ntsu::SocketUtil::close(listener);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketBasic)
 {
-    // Concern: Datagram socket breathing test, which also serves as the
-    // usage example.
-    //
-    // Plan:
-
     ntsa::Error error;
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
@@ -3578,31 +3717,31 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
 
         ntsa::Handle server;
         error = ntsu::SocketUtil::create(&server, transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         if (transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                 false,
                 server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                 false,
                 server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
             ntsa::LocalName localName;
             error = ntsa::LocalName::generateUnique(&localName);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
                                            false,
                                            server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else {
             NTSCFG_TEST_TRUE(false);
@@ -3610,38 +3749,38 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
 
         ntsa::Endpoint serverEndpoint;
         error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Create a blocking socket for the client and bind it to any port on
         // the loopback address.
 
         ntsa::Handle client;
         error = ntsu::SocketUtil::create(&client, transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         if (transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                 false,
                 client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM) {
             error = ntsu::SocketUtil::bind(
                 ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                 false,
                 client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
             ntsa::LocalName localName;
             error = ntsa::LocalName::generateUnique(&localName);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
                                            false,
                                            client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
         else {
             NTSCFG_TEST_TRUE(false);
@@ -3649,7 +3788,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
 
         ntsa::Endpoint clientEndpoint;
         error = ntsu::SocketUtil::sourceEndpoint(&clientEndpoint, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Enqueue outgoing data to transmit by the client socket.
 
@@ -3663,7 +3802,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
             ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
 
             error = ntsu::SocketUtil::send(&context, data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -3680,7 +3819,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(!context.endpoint().isNull());
             NTSCFG_TEST_ASSERT(context.endpoint().value() == clientEndpoint);
@@ -3702,7 +3841,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
             ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
 
             error = ntsu::SocketUtil::send(&context, data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -3719,7 +3858,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(!context.endpoint().isNull());
             NTSCFG_TEST_ASSERT(context.endpoint().value() == serverEndpoint);
@@ -3732,99 +3871,83 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase2)
         // Close each socket.
 
         error = ntsu::SocketUtil::close(client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase3)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketTxSingleBuffer)
 {
-    // Concern: Stream socket transmission: single buffer.
-    // Plan:
-
     SocketUtilTest::executeStreamSocketTest(
         &SocketUtilTest::testStreamSocketTransmissionSingleBuffer);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase4)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketTxMultipleBuffers)
 {
-    // Concern: Stream socket transmission: multiple buffers.
-    // Plan:
-
     SocketUtilTest::executeStreamSocketTest(
         &SocketUtilTest::testStreamSocketTransmissionMultipleBuffers);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase5)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketTxBlob)
 {
-    // Concern: Stream socket transmission: blob.
-    // Plan:
-
     SocketUtilTest::executeStreamSocketTest(
         &SocketUtilTest::testStreamSocketTransmissionBlob);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase6)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketTxString)
 {
-    // Concern: Stream socket transmission: file.
-    // Plan:
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketTransmissionString);
+}
 
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketTxFile)
+{
     SocketUtilTest::executeStreamSocketTest(
         &SocketUtilTest::testStreamSocketTransmissionFile);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase7)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketTxSingleBuffer)
 {
-    // Concern: Stream socket transmission: single buffer.
-    // Plan:
-
     SocketUtilTest::executeDatagramSocketTest(
         &SocketUtilTest::testDatagramSocketTransmissionSingleBuffer);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase8)
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDatagramSocketTxMultipleBuffers)
 {
-    // Concern: Stream socket transmission: multiple buffers.
-    // Plan:
-
     SocketUtilTest::executeDatagramSocketTest(
         &SocketUtilTest::testDatagramSocketTransmissionMultipleBuffers);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase9)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketTxBlob)
 {
-    // Concern: Stream socket transmission: blob.
-    // Plan:
-
     SocketUtilTest::executeDatagramSocketTest(
         &SocketUtilTest::testDatagramSocketTransmissionBlob);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase10)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketTxString)
 {
-    // Concern: Stream socket transmission: single message.
-    // Plan:
+    SocketUtilTest::executeDatagramSocketTest(
+        &SocketUtilTest::testDatagramSocketTransmissionString);
+}
 
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketTxSingleMessage)
+{
     SocketUtilTest::executeDatagramSocketTest(
         &SocketUtilTest::testDatagramSocketTransmissionSingleMessage);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase11)
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDatagramSocketTxMultipleMessages)
 {
-    // Concern: Stream socket transmission: multiple messages.
-    // Plan:
-
     SocketUtilTest::executeDatagramSocketTest(
         &SocketUtilTest::testDatagramSocketTransmissionMultipleMessages);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase12)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyListenerSocketMaximumBacklog)
 {
-    // Concern: Listener socket maximum backlog
-    // Plan:
-
     ntsa::Error error;
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
@@ -3841,7 +3964,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase12)
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransportLoopback(ntsa::Transport::e_LOCAL_STREAM))
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
+            ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
@@ -3872,31 +3996,31 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase12)
 
             ntsa::Handle listener;
             error = ntsu::SocketUtil::create(&listener, transport);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             if (transport == ntsa::Transport::e_TCP_IPV4_STREAM) {
                 error = ntsu::SocketUtil::bind(
                     ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                     false,
                     listener);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
             }
             else if (transport == ntsa::Transport::e_TCP_IPV6_STREAM) {
                 error = ntsu::SocketUtil::bind(
                     ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                     false,
                     listener);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
             }
             else if (transport == ntsa::Transport::e_LOCAL_STREAM) {
                 ntsa::LocalName localName;
                 error = ntsa::LocalName::generateUnique(&localName);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(ntsa::Endpoint(localName),
                                                false,
                                                listener);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
             }
             else {
                 NTSCFG_TEST_TRUE(false);
@@ -3905,26 +4029,23 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase12)
             ntsa::Endpoint listenerEndpoint;
             error =
                 ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             if (NTSCFG_TEST_VERBOSITY > 3) {
                 bsl::cout << "Testing backlog = " << backlog << bsl::endl;
             }
 
             error = ntsu::SocketUtil::listen(backlog, listener);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(listener);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDescriptorDuplication)
 {
-    // Concern: Duplicating sockets
-    // Plan:
-
     ntsa::Error error;
 
     // Create a blocking socket, bind it to any port on the loopback
@@ -3933,16 +4054,16 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
     ntsa::Handle listener;
     error = ntsu::SocketUtil::create(&listener,
                                      ntsa::Transport::e_TCP_IPV4_STREAM);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::bind(
         ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
         false,
         listener);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::listen(1, listener);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     // Create a blocking socket for the client, then connect that socket to
     // the listener socket's local endpoint.
@@ -3950,21 +4071,21 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
     ntsa::Handle client;
     error =
         ntsu::SocketUtil::create(&client, ntsa::Transport::e_TCP_IPV4_STREAM);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     ntsa::Endpoint listenerEndpoint;
     error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::connect(listenerEndpoint, client);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     // Create a blocking socket for the server by accepting the connection
     // made to the listener socket.
 
     ntsa::Handle server;
     error = ntsu::SocketUtil::accept(&server, listener);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     // Duplicate the client socket handle the close it. The subseequent
     // test ensures that operations on the socket still succeed, because
@@ -3976,7 +4097,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
         NTSCFG_TEST_NE(clientDuplicate, ntsa::k_INVALID_HANDLE);
 
         error = ntsu::SocketUtil::close(clientDuplicate);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 
     // Duplicate the server socket handle the close it. The subseequent
@@ -3989,7 +4110,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
         NTSCFG_TEST_NE(serverDuplicate, ntsa::k_INVALID_HANDLE);
 
         error = ntsu::SocketUtil::close(serverDuplicate);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 
     // Enqueue outgoing data to transmit by the client socket.
@@ -4002,7 +4123,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
         ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
 
         error = ntsu::SocketUtil::send(&context, data, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
         NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -4018,7 +4139,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
         ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
 
         error = ntsu::SocketUtil::receive(&context, &data, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
@@ -4035,7 +4156,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
         ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
 
         error = ntsu::SocketUtil::send(&context, data, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
         NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -4051,7 +4172,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
         ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
 
         error = ntsu::SocketUtil::receive(&context, &data, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
@@ -4061,7 +4182,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
     // Shutdown writing by the client socket.
 
     error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, client);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     // Dequeue incoming data received by the server socket, and observe
     // that zero bytes are successfully dequeued, indicating the client
@@ -4075,7 +4196,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
         ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
 
         error = ntsu::SocketUtil::receive(&context, &data, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
@@ -4084,7 +4205,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
     // Shutdown writing by the server socket.
 
     error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, server);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     // Dequeue incoming data received by the client socket, and observe
     // that zero bytes are successfully dequeued, indicating the server
@@ -4098,7 +4219,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
         ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
 
         error = ntsu::SocketUtil::receive(&context, &data, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
@@ -4107,16 +4228,16 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase13)
     // Close each socket.
 
     error = ntsu::SocketUtil::close(listener);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::close(client);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::close(server);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketBinding)
 {
     // Concern: Binding datagram sockets.
     //
@@ -4207,7 +4328,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
@@ -4215,7 +4336,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4228,7 +4349,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 2: The socket may be bound after creation to
@@ -4240,19 +4361,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 error = ntsu::SocketUtil::bind(
                     ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4267,7 +4388,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 3: After the socket is bound to "0.0.0.0:0", the
@@ -4282,19 +4403,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 error = ntsu::SocketUtil::bind(
                     ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4307,7 +4428,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint1;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV4());
@@ -4337,7 +4458,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 4: The socket may be bound after creation to an IPv4
@@ -4351,7 +4472,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint explicitSourceEndpoint;
@@ -4371,12 +4492,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4387,7 +4508,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 5: A datagram socket is implicitly bound to an explicit
@@ -4399,7 +4520,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -4408,11 +4529,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
@@ -4425,14 +4546,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4446,12 +4567,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4462,7 +4583,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
             }
@@ -4471,7 +4592,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -4480,10 +4601,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 5a: A datagram socket may be explicitly bound to "any"
@@ -4501,7 +4622,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -4510,11 +4631,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
@@ -4527,14 +4648,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4551,12 +4672,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4567,12 +4688,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4583,7 +4704,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
             }
@@ -4592,7 +4713,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -4601,10 +4722,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 6: A datagram socket is implicitly bound to an explicit
@@ -4616,7 +4737,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -4625,11 +4746,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
@@ -4642,14 +4763,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4674,12 +4795,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
                     sendOptions,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4692,7 +4813,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -4701,10 +4822,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 7: A datagram socket is implicitly bound to an explicit
@@ -4717,7 +4838,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -4726,11 +4847,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
@@ -4743,14 +4864,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4775,12 +4896,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
                     sendOptions,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4791,12 +4912,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4807,7 +4928,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
             }
@@ -4816,7 +4937,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -4825,10 +4946,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 8: A datagram socket may connect and reconnect to the
@@ -4841,7 +4962,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&serverOne,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverOneEndpoint;
 
@@ -4850,11 +4971,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     serverOne);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::sourceEndpoint(&serverOneEndpoint,
                                                          serverOne);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverOneEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverOneEndpoint.ip().host().isV4());
@@ -4867,7 +4988,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&serverTwo,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverTwoEndpoint;
 
@@ -4876,11 +4997,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     serverTwo);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::sourceEndpoint(&serverTwoEndpoint,
                                                          serverTwo);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverTwoEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverTwoEndpoint.ip().host().isV4());
@@ -4893,14 +5014,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4918,12 +5039,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 for (bsl::size_t j = 0; j < 2; ++j) {
                     error =
                         ntsu::SocketUtil::connect(serverOneEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     ntsa::Endpoint sourceEndpoint;
                     error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
                                                              socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                     NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4934,7 +5055,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint remoteEndpoint;
                     error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
                                                              socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_EQ(remoteEndpoint, serverOneEndpoint);
                 }
@@ -4944,12 +5065,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 for (bsl::size_t j = 0; j < 2; ++j) {
                     error =
                         ntsu::SocketUtil::connect(serverTwoEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     ntsa::Endpoint sourceEndpoint;
                     error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
                                                              socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                     NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -4960,7 +5081,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint remoteEndpoint;
                     error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
                                                              socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_EQ(remoteEndpoint, serverTwoEndpoint);
                 }
@@ -4976,7 +5097,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -4985,13 +5106,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(serverTwo);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(serverOne);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
     }
 
@@ -5006,14 +5127,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5026,7 +5147,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 2: The socket may be bound after creation to
@@ -5038,19 +5159,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 error = ntsu::SocketUtil::bind(
                     ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5065,7 +5186,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 3: After the socket is bound to "[:0]:0", the
@@ -5080,19 +5201,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 error = ntsu::SocketUtil::bind(
                     ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5105,7 +5226,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint1;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV6());
@@ -5135,7 +5256,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 4: The socket may be bound after creation to an IPv6
@@ -5149,7 +5270,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint explicitSourceEndpoint;
@@ -5169,12 +5290,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5185,7 +5306,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 5: A datagram socket is implicitly bound to an explicit
@@ -5197,7 +5318,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -5206,11 +5327,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
@@ -5223,14 +5344,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5244,12 +5365,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5260,7 +5381,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
                 NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
@@ -5279,7 +5400,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -5288,10 +5409,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 5a: A datagram socket may be explicitly bound to "any"
@@ -5309,7 +5430,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -5318,11 +5439,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
@@ -5335,14 +5456,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5359,12 +5480,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5375,12 +5496,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5391,7 +5512,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
                 NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
@@ -5410,7 +5531,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -5419,10 +5540,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 6: A datagram socket is implicitly bound to an explicit
@@ -5434,7 +5555,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -5443,11 +5564,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
@@ -5460,14 +5581,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5492,12 +5613,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
                     sendOptions,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5510,7 +5631,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -5519,10 +5640,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 7: A datagram socket is implicitly bound to an explicit
@@ -5535,7 +5656,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -5544,11 +5665,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
@@ -5561,14 +5682,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5593,12 +5714,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
                     sendOptions,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5609,12 +5730,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5625,7 +5746,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(
                     remoteEndpoint.ip().host().v6().equalsScopeless(
@@ -5638,7 +5759,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -5647,10 +5768,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 8: A datagram socket may connect and reconnect to the
@@ -5663,7 +5784,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&serverOne,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverOneEndpoint;
 
@@ -5672,11 +5793,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     serverOne);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::sourceEndpoint(&serverOneEndpoint,
                                                          serverOne);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverOneEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverOneEndpoint.ip().host().isV6());
@@ -5689,7 +5810,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&serverTwo,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverTwoEndpoint;
 
@@ -5698,11 +5819,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     serverTwo);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::sourceEndpoint(&serverTwoEndpoint,
                                                          serverTwo);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverTwoEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverTwoEndpoint.ip().host().isV6());
@@ -5715,14 +5836,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5740,12 +5861,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 for (bsl::size_t j = 0; j < 2; ++j) {
                     error =
                         ntsu::SocketUtil::connect(serverOneEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     ntsa::Endpoint sourceEndpoint;
                     error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
                                                              socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                     NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5756,7 +5877,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint remoteEndpoint;
                     error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
                                                              socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_TRUE(
                         remoteEndpoint.ip().host().v6().equalsScopeless(
@@ -5770,12 +5891,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 for (bsl::size_t j = 0; j < 2; ++j) {
                     error =
                         ntsu::SocketUtil::connect(serverTwoEndpoint, socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     ntsa::Endpoint sourceEndpoint;
                     error = ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint,
                                                              socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                     NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -5786,7 +5907,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Endpoint remoteEndpoint;
                     error = ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint,
                                                              socket);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_TRUE(
                         remoteEndpoint.ip().host().v6().equalsScopeless(
@@ -5806,7 +5927,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -5815,13 +5936,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(serverTwo);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(serverOne);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
     }
 
@@ -5838,7 +5959,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_LOCAL_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
@@ -5848,17 +5969,17 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     BSLS_LOG_ERROR("Failed to get source endpoint: %s",
                                    error.text().c_str());
                 }
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
             }
 
             error = ntsu::SocketUtil::unlink(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 2: The socket may be bound after creation to an unnamed
@@ -5873,7 +5994,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_LOCAL_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint unnamedSourceEndpoint =
@@ -5884,12 +6005,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 error = ntsu::SocketUtil::bind(unnamedSourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_NE(sourceEndpoint, unnamedSourceEndpoint);
@@ -5900,10 +6021,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             }
 
             error = ntsu::SocketUtil::unlink(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 #endif
 
@@ -5916,12 +6037,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_LOCAL_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::LocalName localName;
                 error = ntsa::LocalName::generateUnique(&localName);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint explicitSourceEndpoint =
                     ntsa::Endpoint(localName);
@@ -5929,22 +6050,22 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_EQ(sourceEndpoint, explicitSourceEndpoint);
             }
 
             error = ntsu::SocketUtil::unlink(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 4: A datagram socket is implicitly bound to an unnamed
@@ -5956,14 +6077,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_LOCAL_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
             {
                 ntsa::LocalName localName;
                 error = ntsa::LocalName::generateUnique(&localName);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint explicitServerEndpoint =
                     ntsa::Endpoint(localName);
@@ -5971,11 +6092,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 error = ntsu::SocketUtil::bind(explicitServerEndpoint,
                                                k_REUSE_ADDRESS,
                                                server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isLocal());
                 NTSCFG_TEST_EQ(serverEndpoint, explicitServerEndpoint);
@@ -5985,13 +6106,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_LOCAL_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
@@ -5999,12 +6120,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
@@ -6012,7 +6133,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
             }
@@ -6021,32 +6142,32 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 #endif
             }
 
             error = ntsu::SocketUtil::unlink(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::unlink(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 5: A datagram socket is implicitly bound to an
@@ -6059,14 +6180,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_LOCAL_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
             {
                 ntsa::LocalName localName;
                 error = ntsa::LocalName::generateUnique(&localName);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint explicitServerEndpoint =
                     ntsa::Endpoint(localName);
@@ -6074,11 +6195,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 error = ntsu::SocketUtil::bind(explicitServerEndpoint,
                                                k_REUSE_ADDRESS,
                                                server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isLocal());
                 NTSCFG_TEST_EQ(serverEndpoint, explicitServerEndpoint);
@@ -6088,13 +6209,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_LOCAL_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
@@ -6113,12 +6234,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                     ntsa::Data(ntsa::ConstBuffer(&storage, 1)),
                     sendOptions,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
@@ -6128,38 +6249,38 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase14)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 #endif
             }
 
             error = ntsu::SocketUtil::unlink(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::unlink(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
     }
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketBinding)
 {
     // Concern: Binding stream sockets.
     // Plan:
@@ -6179,14 +6300,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV4_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -6199,7 +6320,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 2: The socket may be bound after creation to
@@ -6211,19 +6332,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV4_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 error = ntsu::SocketUtil::bind(
                     ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -6238,7 +6359,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 3: After the socket is bound to "0.0.0.0:0", the
@@ -6253,19 +6374,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV4_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 error = ntsu::SocketUtil::bind(
                     ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -6278,7 +6399,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint sourceEndpoint1;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV4());
@@ -6308,7 +6429,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 4: The socket may be bound after creation to an IPv4
@@ -6322,7 +6443,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV4_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint explicitSourceEndpoint;
@@ -6342,12 +6463,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -6358,7 +6479,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 5: A stream socket is implicitly bound to an explicit
@@ -6370,7 +6491,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_TCP_IPV4_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -6379,11 +6500,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                     ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
@@ -6392,21 +6513,21 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
 
                 error = ntsu::SocketUtil::listen(100, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
             }
 
             ntsa::Handle socket;
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -6420,12 +6541,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -6436,7 +6557,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
             }
@@ -6445,7 +6566,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -6454,10 +6575,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 5a: A stream socket may be explicitly bound to "any"
@@ -6475,7 +6596,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_TCP_IPV4_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -6484,11 +6605,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                     ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV4());
@@ -6497,21 +6618,21 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
 
                 error = ntsu::SocketUtil::listen(100, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
             }
 
             ntsa::Handle socket;
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV4_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -6528,12 +6649,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                     ntsa::Endpoint(ntsa::Ipv4Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -6544,12 +6665,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -6560,7 +6681,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
             }
@@ -6569,7 +6690,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -6578,10 +6699,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 6: A stream socket is implicitly bound to an explicit
@@ -6593,14 +6714,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV4_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -6615,12 +6736,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             {
                 error = ntsu::SocketUtil::listen(100, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV4());
@@ -6637,7 +6758,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -6649,7 +6770,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
     }
 
@@ -6664,14 +6785,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV6_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -6684,7 +6805,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 2: The socket may be bound after creation to
@@ -6696,19 +6817,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV6_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 error = ntsu::SocketUtil::bind(
                     ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -6723,7 +6844,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 3: After the socket is bound to "[:0]:0", the
@@ -6738,19 +6859,19 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV6_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 error = ntsu::SocketUtil::bind(
                     ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -6763,7 +6884,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint sourceEndpoint1;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint1, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint1.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint1.ip().host().isV6());
@@ -6793,7 +6914,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 4: The socket may be bound after creation to an IPv6
@@ -6807,7 +6928,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV6_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint explicitSourceEndpoint;
@@ -6827,12 +6948,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -6843,7 +6964,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 5: A stream socket is implicitly bound to an explicit
@@ -6855,7 +6976,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_TCP_IPV6_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -6864,11 +6985,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                     ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
@@ -6877,21 +6998,21 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
 
                 error = ntsu::SocketUtil::listen(100, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
             }
 
             ntsa::Handle socket;
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -6905,12 +7026,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -6921,7 +7042,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
                 NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
@@ -6940,7 +7061,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -6949,10 +7070,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 5a: A stream socket may be explicitly bound to "any"
@@ -6970,7 +7091,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&server,
                                          ntsa::Transport::e_TCP_IPV6_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
@@ -6979,11 +7100,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                     ntsa::Endpoint(ntsa::Ipv6Address::loopback(), 0),
                     k_REUSE_ADDRESS,
                     server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isIp());
                 NTSCFG_TEST_TRUE(serverEndpoint.ip().host().isV6());
@@ -6992,21 +7113,21 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 NTSCFG_TEST_FALSE(serverEndpoint.ip().port() == 0);
 
                 error = ntsu::SocketUtil::listen(100, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
             }
 
             ntsa::Handle socket;
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV6_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -7023,12 +7144,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                     ntsa::Endpoint(ntsa::Ipv6Address::any(), 0),
                     k_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -7039,12 +7160,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -7055,7 +7176,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(remoteEndpoint.isIp());
                 NTSCFG_TEST_TRUE(remoteEndpoint.ip().host().isV6());
@@ -7074,7 +7195,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -7083,10 +7204,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 6: A stream socket is implicitly bound to an explicit
@@ -7098,14 +7219,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             error =
                 ntsu::SocketUtil::create(&socket,
                                          ntsa::Transport::e_TCP_IPV6_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -7120,12 +7241,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             {
                 error = ntsu::SocketUtil::listen(100, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isIp());
                 NTSCFG_TEST_TRUE(sourceEndpoint.ip().host().isV6());
@@ -7142,7 +7263,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -7154,7 +7275,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
     }
 
@@ -7172,14 +7293,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             ntsa::Handle socket;
             error = ntsu::SocketUtil::create(&socket,
                                              ntsa::Transport::e_LOCAL_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
 #else
@@ -7189,10 +7310,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::unlink(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 2: The socket may be bound after creation to an unnamed
@@ -7206,7 +7327,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             ntsa::Handle socket;
             error = ntsu::SocketUtil::create(&socket,
                                              ntsa::Transport::e_LOCAL_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint unnamedSourceEndpoint =
@@ -7217,12 +7338,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 error = ntsu::SocketUtil::bind(unnamedSourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_NE(sourceEndpoint, unnamedSourceEndpoint);
@@ -7233,10 +7354,10 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::unlink(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 #endif
 
@@ -7248,12 +7369,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             ntsa::Handle socket;
             error = ntsu::SocketUtil::create(&socket,
                                              ntsa::Transport::e_LOCAL_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::LocalName localName;
                 error = ntsa::LocalName::generateUnique(&localName);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint explicitSourceEndpoint =
                     ntsa::Endpoint(localName);
@@ -7261,22 +7382,22 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 error = ntsu::SocketUtil::bind(explicitSourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_EQ(sourceEndpoint, explicitSourceEndpoint);
             }
 
             error = ntsu::SocketUtil::unlink(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 4: A stream socket is implicitly bound to an unnamed
@@ -7287,14 +7408,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             ntsa::Handle server;
             error = ntsu::SocketUtil::create(&server,
                                              ntsa::Transport::e_LOCAL_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             ntsa::Endpoint serverEndpoint;
 
             {
                 ntsa::LocalName localName;
                 error = ntsa::LocalName::generateUnique(&localName);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint explicitServerEndpoint =
                     ntsa::Endpoint(localName);
@@ -7302,23 +7423,23 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 error = ntsu::SocketUtil::bind(explicitServerEndpoint,
                                                k_REUSE_ADDRESS,
                                                server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(serverEndpoint.isLocal());
                 NTSCFG_TEST_EQ(serverEndpoint, explicitServerEndpoint);
 
                 error = ntsu::SocketUtil::listen(100, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
             }
 
             ntsa::Handle socket;
             error = ntsu::SocketUtil::create(&socket,
                                              ntsa::Transport::e_LOCAL_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
@@ -7326,7 +7447,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
 #else
@@ -7337,12 +7458,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
 
             {
                 error = ntsu::SocketUtil::connect(serverEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
@@ -7350,7 +7471,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint remoteEndpoint;
                 error =
                     ntsu::SocketUtil::remoteEndpoint(&remoteEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_EQ(remoteEndpoint, serverEndpoint);
             }
@@ -7359,32 +7480,32 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                 ntsa::Endpoint sourceEndpoint;
                 error =
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 error = ntsu::SocketUtil::bind(sourceEndpoint,
                                                k_REUSE_ADDRESS,
                                                socket);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 #endif
             }
 
             error = ntsu::SocketUtil::unlink(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::unlink(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Concern 5: A stream socket is implicitly bound to an unnamed
@@ -7397,7 +7518,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             ntsa::Handle socket;
             error = ntsu::SocketUtil::create(&socket,
                                              ntsa::Transport::e_LOCAL_STREAM);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             {
                 ntsa::Endpoint sourceEndpoint;
@@ -7405,7 +7526,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
                     ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
 #else
@@ -7420,16 +7541,16 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase15)
             }
 
             error = ntsu::SocketUtil::unlink(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             error = ntsu::SocketUtil::close(socket);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
         }
     }
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase16)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyList)
 {
     // Concern: Listing system sockets.
 
@@ -7438,20 +7559,20 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase16)
     ntsa::Handle listener;
     error = ntsu::SocketUtil::create(&listener,
                                      ntsa::Transport::e_TCP_IPV4_STREAM);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::bind(
         ntsa::Endpoint(ntsa::Ipv4Address::loopback(), 0),
         true,
         listener);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     ntsa::Endpoint listenerEndpoint;
     error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::listen(1, listener);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     BSLS_LOG_TRACE("Listening at %s", listenerEndpoint.text().c_str());
 
@@ -7467,7 +7588,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase16)
     }
 
     error = ntsu::SocketUtil::close(listener);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     {
         ntsa::SocketInfoFilter filter;
@@ -7481,7 +7602,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase16)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketPairs)
 {
     // Concern: Create stream socket pairs.
     //
@@ -7503,7 +7624,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
         socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
     }
 
-    if (ntsu::AdapterUtil::supportsTransportLoopback(ntsa::Transport::e_LOCAL_STREAM))
+    if (ntsu::AdapterUtil::supportsTransportLoopback(
+            ntsa::Transport::e_LOCAL_STREAM))
     {
         socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
     }
@@ -7516,31 +7638,31 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
         ntsa::Handle client;
         ntsa::Handle server;
         error = ntsu::SocketUtil::pair(&client, &server, transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Get the client source and remote endpoints.
 
         ntsa::Endpoint clientSourceEndpoint;
         error =
             ntsu::SocketUtil::sourceEndpoint(&clientSourceEndpoint, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint clientRemoteEndpoint;
         error =
             ntsu::SocketUtil::remoteEndpoint(&clientRemoteEndpoint, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Get the server source and remote endpoints.
 
         ntsa::Endpoint serverSourceEndpoint;
         error =
             ntsu::SocketUtil::sourceEndpoint(&serverSourceEndpoint, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint serverRemoteEndpoint;
         error =
             ntsu::SocketUtil::remoteEndpoint(&serverRemoteEndpoint, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         if (NTSCFG_TEST_VERBOSITY > 3) {
             bsl::cout << "Client at " << clientSourceEndpoint << " to "
@@ -7560,7 +7682,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
             ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
 
             error = ntsu::SocketUtil::send(&context, data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -7577,7 +7699,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
@@ -7594,7 +7716,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
             ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
 
             error = ntsu::SocketUtil::send(&context, data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -7610,7 +7732,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
                                               &buffer,
                                               1,
                                               client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(numBytesReceived == 1);
             NTSCFG_TEST_ASSERT(buffer == 'S');
@@ -7641,7 +7763,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
 
                 error =
                     ntsu::SocketUtil::send(&context, data, options, server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
                 NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -7661,7 +7783,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
                                                   &data,
                                                   options,
                                                   client);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
                 NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
@@ -7740,7 +7862,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
                                                    data,
                                                    options,
                                                    server);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
                     NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -7760,7 +7882,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
                                                       &data,
                                                       options,
                                                       client);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
                     NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
@@ -7774,7 +7896,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
         // Shutdown writing by the client socket.
 
         error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Dequeue incoming data received by the server socket, and observe
         // that zero bytes are successfully dequeued, indicating the client
@@ -7789,7 +7911,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
@@ -7798,7 +7920,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
         // Shutdown writing by the server socket.
 
         error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Dequeue incoming data received by the client socket, and observe
         // that zero bytes are successfully dequeued, indicating the server
@@ -7813,7 +7935,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesReceived() == 0);
@@ -7822,14 +7944,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase17)
         // Close each socket.
 
         error = ntsu::SocketUtil::close(client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketPairs)
 {
     // Concern: Create datagram socket pairs.
     //
@@ -7865,15 +7987,15 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
         ntsa::Handle client;
         ntsa::Handle server;
         error = ntsu::SocketUtil::pair(&client, &server, transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint clientEndpoint;
         error = ntsu::SocketUtil::sourceEndpoint(&clientEndpoint, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint serverEndpoint;
         error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         // Enqueue outgoing data to transmit by the client socket.
 
@@ -7885,7 +8007,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
             ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
 
             error = ntsu::SocketUtil::send(&context, data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -7903,7 +8025,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
             NTSCFG_TEST_EQ(context.bytesReceived(), 1);
             NTSCFG_TEST_EQ(context.bytesReceivable(), 1);
 
@@ -7954,7 +8076,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
             ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
 
             error = ntsu::SocketUtil::send(&context, data, options, server);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
             NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -7972,7 +8094,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
 
             error =
                 ntsu::SocketUtil::receive(&context, &data, options, client);
-            NTSCFG_TEST_ASSERT(!error);
+            NTSCFG_TEST_OK(error);
 
             NTSCFG_TEST_ASSERT(!context.endpoint().isNull());
 
@@ -8036,7 +8158,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
 
                 error =
                     ntsu::SocketUtil::send(&context, data, options, client);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
                 NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -8056,7 +8178,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
                                                   &data,
                                                   options,
                                                   server);
-                NTSCFG_TEST_ASSERT(!error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
                 NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
@@ -8130,7 +8252,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
                                                    data,
                                                    options,
                                                    client);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
                     NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -8150,7 +8272,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
                                                       &data,
                                                       options,
                                                       server);
-                    NTSCFG_TEST_ASSERT(!error);
+                    NTSCFG_TEST_OK(error);
 
                     NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
                     NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
@@ -8165,18 +8287,16 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase18)
         // Close each socket.
 
         error = ntsu::SocketUtil::close(client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::close(server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase19)
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDatagramSocketControlSingleBuffer)
 {
-    // Concern: Datagram socket transmission with control data: single buffer.
-    // Plan:
-
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeDatagramSocketTest(
@@ -8186,11 +8306,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase19)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase20)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketControlBlob)
 {
-    // Concern: Datagram socket transmission with control data: blob.
-    // Plan:
-
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeDatagramSocketTest(
@@ -8199,11 +8316,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase20)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase21)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketControlDropped)
 {
-    // Concern: Datagram socket transmission with control data: dropped.
-    // Plan:
-
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeDatagramSocketTest(
@@ -8212,11 +8326,9 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase21)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase22)
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyStreamSocketControlSingleBuffer)
 {
-    // Concern: Stream socket transmission with control data: single buffer.
-    // Plan:
-
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeStreamSocketTest(
@@ -8226,11 +8338,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase22)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase23)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketControlBlob)
 {
-    // Concern: Stream socket transmission with control data: blob.
-    // Plan:
-
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeStreamSocketTest(
@@ -8239,7 +8348,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase23)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketControlDropped)
 {
     // Concern: Stream socket transmission with control data: dropped
     // Plan:
@@ -8252,11 +8361,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24b)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketControlCoalesced)
 {
-    // Concern: Stream socket transmission with control data: dropped
-    // Plan:
-
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeStreamSocketTest(
@@ -8265,11 +8371,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24b)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24c)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketControlChunked)
 {
-    // Concern: Stream socket transmission with control data: dropped
-    // Plan:
-
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
     SocketUtilTest::executeStreamSocketTest(
@@ -8278,7 +8381,9 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase24c)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase25)
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::
+        verifyDatagramSocketControlTimestampingDescriptorBundle)
 {
     // Concern: validate that an incoming software timestamp and a file handle
     // can be simultaneously retrieved from one control message
@@ -8297,7 +8402,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase25)
     ntsa::Handle server;
 
     error = ntsu::SocketUtil::pair(&client, &server, transport);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     if (!ntsu::SocketOptionUtil::supportsTimestamping(server)) {
         ntsu::SocketUtil::close(client);
@@ -8313,13 +8418,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase25)
     ntsa::Endpoint domesticSourceEndpoint;
     {
         error = ntsu::SocketUtil::create(&domesticSocket, transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::bind(
             ntsa::Endpoint(ntsa::LocalName::generateUnique()),
             false,
             domesticSocket);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketUtil::sourceEndpoint(&domesticSourceEndpoint,
                                                  domesticSocket);
@@ -8336,7 +8441,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase25)
         ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
 
         error = ntsu::SocketUtil::send(&context, data, options, client);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
         NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
@@ -8354,7 +8459,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase25)
         ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
 
         error = ntsu::SocketUtil::receive(&context, &data, options, server);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
         NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
@@ -8370,27 +8475,27 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase25)
         error =
             ntsu::SocketUtil::sourceEndpoint(&foreignSourceEndpoint,
                                              context.foreignHandle().value());
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         NTSCFG_TEST_EQ(foreignSourceEndpoint, domesticSourceEndpoint);
 
         error = ntsu::SocketUtil::close(context.foreignHandle().value());
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
     }
 
     // Close each socket.
 
     error = ntsu::SocketUtil::close(client);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::close(server);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 
     error = ntsu::SocketUtil::close(domesticSocket);
-    NTSCFG_TEST_ASSERT(!error);
+    NTSCFG_TEST_OK(error);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase26)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyIsSocket)
 {
     // Concern: ntsu::SocketUtil::isSocket correctly indicates true if a
     // file descriptor is an alias for a socket, and false, after the file
@@ -8425,7 +8530,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase26)
     }
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketZeroCopy)
 {
     // Concern: Test that Linux MSG_ZEROCOPY mechanism is applied for DATAGRAM
     // sockets
@@ -8486,7 +8591,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
         ntsa::Handle handle = ntsa::k_INVALID_HANDLE;
 
         error = ntsu::SocketUtil::create(&handle, *transport);
-        NTSCFG_TEST_ASSERT(!error);
+        NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketOptionUtil::setZeroCopy(handle, true);
         NTSCFG_TEST_OK(error);
@@ -8563,7 +8668,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase27)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase28)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketZeroCopy)
 {
     // Concern: Test that Linux MSG_ZEROCOPY mechanism is applied for STREAM
     // sockets
@@ -8593,7 +8698,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase28)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase29)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketTimestamping)
 {
     // Concern: Test TX timestamping functionality for DATAGRAM sockets
 #if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING
@@ -8616,7 +8721,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase29)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase30)
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketTimestamping)
 {
     // Concern: Test TX timestamping functionality for STREAM sockets
 #if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING
@@ -8639,12 +8744,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase30)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase31)
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDatagramSocketZeroCopyTimestamping)
 {
     // Concern: Test TX timestamping an MSG_ZEROCOPY functionality for
     // DATAGRAM sockets
-#if defined(BSLS_PLATFORM_OS_LINUX) && \
-    NTS_BUILD_WITH_TIMESTAMPING && NTS_BUILD_WITH_ZERO_COPY
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING &&         \
+    NTS_BUILD_WITH_ZERO_COPY
 
     // Linux kernels versions < 5.0.0 do not support MSG_ZEROCOPY for DGRAM
     // sockets
@@ -8665,12 +8771,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase31)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase32)
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyStreamSocketZeroCopyTimestamping)
 {
     // Concern: Test TX timestamping and MSG_ZEROCOPY functionality for
     // STREAM sockets
-#if defined(BSLS_PLATFORM_OS_LINUX) && \
-    NTS_BUILD_WITH_TIMESTAMPING && NTS_BUILD_WITH_ZERO_COPY
+#if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING &&         \
+    NTS_BUILD_WITH_ZERO_COPY
     // Linux kernels versions < 4.14.0 do not support MSG_ZEROCOPY for STREAM
     // sockets
     {
@@ -8690,19 +8797,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase32)
 #endif
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase33)
-{
-    // Concern: test that for stream sockets configured in a blocking mode
-    // attempt to read data from the socket error queue does not lead to a
-    // blocking ::recvmsg call. Also check that even if socket has some data
-    // in its receive buffer and call to ::recvmsg can return 0,
-    // receiveNotifications does not hang in an endless loop.
-
-    SocketUtilTest::executeStreamSocketTest(
-        &SocketUtilTest::testStreamSocketReceiveNotifications);
-}
-
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase34)
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDatagramSocketErrorQueueBlocking)
 {
     // Concern: test that for datagram sockets configured in a blocking mode
     // attempt to read data from the socket error queue does not lead to a
@@ -8714,7 +8810,21 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase34)
         &SocketUtilTest::testDatagramSocketReceiveNotifications);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyStreamSocketErrorQueueBlocking)
+{
+    // Concern: test that for stream sockets configured in a blocking mode
+    // attempt to read data from the socket error queue does not lead to a
+    // blocking ::recvmsg call. Also check that even if socket has some data
+    // in its receive buffer and call to ::recvmsg can return 0,
+    // receiveNotifications does not hang in an endless loop.
+
+    SocketUtilTest::executeStreamSocketTest(
+        &SocketUtilTest::testStreamSocketReceiveNotifications);
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyListenerSocketAcceptingClosedConnections)
 {
     // Concern: If the peer shuts down or closes the socket after the
     // connection is established but before the socket can be accepted from the
@@ -8782,8 +8892,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
     };
     // clang-format on
 
-    const bsl::size_t k_NUM_DATA =
-        sizeof(k_DATA) / sizeof(k_DATA[0]);
+    const bsl::size_t k_NUM_DATA = sizeof(k_DATA) / sizeof(k_DATA[0]);
 
     const ntsa::Transport::Value transport =
         ntsa::Transport::e_TCP_IPV4_STREAM;
@@ -8793,16 +8902,16 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
         bsl::string localHostname;
         error = ntsu::ResolverUtil::getHostname(&localHostname);
 
-        BALL_LOG_DEBUG << "Local hostname = " << localHostname
-                       << BALL_LOG_END;
+        BALL_LOG_DEBUG << "Local hostname = " << localHostname << BALL_LOG_END;
 
         bsl::vector<ntsa::IpAddress> ipAddressList;
         ntsa::IpAddressOptions       ipAddressOptions;
 
         ipAddressOptions.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        error = ntsu::ResolverUtil::getIpAddress(
-            &ipAddressList, localHostname, ipAddressOptions);
+        error = ntsu::ResolverUtil::getIpAddress(&ipAddressList,
+                                                 localHostname,
+                                                 ipAddressOptions);
         if (error) {
             localIpv4Address = ntsa::Ipv4Address::loopback();
         }
@@ -8811,8 +8920,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
             NTSCFG_TEST_GT(ipAddressList.size(), 0);
 
             for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
-                BALL_LOG_DEBUG << "Found IPv4 address = "
-                               << ipAddressList[i]
+                BALL_LOG_DEBUG << "Found IPv4 address = " << ipAddressList[i]
                                << BALL_LOG_END;
             }
 
@@ -8828,16 +8936,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
                        << k_DATA[variation].shutdownSend
                        << ", shutdownReceive = "
                        << k_DATA[variation].shutdownReceive
-                       << ", shutdownBoth = "
-                       << k_DATA[variation].shutdownBoth
+                       << ", shutdownBoth = " << k_DATA[variation].shutdownBoth
                        << ", abortiveClose = "
-                       << k_DATA[variation].abortiveClose
-                       << BALL_LOG_END;
+                       << k_DATA[variation].abortiveClose << BALL_LOG_END;
 
         // Create a non-blocking socket for the listener.
 
         ntsa::Handle listener = ntsa::k_INVALID_HANDLE;
-        error = ntsu::SocketUtil::create(&listener, transport);
+        error                 = ntsu::SocketUtil::create(&listener, transport);
         NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketOptionUtil::setBlocking(listener, false);
@@ -8851,10 +8957,9 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
             NTSCFG_TEST_OK(error);
         }
         else {
-            error = ntsu::SocketUtil::bind(
-                ntsa::Endpoint(localIpv4Address, 0),
-                false,
-                listener);
+            error = ntsu::SocketUtil::bind(ntsa::Endpoint(localIpv4Address, 0),
+                                           false,
+                                           listener);
             NTSCFG_TEST_OK(error);
         }
 
@@ -8869,7 +8974,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
         // the listener socket's local endpoint.
 
         ntsa::Handle client = ntsa::k_INVALID_HANDLE;
-        error = ntsu::SocketUtil::create(&client, transport);
+        error               = ntsu::SocketUtil::create(&client, transport);
         NTSCFG_TEST_OK(error);
 
         error = ntsu::SocketOptionUtil::setBlocking(client, true);
@@ -8886,34 +8991,30 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
 
         if (k_DATA[variation].loopback) {
             connectEndpoint =
-                ntsa::Endpoint(
-                    ntsa::IpEndpoint(
-                        ntsa::Ipv4Address::loopback(),
-                        listenerEndpoint.ip().port()));
+                ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(),
+                                                listenerEndpoint.ip().port()));
         }
         else {
             connectEndpoint =
-                ntsa::Endpoint(
-                    ntsa::IpEndpoint(
-                        localIpv4Address,
-                        listenerEndpoint.ip().port()));
+                ntsa::Endpoint(ntsa::IpEndpoint(localIpv4Address,
+                                                listenerEndpoint.ip().port()));
         }
 
         error = ntsu::SocketUtil::connect(connectEndpoint, client);
         NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint clientSourceEndpoint;
-        error = ntsu::SocketUtil::sourceEndpoint(&clientSourceEndpoint, client);
+        error =
+            ntsu::SocketUtil::sourceEndpoint(&clientSourceEndpoint, client);
         NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint clientRemoteEndpoint;
-        error = ntsu::SocketUtil::remoteEndpoint(&clientRemoteEndpoint, client);
+        error =
+            ntsu::SocketUtil::remoteEndpoint(&clientRemoteEndpoint, client);
         NTSCFG_TEST_OK(error);
 
-        BALL_LOG_DEBUG << "Client sourceEndpoint = "
-                       << clientSourceEndpoint
-                       << ", remoteEndpoint = "
-                       << clientRemoteEndpoint
+        BALL_LOG_DEBUG << "Client sourceEndpoint = " << clientSourceEndpoint
+                       << ", remoteEndpoint = " << clientRemoteEndpoint
                        << BALL_LOG_END;
 
         // Wait until the listener socket's backlog is non-empty.
@@ -8922,20 +9023,20 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
         NTSCFG_TEST_OK(error);
 
         if (k_DATA[variation].shutdownSend) {
-            error = ntsu::SocketUtil::shutdown(
-                ntsa::ShutdownType::e_SEND, client);
+            error =
+                ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, client);
             NTSCFG_TEST_OK(error);
         }
 
         if (k_DATA[variation].shutdownReceive) {
-            error = ntsu::SocketUtil::shutdown(
-                ntsa::ShutdownType::e_RECEIVE, client);
+            error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_RECEIVE,
+                                               client);
             NTSCFG_TEST_OK(error);
         }
 
         if (k_DATA[variation].shutdownBoth) {
-            error = ntsu::SocketUtil::shutdown(
-                ntsa::ShutdownType::e_BOTH, client);
+            error =
+                ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_BOTH, client);
             NTSCFG_TEST_OK(error);
         }
 
@@ -8947,7 +9048,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
         bslmt::ThreadUtil::sleep(bsls::TimeInterval(1));
 
         ntsa::Handle server = ntsa::k_INVALID_HANDLE;
-        error = ntsu::SocketUtil::accept(&server, listener);
+        error               = ntsu::SocketUtil::accept(&server, listener);
 
         if (k_DATA[variation].acceptSuccess) {
             NTSCFG_TEST_OK(error);
@@ -8965,15 +9066,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
             if (k_DATA[variation].getpeernameSuccess) {
                 NTSCFG_TEST_OK(error);
 
-                BALL_LOG_DEBUG << "Server sourceEndpoint = "
-                               << serverSourceEndpoint
-                               << ", remoteEndpoint = "
-                               << serverRemoteEndpoint
-                               << BALL_LOG_END;
+                BALL_LOG_DEBUG
+                    << "Server sourceEndpoint = " << serverSourceEndpoint
+                    << ", remoteEndpoint = " << serverRemoteEndpoint
+                    << BALL_LOG_END;
             }
             else {
-                BALL_LOG_DEBUG << "getpeername failed: "
-                               << error
+                BALL_LOG_DEBUG << "getpeername failed: " << error
                                << BALL_LOG_END;
                 NTSCFG_TEST_TRUE(error);
             }
@@ -8984,9 +9083,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyCase35)
             NTSCFG_TEST_OK(error);
         }
         else {
-            BALL_LOG_DEBUG << "getpeername failed: "
-                           << error
-                           << BALL_LOG_END;
+            BALL_LOG_DEBUG << "getpeername failed: " << error << BALL_LOG_END;
             NTSCFG_TEST_TRUE(error);
         }
 
