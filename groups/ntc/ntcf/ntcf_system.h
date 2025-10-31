@@ -281,6 +281,111 @@ namespace ntcf {
 ///     interface->shutdown();
 ///     interface->linger();
 ///
+/// @par Usage Example: Collecting and Observing Metrics
+/// This example illustrates how to enable the collection and publication of
+/// low-level metrics describing the behavior and operation of the objects
+/// implementing the library. First, metrics must be enabled process-wide,
+/// second, the periodic collection of metrics must be started, third, one or
+/// more publishers must be registered to observe the collected metrics, and
+/// fourth, specific instances of `ntci::Scheduler` must be configured to
+/// collect metrics. Metrics can be collected and aggregated by-scheduler,
+/// by thread, and by socket, although socket-level metric collection is
+/// discouraged outside of testing due to the large number of metrics that
+/// result.
+///
+/// First, let's implement a simple metrics publisher.
+///
+///     class ExamplePublisher: public ntci::MonitorablePublisher
+///     {
+///       public:
+///         void publish(const bsl::shared_ptr<ntci::Monitorable>& monitorable,
+///                      const bdld::Datum&                        statistics,
+///                      const bsls::TimeInterval&                 time,
+///                      bool                                      final)
+///                      BSLS_KEYWORD_OVERRIDE
+///         {
+///             const int numStats =
+///                 static_cast<int>(statistics.theArray().length());
+///
+///             for (int i = 0; i < numStats; ++i) {
+///                 double value = 0.0;
+///
+///                 if (statistics.theArray().data()[i].isDouble()) {
+///                     value = statistics.theArray().data()[i].theDouble();
+///                 }
+///                 else if (statistics.theArray().data()[i].isInteger64()) {
+///                     value = static_cast<double>(
+///                         statistics.theArray().data()[i].theInteger64());
+///                 }
+///                 else {
+///                     continue;
+///                 }
+///
+///                 bsl::cout << monitorable->objectName()
+///                           << '.'
+///                           << monitorable->getFieldPrefix(fieldOrdinal)
+///                           << '.'
+///                           << monitorable->getFieldName(fieldOrdinal);
+///                           << " = "
+///                           << value
+///                           << bsl::endl;
+///             }
+///         }
+///     };
+///
+/// Next, enable tracking for each monitorable object.
+///
+///     ntca::MonitorableRegistryConfig monitorableRegistryConfig;
+///     ntcf::System::enableMonitorableRegistry(monitorableRegistryConfig);
+///
+/// Then, register our custom metrics publisher.
+///
+///     bsl::shared_ptr<ExamplePublisher> examplePublisher =
+///                                       bsl::make_shared<ExamplePublisher>();
+///
+///     ntcf::System::registerMonitorablePublisher(examplePublisher);
+///
+/// Now, the periodic collection of monitorable objects. For this example,
+/// we'll collect metrics once per second and deliver them to
+///
+///     ntca::MonitorableCollectorConfig monitorableCollectorConfig;
+///     monitorableCollectorConfig.setThreadName("metrics");
+///     monitorableCollectorConfig.setPeriod(1);
+///
+///     ntcf::System::enableMonitorableCollector(monitorableCollectorConfig);
+///
+/// Once all the metrics collection and publication machinery is set up and
+/// running, create an 'ntci::Scheduler' explicitly configured to instruct
+/// the objects it manages to automatically register themselves with the
+/// metrics system. For this example, we'll enable "driver"-level metrics
+/// and observe both the metrics per-thread and aggregated per-scheduler. Note
+/// that per-socket level metrics can also be enabled, but collecting metrics
+/// per-socket is discouraged outside of testing, due to the potentially large
+/// number of metrics that result.
+///
+///     ntca::SchedulerConfig schedulerConfig;
+///     schedulerConfig.setThreadName("example");
+///     schedulerConfig.setDriverMetrics(true);
+///     schedulerConfig.setDriverMetricsPerWaiter(true);
+///
+///     bsl::shared_ptr<ntci::Scheduler> scheduler =
+///         ntcf::System::createScheduler(schedulerConfig);
+///
+/// Then, use 'scheduler' to create 'ntci::DatagramSocket',
+/// 'ntci::StreamSocket', and 'ntci::ListenerSocket' objects and use them
+/// according to the application's requirements, as normal. Once per collection
+/// interval the metrics for the system of objects implementing the 'scheduler'
+/// and its sockets will be collected and published to our custom metrics
+/// publisher.
+///
+/// Finally, if metrics collection needs to be disable at at point during the
+/// execution of the process, the previously setup metrics machinery can be
+/// explicitly disabled and deregistered.
+///
+///     ntcf::System::deregisterMonitorablePublisher(examplePublisher);
+///     ntcf::System::disableMonitorableCollector();
+///     ntcf::System::disableMonitorableRegistry();
+///
 /// @ingroup module_ntci_runtime
 struct System {
   public:
