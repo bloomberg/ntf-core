@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_connecttoken.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <ntsa_error.h>
 #include <ntsa_ipaddress.h>
 #include <ntsa_port.h>
 #include <ntsa_transport.h>
@@ -30,9 +31,51 @@ BSLS_IDENT("$Id: $")
 #include <bsls_timeinterval.h>
 #include <bsl_iosfwd.h>
 #include <bsl_limits.h>
+#include <bsl_vector.h>
 
 namespace BloombergLP {
 namespace ntca {
+
+/// Enumerate the connect resolution semantics.
+///
+/// @par Thread Safety
+/// This struct is thread safe.
+///
+/// @ingroup module_ntci_operation_connect
+class ConnectResolutionSemantics
+{
+  public:
+    /// Enumerate the connect resolution semantics.
+    enum Value {
+        /// Resolve the name upon each attempt and pick one endpoint given by
+        /// the resolver, according to the IP address selector and port
+        /// selector, if relevant.
+        e_RESOLVE_INTO_SINGLE,
+
+        /// Resolve the name once before all attempts are first begun,
+        /// save address list, retry each address in order.
+        e_RESOLVE_INTO_LIST
+    };
+};
+
+/// Defines a type alias for a function invoked when a name is resolved into
+/// a list of IP addresses, to allow the user to reorder, adjust, add, or
+/// remove entries in the specified 'ipAddressList'.
+typedef bsl::function<ntsa::Error(bsl::vector<ntsa::IpAddress>* ipAddressList)>
+    ConnectResolutionProcessor;
+
+/// Describe the parameters to the calculation of backoff between individual
+/// attempts of a connect operation.
+class ConnectBackoff
+{
+    double             d_intervalCoefficient;
+    double             d_intervalExponent;
+    bsls::TimeInterval d_intervalMax;
+    bsls::TimeInterval d_jitterMin;
+    bsls::TimeInterval d_jitterMax;
+
+  public:
+};
 
 /// Describe the parameters to a connect operation.
 ///
@@ -41,6 +84,18 @@ namespace ntca {
 ///
 /// @li @b token:
 /// The token used to cancel the operation.
+///
+/// @li @b resolutionSemantics:
+/// The semantics of when to resolve names and how to treat the result of name
+/// resolution: either resolve everytime and pick first address given by
+/// resolver, or resolve once and save address list, retrying each address in
+/// order. In both cases, a resolution processor, is defined, may reorder,
+/// prune, and even adjust the results of name resolution.
+///
+/// @li @b resolutionProcessor:
+/// Function pointer given by the user allowing the user to reorder, prune, and
+/// even adjust the results of name resolution to define the order of addresses
+/// that iterative connection attempts will try to connect to.
 ///
 /// @li @b retryCount:
 /// The number of additional attempts to attempt to connect, if and when the
@@ -51,6 +106,9 @@ namespace ntca {
 /// The interval between connection attempts, if and when the initial attempt
 /// fails and the retry count is greater than zero. The default value is null,
 /// which indicates an implementation-chosen default retry interval is used.
+///
+/// @li @b retryIntervalBackoff
+/// The geometric or exponential backoff policy, with optional jitter.
 ///
 /// @li @b ipAddressFallback:
 /// The implied IP address when no domain name or IP address is explicitly
