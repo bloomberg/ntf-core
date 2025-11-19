@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_ipaddress.h>
+#include <ntsa_ipaddressoptions.h>
 #include <ntsa_transport.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
@@ -54,6 +55,11 @@ namespace ntca {
 /// The default value is null, indicating the first IP address in the IP
 /// address list is selected.
 ///
+/// @li @b ipAddressFilter:
+/// The function invoked when a domain name is resolved into a list of IP
+/// addresses, to allow the user to reorder, adjust, add, or remove entries in
+/// list.
+///
 /// @li @b transport:
 /// The desired transport with which to use the endpoint. This value affects
 /// how domain names resolve to IP addresses. The default value is null,
@@ -73,16 +79,22 @@ class GetIpAddressOptions
     bdlb::NullableValue<ntsa::IpAddress>            d_ipAddressFallback;
     bdlb::NullableValue<ntsa::IpAddressType::Value> d_ipAddressType;
     bdlb::NullableValue<bsl::size_t>                d_ipAddressSelector;
+    bdlb::NullableValue<ntsa::IpAddressFilter>      d_ipAddressFilter;
     bdlb::NullableValue<ntsa::Transport::Value>     d_transport;
     bdlb::NullableValue<bsls::TimeInterval>         d_deadline;
 
   public:
-    /// Create new get IP address options having the default value.
-    GetIpAddressOptions();
+    /// Create new get IP address options having the default value. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is null, the currently installed default allocator is used.
+    explicit GetIpAddressOptions(bslma::Allocator* basicAllocator = 0);
 
     /// Create new get IP address options having the same value as the
-    /// specified 'original' object.
-    GetIpAddressOptions(const GetIpAddressOptions& original);
+    /// specified 'original' object. Optionally specify a 'basicAllocator' used
+    /// to supply memory. If 'basicAllocator' is null, the currently installed
+    /// default allocator is used.
+    GetIpAddressOptions(const GetIpAddressOptions& original,
+                        bslma::Allocator*          basicAllocator = 0);
 
     /// Destroy this object.
     ~GetIpAddressOptions();
@@ -114,6 +126,11 @@ class GetIpAddressOptions
     /// null, indicating the first IP address in the IP address list
     /// is selected.
     void setIpAddressSelector(bsl::size_t value);
+
+    /// Set the function invoked when a domain name is resolved into a list of
+    /// IP addresses, to allow the user to reorder, adjust, add, or remove
+    /// entries in list, to the specified 'value'.
+    void setIpAddressFilter(const ntsa::IpAddressFilter& value);
 
     /// Set the desired transport with which to use the endpoint to the
     /// specified 'value'. This value affects how domain names resolve to
@@ -149,6 +166,11 @@ class GetIpAddressOptions
     /// selected.
     const bdlb::NullableValue<bsl::size_t>& ipAddressSelector() const;
 
+    /// Return the function invoked when a domain name is resolved into a list
+    /// of IP addresses, to allow the user to reorder, adjust, add, or remove
+    /// entries in list.
+    const bdlb::NullableValue<ntsa::IpAddressFilter>& ipAddressFilter() const;
+
     /// Return the desired transport with which to use the endpoint to the
     /// specified 'value'. This value affects how domain names resolve to
     /// IP addresses. The default value is null, indicating that domain
@@ -181,15 +203,9 @@ class GetIpAddressOptions
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// This type's copy-constructor and copy-assignment operator is equivalent
-    /// to copying each byte of the source object's footprint to each
-    /// corresponding byte of the destination object's footprint.
-    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(GetIpAddressOptions);
-
-    /// This type's move-constructor and move-assignment operator is equivalent
-    /// to copying each byte of the source object's footprint to each
-    /// corresponding byte of the destination object's footprint.
-    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(GetIpAddressOptions);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(GetIpAddressOptions);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return
@@ -227,20 +243,23 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const GetIpAddressOptions& value);
 
 NTCCFG_INLINE
-GetIpAddressOptions::GetIpAddressOptions()
+GetIpAddressOptions::GetIpAddressOptions(bslma::Allocator* basicAllocator)
 : d_ipAddressFallback()
 , d_ipAddressType()
 , d_ipAddressSelector()
+, d_ipAddressFilter(basicAllocator)
 , d_transport()
 , d_deadline()
 {
 }
 
 NTCCFG_INLINE
-GetIpAddressOptions::GetIpAddressOptions(const GetIpAddressOptions& original)
+GetIpAddressOptions::GetIpAddressOptions(const GetIpAddressOptions& original,
+                                         bslma::Allocator* basicAllocator)
 : d_ipAddressFallback(original.d_ipAddressFallback)
 , d_ipAddressType(original.d_ipAddressType)
 , d_ipAddressSelector(original.d_ipAddressSelector)
+, d_ipAddressFilter(original.d_ipAddressFilter, basicAllocator)
 , d_transport(original.d_transport)
 , d_deadline(original.d_deadline)
 {
@@ -258,6 +277,7 @@ GetIpAddressOptions& GetIpAddressOptions::operator=(
     d_ipAddressFallback = other.d_ipAddressFallback;
     d_ipAddressType     = other.d_ipAddressType;
     d_ipAddressSelector = other.d_ipAddressSelector;
+    d_ipAddressFilter   = other.d_ipAddressFilter;
     d_transport         = other.d_transport;
     d_deadline          = other.d_deadline;
     return *this;
@@ -269,6 +289,7 @@ void GetIpAddressOptions::reset()
     d_ipAddressFallback.reset();
     d_ipAddressType.reset();
     d_ipAddressSelector.reset();
+    d_ipAddressFilter.reset();
     d_transport.reset();
     d_deadline.reset();
 }
@@ -289,6 +310,13 @@ NTSCFG_INLINE
 void GetIpAddressOptions::setIpAddressSelector(bsl::size_t value)
 {
     d_ipAddressSelector = value;
+}
+
+NTSCFG_INLINE
+void GetIpAddressOptions::setIpAddressFilter(
+    const ntsa::IpAddressFilter& value)
+{
+    d_ipAddressFilter = value;
 }
 
 NTSCFG_INLINE
@@ -322,6 +350,13 @@ const bdlb::NullableValue<bsl::size_t>& GetIpAddressOptions::
     ipAddressSelector() const
 {
     return d_ipAddressSelector;
+}
+
+NTSCFG_INLINE
+const bdlb::NullableValue<ntsa::IpAddressFilter>& GetIpAddressOptions::
+    ipAddressFilter() const
+{
+    return d_ipAddressFilter;
 }
 
 NTSCFG_INLINE

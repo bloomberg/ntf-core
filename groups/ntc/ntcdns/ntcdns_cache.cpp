@@ -546,6 +546,16 @@ ntsa::Error Cache::getIpAddress(ntca::GetIpAddressContext*       context,
         return ntsa::Error(ntsa::Error::e_EOF);
     }
 
+    if (options.ipAddressFilter().has_value()) {
+        if (options.ipAddressFilter().value()) {
+            options.ipAddressFilter().value()(&ipAddressList);
+
+            if (ipAddressList.empty()) {
+                return ntsa::Error(ntsa::Error::e_EOF);
+            }
+        }
+    }
+
     context->setDomainName(domainName);
     context->setSource(ntca::ResolverSource::e_CACHE);
 

@@ -1469,17 +1469,10 @@ class StreamSocket : public ntsi::Descriptor,
     /// to attempt a zero-copy send to the specified 'value'. Return the error.
     virtual ntsa::Error setZeroCopyThreshold(bsl::size_t value);
 
-    /// MRM: Implement the resolver observer idea to complement the
-    /// ntca::ConnectOptions that allow the user to supply a resolver
-    /// post-processor function.
-    /// virtual ntsa::Error setResolverObserver(
-    ///    const bsl::shared_ptr<ntci::ResolverObserver>& resolverObserver) = 0;
-
-    /// MRM
     /// Set the connect rate limiter to the specified 'rateLimiter'. Return
     /// the error.
-    /// virtual ntsa::Error setConnectRateLimiter(
-    ///    const bsl::shared_ptr<ntci::RateLimiter>& rateLimiter) = 0;
+    virtual ntsa::Error setConnectRateLimiter(
+        const bsl::shared_ptr<ntci::RateLimiter>& rateLimiter);
 
     /// Set the write rate limiter to the specified 'rateLimiter'. Return
     /// the error.

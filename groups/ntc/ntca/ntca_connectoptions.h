@@ -19,12 +19,16 @@
 #include <bsls_ident.h>
 BSLS_IDENT("$Id: $")
 
+#include <ntca_connectstrategy.h>
 #include <ntca_connecttoken.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <ntsa_backoff.h>
 #include <ntsa_error.h>
 #include <ntsa_ipaddress.h>
+#include <ntsa_ipaddressoptions.h>
 #include <ntsa_port.h>
+#include <ntsa_portoptions.h>
 #include <ntsa_transport.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
@@ -36,47 +40,6 @@ BSLS_IDENT("$Id: $")
 namespace BloombergLP {
 namespace ntca {
 
-/// Enumerate the connect resolution semantics.
-///
-/// @par Thread Safety
-/// This struct is thread safe.
-///
-/// @ingroup module_ntci_operation_connect
-class ConnectResolutionSemantics
-{
-  public:
-    /// Enumerate the connect resolution semantics.
-    enum Value {
-        /// Resolve the name upon each attempt and pick one endpoint given by
-        /// the resolver, according to the IP address selector and port
-        /// selector, if relevant.
-        e_RESOLVE_INTO_SINGLE,
-
-        /// Resolve the name once before all attempts are first begun,
-        /// save address list, retry each address in order.
-        e_RESOLVE_INTO_LIST
-    };
-};
-
-/// Defines a type alias for a function invoked when a name is resolved into
-/// a list of IP addresses, to allow the user to reorder, adjust, add, or
-/// remove entries in the specified 'ipAddressList'.
-typedef bsl::function<ntsa::Error(bsl::vector<ntsa::IpAddress>* ipAddressList)>
-    ConnectResolutionProcessor;
-
-/// Describe the parameters to the calculation of backoff between individual
-/// attempts of a connect operation.
-class ConnectBackoff
-{
-    double             d_intervalCoefficient;
-    double             d_intervalExponent;
-    bsls::TimeInterval d_intervalMax;
-    bsls::TimeInterval d_jitterMin;
-    bsls::TimeInterval d_jitterMax;
-
-  public:
-};
-
 /// Describe the parameters to a connect operation.
 ///
 /// @par Attributes
@@ -85,17 +48,12 @@ class ConnectBackoff
 /// @li @b token:
 /// The token used to cancel the operation.
 ///
-/// @li @b resolutionSemantics:
+/// @li @b strategy:
 /// The semantics of when to resolve names and how to treat the result of name
-/// resolution: either resolve everytime and pick first address given by
+/// resolution: either resolve every time and pick one address given by
 /// resolver, or resolve once and save address list, retrying each address in
-/// order. In both cases, a resolution processor, is defined, may reorder,
-/// prune, and even adjust the results of name resolution.
-///
-/// @li @b resolutionProcessor:
-/// Function pointer given by the user allowing the user to reorder, prune, and
-/// even adjust the results of name resolution to define the order of addresses
-/// that iterative connection attempts will try to connect to.
+/// order. In both cases, IP address filters and port filers, if defined, may
+/// reorder, prune, and even adjust the results of name resolution.
 ///
 /// @li @b retryCount:
 /// The number of additional attempts to attempt to connect, if and when the
@@ -107,7 +65,7 @@ class ConnectBackoff
 /// fails and the retry count is greater than zero. The default value is null,
 /// which indicates an implementation-chosen default retry interval is used.
 ///
-/// @li @b retryIntervalBackoff
+/// @li @b retryBackoff
 /// The geometric or exponential backoff policy, with optional jitter.
 ///
 /// @li @b ipAddressFallback:
@@ -127,6 +85,11 @@ class ConnectBackoff
 /// The default value is null, indicating the first IP address in the IP
 /// address list is selected.
 ///
+/// @li @b ipAddressFilter:
+/// The function invoked when a domain name is resolved into a list of IP
+/// addresses, to allow the user to reorder, adjust, add, or remove entries in
+/// list.
+///
 /// @li @b portFallback:
 /// The implied port when no service name or port is explicitly defined. The
 /// default value is null, which indicates that resolution should fail unless a
@@ -137,6 +100,11 @@ class ConnectBackoff
 /// to a service name. This value is always applied modulo the size of the port
 /// list that is the result of resolving a service name. The default value is
 /// null, indicating the first port in the port list is selected.
+///
+/// @li @b portFilter:
+/// The function invoked when a service name is resolved into a list of port
+/// numbers, to allow the user to reorder, adjust, add, or remove entries in
+/// list.
 ///
 /// @li @b transport:
 /// The desired transport with which to use the endpoint. This value affects
@@ -160,25 +128,34 @@ class ConnectBackoff
 /// @ingroup module_ntci_operation_connect
 class ConnectOptions
 {
-    bdlb::NullableValue<ntca::ConnectToken>         d_token;
-    bdlb::NullableValue<bsl::size_t>                d_retryCount;
-    bdlb::NullableValue<bsls::TimeInterval>         d_retryInterval;
-    bdlb::NullableValue<ntsa::IpAddress>            d_ipAddressFallback;
-    bdlb::NullableValue<ntsa::IpAddressType::Value> d_ipAddressType;
-    bdlb::NullableValue<bsl::size_t>                d_ipAddressSelector;
-    bdlb::NullableValue<ntsa::Port>                 d_portFallback;
-    bdlb::NullableValue<bsl::size_t>                d_portSelector;
-    bdlb::NullableValue<ntsa::Transport::Value>     d_transport;
-    bdlb::NullableValue<bsls::TimeInterval>         d_deadline;
-    bool                                            d_recurse;
+    bdlb::NullableValue<ntca::ConnectToken>           d_token;
+    bdlb::NullableValue<ntca::ConnectStrategy::Value> d_strategy;
+    bdlb::NullableValue<bsl::size_t>                  d_retryCount;
+    bdlb::NullableValue<bsls::TimeInterval>           d_retryInterval;
+    bdlb::NullableValue<ntsa::Backoff>                d_retryBackoff;
+    bdlb::NullableValue<ntsa::IpAddress>              d_ipAddressFallback;
+    bdlb::NullableValue<ntsa::IpAddressType::Value>   d_ipAddressType;
+    bdlb::NullableValue<bsl::size_t>                  d_ipAddressSelector;
+    bdlb::NullableValue<ntsa::IpAddressFilter>        d_ipAddressFilter;
+    bdlb::NullableValue<ntsa::Port>                   d_portFallback;
+    bdlb::NullableValue<bsl::size_t>                  d_portSelector;
+    bdlb::NullableValue<ntsa::PortFilter>             d_portFilter;
+    bdlb::NullableValue<ntsa::Transport::Value>       d_transport;
+    bdlb::NullableValue<bsls::TimeInterval>           d_deadline;
+    bool                                              d_recurse;
 
   public:
-    /// Create new connect options having the default value.
-    ConnectOptions();
+    /// Create new connect options having the default value. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is null, the currently installed default allocator is used.
+    explicit ConnectOptions(bslma::Allocator* basicAllocator = 0);
 
     /// Create new connect options having the same value as the specified
-    /// 'original' object.
-    ConnectOptions(const ConnectOptions& original);
+    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is null, the currently installed default
+    /// allocator is used.
+    ConnectOptions(const ConnectOptions& original,
+                   bslma::Allocator*     basicAllocator = 0);
 
     /// Destroy this object.
     ~ConnectOptions();
@@ -194,6 +171,9 @@ class ConnectOptions
     /// Set the token used to cancel the operation to the specified 'value'.
     void setToken(const ntca::ConnectToken& value);
 
+    /// Set the resolution strategy to the specified 'value'.
+    void setStrategy(ntca::ConnectStrategy::Value value);
+
     /// Set the number of additional attempts to attempt to connect, if and
     /// when the initial attempt fails, to the specified 'value'.
     void setRetryCount(bsl::size_t value);
@@ -202,6 +182,9 @@ class ConnectOptions
     /// initial attempt fails and the retry count is greater than zero, to
     /// the specified 'value'.
     void setRetryInterval(const bsls::TimeInterval& value);
+
+    /// Set the retry back to the specified 'value'.
+    void setRetryBackoff(const ntsa::Backoff& value);
 
     /// Set the implied IP address when no domain name or IP address is
     /// explicitly defined to the specified 'value'. The default value is
@@ -223,6 +206,11 @@ class ConnectOptions
     /// is selected.
     void setIpAddressSelector(bsl::size_t value);
 
+    /// Set the function invoked when a domain name is resolved into a list of
+    /// IP addresses, to allow the user to reorder, adjust, add, or remove
+    /// entries in list, to the specified 'value'.
+    void setIpAddressFilter(const ntsa::IpAddressFilter& value);
+
     /// Set the implied port when no service name or port is explicitly
     /// defined to the specified 'value'. The default value is null,
     /// which indicates that resolution should fail unless a service name or
@@ -235,6 +223,11 @@ class ConnectOptions
     /// of resolving a service name. The default value is null, indicating
     /// the first port in the port list is selected.
     void setPortSelector(bsl::size_t value);
+
+    /// Set the function invoked when a service name is resolved into a list of
+    /// port numbers, to allow the user to reorder, adjust, add, or remove
+    /// entries in list, to the specified 'value'.
+    void setPortFilter(const ntsa::PortFilter& value);
 
     /// Set the desired transport with which to use the endpoint to the
     /// specified 'value'. This value affects how domain names resolve to
@@ -256,6 +249,9 @@ class ConnectOptions
     /// Return the token used to cancel the operation.
     const bdlb::NullableValue<ntca::ConnectToken>& token() const;
 
+    /// Return the resolution strategy.
+    const bdlb::NullableValue<ntca::ConnectStrategy::Value>& strategy() const;
+
     /// Return the number of additional attempts to attempt to connect, if
     /// and when the initial attempt fails.
     const bdlb::NullableValue<bsl::size_t>& retryCount() const;
@@ -263,6 +259,9 @@ class ConnectOptions
     /// Return the interval between connection attempts, if and when the
     /// initial attempt fails and the retry count is greater than zero.
     const bdlb::NullableValue<bsls::TimeInterval>& retryInterval() const;
+
+    /// Return the retry backoff.
+    const bdlb::NullableValue<ntsa::Backoff>& retryBackoff() const;
 
     /// Return the implied IP address when no domain name or IP address is
     /// explicitly defined to the specified 'value'. The default value is
@@ -285,6 +284,11 @@ class ConnectOptions
     /// selected.
     const bdlb::NullableValue<bsl::size_t>& ipAddressSelector() const;
 
+    /// Return the function invoked when a domain name is resolved into a list
+    /// of IP addresses, to allow the user to reorder, adjust, add, or remove
+    /// entries in list.
+    const bdlb::NullableValue<ntsa::IpAddressFilter>& ipAddressFilter() const;
+
     /// Return the implied port when no service name or port is explicitly
     /// defined to the specified 'value'. The default value is null, which
     /// indicates that resolution should fail unless a service name or port
@@ -297,6 +301,11 @@ class ConnectOptions
     /// result of resolving a service name. The default value is null,
     /// indicating the first port in the port list is selected.
     const bdlb::NullableValue<bsl::size_t>& portSelector() const;
+
+    /// Return the function invoked when a service name is resolved into a list
+    /// of port numbers, to allow the user to reorder, adjust, add, or remove
+    /// entries in list.
+    const bdlb::NullableValue<ntsa::PortFilter>& portFilter() const;
 
     /// Return the desired transport with which to use the endpoint to the
     /// specified 'value'. This value affects how domain names resolve to
@@ -337,15 +346,9 @@ class ConnectOptions
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// This type's copy-constructor and copy-assignment operator is equivalent
-    /// to copying each byte of the source object's footprint to each
-    /// corresponding byte of the destination object's footprint.
-    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(ConnectOptions);
-
-    /// This type's move-constructor and move-assignment operator is equivalent
-    /// to copying each byte of the source object's footprint to each
-    /// corresponding byte of the destination object's footprint.
-    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(ConnectOptions);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(ConnectOptions);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return
@@ -380,15 +383,19 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const ConnectOptions& value);
 
 NTCCFG_INLINE
-ConnectOptions::ConnectOptions()
+ConnectOptions::ConnectOptions(bslma::Allocator* basicAllocator)
 : d_token()
+, d_strategy()
 , d_retryCount()
 , d_retryInterval()
+, d_retryBackoff()
 , d_ipAddressFallback()
 , d_ipAddressType()
 , d_ipAddressSelector()
+, d_ipAddressFilter(basicAllocator)
 , d_portFallback()
 , d_portSelector()
+, d_portFilter(basicAllocator)
 , d_transport()
 , d_deadline()
 , d_recurse(false)
@@ -396,15 +403,20 @@ ConnectOptions::ConnectOptions()
 }
 
 NTCCFG_INLINE
-ConnectOptions::ConnectOptions(const ConnectOptions& original)
+ConnectOptions::ConnectOptions(const ConnectOptions& original,
+                               bslma::Allocator*     basicAllocator)
 : d_token(original.d_token)
+, d_strategy(original.d_strategy)
 , d_retryCount(original.d_retryCount)
 , d_retryInterval(original.d_retryInterval)
+, d_retryBackoff(original.d_retryBackoff)
 , d_ipAddressFallback(original.d_ipAddressFallback)
 , d_ipAddressType(original.d_ipAddressType)
 , d_ipAddressSelector(original.d_ipAddressSelector)
+, d_ipAddressFilter(original.d_ipAddressFilter, basicAllocator)
 , d_portFallback(original.d_portFallback)
 , d_portSelector(original.d_portSelector)
+, d_portFilter(original.d_portFilter, basicAllocator)
 , d_transport(original.d_transport)
 , d_deadline(original.d_deadline)
 , d_recurse(original.d_recurse)
@@ -420,13 +432,17 @@ NTCCFG_INLINE
 ConnectOptions& ConnectOptions::operator=(const ConnectOptions& other)
 {
     d_token             = other.d_token;
+    d_strategy          = other.d_strategy;
     d_retryCount        = other.d_retryCount;
     d_retryInterval     = other.d_retryInterval;
+    d_retryBackoff      = other.d_retryBackoff;
     d_ipAddressFallback = other.d_ipAddressFallback;
     d_ipAddressType     = other.d_ipAddressType;
     d_ipAddressSelector = other.d_ipAddressSelector;
+    d_ipAddressFilter   = other.d_ipAddressFilter;
     d_portFallback      = other.d_portFallback;
     d_portSelector      = other.d_portSelector;
+    d_portFilter        = other.d_portFilter;
     d_transport         = other.d_transport;
     d_deadline          = other.d_deadline;
     d_recurse           = other.d_recurse;
@@ -437,13 +453,17 @@ NTCCFG_INLINE
 void ConnectOptions::reset()
 {
     d_token.reset();
+    d_strategy.reset();
     d_retryCount.reset();
     d_retryInterval.reset();
+    d_retryBackoff.reset();
     d_ipAddressFallback.reset();
     d_ipAddressType.reset();
     d_ipAddressSelector.reset();
+    d_ipAddressFilter.reset();
     d_portFallback.reset();
     d_portSelector.reset();
+    d_portFilter.reset();
     d_transport.reset();
     d_deadline.reset();
     d_recurse = false;
@@ -456,6 +476,12 @@ void ConnectOptions::setToken(const ntca::ConnectToken& value)
 }
 
 NTCCFG_INLINE
+void ConnectOptions::setStrategy(ntca::ConnectStrategy::Value value)
+{
+    d_strategy = value;
+}
+
+NTCCFG_INLINE
 void ConnectOptions::setRetryCount(bsl::size_t value)
 {
     d_retryCount = value;
@@ -465,6 +491,12 @@ NTCCFG_INLINE
 void ConnectOptions::setRetryInterval(const bsls::TimeInterval& value)
 {
     d_retryInterval = value;
+}
+
+NTCCFG_INLINE
+void ConnectOptions::setRetryBackoff(const ntsa::Backoff& value)
+{
+    d_retryBackoff = value;
 }
 
 NTSCFG_INLINE
@@ -486,6 +518,12 @@ void ConnectOptions::setIpAddressSelector(bsl::size_t value)
 }
 
 NTSCFG_INLINE
+void ConnectOptions::setIpAddressFilter(const ntsa::IpAddressFilter& value)
+{
+    d_ipAddressFilter = value;
+}
+
+NTSCFG_INLINE
 void ConnectOptions::setPortFallback(ntsa::Port value)
 {
     d_portFallback = value;
@@ -495,6 +533,12 @@ NTSCFG_INLINE
 void ConnectOptions::setPortSelector(bsl::size_t value)
 {
     d_portSelector = value;
+}
+
+NTSCFG_INLINE
+void ConnectOptions::setPortFilter(const ntsa::PortFilter& value)
+{
+    d_portFilter = value;
 }
 
 NTSCFG_INLINE
@@ -521,6 +565,13 @@ const bdlb::NullableValue<ntca::ConnectToken>& ConnectOptions::token() const
     return d_token;
 }
 
+NTCCFG_INLINE
+const bdlb::NullableValue<ntca::ConnectStrategy::Value>& ConnectOptions::
+    strategy() const
+{
+    return d_strategy;
+}
+
 NTSCFG_INLINE
 const bdlb::NullableValue<bsl::size_t>& ConnectOptions::retryCount() const
 {
@@ -532,6 +583,12 @@ const bdlb::NullableValue<bsls::TimeInterval>& ConnectOptions::retryInterval()
     const
 {
     return d_retryInterval;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntsa::Backoff>& ConnectOptions::retryBackoff() const
+{
+    return d_retryBackoff;
 }
 
 NTSCFG_INLINE
@@ -556,6 +613,13 @@ const bdlb::NullableValue<bsl::size_t>& ConnectOptions::ipAddressSelector()
 }
 
 NTSCFG_INLINE
+const bdlb::NullableValue<ntsa::IpAddressFilter>& ConnectOptions::
+    ipAddressFilter() const
+{
+    return d_ipAddressFilter;
+}
+
+NTSCFG_INLINE
 const bdlb::NullableValue<ntsa::Port>& ConnectOptions::portFallback() const
 {
     return d_portFallback;
@@ -565,6 +629,12 @@ NTSCFG_INLINE
 const bdlb::NullableValue<bsl::size_t>& ConnectOptions::portSelector() const
 {
     return d_portSelector;
+}
+
+NTSCFG_INLINE
+const bdlb::NullableValue<ntsa::PortFilter>& ConnectOptions::portFilter() const
+{
+    return d_portFilter;
 }
 
 NTSCFG_INLINE
@@ -616,8 +686,10 @@ void hashAppend(HASH_ALGORITHM& algorithm, const ConnectOptions& value)
     using bslh::hashAppend;
 
     hashAppend(algorithm, value.token());
+    hashAppend(algorithm, value.strategy());
     hashAppend(algorithm, value.retryCount());
     hashAppend(algorithm, value.retryInterval());
+    hashAppend(algorithm, value.retryBackoff());
     hashAppend(algorithm, value.ipAddressFallback());
     hashAppend(algorithm, value.ipAddressType());
     hashAppend(algorithm, value.ipAddressSelector());

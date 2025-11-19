@@ -478,6 +478,14 @@ void ClientGetIpAddressOperation::processResponse(
         ntsu::ResolverUtil::sortIpAddressList(&ipAddressList);
     }
 
+    if (!ipAddressList.empty()) {
+        if (d_options.ipAddressFilter().has_value()) {
+            if (d_options.ipAddressFilter().value()) {
+                d_options.ipAddressFilter().value()(&ipAddressList);
+            }
+        }
+    }
+
     ntca::GetIpAddressEvent event;
 
     if (ipAddressList.empty()) {

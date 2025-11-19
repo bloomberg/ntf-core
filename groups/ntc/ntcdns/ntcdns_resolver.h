@@ -93,10 +93,10 @@ class Resolver : public ntci::Resolver, public ntccfg::Shared<Resolver>
     /// an IP address. Invoke the specified 'callback'.
     static void processGetIpAddressResult(
         const bsl::shared_ptr<ntci::Resolver>& resolver,
-        const bsl::vector<ntsa::IpAddress>&    ipAddressList,
+        const bsl::string&                     authority,
         const bsls::TimeInterval&              startTime,
-        const bsl::string&                     serviceName,
-        ntsa::Port                             port,
+        const bsl::vector<ntsa::IpAddress>&    ipAddressList,
+        const bsl::vector<ntsa::Port>          portList,
         const ntca::GetIpAddressEvent&         event,
         const ntci::GetEndpointCallback&       callback);
 

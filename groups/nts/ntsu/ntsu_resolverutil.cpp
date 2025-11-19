@@ -250,6 +250,16 @@ ntsa::Error ResolverUtil::getIpAddress(bsl::vector<ntsa::IpAddress>* result,
         return ntsa::Error(ntsa::Error::e_EOF);
     }
 
+    if (options.ipAddressFilter().has_value()) {
+        if (options.ipAddressFilter().value()) {
+            options.ipAddressFilter().value()(&ipAddressList);
+
+            if (ipAddressList.empty()) {
+                return ntsa::Error(ntsa::Error::e_EOF);
+            }
+        }
+    }
+
     if (options.ipAddressSelector().isNull()) {
         *result = ipAddressList;
     }
@@ -440,6 +450,16 @@ ntsa::Error ResolverUtil::getPort(bsl::vector<ntsa::Port>* result,
         return ntsa::Error(ntsa::Error::e_EOF);
     }
 
+    if (options.portFilter().has_value()) {
+        if (options.portFilter().value()) {
+            options.portFilter().value()(&portList);
+
+            if (portList.empty()) {
+                return ntsa::Error(ntsa::Error::e_EOF);
+            }
+        }
+    }
+
     if (options.portSelector().isNull()) {
         *result = portList;
     }
@@ -568,6 +588,16 @@ ntsa::Error ResolverUtil::getLocalIpAddress(
 
     if (ipAddressList.empty()) {
         return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    if (options.ipAddressFilter().has_value()) {
+        if (options.ipAddressFilter().value()) {
+            options.ipAddressFilter().value()(&ipAddressList);
+
+            if (ipAddressList.empty()) {
+                return ntsa::Error(ntsa::Error::e_EOF);
+            }
+        }
     }
 
     if (options.ipAddressSelector().isNull()) {

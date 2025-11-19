@@ -44,6 +44,9 @@ namespace ntca {
 /// @li @b authority:
 /// The domain name and port requested to be resolved.
 ///
+/// @li @b endpointList:
+/// The list of endpoints to which the authority resolves.
+///
 /// @li @b latency:
 /// The length of time to perform the resolution.
 ///
@@ -68,6 +71,7 @@ namespace ntca {
 class GetEndpointContext
 {
     bsl::string                         d_authority;
+    bsl::vector<ntsa::Endpoint>         d_endpointList;
     bsls::TimeInterval                  d_latency;
     ntca::ResolverSource::Value         d_source;
     bdlb::NullableValue<ntsa::Endpoint> d_nameServer;
@@ -103,6 +107,14 @@ class GetEndpointContext
     /// specified 'value'.
     void setAuthority(const bsl::string& value);
 
+    /// Set the list of endpoints to which the authority resolves to the
+    /// specified 'value'.
+    void setEndpointList(const bsl::vector<ntsa::Endpoint>& value);
+
+    /// Add the specified 'value' to the list of endpoints to which the
+    /// authority resolves.
+    void addEndpoint(const ntsa::Endpoint& value);
+
     /// Set the length of time to perform the resolution to the specified
     /// 'value'.
     void setLatency(const bsls::TimeInterval& value);
@@ -124,6 +136,9 @@ class GetEndpointContext
 
     /// Return the domain name and port requested to be resolved.
     const bsl::string& authority() const;
+
+    /// Return the endpoint list.
+    const bsl::vector<ntsa::Endpoint>& endpointList() const;
 
     /// Return the length of time to perform the resolution.
     const bsls::TimeInterval& latency() const;
@@ -204,6 +219,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const GetEndpointContext& value);
 NTCCFG_INLINE
 GetEndpointContext::GetEndpointContext(bslma::Allocator* basicAllocator)
 : d_authority(basicAllocator)
+, d_endpointList(basicAllocator)
 , d_latency()
 , d_source(ntca::ResolverSource::e_UNKNOWN)
 , d_nameServer()
@@ -216,6 +232,7 @@ NTCCFG_INLINE
 GetEndpointContext::GetEndpointContext(const GetEndpointContext& original,
                                        bslma::Allocator* basicAllocator)
 : d_authority(original.d_authority, basicAllocator)
+, d_endpointList(original.d_endpointList, basicAllocator)
 , d_latency(original.d_latency)
 , d_source(original.d_source)
 , d_nameServer(original.d_nameServer)
@@ -234,12 +251,13 @@ GetEndpointContext& GetEndpointContext::operator=(
     const GetEndpointContext& other)
 {
     if (this != &other) {
-        d_authority  = other.d_authority;
-        d_latency    = other.d_latency;
-        d_source     = other.d_source;
-        d_nameServer = other.d_nameServer;
-        d_timeToLive = other.d_timeToLive;
-        d_error      = other.d_error;
+        d_authority    = other.d_authority;
+        d_endpointList = other.d_endpointList;
+        d_latency      = other.d_latency;
+        d_source       = other.d_source;
+        d_nameServer   = other.d_nameServer;
+        d_timeToLive   = other.d_timeToLive;
+        d_error        = other.d_error;
     }
     return *this;
 }
@@ -248,6 +266,7 @@ NTCCFG_INLINE
 void GetEndpointContext::reset()
 {
     d_authority.clear();
+    d_endpointList.clear();
     d_latency = bsls::TimeInterval();
     d_source  = ntca::ResolverSource::e_UNKNOWN;
     d_nameServer.reset();
@@ -259,6 +278,19 @@ NTCCFG_INLINE
 void GetEndpointContext::setAuthority(const bsl::string& value)
 {
     d_authority = value;
+}
+
+NTCCFG_INLINE
+void GetEndpointContext::setEndpointList(
+    const bsl::vector<ntsa::Endpoint>& value)
+{
+    d_endpointList = value;
+}
+
+NTCCFG_INLINE
+void GetEndpointContext::addEndpoint(const ntsa::Endpoint& value)
+{
+    d_endpointList.push_back(value);
 }
 
 NTCCFG_INLINE
@@ -295,6 +327,12 @@ NTCCFG_INLINE
 const bsl::string& GetEndpointContext::authority() const
 {
     return d_authority;
+}
+
+NTCCFG_INLINE
+const bsl::vector<ntsa::Endpoint>& GetEndpointContext::endpointList() const
+{
+    return d_endpointList;
 }
 
 NTCCFG_INLINE
@@ -359,6 +397,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const GetEndpointContext& value)
     using bslh::hashAppend;
 
     hashAppend(algorithm, value.authority());
+    hashAppend(algorithm, value.endpointList());
     hashAppend(algorithm, value.latency());
     hashAppend(algorithm, value.source());
     hashAppend(algorithm, value.nameServer());

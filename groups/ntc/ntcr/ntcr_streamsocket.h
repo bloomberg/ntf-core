@@ -137,6 +137,8 @@ class StreamSocket : public ntci::StreamSocket,
     bool                                       d_receiveGreedily;
     bsl::shared_ptr<bdlbb::Blob>               d_receiveBlob_sp;
     ntsa::Endpoint                             d_connectEndpoint;
+    bsl::vector<ntsa::Endpoint>                d_connectEndpointVector;
+    bsl::size_t                                d_connectEndpointIndex;
     bsl::string                                d_connectName;
     bsls::TimeInterval                         d_connectStartTime;
     bsl::size_t                                d_connectAttempts;
@@ -145,6 +147,8 @@ class StreamSocket : public ntci::StreamSocket,
     ntci::ConnectCallback                      d_connectCallback;
     bsl::shared_ptr<ntci::Timer>               d_connectDeadlineTimer_sp;
     bsl::shared_ptr<ntci::Timer>               d_connectRetryTimer_sp;
+    bsl::shared_ptr<ntci::RateLimiter>         d_connectRateLimiter_sp;
+    bsl::shared_ptr<ntci::Timer>               d_connectRateTimer_sp;
     bool                                       d_connectInProgress;
     ntca::UpgradeOptions                       d_upgradeOptions;
     ntci::UpgradeCallback                      d_upgradeCallback;
@@ -1171,6 +1175,11 @@ class StreamSocket : public ntci::StreamSocket,
     /// Set the minimum number of bytes that must be available to send in order
     /// to attempt a zero-copy send to the specified 'value'. Return the error.
     ntsa::Error setZeroCopyThreshold(bsl::size_t value) BSLS_KEYWORD_OVERRIDE;
+
+    /// Set the connect rate limiter to the specified 'rateLimiter'. Return
+    /// the error.
+    ntsa::Error setConnectRateLimiter(const bsl::shared_ptr<ntci::RateLimiter>&
+                                          rateLimiter) BSLS_KEYWORD_OVERRIDE;
 
     /// Set the write rate limiter to the specified 'rateLimiter'. Return
     /// the error.

@@ -311,6 +311,16 @@ ntsa::Error ResolverOverrides::getIpAddress(
         return ntsa::Error(ntsa::Error::e_EOF);
     }
 
+    if (options.ipAddressFilter().has_value()) {
+        if (options.ipAddressFilter().value()) {
+            options.ipAddressFilter().value()(&ipAddressList);
+
+            if (ipAddressList.empty()) {
+                return ntsa::Error(ntsa::Error::e_EOF);
+            }
+        }
+    }
+
     if (options.ipAddressSelector().isNull()) {
         *result = ipAddressList;
     }
@@ -407,6 +417,16 @@ ntsa::Error ResolverOverrides::getPort(bsl::vector<ntsa::Port>* result,
 
     if (portList.empty()) {
         return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    if (options.portFilter().has_value()) {
+        if (options.portFilter().value()) {
+            options.portFilter().value()(&portList);
+
+            if (portList.empty()) {
+                return ntsa::Error(ntsa::Error::e_EOF);
+            }
+        }
     }
 
     if (options.portSelector().isNull()) {
@@ -941,6 +961,10 @@ ntsa::Error Resolver::getEndpoint(ntsa::Endpoint*              result,
             portOptions.setPortSelector(options.portSelector().value());
         }
 
+        if (!options.portFilter().isNull()) {
+            portOptions.setPortFilter(options.portFilter().value());
+        }
+
         if (!options.transport().isNull()) {
             portOptions.setTransport(options.transport().value());
         }
@@ -976,6 +1000,11 @@ ntsa::Error Resolver::getEndpoint(ntsa::Endpoint*              result,
         if (!options.ipAddressSelector().isNull()) {
             ipAddressOptions.setIpAddressSelector(
                 options.ipAddressSelector().value());
+        }
+
+        if (!options.ipAddressFilter().isNull()) {
+            ipAddressOptions.setIpAddressFilter(
+                options.ipAddressFilter().value());
         }
 
         if (!options.transport().isNull()) {
@@ -1043,6 +1072,334 @@ ntsa::Error Resolver::getEndpoint(ntsa::Endpoint*              result,
     }
 
     *result = ntsa::Endpoint(ntsa::IpEndpoint(ipAddress, port.value()));
+
+    return ntsa::Error();
+}
+
+ntsa::Error Resolver::getEndpoint(bsl::vector<ntsa::Endpoint>* result,
+                                  const bslstl::StringRef&     text,
+                                  const ntsa::EndpointOptions& options)
+{
+    ntsa::Error error;
+
+    bsl::vector<ntsa::IpAddress> resolvedIpAddressVector;
+    bsl::vector<ntsa::Port>      resolvedPortVector;
+
+    bslstl::StringRef unresolvedDomainName;
+    bslstl::StringRef unresolvedPort;
+
+    result->clear();
+
+    if (!options.transport().isNull()) {
+        if (options.transport().value() == ntsa::Transport::e_LOCAL_STREAM ||
+            options.transport().value() == ntsa::Transport::e_LOCAL_DATAGRAM)
+        {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    const char* begin = text.begin();
+    const char* end   = text.end();
+
+    if (begin != end) {
+        bool isNumber = true;
+        {
+            for (const char* current = begin; current < end; ++current) {
+                if (!bdlb::CharType::isDigit(*current)) {
+                    isNumber = false;
+                    break;
+                }
+            }
+        }
+
+        if (isNumber) {
+            ntsa::Port port;
+            if (!ntsa::PortUtil::parse(&port, begin, end - begin)) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+            else {
+                resolvedPortVector.push_back(port);
+            }
+        }
+        else {
+            if (*begin == '[') {
+                const char* mark = end - 1;
+                while (mark > begin) {
+                    if (*mark == ']') {
+                        break;
+                    }
+
+                    --mark;
+                }
+
+                if (mark == begin) {
+                    return ntsa::Error(ntsa::Error::e_INVALID);  // missing ']'
+                }
+
+                const char* ipv6AddressBegin = begin + 1;
+                const char* ipv6AddressEnd   = mark;
+
+                ntsa::Ipv6Address ipv6Address;
+                if (ipv6Address.parse(
+                        bslstl::StringRef(ipv6AddressBegin, ipv6AddressEnd)))
+                {
+                    resolvedIpAddressVector.push_back(
+                        ntsa::IpAddress(ipv6Address));
+                }
+                else {
+                    return ntsa::Error(ntsa::Error::e_INVALID);
+                }
+
+                const char* colon = mark + 1;
+
+                if (colon >= end) {
+                    return ntsa::Error(ntsa::Error::e_INVALID);  // missing ':'
+                }
+
+                if (*colon != ':') {
+                    return ntsa::Error(ntsa::Error::e_INVALID);  // missing ':'
+                }
+
+                const char* portBegin = colon + 1;
+                const char* portEnd   = end;
+
+                if (portBegin >= portEnd) {
+                    return ntsa::Error(
+                        ntsa::Error::e_INVALID);  // missing port
+                }
+
+                ntsa::Port port;
+                if (!ntsa::PortUtil::parse(&port,
+                                           portBegin,
+                                           portEnd - portBegin))
+                {
+                    unresolvedPort.assign(portBegin, portEnd);
+                }
+                else {
+                    resolvedPortVector.push_back(port);
+                }
+            }
+            else {
+                const char* current   = end - 1;
+                const char* mark      = 0;
+                bsl::size_t numColons = 0;
+                while (current > begin) {
+                    if (*current == ':') {
+                        if (mark == 0) {
+                            mark = current;
+                        }
+                        ++numColons;
+                        if (numColons > 1) {
+                            break;
+                        }
+                    }
+
+                    --current;
+                }
+
+                if (numColons == 0) {
+                    // <ip-address-or-host> (missing ':' therefore no port)
+
+                    const char* ipAddressBegin = begin;
+                    const char* ipAddressEnd   = end;
+
+                    ntsa::IpAddress ipAddress;
+                    if (!ipAddress.parse(
+                            bslstl::StringRef(ipAddressBegin, ipAddressEnd)))
+                    {
+                        unresolvedDomainName.assign(ipAddressBegin,
+                                                    ipAddressEnd);
+                    }
+                    else {
+                        resolvedIpAddressVector.push_back(ipAddress);
+                    }
+                }
+                else if (numColons == 1) {
+                    // <ipv4-address-or-host>:<port>
+
+                    const char* ipv4AddressBegin = begin;
+                    const char* ipv4AddressEnd   = mark;
+
+                    ntsa::Ipv4Address ipv4Address;
+                    if (ipv4Address.parse(bslstl::StringRef(ipv4AddressBegin,
+                                                            ipv4AddressEnd)))
+                    {
+                        resolvedIpAddressVector.push_back(
+                            ntsa::IpAddress(ipv4Address));
+                    }
+                    else {
+                        unresolvedDomainName.assign(ipv4AddressBegin,
+                                                    ipv4AddressEnd);
+                    }
+
+                    const char* portBegin = mark + 1;
+                    const char* portEnd   = end;
+
+                    if (portBegin >= portEnd) {
+                        return ntsa::Error(
+                            ntsa::Error::e_INVALID);  // missing port
+                    }
+
+                    ntsa::Port port;
+                    if (!ntsa::PortUtil::parse(&port,
+                                               portBegin,
+                                               portEnd - portBegin))
+                    {
+                        unresolvedPort.assign(portBegin, portEnd);
+                    }
+                    else {
+                        resolvedPortVector.push_back(port);
+                    }
+                }
+                else {
+                    // <ipv6-address> (more than one ':' found)
+
+                    const char* ipv6AddressBegin = begin;
+                    const char* ipv6AddressEnd   = end;
+
+                    ntsa::Ipv6Address ipv6Address;
+                    if (ipv6Address.parse(bslstl::StringRef(ipv6AddressBegin,
+                                                            ipv6AddressEnd)))
+                    {
+                        resolvedIpAddressVector.push_back(
+                            ntsa::IpAddress(ipv6Address));
+                    }
+                    else {
+                        return ntsa::Error(ntsa::Error::e_INVALID);
+                    }
+                }
+            }
+        }
+    }
+
+    if (!unresolvedPort.empty()) {
+        ntsa::PortOptions portOptions;
+
+        if (!options.portSelector().isNull()) {
+            portOptions.setPortSelector(options.portSelector().value());
+        }
+
+        if (!options.portFilter().isNull()) {
+            portOptions.setPortFilter(options.portFilter().value());
+        }
+
+        if (!options.transport().isNull()) {
+            portOptions.setTransport(options.transport().value());
+        }
+
+        error =
+            this->getPort(&resolvedPortVector, unresolvedPort, portOptions);
+        if (error) {
+            return error;
+        }
+
+        if (resolvedPortVector.empty()) {
+            return ntsa::Error(ntsa::Error::e_EOF);  // unresolvable port
+        }
+    }
+    else if (resolvedPortVector.empty()) {
+        if (!options.portFallback().isNull()) {
+            resolvedPortVector.push_back(options.portFallback().value());
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (!unresolvedDomainName.empty()) {
+        ntsa::IpAddressOptions ipAddressOptions;
+
+        if (!options.ipAddressType().isNull()) {
+            ipAddressOptions.setIpAddressType(options.ipAddressType().value());
+        }
+
+        if (!options.ipAddressSelector().isNull()) {
+            ipAddressOptions.setIpAddressSelector(
+                options.ipAddressSelector().value());
+        }
+
+        if (!options.ipAddressFilter().isNull()) {
+            ipAddressOptions.setIpAddressFilter(
+                options.ipAddressFilter().value());
+        }
+
+        if (!options.transport().isNull()) {
+            ipAddressOptions.setTransport(options.transport().value());
+        }
+
+        error = this->getIpAddress(&resolvedIpAddressVector,
+                                   unresolvedDomainName,
+                                   ipAddressOptions);
+        if (error) {
+            return error;
+        }
+
+        if (resolvedIpAddressVector.empty()) {
+            return ntsa::Error(ntsa::Error::e_EOF);  // unresolvable host
+        }
+    }
+    else if (resolvedIpAddressVector.empty()) {
+        if (!options.ipAddressFallback().isNull()) {
+            resolvedIpAddressVector.push_back(
+                options.ipAddressFallback().value());
+        }
+        else {
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
+    if (resolvedIpAddressVector.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    if (resolvedPortVector.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
+
+    for (bsl::size_t i = 0; i < resolvedIpAddressVector.size(); ++i) {
+        const ntsa::IpAddress& ipAddress = resolvedIpAddressVector[i];
+
+        if (!options.ipAddressType().isNull()) {
+            if (ipAddress.type() != options.ipAddressType().value()) {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+
+        if (!options.transport().isNull()) {
+            if (options.transport().value() ==
+                    ntsa::Transport::e_TCP_IPV4_STREAM ||
+                options.transport().value() ==
+                    ntsa::Transport::e_UDP_IPV4_DATAGRAM)
+            {
+                if (!ipAddress.isV4()) {
+                    return ntsa::Error(ntsa::Error::e_INVALID);
+                }
+            }
+            else if (options.transport().value() ==
+                         ntsa::Transport::e_TCP_IPV6_STREAM ||
+                     options.transport().value() ==
+                         ntsa::Transport::e_UDP_IPV6_DATAGRAM)
+            {
+                if (!ipAddress.isV6()) {
+                    return ntsa::Error(ntsa::Error::e_INVALID);
+                }
+            }
+            else {
+                return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+        }
+
+        for (bsl::size_t j = 0; j < resolvedPortVector.size(); ++j) {
+            const ntsa::Port port = resolvedPortVector[j];
+
+            result->push_back(
+                ntsa::Endpoint(ntsa::IpEndpoint(ipAddress, port)));
+        }
+    }
+
+    if (result->empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
     return ntsa::Error();
 }

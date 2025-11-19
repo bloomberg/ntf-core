@@ -18,6 +18,7 @@
 #include <bsls_ident.h>
 BSLS_IDENT_RCSID(ntca_connectoptions_cpp, "$Id$ $CSID$")
 
+#include <bdlb_string.h>
 #include <bslim_printer.h>
 
 namespace BloombergLP {
@@ -25,8 +26,10 @@ namespace ntca {
 
 bool ConnectOptions::equals(const ConnectOptions& other) const
 {
-    return (d_token == other.d_token && d_retryCount == other.d_retryCount &&
+    return (d_token == other.d_token && d_strategy == other.d_strategy &&
+            d_retryCount == other.d_retryCount &&
             d_retryInterval == other.d_retryInterval &&
+            d_retryBackoff == other.d_retryBackoff &&
             d_ipAddressFallback == other.d_ipAddressFallback &&
             d_ipAddressType == other.d_ipAddressType &&
             d_ipAddressSelector == other.d_ipAddressSelector &&
@@ -46,6 +49,14 @@ bool ConnectOptions::less(const ConnectOptions& other) const
         return false;
     }
 
+    if (d_strategy < other.d_strategy) {
+        return true;
+    }
+
+    if (other.d_strategy < d_strategy) {
+        return false;
+    }
+
     if (d_retryCount < other.d_retryCount) {
         return true;
     }
@@ -59,6 +70,14 @@ bool ConnectOptions::less(const ConnectOptions& other) const
     }
 
     if (other.d_retryInterval < d_retryInterval) {
+        return false;
+    }
+
+    if (d_retryBackoff < other.d_retryBackoff) {
+        return true;
+    }
+
+    if (other.d_retryBackoff < d_retryBackoff) {
         return false;
     }
 
@@ -128,12 +147,20 @@ bsl::ostream& ConnectOptions::print(bsl::ostream& stream,
         printer.printAttribute("token", d_token);
     }
 
+    if (!d_strategy.isNull()) {
+        printer.printAttribute("resolutionStrategy", d_strategy);
+    }
+
     if (!d_retryCount.isNull()) {
         printer.printAttribute("retryCount", d_retryCount);
     }
 
     if (!d_retryInterval.isNull()) {
         printer.printAttribute("retryInterval", d_retryInterval);
+    }
+
+    if (!d_retryBackoff.isNull()) {
+        printer.printAttribute("retryBackoff", d_retryBackoff);
     }
 
     if (!d_ipAddressFallback.isNull()) {

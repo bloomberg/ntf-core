@@ -5290,14 +5290,18 @@ StreamSocket::StreamSocket(
 , d_receiveGreedily(NTCCFG_DEFAULT_STREAM_SOCKET_READ_GREEDILY)
 , d_receiveBlob_sp()
 , d_connectEndpoint()
+, d_connectEndpointVector(basicAllocator)
+, d_connectEndpointIndex(0)
 , d_connectName(basicAllocator)
 , d_connectStartTime()
 , d_connectAttempts(0)
-, d_connectOptions()
+, d_connectOptions(basicAllocator)
 , d_connectContext(basicAllocator)
 , d_connectCallback(basicAllocator)
 , d_connectDeadlineTimer_sp()
 , d_connectRetryTimer_sp()
+, d_connectRateLimiter_sp()
+, d_connectRateTimer_sp()
 , d_connectInProgress(false)
 , d_upgradeOptions(basicAllocator)
 , d_upgradeCallback(basicAllocator)
@@ -5319,6 +5323,9 @@ StreamSocket::StreamSocket(
 , d_options(options)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
+    NTCCFG_WARNING_UNUSED(d_connectEndpointVector);
+    NTCCFG_WARNING_UNUSED(d_connectEndpointIndex);
+
     if (reactor->maxThreads() > 1) {
         if (!reactor->oneShot()) {
             BSLS_ASSERT(!"Dynamic load balancing requires one-shot mode");
@@ -6743,6 +6750,14 @@ ntsa::Error StreamSocket::setZeroCopyThreshold(bsl::size_t value)
     LockGuard                     lock(&d_mutex);
 
     return this->privateZeroCopyEngage(self, value);
+}
+
+ntsa::Error StreamSocket::setConnectRateLimiter(
+    const bsl::shared_ptr<ntci::RateLimiter>& rateLimiter)
+{
+    NTCCFG_WARNING_UNUSED(rateLimiter);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error StreamSocket::setWriteDeflater(

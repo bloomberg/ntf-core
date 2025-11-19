@@ -62,32 +62,30 @@ const int Resolver::k_DEFAULT_SYSTEM_MAX_IDLE_TIME = 10;
 
 void Resolver::processGetIpAddressResult(
     const bsl::shared_ptr<ntci::Resolver>& resolver,
-    const bsl::vector<ntsa::IpAddress>&    ipAddressList,
+    const bsl::string&                     authority,
     const bsls::TimeInterval&              startTime,
-    const bsl::string&                     serviceName,
-    ntsa::Port                             port,
+    const bsl::vector<ntsa::IpAddress>&    ipAddressList,
+    const bsl::vector<ntsa::Port>          portList,
     const ntca::GetIpAddressEvent&         event,
     const ntci::GetEndpointCallback&       callback)
 {
-#if NTCDNS_RESOLVER_LOG_VERBOSE
-    NTCI_LOG_CONTEXT();
+    ntsa::Endpoint              endpoint;
+    bsl::vector<ntsa::Endpoint> endpointVector;
 
-    NTCI_LOG_STREAM_DEBUG << "Processing get IP address event " << event
-                          << NTCI_LOG_STREAM_END;
-#endif
-
-    ntsa::Endpoint           endpoint;
     ntca::GetEndpointContext getEndpointContext;
     ntca::GetEndpointEvent   getEndpointEvent;
 
-    bsl::string authority;
-    authority.assign(event.context().domainName());
-    authority.append(1, ':');
-    if (!serviceName.empty()) {
-        authority.append(serviceName);
-    }
-    else {
-        authority.append(bsl::to_string(port));
+    const bsl::shared_ptr<ntci::Strand> strand = ntci::Strand::unknown();
+
+    for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
+        const ntsa::IpAddress& ipAddress = ipAddressList[i];
+
+        for (bsl::size_t j = 0; j < portList.size(); ++j) {
+            const ntsa::Port port = portList[j];
+
+            endpointVector.push_back(
+                ntsa::Endpoint(ntsa::IpEndpoint(ipAddress, port)));
+        }
     }
 
     getEndpointContext.setAuthority(authority);
@@ -98,49 +96,49 @@ void Resolver::processGetIpAddressResult(
         getEndpointContext.setLatency(endTime - startTime);
     }
 
-    if (!event.context().nameServer().isNull()) {
+    if (event.context().nameServer().has_value()) {
         getEndpointContext.setNameServer(event.context().nameServer().value());
     }
 
-    if (!event.context().timeToLive().isNull()) {
+    if (event.context().timeToLive().has_value()) {
         getEndpointContext.setTimeToLive(event.context().timeToLive().value());
     }
 
-    if (event.type() == ntca::GetIpAddressEventType::e_COMPLETE) {
-        if (ipAddressList.size() > 0) {
-#if NTCDNS_RESOLVER_LOG_VERBOSE
-            for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
-                const ntsa::IpAddress& ipAddress = ipAddressList[i];
-                NTCI_LOG_STREAM_DEBUG << "The domain name '"
-                                     << event.context().domainName()
-                                     << "' has resolved to " << ipAddress
-                                     << NTCI_LOG_STREAM_END;
-            }
-#endif
+    if (endpointVector.empty()) {
+        getEndpointContext.setError(ntsa::Error(ntsa::Error::e_EOF));
 
-            getEndpointEvent.setType(ntca::GetEndpointEventType::e_COMPLETE);
-            endpoint =
-                ntsa::Endpoint(ntsa::IpEndpoint(ipAddressList.front(), port));
-        }
-        else {
-#if NTCDNS_RESOLVER_LOG_VERBOSE
-            NTCI_LOG_STREAM_DEBUG
-                << "The domain name '" << event.context().domainName()
-                << "' has no IP addresses assigned" << NTCI_LOG_STREAM_END;
-#endif
+        getEndpointEvent.setType(ntca::GetEndpointEventType::e_ERROR);
+        getEndpointEvent.setContext(getEndpointContext);
 
-            getEndpointEvent.setType(ntca::GetEndpointEventType::e_ERROR);
-            getEndpointContext.setError(ntsa::Error(ntsa::Error::e_EOF));
-        }
+        callback(resolver, endpoint, getEndpointEvent, strand);
+    }
+    else if (event.type() == ntca::GetIpAddressEventType::e_ERROR) {
+        getEndpointContext.setError(event.context().error());
+
+        getEndpointEvent.setType(ntca::GetEndpointEventType::e_ERROR);
+        getEndpointEvent.setContext(getEndpointContext);
+
+        callback(resolver, endpoint, getEndpointEvent, strand);
+    }
+    else if (event.type() == ntca::GetIpAddressEventType::e_COMPLETE) {
+        endpoint = endpointVector.front();
+
+        getEndpointContext.setEndpointList(endpointVector);
+
+        getEndpointEvent.setType(ntca::GetEndpointEventType::e_COMPLETE);
+        getEndpointEvent.setContext(getEndpointContext);
+
+        callback(resolver, endpoint, getEndpointEvent, strand);
     }
     else {
+        getEndpointContext.setError(
+            ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+
         getEndpointEvent.setType(ntca::GetEndpointEventType::e_ERROR);
-        getEndpointContext.setError(event.context().error());
+        getEndpointEvent.setContext(getEndpointContext);
+
+        callback(resolver, endpoint, getEndpointEvent, strand);
     }
-
-    getEndpointEvent.setContext(getEndpointContext);
-
-    callback(resolver, endpoint, getEndpointEvent, ntci::Strand::unknown());
 }
 
 ntsa::Error Resolver::initialize()
@@ -1520,8 +1518,8 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
         }
     }
 
-    ntsa::IpAddress                 ipAddress;
-    bdlb::NullableValue<ntsa::Port> port;
+    bsl::vector<ntsa::IpAddress> ipAddressList;
+    bsl::vector<ntsa::Port>      portList;
 
     bslstl::StringRef unresolvedDomainName;
     bslstl::StringRef unresolvedPort;
@@ -1537,37 +1535,6 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
     const char* begin = text.begin();
     const char* end   = text.end();
 
-    // MRM
-#if 0
-    if (begin == end) {
-        if (!options.ipAddressFallback().isNull()) {
-            ipAddress = options.ipAddressFallback().value();
-        }
-
-        if (!options.portFallback().isNull()) {
-            port = options.portFallback().value();
-        }
-
-        if (ipAddress.isUndefined() && port.isNull()) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
-        else {
-            ntsa::Endpoint endpoint(ntsa::IpEndpoint(ipAddress, port.value()));
-
-            ntca::GetEndpointContext getEndpointContext;
-
-            ntca::GetEndpointEvent getEndpointEvent;
-            getEndpointEvent.setType(ntca::GetEndpointEventType::e_COMPLETE);
-            getEndpointEvent.setContext(getEndpointContext);
-
-            callback.dispatch(
-                self, endpoint, getEndpointEvent, d_strand_sp, self, true, NTCCFG_MUTEX_NULL);
-
-            return ntsa::Error();
-        }
-    }
-#endif
-
     if (begin != end) {
         bool isNumber = true;
         {
@@ -1580,9 +1547,12 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
         }
 
         if (isNumber) {
-            if (!ntsa::PortUtil::parse(&port.makeValue(), begin, end - begin))
-            {
+            ntsa::Port port;
+            if (!ntsa::PortUtil::parse(&port, begin, end - begin)) {
                 return ntsa::Error(ntsa::Error::e_INVALID);
+            }
+            else {
+                portList.push_back(port);
             }
         }
         else {
@@ -1607,7 +1577,7 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
                 if (ipv6Address.parse(
                         bslstl::StringRef(ipv6AddressBegin, ipv6AddressEnd)))
                 {
-                    ipAddress = ipv6Address;
+                    ipAddressList.push_back(ntsa::IpAddress(ipv6Address));
                 }
                 else {
                     return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1631,12 +1601,15 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
                         ntsa::Error::e_INVALID);  // missing port
                 }
 
-                if (!ntsa::PortUtil::parse(&port.makeValue(),
+                ntsa::Port port;
+                if (!ntsa::PortUtil::parse(&port,
                                            portBegin,
                                            portEnd - portBegin))
                 {
-                    port.reset();
                     unresolvedPort.assign(portBegin, portEnd);
+                }
+                else {
+                    portList.push_back(port);
                 }
             }
             else {
@@ -1663,11 +1636,15 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
                     const char* ipAddressBegin = begin;
                     const char* ipAddressEnd   = end;
 
+                    ntsa::IpAddress ipAddress;
                     if (!ipAddress.parse(
                             bslstl::StringRef(ipAddressBegin, ipAddressEnd)))
                     {
                         unresolvedDomainName.assign(ipAddressBegin,
                                                     ipAddressEnd);
+                    }
+                    else {
+                        ipAddressList.push_back(ipAddress);
                     }
                 }
                 else if (numColons == 1) {
@@ -1677,14 +1654,14 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
                     const char* ipv4AddressEnd   = mark;
 
                     ntsa::Ipv4Address ipv4Address;
-                    if (ipv4Address.parse(bslstl::StringRef(ipv4AddressBegin,
-                                                            ipv4AddressEnd)))
+                    if (!ipv4Address.parse(bslstl::StringRef(ipv4AddressBegin,
+                                                             ipv4AddressEnd)))
                     {
-                        ipAddress = ipv4Address;
-                    }
-                    else {
                         unresolvedDomainName.assign(ipv4AddressBegin,
                                                     ipv4AddressEnd);
+                    }
+                    else {
+                        ipAddressList.push_back(ntsa::IpAddress(ipv4Address));
                     }
 
                     const char* portBegin = mark + 1;
@@ -1695,12 +1672,15 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
                             ntsa::Error::e_INVALID);  // missing port
                     }
 
-                    if (!ntsa::PortUtil::parse(&port.makeValue(),
+                    ntsa::Port port;
+                    if (!ntsa::PortUtil::parse(&port,
                                                portBegin,
                                                portEnd - portBegin))
                     {
-                        port.reset();
                         unresolvedPort.assign(portBegin, portEnd);
+                    }
+                    else {
+                        portList.push_back(port);
                     }
                 }
                 else {
@@ -1710,13 +1690,13 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
                     const char* ipv6AddressEnd   = end;
 
                     ntsa::Ipv6Address ipv6Address;
-                    if (ipv6Address.parse(bslstl::StringRef(ipv6AddressBegin,
-                                                            ipv6AddressEnd)))
+                    if (!ipv6Address.parse(bslstl::StringRef(ipv6AddressBegin,
+                                                             ipv6AddressEnd)))
                     {
-                        ipAddress = ipv6Address;
+                        return ntsa::Error(ntsa::Error::e_INVALID);
                     }
                     else {
-                        return ntsa::Error(ntsa::Error::e_INVALID);
+                        ipAddressList.push_back(ntsa::IpAddress(ipv6Address));
                     }
                 }
             }
@@ -1724,11 +1704,14 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
     }
 
     if (!unresolvedPort.empty()) {
-        bsl::vector<ntsa::Port> portList;
-        ntsa::PortOptions       portOptions;
+        ntsa::PortOptions portOptions;
 
         if (!options.portSelector().isNull()) {
             portOptions.setPortSelector(options.portSelector().value());
+        }
+
+        if (!options.portFilter().isNull()) {
+            portOptions.setPortFilter(options.portFilter().value());
         }
 
         if (!options.transport().isNull()) {
@@ -1795,12 +1778,10 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
         if (portList.empty()) {
             return ntsa::Error(ntsa::Error::e_EOF);  // unresolvable port
         }
-
-        port = portList.front();
     }
-    else if (port.isNull()) {
+    else if (portList.empty()) {
         if (!options.portFallback().isNull()) {
-            port = options.portFallback().value();
+            portList.push_back(options.portFallback().value());
         }
         else {
             return ntsa::Error(ntsa::Error::e_INVALID);
@@ -1812,10 +1793,10 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
             this->createGetIpAddressCallback(
                 bdlf::BindUtil::bind(&Resolver::processGetIpAddressResult,
                                      bdlf::PlaceHolders::_1,
-                                     bdlf::PlaceHolders::_2,
+                                     bsl::string(text),
                                      startTime,
-                                     bsl::string(unresolvedPort),
-                                     port.value(),
+                                     bdlf::PlaceHolders::_2,
+                                     portList,
                                      bdlf::PlaceHolders::_3,
                                      callback),
                 d_allocator_p);
@@ -1832,63 +1813,80 @@ ntsa::Error Resolver::getEndpoint(const bslstl::StringRef&         text,
 
         return ntsa::Error();
     }
-    else if (ipAddress.isUndefined()) {
+    else if (ipAddressList.empty()) {
         if (!options.ipAddressFallback().isNull()) {
-            ipAddress = options.ipAddressFallback().value();
+            ipAddressList.push_back(options.ipAddressFallback().value());
         }
         else {
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
     }
 
-    if (ipAddress.isUndefined()) {
+    if (ipAddressList.empty()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (port.isNull()) {
+    if (portList.empty()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
-    if (!options.ipAddressType().isNull()) {
-        if (ipAddress.type() != options.ipAddressType().value()) {
-            return ntsa::Error(ntsa::Error::e_INVALID);
+    bsl::vector<ntsa::Endpoint> endpointVector;
+
+    for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
+        const ntsa::IpAddress& ipAddress = ipAddressList[i];
+
+        if (!options.ipAddressType().isNull()) {
+            if (ipAddress.type() != options.ipAddressType().value()) {
+                continue;
+            }
+        }
+
+        if (!options.transport().isNull()) {
+            if (options.transport().value() ==
+                    ntsa::Transport::e_TCP_IPV4_STREAM ||
+                options.transport().value() ==
+                    ntsa::Transport::e_UDP_IPV4_DATAGRAM)
+            {
+                if (!ipAddress.isV4()) {
+                    continue;
+                }
+            }
+            else if (options.transport().value() ==
+                         ntsa::Transport::e_TCP_IPV6_STREAM ||
+                     options.transport().value() ==
+                         ntsa::Transport::e_UDP_IPV6_DATAGRAM)
+            {
+                if (!ipAddress.isV6()) {
+                    continue;
+                }
+            }
+            else {
+                continue;
+            }
+        }
+
+        for (bsl::size_t j = 0; j < portList.size(); ++j) {
+            const ntsa::Port port = portList[j];
+
+            endpointVector.push_back(
+                ntsa::Endpoint(ntsa::IpEndpoint(ipAddress, port)));
         }
     }
 
-    if (!options.transport().isNull()) {
-        if (options.transport().value() ==
-                ntsa::Transport::e_TCP_IPV4_STREAM ||
-            options.transport().value() ==
-                ntsa::Transport::e_UDP_IPV4_DATAGRAM)
-        {
-            if (!ipAddress.isV4()) {
-                return ntsa::Error(ntsa::Error::e_INVALID);
-            }
-        }
-        else if (options.transport().value() ==
-                     ntsa::Transport::e_TCP_IPV6_STREAM ||
-                 options.transport().value() ==
-                     ntsa::Transport::e_UDP_IPV6_DATAGRAM)
-        {
-            if (!ipAddress.isV6()) {
-                return ntsa::Error(ntsa::Error::e_INVALID);
-            }
-        }
-        else {
-            return ntsa::Error(ntsa::Error::e_INVALID);
-        }
+    if (endpointVector.empty()) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
     }
-
-    ntsa::Endpoint endpoint(ntsa::IpEndpoint(ipAddress, port.value()));
 
     ntca::GetEndpointContext getEndpointContext;
+    getEndpointContext.setAuthority(text);
+    getEndpointContext.setEndpointList(endpointVector);
 
     ntca::GetEndpointEvent getEndpointEvent;
     getEndpointEvent.setType(ntca::GetEndpointEventType::e_COMPLETE);
     getEndpointEvent.setContext(getEndpointContext);
 
     callback.dispatch(self,
-                      endpoint,
+                      endpointVector.front(),
                       getEndpointEvent,
                       d_strand_sp,
                       self,

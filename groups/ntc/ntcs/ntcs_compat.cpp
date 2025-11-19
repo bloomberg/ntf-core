@@ -1096,12 +1096,20 @@ void Compat::convert(ntca::GetEndpointOptions* result,
         result->setIpAddressSelector(options.ipAddressSelector().value());
     }
 
+    if (!options.ipAddressFilter().isNull()) {
+        result->setIpAddressFilter(options.ipAddressFilter().value());
+    }
+
     if (!options.portFallback().isNull()) {
         result->setPortFallback(options.portFallback().value());
     }
 
     if (!options.portSelector().isNull()) {
         result->setPortSelector(options.portSelector().value());
+    }
+
+    if (!options.portFilter().isNull()) {
+        result->setPortFilter(options.portFilter().value());
     }
 
     if (!options.transport().isNull()) {
@@ -1128,12 +1136,20 @@ void Compat::convert(ntca::GetEndpointOptions*   result,
         result->setIpAddressSelector(options.ipAddressSelector().value());
     }
 
+    if (!options.ipAddressFilter().isNull()) {
+        result->setIpAddressFilter(options.ipAddressFilter().value());
+    }
+
     if (!options.portFallback().isNull()) {
         result->setPortFallback(options.portFallback().value());
     }
 
     if (!options.portSelector().isNull()) {
         result->setPortSelector(options.portSelector().value());
+    }
+
+    if (!options.portFilter().isNull()) {
+        result->setPortFilter(options.portFilter().value());
     }
 
     if (!options.transport().isNull()) {

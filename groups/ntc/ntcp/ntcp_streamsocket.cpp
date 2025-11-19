@@ -4031,14 +4031,18 @@ StreamSocket::StreamSocket(
 , d_receiveCount(0)
 , d_receiveBlob_sp()
 , d_connectEndpoint()
+, d_connectEndpointVector(basicAllocator)
+, d_connectEndpointIndex(0)
 , d_connectName(basicAllocator)
 , d_connectStartTime()
 , d_connectAttempts(0)
-, d_connectOptions()
+, d_connectOptions(basicAllocator)
 , d_connectContext(basicAllocator)
 , d_connectCallback(basicAllocator)
 , d_connectDeadlineTimer_sp()
 , d_connectRetryTimer_sp()
+, d_connectRateLimiter_sp()
+, d_connectRateTimer_sp()
 , d_connectInProgress(false)
 , d_upgradeCallback(basicAllocator)
 , d_upgradeTimer_sp()
@@ -4052,6 +4056,9 @@ StreamSocket::StreamSocket(
 , d_deferredCalls(bslma::Default::allocator(basicAllocator))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
+    NTCCFG_WARNING_UNUSED(d_connectEndpointVector);
+    NTCCFG_WARNING_UNUSED(d_connectEndpointIndex);
+
     d_sendQueue.setData(d_dataPool_sp->createOutgoingBlob());
     d_receiveQueue.setData(d_dataPool_sp->createIncomingBlob());
     d_receiveBlob_sp = d_dataPool_sp->createIncomingBlob();
@@ -5419,6 +5426,14 @@ ntsa::Error StreamSocket::deregisterSession()
     d_sessionStrand_sp.reset();
 
     return ntsa::Error();
+}
+
+ntsa::Error StreamSocket::setConnectRateLimiter(
+    const bsl::shared_ptr<ntci::RateLimiter>& rateLimiter)
+{
+    NTCCFG_WARNING_UNUSED(rateLimiter);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
 ntsa::Error StreamSocket::setWriteDeflater(

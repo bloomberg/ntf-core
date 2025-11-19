@@ -21,6 +21,7 @@ ntca_connectoptions
 ntca_connectcontext
 ntca_connectevent
 ntca_connecteventtype
+ntca_connectstrategy
 ntca_datagramsocketevent
 ntca_datagramsocketeventtype
 ntca_datagramsocketoptions

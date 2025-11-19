@@ -413,15 +413,20 @@ class SystemTest
 
     static void verifyBasicSchedulerUsageWithMetrics();
 
-    static void verifyResolverGetIpAddress();
+    static void verifyResolverGetIpAddressSystem();
+    static void verifyResolverGetIpAddressClient();
     static void verifyResolverGetIpAddressOverride();
-    static void verifyResolverGetDomainName();
+    static void verifyResolverGetDomainNameSystem();
+    static void verifyResolverGetDomainNameClient();
     static void verifyResolverGetDomainNameOverride();
-    static void verifyResolverGetPort();
+    static void verifyResolverGetPortSystem();
+    static void verifyResolverGetPortClient();
     static void verifyResolverGetPortOverride();
-    static void verifyResolverGetServiceName();
+    static void verifyResolverGetServiceNameSystem();
+    static void verifyResolverGetServiceNameClient();
     static void verifyResolverGetServiceNameOverride();
-    static void verifyResolverGetEndpoint();
+    static void verifyResolverGetEndpointSystem();
+    static void verifyResolverGetEndpointClient();
     static void verifyResolverGetEndpointOverride();
 
     static void verifyDataExchange();
@@ -1915,6 +1920,17 @@ class SystemTest::ResolverUtil
         const bsl::shared_ptr<ntci::Resolver>& resolver,
         const bsl::vector<ntsa::IpAddress>&    ipAddressList,
         const ntca::GetIpAddressEvent&         event);
+
+    /// Post-process the specified 'ipAddressList' that is the result of
+    /// resolving a domain name.
+    static void filterIpAddressList(
+        bsl::vector<ntsa::IpAddress>* ipAddressList,
+        bslmt::Semaphore*             semaphore);
+
+    /// Post-process the specified 'portList' that is the result of resolving a
+    /// service name.
+    static void filterPortList(bsl::vector<ntsa::Port>* portList,
+                               bslmt::Semaphore*        semaphore);
 };
 
 /// Provide callbacks used in examples.
@@ -5624,8 +5640,48 @@ void SystemTest::ResolverUtil::processGetIpAddressEvent(
     NTCI_LOG_STREAM_DEBUG << "Processing get IP address event " << event
                           << NTCI_LOG_STREAM_END;
 
+    if (event.type() == ntca::GetIpAddressEventType::e_COMPLETE) {
+        if (ipAddressList.size() > 0) {
+            for (bsl::size_t i = 0; i < ipAddressList.size(); ++i) {
+                const ntsa::IpAddress& ipAddress = ipAddressList[i];
+                NTCI_LOG_STREAM_DEBUG << "The domain name '"
+                                      << event.context().domainName()
+                                      << "' has resolved to " << ipAddress
+                                      << NTCI_LOG_STREAM_END;
+            }
+        }
+        else {
+            NTCI_LOG_STREAM_DEBUG
+                << "The domain name '" << event.context().domainName()
+                << "' has no IP addresses assigned" << NTCI_LOG_STREAM_END;
+        }
+    }
+
     *outputIpAddressList = ipAddressList;
     *outputEvent         = event;
+
+    semaphore->post();
+}
+
+void SystemTest::ResolverUtil::filterIpAddressList(
+    bsl::vector<ntsa::IpAddress>* ipAddressList,
+    bslmt::Semaphore*             semaphore)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_STREAM_DEBUG << "Filtering IP address list"
+                          << NTCI_LOG_STREAM_END;
+
+    semaphore->post();
+}
+
+void SystemTest::ResolverUtil::filterPortList(
+    bsl::vector<ntsa::Port>* portList,
+    bslmt::Semaphore*        semaphore)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_STREAM_DEBUG << "Filtering port list" << NTCI_LOG_STREAM_END;
 
     semaphore->post();
 }
@@ -13123,12 +13179,75 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyBasicSchedulerUsageWithMetrics)
     scheduler->linger();
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetIpAddress)
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetIpAddressSystem)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
-    // Concern: Test 'Resolver::getIpAddress'
-    // Plan:
+    // Concern: Test 'Resolver::getIpAddress' from the native operating system
+    // functions.
+
+    NTCI_LOG_CONTEXT();
+
+    const bsl::size_t k_NUM_ITERATIONS = 2;
+
+    ntsa::Error error;
+
+    // Define a resolver configuration with the DNS client disabled and the
+    // operating system name service functions enabled.
+
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setSystemEnabled(true);
+
+    // Create a start a resolver.
+
+    bsl::shared_ptr<ntci::Resolver> resolver =
+        ntcf::System::createResolver(resolverConfig, NTSCFG_TEST_ALLOCATOR);
+
+    error = resolver->start();
+    NTSCFG_TEST_OK(error);
+
+    for (bsl::size_t i = 0; i < k_NUM_ITERATIONS; ++i) {
+        // Create the callback.
+
+        bslmt::Semaphore semaphore;
+
+        ntci::GetIpAddressCallback callback =
+            resolver->createGetIpAddressCallback(
+                bdlf::BindUtil::bind(
+                    &test::ResolverUtil::processGetIpAddressResult,
+                    bdlf::PlaceHolders::_1,
+                    bdlf::PlaceHolders::_2,
+                    bdlf::PlaceHolders::_3,
+                    &semaphore),
+                NTSCFG_TEST_ALLOCATOR);
+
+        // Define the options.
+
+        ntca::GetIpAddressOptions options;
+        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+
+        // Get the IP addresses assigned to "example.com".
+
+        error = resolver->getIpAddress("example.com", options, callback);
+        NTSCFG_TEST_OK(error);
+
+        semaphore.wait();
+    }
+
+    // Stop the resolver.
+
+    resolver->shutdown();
+    resolver->linger();
+
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetIpAddressClient)
+{
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
+    // Concern: Test 'Resolver::getIpAddress' from the DNS client.
 
     NTCI_LOG_CONTEXT();
 
@@ -13171,9 +13290,9 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetIpAddress)
         ntca::GetIpAddressOptions options;
         options.setIpAddressType(ntsa::IpAddressType::e_V4);
 
-        // Get the IP addresses assigned to "google.com".
+        // Get the IP addresses assigned to "example.com".
 
-        error = resolver->getIpAddress("google.com", options, callback);
+        error = resolver->getIpAddress("example.com", options, callback);
         NTSCFG_TEST_OK(error);
 
         semaphore.wait();
@@ -13189,14 +13308,13 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetIpAddress)
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetIpAddressOverride)
 {
-    // Concern: Test 'Resolver::getIpAddress' using an override
-    // Plan:
+    // Concern: Test 'Resolver::getIpAddress' using an override.
 
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
 
-    // Define a resolver configuration with the DNS client enabled and the
+    // Define a resolver configuration with the DNS client disabled and the
     // operating system name service functions disabled.
 
     ntca::ResolverConfig resolverConfig;
@@ -13293,12 +13411,76 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetIpAddressOverride)
     scheduler->linger();
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetDomainName)
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetDomainNameSystem)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
-    // Concern: Test 'Resolver::getDomainName'
-    // Plan:
+    // Concern: Test 'Resolver::getDomainName' from the native operating system
+    // functions.
+
+    NTCI_LOG_CONTEXT();
+
+    const bsl::size_t k_NUM_ITERATIONS = 2;
+
+    ntsa::Error error;
+
+    // Define a resolver configuration with the DNS client disabled and the
+    // operating system name service functions enabled.
+
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setSystemEnabled(true);
+
+    // Create a start a resolver.
+
+    bsl::shared_ptr<ntci::Resolver> resolver =
+        ntcf::System::createResolver(resolverConfig, NTSCFG_TEST_ALLOCATOR);
+
+    error = resolver->start();
+    NTSCFG_TEST_OK(error);
+
+    for (bsl::size_t i = 0; i < k_NUM_ITERATIONS; ++i) {
+        // Create the callback.
+
+        bslmt::Semaphore semaphore;
+
+        ntci::GetDomainNameCallback callback =
+            resolver->createGetDomainNameCallback(
+                bdlf::BindUtil::bind(
+                    &test::ResolverUtil::processGetDomainNameResult,
+                    bdlf::PlaceHolders::_1,
+                    bdlf::PlaceHolders::_2,
+                    bdlf::PlaceHolders::_3,
+                    &semaphore),
+                NTSCFG_TEST_ALLOCATOR);
+
+        // Define the options.
+
+        ntca::GetDomainNameOptions options;
+
+        // Get the domain name to which "8.8.8.8" is assigned.
+
+        error = resolver->getDomainName(ntsa::IpAddress("8.8.8.8"),
+                                        options,
+                                        callback);
+        NTSCFG_TEST_OK(error);
+
+        semaphore.wait();
+    }
+
+    // Stop the resolver.
+
+    resolver->shutdown();
+    resolver->linger();
+
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetDomainNameClient)
+{
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
+    // Concern: Test 'Resolver::getDomainName' from the DNS client.
 
     NTCI_LOG_CONTEXT();
 
@@ -13362,12 +13544,77 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetDomainNameOverride)
 {
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetPort)
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetPortSystem)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
-    // Concern: Test 'Resolver::getPort'
-    // Plan:
+    // Concern: Test 'Resolver::getPort' from the native operating system
+    // functions.
+
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
+
+    NTCI_LOG_CONTEXT();
+
+    const bsl::size_t k_NUM_ITERATIONS = 2;
+
+    ntsa::Error error;
+
+    // Define a resolver configuration with the DNS client disabled and the
+    // operating system name service functions enabled.
+
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setSystemEnabled(true);
+
+    // Create a start a resolver.
+
+    bsl::shared_ptr<ntci::Resolver> resolver =
+        ntcf::System::createResolver(resolverConfig, NTSCFG_TEST_ALLOCATOR);
+
+    error = resolver->start();
+    NTSCFG_TEST_OK(error);
+
+    for (bsl::size_t i = 0; i < k_NUM_ITERATIONS; ++i) {
+        // Create the callback.
+
+        bslmt::Semaphore semaphore;
+
+        ntci::GetPortCallback callback = resolver->createGetPortCallback(
+            bdlf::BindUtil::bind(&test::ResolverUtil::processGetPortResult,
+                                 bdlf::PlaceHolders::_1,
+                                 bdlf::PlaceHolders::_2,
+                                 bdlf::PlaceHolders::_3,
+                                 &semaphore),
+            NTSCFG_TEST_ALLOCATOR);
+
+        // Define the options.
+
+        ntca::GetPortOptions options;
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        // Get the ports assigned to the "echo" service.
+
+        error = resolver->getPort("echo", options, callback);
+        NTSCFG_TEST_OK(error);
+
+        semaphore.wait();
+    }
+
+    // Stop the resolver.
+
+    resolver->shutdown();
+    resolver->linger();
+
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetPortClient)
+{
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
+    // Concern: Test 'Resolver::getPort' from the DNS client.
 
     if (!ntscfg::Platform::hasPortDatabase()) {
         return;
@@ -13432,12 +13679,79 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetPortOverride)
 {
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetServiceName)
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetServiceNameSystem)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
-    // Concern: Test 'Resolver::getServiceName'
-    // Plan:
+    // Concern: Test 'Resolver::getServiceName' from the native operating
+    // system functions.
+
+    if (!ntscfg::Platform::hasPortDatabase()) {
+        return;
+    }
+
+    NTCI_LOG_CONTEXT();
+
+    const bsl::size_t k_NUM_ITERATIONS = 2;
+
+    ntsa::Error error;
+
+    // Define a resolver configuration with the DNS client disabled and the
+    // operating system name service functions enabled.
+
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setSystemEnabled(true);
+
+    // Create a start a resolver.
+
+    bsl::shared_ptr<ntci::Resolver> resolver =
+        ntcf::System::createResolver(resolverConfig, NTSCFG_TEST_ALLOCATOR);
+
+    error = resolver->start();
+    NTSCFG_TEST_OK(error);
+
+    for (bsl::size_t i = 0; i < k_NUM_ITERATIONS; ++i) {
+        // Create the callback.
+
+        bslmt::Semaphore semaphore;
+
+        ntci::GetServiceNameCallback callback =
+            resolver->createGetServiceNameCallback(
+                bdlf::BindUtil::bind(
+                    &test::ResolverUtil::processGetServiceNameResult,
+                    bdlf::PlaceHolders::_1,
+                    bdlf::PlaceHolders::_2,
+                    bdlf::PlaceHolders::_3,
+                    &semaphore),
+                NTSCFG_TEST_ALLOCATOR);
+
+        // Define the options.
+
+        ntca::GetServiceNameOptions options;
+        options.setTransport(ntsa::Transport::e_TCP_IPV4_STREAM);
+
+        // Get the service name to which TCP port 7 is assigned.
+
+        error = resolver->getServiceName(7, options, callback);
+        NTSCFG_TEST_OK(error);
+
+        semaphore.wait();
+    }
+
+    // Stop the resolver.
+
+    resolver->shutdown();
+    resolver->linger();
+
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetServiceNameClient)
+{
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
+    // Concern: Test 'Resolver::getServiceName' from a DNS client.
 
     if (!ntscfg::Platform::hasPortDatabase()) {
         return;
@@ -13504,12 +13818,94 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetServiceNameOverride)
 {
 }
 
-NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetEndpoint)
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetEndpointSystem)
 {
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
 
-    // Concern: Test 'getEndpoint'
-    // Plan:
+    // Concern: Test 'Resolver::getEndpoint' from the native operating system
+    // functions.
+
+    NTCI_LOG_CONTEXT();
+
+    const bsl::size_t k_NUM_ITERATIONS = 2;
+
+    ntsa::Error error;
+
+    // Define a resolver configuration with the DNS client disabled and the
+    // operating system name service functions enabled.
+
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setSystemEnabled(true);
+
+    // Create a start a resolver.
+
+    bsl::shared_ptr<ntci::Resolver> resolver =
+        ntcf::System::createResolver(resolverConfig, NTSCFG_TEST_ALLOCATOR);
+
+    error = resolver->start();
+    NTSCFG_TEST_OK(error);
+
+    for (bsl::size_t i = 0; i < k_NUM_ITERATIONS; ++i) {
+        // Create the callback.
+
+        bslmt::Semaphore getEndpointResultSemaphore;
+
+        ntci::GetEndpointCallback callback =
+            resolver->createGetEndpointCallback(
+                bdlf::BindUtil::bind(
+                    &test::ResolverUtil::processGetEndpointResult,
+                    bdlf::PlaceHolders::_1,
+                    bdlf::PlaceHolders::_2,
+                    bdlf::PlaceHolders::_3,
+                    &getEndpointResultSemaphore),
+                NTSCFG_TEST_ALLOCATOR);
+
+        bslmt::Semaphore filterIpAddressListSemaphore;
+
+        ntsa::IpAddressFilter ipAddressFilter =
+            NTCCFG_BIND(&test::ResolverUtil::filterIpAddressList,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        &filterIpAddressListSemaphore);
+
+        bslmt::Semaphore filterPortListSemaphore;
+
+        ntsa::PortFilter portFilter =
+            NTCCFG_BIND(&test::ResolverUtil::filterPortList,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        &filterPortListSemaphore);
+
+        // Define the options.
+
+        ntca::GetEndpointOptions options;
+        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+        options.setIpAddressFilter(ipAddressFilter);
+        options.setPortFilter(portFilter);
+
+        // Get the endpoint assigned to "example.com:http".
+
+        error = resolver->getEndpoint("example.com:http", options, callback);
+        NTSCFG_TEST_OK(error);
+
+        filterIpAddressListSemaphore.wait();
+        filterPortListSemaphore.wait();
+
+        getEndpointResultSemaphore.wait();
+    }
+
+    // Stop the resolver.
+
+    resolver->shutdown();
+    resolver->linger();
+
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetEndpointClient)
+{
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
+    // Concern: Test 'Resolver::getEndpoint' from a DNS client.
 
     NTCI_LOG_CONTEXT();
 
@@ -13535,7 +13931,7 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetEndpoint)
     for (bsl::size_t i = 0; i < k_NUM_ITERATIONS; ++i) {
         // Create the callback.
 
-        bslmt::Semaphore semaphore;
+        bslmt::Semaphore getEndpointResultSemaphore;
 
         ntci::GetEndpointCallback callback =
             resolver->createGetEndpointCallback(
@@ -13544,21 +13940,39 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetEndpoint)
                     bdlf::PlaceHolders::_1,
                     bdlf::PlaceHolders::_2,
                     bdlf::PlaceHolders::_3,
-                    &semaphore),
+                    &getEndpointResultSemaphore),
                 NTSCFG_TEST_ALLOCATOR);
+
+        bslmt::Semaphore filterIpAddressListSemaphore;
+
+        ntsa::IpAddressFilter ipAddressFilter =
+            NTCCFG_BIND(&test::ResolverUtil::filterIpAddressList,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        &filterIpAddressListSemaphore);
+
+        bslmt::Semaphore filterPortListSemaphore;
+
+        ntsa::PortFilter portFilter =
+            NTCCFG_BIND(&test::ResolverUtil::filterPortList,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        &filterPortListSemaphore);
 
         // Define the options.
 
         ntca::GetEndpointOptions options;
         options.setIpAddressType(ntsa::IpAddressType::e_V4);
+        options.setIpAddressFilter(ipAddressFilter);
+        options.setPortFilter(portFilter);
 
-        // Get the endpoint assigned to "dns.google.com:http".
+        // Get the endpoint assigned to "example.com:http".
 
-        error =
-            resolver->getEndpoint("dns.google.com:http", options, callback);
+        error = resolver->getEndpoint("example.com:http", options, callback);
         NTSCFG_TEST_OK(error);
 
-        semaphore.wait();
+        filterIpAddressListSemaphore.wait();
+        filterPortListSemaphore.wait();
+
+        getEndpointResultSemaphore.wait();
     }
 
     // Stop the resolver.
@@ -13571,6 +13985,102 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetEndpoint)
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyResolverGetEndpointOverride)
 {
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
+
+    // Concern: Test 'Resolver::getEndpoint' from an override.
+
+    NTCI_LOG_CONTEXT();
+
+    const bsl::size_t k_NUM_ITERATIONS = 2;
+
+    ntsa::Error error;
+
+    // Define a resolver configuration with the DNS client enabled and the
+    // operating system name service functions disabled.
+
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setSystemEnabled(false);
+
+    // Create a start a resolver.
+
+    bsl::shared_ptr<ntci::Resolver> resolver =
+        ntcf::System::createResolver(resolverConfig, NTSCFG_TEST_ALLOCATOR);
+
+    // Set overrides.
+
+    error = resolver->addIpAddress("example.com",
+                                   ntsa::IpAddress("192.168.0.100"));
+    NTSCFG_TEST_FALSE(error);
+
+    error = resolver->addIpAddress("example.com",
+                                   ntsa::IpAddress("192.168.0.101"));
+    NTSCFG_TEST_FALSE(error);
+
+    error = resolver->addIpAddress("example.com",
+                                   ntsa::IpAddress("192.168.0.102"));
+    NTSCFG_TEST_FALSE(error);
+
+    error =
+        resolver->addPort("http", 8080, ntsa::Transport::e_TCP_IPV4_STREAM);
+    NTSCFG_TEST_FALSE(error);
+
+    error = resolver->start();
+    NTSCFG_TEST_OK(error);
+
+    for (bsl::size_t i = 0; i < k_NUM_ITERATIONS; ++i) {
+        // Create the callback.
+
+        bslmt::Semaphore getEndpointResultSemaphore;
+
+        ntci::GetEndpointCallback callback =
+            resolver->createGetEndpointCallback(
+                bdlf::BindUtil::bind(
+                    &test::ResolverUtil::processGetEndpointResult,
+                    bdlf::PlaceHolders::_1,
+                    bdlf::PlaceHolders::_2,
+                    bdlf::PlaceHolders::_3,
+                    &getEndpointResultSemaphore),
+                NTSCFG_TEST_ALLOCATOR);
+
+        bslmt::Semaphore filterIpAddressListSemaphore;
+
+        ntsa::IpAddressFilter ipAddressFilter =
+            NTCCFG_BIND(&test::ResolverUtil::filterIpAddressList,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        &filterIpAddressListSemaphore);
+
+        bslmt::Semaphore filterPortListSemaphore;
+
+        ntsa::PortFilter portFilter =
+            NTCCFG_BIND(&test::ResolverUtil::filterPortList,
+                        NTCCFG_BIND_PLACEHOLDER_1,
+                        &filterPortListSemaphore);
+
+        // Define the options.
+
+        ntca::GetEndpointOptions options;
+        options.setIpAddressType(ntsa::IpAddressType::e_V4);
+        options.setIpAddressFilter(ipAddressFilter);
+        options.setPortFilter(portFilter);
+
+        // Get the endpoint assigned to "example.com:http".
+
+        error = resolver->getEndpoint("example.com:http", options, callback);
+        NTSCFG_TEST_OK(error);
+
+        filterIpAddressListSemaphore.wait();
+        filterPortListSemaphore.wait();
+
+        getEndpointResultSemaphore.wait();
+    }
+
+    // Stop the resolver.
+
+    resolver->shutdown();
+    resolver->linger();
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyDataExchange)

@@ -294,6 +294,25 @@ class Resolver
                                     const bslstl::StringRef&     text,
                                     const ntsa::EndpointOptions& options);
 
+    /// Load into the specified 'result' the endpoints parsed and potentially
+    /// resolved from the components of the specified 'text', in the format of
+    /// '<port>' or '[<host>][:<port>]'. If the optionally specified '<host>'
+    /// component is not an IP address, interpret the '<host>' as a domain name
+    /// and resolve it into the IP addresses assigned to that domain name. If
+    /// the optionally specified '<port>' is a name and not a number, interpret
+    /// the '<port>' as a service name and resolve it into the ports assigned
+    /// to that service name. Perform all resolution and validation of the
+    /// characteristics of the desired 'result' according to the specified
+    /// 'options'. Return the error. Note if 'text' contains no component that
+    /// needs resolution, and its format is valid, 'result' will contain a
+    /// single element. Also note that if 'text' contains components that
+    /// require resolution, and those components resolve to more than one
+    /// IP address or port number, then 'result' will contain all combinations
+    /// of the resolved IP addresses and port numbers.
+    virtual ntsa::Error getEndpoint(bsl::vector<ntsa::Endpoint>* result,
+                                    const bslstl::StringRef&     text,
+                                    const ntsa::EndpointOptions& options);
+
     /// Load into the specified 'result' the IP addresses assigned to the
     /// local machine. Perform all resolution and validation of the
     /// characteristics of the desired 'result' according to the specified

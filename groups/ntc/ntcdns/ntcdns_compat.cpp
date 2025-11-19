@@ -37,6 +37,10 @@ void Compat::convert(ntca::GetIpAddressOptions*      result,
         result->setIpAddressSelector(options.ipAddressSelector().value());
     }
 
+    if (!options.ipAddressFilter().isNull()) {
+        result->setIpAddressFilter(options.ipAddressFilter().value());
+    }
+
     if (!options.ipAddressType().isNull()) {
         result->setIpAddressType(options.ipAddressType().value());
     }
@@ -64,6 +68,10 @@ void Compat::convert(ntca::GetPortOptions*           result,
         result->setPortSelector(options.portSelector().value());
     }
 
+    if (!options.portFilter().isNull()) {
+        result->setPortFilter(options.portFilter().value());
+    }
+
     if (!options.transport().isNull()) {
         result->setTransport(options.transport().value());
     }
@@ -87,6 +95,10 @@ void Compat::convert(ntsa::IpAddressOptions*          result,
         result->setIpAddressSelector(options.ipAddressSelector().value());
     }
 
+    if (!options.ipAddressFilter().isNull()) {
+        result->setIpAddressFilter(options.ipAddressFilter().value());
+    }
+
     if (!options.ipAddressType().isNull()) {
         result->setIpAddressType(options.ipAddressType().value());
     }
@@ -108,6 +120,10 @@ void Compat::convert(ntsa::PortOptions*          result,
 
     if (!options.portSelector().isNull()) {
         result->setPortSelector(options.portSelector().value());
+    }
+
+    if (!options.portFilter().isNull()) {
+        result->setPortFilter(options.portFilter().value());
     }
 
     if (!options.transport().isNull()) {
