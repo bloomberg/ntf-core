@@ -748,6 +748,16 @@ ntsa::Error HostDatabase::getIpAddress(
         return ntsa::Error(ntsa::Error::e_EOF);
     }
 
+    if (options.ipAddressFilter().has_value()) {
+        if (options.ipAddressFilter().value()) {
+            options.ipAddressFilter().value()(&ipAddressList);
+
+            if (ipAddressList.empty()) {
+                return ntsa::Error(ntsa::Error::e_EOF);
+            }
+        }
+    }
+
     context->setDomainName(domainName);
     context->setSource(ntca::ResolverSource::e_DATABASE);
 
@@ -1318,6 +1328,16 @@ ntsa::Error PortDatabase::getPort(ntca::GetPortContext*       context,
 
     if (portList.empty()) {
         return ntsa::Error(ntsa::Error::e_EOF);
+    }
+
+    if (options.portFilter().has_value()) {
+        if (options.portFilter().value()) {
+            options.portFilter().value()(&portList);
+
+            if (portList.empty()) {
+                return ntsa::Error(ntsa::Error::e_EOF);
+            }
+        }
     }
 
     context->setServiceName(serviceName);

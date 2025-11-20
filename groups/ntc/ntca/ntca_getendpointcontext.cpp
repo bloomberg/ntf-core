@@ -25,8 +25,10 @@ namespace ntca {
 
 bool GetEndpointContext::equals(const GetEndpointContext& other) const
 {
-    return (d_authority == other.d_authority && d_latency == other.d_latency &&
-            d_source == other.d_source && d_nameServer == other.d_nameServer &&
+    return (d_authority == other.d_authority &&
+            d_endpointList == other.d_endpointList &&
+            d_latency == other.d_latency && d_source == other.d_source &&
+            d_nameServer == other.d_nameServer &&
             d_timeToLive == other.d_timeToLive && d_error == other.d_error);
 }
 
@@ -37,6 +39,14 @@ bool GetEndpointContext::less(const GetEndpointContext& other) const
     }
 
     if (other.d_authority < d_authority) {
+        return false;
+    }
+
+    if (d_endpointList < other.d_endpointList) {
+        return true;
+    }
+
+    if (other.d_endpointList < d_endpointList) {
         return false;
     }
 
@@ -82,6 +92,7 @@ bsl::ostream& GetEndpointContext::print(bsl::ostream& stream,
     bslim::Printer printer(&stream, level, spacesPerLevel);
     printer.start();
     printer.printAttribute("authority", d_authority);
+    printer.printAttribute("endpointList", d_endpointList);
     printer.printAttribute("latency", d_latency);
     printer.printAttribute("source", d_source);
     printer.printAttribute("nameServer", d_nameServer);

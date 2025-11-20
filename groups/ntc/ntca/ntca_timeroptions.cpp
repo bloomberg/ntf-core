@@ -26,7 +26,8 @@ namespace ntca {
 bool TimerOptions::equals(const TimerOptions& other) const
 {
     return (d_handle == other.d_handle && d_id == other.d_id &&
-            d_flags == other.d_flags && d_eventMask == other.d_eventMask);
+            d_flags == other.d_flags && d_eventMask == other.d_eventMask &&
+            d_backoff == other.d_backoff);
 }
 
 bool TimerOptions::less(const TimerOptions& other) const
@@ -59,7 +60,15 @@ bool TimerOptions::less(const TimerOptions& other) const
         return false;
     }
 
-    return d_eventMask < other.d_eventMask;
+    if (d_eventMask < other.d_eventMask) {
+        return true;
+    }
+
+    if (other.d_eventMask < d_eventMask) {
+        return false;
+    }
+
+    return d_backoff < other.d_backoff;
 }
 
 bsl::ostream& TimerOptions::print(bsl::ostream& stream,
@@ -79,6 +88,11 @@ bsl::ostream& TimerOptions::print(bsl::ostream& stream,
                            this->wantEvent(ntca::TimerEventType::e_CANCELED));
     printer.printAttribute("wantClosed",
                            this->wantEvent(ntca::TimerEventType::e_CLOSED));
+
+    if (d_backoff.has_value()) {
+        printer.printAttribute("drift", d_backoff.value());
+    }
+
     printer.end();
     return stream;
 }

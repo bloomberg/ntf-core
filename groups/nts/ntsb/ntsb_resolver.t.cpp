@@ -19,6 +19,7 @@
 BSLS_IDENT_RCSID(ntsb_resolver_t_cpp, "$Id$ $CSID$")
 
 #include <ntsb_resolver.h>
+#include <bslim_printer.h>
 
 using namespace BloombergLP;
 
@@ -61,6 +62,9 @@ class ResolverTest
 
     // TODO
     static void verifyCase11();
+
+    // TODO
+    static void verifyCase12();
 
   private:
     static bsl::string makeEndpointSpecifier(ntsa::Port port);
@@ -144,6 +148,97 @@ class ResolverTest
                                    const ntsa::EndpointOptions& options,
                                    const ntsa::Ipv6Address&     host,
                                    ntsa::Port                   port);
+
+    static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
+                                   bsl::vector<ntsa::Endpoint>* endpointVector,
+                                   const ntsa::EndpointOptions& options,
+                                   ntsa::Port                   port);
+
+    static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
+                                   bsl::vector<ntsa::Endpoint>* endpointVector,
+                                   const ntsa::EndpointOptions& options,
+                                   const bsl::string&           host);
+
+    static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
+                                   bsl::vector<ntsa::Endpoint>* endpointVector,
+                                   const ntsa::EndpointOptions& options,
+                                   const bsl::string&           host,
+                                   const bsl::string&           port);
+
+    static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
+                                   bsl::vector<ntsa::Endpoint>* endpointVector,
+                                   const ntsa::EndpointOptions& options,
+                                   const bsl::string&           host,
+                                   ntsa::Port                   port);
+
+    static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
+                                   bsl::vector<ntsa::Endpoint>* endpointVector,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv4Address&     host);
+
+    static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
+                                   bsl::vector<ntsa::Endpoint>* endpointVector,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv4Address&     host,
+                                   const bsl::string&           port);
+
+    static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
+                                   bsl::vector<ntsa::Endpoint>* endpointVector,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv4Address&     host,
+                                   ntsa::Port                   port);
+
+    static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
+                                   bsl::vector<ntsa::Endpoint>* endpointVector,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv6Address&     host);
+
+    static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
+                                   bsl::vector<ntsa::Endpoint>* endpointVector,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv6Address&     host,
+                                   const bsl::string&           port);
+
+    static ntsa::Error getEndpoint(ntsb::Resolver*              resolver,
+                                   bsl::vector<ntsa::Endpoint>* endpointVector,
+                                   const ntsa::EndpointOptions& options,
+                                   const ntsa::Ipv6Address&     host,
+                                   ntsa::Port                   port);
+
+    static bool sortIpAddress(const ntsa::IpAddress& lhs,
+                              const ntsa::IpAddress& rhs)
+    {
+        return rhs < lhs;  // reverse sort
+    }
+
+    static void filterIpAddress(bsl::vector<ntsa::IpAddress>* ipAddressVector)
+    {
+        NTSCFG_TEST_LOG_INFO << "Filtering IP address list"
+                             << NTSCFG_TEST_LOG_END;
+
+        bsl::sort(ipAddressVector->begin(),
+                  ipAddressVector->end(),
+                  &ResolverTest::sortIpAddress);
+    }
+
+    struct EndpointVectorPrinter {
+        bsl::vector<ntsa::Endpoint>* d_endpointVector;
+        explicit EndpointVectorPrinter(
+            bsl::vector<ntsa::Endpoint>* endpointVector)
+        : d_endpointVector(endpointVector)
+        {
+        }
+
+        friend bsl::ostream& operator<<(bsl::ostream&                stream,
+                                        const EndpointVectorPrinter& object)
+        {
+            bslim::Printer printer(&stream, 0, -1);
+            printer.start();
+            printer.printValue(*object.d_endpointVector);
+            printer.end();
+            return stream;
+        }
+    };
 };
 
 // Uncomment or set to 0 to disable tests for invalid domain names, which
@@ -3018,6 +3113,51 @@ NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase11)
     }
 }
 
+NTSCFG_TEST_FUNCTION(ntsb::ResolverTest::verifyCase12)
+{
+    // MRM
+
+    ntsa::Error error;
+
+    ntsb::Resolver resolver(NTSCFG_TEST_ALLOCATOR);
+
+    {
+        bsl::vector<ntsa::Endpoint> endpointVector;
+        ntsa::EndpointOptions       options;
+
+        bsl::string endpointString = "example.com:12345";
+
+        error = ResolverTest::getEndpoint(&resolver,
+                                          &endpointVector,
+                                          options,
+                                          endpointString);
+        if (error) {
+            NTSCFG_TEST_LOG_DEBUG << "Failed to resolve '" << endpointString
+                                  << "': check DNS availability"
+                                  << NTSCFG_TEST_LOG_END;
+        }
+    }
+
+    {
+        bsl::vector<ntsa::Endpoint> endpointVector;
+        ntsa::EndpointOptions       options;
+
+        options.setIpAddressFilter(&ResolverTest::filterIpAddress);
+
+        bsl::string endpointString = "example.com:12345";
+
+        error = ResolverTest::getEndpoint(&resolver,
+                                          &endpointVector,
+                                          options,
+                                          endpointString);
+        if (error) {
+            NTSCFG_TEST_LOG_DEBUG << "Failed to resolve '" << endpointString
+                                  << "': check DNS availability"
+                                  << NTSCFG_TEST_LOG_END;
+        }
+    }
+}
+
 bsl::string ResolverTest::makeEndpointSpecifier(ntsa::Port port)
 {
     bsl::stringstream ss;
@@ -3365,6 +3505,302 @@ ntsa::Error ResolverTest::getEndpoint(ntsb::Resolver*              resolver,
     else {
         NTSCFG_TEST_LOG_DEBUG << "Endpoint = " << *endpoint
                               << NTSCFG_TEST_LOG_END;
+    }
+
+    return error;
+}
+
+ntsa::Error ResolverTest::getEndpoint(
+    ntsb::Resolver*              resolver,
+    bsl::vector<ntsa::Endpoint>* endpointVector,
+    const ntsa::EndpointOptions& options,
+    ntsa::Port                   port)
+{
+    ntsa::Error error;
+
+    bsl::string text = ResolverTest::makeEndpointSpecifier(port);
+
+    NTSCFG_TEST_LOG_DEBUG << "--" << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Parsing: '" << text << "' using options "
+                          << options << NTSCFG_TEST_LOG_END;
+
+    error = resolver->getEndpoint(endpointVector, text, options);
+
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        NTSCFG_TEST_LOG_DEBUG
+            << "Endpoint = "
+            << ResolverTest::EndpointVectorPrinter(endpointVector)
+            << NTSCFG_TEST_LOG_END;
+    }
+
+    return error;
+}
+
+ntsa::Error ResolverTest::getEndpoint(
+    ntsb::Resolver*              resolver,
+    bsl::vector<ntsa::Endpoint>* endpointVector,
+    const ntsa::EndpointOptions& options,
+    const bsl::string&           host)
+{
+    ntsa::Error error;
+
+    bsl::string text = ResolverTest::makeEndpointSpecifier(host);
+
+    NTSCFG_TEST_LOG_DEBUG << "--" << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Parsing: '" << text << "' using options "
+                          << options << NTSCFG_TEST_LOG_END;
+
+    error = resolver->getEndpoint(endpointVector, text, options);
+
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        NTSCFG_TEST_LOG_DEBUG
+            << "Endpoint = "
+            << ResolverTest::EndpointVectorPrinter(endpointVector)
+            << NTSCFG_TEST_LOG_END;
+    }
+
+    return error;
+}
+
+ntsa::Error ResolverTest::getEndpoint(
+    ntsb::Resolver*              resolver,
+    bsl::vector<ntsa::Endpoint>* endpointVector,
+    const ntsa::EndpointOptions& options,
+    const bsl::string&           host,
+    const bsl::string&           port)
+{
+    ntsa::Error error;
+
+    bsl::string text = ResolverTest::makeEndpointSpecifier(host, port);
+
+    NTSCFG_TEST_LOG_DEBUG << "--" << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Parsing: '" << text << "' using options "
+                          << options << NTSCFG_TEST_LOG_END;
+
+    error = resolver->getEndpoint(endpointVector, text, options);
+
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        NTSCFG_TEST_LOG_DEBUG
+            << "Endpoint = "
+            << ResolverTest::EndpointVectorPrinter(endpointVector)
+            << NTSCFG_TEST_LOG_END;
+    }
+
+    return error;
+}
+
+ntsa::Error ResolverTest::getEndpoint(
+    ntsb::Resolver*              resolver,
+    bsl::vector<ntsa::Endpoint>* endpointVector,
+    const ntsa::EndpointOptions& options,
+    const bsl::string&           host,
+    ntsa::Port                   port)
+{
+    ntsa::Error error;
+
+    bsl::string text = ResolverTest::makeEndpointSpecifier(host, port);
+
+    NTSCFG_TEST_LOG_DEBUG << "--" << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Parsing: '" << text << "' using options "
+                          << options << NTSCFG_TEST_LOG_END;
+
+    error = resolver->getEndpoint(endpointVector, text, options);
+
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        NTSCFG_TEST_LOG_DEBUG
+            << "Endpoint = "
+            << ResolverTest::EndpointVectorPrinter(endpointVector)
+            << NTSCFG_TEST_LOG_END;
+    }
+
+    return error;
+}
+
+ntsa::Error ResolverTest::getEndpoint(
+    ntsb::Resolver*              resolver,
+    bsl::vector<ntsa::Endpoint>* endpointVector,
+    const ntsa::EndpointOptions& options,
+    const ntsa::Ipv4Address&     host)
+{
+    ntsa::Error error;
+
+    bsl::string text = ResolverTest::makeEndpointSpecifier(host);
+
+    NTSCFG_TEST_LOG_DEBUG << "--" << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Parsing: '" << text << "' using options "
+                          << options << NTSCFG_TEST_LOG_END;
+
+    error = resolver->getEndpoint(endpointVector, text, options);
+
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        NTSCFG_TEST_LOG_DEBUG
+            << "Endpoint = "
+            << ResolverTest::EndpointVectorPrinter(endpointVector)
+            << NTSCFG_TEST_LOG_END;
+    }
+
+    return error;
+}
+
+ntsa::Error ResolverTest::getEndpoint(
+    ntsb::Resolver*              resolver,
+    bsl::vector<ntsa::Endpoint>* endpointVector,
+    const ntsa::EndpointOptions& options,
+    const ntsa::Ipv4Address&     host,
+    const bsl::string&           port)
+{
+    ntsa::Error error;
+
+    bsl::string text = ResolverTest::makeEndpointSpecifier(host, port);
+
+    NTSCFG_TEST_LOG_DEBUG << "--" << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Parsing: '" << text << "' using options "
+                          << options << NTSCFG_TEST_LOG_END;
+
+    error = resolver->getEndpoint(endpointVector, text, options);
+
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        NTSCFG_TEST_LOG_DEBUG
+            << "Endpoint = "
+            << ResolverTest::EndpointVectorPrinter(endpointVector)
+            << NTSCFG_TEST_LOG_END;
+    }
+
+    return error;
+}
+
+ntsa::Error ResolverTest::getEndpoint(
+    ntsb::Resolver*              resolver,
+    bsl::vector<ntsa::Endpoint>* endpointVector,
+    const ntsa::EndpointOptions& options,
+    const ntsa::Ipv4Address&     host,
+    ntsa::Port                   port)
+{
+    ntsa::Error error;
+
+    bsl::string text = ResolverTest::makeEndpointSpecifier(host, port);
+
+    NTSCFG_TEST_LOG_DEBUG << "--" << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Parsing: '" << text << "' using options "
+                          << options << NTSCFG_TEST_LOG_END;
+
+    error = resolver->getEndpoint(endpointVector, text, options);
+
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        NTSCFG_TEST_LOG_DEBUG
+            << "Endpoint = "
+            << ResolverTest::EndpointVectorPrinter(endpointVector)
+            << NTSCFG_TEST_LOG_END;
+    }
+
+    return error;
+}
+
+ntsa::Error ResolverTest::getEndpoint(
+    ntsb::Resolver*              resolver,
+    bsl::vector<ntsa::Endpoint>* endpointVector,
+    const ntsa::EndpointOptions& options,
+    const ntsa::Ipv6Address&     host)
+{
+    ntsa::Error error;
+
+    bsl::string text = ResolverTest::makeEndpointSpecifier(host);
+
+    NTSCFG_TEST_LOG_DEBUG << "--" << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Parsing: '" << text << "' using options "
+                          << options << NTSCFG_TEST_LOG_END;
+
+    error = resolver->getEndpoint(endpointVector, text, options);
+
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        NTSCFG_TEST_LOG_DEBUG
+            << "Endpoint = "
+            << ResolverTest::EndpointVectorPrinter(endpointVector)
+            << NTSCFG_TEST_LOG_END;
+    }
+
+    return error;
+}
+
+ntsa::Error ResolverTest::getEndpoint(
+    ntsb::Resolver*              resolver,
+    bsl::vector<ntsa::Endpoint>* endpointVector,
+    const ntsa::EndpointOptions& options,
+    const ntsa::Ipv6Address&     host,
+    const bsl::string&           port)
+{
+    ntsa::Error error;
+
+    bsl::string text = ResolverTest::makeEndpointSpecifier(host, port);
+
+    NTSCFG_TEST_LOG_DEBUG << "--" << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Parsing: '" << text << "' using options "
+                          << options << NTSCFG_TEST_LOG_END;
+
+    error = resolver->getEndpoint(endpointVector, text, options);
+
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        NTSCFG_TEST_LOG_DEBUG
+            << "Endpoint = "
+            << ResolverTest::EndpointVectorPrinter(endpointVector)
+            << NTSCFG_TEST_LOG_END;
+    }
+
+    return error;
+}
+
+ntsa::Error ResolverTest::getEndpoint(
+    ntsb::Resolver*              resolver,
+    bsl::vector<ntsa::Endpoint>* endpointVector,
+    const ntsa::EndpointOptions& options,
+    const ntsa::Ipv6Address&     host,
+    ntsa::Port                   port)
+{
+    ntsa::Error error;
+
+    bsl::string text = ResolverTest::makeEndpointSpecifier(host, port);
+
+    NTSCFG_TEST_LOG_DEBUG << "--" << NTSCFG_TEST_LOG_END;
+    NTSCFG_TEST_LOG_DEBUG << "Parsing: '" << text << "' using options "
+                          << options << NTSCFG_TEST_LOG_END;
+
+    error = resolver->getEndpoint(endpointVector, text, options);
+
+    if (error) {
+        NTSCFG_TEST_LOG_DEBUG << "Error: " << error << NTSCFG_TEST_LOG_END;
+    }
+    else {
+        NTSCFG_TEST_LOG_DEBUG
+            << "Endpoint = "
+            << ResolverTest::EndpointVectorPrinter(endpointVector)
+            << NTSCFG_TEST_LOG_END;
     }
 
     return error;

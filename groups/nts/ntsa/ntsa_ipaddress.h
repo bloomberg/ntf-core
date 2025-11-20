@@ -29,6 +29,7 @@ BSLS_IDENT("$Id: $")
 #include <bsls_objectbuffer.h>
 #include <bsl_iosfwd.h>
 #include <bsl_string.h>
+#include <bsl_vector.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -254,6 +255,11 @@ class IpAddress
     NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(IpAddress);
 };
 
+/// Define a type alias for a vector of IP addresses.
+///
+/// @ingroup module_ntsa_identity
+typedef bsl::vector<ntsa::IpAddress> IpAddressVector;
+
 /// Write the specified 'object' to the specified 'stream'. Return
 /// a modifiable reference to the 'stream'.
 ///
@@ -305,12 +311,12 @@ IpAddress::IpAddress(bslmf::MovableRef<IpAddress> other) NTSCFG_NOEXCEPT
 {
     switch (d_type) {
     case ntsa::IpAddressType::e_V4:
-        new (d_v4.buffer()) ntsa::Ipv4Address(
-            NTSCFG_MOVE_FROM(other, d_v4.object()));
+        new (d_v4.buffer())
+            ntsa::Ipv4Address(NTSCFG_MOVE_FROM(other, d_v4.object()));
         break;
     case ntsa::IpAddressType::e_V6:
-        new (d_v6.buffer()) ntsa::Ipv6Address(
-            NTSCFG_MOVE_FROM(other, d_v6.object()));
+        new (d_v6.buffer())
+            ntsa::Ipv6Address(NTSCFG_MOVE_FROM(other, d_v6.object()));
         break;
     default:
         BSLS_ASSERT(d_type == ntsa::IpAddressType::e_UNDEFINED);
@@ -356,7 +362,7 @@ IpAddress& IpAddress::operator=(bslmf::MovableRef<IpAddress> other)
         this->makeV6(NTSCFG_MOVE_FROM(other, d_v6.object()));
         break;
     default:
-        BSLS_ASSERT(NTSCFG_MOVE_ACCESS(other).d_type == 
+        BSLS_ASSERT(NTSCFG_MOVE_ACCESS(other).d_type ==
                     ntsa::IpAddressType::e_UNDEFINED);
         this->reset();
     }

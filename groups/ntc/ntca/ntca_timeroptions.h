@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntca_timereventtype.h>
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <ntsa_backoff.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
 #include <bsls_timeinterval.h>
@@ -41,6 +42,10 @@ namespace ntca {
 /// @li @b id:
 /// A user-defined identifier of the timer.
 ///
+/// @li @b backoff:
+/// The backoff parameters applied to the interval between periodic recurrence
+/// of the timer, if any.
+///
 /// @li @b oneShot:
 /// The flag indicating the timer is intended to be scheduled only once and not
 /// recur at any period. Such timers are automatically removed when their
@@ -59,10 +64,11 @@ class TimerOptions
 {
     enum Flags { k_FLAG_ONE_SHOT = (1 << 1), k_FLAG_DRIFT = (1 << 2) };
 
-    void*        d_handle;
-    int          d_id;
-    unsigned int d_flags;
-    unsigned int d_eventMask;
+    void*                              d_handle;
+    int                                d_id;
+    unsigned int                       d_flags;
+    unsigned int                       d_eventMask;
+    bdlb::NullableValue<ntsa::Backoff> d_backoff;
 
   public:
     /// Create new timer options having the default value.
@@ -100,6 +106,10 @@ class TimerOptions
     /// 'value'.
     void setId(int value);
 
+    /// Set the backoff parameters applied to the interval between periodic
+    /// recurrence of the timer to the specified 'value'.
+    void setBackoff(const ntsa::Backoff& value);
+
     /// Set the flag indicating one-shot mode to the specified 'value'.
     /// Timers in one-shot mode are intended to be scheduled only once and
     /// not recur at any period. Such timers are automatically closed when
@@ -128,6 +138,10 @@ class TimerOptions
 
     /// Return the user-defined identifier of this timer.
     int id() const;
+
+    /// Return the backoff parameters applied to the interval between periodic
+    /// recurrence of the timer.
+    const bdlb::NullableValue<ntsa::Backoff>& backoff() const;
 
     /// Return the one-shot mode. Timers in one-shot mode are intended to be
     /// scheduled only once and not recur at any period. Such timers are
@@ -232,6 +246,7 @@ TimerOptions::TimerOptions()
 , d_id(0)
 , d_flags(0)
 , d_eventMask(0)
+, d_backoff()
 {
 }
 
@@ -241,6 +256,7 @@ TimerOptions::TimerOptions(const TimerOptions& original)
 , d_id(original.d_id)
 , d_flags(original.d_flags)
 , d_eventMask(original.d_eventMask)
+, d_backoff(original.d_backoff)
 {
 }
 
@@ -250,6 +266,7 @@ TimerOptions::TimerOptions(bslmf::MovableRef<TimerOptions> original)
 , d_id(NTSCFG_MOVE_FROM(original, d_id))
 , d_flags(NTSCFG_MOVE_FROM(original, d_flags))
 , d_eventMask(NTSCFG_MOVE_FROM(original, d_eventMask))
+, d_backoff(NTSCFG_MOVE_FROM(original, d_backoff))
 {
     NTSCFG_MOVE_RESET(original);
 }
@@ -266,6 +283,7 @@ TimerOptions& TimerOptions::operator=(const TimerOptions& other)
     d_id        = other.d_id;
     d_flags     = other.d_flags;
     d_eventMask = other.d_eventMask;
+    d_backoff   = other.d_backoff;
 
     return *this;
 }
@@ -277,6 +295,7 @@ TimerOptions& TimerOptions::operator=(bslmf::MovableRef<TimerOptions> other)
     d_id        = NTSCFG_MOVE_FROM(other, d_id);
     d_flags     = NTSCFG_MOVE_FROM(other, d_flags);
     d_eventMask = NTSCFG_MOVE_FROM(other, d_eventMask);
+    d_backoff   = NTSCFG_MOVE_FROM(other, d_backoff);
 
     NTSCFG_MOVE_RESET(other);
 
@@ -290,6 +309,7 @@ void TimerOptions::reset()
     d_id        = 0;
     d_flags     = 0;
     d_eventMask = 0;
+    d_backoff.reset();
 }
 
 NTCCFG_INLINE
@@ -302,6 +322,12 @@ NTCCFG_INLINE
 void TimerOptions::setId(int value)
 {
     d_id = value;
+}
+
+NTCCFG_INLINE
+void TimerOptions::setBackoff(const ntsa::Backoff& value)
+{
+    d_backoff = value;
 }
 
 NTCCFG_INLINE
@@ -348,6 +374,12 @@ NTCCFG_INLINE
 int TimerOptions::id() const
 {
     return d_id;
+}
+
+NTCCFG_INLINE
+const bdlb::NullableValue<ntsa::Backoff>& TimerOptions::backoff() const
+{
+    return d_backoff;
 }
 
 NTCCFG_INLINE
@@ -429,6 +461,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const TimerOptions& value)
     hashAppend(algorithm, value.id());
     hashAppend(algorithm, value.flags());
     hashAppend(algorithm, value.eventMask());
+    hashAppend(algorithm, value.backoff());
 }
 
 }  // close package namespace

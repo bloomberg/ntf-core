@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
+#include <bsl_vector.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -29,6 +30,11 @@ namespace ntsa {
 ///
 /// @ingroup module_ntsa_identity
 typedef bsl::uint16_t Port;
+
+/// Define a type alias for a vector of port numbers.
+///
+/// @ingroup module_ntsa_identity
+typedef bsl::vector<ntsa::Port> PortVector;
 
 /// Provide utilities for encoding and decoding port numbers.
 ///

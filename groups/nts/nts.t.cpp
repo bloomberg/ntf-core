@@ -21,6 +21,7 @@
 #include <ntsa_abstract.t.cpp>
 #include <ntsa_adapter.t.cpp>
 #include <ntsa_allocator.t.cpp>
+#include <ntsa_backoff.t.cpp>
 #include <ntsa_buffer.t.cpp>
 #include <ntsa_coroutine.t.cpp>
 #include <ntsa_data.t.cpp>

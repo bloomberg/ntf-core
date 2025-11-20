@@ -1469,6 +1469,11 @@ class StreamSocket : public ntsi::Descriptor,
     /// to attempt a zero-copy send to the specified 'value'. Return the error.
     virtual ntsa::Error setZeroCopyThreshold(bsl::size_t value);
 
+    /// Set the connect rate limiter to the specified 'rateLimiter'. Return
+    /// the error.
+    virtual ntsa::Error setConnectRateLimiter(
+        const bsl::shared_ptr<ntci::RateLimiter>& rateLimiter);
+
     /// Set the write rate limiter to the specified 'rateLimiter'. Return
     /// the error.
     virtual ntsa::Error setWriteRateLimiter(
@@ -1597,7 +1602,7 @@ class StreamSocket : public ntsi::Descriptor,
     /// socket handle into the specified 'result', and close this object.
     /// Return the result. Note that the caller has the responsibility for
     /// closing '*result'. Also note that this function automatically closes
-    /// this object, but neither shuts down nor closes '*result'. 
+    /// this object, but neither shuts down nor closes '*result'.
     virtual ntsa::Error release(ntsa::Handle* result);
 
     /// Release the underlying socket from ownership by this object, load the
@@ -1609,7 +1614,7 @@ class StreamSocket : public ntsi::Descriptor,
     /// '*result'. Also tote that callbacks created by this object will
     /// automatically be invoked on this object's strand unless an explicit
     /// strand is specified at the time the callback is created.
-    virtual ntsa::Error release(ntsa::Handle*              result, 
+    virtual ntsa::Error release(ntsa::Handle*              result,
                                 const ntci::CloseFunction& callback);
 
     /// Release the underlying socket from ownership by this object, load the

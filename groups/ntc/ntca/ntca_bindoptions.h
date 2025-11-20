@@ -23,7 +23,9 @@ BSLS_IDENT("$Id: $")
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
 #include <ntsa_ipaddress.h>
+#include <ntsa_ipaddressoptions.h>
 #include <ntsa_port.h>
+#include <ntsa_portoptions.h>
 #include <ntsa_transport.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
@@ -59,6 +61,11 @@ namespace ntca {
 /// The default value is null, indicating the first IP address in the IP
 /// address list is selected.
 ///
+/// @li @b ipAddressFilter:
+/// The function invoked when a domain name is resolved into a list of IP
+/// addresses, to allow the user to reorder, adjust, add, or remove entries in
+/// list.
+///
 /// @li @b portFallback:
 /// The implied port when no service name or port is explicitly defined. The
 /// default value is null, which indicates that resolution should fail unless a
@@ -69,6 +76,11 @@ namespace ntca {
 /// to a service name. This value is always applied modulo the size of the port
 /// list that is the result of resolving a service name. The default value is
 /// null, indicating the first port in the port list is selected.
+///
+/// @li @b portFilter:
+/// The function invoked when a service name is resolved into a list of port
+/// numbers, to allow the user to reorder, adjust, add, or remove entries in
+/// list.
 ///
 /// @li @b transport:
 /// The desired transport with which to use the endpoint. This value affects
@@ -96,19 +108,26 @@ class BindOptions
     bdlb::NullableValue<ntsa::IpAddress>            d_ipAddressFallback;
     bdlb::NullableValue<ntsa::IpAddressType::Value> d_ipAddressType;
     bdlb::NullableValue<bsl::size_t>                d_ipAddressSelector;
+    bdlb::NullableValue<ntsa::IpAddressFilter>      d_ipAddressFilter;
     bdlb::NullableValue<ntsa::Port>                 d_portFallback;
     bdlb::NullableValue<bsl::size_t>                d_portSelector;
+    bdlb::NullableValue<ntsa::PortFilter>           d_portFilter;
     bdlb::NullableValue<ntsa::Transport::Value>     d_transport;
     bdlb::NullableValue<bsls::TimeInterval>         d_deadline;
     bool                                            d_recurse;
 
   public:
-    /// Create new bind options having the default value.
-    BindOptions();
+    /// Create new bind options having the default value. Optionally
+    /// specify a 'basicAllocator' used to supply memory. If 'basicAllocator'
+    /// is null, the currently installed default allocator is used.
+    explicit BindOptions(bslma::Allocator* basicAllocator = 0);
 
     /// Create new bind options having the same value as the specified
-    /// 'original' object.
-    BindOptions(const BindOptions& original);
+    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is null, the currently installed default
+    /// allocator is used.
+    BindOptions(const BindOptions& original,
+                bslma::Allocator*  basicAllocator = 0);
 
     /// Destroy this object.
     ~BindOptions();
@@ -144,6 +163,11 @@ class BindOptions
     /// is selected.
     void setIpAddressSelector(bsl::size_t value);
 
+    /// Set the function invoked when a domain name is resolved into a list of
+    /// IP addresses, to allow the user to reorder, adjust, add, or remove
+    /// entries in list, to the specified 'value'.
+    void setIpAddressFilter(const ntsa::IpAddressFilter& value);
+
     /// Set the implied port when no service name or port is explicitly
     /// defined to the specified 'value'. The default value is null,
     /// which indicates that resolution should fail unless a service name or
@@ -156,6 +180,11 @@ class BindOptions
     /// of resolving a service name. The default value is null, indicating
     /// the first port in the port list is selected.
     void setPortSelector(bsl::size_t value);
+
+    /// Set the function invoked when a service name is resolved into a list of
+    /// port numbers, to allow the user to reorder, adjust, add, or remove
+    /// entries in list, to the specified 'value'.
+    void setPortFilter(const ntsa::PortFilter& value);
 
     /// Set the desired transport with which to use the endpoint to the
     /// specified 'value'. This value affects how domain names resolve to
@@ -198,6 +227,11 @@ class BindOptions
     /// selected.
     const bdlb::NullableValue<bsl::size_t>& ipAddressSelector() const;
 
+    /// Return the function invoked when a domain name is resolved into a list
+    /// of IP addresses, to allow the user to reorder, adjust, add, or remove
+    /// entries in list.
+    const bdlb::NullableValue<ntsa::IpAddressFilter>& ipAddressFilter() const;
+
     /// Return the implied port when no service name or port is explicitly
     /// defined to the specified 'value'. The default value is null, which
     /// indicates that resolution should fail unless a service name or port
@@ -210,6 +244,11 @@ class BindOptions
     /// result of resolving a service name. The default value is null,
     /// indicating the first port in the port list is selected.
     const bdlb::NullableValue<bsl::size_t>& portSelector() const;
+
+    /// Return the function invoked when a service name is resolved into a list
+    /// of port numbers, to allow the user to reorder, adjust, add, or remove
+    /// entries in list.
+    const bdlb::NullableValue<ntsa::PortFilter>& portFilter() const;
 
     /// Return the desired transport with which to use the endpoint to the
     /// specified 'value'. This value affects how domain names resolve to
@@ -250,15 +289,9 @@ class BindOptions
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// This type's copy-constructor and copy-assignment operator is equivalent
-    /// to copying each byte of the source object's footprint to each
-    /// corresponding byte of the destination object's footprint.
-    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(BindOptions);
-
-    /// This type's move-constructor and move-assignment operator is equivalent
-    /// to copying each byte of the source object's footprint to each
-    /// corresponding byte of the destination object's footprint.
-    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(BindOptions);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(BindOptions);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return
@@ -293,13 +326,15 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const BindOptions& value);
 
 NTCCFG_INLINE
-BindOptions::BindOptions()
+BindOptions::BindOptions(bslma::Allocator* basicAllocator)
 : d_token()
 , d_ipAddressFallback()
 , d_ipAddressType()
 , d_ipAddressSelector()
+, d_ipAddressFilter(basicAllocator)
 , d_portFallback()
 , d_portSelector()
+, d_portFilter(basicAllocator)
 , d_transport()
 , d_deadline()
 , d_recurse(false)
@@ -307,13 +342,16 @@ BindOptions::BindOptions()
 }
 
 NTCCFG_INLINE
-BindOptions::BindOptions(const BindOptions& original)
+BindOptions::BindOptions(const BindOptions& original,
+                         bslma::Allocator*  basicAllocator)
 : d_token(original.d_token)
 , d_ipAddressFallback(original.d_ipAddressFallback)
 , d_ipAddressType(original.d_ipAddressType)
 , d_ipAddressSelector(original.d_ipAddressSelector)
+, d_ipAddressFilter(original.d_ipAddressFilter, basicAllocator)
 , d_portFallback(original.d_portFallback)
 , d_portSelector(original.d_portSelector)
+, d_portFilter(original.d_portFilter, basicAllocator)
 , d_transport(original.d_transport)
 , d_deadline(original.d_deadline)
 , d_recurse(original.d_recurse)
@@ -332,8 +370,10 @@ BindOptions& BindOptions::operator=(const BindOptions& other)
     d_ipAddressFallback = other.d_ipAddressFallback;
     d_ipAddressType     = other.d_ipAddressType;
     d_ipAddressSelector = other.d_ipAddressSelector;
+    d_ipAddressFilter   = other.d_ipAddressFilter;
     d_portFallback      = other.d_portFallback;
     d_portSelector      = other.d_portSelector;
+    d_portFilter        = other.d_portFilter;
     d_transport         = other.d_transport;
     d_deadline          = other.d_deadline;
     d_recurse           = other.d_recurse;
@@ -349,6 +389,7 @@ void BindOptions::reset()
     d_ipAddressSelector.reset();
     d_portFallback.reset();
     d_portSelector.reset();
+    d_portFilter.reset();
     d_transport.reset();
     d_deadline.reset();
     d_recurse = false;
@@ -379,6 +420,12 @@ void BindOptions::setIpAddressSelector(bsl::size_t value)
 }
 
 NTSCFG_INLINE
+void BindOptions::setIpAddressFilter(const ntsa::IpAddressFilter& value)
+{
+    d_ipAddressFilter = value;
+}
+
+NTSCFG_INLINE
 void BindOptions::setPortFallback(ntsa::Port value)
 {
     d_portFallback = value;
@@ -388,6 +435,12 @@ NTSCFG_INLINE
 void BindOptions::setPortSelector(bsl::size_t value)
 {
     d_portSelector = value;
+}
+
+NTSCFG_INLINE
+void BindOptions::setPortFilter(const ntsa::PortFilter& value)
+{
+    d_portFilter = value;
 }
 
 NTSCFG_INLINE
@@ -435,6 +488,13 @@ const bdlb::NullableValue<bsl::size_t>& BindOptions::ipAddressSelector() const
 }
 
 NTSCFG_INLINE
+const bdlb::NullableValue<ntsa::IpAddressFilter>& BindOptions::
+    ipAddressFilter() const
+{
+    return d_ipAddressFilter;
+}
+
+NTSCFG_INLINE
 const bdlb::NullableValue<ntsa::Port>& BindOptions::portFallback() const
 {
     return d_portFallback;
@@ -444,6 +504,12 @@ NTSCFG_INLINE
 const bdlb::NullableValue<bsl::size_t>& BindOptions::portSelector() const
 {
     return d_portSelector;
+}
+
+NTSCFG_INLINE
+const bdlb::NullableValue<ntsa::PortFilter>& BindOptions::portFilter() const
+{
+    return d_portFilter;
 }
 
 NTSCFG_INLINE

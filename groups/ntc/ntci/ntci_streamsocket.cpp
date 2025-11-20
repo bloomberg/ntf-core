@@ -27,8 +27,16 @@ StreamSocket::~StreamSocket()
 {
 }
 
+ntsa::Error StreamSocket::setConnectRateLimiter(
+    const bsl::shared_ptr<ntci::RateLimiter>& rateLimiter)
+{
+    NTCCFG_WARNING_UNUSED(rateLimiter);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error StreamSocket::setWriteDeflater(
-        const bsl::shared_ptr<ntci::Compression>& compression)
+    const bsl::shared_ptr<ntci::Compression>& compression)
 {
     NTCCFG_WARNING_UNUSED(compression);
 
@@ -36,7 +44,7 @@ ntsa::Error StreamSocket::setWriteDeflater(
 }
 
 ntsa::Error StreamSocket::setReadInflater(
-        const bsl::shared_ptr<ntci::Compression>& compression)
+    const bsl::shared_ptr<ntci::Compression>& compression)
 {
     NTCCFG_WARNING_UNUSED(compression);
 
@@ -77,7 +85,7 @@ ntsa::Error StreamSocket::release(ntsa::Handle* result)
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
-ntsa::Error StreamSocket::release(ntsa::Handle*              result, 
+ntsa::Error StreamSocket::release(ntsa::Handle*              result,
                                   const ntci::CloseFunction& callback)
 {
     NTCCFG_WARNING_UNUSED(callback);

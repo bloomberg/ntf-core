@@ -25,10 +25,16 @@ BSLS_IDENT("$Id: $")
 #include <ntsscm_version.h>
 #include <bdlb_nullablevalue.h>
 #include <bslh_hash.h>
+#include <bsl_functional.h>
 #include <bsl_iosfwd.h>
 
 namespace BloombergLP {
 namespace ntsa {
+
+/// Defines a type alias for a function invoked when a service name is resolved
+/// into a list of port numbers, to allow the user to reorder, adjust, add, or
+/// remove entries in the specified 'portList'.
+typedef bsl::function<void(ntsa::PortVector* portList)> PortFilter;
 
 /// Provide options to get a port from a service name.
 ///
@@ -50,6 +56,11 @@ namespace ntsa {
 /// list that is the result of resolving a service name. The default value is
 /// null, indicating the first port in the port list is selected.
 ///
+/// @li @b portFilter:
+/// The function invoked when a service name is resolved into a list of port
+/// numbers, to allow the user to reorder, adjust, add, or remove entries in
+/// list.
+///
 /// @li @b transport:
 /// The desired transport with which to use the endpoint. This value affects
 /// how service names resolve to ports. The default value is null, indicating
@@ -63,15 +74,21 @@ class PortOptions
 {
     bdlb::NullableValue<ntsa::Port>             d_portFallback;
     bdlb::NullableValue<bsl::size_t>            d_portSelector;
+    bdlb::NullableValue<ntsa::PortFilter>       d_portFilter;
     bdlb::NullableValue<ntsa::Transport::Value> d_transport;
 
   public:
-    /// Create new send options having the default value.
-    PortOptions();
+    /// Create new send options having the default value. Optionally specify a
+    /// 'basicAllocator' used to supply memory. If 'basicAllocator' is null,
+    /// the currently installed default allocator is used.
+    explicit PortOptions(bslma::Allocator* basicAllocator = 0);
 
     /// Create new send options having the same value as the specified
-    /// 'original' object.
-    PortOptions(const PortOptions& original);
+    /// 'original' object. Optionally specify a 'basicAllocator' used to supply
+    /// memory. If 'basicAllocator' is null, the currently installed default
+    /// allocator is used.
+    PortOptions(const PortOptions& original,
+                bslma::Allocator*  basicAllocator = 0);
 
     /// Destroy this object.
     ~PortOptions();
@@ -97,6 +114,11 @@ class PortOptions
     /// the first port in the port list is selected.
     void setPortSelector(bsl::size_t value);
 
+    /// Set the function invoked when a service name is resolved into a list of
+    /// port numbers, to allow the user to reorder, adjust, add, or remove
+    /// entries in list, to the specified 'value'.
+    void setPortFilter(const ntsa::PortFilter& value);
+
     /// Set the desired transport with which to use the port to the
     /// specified 'value'. This value affects how service names resolve to
     /// ports. The default value is null, indicating that service names are
@@ -115,6 +137,11 @@ class PortOptions
     /// result of resolving a service name. The default value is null,
     /// indicating the first port in the port list is selected.
     const bdlb::NullableValue<bsl::size_t>& portSelector() const;
+
+    /// Return the function invoked when a service name is resolved into a list
+    /// of port numbers, to allow the user to reorder, adjust, add, or remove
+    /// entries in list.
+    const bdlb::NullableValue<ntsa::PortFilter>& portFilter() const;
 
     /// Return the desired transport with which to use the endpoint to the
     /// specified 'value'. This value affects how service names resolve to
@@ -145,15 +172,9 @@ class PortOptions
                         int           level          = 0,
                         int           spacesPerLevel = 4) const;
 
-    /// This type's copy-constructor and copy-assignment operator is equivalent
-    /// to copying each byte of the source object's footprint to each
-    /// corresponding byte of the destination object's footprint.
-    NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(PortOptions);
-
-    /// This type's move-constructor and move-assignment operator is equivalent
-    /// to copying each byte of the source object's footprint to each
-    /// corresponding byte of the destination object's footprint.
-    NTSCFG_TYPE_TRAIT_BITWISE_MOVABLE(PortOptions);
+    /// This type accepts an allocator argument to its constructors and may
+    /// dynamically allocate memory during its operation.
+    NTSCFG_TYPE_TRAIT_ALLOCATOR_AWARE(PortOptions);
 };
 
 /// Write the specified 'object' to the specified 'stream'. Return
@@ -188,17 +209,20 @@ template <typename HASH_ALGORITHM>
 void hashAppend(HASH_ALGORITHM& algorithm, const PortOptions& value);
 
 NTSCFG_INLINE
-PortOptions::PortOptions()
+PortOptions::PortOptions(bslma::Allocator* basicAllocator)
 : d_portFallback()
 , d_portSelector()
+, d_portFilter(basicAllocator)
 , d_transport()
 {
 }
 
 NTSCFG_INLINE
-PortOptions::PortOptions(const PortOptions& original)
+PortOptions::PortOptions(const PortOptions& original,
+                         bslma::Allocator*  basicAllocator)
 : d_portFallback(original.d_portFallback)
 , d_portSelector(original.d_portSelector)
+, d_portFilter(original.d_portFilter, basicAllocator)
 , d_transport(original.d_transport)
 {
 }
@@ -213,6 +237,7 @@ PortOptions& PortOptions::operator=(const PortOptions& other)
 {
     d_portFallback = other.d_portFallback;
     d_portSelector = other.d_portSelector;
+    d_portFilter   = other.d_portFilter;
     d_transport    = other.d_transport;
     return *this;
 }
@@ -222,6 +247,7 @@ void PortOptions::reset()
 {
     d_portFallback.reset();
     d_portSelector.reset();
+    d_portFilter.reset();
     d_transport.reset();
 }
 
@@ -235,6 +261,12 @@ NTSCFG_INLINE
 void PortOptions::setPortSelector(bsl::size_t value)
 {
     d_portSelector = value;
+}
+
+NTSCFG_INLINE
+void PortOptions::setPortFilter(const ntsa::PortFilter& value)
+{
+    d_portFilter = value;
 }
 
 NTSCFG_INLINE
@@ -253,6 +285,12 @@ NTSCFG_INLINE
 const bdlb::NullableValue<bsl::size_t>& PortOptions::portSelector() const
 {
     return d_portSelector;
+}
+
+NTSCFG_INLINE
+const bdlb::NullableValue<ntsa::PortFilter>& PortOptions::portFilter() const
+{
+    return d_portFilter;
 }
 
 NTSCFG_INLINE

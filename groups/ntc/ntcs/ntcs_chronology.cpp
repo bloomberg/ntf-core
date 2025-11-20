@@ -1204,6 +1204,12 @@ void Chronology::announce(bool single)
                 }
 
                 if (NTCCFG_UNLIKELY(isRecurring)) {
+                    if (timer->d_options.backoff().has_value()) {
+                        timer->d_period =
+                            timer->d_options.backoff().value().apply(
+                                timer->d_period);
+                    }
+
                     Microseconds nextDeadlineInMicroseconds =
                         timerDeadlineInMicroseconds +
                         timer->d_period.totalMicroseconds();

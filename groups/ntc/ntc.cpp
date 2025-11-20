@@ -49,6 +49,7 @@
 #include <ntca_connectcontext.cpp>
 #include <ntca_connectevent.cpp>
 #include <ntca_connecteventtype.cpp>
+#include <ntca_connectstrategy.cpp>
 #include <ntca_connectoptions.cpp>
 #include <ntca_connecttoken.cpp>
 #include <ntca_datagramsocketevent.cpp>

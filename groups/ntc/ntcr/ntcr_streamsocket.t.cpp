@@ -28,9 +28,11 @@ BSLS_IDENT_RCSID(ntcr_streamsocket_t_cpp, "$Id$ $CSID$")
 #include <ntcd_resolver.h>
 #include <ntcd_simulation.h>
 #include <ntcd_timer.h>
+#include <ntcdns_resolver.h>
+#include <ntci_connectfuture.h>
 #include <ntci_log.h>
-#include <ntcs_monitorable.h>
 #include <ntcs_datapool.h>
+#include <ntcs_monitorable.h>
 #include <ntcs_ratelimiter.h>
 #include <ntcs_user.h>
 #include <ntcu_streamsocketeventqueue.h>
@@ -65,6 +67,13 @@ class StreamSocketTest
 
     /// Provide a system of mocked objects for this test driver.
     class Fixture;
+
+    // Execute the concern to test connection strategies for the specified
+    // 'transport' using the specified 'reactor'.
+    static void verifyConnectStrategyVariation(
+        ntsa::Transport::Value                transport,
+        const bsl::shared_ptr<ntci::Reactor>& reactor,
+        bslma::Allocator*                     allocator);
 
     // Execute the concern with the specified 'parameters' for the specified
     // 'transport' using the specified 'reactor'.
@@ -303,6 +312,10 @@ class StreamSocketTest
     // previous shutdown call while the socket was waiting for connection
     // attempt result, connection deadline timer is set.
     static void verifyShutdownCloseDetachEsoterica2();
+
+    // Concern: The "list"-based connect strategy tries each result of
+    // name resolution in order before re-resolving.
+    static void verifyConnectStrategy();
 };
 
 /// Provide a test case execution framework.
@@ -616,8 +629,8 @@ void StreamSocketTest::Framework::execute(
     ntsa::Error error;
 
     BSLS_LOG_TRACE("Testing transport %s numThreads %d",
-                  ntsa::Transport::toString(transport),
-                  (int)(numThreads));
+                   ntsa::Transport::toString(transport),
+                   (int)(numThreads));
 
     bsl::shared_ptr<ntcd::Simulation> simulation;
     simulation.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
@@ -1706,6 +1719,98 @@ void StreamSocketTest::Fixture::closeCallback()
 {
     NTSCFG_TEST_FALSE(d_closed);
     d_closed = true;
+}
+
+void StreamSocketTest::verifyConnectStrategyVariation(
+    ntsa::Transport::Value                transport,
+    const bsl::shared_ptr<ntci::Reactor>& reactor,
+    bslma::Allocator*                     allocator)
+{
+    // Concern: Connect strategy.
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_DEBUG("Stream socket connect strategy test starting");
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntcs::Metrics> metrics;
+
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setSystemEnabled(false);
+
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(allocator, resolverConfig, allocator);
+
+    error = resolver->addIpAddress("my.test.domain",
+                                   ntsa::IpAddress("10.0.1.101"));
+    NTSCFG_TEST_OK(error);
+
+    error = resolver->addIpAddress("my.test.domain",
+                                   ntsa::IpAddress("10.0.1.102"));
+    NTSCFG_TEST_OK(error);
+
+    error = resolver->addIpAddress("my.test.domain",
+                                   ntsa::IpAddress("10.0.1.103"));
+    NTSCFG_TEST_OK(error);
+
+    bsl::shared_ptr<ntcd::StreamSocket> basicStreamSocket;
+    basicStreamSocket.createInplace(allocator, allocator);
+
+    error = basicStreamSocket->open(transport);
+    NTSCFG_TEST_OK(error);
+
+    ntca::StreamSocketOptions streamSocketOptions;
+    streamSocketOptions.setTransport(transport);
+
+    bsl::shared_ptr<ntcr::StreamSocket> streamSocket;
+    streamSocket.createInplace(allocator,
+                               streamSocketOptions,
+                               resolver,
+                               reactor,
+                               reactor,
+                               metrics,
+                               allocator);
+
+    error = streamSocket->open(transport, basicStreamSocket);
+    NTSCFG_TEST_OK(error);
+
+    ntca::ConnectOptions connectOptions;
+    ntci::ConnectFuture  connectFuture;
+
+    bsls::TimeInterval retryInterval;
+    retryInterval.addMilliseconds(100);
+
+    ntsa::Backoff retryBackoff;
+    retryBackoff.makeGeometric(2.0);
+
+    connectOptions.setStrategy(ntca::ConnectStrategy::e_RESOLVE_INTO_LIST);
+    connectOptions.setRetryCount(6);
+    connectOptions.setRetryInterval(retryInterval);
+    connectOptions.setRetryBackoff(retryBackoff);
+
+    error = streamSocket->connect("my.test.domain:12345",
+                                  connectOptions,
+                                  connectFuture);
+    NTSCFG_TEST_OK(error);
+
+    while (true) {
+        ntci::ConnectResult connectResult;
+        error = connectFuture.wait(&connectResult);
+        NTSCFG_TEST_OK(error);
+
+        NTCI_LOG_STREAM_DEBUG << "Connect event = " << connectResult.event()
+                              << NTCI_LOG_STREAM_END;
+
+        if (connectResult.event().context().attemptsRemaining() == 0) {
+            break;
+        }
+    }
+
+    NTCI_LOG_DEBUG("Stream socket connect strategy test complete");
+
+    reactor->stop();
 }
 
 void StreamSocketTest::verifyGenericVariation(
@@ -5591,6 +5696,14 @@ NTSCFG_TEST_FUNCTION(
         closeCallback();
         NTSCFG_TEST_TRUE(test.d_closed);
     }
+}
+
+NTSCFG_TEST_FUNCTION(ntcr::StreamSocketTest::verifyConnectStrategy)
+{
+    StreamSocketTest::Framework::execute(
+        ntsa::Transport::e_TCP_IPV4_STREAM,
+        1,
+        &ntcr::StreamSocketTest::verifyConnectStrategyVariation);
 }
 
 }  // close namespace ntcr

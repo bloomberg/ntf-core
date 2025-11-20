@@ -162,6 +162,17 @@ ntsa::Error Resolver::getEndpoint(ntsa::Endpoint*              result,
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 }
 
+ntsa::Error Resolver::getEndpoint(bsl::vector<ntsa::Endpoint>* result,
+                                  const bslstl::StringRef&     text,
+                                  const ntsa::EndpointOptions& options)
+{
+    NTSCFG_WARNING_UNUSED(result);
+    NTSCFG_WARNING_UNUSED(text);
+    NTSCFG_WARNING_UNUSED(options);
+
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
+}
+
 ntsa::Error Resolver::getLocalIpAddress(bsl::vector<ntsa::IpAddress>* result,
                                         const ntsa::IpAddressOptions& options)
 {
