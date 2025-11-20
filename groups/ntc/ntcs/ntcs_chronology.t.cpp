@@ -175,6 +175,9 @@ class ChronologyTest
 
     // TODO
     static void verifyCase36();
+
+    // TODO
+    static void verifyBackoff();
 };
 
 const int ChronologyTest::k_THREAD_INDEX = 5;
@@ -318,11 +321,11 @@ class ChronologyTest::StrandMock : public ntci::Strand
     }
     // mocking base class method
 
-    void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE{};
+    void execute(const Functor& functor) BSLS_KEYWORD_OVERRIDE {};
     // mocking base class method
 
     void moveAndExecute(FunctorSequence* functorSequence,
-                        const Functor&   functor) BSLS_KEYWORD_OVERRIDE{};
+                        const Functor&   functor) BSLS_KEYWORD_OVERRIDE {};
     // mocking base class method
 };
 
@@ -3181,9 +3184,9 @@ NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase34)
         const int numProducers = (numThreads + 1) / 2;
         const int iterations   = numThreads * 100 * 1000;
 #else
-        const int numConsumers      = 8;
-        const int numProducers      = 8;
-        const int iterations        = 1000000;
+        const int numConsumers = 8;
+        const int numProducers = 8;
+        const int iterations   = 1000000;
 #endif
 
         ts.d_numOneShotTimersToConsume = iterations;
@@ -3298,9 +3301,9 @@ NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase36)
         const int numProducers = (numThreads + 1) / 2;
         const int iterations   = 1000 * 1000;
 #else
-        const int numConsumers      = 8;
-        const int numProducers      = 8;
-        const int iterations        = 1000000;
+        const int numConsumers = 8;
+        const int numProducers = 8;
+        const int iterations   = 1000000;
 #endif
 
         ts.d_numOneShotTimersToConsume = iterations;
@@ -3313,6 +3316,86 @@ NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyCase36)
         ts.createAndLaunchProducersWithStrands(numProducers);
 
         ts.waitAll();
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcs::ChronologyTest::verifyBackoff)
+{
+    // Concern: Test recurring timers. Create and schedule one timer with deadline t0 and period p0.
+    // t0 > p0. Check that till t0 it does not shot. Then check that it shots every period
+
+    ChronologyTest::TestSuite s;
+    {
+        NTCI_LOG_CONTEXT();
+
+        NTCI_LOG_DEBUG(
+            "Part 1, create and schedule periodic timer with backoff");
+
+        bsl::shared_ptr<ntci::Timer> timer;
+        {
+            NTCI_LOG_STREAM_DEBUG
+                << "Clock current time = " << s.clock.currentTime()
+                << NTCI_LOG_STREAM_END;
+
+            NTCI_LOG_STREAM_DEBUG
+                << "Chronology current time = " << s.chronology->currentTime()
+                << NTCI_LOG_STREAM_END;
+
+            ntsa::Backoff backoff;
+            backoff.makeGeometric(2.0);
+
+            ntca::TimerOptions timerOptions =
+                s.createOptionsAllDisabled(ChronologyTest::k_TIMER_ID_5);
+            timerOptions.showEvent(ntca::TimerEventType::e_DEADLINE);
+            timerOptions.setBackoff(backoff);
+
+            timer = s.chronology->createTimer(timerOptions,
+                                              s.timerCallback,
+                                              &s.ta);
+
+            const ntsa::Error error =
+                timer->schedule(s.chronology->currentTime() + s.oneMinute,
+                                s.oneMinute);
+            NTSCFG_TEST_OK(error);
+            s.driver->validateInterruptAllCalled();
+
+            s.validateRegisteredAndScheduled(1, 1);
+        }
+
+        for (bsl::size_t i = 0; i < 30; ++i) {
+            s.clock.advance(s.oneMinute);
+            s.chronology->announce();
+        }
+
+        for (bsl::size_t i = 0; i < 4; ++i) {
+            s.callbacks->validateEventReceived(
+                ChronologyTest::k_TIMER_ID_5,
+                ntca::TimerEventType::e_DEADLINE);
+        }
+
+#if 0
+        NTCI_LOG_DEBUG("Part 2, advance till time point earlier than t0, "
+                       "check that it was not shot");
+        {
+            s.clock.advance(s.oneMinute);
+            s.callbacks->validateNoEventReceived();
+            s.validateRegisteredAndScheduled(1, 1);
+        }
+
+        NTCI_LOG_DEBUG(
+            "Part 3, advance till deadline, check that timer was shot");
+        {
+            s.clock.advance(s.oneHour - s.oneMinute);
+            s.chronology->announce();
+            s.callbacks->validateEventReceived(
+                ChronologyTest::k_TIMER_ID_5,
+                ntca::TimerEventType::e_DEADLINE);
+            s.validateRegisteredAndScheduled(1, 1);
+        }
+#endif
+
+        timer->close();
+        timer.reset();
     }
 }
 

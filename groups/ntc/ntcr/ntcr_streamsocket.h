@@ -136,9 +136,7 @@ class StreamSocket : public ntci::StreamSocket,
     bsl::shared_ptr<ntci::Timer>               d_receiveRateTimer_sp;
     bool                                       d_receiveGreedily;
     bsl::shared_ptr<bdlbb::Blob>               d_receiveBlob_sp;
-    ntsa::Endpoint                             d_connectEndpoint;
     bsl::vector<ntsa::Endpoint>                d_connectEndpointVector;
-    bsl::size_t                                d_connectEndpointIndex;
     bsl::string                                d_connectName;
     bsls::TimeInterval                         d_connectStartTime;
     bsl::size_t                                d_connectAttempts;

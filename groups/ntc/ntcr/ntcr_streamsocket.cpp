@@ -1081,13 +1081,14 @@ ntsa::Error StreamSocket::privateSocketWritableConnection(
     }
 
     if (d_connectContext.endpoint().isUndefined()) {
-        if (!d_connectEndpoint.isUndefined()) {
-            d_connectContext.setEndpoint(d_connectEndpoint);
+        if (!d_connectEndpointVector.empty()) {
+            d_connectContext.setEndpoint(d_connectEndpointVector.front());
         }
     }
 
     d_connectOptions.setRetryCount(0);
     d_connectInProgress = false;
+    d_connectEndpointVector.clear();
 
     d_openState.set(ntcs::OpenState::e_CONNECTED);
 
@@ -1514,8 +1515,8 @@ void StreamSocket::privateFailConnect(
         }
 
         if (d_connectContext.endpoint().isUndefined()) {
-            if (!d_connectEndpoint.isUndefined()) {
-                d_connectContext.setEndpoint(d_connectEndpoint);
+            if (!d_connectEndpointVector.empty()) {
+                d_connectContext.setEndpoint(d_connectEndpointVector.front());
             }
         }
 
@@ -4267,9 +4268,14 @@ void StreamSocket::processRemoteEndpointResolution(
 
     ntsa::Error error;
 
+    // MRM: Downgrade to TRACE.
+    NTCI_LOG_STREAM_INFO
+        << "Stream socket processing remote endpoint resolution "
+        << getEndpointEvent << NTCI_LOG_STREAM_END;
+
     if (!d_connectInProgress) {
         NTCI_LOG_STREAM_TRACE
-            << "Stream socket socket ignored remote endpoint resolution "
+            << "Stream socket ignored remote endpoint resolution "
             << getEndpointEvent << " for connection attempt "
             << connectAttempts
             << " because a connection is no longer in progress"
@@ -4279,12 +4285,14 @@ void StreamSocket::processRemoteEndpointResolution(
 
     if (connectAttempts != d_connectAttempts) {
         NTCI_LOG_STREAM_TRACE
-            << "Stream socket socket ignored remote endpoint resolution "
+            << "Stream socket ignored remote endpoint resolution "
             << getEndpointEvent << " for connection attempt "
             << connectAttempts << " because connection attempt "
             << d_connectAttempts << " is now active" << NTCI_LOG_STREAM_END;
         return;
     }
+
+    d_connectEndpointVector = getEndpointEvent.context().endpointList();
 
     if (getEndpointEvent.type() == ntca::GetEndpointEventType::e_ERROR) {
         error = getEndpointEvent.context().error();
@@ -4711,6 +4719,8 @@ void StreamSocket::privateRetryConnect(
         return;
     }
 
+    ntca::ConnectContext connectContext = d_connectContext;
+
     d_systemSourceEndpoint.reset();
     d_systemRemoteEndpoint.reset();
     d_publicSourceEndpoint.reset();
@@ -4726,11 +4736,47 @@ void StreamSocket::privateRetryConnect(
 
     d_connectOptions.setRetryCount(d_connectOptions.retryCount().value() - 1);
 
-    if (!d_connectEndpoint.isUndefined()) {
-        this->privateRetryConnectToEndpoint(self);
+    const ntca::ConnectStrategy::Value connectStrategy =
+        d_connectOptions.strategy().value_or(
+            ntca::ConnectStrategy::e_RESOLVE_INTO_SINGLE);
+
+    if (connectStrategy == ntca::ConnectStrategy::e_RESOLVE_INTO_SINGLE) {
+        if (d_connectEndpointVector.empty()) {
+            BSLS_ASSERT(!d_connectName.empty());
+            this->privateRetryConnectToName(self);
+        }
+        else {
+            this->privateRetryConnectToEndpoint(self);
+        }
     }
     else {
-        this->privateRetryConnectToName(self);
+        BSLS_ASSERT(connectStrategy ==
+                    ntca::ConnectStrategy::e_RESOLVE_INTO_LIST);
+
+        if (!d_connectName.empty() && !d_connectEndpointVector.empty()) {
+            d_connectEndpointVector.erase(d_connectEndpointVector.begin());
+        }
+
+        if (d_connectEndpointVector.empty()) {
+            BSLS_ASSERT(!d_connectName.empty());
+            this->privateRetryConnectToName(self);
+        }
+        else {
+            if (connectContext.source().has_value()) {
+                d_connectContext.setSource(connectContext.source().value());
+            }
+
+            if (connectContext.nameServer().has_value()) {
+                d_connectContext.setNameServer(
+                    connectContext.nameServer().value());
+            }
+
+            if (connectContext.latency().has_value()) {
+                d_connectContext.setLatency(connectContext.latency().value());
+            }
+
+            this->privateRetryConnectToEndpoint(self);
+        }
     }
 }
 
@@ -4793,7 +4839,9 @@ void StreamSocket::privateRetryConnectToEndpoint(
 
     bsl::size_t connectAttempts = d_connectAttempts;
 
-    error = this->privateOpen(self, d_connectEndpoint);
+    BSLS_ASSERT(!d_connectEndpointVector.empty());
+
+    error = this->privateOpen(self, d_connectEndpointVector.front());
     if (error) {
         this->privateFailConnect(self, error, false, false);
         return;
@@ -4818,7 +4866,7 @@ void StreamSocket::privateRetryConnectToEndpoint(
         }
     }
 
-    error = d_socket_sp->connect(d_connectEndpoint);
+    error = d_socket_sp->connect(d_connectEndpointVector.front());
     if (error) {
         if (error != ntsa::Error::e_PENDING &&
             error != ntsa::Error::e_WOULD_BLOCK)
@@ -4836,8 +4884,8 @@ void StreamSocket::privateRetryConnectToEndpoint(
 
     d_publicSourceEndpoint = d_systemSourceEndpoint;
 
-    d_systemRemoteEndpoint = d_connectEndpoint;
-    d_publicRemoteEndpoint = d_connectEndpoint;
+    d_systemRemoteEndpoint = d_connectEndpointVector.front();
+    d_publicRemoteEndpoint = d_connectEndpointVector.front();
 
     if (d_session_sp) {
         ntca::ConnectEvent event;
@@ -5289,9 +5337,7 @@ StreamSocket::StreamSocket(
 , d_receiveRateTimer_sp()
 , d_receiveGreedily(NTCCFG_DEFAULT_STREAM_SOCKET_READ_GREEDILY)
 , d_receiveBlob_sp()
-, d_connectEndpoint()
 , d_connectEndpointVector(basicAllocator)
-, d_connectEndpointIndex(0)
 , d_connectName(basicAllocator)
 , d_connectStartTime()
 , d_connectAttempts(0)
@@ -5323,9 +5369,6 @@ StreamSocket::StreamSocket(
 , d_options(options)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
-    NTCCFG_WARNING_UNUSED(d_connectEndpointVector);
-    NTCCFG_WARNING_UNUSED(d_connectEndpointIndex);
-
     if (reactor->maxThreads() > 1) {
         if (!reactor->oneShot()) {
             BSLS_ASSERT(!"Dynamic load balancing requires one-shot mode");
@@ -5654,10 +5697,16 @@ ntsa::Error StreamSocket::connect(const ntsa::Endpoint&        endpoint,
         }
     }
 
-    d_connectEndpoint   = endpoint;
+    d_connectEndpointVector.push_back(endpoint);
+
     d_connectOptions    = options;
     d_connectCallback   = callback;
     d_connectInProgress = true;
+
+    if (d_connectOptions.strategy().isNull()) {
+        d_connectOptions.setStrategy(
+            ntca::ConnectStrategy::e_RESOLVE_INTO_SINGLE);
+    }
 
     d_openState.set(ntcs::OpenState::e_WAITING);
 
@@ -5703,6 +5752,10 @@ ntsa::Error StreamSocket::connect(const ntsa::Endpoint&        endpoint,
         timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
         timerOptions.setOneShot(true);
 
+        if (d_connectOptions.retryBackoff().has_value()) {
+            timerOptions.setBackoff(d_connectOptions.retryBackoff().value());
+        }
+
         ntci::TimerCallback timerCallback = this->createTimerCallback(
             bdlf::MemFnUtil::memFn(&StreamSocket::processConnectRetryTimer,
                                    self),
@@ -5718,6 +5771,10 @@ ntsa::Error StreamSocket::connect(const ntsa::Endpoint&        endpoint,
         timerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
         timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
         timerOptions.setOneShot(false);
+
+        if (d_connectOptions.retryBackoff().has_value()) {
+            timerOptions.setBackoff(d_connectOptions.retryBackoff().value());
+        }
 
         ntci::TimerCallback timerCallback = this->createTimerCallback(
             bdlf::MemFnUtil::memFn(&StreamSocket::processConnectRetryTimer,
@@ -5826,6 +5883,10 @@ ntsa::Error StreamSocket::connect(const bsl::string&           name,
         timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
         timerOptions.setOneShot(true);
 
+        if (d_connectOptions.retryBackoff().has_value()) {
+            timerOptions.setBackoff(d_connectOptions.retryBackoff().value());
+        }
+
         ntci::TimerCallback timerCallback = this->createTimerCallback(
             bdlf::MemFnUtil::memFn(&StreamSocket::processConnectRetryTimer,
                                    self),
@@ -5841,6 +5902,10 @@ ntsa::Error StreamSocket::connect(const bsl::string&           name,
         timerOptions.hideEvent(ntca::TimerEventType::e_CANCELED);
         timerOptions.hideEvent(ntca::TimerEventType::e_CLOSED);
         timerOptions.setOneShot(false);
+
+        if (d_connectOptions.retryBackoff().has_value()) {
+            timerOptions.setBackoff(d_connectOptions.retryBackoff().value());
+        }
 
         ntci::TimerCallback timerCallback = this->createTimerCallback(
             bdlf::MemFnUtil::memFn(&StreamSocket::processConnectRetryTimer,

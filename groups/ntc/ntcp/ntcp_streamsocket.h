@@ -133,9 +133,7 @@ class StreamSocket : public ntci::StreamSocket,
     bool                                       d_receiveGreedily;
     bsl::uint64_t                              d_receiveCount;
     bsl::shared_ptr<bdlbb::Blob>               d_receiveBlob_sp;
-    ntsa::Endpoint                             d_connectEndpoint;
     bsl::vector<ntsa::Endpoint>                d_connectEndpointVector;
-    bsl::size_t                                d_connectEndpointIndex;
     bsl::string                                d_connectName;
     bsls::TimeInterval                         d_connectStartTime;
     bsl::size_t                                d_connectAttempts;

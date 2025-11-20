@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntscfg_config.h>
 #include <ntscfg_platform.h>
 #include <bdlb_nullablevalue.h>
+#include <bsls_objectbuffer.h>
 #include <bsls_timeinterval.h>
 #include <bsl_variant.h>
 
@@ -46,7 +47,10 @@ namespace ntsa {
 /// @li @b maxJitter:
 /// The maximum jitter.
 ///
-/// @li @b limit:
+/// @li @b minLimit:
+/// The minimum value.
+///
+/// @li @b maxLimit:
 /// The maximum value.
 ///
 /// @par Thread Safety
@@ -55,12 +59,51 @@ namespace ntsa {
 /// @ingroup module_ntsa_system
 class Backoff
 {
-    typedef bsl::variant<bsls::TimeInterval, double> Progression;
+    /// Enumerates the backoff progressions.
+    enum Type {
+        /// The backoff progression is undefined.
+        e_UNDEFINED = 0,
 
-    Progression                             d_progression;
-    bsls::TimeInterval                      d_minJitter;
-    bsls::TimeInterval                      d_maxJitter;
-    bdlb::NullableValue<bsls::TimeInterval> d_limit;
+        /// The backoff progression is arithmetic.
+        e_ARITHMETIC = 1,
+
+        /// The backoff progression is geometric.
+        e_GEOMETRIC = 2
+    };
+
+    /// Defines a type alias for the representation of an arithmetic
+    /// progression.
+    typedef bsls::TimeInterval ArithmeticType;
+
+    /// Defines a type alias for the representation of a geometric progression.
+    typedef double GeometricType;
+
+    /// Describes the union of possible representations.
+    union Rep {
+        /// The parameter of arithmetic progression.
+        bsls::ObjectBuffer<ArithmeticType> d_arithmetic;
+
+        /// The parameter of geometric progression.
+        bsls::ObjectBuffer<GeometricType> d_geometric;
+    };
+
+    /// The progression type.
+    Type d_type;
+
+    /// The union of possible progression representations.
+    Rep d_rep;
+
+    /// The minimum jitter.
+    bsls::TimeInterval d_minJitter;
+
+    /// The maximum jitter.
+    bsls::TimeInterval d_maxJitter;
+
+    /// The minimum limit.
+    bdlb::NullableValue<bsls::TimeInterval> d_minLimit;
+
+    /// The maximum limit.
+    bdlb::NullableValue<bsls::TimeInterval> d_maxLimit;
 
   public:
     /// Create a new backoff with the default value.
@@ -70,12 +113,22 @@ class Backoff
     /// object.
     Backoff(const Backoff& original);
 
+    /// Create a new backoff having the same value as the specified 'original'
+    /// object. The value of the 'original' object becomes unspecified but
+    /// valid.
+    Backoff(bslmf::MovableRef<Backoff> original);
+
     /// Destroy this object.
     ~Backoff();
 
     /// Assign the value of the specified 'other' object to this object. Return
     /// a reference to this modifiable object.
     Backoff& operator=(const Backoff& other);
+
+    /// Assign the value of the specified 'other' object to this object. Return
+    /// a reference to this modifiable object. The value of the 'other' object
+    /// becomes unspecified but valid.
+    Backoff& operator=(bslmf::MovableRef<Backoff> other);
 
     /// Reset the value of this object to its value upon default construction.
     void reset();
@@ -92,16 +145,19 @@ class Backoff
     /// Set the maximum jitter to the specified 'value'.
     void setMaxJitter(const bsls::TimeInterval& value);
 
-    /// Set the limit to the specified 'value'.
-    void setLimit(const bsls::TimeInterval& value);
+    /// Set the minimum limit to the specified 'value'.
+    void setMinLimit(const bsls::TimeInterval& value);
 
-    /// Return the arithmetic difference between intervals, or an unset value
-    /// if the progression is not arithmetic.
-    bdlb::NullableValue<bsls::TimeInterval> arithmetic() const;
+    /// Set the maximum limit to the specified 'value'.
+    void setMaxLimit(const bsls::TimeInterval& value);
 
-    /// Return the multiplier between intervals to the specified 'value', or
-    /// an unset value if the progression is not geometric.
-    bdlb::NullableValue<double> geometric() const;
+    /// Return the arithmetic difference between intervals. The behavior is
+    /// undefined unless the progression is arithmetic.
+    const bsls::TimeInterval& arithmetic() const;
+
+    /// Return the geometric multiplier between intervals. The behavior is
+    /// undefined unless the progression is geometric.
+    double geometric() const;
 
     /// Return the minimum jitter.
     const bsls::TimeInterval& minJitter() const;
@@ -109,11 +165,26 @@ class Backoff
     /// Return the maximum jitter.
     const bsls::TimeInterval& maxJitter() const;
 
-    /// Return the limit.
-    const bdlb::NullableValue<bsls::TimeInterval>& limit() const;
+    /// Return the minimum limit.
+    const bdlb::NullableValue<bsls::TimeInterval>& minLimit() const;
+
+    /// Return the maximum limit.
+    const bdlb::NullableValue<bsls::TimeInterval>& maxLimit() const;
 
     /// Apply this backoff to the specified 'value' and return the result.
     bsls::TimeInterval apply(const bsls::TimeInterval& value) const;
+
+    /// Return true of the back progression is undefined, otherwise return
+    /// false.
+    bool isUndefined() const;
+
+    /// Return true of the back progression is arithmetic, otherwise return
+    /// false.
+    bool isArithmetic() const;
+
+    /// Return true of the back progression is geometric, otherwise return
+    /// false.
+    bool isGeometric() const;
 
     /// Return true if this object has the same value as the specified 'other'
     /// object, otherwise return false.
@@ -192,16 +263,31 @@ NTSCFG_INLINE void Backoff::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
 
-    if (bsl::holds_alternative<bsls::TimeInterval>(d_progression)) {
-        hashAppend(algorithm, bsl::get<bsls::TimeInterval>(d_progression));
+    if (d_type == e_ARITHMETIC) {
+        const bsls::TimeInterval arithmetic = d_rep.d_arithmetic.object();
+        hashAppend(algorithm, arithmetic.totalMicroseconds());
     }
-    else if (bsl::holds_alternative<double>(d_progression)) {
-        hashAppend(algorithm, bsl::get<double>(d_progression));
+    else if (d_type == e_GEOMETRIC) {
+        const double geometric = d_rep.d_geometric.object();
+        hashAppend(algorithm, geometric);
     }
 
-    hashAppend(algorithm, d_minJitter);
-    hashAppend(algorithm, d_maxJitter);
-    hashAppend(algorithm, d_limit);
+    hashAppend(algorithm, d_minJitter.totalMicroseconds());
+    hashAppend(algorithm, d_maxJitter.totalMicroseconds());
+
+    bsls::TimeInterval minLimit;
+    if (d_minLimit.has_value()) {
+        minLimit = d_minLimit.value();
+    }
+
+    hashAppend(algorithm, minLimit.totalMicroseconds());
+
+    bsls::TimeInterval maxLimit;
+    if (d_maxLimit.has_value()) {
+        maxLimit = d_maxLimit.value();
+    }
+
+    hashAppend(algorithm, maxLimit.totalMicroseconds());
 }
 
 template <typename HASH_ALGORITHM>
