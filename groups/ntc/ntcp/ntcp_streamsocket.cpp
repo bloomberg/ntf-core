@@ -453,7 +453,7 @@ void StreamSocket::processUpgradeTimer(
     NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
 
     if (event.type() == ntca::TimerEventType::e_DEADLINE) {
-        // MRM: Log upgrade timeout
+        // TODO: Log upgrade timeout
 
         if (d_upgradeInProgress) {
             this->privateFailUpgrade(self,
@@ -3376,11 +3376,6 @@ void StreamSocket::processRemoteEndpointResolution(
 
     ntsa::Error error;
 
-    // MRM: Downgrade to TRACE.
-    NTCI_LOG_STREAM_INFO
-        << "Stream socket processing remote endpoint resolution "
-        << getEndpointEvent << NTCI_LOG_STREAM_END;
-
     if (!d_connectInProgress) {
         NTCI_LOG_STREAM_TRACE
             << "Stream socket socket ignored remote endpoint resolution "
@@ -3573,7 +3568,7 @@ ntsa::Error StreamSocket::privateUpgrade(
                     NTCCFG_WARNING_PROMOTE(bsl::size_t,
                                            d_receiveQueue.data()->length()));
 
-        // MRM: Announce watermarks if neccessary?
+        // TODO: Announce watermarks if neccessary?
     }
 
     // Pop any outgoing cipher text generated as a result of initiating the
@@ -4009,7 +4004,7 @@ void StreamSocket::privateClose(const bsl::shared_ptr<StreamSocket>& self,
                                  true);
     }
     else {
-        // MRM: Announce discarded.
+        // TODO: Announce discarded.
 
         this->privateShutdown(self,
                               ntsa::ShutdownType::e_BOTH,
