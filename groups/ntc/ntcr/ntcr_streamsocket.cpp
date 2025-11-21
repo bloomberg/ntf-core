@@ -3638,9 +3638,6 @@ ntsa::Error StreamSocket::privateSendRaw(
         }
     }
 
-    BSLS_ASSERT((!error && context.bytesSent() > 0) ||
-                (error == ntsa::Error::e_WOULD_BLOCK));
-
     if (context.bytesSent() == data.size()) {
         if (context.zeroCopy()) {
             ntcq::ZeroCopyCounter zeroCopyCounter =
@@ -4267,11 +4264,6 @@ void StreamSocket::processRemoteEndpointResolution(
     }
 
     ntsa::Error error;
-
-    // MRM: Downgrade to TRACE.
-    NTCI_LOG_STREAM_INFO
-        << "Stream socket processing remote endpoint resolution "
-        << getEndpointEvent << NTCI_LOG_STREAM_END;
 
     if (!d_connectInProgress) {
         NTCI_LOG_STREAM_TRACE
