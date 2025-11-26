@@ -1547,8 +1547,8 @@ ntsa::Error SocketOptionUtil::setMulticastLoopback(ntsa::Handle socket,
         }
     }
     else if (socketAddress.ss_family == AF_INET6) {
-        u_char optionValue = enabled ? 1 : 0;
-        int    rc          = ::setsockopt(socket,
+        u_int optionValue = enabled ? 1 : 0;
+        int   rc          = ::setsockopt(socket,
                               IPPROTO_IPV6,
                               IPV6_MULTICAST_LOOP,
                               reinterpret_cast<char*>(&optionValue),
@@ -1584,8 +1584,10 @@ ntsa::Error SocketOptionUtil::setMulticastInterface(
         }
     }
     else if (interface.isV6()) {
-        bsl::uint32_t optionValue =
+        bsl::uint32_t optionValue = interface.v6().scopeId();
+        if (optionValue == 0) {
             ntsu::AdapterUtil::discoverInterfaceIndex(interface.v6());
+        }
 
         int rc = ::setsockopt(socket,
                               IPPROTO_IPV6,
