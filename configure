@@ -1077,9 +1077,10 @@ if [[ -n "${NTF_CONFIGURE_SANITIZER}" ]]; then
     NTF_CONFIGURE_UFID_CANONICAL="${NTF_CONFIGURE_UFID_CANONICAL}_${NTF_CONFIGURE_SANITIZER}"
 fi
 
-if [[ "${NTF_CONFIGURE_UNAME}" == "Linux" ]] || \
-   [[ "${NTF_CONFIGURE_UNAME}" == "Darwin" ]] || \
-   [[ "${NTF_CONFIGURE_UNAME}" == "Windows" ]]; then
+if { [[ "${NTF_CONFIGURE_UNAME}" == "Linux" ]] || \
+     [[ "${NTF_CONFIGURE_UNAME}" == "Darwin" ]] || \
+     [[ "${NTF_CONFIGURE_UNAME}" == "Windows" ]]; } && \
+    [[ ! "${NTF_CONFIGURE_UFID_CANONICAL}" =~ cpp[0-9]{2} ]]; then
     NTF_CONFIGURE_UFID_CANONICAL="${NTF_CONFIGURE_UFID_CANONICAL}_cpp20"
 fi
 
