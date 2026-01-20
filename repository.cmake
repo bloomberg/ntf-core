@@ -705,6 +705,58 @@ function (ntf_target_requires_get)
     set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
 endfunction()
 
+# Set the "requires_test" variable scoped to a target.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_requires_test_set)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "")
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "requires_test" VALUE ${ARG_VALUE})
+    else()
+        ntf_target_variable_set(
+            TARGET ${ARG_TARGET} VARIABLE "requires_test" VALUE "")
+    endif()
+endfunction()
+
+# Append to the "requires_test" variable scoped to a target.
+#
+# TARGET - The target.
+# VALUE  - The variable value.
+function (ntf_target_requires_test_append)
+    cmake_parse_arguments(
+        ARG "" "TARGET" "VALUE" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+
+    if (NOT "${ARG_VALUE}" STREQUAL "")
+        ntf_target_variable_append(
+            TARGET ${ARG_TARGET} VARIABLE "requires_test" VALUE ${ARG_VALUE})
+    endif()
+endfunction()
+
+# Get the "requires_test" variable scoped to a target.
+#
+# TARGET - The target.
+# OUTPUT - The variable name set in the parent scope.
+function (ntf_target_requires_test_get)
+    cmake_parse_arguments(
+        ARG "" "TARGET;OUTPUT" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_TARGET})
+    ntf_assert_defined(${ARG_OUTPUT})
+
+    ntf_target_variable_get(
+        TARGET ${ARG_TARGET} VARIABLE "requires_test" OUTPUT result)
+
+    set(${ARG_OUTPUT} ${result} PARENT_SCOPE)
+endfunction()
+
 # Set the "aliases" variable scoped to a target. The contents of this variable
 # are imported as aliases of the target in the CMake install metadata.
 #
@@ -1721,7 +1773,7 @@ function (ntf_target_options_cov target)
     ntf_target_build_definition(TARGET ${target} VALUE BDE_BUILD_TARGET_COV)
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-        ntf_target_build_option(TARGET ${target} COMPILE LINK --coverage)
+        ntf_target_build_option(TARGET ${target} COMPILE LINK VALUE --coverage)
     else()
         ntf_die("The UFID flag 'cov' is not supported by compiler: ${CMAKE_CXX_COMPILER_ID}")
     endif()
@@ -2107,7 +2159,7 @@ endfunction()
 #               suite for the repository.
 function (ntf_executable)
     cmake_parse_arguments(
-        NTF_EXECUTABLE "PRIVATE;TEST;EXAMPLE;UNITY" "NAME;PATH;MAIN;OUTPUT" "REQUIRES" ${ARGN})
+        NTF_EXECUTABLE "PRIVATE;THIRDPARTY;TEST;EXAMPLE;UNITY" "NAME;PATH;MAIN;OUTPUT" "REQUIRES" ${ARGN})
 
     if ("${NTF_EXECUTABLE_NAME}" STREQUAL "")
         message(FATAL_ERROR "Invalid parameter: NAME")
@@ -2135,6 +2187,11 @@ function (ntf_executable)
     set(target_private ${NTF_EXECUTABLE_PRIVATE})
     if ("${target_private}" STREQUAL "")
         set(target_private FALSE)
+    endif()
+
+    set(target_thirdparty ${NTF_EXECUTABLE_THIRDPARTY})
+    if ("${target_thirdparty}" STREQUAL "")
+        set(target_thirdparty FALSE)
     endif()
 
     set(target_unity ${NTF_EXECUTABLE_UNITY})
@@ -2230,7 +2287,7 @@ function (ntf_executable)
         TARGET ${target} VALUE ${target_private})
 
     ntf_target_thirdparty_set(
-        TARGET ${target} VALUE FALSE)
+        TARGET ${target} VALUE ${target_thirdparty})
 
     ntf_target_pseudo_set(
         TARGET ${target} VALUE FALSE)
@@ -3151,7 +3208,7 @@ endfunction()
 #              it exists, otherwise the dependency must be must found
 function (ntf_group_requires)
     cmake_parse_arguments(
-        ARG "OPTIONAL" "NAME" "DEPENDENCY" ${ARGN})
+        ARG "OPTIONAL;TEST" "NAME" "DEPENDENCY" ${ARGN})
 
     ntf_assert_defined(${ARG_NAME})
     ntf_assert_defined(${ARG_DEPENDENCY})
@@ -3160,14 +3217,25 @@ function (ntf_group_requires)
 
     ntf_assert_target_defined(${target})
 
-    foreach (dependency ${ARG_DEPENDENCY})
-        ntf_target_link_dependency(
-            TARGET ${target} DEPENDENCY ${dependency} OUTPUT result OPTIONAL)
+    set(for_testing ${ARG_TEST})
+    if ("${for_testing}" STREQUAL "")
+        set(for_testing FALSE)
+    endif()
 
-        if (NOT ${result} AND NOT ${ARG_OPTIONAL})
-            ntf_die("The target '${target}' requires dependency '${dependency}' but it cannot be found")
-        endif()
-    endforeach()
+    if (NOT ${for_testing})
+        foreach (dependency ${ARG_DEPENDENCY})
+            ntf_target_link_dependency(
+                TARGET ${target} DEPENDENCY ${dependency} OUTPUT result OPTIONAL)
+
+            if (NOT ${result} AND NOT ${ARG_OPTIONAL})
+                ntf_die("The target '${target}' requires dependency '${dependency}' but it cannot be found")
+            endif()
+        endforeach()
+    else()
+        foreach (dependency ${ARG_DEPENDENCY})
+            ntf_target_requires_test_append(TARGET ${target} VALUE ${dependency})
+        endforeach()
+    endif()
 endfunction()
 
 # Unify the build of all the components in a group.
@@ -4230,6 +4298,20 @@ function (ntf_component)
             endif()
 
             target_link_libraries(${component_test_build_target} PUBLIC ${dependency})
+        endforeach()
+
+        ntf_target_requires_test_get(
+            TARGET ${component_install_component} OUTPUT target_requires_test)
+
+        foreach(entry ${target_requires_test})
+            set(test_dependency ${entry})
+
+            if (VERBOSE)
+                message(STATUS "NTF Build: linking component test driver '${component_test_build_target}' to test target '${test_dependency}'")
+                message(STATUS "         * target_link_libraries(${component_test_build_target} ${test_dependency})")
+            endif()
+
+            target_link_libraries(${component_test_build_target} PUBLIC ${test_dependency})
         endforeach()
 
         ntf_target_options_common_epilog(${target})
@@ -6355,7 +6437,7 @@ function (ntf_repository_end)
         set(coverage_command
             ${GCOVR_PATH} --root ${PROJECT_SOURCE_DIR} --object-directory=${PROJECT_BINARY_DIR} --exclude=${PROJECT_SOURCE_DIR}/\(.+/\)?\(.+\)\\.t\\.cpp\$ --exclude=${PROJECT_SOURCE_DIR}/\(.+/\)?\(.+\)\\.m\\.cpp\$ --html coverage/index.html --html-details --html-title ${html_title} --xml coverage/index.xml --xml-pretty)
 
-        if (VERBOSE)
+        if (VERBOSE OR TRUE)
             message(STATUS "Enabled code coverage")
             message(STATUS "    GCOV_PATH:    ${GCOV_PATH}")
             message(STATUS "    LCOV_PATH:    ${LCOV_PATH}")
@@ -6385,12 +6467,13 @@ function (ntf_repository_end)
             COMMENT "Generating code coverage"
         )
 
-        add_custom_command(
-            TARGET coverage
-            POST_BUILD
-            COMMAND ;
-            COMMENT "Generated '${PROJECT_BINARY_DIR}/coverage/index.html'"
-        )
+        # MRM:
+        #add_custom_command(
+        #    TARGET coverage
+        #    POST_BUILD
+        #    COMMAND ;
+        #    COMMENT "Generated '${PROJECT_BINARY_DIR}/coverage/index.html'"
+        #)
     endif()
 
 endfunction()
@@ -8433,8 +8516,6 @@ Libs.private:${target_libs_string}\n\
 
 endfunction()
 
-
-
 # Install the artifacts produced when building the target library, including
 # its build system meta-data.
 #
@@ -8541,10 +8622,30 @@ function (ntf_target_install_rule)
 
     # Determine which CMake meta data case style to use.
 
-    if (EXISTS "${install_refroot}/${install_prefix}/${library_relative_path}/cmake/${target}/${target}Config.cmake")
+    if (NOT DEFINED NTF_BUILD_WITH_CMAKE_METADATA_PASCAL_CASE)
+        if (DEFINED NTF_CONFIGURE_WITH_CMAKE_METADATA_PASCAL_CASE)
+            set(NTF_BUILD_WITH_CMAKE_METADATA_PASCAL_CASE
+                ${NTF_CONFIGURE_WITH_CMAKE_METADATA_PASCAL_CASE} CACHE INTERNAL "")
+        elseif (DEFINED ENV{NTF_CONFIGURE_WITH_CMAKE_METADATA_PASCAL_CASE})
+            set(NTF_BUILD_WITH_CMAKE_METADATA_PASCAL_CASE
+                $ENV{NTF_CONFIGURE_WITH_CMAKE_METADATA_PASCAL_CASE} CACHE INTERNAL "")
+        else()
+            set(NTF_BUILD_WITH_CMAKE_METADATA_PASCAL_CASE FALSE CACHE INTERNAL "")
+        endif()
+    endif()
+
+    set(install_cmake_metadata_style 0)
+
+    if (${NTF_BUILD_WITH_CMAKE_METADATA_PASCAL_CASE})
         set(install_cmake_metadata_style 1)
-    else()
-        set(install_cmake_metadata_style 2)
+    endif()
+
+    if (${install_cmake_metadata_style} EQUAL 0)
+        if (EXISTS "${install_refroot}/${install_prefix}/${library_relative_path}/cmake/${target}/${target}Config.cmake")
+            set(install_cmake_metadata_style 1)
+        else()
+            set(install_cmake_metadata_style 2)
+        endif()
     endif()
 
     string(TOLOWER "${CMAKE_BUILD_TYPE}" buildTypeLowercase)
