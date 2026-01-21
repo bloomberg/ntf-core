@@ -47,6 +47,9 @@ class BackoffTest
     // Verify an geometric progression with an initial value of 8.
     static void verifyGeometric8();
 
+    // Verify jitter.
+    static void verifyJitter();
+
   private:
     static void log(bsl::size_t step, const bsls::TimeInterval& interval);
 };
@@ -203,6 +206,24 @@ NTSCFG_TEST_FUNCTION(ntsa::BackoffTest::verifyGeometric8)
     interval = backoff.apply(interval);
     BackoffTest::log(4, interval);
     NTSCFG_TEST_EQ(interval, bsls::TimeInterval(128));
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::BackoffTest::verifyJitter)
+{
+    ntsa::Backoff backoff;
+    backoff.makeArithmetic(bsls::TimeInterval());
+    backoff.setMinJitter(bsls::TimeInterval().addMicroseconds(100));
+    backoff.setMaxJitter(bsls::TimeInterval().addMicroseconds(800));
+
+    for (bsl::size_t i = 0; i < 20; ++i) {
+        const bsls::TimeInterval t  = backoff.apply(bsls::TimeInterval());
+        const bsls::Types::Int64 us = t.totalMicroseconds();
+
+        NTSCFG_TEST_GE(us, 100);
+        NTSCFG_TEST_LE(us, 900);
+
+        NTSCFG_TEST_LOG_DEBUG << "t = " << us << NTSCFG_TEST_LOG_END;
+    }
 }
 
 void BackoffTest::log(bsl::size_t step, const bsls::TimeInterval& interval)

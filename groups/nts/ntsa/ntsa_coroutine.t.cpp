@@ -47,6 +47,8 @@ BSLS_IDENT_RCSID(ntsa_coroutine_t_cpp, "$Id$ $CSID$")
 #include <bsl_type_traits.h>
 #include <bsl_utility.h>
 
+#endif
+
 using namespace BloombergLP;
 
 namespace BloombergLP {
@@ -57,6 +59,8 @@ class CoroutineTest
 {
   public:
     BALL_LOG_SET_CLASS_CATEGORY("NTSA.COROUTINE.TEST");
+
+#if NTS_BUILD_WITH_COROUTINES
 
     template <typename TYPE>
     class AwaitableValue;
@@ -174,6 +178,8 @@ class CoroutineTest
     static ntsa::Task<void> coVerifySandbox(ntsa::AllocatorArg,
                                             ntsa::Allocator allocator);
 
+#endif
+
   public:
     // TODO
     static void verifyMeta();
@@ -214,6 +220,8 @@ class CoroutineTest
     // TODO
     static void verifySandbox();
 };
+
+#if NTS_BUILD_WITH_COROUTINES
 
 /// @internal @brief
 /// Provide an awaitable value that is immediately ready.
@@ -2233,8 +2241,12 @@ ntsa::Task<void> CoroutineTest::coVerifySandbox(ntsa::AllocatorArg,
     co_return;
 }
 
+#endif
+
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyMeta)
 {
+#if NTS_BUILD_WITH_COROUTINES
+
     // IsCoroutineHandle
 
     {
@@ -2460,10 +2472,14 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyMeta)
             ntsa::Coroutine::Compiler::IsAwaiter<TestAwaiter>::value;
         NTSCFG_TEST_TRUE(result);
     }
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyPrerequisites)
 {
+#if NTS_BUILD_WITH_COROUTINES
+
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
 
     CoroutineTest::String empty;
@@ -2482,10 +2498,14 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyPrerequisites)
     concatenation.append(rhs);
 
     BALL_LOG_DEBUG << "Sum = " << concatenation << BALL_LOG_END;
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
 {
+#if NTS_BUILD_WITH_COROUTINES
+
     ntsa::CoroutineTest::Scope function("verifyBasic");
 
     {
@@ -2514,64 +2534,86 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyBasic)
 
         NTSCFG_TEST_EQ(e, f);
     }
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyReturnVoid)
 {
+#if NTS_BUILD_WITH_COROUTINES
     ntsa::CoroutineTest::Scope function("verifyReturnVoid");
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyReturnVoid);
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyReturnInt)
 {
+#if NTS_BUILD_WITH_COROUTINES
     ntsa::CoroutineTest::Scope function("verifyReturnInt");
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyReturnInt);
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyReturnIntChain)
 {
+#if NTS_BUILD_WITH_COROUTINES
     ntsa::CoroutineTest::Scope function("verifyReturnIntChain");
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyReturnIntChain);
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyReturnString)
 {
+#if NTS_BUILD_WITH_COROUTINES
     ntsa::CoroutineTest::Scope function("verifyReturnString");
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyReturnString);
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyReturnStringChain)
 {
+#if NTS_BUILD_WITH_COROUTINES
     ntsa::CoroutineTest::Scope function("verifyReturnStringChain");
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyReturnStringChain);
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyGenerator)
 {
+#if NTS_BUILD_WITH_COROUTINES
     ntsa::CoroutineTest::Scope function("verifyGenerator");
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyGenerator);
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyJoinTuple)
 {
+#if NTS_BUILD_WITH_COROUTINES
     ntsa::CoroutineTest::Scope function("verifyJoinTuple");
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyJoinTuple);
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyJoinVector)
 {
+#if NTS_BUILD_WITH_COROUTINES
     ntsa::CoroutineTest::Scope function("verifyJoinVector");
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyJoinVector);
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifyThreading)
 {
+#if NTS_BUILD_WITH_COROUTINES
     ntsa::CoroutineTest::Scope function("verifyThreading");
     ntsa::CoroutineTest::main(&ntsa::CoroutineTest::coVerifyThreading);
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifySandbox)
 {
+#if NTS_BUILD_WITH_COROUTINES
+
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
 
     coVerifySandbox(ntsa::AllocatorArg(), allocator);
@@ -2583,9 +2625,9 @@ NTSCFG_TEST_FUNCTION(ntsa::CoroutineTest::verifySandbox)
     if (testAllocator != 0) {
         NTSCFG_TEST_EQ(testAllocator->numBlocksInUse(), 0);
     }
+
+#endif
 }
 
 }  // close namespace ntsa
 }  // close namespace BloombergLP
-
-#endif  // NTS_BUILD_WITH_COROUTINES

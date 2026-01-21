@@ -17004,10 +17004,14 @@ NTSCFG_TEST_FUNCTION(ntcf::SystemTest::verifyTlsDowngradeAbortivelyWithMessage)
         BALL_LOG_INFO << "Listener socket closed" << BALL_LOG_END;            \
     } while (false)
 
+#endif
+
 // Provide tests for 'ntci::Concurrent'.
 class ConcurrentTest
 {
     BALL_LOG_SET_CLASS_CATEGORY("NTCI.CONCURRENT");
+
+#if NTC_BUILD_WITH_COROUTINES
 
     // Describe the configurable parameters of the application simulation.
     class Configuration
@@ -17114,6 +17118,8 @@ class ConcurrentTest
         ntsa::AllocatorArg                  allocatorTag,
         ntsa::Allocator                     allocator);
 
+#endif
+
   public:
     // Verify a coroutine can be resume on an scheduler's I/O thread.
     static void verifyExecute();
@@ -17127,6 +17133,8 @@ class ConcurrentTest
     // Verify a sample application.
     static void verifyApplication();
 };
+
+#if NTC_BUILD_WITH_COROUTINES
 
 bsl::shared_ptr<ntci::Scheduler> ConcurrentTest::createScheduler(
     ntsa::Allocator allocator)
@@ -17792,8 +17800,12 @@ ntsa::Task<void> ConcurrentTest::coVerifyApplicationServer(
     co_return;
 }
 
+#endif
+
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyExecute)
 {
+#if NTC_BUILD_WITH_COROUTINES
+
     ntccfg::Object scope("verifyExecute");
 
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
@@ -17807,10 +17819,14 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyExecute)
         coVerifyExecute(scheduler, bsl::allocator_arg, allocator);
 
     ntsa::Coroutine::synchronize(bsl::move(task));
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyDatagramSocket)
 {
+#if NTC_BUILD_WITH_COROUTINES
+
     ntccfg::Object scope("verifyDatagramSocket");
 
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
@@ -17824,10 +17840,14 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyDatagramSocket)
         coVerifyDatagramSocket(scheduler, bsl::allocator_arg, allocator);
 
     ntsa::Coroutine::synchronize(bsl::move(task));
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyStreamSocket)
 {
+#if NTC_BUILD_WITH_COROUTINES
+
     ntccfg::Object scope("verifyStreamSocket");
 
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
@@ -17840,10 +17860,14 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyStreamSocket)
     ntsa::Task<void> task =
         coVerifyStreamSocket(scheduler, bsl::allocator_arg, allocator);
     ntsa::Coroutine::synchronize(bsl::move(task));
+
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
 {
+#if NTC_BUILD_WITH_COROUTINES
+
     ntccfg::Object scope("verifyApplication");
 
     ntsa::Allocator allocator(NTSCFG_TEST_ALLOCATOR);
@@ -17862,9 +17886,9 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
         coVerifyApplication(scheduler, bsl::allocator_arg, allocator);
 
     ntsa::Coroutine::synchronize(bsl::move(task));
-}
-
+    
 #endif
+}
 
 }  // close namespace ntcf
 }  // close namespace BloombergLP

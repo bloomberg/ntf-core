@@ -133,7 +133,8 @@ class Backoff
     /// Reset the value of this object to its value upon default construction.
     void reset();
 
-    /// Set the arithmetic difference between intervals to the specified 'value'.
+    /// Set the arithmetic difference between intervals to the specified 
+    /// 'value'.
     void makeArithmetic(const bsls::TimeInterval& value);
 
     /// Set the multiplier between intervals to the specified 'value'.
