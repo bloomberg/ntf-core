@@ -241,7 +241,7 @@ bsls::TimeInterval Backoff::apply(const bsls::TimeInterval& value) const
     }
     else if (d_type == e_GEOMETRIC) {
         const double geometric = d_rep.d_geometric.object();
-        next                   = initial * geometric;
+        next = static_cast<bsls::Types::Int64>(initial * geometric);
     }
     else {
         BSLA_UNREACHABLE;
@@ -253,11 +253,13 @@ bsls::TimeInterval Backoff::apply(const bsls::TimeInterval& value) const
     const bsls::Types::Int64 jitterRange =
         jitterMax > jitterMin ? jitterMax - jitterMin : 0;
 
-    const bsls::Types::Int64 jitter =
-        jitterMin +
-        (static_cast<double>(static_cast<bsl::uint32_t>(RAND_MAX) -
-                             static_cast<bsl::uint32_t>(bsl::rand())) *
-         jitterRange);
+    const double jitterFactor = 
+        static_cast<double>(bsl::rand()) / static_cast<double>(RAND_MAX);
+
+    const bsls::Types::Int64 jitterAmount = 
+        static_cast<bsls::Types::Int64>(jitterFactor * jitterRange);
+
+    const bsls::Types::Int64 jitter = jitterMin + jitterAmount;
 
     result.addMicroseconds(next + jitter);
 

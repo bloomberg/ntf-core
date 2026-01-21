@@ -22,8 +22,6 @@ BSLS_IDENT_RCSID(ntci_concurrent_t_cpp, "$Id$ $CSID$")
 
 using namespace BloombergLP;
 
-#if NTC_BUILD_WITH_COROUTINES
-
 namespace BloombergLP {
 namespace ntci {
 
@@ -39,9 +37,10 @@ class ConcurrentTest
 
 NTSCFG_TEST_FUNCTION(ntci::ConcurrentTest::verify)
 {
+#if NTC_BUILD_WITH_COROUTINES
+
+#endif
 }
 
 }  // close namespace ntci
 }  // close namespace BloombergLP
-
-#endif

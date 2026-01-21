@@ -7320,20 +7320,33 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 {
     context->reset();
 
-    bsl::size_t size     = string->size();
-    bsl::size_t capacity = string->capacity() - size;
-    if (capacity == 0) {
+    const bsl::size_t originalSize     = string->size();
+    const bsl::size_t originalCapacity = string->capacity();
+
+    bsl::size_t receiveBufferSize = originalCapacity - originalSize;
+
+    if (receiveBufferSize == 0) {
         return ntsa::Error::invalid();
     }
 
-    context->setBytesReceivable(capacity);
+    if (options.maxBytes() > 0) {
+        if (receiveBufferSize > options.maxBytes()) {
+            receiveBufferSize = options.maxBytes();
+        }
+    }
+
+    string->resize(originalSize + receiveBufferSize);
+
+    char* receiveBufferData = string->data() + originalSize;
+
+    context->setBytesReceivable(receiveBufferSize);
 
     const bool wantEndpoint = options.wantEndpoint();
 
     if (wantEndpoint) {
         WSABUF wsaBuf;
-        wsaBuf.buf = string->data() + size;
-        wsaBuf.len = static_cast<DWORD>(capacity);
+        wsaBuf.buf = receiveBufferData;
+        wsaBuf.len = static_cast<DWORD>(receiveBufferSize);
 
         sockaddr_storage socketAddress;
         socklen_t        socketAddressSize;
@@ -7355,6 +7368,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                         0);
 
         if (wsaRecvFromResult != 0) {
+            string->resize(originalSize);
             return ntsa::Error(WSAGetLastError());
         }
 
@@ -7371,14 +7385,14 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         }
 
         context->setBytesReceived(wsaNumBytesReceived);
-        string->resize(size + wsaNumBytesReceived);
+        string->resize(originalSize + wsaNumBytesReceived);
 
         return ntsa::Error();
     }
     else {
         WSABUF wsaBuf;
-        wsaBuf.buf = string->data() + size;
-        wsaBuf.len = static_cast<DWORD>(capacity);
+        wsaBuf.buf = receiveBufferData;
+        wsaBuf.len = static_cast<DWORD>(receiveBufferSize);
 
         DWORD wsaNumBytesReceived = 0;
         DWORD wsaFlags            = 0;
@@ -7387,11 +7401,12 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             WSARecv(socket, &wsaBuf, 1, &wsaNumBytesReceived, &wsaFlags, 0, 0);
 
         if (wsaRecvResult != 0) {
+            string->resize(originalSize);
             return ntsa::Error(WSAGetLastError());
         }
 
         context->setBytesReceived(wsaNumBytesReceived);
-        string->resize(size + wsaNumBytesReceived);
+        string->resize(originalSize + wsaNumBytesReceived);
 
         return ntsa::Error();
     }
