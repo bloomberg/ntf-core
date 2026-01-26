@@ -580,8 +580,8 @@ ntsa::Error SocketOptionUtil::setTimestampIncomingData(ntsa::Handle socket,
     socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue));
 
     rc = getsockopt(socket,
-                    SOL_SOCKET,
-                    ntsu::TimestampUtil::e_SO_TIMESTAMPING,
+                    ntsu::TimestampUtil::socketOptionLevel(),
+                    ntsu::TimestampUtil::socketOptionName(),
                     &optionValue,
                     &optionLength);
     if (rc != 0) {
@@ -593,29 +593,23 @@ ntsa::Error SocketOptionUtil::setTimestampIncomingData(ntsa::Handle socket,
     }
 
     if (timestampFlag) {
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION;
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_OPTIONS;
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
+        optionValue |= ntsu::TimestampUtil::socketOptionValueRxGeneration();
+        optionValue |= ntsu::TimestampUtil::socketOptionValueRxFlags();
+        optionValue |= ntsu::TimestampUtil::socketOptionValueReporting();
     }
     else {
-        optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION;
-        optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_OPTIONS;
+        optionValue &= ~ntsu::TimestampUtil::socketOptionValueRxGeneration();
+        optionValue &= ~ntsu::TimestampUtil::socketOptionValueRxFlags();
         if ((optionValue &
-             ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION) == 0)
+             ntsu::TimestampUtil::socketOptionValueTxGeneration()) == 0)
         {
-            optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
+            optionValue &= ~ntsu::TimestampUtil::socketOptionValueReporting();
         }
     }
 
-#if NTSU_TIMESTAMPUTIL_SAFE_FLAGS
-
-    optionValue = ntsu::TimestampUtil::removeUnsupported(optionValue);
-
-#endif
-
     rc = setsockopt(socket,
-                    SOL_SOCKET,
-                    ntsu::TimestampUtil::e_SO_TIMESTAMPING,
+                    ntsu::TimestampUtil::socketOptionLevel(),
+                    ntsu::TimestampUtil::socketOptionName(),
                     &optionValue,
                     sizeof(optionValue));
 
@@ -651,8 +645,8 @@ ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
     socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue));
 
     rc = getsockopt(socket,
-                    SOL_SOCKET,
-                    ntsu::TimestampUtil::e_SO_TIMESTAMPING,
+                    ntsu::TimestampUtil::socketOptionLevel(),
+                    ntsu::TimestampUtil::socketOptionName(),
                     &optionValue,
                     &optionLength);
     if (rc != 0) {
@@ -664,30 +658,24 @@ ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
     }
 
     if (timestampFlag) {
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION;
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_OPTIONS;
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
+        optionValue |= ntsu::TimestampUtil::socketOptionValueTxGeneration();
+        optionValue |= ntsu::TimestampUtil::socketOptionValueTxFlags();
+        optionValue |= ntsu::TimestampUtil::socketOptionValueReporting();
     }
     else {
-        optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION;
-        optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_OPTIONS;
+        optionValue &= ~ntsu::TimestampUtil::socketOptionValueTxGeneration();
+        optionValue &= ~ntsu::TimestampUtil::socketOptionValueTxFlags();
 
         if ((optionValue &
-             ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION) == 0)
+             ntsu::TimestampUtil::socketOptionValueRxGeneration()) == 0)
         {
-            optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
+            optionValue &= ~ntsu::TimestampUtil::socketOptionValueReporting();
         }
     }
 
-#if NTSU_TIMESTAMPUTIL_SAFE_FLAGS
-
-    optionValue = ntsu::TimestampUtil::removeUnsupported(optionValue);
-
-#endif
-
     rc = setsockopt(socket,
-                    SOL_SOCKET,
-                    ntsu::TimestampUtil::e_SO_TIMESTAMPING,
+                    ntsu::TimestampUtil::socketOptionLevel(),
+                    ntsu::TimestampUtil::socketOptionName(),
                     &optionValue,
                     sizeof(optionValue));
 
@@ -1269,8 +1257,8 @@ ntsa::Error SocketOptionUtil::getTimestampIncomingData(bool* timestampFlag,
     socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue));
 
     rc = getsockopt(socket,
-                    SOL_SOCKET,
-                    ntsu::TimestampUtil::e_SO_TIMESTAMPING,
+                    ntsu::TimestampUtil::socketOptionLevel(),
+                    ntsu::TimestampUtil::socketOptionName(),
                     &optionValue,
                     &optionLength);
 
@@ -1283,7 +1271,7 @@ ntsa::Error SocketOptionUtil::getTimestampIncomingData(bool* timestampFlag,
     }
 
     if ((optionValue &
-         ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION) != 0)
+         ntsu::TimestampUtil::socketOptionValueRxGeneration()) != 0)
     {
         *timestampFlag = true;
     }
@@ -1316,8 +1304,8 @@ ntsa::Error SocketOptionUtil::getTimestampOutgoingData(bool* timestampFlag,
     socklen_t optionLength = static_cast<socklen_t>(sizeof(optionValue));
 
     rc = getsockopt(socket,
-                    SOL_SOCKET,
-                    ntsu::TimestampUtil::e_SO_TIMESTAMPING,
+                    ntsu::TimestampUtil::socketOptionLevel(),
+                    ntsu::TimestampUtil::socketOptionName(),
                     &optionValue,
                     &optionLength);
 
@@ -1330,7 +1318,7 @@ ntsa::Error SocketOptionUtil::getTimestampOutgoingData(bool* timestampFlag,
     }
 
     if ((optionValue &
-         ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION) != 0)
+         ntsu::TimestampUtil::socketOptionValueTxGeneration()) != 0)
     {
         *timestampFlag = true;
     }

@@ -93,22 +93,6 @@ class TimestampUtil::Impl
                 optionSupport.versionMinor,
                 optionSupport.versionPatch);
 
-        // MRM
-        #if 0
-        BSLS_LOG_WARN(
-            "Linux kernel version %d.%d.%d (%zu) "
-            "checking for flag %d introduced in version %d.%d.%d (%zu)",
-            versionMajor, 
-            versionMinor, 
-            versionPatch,
-            currentVersion, 
-            optionSupport.option,
-            optionSupport.versionMajor,
-            optionSupport.versionMinor,
-            optionSupport.versionPatch,
-            minimumVersion);
-        #endif
-
         return (currentVersion >= minimumVersion);
     }
 
@@ -249,7 +233,8 @@ int TimestampUtil::socketOptionName()
 
 int TimestampUtil::socketOptionValueReporting()
 {
-    return ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
+    return ntsu::TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE | 
+           ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RAW_HARDWARE;
 }
 
 int TimestampUtil::socketOptionValueRxGeneration()
@@ -332,67 +317,59 @@ int TimestampUtil::socketOptionValueTxFlags()
 
 int TimestampUtil::setRxTimestamps(int optionValue, bool enabled)
 {
+    int result = optionValue;
+
     if (enabled) {
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION;
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_OPTIONS;
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
+        result |= ntsu::TimestampUtil::socketOptionValueRxGeneration();
+        result |= ntsu::TimestampUtil::socketOptionValueRxFlags();
+        result |= ntsu::TimestampUtil::socketOptionValueReporting();
     }
     else {
-        optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION;
-        optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_OPTIONS;
-        if ((optionValue &
-             ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION) == 0)
+        result &= ~ntsu::TimestampUtil::socketOptionValueRxGeneration();
+        result &= ~ntsu::TimestampUtil::socketOptionValueRxFlags();
+        if ((result &
+             ntsu::TimestampUtil::socketOptionValueTxGeneration()) == 0)
         {
-            optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
+            result &= ~ntsu::TimestampUtil::socketOptionValueReporting();
         }
     }
 
-#if NTSU_TIMESTAMPUTIL_SAFE_FLAGS
-
-    optionValue = ntsu::TimestampUtil::removeUnsupported(optionValue);
-
-#endif
-
-    return optionValue;
+    return result;
 }
 
 int TimestampUtil::setTxTimestamps(int optionValue, bool enabled)
 {
+    int result = optionValue;
+
     if (enabled) {
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION;
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_OPTIONS;
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
+        result |= ntsu::TimestampUtil::socketOptionValueTxGeneration();
+        result |= ntsu::TimestampUtil::socketOptionValueTxFlags();
+        result |= ntsu::TimestampUtil::socketOptionValueReporting();
     }
     else {
-        optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION;
-        optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_OPTIONS;
+        result &= ~ntsu::TimestampUtil::socketOptionValueTxGeneration();
+        result &= ~ntsu::TimestampUtil::socketOptionValueTxFlags();
 
-        if ((optionValue &
-             ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION) == 0)
+        if ((result &
+             ntsu::TimestampUtil::socketOptionValueRxGeneration()) == 0)
         {
-            optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
+            result &= ~ntsu::TimestampUtil::socketOptionValueReporting();
         }
     }
 
-#if NTSU_TIMESTAMPUTIL_SAFE_FLAGS
-
-    optionValue = ntsu::TimestampUtil::removeUnsupported(optionValue);
-
-#endif
-
-    return optionValue;
+    return result;
 }
 
 bool TimestampUtil::hasRxTimestamps(int optionValue)
 {
     return ((optionValue &
-             ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION) != 0);
+             ntsu::TimestampUtil::socketOptionValueRxGeneration()) != 0);
 }
 
 bool TimestampUtil::hasTxTimestamps(int optionValue)
 {
     return ((optionValue &
-             ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION) != 0);
+             ntsu::TimestampUtil::socketOptionValueTxGeneration()) != 0);
 }
 
 bool TimestampUtil::supportsOption(int option,
@@ -406,35 +383,12 @@ bool TimestampUtil::supportsOption(int option,
                               sizeof(TimestampUtil::Impl::s_support[0]);
 
     for (bsl::size_t i = 0; i < count; ++i) {
-        // MRM
-        #if 0
-        BSLS_LOG_WARN(
-            "Linux kernel version %d.%d.%d "
-            "checking for flag %d requires version %d.%d.%d", 
-            versionMajor, versionMinor, versionPatch, 
-            TimestampUtil::Impl::s_support[i].option,
-            TimestampUtil::Impl::s_support[i].versionMajor,
-            TimestampUtil::Impl::s_support[i].versionMinor,
-            TimestampUtil::Impl::s_support[i].versionPatch);
-        #endif
-
         if ((option & TimestampUtil::Impl::s_support[i].option) != 0) {
-            // MRM
-            #if 0
-            BSLS_LOG_WARN(
-            "Linux kernel version %d.%d.%d "
-            "checking for flag %d: FOUND",
-            versionMajor, versionMinor, versionPatch, 
-            TimestampUtil::Impl::s_support[i].option);
-            #endif
-
-            const bool isSupported = TimestampUtil::Impl::isSupported(
+            return TimestampUtil::Impl::isSupported(
                 versionMajor,
                 versionMinor,
                 versionPatch,
                 TimestampUtil::Impl::s_support[i]);
-
-            return isSupported;
         }
     }
 
@@ -483,11 +437,6 @@ int TimestampUtil::removeUnsupported(int options)
                                                     versionPatch);
 
             if (!supportsOption) {
-                BSLS_LOG_WARN(
-                    "Linux kernel version %d.%d.%d "
-                    "does not support timestamping flag %d", 
-                    versionMajor, versionMinor, versionPatch, i);
-
                 result &= ~flag;
             }
         }

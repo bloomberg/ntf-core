@@ -61,9 +61,59 @@ namespace ntsu {
 class TimestampUtil 
 {
   public:
+    /// Enumerate the constants used setting timestamp options.
+    enum {
+        e_SCM_TSTAMP_SND   = 0,
+        e_SCM_TSTAMP_SCHED = 1,
+        e_SCM_TSTAMP_ACK   = 2,
+
+        e_SO_TIMESTAMPNS   = 35,
+        e_SO_TIMESTAMPING  = 37,
+        e_SCM_TIMESTAMPNS  = e_SO_TIMESTAMPNS,
+        e_SCM_TIMESTAMPING = e_SO_TIMESTAMPING,
+
+        // Timestamp generation.
+        e_SOF_TIMESTAMPING_TX_HARDWARE = (1 << 0),
+        e_SOF_TIMESTAMPING_TX_SOFTWARE = (1 << 1),
+        e_SOF_TIMESTAMPING_TX_SCHED    = (1 << 8),
+        e_SOF_TIMESTAMPING_TX_ACK      = (1 << 9),
+        e_SOF_TIMESTAMPING_RX_HARDWARE = (1 << 2),
+        e_SOF_TIMESTAMPING_RX_SOFTWARE = (1 << 3),
+
+        // Timestamp reporting.
+        e_SOF_TIMESTAMPING_SOFTWARE     = (1 << 4),
+        e_SOF_TIMESTAMPING_RAW_HARDWARE = (1 << 6),
+
+        // Timestamp options.
+        e_SOF_TIMESTAMPING_OPT_ID     = (1 << 7),
+        e_SOF_TIMESTAMPING_OPT_ID_TCP = (1 << 16),
+        e_SOF_TIMESTAMPING_OPT_TSONLY = (1 << 11),
+        e_SOF_TIMESTAMPING_OPT_RX_FILTER = (1 << 17),
+
+        e_SOF_TIMESTAMPING_TX_OPTIONS =
+            e_SOF_TIMESTAMPING_OPT_ID | 
+            e_SOF_TIMESTAMPING_OPT_ID_TCP |
+            e_SOF_TIMESTAMPING_OPT_TSONLY,
+
+        e_SOF_TIMESTAMPING_RX_OPTIONS = e_SOF_TIMESTAMPING_OPT_RX_FILTER
+    };
+
+    // Copy of Linux 'struct timespec'.
+    struct Timespec {
+        long tv_sec;
+        long tv_nsec;
+    };
+
+    // Copy of linux 'struct scm_timestamping'.
+    struct ScmTimestamping {
+        Timespec softwareTs;
+        Timespec deprecated;
+        Timespec hardwareTs;
+    };
+
     /// Validate the implementation of the current machine.
     static void validate();
-    
+
     /// Return the socket option level for the timestaping socket option. 
     static int socketOptionLevel();
 
@@ -108,65 +158,6 @@ class TimestampUtil
     /// indicate timestamping for outgoing packets is enabled.
     static bool hasTxTimestamps(int optionValue);
 
-    enum {
-        e_SCM_TSTAMP_SND   = 0,
-        e_SCM_TSTAMP_SCHED = 1,
-        e_SCM_TSTAMP_ACK   = 2,
-
-        e_SO_TIMESTAMPNS   = 35,
-        e_SO_TIMESTAMPING  = 37,
-        e_SCM_TIMESTAMPNS  = e_SO_TIMESTAMPNS,
-        e_SCM_TIMESTAMPING = e_SO_TIMESTAMPING,
-
-        // Timestamp generation.
-        e_SOF_TIMESTAMPING_TX_HARDWARE = (1 << 0),
-        e_SOF_TIMESTAMPING_TX_SOFTWARE = (1 << 1),
-        e_SOF_TIMESTAMPING_TX_SCHED    = (1 << 8),
-        e_SOF_TIMESTAMPING_TX_ACK      = (1 << 9),
-        e_SOF_TIMESTAMPING_RX_HARDWARE = (1 << 2),
-        e_SOF_TIMESTAMPING_RX_SOFTWARE = (1 << 3),
-
-        e_SOF_TIMESTAMPING_TX_GENERATION =
-            e_SOF_TIMESTAMPING_TX_HARDWARE | e_SOF_TIMESTAMPING_TX_SOFTWARE |
-            e_SOF_TIMESTAMPING_TX_SCHED | e_SOF_TIMESTAMPING_TX_ACK,
-
-        e_SOF_TIMESTAMPING_RX_GENERATION =
-            e_SOF_TIMESTAMPING_RX_HARDWARE | e_SOF_TIMESTAMPING_RX_SOFTWARE,
-
-        // Timestamp reporting.
-        e_SOF_TIMESTAMPING_SOFTWARE     = (1 << 4),
-        e_SOF_TIMESTAMPING_RAW_HARDWARE = (1 << 6),
-
-        e_SOF_TIMESTAMPING_REPORTING =
-            e_SOF_TIMESTAMPING_SOFTWARE | e_SOF_TIMESTAMPING_RAW_HARDWARE,
-
-        // Timestamp options.
-        e_SOF_TIMESTAMPING_OPT_ID     = (1 << 7),
-        e_SOF_TIMESTAMPING_OPT_ID_TCP = (1 << 16),
-        e_SOF_TIMESTAMPING_OPT_TSONLY = (1 << 11),
-        e_SOF_TIMESTAMPING_OPT_RX_FILTER = (1 << 17),
-
-        e_SOF_TIMESTAMPING_TX_OPTIONS =
-            e_SOF_TIMESTAMPING_OPT_ID | 
-            e_SOF_TIMESTAMPING_OPT_ID_TCP |
-            e_SOF_TIMESTAMPING_OPT_TSONLY,
-
-        e_SOF_TIMESTAMPING_RX_OPTIONS = e_SOF_TIMESTAMPING_OPT_RX_FILTER
-    };
-
-    // Copy of Linux 'struct timespec'.
-    struct Timespec {
-        long tv_sec;
-        long tv_nsec;
-    };
-
-    // Copy of linux 'struct scm_timestamping'.
-    struct ScmTimestamping {
-        Timespec softwareTs;
-        Timespec deprecated;
-        Timespec hardwareTs;
-    };
-
     /// Return true if the specified operation system 'versionMajor',
     /// 'versionMinor', and 'versionPatch' supports the specified 'option'
     /// flag, otherwise return false.
@@ -187,15 +178,6 @@ class TimestampUtil
     /// Provide a private implementation.
     class Impl;
 };
-
-/// @internal @brief
-/// The compile-time configuration flag that indicates timestamping flags
-/// used when specifying socket options should be sanitized to prevent
-/// instructing a kernel with flags that are not recognized by that kernel
-/// version. Define to 1 to strip flags detected to be not supported by the
-/// run-time kernel version. Do not define or define to 0 to submit 
-/// timestamping socket option flags as-is.
-#define NTSU_TIMESTAMPUTIL_SAFE_FLAGS 1
 
 }  // close package namespace
 }  // close enterprise namespace
