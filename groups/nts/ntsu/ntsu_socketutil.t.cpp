@@ -273,12 +273,20 @@ class SocketUtilTest
                                             ntsa::Handle           client,
                                             bslma::Allocator*      allocator);
 
+    static void testDatagramSocketRxTimestamps(
+        ntsa::Transport::Value transport,
+        bslma::Allocator*      allocator);
+
     static void testDatagramSocketTxTimestamps(
         ntsa::Transport::Value transport,
         ntsa::Handle           server,
         const ntsa::Endpoint&  serverEndpoint,
         ntsa::Handle           client,
         const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator);
+
+    static void testStreamSocketRxTimestamps(
+        ntsa::Transport::Value transport,
         bslma::Allocator*      allocator);
 
     static void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
@@ -2798,6 +2806,13 @@ void SocketUtilTest::testStreamSocketMsgZeroCopy(
     }
 }
 
+void SocketUtilTest::testDatagramSocketRxTimestamps(
+        ntsa::Transport::Value transport,
+        bslma::Allocator*      allocator)
+{
+
+}
+
 void SocketUtilTest::testDatagramSocketTxTimestamps(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
@@ -2909,6 +2924,13 @@ void SocketUtilTest::testDatagramSocketTxTimestamps(
             feedback.pop_front();
         }
     }
+}
+
+void SocketUtilTest::testStreamSocketRxTimestamps(
+        ntsa::Transport::Value transport,
+        bslma::Allocator*      allocator)
+{
+
 }
 
 void SocketUtilTest::testStreamSocketTxTimestamps(
@@ -8715,6 +8737,28 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketTimestamping)
         }
     }
 
+    {
+        bsl::vector<ntsa::Transport::Value> socketTypes;
+
+        if (ntsu::AdapterUtil::supportsTransportLoopback(
+                ntsa::Transport::e_UDP_IPV4_DATAGRAM))
+        {
+            socketTypes.push_back(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+        }
+
+        if (ntsu::AdapterUtil::supportsTransportLoopback(
+                ntsa::Transport::e_UDP_IPV6_DATAGRAM))
+        {
+            socketTypes.push_back(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
+        }
+
+        for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
+            ntsa::Transport::Value transport = socketTypes[i];
+            SocketUtilTest::testDatagramSocketRxTimestamps(
+                transport, NTSCFG_TEST_ALLOCATOR);
+        }
+    }
+
     SocketUtilTest::executeDatagramSocketTest(
         &SocketUtilTest::testDatagramSocketTxTimestamps);
 
@@ -8735,6 +8779,28 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketTimestamping)
 
         if (KERNEL_VERSION(major, minor, patch) < KERNEL_VERSION(4, 14, 0)) {
             return;
+        }
+    }
+
+    {
+        bsl::vector<ntsa::Transport::Value> socketTypes;
+
+        if (ntsu::AdapterUtil::supportsTransportLoopback(
+                ntsa::Transport::e_TCP_IPV4_STREAM))
+        {
+            socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
+        }
+
+        if (ntsu::AdapterUtil::supportsTransportLoopback(
+                ntsa::Transport::e_TCP_IPV6_STREAM))
+        {
+            socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
+        }
+
+        for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
+            ntsa::Transport::Value transport = socketTypes[i];
+            SocketUtilTest::testStreamSocketRxTimestamps(
+                transport, NTSCFG_TEST_ALLOCATOR);
         }
     }
 

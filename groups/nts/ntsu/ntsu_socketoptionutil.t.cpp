@@ -131,7 +131,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase1)
 
         ntsa::Handle socket;
         error = ntsu::SocketUtil::create(&socket, transport);
-        NTSCFG_TEST_FALSE(error);
+        NTSCFG_TEST_OK(error);
 
         // Test SOL_SOCKET/SO_KEEPALIVE.
 
@@ -209,12 +209,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase1)
                 NTSCFG_TEST_LOG_INFO << "setReuseAddress: " << error
                                      << NTSCFG_TEST_LOG_END;
 
-                NTSCFG_TEST_FALSE(error);
+                NTSCFG_TEST_OK(error);
 
                 bool output;
                 error =
                     ntsu::SocketOptionUtil::getReuseAddress(&output, socket);
-                NTSCFG_TEST_FALSE(error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_EQ(output, INPUT[i]);
             }
@@ -538,7 +538,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase1)
     defined(BSLS_PLATFORM_OS_WINDOWS)
             NTSCFG_TEST_EQ(error, ntsa::Error::e_NOT_IMPLEMENTED);
 #else
-            NTSCFG_TEST_FALSE(error);
+            NTSCFG_TEST_OK(error);
 #endif
         }
 
@@ -552,7 +552,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase1)
             NTSCFG_TEST_LOG_INFO << "getReceiveBufferAvailable: " << error
                                  << NTSCFG_TEST_LOG_END;
 
-            NTSCFG_TEST_FALSE(error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Retrieve the last error associated with the socket.
@@ -564,7 +564,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase1)
             NTSCFG_TEST_LOG_INFO << "getLastError: " << error
                                  << NTSCFG_TEST_LOG_END;
 
-            NTSCFG_TEST_FALSE(error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Test IPPROTO_TCP/TCP_NODELAY.
@@ -658,7 +658,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase2)
 
         ntsa::Handle socket;
         error = ntsu::SocketUtil::create(&socket, transport);
-        NTSCFG_TEST_FALSE(error);
+        NTSCFG_TEST_OK(error);
 
         // Test SOL_SOCKET/SO_KEEPALIVE.
 
@@ -750,14 +750,14 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase2)
                 NTSCFG_TEST_LOG_INFO << "setReuseAddress: " << error
                                      << NTSCFG_TEST_LOG_END;
 
-                NTSCFG_TEST_FALSE(error);
+                NTSCFG_TEST_OK(error);
 
                 ntsa::SocketOption output;
                 error = ntsu::SocketOptionUtil::getOption(
                     &output,
                     ntsa::SocketOptionType::e_REUSE_ADDRESS,
                     socket);
-                NTSCFG_TEST_FALSE(error);
+                NTSCFG_TEST_OK(error);
 
                 NTSCFG_TEST_TRUE(output.isReuseAddress());
                 NTSCFG_TEST_EQ(output.reuseAddress(), INPUT[i]);
@@ -1126,7 +1126,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase2)
     defined(BSLS_PLATFORM_OS_WINDOWS)
             NTSCFG_TEST_EQ(error, ntsa::Error::e_NOT_IMPLEMENTED);
 #else
-            NTSCFG_TEST_FALSE(error);
+            NTSCFG_TEST_OK(error);
 #endif
         }
 
@@ -1140,7 +1140,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase2)
             NTSCFG_TEST_LOG_INFO << "getReceiveBufferAvailable: " << error
                                  << NTSCFG_TEST_LOG_END;
 
-            NTSCFG_TEST_FALSE(error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Retrieve the last error associated with the socket.
@@ -1152,7 +1152,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase2)
             NTSCFG_TEST_LOG_INFO << "getLastError: " << error
                                  << NTSCFG_TEST_LOG_END;
 
-            NTSCFG_TEST_FALSE(error);
+            NTSCFG_TEST_OK(error);
         }
 
         // Test IPPROTO_TCP/TCP_NODELAY.
@@ -1257,7 +1257,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
 
             ntsa::Handle socket;
             error = ntsu::SocketUtil::create(&socket, transport);
-            NTSCFG_TEST_FALSE(error);
+            NTSCFG_TEST_OK(error);
 
             // Bind the socket to the adapter's address.
 
@@ -1265,13 +1265,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase3)
                 ntsa::Endpoint endpoint(
                     ntsa::IpEndpoint(adapter.ipv4Address().value(), 0));
                 error = ntsu::SocketUtil::bind(endpoint, true, socket);
-                NTSCFG_TEST_FALSE(error);
+                NTSCFG_TEST_OK(error);
             }
             else {
                 ntsa::Endpoint endpoint(
                     ntsa::IpEndpoint(adapter.ipv6Address().value(), 0));
                 error = ntsu::SocketUtil::bind(endpoint, true, socket);
-                NTSCFG_TEST_FALSE(error);
+                NTSCFG_TEST_OK(error);
             }
 
             // Test multicast loopback.
@@ -1504,11 +1504,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase4)
     ntsa::Handle socket;
     error =
         ntsu::SocketUtil::create(&socket, ntsa::Transport::e_TCP_IPV4_STREAM);
-    NTSCFG_TEST_FALSE(error);
+    NTSCFG_TEST_OK(error);
 
     bool noDelay = false;
     error        = ntsu::SocketOptionUtil::getNoDelay(&noDelay, socket);
-    NTSCFG_TEST_FALSE(error);
+    NTSCFG_TEST_OK(error);
 
     if (NTSCFG_TEST_VERBOSITY) {
         bsl::cout << "TCP_NODELAY: " << noDelay << bsl::endl;
@@ -1591,6 +1591,23 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase5)
             if (transport == ntsa::Transport::e_TCP_IPV4_STREAM ||
                 transport == ntsa::Transport::e_TCP_IPV6_STREAM)
             {
+                // Ensure RX timestamps can be enabled on the connecting socket
+                // even though it is not yet connected.
+
+                error =
+                    ntsu::SocketOptionUtil::setTimestampIncomingData(socket,
+                                                                     true);
+                NTSCFG_TEST_OK(error);
+
+                error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                    &timestampIncomingData,
+                    socket);
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_TRUE(timestampIncomingData);
+
+                // Ensure TX timestamps cannot yet be enabled on the connecting
+                // socket because it is not yet connected.
+
                 error =
                     ntsu::SocketOptionUtil::setTimestampOutgoingData(socket,
                                                                      true);
@@ -1602,8 +1619,41 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase5)
                 NTSCFG_TEST_OK(error);
                 NTSCFG_TEST_FALSE(timestampOutgoingData);
 
+                // Create a listener socket.
+
                 error = ntsu::SocketUtil::create(&listener, transport);
                 NTSCFG_TEST_OK(error);
+
+                // Ensure RX timestamps can be enabled on the listener
+                // socket because even though it is not yet bound.
+
+                error =
+                    ntsu::SocketOptionUtil::setTimestampIncomingData(listener,
+                                                                     true);
+                NTSCFG_TEST_OK(error);
+
+                error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                    &timestampIncomingData,
+                    listener);
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_TRUE(timestampIncomingData);
+
+                // Ensure TX timestamps cannot be enabled on the listener 
+                // socket because TX timestamps can only be enabled on
+                // connected sockets.
+
+                error =
+                    ntsu::SocketOptionUtil::setTimestampOutgoingData(listener,
+                                                                     true);
+                NTSCFG_TEST_TRUE(error);
+
+                error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                    &timestampOutgoingData,
+                    listener);
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_FALSE(timestampOutgoingData);
+
+                // Bind the listening socket to a local address.
 
                 if (transport == ntsa::Transport::e_TCP_IPV4_STREAM) {
                     error = ntsu::SocketUtil::bind(
@@ -1636,7 +1686,73 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketOptionUtilTest::verifyCase5)
 
                 error = ntsu::SocketUtil::accept(&server, listener);
                 NTSCFG_TEST_OK(error);
+
+                // Ensure the accepted socket inherits the listening socket's
+                // timestamping options.
+
+                error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                    &timestampIncomingData,
+                    server);
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_TRUE(timestampIncomingData);
+
+                error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                    &timestampOutgoingData,
+                    server);
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_FALSE(timestampOutgoingData);
+
+                // Ensure that outgoing timestamps can now be enabled on
+                // the accepted socket.
+
+                error =
+                    ntsu::SocketOptionUtil::setTimestampOutgoingData(server,
+                                                                     true);
+                NTSCFG_TEST_OK(error);
+
+                error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                    &timestampOutgoingData,
+                    server);
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_TRUE(timestampOutgoingData);
+
+                // Disable both RX and TX timestamps on the connecting socket.
+
+                error = ntsu::SocketOptionUtil::setTimestampIncomingData(
+                    socket, false);
+                NTSCFG_TEST_OK(error);
+
+                error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                    &timestampIncomingData,
+                    socket);
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_FALSE(timestampIncomingData);
+
+                error = ntsu::SocketOptionUtil::setTimestampOutgoingData(
+                    socket, false);
+                NTSCFG_TEST_OK(error);
+
+                error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                    &timestampOutgoingData,
+                    socket);
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_FALSE(timestampOutgoingData);
             }
+
+            // Ensure both RX and TX timestamps are disabled at the start of
+            // the remainder of this test.
+
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &timestampIncomingData,
+                socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampIncomingData);
+
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &timestampOutgoingData,
+                socket);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_FALSE(timestampOutgoingData);
 
             // RX 0, TX 0 -> RX 1, TX 0
 

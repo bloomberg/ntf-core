@@ -233,7 +233,7 @@ class SocketConfig
     /// 'type'. Note that if the option for the 'type' is not set, the
     /// resulting 'option->isUndefined()' will be true.
     void getOption(ntsa::SocketOption*           option,
-                   ntsa::SocketOptionType::Value type);
+                   ntsa::SocketOptionType::Value type) const;
 
     /// Return the flag that indicates the operating system should allow the
     /// user to rebind a socket to reuse local addresses.

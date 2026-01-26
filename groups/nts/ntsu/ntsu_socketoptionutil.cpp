@@ -390,6 +390,67 @@ ntsa::Error SocketOptionUtil::getOption(ntsa::SocketOption*           option,
     }
 }
 
+ntsa::Error SocketOptionUtil::setConfig(
+    ntsa::Handle              socket,
+    const ntsa::SocketConfig& configuration)
+{
+    ntsa::Error error;
+
+    bsl::vector<ntsa::SocketOptionType::Value> optionTypes;
+    ntsa::SocketOptionType::load(&optionTypes);
+
+    for (bsl::size_t i = 0; i < optionTypes.size(); ++i) {
+        const ntsa::SocketOptionType::Value optionType = optionTypes[i];
+
+        ntsa::SocketOption option;
+        configuration.getOption(&option, optionType);
+
+        if (option.isUndefined()) {
+            continue;
+        }
+
+        error = SocketOptionUtil::setOption(socket, option);
+        if (error) {
+            if (error == ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
+                continue;
+            }
+
+            return error;
+        }
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error SocketOptionUtil::getConfig(ntsa::SocketConfig* result,
+                                        ntsa::Handle        socket)
+{
+    ntsa::Error error;
+
+    result->reset();
+
+    bsl::vector<ntsa::SocketOptionType::Value> optionTypes;
+    ntsa::SocketOptionType::load(&optionTypes);
+
+    for (bsl::size_t i = 0; i < optionTypes.size(); ++i) {
+        const ntsa::SocketOptionType::Value optionType = optionTypes[i];
+
+        ntsa::SocketOption option;
+        error = SocketOptionUtil::getOption(&option, optionType, socket);
+        if (error) {
+            if (error == ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED)) {
+                continue;
+            }
+
+            return error;
+        }
+
+        result->setOption(option);
+    }
+
+    return ntsa::Error();
+}
+
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
 ntsa::Error SocketOptionUtil::setBlocking(ntsa::Handle socket, bool blocking)
@@ -533,20 +594,20 @@ ntsa::Error SocketOptionUtil::setTimestampIncomingData(ntsa::Handle socket,
 
     if (timestampFlag) {
         optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION;
+        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_OPTIONS;
         optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPTIONS;
     }
     else {
         optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION;
+        optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_OPTIONS;
         if ((optionValue &
              ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION) == 0)
         {
             optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
-            optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPTIONS;
         }
     }
 
-#if NTSU_SOCKETOPTIONUTIL_TIMESTAMPING_SAFE
+#if NTSU_TIMESTAMPUTIL_SAFE_FLAGS
 
     optionValue = ntsu::TimestampUtil::removeUnsupported(optionValue);
 
@@ -604,20 +665,21 @@ ntsa::Error SocketOptionUtil::setTimestampOutgoingData(ntsa::Handle socket,
 
     if (timestampFlag) {
         optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION;
+        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_OPTIONS;
         optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
-        optionValue |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPTIONS;
     }
     else {
         optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_GENERATION;
+        optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_OPTIONS;
+
         if ((optionValue &
              ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_GENERATION) == 0)
         {
             optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_REPORTING;
-            optionValue &= ~ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPTIONS;
         }
     }
 
-#if NTSU_SOCKETOPTIONUTIL_TIMESTAMPING_SAFE
+#if NTSU_TIMESTAMPUTIL_SAFE_FLAGS
 
     optionValue = ntsu::TimestampUtil::removeUnsupported(optionValue);
 

@@ -58,7 +58,56 @@ namespace ntsu {
 /// Return system time stamp generated in software.
 ///
 /// @ingroup module_ntsu
-struct TimestampUtil {
+class TimestampUtil 
+{
+  public:
+    /// Validate the implementation of the current machine.
+    static void validate();
+    
+    /// Return the socket option level for the timestaping socket option. 
+    static int socketOptionLevel();
+
+    /// Return the socket option name for the timestamping socket option. 
+    static int socketOptionName();
+
+    /// Return the socket option value flags to enable the reporting of 
+    /// timestamps through control messages.
+    static int socketOptionValueReporting();
+
+    /// Return the socket option value flags to enable the generation of 
+    /// timestamps for incoming packets. 
+    static int socketOptionValueRxGeneration();
+
+    /// Return the socket option value flags required to enable timestamping
+    /// for incoming packets. 
+    static int socketOptionValueRxFlags();
+
+    /// Return the socket option value flags to enable the generation of 
+    /// timestamps for outgoing packets. 
+    static int socketOptionValueTxGeneration();
+
+    /// Return the socket option value flags required to enable timestamping
+    /// for outgoijg packets. 
+    static int socketOptionValueTxFlags();
+
+    /// Set or clear the bits in the specified 'optionValue' that enable or 
+    /// disable timestamping for incoming packets according to the specified
+    /// 'enabled' flag. Return the result. 
+    static int setRxTimestamps(int optionValue, bool enabled);
+
+    /// Set or clear the bits in the specified 'optionValue' that enable or 
+    /// disable timestamping for outgoing packets according to the specified
+    /// 'enabled' flag. Return the result. 
+    static int setTxTimestamps(int optionValue, bool enabled);
+
+    /// Return true if the specified 'optionValue' has the necessary bits set
+    /// indicate timestamping for incoming packets is enabled. 
+    static bool hasRxTimestamps(int optionValue);
+
+    /// Return true if the specified 'optionValue' has the necessary bits set
+    /// indicate timestamping for outgoing packets is enabled.
+    static bool hasTxTimestamps(int optionValue);
+
     enum {
         e_SCM_TSTAMP_SND   = 0,
         e_SCM_TSTAMP_SCHED = 1,
@@ -93,10 +142,16 @@ struct TimestampUtil {
 
         // Timestamp options.
         e_SOF_TIMESTAMPING_OPT_ID     = (1 << 7),
+        e_SOF_TIMESTAMPING_OPT_ID_TCP = (1 << 16),
         e_SOF_TIMESTAMPING_OPT_TSONLY = (1 << 11),
+        e_SOF_TIMESTAMPING_OPT_RX_FILTER = (1 << 17),
 
-        e_SOF_TIMESTAMPING_OPTIONS =
-            e_SOF_TIMESTAMPING_OPT_ID | e_SOF_TIMESTAMPING_OPT_TSONLY
+        e_SOF_TIMESTAMPING_TX_OPTIONS =
+            e_SOF_TIMESTAMPING_OPT_ID | 
+            e_SOF_TIMESTAMPING_OPT_ID_TCP |
+            e_SOF_TIMESTAMPING_OPT_TSONLY,
+
+        e_SOF_TIMESTAMPING_RX_OPTIONS = e_SOF_TIMESTAMPING_OPT_RX_FILTER
     };
 
     // Copy of Linux 'struct timespec'.
@@ -132,6 +187,15 @@ struct TimestampUtil {
     /// Provide a private implementation.
     class Impl;
 };
+
+/// @internal @brief
+/// The compile-time configuration flag that indicates timestamping flags
+/// used when specifying socket options should be sanitized to prevent
+/// instructing a kernel with flags that are not recognized by that kernel
+/// version. Define to 1 to strip flags detected to be not supported by the
+/// run-time kernel version. Do not define or define to 0 to submit 
+/// timestamping socket option flags as-is.
+#define NTSU_TIMESTAMPUTIL_SAFE_FLAGS 1
 
 }  // close package namespace
 }  // close enterprise namespace
