@@ -4034,6 +4034,69 @@ ntsa::Error SocketUtil::waitUntilWritable(ntsa::Handle              socket,
     return ntsa::Error::invalid();
 }
 
+ntsa::Error SocketUtil::waitUntilError(ntsa::Handle socket)
+{
+    struct ::pollfd pfd;
+
+    pfd.fd      = socket;
+    pfd.events  = POLLERR | POLLNVAL;
+    pfd.revents = 0;
+
+    int rc = ::poll(&pfd, 1, -1);
+    if (rc < 0) {
+        return ntsa::Error(errno);
+    }
+
+    if (rc == 0) {
+        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+    }
+
+    if ((pfd.revents & POLLERR) != 0) {
+        return ntsa::Error();
+    }
+
+    return ntsa::Error::invalid();
+}
+
+ntsa::Error SocketUtil::waitUntilError(ntsa::Handle              socket,
+                                       const bsls::TimeInterval& timeout)
+{
+    struct ::pollfd pfd;
+
+    pfd.fd      = socket;
+    pfd.events  = POLLERR | POLLNVAL;
+    pfd.revents = 0;
+
+    bsls::TimeInterval now = bdlt::CurrentTime::now();
+
+    bsls::TimeInterval delta;
+    if (timeout > now) {
+        delta = timeout - now;
+    }
+
+    bsl::int64_t milliseconds =
+        static_cast<bsl::int64_t>(delta.totalMilliseconds());
+
+    if (milliseconds > bsl::numeric_limits<int>::max()) {
+        milliseconds = bsl::numeric_limits<int>::max();
+    }
+
+    int rc = ::poll(&pfd, 1, static_cast<int>(milliseconds));
+    if (rc < 0) {
+        return ntsa::Error(errno);
+    }
+
+    if (rc == 0) {
+        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+    }
+
+    if ((pfd.revents & POLLERR) != 0) {
+        return ntsa::Error();
+    }
+
+    return ntsa::Error::invalid();
+}
+
 ntsa::Error SocketUtil::pair(ntsa::Handle*          client,
                              ntsa::Handle*          server,
                              ntsa::Transport::Value type)
@@ -8015,6 +8078,69 @@ ntsa::Error SocketUtil::waitUntilWritable(ntsa::Handle              socket,
     }
 
     if ((pfd.revents & POLLOUT) != 0) {
+        return ntsa::Error();
+    }
+
+    return ntsa::Error::invalid();
+}
+
+ntsa::Error SocketUtil::waitUntilError(ntsa::Handle socket)
+{
+    WSAPOLLFD pfd;
+
+    pfd.fd      = socket;
+    pfd.events  = 0;
+    pfd.revents = 0;
+
+    int rc = WSAPoll(&pfd, 1, -1);
+    if (rc < 0) {
+        return ntsa::Error(WSAGetLastError());
+    }
+
+    if (rc == 0) {
+        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+    }
+
+    if ((pfd.revents & POLLERR) != 0) {
+        return ntsa::Error();
+    }
+
+    return ntsa::Error::invalid();
+}
+
+ntsa::Error SocketUtil::waitUntilError(ntsa::Handle              socket,
+                                       const bsls::TimeInterval& timeout)
+{
+    WSAPOLLFD pfd;
+
+    pfd.fd      = socket;
+    pfd.events  = 0;
+    pfd.revents = 0;
+
+    bsls::TimeInterval now = bdlt::CurrentTime::now();
+
+    bsls::TimeInterval delta;
+    if (timeout > now) {
+        delta = timeout - now;
+    }
+
+    bsl::int64_t milliseconds =
+        static_cast<bsl::int64_t>(delta.totalMilliseconds());
+
+    if (milliseconds > bsl::numeric_limits<int>::max()) {
+        milliseconds = bsl::numeric_limits<int>::max();
+    }
+
+    int rc = WSAPoll(&pfd, 1, static_cast<int>(milliseconds));
+    if (rc < 0) {
+        return ntsa::Error(WSAGetLastError());
+    }
+
+    if (rc == 0) {
+        return ntsa::Error(ntsa::Error::e_WOULD_BLOCK);
+    }
+
+    if ((pfd.revents & POLLERR) != 0) {
         return ntsa::Error();
     }
 

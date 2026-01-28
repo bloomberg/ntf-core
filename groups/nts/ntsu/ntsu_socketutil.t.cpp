@@ -66,6 +66,9 @@ namespace ntsu {
 // Provide tests for 'ntsu::SocketUtil'.
 class SocketUtilTest
 {
+    /// Describes the parameters of the test.
+    class Parameters;
+
     /// This typedef defines a callback function invoked to test a particular
     /// portion of the component using the specified connected 'server' and
     /// 'client' having the specified stream socket 'transport', supplying
@@ -94,19 +97,13 @@ class SocketUtilTest
     template <unsigned N>
     class Storage;
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
+    // Return true if the specified 'socket' supports timestamping using the
+    // loopback device.
+    static bool supportsTimestamping(ntsa::Handle socket);
 
-    // Return the native flags indicating timestamping support for the
-    // specified 'socket'.
-    static bsl::uint32_t timestampingSupport(ntsa::Handle socket);
-
-#endif
-
-    // Return true if the specified 'socket' supports RX timestamps.
-    static bool supportsRxTimestamps(ntsa::Handle socket);
-
-    // Return true if the specified 'socket' supports TX timestamps.
-    static bool supportsTxTimestamps(ntsa::Handle socket);
+    // Return true if the specified 'socket' supports zero-copy using the
+    // loopback device.
+    static bool supportsZeroCopy(ntsa::Handle socket);
 
     // Load into the specified 'result' the zero-copy notifications for the
     // specified 'handle'.
@@ -131,9 +128,21 @@ class SocketUtilTest
     static void executeStreamSocketTest(const StreamSocketTestCallback& test,
                                         bslma::Allocator* basicAllocator = 0);
 
+    // Execute the specified 'test' with the specified 'parameters'.
+    static void executeStreamSocketTestParameters(
+        const StreamSocketTestCallback& test,
+        const Parameters&               parameters,
+        bslma::Allocator*               basicAllocator = 0);
+
     // Execute the specified 'test'.
     static void executeDatagramSocketTest(
         const DatagramSocketTestCallback& test,
+        bslma::Allocator*                 basicAllocator = 0);
+
+    // Execute the specified 'test' with the specified 'parameters'.
+    static void executeDatagramSocketTestParameters(
+        const DatagramSocketTestCallback& test,
+        const Parameters&                 parameters,
         bslma::Allocator*                 basicAllocator = 0);
 
     static void testStreamSocketTransmissionSingleBuffer(
@@ -268,16 +277,7 @@ class SocketUtilTest
         const ntsa::Endpoint&  clientEndpoint,
         bslma::Allocator*      allocator);
 
-    static void testStreamSocketMsgZeroCopy(ntsa::Transport::Value transport,
-                                            ntsa::Handle           server,
-                                            ntsa::Handle           client,
-                                            bslma::Allocator*      allocator);
-
-    static void testDatagramSocketRxTimestamps(
-        ntsa::Transport::Value transport,
-        bslma::Allocator*      allocator);
-
-    static void testDatagramSocketTxTimestamps(
+    static void testDatagramSocketZeroCopy(
         ntsa::Transport::Value transport,
         ntsa::Handle           server,
         const ntsa::Endpoint&  serverEndpoint,
@@ -285,8 +285,17 @@ class SocketUtilTest
         const ntsa::Endpoint&  clientEndpoint,
         bslma::Allocator*      allocator);
 
-    static void testStreamSocketRxTimestamps(
+    static void testStreamSocketZeroCopy(ntsa::Transport::Value transport,
+                                            ntsa::Handle           server,
+                                            ntsa::Handle           client,
+                                            bslma::Allocator*      allocator);
+
+    static void testDatagramSocketTxTimestamps(
         ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
         bslma::Allocator*      allocator);
 
     static void testStreamSocketTxTimestamps(ntsa::Transport::Value transport,
@@ -452,6 +461,80 @@ class SocketUtilTest
     static void verifyListenerSocketAcceptingClosedConnections();
 };
 
+/// Describe the parameters of the test.
+class SocketUtilTest::Parameters
+{
+public:
+    /// Create new test parameters having a default value.
+    Parameters();
+
+    /// Set the flag indicating that timestamps for incoming data should be
+    /// generated to the specified 'value'.
+    void setTimestampIncomingData(bool value);
+
+    /// Set the flag indicating that timestamps for outgoing data should be
+    /// generated to the specified 'value'.
+    void setTimestampOutgoingData(bool value);
+
+    /// Set the flag indicating that zero-copy transmissions should be
+    /// performed according to the specified 'value'.
+    void setZeroCopy(bool value);
+    
+    /// Return the flag indicating that timestamps for incoming data should be
+    /// generated.
+    bool timestampIncomingData() const;
+
+    /// Return the flag indicating that timestamps for incoming data should be
+    /// generated.
+    bool timestampOutgoingData() const;
+
+    /// Return the flag indicating that zero-copy transmission should be 
+    /// performed.
+    bool zeroCopy() const;
+
+private:
+    bool d_timestampIncomingData;
+    bool d_timestampOutgoingData;
+    bool d_zeroCopy;
+};
+
+SocketUtilTest::Parameters::Parameters()
+: d_timestampIncomingData(false)
+, d_timestampOutgoingData(false)
+, d_zeroCopy(false)
+{
+}
+
+void SocketUtilTest::Parameters::setTimestampIncomingData(bool value)
+{
+    d_timestampIncomingData = value;
+}
+
+void SocketUtilTest::Parameters::setTimestampOutgoingData(bool value)
+{
+    d_timestampOutgoingData = value;
+}
+
+void SocketUtilTest::Parameters::setZeroCopy(bool value)
+{
+    d_zeroCopy = value;
+}
+
+bool SocketUtilTest::Parameters::timestampIncomingData() const
+{
+    return d_timestampIncomingData;
+}
+
+bool SocketUtilTest::Parameters::timestampOutgoingData() const
+{
+    return d_timestampOutgoingData;
+}
+
+bool SocketUtilTest::Parameters::zeroCopy() const
+{
+    return d_zeroCopy;
+}
+
 /// Provide a in-core storage of bytes.
 template <unsigned N>
 class SocketUtilTest::Storage
@@ -472,54 +555,53 @@ class SocketUtilTest::Storage
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
-bsl::uint32_t SocketUtilTest::timestampingSupport(ntsa::Handle socket)
+bool SocketUtilTest::supportsTimestamping(ntsa::Handle socket)
 {
-    ntsa::Error error;
-    int         rc;
-
-    struct ::ethtool_ts_info info;
-    bsl::memset(&info, 0, sizeof info);
-
-    info.cmd = ETHTOOL_GET_TS_INFO;
-
-    struct ::ifreq ifr;
-    bsl::memset(&ifr, 0, sizeof ifr);
-
-    bsl::strcpy(ifr.ifr_ifrn.ifrn_name, "lo");
-    ifr.ifr_ifru.ifru_data = reinterpret_cast<char*>(&info);
-
-    rc = ::ioctl(socket, SIOCETHTOOL, &ifr);
-    if (rc != 0) {
-        error = ntsa::Error(errno);
-        BSLS_LOG_TRACE("I/O control SIOCETHTOOL failed: %s",
-                       error.text().c_str());
-        return 0;
+    if (!ntsu::SocketOptionUtil::supportsTimestamping(socket)) {
+        return false;
     }
 
-    return static_cast<bsl::uint32_t>(info.so_timestamping);
+    bsl::vector<ntsa::Adapter> adapterList;
+    ntsu::AdapterUtil::discoverAdapterList(&adapterList);
+
+    for (bsl::size_t i = 0; i < adapterList.size(); ++i) {
+        const ntsa::Adapter& adapter = adapterList[i];
+
+        if (adapter.ipv4Address().has_value() && 
+            adapter.ipv4Address().value() == ntsa::Ipv4Address::loopback()) 
+        {
+            if (adapter.txSoftwareTimestamps() && 
+                adapter.rxSoftwareTimestamps())
+            {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+    }
+
+    return false;
 }
 
-bool SocketUtilTest::supportsRxTimestamps(ntsa::Handle socket)
+bool SocketUtilTest::supportsZeroCopy(ntsa::Handle socket)
 {
-    const bsl::uint32_t flags = timestampingSupport(socket);
-    return (flags & ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE) != 0;
-}
+    if (!ntsu::SocketOptionUtil::supportsZeroCopy(socket)) {
+        return false;
+    }
 
-bool SocketUtilTest::supportsTxTimestamps(ntsa::Handle socket)
-{
-    const bsl::uint32_t flags = timestampingSupport(socket);
-    return (flags & ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE) != 0;
+    return true;
 }
 
 #else
 
-bool SocketUtilTest::supportsRxTimestamps(ntsa::Handle socket)
+bool SocketUtilTest::supportsTimestamping(ntsa::Handle socket)
 {
     NTSCFG_WARNING_UNUSED(socket);
     return false;
 }
 
-bool SocketUtilTest::supportsTxTimestamps(ntsa::Handle socket)
+bool SocketUtilTest::supportsZeroCopy(ntsa::Handle socket)
 {
     NTSCFG_WARNING_UNUSED(socket);
     return false;
@@ -602,11 +684,20 @@ void SocketUtilTest::executeStreamSocketTest(
     const StreamSocketTestCallback& test,
     bslma::Allocator*               basicAllocator)
 {
-    // Execute the specified stream socket 'test'.
+    Parameters parameters;
+    executeStreamSocketTestParameters(test, parameters, basicAllocator);
+}
 
+void SocketUtilTest::executeStreamSocketTestParameters(
+        const StreamSocketTestCallback& test,
+        const Parameters&               parameters,
+        bslma::Allocator*               basicAllocator)
+{
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
     ntsa::Error error;
+
+    // Determine the transports supported by the loopback device.
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
@@ -625,18 +716,45 @@ void SocketUtilTest::executeStreamSocketTest(
     if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_LOCAL_STREAM))
     {
-        socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
+        if (!parameters.timestampIncomingData() && 
+            !parameters.timestampOutgoingData() &&
+            !parameters.zeroCopy())
+        {
+            socketTypes.push_back(ntsa::Transport::e_LOCAL_STREAM);
+        }
     }
+
+    // For each supported transport...
 
     for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
         ntsa::Transport::Value transport = socketTypes[i];
 
-        // Create a blocking socket, bind it to any port on the loopback
-        // address, then begin listening for connections.
+        // Create a blocking socket for the listener.
 
-        ntsa::Handle listener;
+        ntsa::Handle listener = ntsa::k_INVALID_HANDLE;
+
         error = ntsu::SocketUtil::create(&listener, transport);
         NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_NE(listener, ntsa::k_INVALID_HANDLE);
+
+        ntsu::SocketUtil::Guard listenerGuard(listener);
+
+        // Set the RX timestamping options for the listener according to the
+        // test parameters. Note that TX timestamping cannot be enabled on
+        // listening sockets but must be explicitly set on accepted sockets
+        // after they are accepted.
+
+        if (parameters.timestampIncomingData()) {
+            if (!SocketUtilTest::supportsTimestamping(listener)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(listener, 
+                                                                     true);
+            NTSCFG_TEST_OK(error);
+        }
+
+        // Bind the listener to any endpoint.
 
         if (transport == ntsa::Transport::e_TCP_IPV4_STREAM) {
             error = ntsu::SocketUtil::bind(
@@ -666,29 +784,151 @@ void SocketUtilTest::executeStreamSocketTest(
             NTSCFG_TEST_TRUE(false);
         }
 
-        error = ntsu::SocketUtil::listen(1, listener);
-        NTSCFG_TEST_OK(error);
-
-        // Create a blocking socket for the client, then connect that socket to
-        // the listener socket's local endpoint.
-
-        ntsa::Handle client;
-        error = ntsu::SocketUtil::create(&client, transport);
-        NTSCFG_TEST_OK(error);
+        // Get the endpoint to which the listener is bound.
 
         ntsa::Endpoint listenerEndpoint;
         error = ntsu::SocketUtil::sourceEndpoint(&listenerEndpoint, listener);
         NTSCFG_TEST_OK(error);
 
+        // Begin listening for connections.
+
+        error = ntsu::SocketUtil::listen(1, listener);
+        NTSCFG_TEST_OK(error);
+
+        // Create a blocking socket for the client.
+
+        ntsa::Handle client = ntsa::k_INVALID_HANDLE;
+
+        error = ntsu::SocketUtil::create(&client, transport);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_NE(client, ntsa::k_INVALID_HANDLE);
+
+        ntsu::SocketUtil::Guard clientGuard(client);
+
+        // Set the RX timestamping options for the client according to the
+        // test parameters. Note that TX timestamping cannot be enabled on
+        // sockets before they are connected but must be explicitly set after 
+        // they are connected.
+
+        if (parameters.timestampIncomingData()) {
+            if (!SocketUtilTest::supportsTimestamping(client)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(client, 
+                                                                     true);
+            NTSCFG_TEST_OK(error);
+        }
+
+        // Connect the client socket to the listener socket's local endpoint.
+
         error = ntsu::SocketUtil::connect(listenerEndpoint, client);
         NTSCFG_TEST_OK(error);
+
+        // Set the TX timestamping options for the client according to the
+        // test parameters.
+
+        if (parameters.timestampOutgoingData()) {
+            if (!SocketUtilTest::supportsTimestamping(client)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client, 
+                                                                     true);
+            NTSCFG_TEST_OK(error);
+        }
+
+        // Set the zero-copy options for the client according to the test
+        // parameters.
+
+        if (parameters.zeroCopy()) {
+            if (!SocketUtilTest::supportsZeroCopy(client)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setZeroCopy(client, true);
+            NTSCFG_TEST_OK(error);
+        }
 
         // Create a blocking socket for the server by accepting the connection
         // made to the listener socket.
 
-        ntsa::Handle server;
+        ntsa::Handle server = ntsa::k_INVALID_HANDLE;
+
         error = ntsu::SocketUtil::accept(&server, listener);
         NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_NE(server, ntsa::k_INVALID_HANDLE);
+
+        ntsu::SocketUtil::Guard serverGuard(server);
+
+        // Set the TX timestamping options for the server according to the
+        // test parameters. 
+
+        if (parameters.timestampOutgoingData()) {
+            if (!SocketUtilTest::supportsTimestamping(server)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(server, 
+                                                                     true);
+            NTSCFG_TEST_OK(error);
+        }
+
+        // Set the zero-copy options for the server according to the test
+        // parameters.
+
+        if (parameters.zeroCopy()) {
+            if (!SocketUtilTest::supportsZeroCopy(server)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setZeroCopy(server, true);
+            NTSCFG_TEST_OK(error);
+        }
+
+        // Verify the expected socket options are set from the test parameters.
+
+        if (parameters.timestampIncomingData()) {
+            bool clientIncomingTimestamps;
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &clientIncomingTimestamps, client);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(clientIncomingTimestamps);
+
+            bool serverIncomingTimestamps;
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &serverIncomingTimestamps, server);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(serverIncomingTimestamps);
+        }
+
+        if (parameters.timestampOutgoingData()) {
+            bool clientOutgoingTimestamps;
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &clientOutgoingTimestamps, client);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(clientOutgoingTimestamps);
+
+            bool serverOutgoingTimestamps;
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &serverOutgoingTimestamps, server);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(serverOutgoingTimestamps);
+        }
+
+        if (parameters.zeroCopy()) {
+            bool clientZeroCopy;
+            error = ntsu::SocketOptionUtil::getZeroCopy(&clientZeroCopy, 
+                                                        client);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(clientZeroCopy);
+
+            bool serverZeroCopy;
+            error = ntsu::SocketOptionUtil::getZeroCopy(&serverZeroCopy, 
+                                                        server);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(serverZeroCopy);
+        }
 
         // Execute the test.
 
@@ -744,11 +984,17 @@ void SocketUtilTest::executeStreamSocketTest(
 
         // Close each socket.
 
+        listenerGuard.release();
+
         error = ntsu::SocketUtil::close(listener);
         NTSCFG_TEST_OK(error);
 
+        clientGuard.release();
+
         error = ntsu::SocketUtil::close(client);
         NTSCFG_TEST_OK(error);
+
+        serverGuard.release();
 
         error = ntsu::SocketUtil::close(server);
         NTSCFG_TEST_OK(error);
@@ -759,11 +1005,20 @@ void SocketUtilTest::executeDatagramSocketTest(
     const DatagramSocketTestCallback& test,
     bslma::Allocator*                 basicAllocator)
 {
-    // Execute the specified datagram socket 'test'.
+    Parameters parameters;
+    executeDatagramSocketTestParameters(test, parameters, basicAllocator);
+}
 
+void SocketUtilTest::executeDatagramSocketTestParameters(
+        const DatagramSocketTestCallback& test,
+        const Parameters&                 parameters,
+        bslma::Allocator*                 basicAllocator)
+{
     bslma::Allocator* allocator = bslma::Default::allocator(basicAllocator);
 
     ntsa::Error error;
+
+    // Determine the transports supported by the loopback device.
 
     bsl::vector<ntsa::Transport::Value> socketTypes;
 
@@ -782,18 +1037,65 @@ void SocketUtilTest::executeDatagramSocketTest(
     if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_LOCAL_DATAGRAM))
     {
-        socketTypes.push_back(ntsa::Transport::e_LOCAL_DATAGRAM);
+        if (!parameters.timestampIncomingData() && 
+            !parameters.timestampOutgoingData() &&
+            !parameters.zeroCopy())
+        {
+            socketTypes.push_back(ntsa::Transport::e_LOCAL_DATAGRAM);
+        }
     }
+
+    // For each supported transport...
 
     for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
         ntsa::Transport::Value transport = socketTypes[i];
 
-        // Create a blocking socket for the server and bind it to any port on
-        // the loopback address.
+        // Create a blocking socket for the server.
 
-        ntsa::Handle server;
+        ntsa::Handle server = ntsa::k_INVALID_HANDLE;
+
         error = ntsu::SocketUtil::create(&server, transport);
         NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_NE(server, ntsa::k_INVALID_HANDLE);
+
+        ntsu::SocketUtil::Guard serverGuard(server);
+
+        // Set the timestamping options for the server according to the test
+        // parameters.
+
+        if (parameters.timestampIncomingData()) {
+            if (!SocketUtilTest::supportsTimestamping(server)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(server, 
+                                                                     true);
+            NTSCFG_TEST_OK(error);
+        }
+
+        if (parameters.timestampOutgoingData()) {
+            if (!SocketUtilTest::supportsTimestamping(server)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(server, 
+                                                                     true);
+            NTSCFG_TEST_OK(error);
+        }
+
+        // Set the zero-copy options for the server according to the test
+        // parameters.
+
+        if (parameters.zeroCopy()) {
+            if (!SocketUtilTest::supportsZeroCopy(server)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setZeroCopy(server, true);
+            NTSCFG_TEST_OK(error);
+        }
+
+        // Bind the server to any endpoint.
 
         if (transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
             error = ntsu::SocketUtil::bind(
@@ -823,16 +1125,58 @@ void SocketUtilTest::executeDatagramSocketTest(
             NTSCFG_TEST_TRUE(false);
         }
 
+        // Get the endpoint to which the server was bound.
+
         ntsa::Endpoint serverEndpoint;
         error = ntsu::SocketUtil::sourceEndpoint(&serverEndpoint, server);
         NTSCFG_TEST_OK(error);
 
-        // Create a blocking socket for the client and bind it to any port on
-        // the loopback address.
+        // Create a blocking socket for the client.
 
-        ntsa::Handle client;
+        ntsa::Handle client = ntsa::k_INVALID_HANDLE;
+
         error = ntsu::SocketUtil::create(&client, transport);
         NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_NE(client, ntsa::k_INVALID_HANDLE);
+
+        ntsu::SocketUtil::Guard clientGuard(client);
+
+        // Set the timestamping options for the client according to the test
+        // parameters.
+
+        if (parameters.timestampIncomingData()) {
+            if (!SocketUtilTest::supportsTimestamping(client)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(client, 
+                                                                     true);
+            NTSCFG_TEST_OK(error);
+        }
+
+        if (parameters.timestampOutgoingData()) {
+            if (!SocketUtilTest::supportsTimestamping(client)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client, 
+                                                                     true);
+            NTSCFG_TEST_OK(error);
+        }
+
+        // Set the zero-copy options for the client according to the test
+        // parameters.
+
+        if (parameters.zeroCopy()) {
+            if (!SocketUtilTest::supportsZeroCopy(client)) {
+                continue;
+            }
+
+            error = ntsu::SocketOptionUtil::setZeroCopy(client, true);
+            NTSCFG_TEST_OK(error);
+        }
+
+        // Bind the client to any endpoint.
 
         if (transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
             error = ntsu::SocketUtil::bind(
@@ -862,9 +1206,55 @@ void SocketUtilTest::executeDatagramSocketTest(
             NTSCFG_TEST_TRUE(false);
         }
 
+        // Get the endpoint to which the client was bound.
+
         ntsa::Endpoint clientEndpoint;
         error = ntsu::SocketUtil::sourceEndpoint(&clientEndpoint, client);
         NTSCFG_TEST_OK(error);
+
+        // Verify the expected socket options are set from the test parameters.
+
+        if (parameters.timestampIncomingData()) {
+            bool clientIncomingTimestamps;
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &clientIncomingTimestamps, client);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(clientIncomingTimestamps);
+
+            bool serverIncomingTimestamps;
+            error = ntsu::SocketOptionUtil::getTimestampIncomingData(
+                &serverIncomingTimestamps, server);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(serverIncomingTimestamps);
+        }
+
+        if (parameters.timestampOutgoingData()) {
+            bool clientOutgoingTimestamps;
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &clientOutgoingTimestamps, client);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(clientOutgoingTimestamps);
+
+            bool serverOutgoingTimestamps;
+            error = ntsu::SocketOptionUtil::getTimestampOutgoingData(
+                &serverOutgoingTimestamps, server);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(serverOutgoingTimestamps);
+        }
+
+        if (parameters.zeroCopy()) {
+            bool clientZeroCopy;
+            error = ntsu::SocketOptionUtil::getZeroCopy(&clientZeroCopy, 
+                                                        client);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(clientZeroCopy);
+
+            bool serverZeroCopy;
+            error = ntsu::SocketOptionUtil::getZeroCopy(&serverZeroCopy, 
+                                                        server);
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_TRUE(serverZeroCopy);
+        }
 
         // Execute the test.
 
@@ -877,8 +1267,12 @@ void SocketUtilTest::executeDatagramSocketTest(
 
         // Close each socket.
 
+        clientGuard.release();
+
         error = ntsu::SocketUtil::close(client);
         NTSCFG_TEST_OK(error);
+
+        serverGuard.release();
 
         error = ntsu::SocketUtil::close(server);
         NTSCFG_TEST_OK(error);
@@ -2707,29 +3101,120 @@ void SocketUtilTest::testDatagramSocketTransmissionMultipleMessages(
     }
 }
 
-void SocketUtilTest::testStreamSocketMsgZeroCopy(
+void SocketUtilTest::testDatagramSocketZeroCopy(
+        ntsa::Transport::Value transport,
+        ntsa::Handle           server,
+        const ntsa::Endpoint&  serverEndpoint,
+        ntsa::Handle           client,
+        const ntsa::Endpoint&  clientEndpoint,
+        bslma::Allocator*      allocator)
+{
+    NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << NTSCFG_TEST_LOG_END;
+
+    // Observation: if system MTU is 1500 bytes then maximum payload
+    // size of UDP IPV4 packet for which MSG_ZEROCOPY functionality can
+    // really work is 1472 bytes (because UDP header is 8 bytes and
+    // IPV4 header is 20 bytes).
+
+    const int msgSize           = 1024;
+    const int numMessagesToSend = 10;
+
+    ntsa::Error  error;
+
+    bsl::vector<char> message(msgSize, allocator);
+    for (int i = 0; i < msgSize; ++i) {
+        message[i] = bsl::rand() % 100;
+    }
+    const ntsa::Data data(
+        ntsa::ConstBuffer(message.data(), message.size()));
+
+    bsl::list<ntsa::ZeroCopy>         feedback(allocator);
+    bsl::unordered_set<bsl::uint32_t> sendIDs(allocator);
+
+    for (int i = 0; i < numMessagesToSend; ++i) {
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+        options.setEndpoint(serverEndpoint);
+        options.setZeroCopy(true);
+
+        error = ntsu::SocketUtil::send(&context, data, options, client);
+        if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK) ||
+            error == ntsa::Error(ntsa::Error::e_LIMIT))
+        {
+            --i;
+            continue;
+        }
+        NTSCFG_TEST_OK(error);
+        sendIDs.insert(i);
+
+        NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
+        NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
+
+        SocketUtilTest::extractZeroCopyNotifications(
+            &feedback,
+            client,
+            allocator);
+    }
+
+    // receive data
+    {
+        bsl::vector<char> rBuffer(msgSize, allocator);
+        for (int totalSend = msgSize * numMessagesToSend; totalSend > 0;) {
+            ntsa::ReceiveContext context;
+            ntsa::ReceiveOptions options;
+
+            ntsa::Data data(
+                ntsa::MutableBuffer(rBuffer.data(), rBuffer.size()));
+
+            error =
+                ntsu::SocketUtil::receive(&context, &data, options, server);
+            if (!error) {
+                totalSend -= context.bytesReceived();
+            }
+        }
+    }
+
+    // retrieve data from the socket error queue until all send system
+    // calls are acknowledged by the OS
+    while (!sendIDs.empty()) {
+        SocketUtilTest::extractZeroCopyNotifications(
+            &feedback,
+            client,
+            allocator);
+
+        while (!feedback.empty()) {
+            const ntsa::ZeroCopy& zc = feedback.front();
+            if (zc.from() == zc.thru()) {
+                NTSCFG_TEST_EQ(sendIDs.erase(zc.from()), 1);
+            }
+            else {
+                for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1);
+                        ++i)
+                {
+                    NTSCFG_TEST_EQ(sendIDs.erase(i), 1);
+                }
+            }
+            feedback.pop_front();
+        }
+    }
+}
+
+void SocketUtilTest::testStreamSocketZeroCopy(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     ntsa::Handle           client,
     bslma::Allocator*      allocator)
 {
-    if (transport == ntsa::Transport::e_LOCAL_STREAM) {
-        return;
-    }
-
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << NTSCFG_TEST_LOG_END;
 
     // Note: for this test case msgSize is not really important as loopback
     // device is used - it means that even if MSG_ZEROCOPY option is used then
     // anyway data will be copied
 
-    const int msgSize           = 200;
-    const int numMessagesToSend = 200;
+    const int msgSize           = 1024;
+    const int numMessagesToSend = 10;
 
     ntsa::Error error;
-
-    error = ntsu::SocketOptionUtil::setZeroCopy(client, true);
-    NTSCFG_TEST_OK(error);
 
     bsl::vector<char> message(msgSize, allocator);
     for (int i = 0; i < msgSize; ++i) {
@@ -2806,13 +3291,6 @@ void SocketUtilTest::testStreamSocketMsgZeroCopy(
     }
 }
 
-void SocketUtilTest::testDatagramSocketRxTimestamps(
-        ntsa::Transport::Value transport,
-        bslma::Allocator*      allocator)
-{
-
-}
-
 void SocketUtilTest::testDatagramSocketTxTimestamps(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
@@ -2821,24 +3299,14 @@ void SocketUtilTest::testDatagramSocketTxTimestamps(
     const ntsa::Endpoint&  clientEndpoint,
     bslma::Allocator*      allocator)
 {
-    if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
-        return;
-    }
-
-    if (!ntsu::SocketOptionUtil::supportsTimestamping(client)) {
-        return;
-    }
-
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << NTSCFG_TEST_LOG_END;
 
     ntsa::Error error;
 
-    error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client, true);
+    const bsls::TimeInterval startTime = bdlt::CurrentTime::now();
 
-    NTSCFG_TEST_OK(error);
-
-    const int msgSize           = 200;
-    const int numMessagesToSend = 100;
+    const int msgSize           = 1024;
+    const int numMessagesToSend = 10;
 
     bsl::vector<char> message(msgSize, allocator);
     for (int i = 0; i < msgSize; ++i) {
@@ -2892,6 +3360,7 @@ void SocketUtilTest::testDatagramSocketTxTimestamps(
         for (int totalSend = msgSize * numMessagesToSend; totalSend > 0;) {
             ntsa::ReceiveContext context;
             ntsa::ReceiveOptions options;
+            options.showTimestamp();
 
             ntsa::Data data(
                 ntsa::MutableBuffer(rBuffer.data(), rBuffer.size()));
@@ -2901,6 +3370,11 @@ void SocketUtilTest::testDatagramSocketTxTimestamps(
             if (!error) {
                 totalSend -= context.bytesReceived();
             }
+
+            NTSCFG_TEST_LOG_TRACE << "RX = " << context << NTSCFG_TEST_LOG_END;
+
+            NTSCFG_TEST_TRUE(context.softwareTimestamp().has_value());
+            NTSCFG_TEST_GT(context.softwareTimestamp().value(), startTime);
         }
     }
 
@@ -2926,42 +3400,26 @@ void SocketUtilTest::testDatagramSocketTxTimestamps(
     }
 }
 
-void SocketUtilTest::testStreamSocketRxTimestamps(
-        ntsa::Transport::Value transport,
-        bslma::Allocator*      allocator)
-{
-
-}
-
 void SocketUtilTest::testStreamSocketTxTimestamps(
     ntsa::Transport::Value transport,
     ntsa::Handle           server,
     ntsa::Handle           client,
     bslma::Allocator*      allocator)
 {
-    if (transport == ntsa::Transport::e_LOCAL_STREAM) {
-        return;
-    }
-
-    if (!ntsu::SocketOptionUtil::supportsTimestamping(client)) {
-        return;
-    }
-
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << NTSCFG_TEST_LOG_END;
 
     ntsa::Error error;
 
-    error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client, true);
+    const bsls::TimeInterval startTime = bdlt::CurrentTime::now();
 
-    NTSCFG_TEST_OK(error);
-
-    const int msgSize           = 200;
-    const int numMessagesToSend = 5;
+    const int msgSize           = 1024;
+    const int numMessagesToSend = 10;
 
     bsl::vector<char> message(msgSize, allocator);
     for (int i = 0; i < msgSize; ++i) {
         message[i] = bsl::rand() % 100;
     }
+
     const ntsa::Data data(ntsa::ConstBuffer(message.data(), message.size()));
 
     bsl::list<ntsa::Timestamp> feedback(allocator);
@@ -2977,10 +3435,10 @@ void SocketUtilTest::testStreamSocketTxTimestamps(
     for (int i = 0; i < numMessagesToSend; ++i) {
         ntsa::SendContext context;
         ntsa::SendOptions options;
-        options.setZeroCopy(false);
 
         const bsls::TimeInterval sysTimeBeforeSending =
             bdlt::CurrentTime::now();
+
         error = ntsu::SocketUtil::send(&context, data, options, client);
         if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK) ||
             error == ntsa::Error(ntsa::Error::e_LIMIT))
@@ -2997,9 +3455,11 @@ void SocketUtilTest::testStreamSocketTxTimestamps(
 
         timestampsToValidate[byteCounter - 1][ntsa::TimestampType::e_SENT] =
             sysTimeBeforeSending;
+
         timestampsToValidate[byteCounter - 1]
                             [ntsa::TimestampType::e_SCHEDULED] =
                                 sysTimeBeforeSending;
+
         timestampsToValidate[byteCounter - 1]
                             [ntsa::TimestampType::e_ACKNOWLEDGED] =
                                 sysTimeBeforeSending;
@@ -3015,6 +3475,7 @@ void SocketUtilTest::testStreamSocketTxTimestamps(
         for (int totalSend = msgSize * numMessagesToSend; totalSend > 0;) {
             ntsa::ReceiveContext context;
             ntsa::ReceiveOptions options;
+            options.showTimestamp();
 
             ntsa::Data data(
                 ntsa::MutableBuffer(rBuffer.data(), rBuffer.size()));
@@ -3024,6 +3485,11 @@ void SocketUtilTest::testStreamSocketTxTimestamps(
             if (!error) {
                 totalSend -= context.bytesReceived();
             }
+
+            NTSCFG_TEST_LOG_TRACE << "RX = " << context << NTSCFG_TEST_LOG_END;
+
+            NTSCFG_TEST_TRUE(context.softwareTimestamp().has_value());
+            NTSCFG_TEST_GT(context.softwareTimestamp().value(), startTime);
         }
     }
 
@@ -3057,35 +3523,17 @@ void SocketUtilTest::testDatagramSocketTxTimestampsAndZeroCopy(
     const ntsa::Endpoint&  clientEndpoint,
     bslma::Allocator*      allocator)
 {
-    if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
-        return;
-    }
-
-    if (!ntsu::SocketOptionUtil::supportsTimestamping(client)) {
-        return;
-    }
-
-    if (!ntsu::SocketOptionUtil::supportsZeroCopy(client)) {
-        return;
-    }
-
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << NTSCFG_TEST_LOG_END;
 
     ntsa::Error error;
 
-    error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client, true);
-    NTSCFG_TEST_OK(error);
-
-    error = ntsu::SocketOptionUtil::setZeroCopy(client, true);
-    NTSCFG_TEST_OK(error);
-
     // Note that zero-copy requires significantly more resources on the
-    // receiver's side. Sending a large number of bigger datagram may exceed
+    // receiver's side. Sending a large number of larger datagrams may exceed
     // the receiver's capacity to receive them, resulting in successful sends
     // but dropped datagrams, resulting in the receiver blocking indefinitely
     // receiving datagram from the receive buffer.
 
-    const int msgSize           = 100;
+    const int msgSize           = 1024;
     const int numMessagesToSend = 10;
 
     bsl::vector<char> message(msgSize, allocator);
@@ -3200,30 +3648,12 @@ void SocketUtilTest::testStreamSocketTxTimestampsAndZeroCopy(
     ntsa::Handle           client,
     bslma::Allocator*      allocator)
 {
-    if (transport == ntsa::Transport::e_LOCAL_STREAM) {
-        return;
-    }
-
-    if (!ntsu::SocketOptionUtil::supportsTimestamping(client)) {
-        return;
-    }
-
-    if (!ntsu::SocketOptionUtil::supportsZeroCopy(client)) {
-        return;
-    }
-
     NTSCFG_TEST_LOG_DEBUG << "Testing " << transport << NTSCFG_TEST_LOG_END;
 
     ntsa::Error error;
 
-    error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client, true);
-    NTSCFG_TEST_OK(error);
-
-    error = ntsu::SocketOptionUtil::setZeroCopy(client, true);
-    NTSCFG_TEST_OK(error);
-
-    const int msgSize           = 200;
-    const int numMessagesToSend = 5;
+    const int msgSize           = 1024;
+    const int numMessagesToSend = 10;
 
     bsl::vector<char> message(msgSize, allocator);
     for (int i = 0; i < msgSize; ++i) {
@@ -7760,161 +8190,6 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketPairs)
             NTSCFG_TEST_ASSERT(buffer == 'S');
         }
 
-        // Validate RX timestamping functionality.
-
-        if (ntsu::SocketOptionUtil::supportsTimestamping(client)) {
-            error =
-                ntsu::SocketOptionUtil::setTimestampIncomingData(client, true);
-            NTSCFG_TEST_OK(error);
-
-            // Sleep for 100 milliseconds to let the kernel apply changes.
-
-            bslmt::ThreadUtil::microSleep(100000, 0);
-
-            // Enqueue outgoing data to transmit by the client socket.
-
-            bsls::TimeInterval sysTimeBeforeSending;
-            {
-                char              buffer = 'S';
-                ntsa::SendContext context;
-                ntsa::SendOptions options;
-
-                ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
-
-                sysTimeBeforeSending = bdlt::CurrentTime::now();
-
-                error =
-                    ntsu::SocketUtil::send(&context, data, options, server);
-                NTSCFG_TEST_OK(error);
-
-                NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
-                NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
-            }
-
-            // Dequeue incoming data received by the server socket.
-
-            {
-                char                 buffer;
-                ntsa::ReceiveContext context;
-                ntsa::ReceiveOptions options;
-                options.showTimestamp();
-
-                ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
-
-                error = ntsu::SocketUtil::receive(&context,
-                                                  &data,
-                                                  options,
-                                                  client);
-                NTSCFG_TEST_OK(error);
-
-                NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
-                NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
-                NTSCFG_TEST_ASSERT(buffer == 'S');
-#if defined(BSLS_PLATFORM__OS_LINUX)
-                int major, minor, patch, build;
-                NTSCFG_TEST_ASSERT(ntsscm::Version::systemVersion(&major,
-                                                                  &minor,
-                                                                  &patch,
-                                                                  &build) ==
-                                   0);
-
-                // Linux kernels versions <= 3.10.0 have restricted
-                // timestamping support.
-
-                if (KERNEL_VERSION(major, minor, patch) <=
-                    KERNEL_VERSION(3, 10, 0))
-                {
-                    NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
-                    NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
-                }
-                else {
-                    // On a modern kernel timestamps will be present for
-                    // AF_INET stream sockets only.
-
-                    if (transport == ntsa::Transport::e_LOCAL_STREAM) {
-                        NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
-                        NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
-                    }
-                    else {
-                        BSLS_LOG_TRACE("Detected RX timestamp");
-                        NTSCFG_TEST_TRUE(
-                            context.softwareTimestamp().has_value());
-                        NTSCFG_TEST_LE(sysTimeBeforeSending,
-                                       context.softwareTimestamp().value());
-
-                        // We cannot make any assertion about hardware
-                        // timestamp availability as it strictly OS+NIC
-                        // dependent.
-                    }
-                }
-#else
-                // Ensure that no timestamp was generated for other platforms
-                // except Linux.
-
-                NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
-                NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
-#endif
-            }
-
-            // Now switch off the option and check that requested timestamp is
-            // not available.
-
-            {
-                error =
-                    ntsu::SocketOptionUtil::setTimestampIncomingData(client,
-                                                                     false);
-#if defined(BSLS_PLATFORM_OS_LINUX)
-                NTSCFG_TEST_OK(error);
-#else
-                NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
-#endif
-
-                // Enqueue outgoing data to transmit by the client socket.
-
-                {
-                    char              buffer = 'S';
-                    ntsa::SendContext context;
-                    ntsa::SendOptions options;
-
-                    ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
-
-                    sysTimeBeforeSending = bdlt::CurrentTime::now();
-
-                    error = ntsu::SocketUtil::send(&context,
-                                                   data,
-                                                   options,
-                                                   server);
-                    NTSCFG_TEST_OK(error);
-
-                    NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
-                    NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
-                }
-
-                // Dequeue incoming data received by the server socket.
-
-                {
-                    char                 buffer;
-                    ntsa::ReceiveContext context;
-                    ntsa::ReceiveOptions options;
-                    options.showTimestamp();
-
-                    ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
-
-                    error = ntsu::SocketUtil::receive(&context,
-                                                      &data,
-                                                      options,
-                                                      client);
-                    NTSCFG_TEST_OK(error);
-
-                    NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
-                    NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
-                    NTSCFG_TEST_ASSERT(buffer == 'S');
-                    NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
-                    NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
-                }
-            }
-        }
-
         // Shutdown writing by the client socket.
 
         error = ntsu::SocketUtil::shutdown(ntsa::ShutdownType::e_SEND, client);
@@ -8155,157 +8430,6 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketPairs)
             NTSCFG_TEST_ASSERT(buffer == 'C');
         }
 
-        // Test RX timestamping functionality.
-
-        if (ntsu::SocketOptionUtil::supportsTimestamping(server)) {
-            error =
-                ntsu::SocketOptionUtil::setTimestampIncomingData(server, true);
-            NTSCFG_TEST_OK(error);
-
-            // Sleep for 100 milliseconds to let the kernel apply changes.
-
-            bslmt::ThreadUtil::microSleep(100000, 0);
-
-            // Enqueue outgoing data to transmit by the client socket.
-
-            bsls::TimeInterval sysTimeBeforeSending;
-            {
-                char              buffer = 'C';
-                ntsa::SendContext context;
-                ntsa::SendOptions options;
-
-                ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
-
-                sysTimeBeforeSending = bdlt::CurrentTime::now();
-
-                error =
-                    ntsu::SocketUtil::send(&context, data, options, client);
-                NTSCFG_TEST_OK(error);
-
-                NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
-                NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
-            }
-
-            // Dequeue incoming data received by the server socket.
-
-            {
-                char                 buffer;
-                ntsa::ReceiveContext context;
-                ntsa::ReceiveOptions options;
-                options.showTimestamp();
-
-                ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
-
-                error = ntsu::SocketUtil::receive(&context,
-                                                  &data,
-                                                  options,
-                                                  server);
-                NTSCFG_TEST_OK(error);
-
-                NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
-                NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
-                NTSCFG_TEST_ASSERT(buffer == 'C');
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-                int major, minor, patch, build;
-                NTSCFG_TEST_ASSERT(ntsscm::Version::systemVersion(&major,
-                                                                  &minor,
-                                                                  &patch,
-                                                                  &build) ==
-                                   0);
-
-                // Linux kernels versions <= 2.6.32 have restricted
-                // timestamping support.
-
-                if (KERNEL_VERSION(major, minor, patch) >
-                    KERNEL_VERSION(2, 6, 32))
-                {
-                    NTSCFG_TEST_FALSE(context.softwareTimestamp().isNull());
-                    NTSCFG_TEST_LE(sysTimeBeforeSending,
-                                   context.softwareTimestamp().value());
-                    if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
-                        NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
-                    }
-                }
-                else {
-                    if (transport == ntsa::Transport::e_LOCAL_DATAGRAM) {
-                        NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
-                        NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
-                    }
-                    else {
-                        BSLS_LOG_TRACE("Detected RX timestamp");
-                        NTSCFG_TEST_FALSE(
-                            context.softwareTimestamp().isNull());
-                        NTSCFG_TEST_LE(sysTimeBeforeSending,
-                                       context.softwareTimestamp().value());
-                    }
-                }
-#else
-                NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
-                NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
-#endif
-            }
-
-            // Now switch off the option and check that it is impossible to get
-            // a timestamp.
-
-            {
-                error =
-                    ntsu::SocketOptionUtil::setTimestampIncomingData(server,
-                                                                     false);
-#if defined(BSLS_PLATFORM_OS_LINUX)
-                NTSCFG_TEST_OK(error);
-#else
-                NTSCFG_TEST_ERROR(error, ntsa::Error::e_NOT_IMPLEMENTED);
-#endif
-
-                // Enqueue outgoing data to transmit by the client socket.
-
-                {
-                    char              buffer = 'C';
-                    ntsa::SendContext context;
-                    ntsa::SendOptions options;
-
-                    ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
-
-                    sysTimeBeforeSending = bdlt::CurrentTime::now();
-
-                    error = ntsu::SocketUtil::send(&context,
-                                                   data,
-                                                   options,
-                                                   client);
-                    NTSCFG_TEST_OK(error);
-
-                    NTSCFG_TEST_ASSERT(context.bytesSendable() == 1);
-                    NTSCFG_TEST_ASSERT(context.bytesSent() == 1);
-                }
-
-                // Dequeue incoming data received by the server socket.
-
-                {
-                    char                 buffer;
-                    ntsa::ReceiveContext context;
-                    ntsa::ReceiveOptions options;
-                    options.showTimestamp();
-
-                    ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
-
-                    error = ntsu::SocketUtil::receive(&context,
-                                                      &data,
-                                                      options,
-                                                      server);
-                    NTSCFG_TEST_OK(error);
-
-                    NTSCFG_TEST_ASSERT(context.bytesReceivable() == 1);
-                    NTSCFG_TEST_ASSERT(context.bytesReceived() == 1);
-                    NTSCFG_TEST_ASSERT(buffer == 'C');
-
-                    NTSCFG_TEST_TRUE(context.softwareTimestamp().isNull());
-                    NTSCFG_TEST_TRUE(context.hardwareTimestamp().isNull());
-                }
-            }
-        }
-
         // Close each socket.
 
         error = ntsu::SocketUtil::close(client);
@@ -8426,7 +8550,9 @@ NTSCFG_TEST_FUNCTION(
     error = ntsu::SocketUtil::pair(&client, &server, transport);
     NTSCFG_TEST_OK(error);
 
-    if (!ntsu::SocketOptionUtil::supportsTimestamping(server)) {
+    if (!SocketUtilTest::supportsTimestamping(client) ||
+        !SocketUtilTest::supportsTimestamping(server)) 
+    {
         ntsu::SocketUtil::close(client);
         ntsu::SocketUtil::close(server);
         return;
@@ -8517,41 +8643,6 @@ NTSCFG_TEST_FUNCTION(
     NTSCFG_TEST_OK(error);
 }
 
-NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyIsSocket)
-{
-    // Concern: ntsu::SocketUtil::isSocket correctly indicates true if a
-    // file descriptor is an alias for a socket, and false, after the file
-    // descriptor is closed.
-
-    ntsa::Error error;
-
-    {
-        bool result = ntsu::SocketUtil::isSocket(ntsa::k_INVALID_HANDLE);
-        NTSCFG_TEST_FALSE(result);
-    }
-
-    {
-        bool result = ntsu::SocketUtil::isSocket(12345);
-        NTSCFG_TEST_FALSE(result);
-    }
-
-    {
-        ntsa::Handle socket = ntsa::k_INVALID_HANDLE;
-        error               = ntsu::SocketUtil::create(&socket,
-                                         ntsa::Transport::e_TCP_IPV4_STREAM);
-        NTSCFG_TEST_OK(error);
-
-        bool result1 = ntsu::SocketUtil::isSocket(socket);
-        NTSCFG_TEST_TRUE(result1);
-
-        error = ntsu::SocketUtil::close(socket);
-        NTSCFG_TEST_OK(error);
-
-        bool result2 = ntsu::SocketUtil::isSocket(socket);
-        NTSCFG_TEST_FALSE(result2);
-    }
-}
-
 NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketZeroCopy)
 {
     // Concern: Test that Linux MSG_ZEROCOPY mechanism is applied for DATAGRAM
@@ -8568,125 +8659,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketZeroCopy)
     // See related code section below.
 
 #if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_ZERO_COPY
-    // Linux kernels versions < 5.0.0 do not support MSG_ZEROCOPY for DGRAM
-    // sockets
-    {
-        int major, minor, patch, build;
-        NTSCFG_TEST_ASSERT(
-            ntsscm::Version::systemVersion(&major, &minor, &patch, &build) ==
-            0);
 
-        if (KERNEL_VERSION(major, minor, patch) < KERNEL_VERSION(5, 0, 0)) {
-            return;
-        }
-    }
+    SocketUtilTest::Parameters parameters;
+    parameters.setZeroCopy(true);
 
-    bsl::vector<ntsa::Transport::Value> socketTypes;
-    if (ntsu::AdapterUtil::supportsTransportLoopback(
-            ntsa::Transport::e_UDP_IPV4_DATAGRAM))
-    {
-        socketTypes.push_back(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-    }
-    if (ntsu::AdapterUtil::supportsTransportLoopback(
-            ntsa::Transport::e_UDP_IPV6_DATAGRAM))
-    {
-        socketTypes.push_back(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-    }
+    SocketUtilTest::executeDatagramSocketTestParameters(
+        &SocketUtilTest::testDatagramSocketZeroCopy, parameters);
 
-    for (bsl::vector<ntsa::Transport::Value>::const_iterator transport =
-             socketTypes.cbegin();
-         transport != socketTypes.cend();
-         ++transport)
-    {
-        NTSCFG_TEST_LOG_DEBUG << "Testing " << *transport
-                              << NTSCFG_TEST_LOG_END;
-
-        // Observation: if system MTU is 1500 bytes then maximum payload
-        // size of UDP IPV4 packet for which MSG_ZEROCOPY functionality can
-        // really work is 1472 bytes (because UDP header is 8 bytes and
-        // IPV4 header is 20 bytes).
-
-        const int msgSize           = 1472;
-        const int numMessagesToSend = 200;
-
-        ntsa::Error  error;
-        ntsa::Handle handle = ntsa::k_INVALID_HANDLE;
-
-        error = ntsu::SocketUtil::create(&handle, *transport);
-        NTSCFG_TEST_OK(error);
-
-        error = ntsu::SocketOptionUtil::setZeroCopy(handle, true);
-        NTSCFG_TEST_OK(error);
-
-        bsl::vector<char> message(msgSize, NTSCFG_TEST_ALLOCATOR);
-        for (int i = 0; i < msgSize; ++i) {
-            message[i] = bsl::rand() % 100;
-        }
-        const ntsa::Data data(
-            ntsa::ConstBuffer(message.data(), message.size()));
-
-        ntsa::Endpoint endpoint;
-        if (*transport == ntsa::Transport::e_UDP_IPV4_DATAGRAM) {
-            NTSCFG_TEST_TRUE(endpoint.parse("127.0.0.1:5555"));
-            // NTSCFG_TEST_TRUE(endpoint.parse("108.22.44.23:5555"));
-        }
-        else if (*transport == ntsa::Transport::e_UDP_IPV6_DATAGRAM) {
-            NTSCFG_TEST_TRUE(endpoint.parse("[::1]:5555"));
-            // NTSCFG_TEST_TRUE(endpoint.parse("[fe80::215:5dff:fe8d:6bd1]:5555"));
-        }
-
-        bsl::list<ntsa::ZeroCopy>         feedback(NTSCFG_TEST_ALLOCATOR);
-        bsl::unordered_set<bsl::uint32_t> sendIDs(NTSCFG_TEST_ALLOCATOR);
-
-        for (int i = 0; i < numMessagesToSend; ++i) {
-            ntsa::SendContext context;
-            ntsa::SendOptions options;
-            options.setEndpoint(endpoint);
-            options.setZeroCopy(true);
-
-            error = ntsu::SocketUtil::send(&context, data, options, handle);
-            if (error == ntsa::Error(ntsa::Error::e_WOULD_BLOCK) ||
-                error == ntsa::Error(ntsa::Error::e_LIMIT))
-            {
-                --i;
-                continue;
-            }
-            NTSCFG_TEST_OK(error);
-            sendIDs.insert(i);
-
-            NTSCFG_TEST_ASSERT(context.bytesSendable() == msgSize);
-            NTSCFG_TEST_ASSERT(context.bytesSent() == msgSize);
-
-            SocketUtilTest::extractZeroCopyNotifications(
-                &feedback,
-                handle,
-                NTSCFG_TEST_ALLOCATOR);
-        }
-
-        // retrieve data from the socket error queue until all send system
-        // calls are acknowledged by the OS
-        while (!sendIDs.empty()) {
-            SocketUtilTest::extractZeroCopyNotifications(
-                &feedback,
-                handle,
-                NTSCFG_TEST_ALLOCATOR);
-
-            while (!feedback.empty()) {
-                const ntsa::ZeroCopy& zc = feedback.front();
-                if (zc.from() == zc.thru()) {
-                    NTSCFG_TEST_EQ(sendIDs.erase(zc.from()), 1);
-                }
-                else {
-                    for (bsl::uint32_t i = zc.from(); i != (zc.thru() + 1);
-                         ++i)
-                    {
-                        NTSCFG_TEST_EQ(sendIDs.erase(i), 1);
-                    }
-                }
-                feedback.pop_front();
-            }
-        }
-    }
 #endif
 }
 
@@ -8701,21 +8680,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketZeroCopy)
     // appear on a socket error queue.
 
 #if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_ZERO_COPY
-    // Linux kernels versions < 4.14.0 do not support MSG_ZEROCOPY for STREAM
-    // sockets
-    {
-        int major, minor, patch, build;
-        NTSCFG_TEST_ASSERT(
-            ntsscm::Version::systemVersion(&major, &minor, &patch, &build) ==
-            0);
 
-        if (KERNEL_VERSION(major, minor, patch) < KERNEL_VERSION(4, 14, 0)) {
-            return;
-        }
-    }
+    SocketUtilTest::Parameters parameters;
+    parameters.setZeroCopy(true);
 
-    SocketUtilTest::executeStreamSocketTest(
-        &SocketUtilTest::testStreamSocketMsgZeroCopy);
+    SocketUtilTest::executeStreamSocketTestParameters(
+        &SocketUtilTest::testStreamSocketZeroCopy, parameters);
 
 #endif
 }
@@ -8724,43 +8694,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketTimestamping)
 {
     // Concern: Test TX timestamping functionality for DATAGRAM sockets
 #if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING
-    // Linux kernels versions < 5.0.0 do not support MSG_ZEROCOPY for DGRAM
-    // sockets
-    {
-        int major, minor, patch, build;
-        NTSCFG_TEST_ASSERT(
-            ntsscm::Version::systemVersion(&major, &minor, &patch, &build) ==
-            0);
 
-        if (KERNEL_VERSION(major, minor, patch) < KERNEL_VERSION(5, 0, 0)) {
-            return;
-        }
-    }
+    SocketUtilTest::Parameters parameters;
+    parameters.setTimestampIncomingData(true);
+    parameters.setTimestampOutgoingData(true);
 
-    {
-        bsl::vector<ntsa::Transport::Value> socketTypes;
-
-        if (ntsu::AdapterUtil::supportsTransportLoopback(
-                ntsa::Transport::e_UDP_IPV4_DATAGRAM))
-        {
-            socketTypes.push_back(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
-        }
-
-        if (ntsu::AdapterUtil::supportsTransportLoopback(
-                ntsa::Transport::e_UDP_IPV6_DATAGRAM))
-        {
-            socketTypes.push_back(ntsa::Transport::e_UDP_IPV6_DATAGRAM);
-        }
-
-        for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
-            ntsa::Transport::Value transport = socketTypes[i];
-            SocketUtilTest::testDatagramSocketRxTimestamps(
-                transport, NTSCFG_TEST_ALLOCATOR);
-        }
-    }
-
-    SocketUtilTest::executeDatagramSocketTest(
-        &SocketUtilTest::testDatagramSocketTxTimestamps);
+    SocketUtilTest::executeDatagramSocketTestParameters(
+        &SocketUtilTest::testDatagramSocketTxTimestamps, parameters);
 
 #endif
 }
@@ -8769,43 +8709,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketTimestamping)
 {
     // Concern: Test TX timestamping functionality for STREAM sockets
 #if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING
-    // Linux kernels versions < 4.14.0 do not support MSG_ZEROCOPY for STREAM
-    // sockets
-    {
-        int major, minor, patch, build;
-        NTSCFG_TEST_ASSERT(
-            ntsscm::Version::systemVersion(&major, &minor, &patch, &build) ==
-            0);
 
-        if (KERNEL_VERSION(major, minor, patch) < KERNEL_VERSION(4, 14, 0)) {
-            return;
-        }
-    }
+    SocketUtilTest::Parameters parameters;
+    parameters.setTimestampIncomingData(true);
+    parameters.setTimestampOutgoingData(true);
 
-    {
-        bsl::vector<ntsa::Transport::Value> socketTypes;
-
-        if (ntsu::AdapterUtil::supportsTransportLoopback(
-                ntsa::Transport::e_TCP_IPV4_STREAM))
-        {
-            socketTypes.push_back(ntsa::Transport::e_TCP_IPV4_STREAM);
-        }
-
-        if (ntsu::AdapterUtil::supportsTransportLoopback(
-                ntsa::Transport::e_TCP_IPV6_STREAM))
-        {
-            socketTypes.push_back(ntsa::Transport::e_TCP_IPV6_STREAM);
-        }
-
-        for (bsl::size_t i = 0; i < socketTypes.size(); ++i) {
-            ntsa::Transport::Value transport = socketTypes[i];
-            SocketUtilTest::testStreamSocketRxTimestamps(
-                transport, NTSCFG_TEST_ALLOCATOR);
-        }
-    }
-
-    SocketUtilTest::executeStreamSocketTest(
-        &SocketUtilTest::testStreamSocketTxTimestamps);
+    SocketUtilTest::executeStreamSocketTestParameters(
+        &SocketUtilTest::testStreamSocketTxTimestamps, parameters);
 
 #endif
 }
@@ -8818,21 +8728,14 @@ NTSCFG_TEST_FUNCTION(
 #if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING &&         \
     NTS_BUILD_WITH_ZERO_COPY
 
-    // Linux kernels versions < 5.0.0 do not support MSG_ZEROCOPY for DGRAM
-    // sockets
-    {
-        int major, minor, patch, build;
-        NTSCFG_TEST_ASSERT(
-            ntsscm::Version::systemVersion(&major, &minor, &patch, &build) ==
-            0);
+    SocketUtilTest::Parameters parameters;
+    parameters.setTimestampIncomingData(true);
+    parameters.setTimestampOutgoingData(true);
+    parameters.setZeroCopy(true);
 
-        if (KERNEL_VERSION(major, minor, patch) < KERNEL_VERSION(5, 0, 0)) {
-            return;
-        }
-    }
-
-    SocketUtilTest::executeDatagramSocketTest(
-        &SocketUtilTest::testDatagramSocketTxTimestampsAndZeroCopy);
+    SocketUtilTest::executeDatagramSocketTestParameters(
+        &SocketUtilTest::testDatagramSocketTxTimestampsAndZeroCopy, 
+        parameters);
 
 #endif
 }
@@ -8844,21 +8747,14 @@ NTSCFG_TEST_FUNCTION(
     // STREAM sockets
 #if defined(BSLS_PLATFORM_OS_LINUX) && NTS_BUILD_WITH_TIMESTAMPING &&         \
     NTS_BUILD_WITH_ZERO_COPY
-    // Linux kernels versions < 4.14.0 do not support MSG_ZEROCOPY for STREAM
-    // sockets
-    {
-        int major, minor, patch, build;
-        NTSCFG_TEST_ASSERT(
-            ntsscm::Version::systemVersion(&major, &minor, &patch, &build) ==
-            0);
 
-        if (KERNEL_VERSION(major, minor, patch) < KERNEL_VERSION(4, 14, 0)) {
-            return;
-        }
-    }
+    SocketUtilTest::Parameters parameters;
+    parameters.setTimestampIncomingData(true);
+    parameters.setTimestampOutgoingData(true);
+    parameters.setZeroCopy(true);
 
-    SocketUtilTest::executeStreamSocketTest(
-        &SocketUtilTest::testStreamSocketTxTimestampsAndZeroCopy);
+    SocketUtilTest::executeStreamSocketTestParameters(
+        &SocketUtilTest::testStreamSocketTxTimestampsAndZeroCopy, parameters);
 
 #endif
 }
@@ -9157,6 +9053,41 @@ NTSCFG_TEST_FUNCTION(
 
         error = ntsu::SocketUtil::close(listener);
         NTSCFG_TEST_OK(error);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyIsSocket)
+{
+    // Concern: ntsu::SocketUtil::isSocket correctly indicates true if a
+    // file descriptor is an alias for a socket, and false, after the file
+    // descriptor is closed.
+
+    ntsa::Error error;
+
+    {
+        bool result = ntsu::SocketUtil::isSocket(ntsa::k_INVALID_HANDLE);
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        bool result = ntsu::SocketUtil::isSocket(12345);
+        NTSCFG_TEST_FALSE(result);
+    }
+
+    {
+        ntsa::Handle socket = ntsa::k_INVALID_HANDLE;
+        error               = ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_TCP_IPV4_STREAM);
+        NTSCFG_TEST_OK(error);
+
+        bool result1 = ntsu::SocketUtil::isSocket(socket);
+        NTSCFG_TEST_TRUE(result1);
+
+        error = ntsu::SocketUtil::close(socket);
+        NTSCFG_TEST_OK(error);
+
+        bool result2 = ntsu::SocketUtil::isSocket(socket);
+        NTSCFG_TEST_FALSE(result2);
     }
 }
 
