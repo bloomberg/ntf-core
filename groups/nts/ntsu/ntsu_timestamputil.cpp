@@ -34,6 +34,38 @@
 #endif
 // clang-format on
 
+#if defined(BSLS_PLATFORM_OS_WINDOWS)
+#ifdef NTDDI_VERSION
+#undef NTDDI_VERSION
+#endif
+#ifdef WINVER
+#undef WINVER
+#endif
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
+#define NTDDI_VERSION 0x06000100
+#define WINVER 0x0600
+#define _WIN32_WINNT 0x0600
+#ifndef _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+// clang-format off
+#include <windows.h>
+#include <winerror.h>
+#include <winsock2.h>
+#include <mswsock.h>
+#include <ws2tcpip.h>
+// clang-format on
+#ifdef interface
+#undef interface
+#endif
+#pragma comment(lib, "ws2_32")
+#endif
+
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
 #define NTSU_TIMESTAMP_UTIL_LINUX_VERSION(major, minor, patch)                \
@@ -216,35 +248,64 @@ BSLMF_ASSERT((sizeof(TimestampUtil::ScmTimestamping().hardwareTs) +
 
 #endif
 
-void TimestampUtil::validate()
-{
-
-}
-
 int TimestampUtil::socketOptionLevel()
 {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
     return SOL_SOCKET;
+
+#else
+
+    return 0;
+
+#endif
 }
 
 int TimestampUtil::socketOptionName()
 {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
     return ntsu::TimestampUtil::e_SO_TIMESTAMPING;
+
+#else
+
+    return 0;
+
+#endif
 }
 
 int TimestampUtil::socketOptionValueReporting()
 {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
     return ntsu::TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE | 
            ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RAW_HARDWARE;
+
+#else
+
+    return 0;
+
+#endif
 }
 
 int TimestampUtil::socketOptionValueRxGeneration()
 {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
     return ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_HARDWARE | 
            ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE;
+
+#else
+
+    return 0;
+
+#endif
 }
 
 int TimestampUtil::socketOptionValueRxFlags()
 {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
     int result = 0;
 
     int versionMajor = 0;
@@ -269,18 +330,34 @@ int TimestampUtil::socketOptionValueRxFlags()
     }
 
     return result;
+
+#else
+
+    return 0;
+
+#endif
 }
 
 int TimestampUtil::socketOptionValueTxGeneration()
 {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
     return ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_HARDWARE | 
            ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE |
            ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SCHED | 
            ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_ACK;
+
+#else
+
+    return 0;
+
+#endif
 }
 
 int TimestampUtil::socketOptionValueTxFlags()
 {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
     int result = 0;
 
     int versionMajor = 0;
@@ -313,10 +390,18 @@ int TimestampUtil::socketOptionValueTxFlags()
     }
 
     return result;
+
+#else
+
+    return 0;
+
+#endif
 }
 
 int TimestampUtil::setRxTimestamps(int optionValue, bool enabled)
 {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
     int result = optionValue;
 
     if (enabled) {
@@ -335,10 +420,18 @@ int TimestampUtil::setRxTimestamps(int optionValue, bool enabled)
     }
 
     return result;
+
+#else
+
+    return 0;
+
+#endif
 }
 
 int TimestampUtil::setTxTimestamps(int optionValue, bool enabled)
 {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
     int result = optionValue;
 
     if (enabled) {
@@ -358,18 +451,40 @@ int TimestampUtil::setTxTimestamps(int optionValue, bool enabled)
     }
 
     return result;
+
+#else
+
+    return 0;
+
+#endif
 }
 
 bool TimestampUtil::hasRxTimestamps(int optionValue)
 {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
     return ((optionValue &
              ntsu::TimestampUtil::socketOptionValueRxGeneration()) != 0);
+
+#else
+
+    return false;
+
+#endif
 }
 
 bool TimestampUtil::hasTxTimestamps(int optionValue)
 {
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
     return ((optionValue &
              ntsu::TimestampUtil::socketOptionValueTxGeneration()) != 0);
+
+#else
+
+    return false;
+
+#endif
 }
 
 bool TimestampUtil::supportsOption(int option,
