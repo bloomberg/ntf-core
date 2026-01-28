@@ -423,6 +423,9 @@ int TimestampUtil::setRxTimestamps(int optionValue, bool enabled)
 
 #else
 
+    NTSCFG_WARNING_UNUSED(optionValue);
+    NTSCFG_WARNING_UNUSED(enabled);
+
     return 0;
 
 #endif
@@ -454,6 +457,9 @@ int TimestampUtil::setTxTimestamps(int optionValue, bool enabled)
 
 #else
 
+    NTSCFG_WARNING_UNUSED(optionValue);
+    NTSCFG_WARNING_UNUSED(enabled);
+
     return 0;
 
 #endif
@@ -468,6 +474,7 @@ bool TimestampUtil::hasRxTimestamps(int optionValue)
 
 #else
 
+    NTSCFG_WARNING_UNUSED(optionValue);
     return false;
 
 #endif
@@ -482,6 +489,7 @@ bool TimestampUtil::hasTxTimestamps(int optionValue)
 
 #else
 
+    NTSCFG_WARNING_UNUSED(optionValue);
     return false;
 
 #endif
