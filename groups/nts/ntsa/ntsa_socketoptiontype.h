@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
+#include <bsl_vector.h>
 
 namespace BloombergLP {
 namespace ntsa {
@@ -115,6 +116,9 @@ struct SocketOptionType {
     /// no effect on 'result' otherwise (i.e., 'number' does not match any
     /// enumerator).
     static int fromInt(Value* result, int number);
+
+    /// Load into the specified 'result' each socket option type.  
+    static void load(bsl::vector<Value>* result);
 
     /// Write to the specified 'stream' the string representation of the
     /// specified enumeration 'value'.  Return a reference to the modifiable

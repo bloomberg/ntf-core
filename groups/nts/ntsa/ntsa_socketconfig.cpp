@@ -79,7 +79,7 @@ void SocketConfig::setOption(const ntsa::SocketOption& option)
 }
 
 void SocketConfig::getOption(ntsa::SocketOption*           option,
-                             ntsa::SocketOptionType::Value type)
+                             ntsa::SocketOptionType::Value type) const
 {
     option->reset();
 

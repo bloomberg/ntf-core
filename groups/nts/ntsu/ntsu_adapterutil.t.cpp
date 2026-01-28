@@ -111,6 +111,9 @@ void AdapterUtilTest::log(const bsl::vector<ntsa::Adapter>& adapterList)
     for (bsl::size_t i = 0; i < adapterList.size(); ++i) {
         const ntsa::Adapter& adapter = adapterList[i];
 
+        NTSCFG_TEST_LOG_DEBUG << "Adapter = " << adapter 
+                              << NTSCFG_TEST_LOG_END;
+
         bsl::string name            = adapter.name();
         bsl::size_t index           = adapter.index();
         bsl::string ethernetAddress = adapter.ethernetAddress();

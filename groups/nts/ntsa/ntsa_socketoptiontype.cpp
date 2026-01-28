@@ -202,6 +202,31 @@ const char* SocketOptionType::toString(SocketOptionType::Value value)
     return 0;
 }
 
+void SocketOptionType::load(bsl::vector<Value>* result)
+{
+    result->clear();
+    result->reserve(18);
+    
+    result->push_back(SocketOptionType::e_REUSE_ADDRESS);
+    result->push_back(SocketOptionType::e_KEEP_ALIVE);
+    result->push_back(SocketOptionType::e_CORK);
+    result->push_back(SocketOptionType::e_DELAY_TRANSMISSION);
+    result->push_back(SocketOptionType::e_DELAY_ACKNOWLEDGEMENT);
+    result->push_back(SocketOptionType::e_SEND_BUFFER_SIZE);
+    result->push_back(SocketOptionType::e_SEND_BUFFER_LOW_WATERMARK);
+    result->push_back(SocketOptionType::e_RECEIVE_BUFFER_SIZE);
+    result->push_back(SocketOptionType::e_RECEIVE_BUFFER_LOW_WATERMARK);
+    result->push_back(SocketOptionType::e_DEBUG);
+    result->push_back(SocketOptionType::e_LINGER);
+    result->push_back(SocketOptionType::e_BROADCAST);
+    result->push_back(SocketOptionType::e_BYPASS_ROUTING);
+    result->push_back(SocketOptionType::e_INLINE_OUT_OF_BAND_DATA);
+    result->push_back(SocketOptionType::e_RX_TIMESTAMPING);
+    result->push_back(SocketOptionType::e_TX_TIMESTAMPING);
+    result->push_back(SocketOptionType::e_ZERO_COPY);
+    result->push_back(SocketOptionType::e_TCP_CONGESTION_CONTROL);
+}
+
 bsl::ostream& SocketOptionType::print(bsl::ostream&           stream,
                                       SocketOptionType::Value value)
 {

@@ -58,7 +58,10 @@ namespace ntsu {
 /// Return system time stamp generated in software.
 ///
 /// @ingroup module_ntsu
-struct TimestampUtil {
+class TimestampUtil 
+{
+  public:
+    /// Enumerate the constants used setting timestamp options.
     enum {
         e_SCM_TSTAMP_SND   = 0,
         e_SCM_TSTAMP_SCHED = 1,
@@ -77,26 +80,22 @@ struct TimestampUtil {
         e_SOF_TIMESTAMPING_RX_HARDWARE = (1 << 2),
         e_SOF_TIMESTAMPING_RX_SOFTWARE = (1 << 3),
 
-        e_SOF_TIMESTAMPING_TX_GENERATION =
-            e_SOF_TIMESTAMPING_TX_HARDWARE | e_SOF_TIMESTAMPING_TX_SOFTWARE |
-            e_SOF_TIMESTAMPING_TX_SCHED | e_SOF_TIMESTAMPING_TX_ACK,
-
-        e_SOF_TIMESTAMPING_RX_GENERATION =
-            e_SOF_TIMESTAMPING_RX_HARDWARE | e_SOF_TIMESTAMPING_RX_SOFTWARE,
-
         // Timestamp reporting.
         e_SOF_TIMESTAMPING_SOFTWARE     = (1 << 4),
         e_SOF_TIMESTAMPING_RAW_HARDWARE = (1 << 6),
 
-        e_SOF_TIMESTAMPING_REPORTING =
-            e_SOF_TIMESTAMPING_SOFTWARE | e_SOF_TIMESTAMPING_RAW_HARDWARE,
-
         // Timestamp options.
         e_SOF_TIMESTAMPING_OPT_ID     = (1 << 7),
+        e_SOF_TIMESTAMPING_OPT_ID_TCP = (1 << 16),
         e_SOF_TIMESTAMPING_OPT_TSONLY = (1 << 11),
+        e_SOF_TIMESTAMPING_OPT_RX_FILTER = (1 << 17),
 
-        e_SOF_TIMESTAMPING_OPTIONS =
-            e_SOF_TIMESTAMPING_OPT_ID | e_SOF_TIMESTAMPING_OPT_TSONLY
+        e_SOF_TIMESTAMPING_TX_OPTIONS =
+            e_SOF_TIMESTAMPING_OPT_ID | 
+            e_SOF_TIMESTAMPING_OPT_ID_TCP |
+            e_SOF_TIMESTAMPING_OPT_TSONLY,
+
+        e_SOF_TIMESTAMPING_RX_OPTIONS = e_SOF_TIMESTAMPING_OPT_RX_FILTER
     };
 
     // Copy of Linux 'struct timespec'.
@@ -111,6 +110,53 @@ struct TimestampUtil {
         Timespec deprecated;
         Timespec hardwareTs;
     };
+
+    /// Validate the implementation of the current machine.
+    static void validate();
+
+    /// Return the socket option level for the timestaping socket option. 
+    static int socketOptionLevel();
+
+    /// Return the socket option name for the timestamping socket option. 
+    static int socketOptionName();
+
+    /// Return the socket option value flags to enable the reporting of 
+    /// timestamps through control messages.
+    static int socketOptionValueReporting();
+
+    /// Return the socket option value flags to enable the generation of 
+    /// timestamps for incoming packets. 
+    static int socketOptionValueRxGeneration();
+
+    /// Return the socket option value flags required to enable timestamping
+    /// for incoming packets. 
+    static int socketOptionValueRxFlags();
+
+    /// Return the socket option value flags to enable the generation of 
+    /// timestamps for outgoing packets. 
+    static int socketOptionValueTxGeneration();
+
+    /// Return the socket option value flags required to enable timestamping
+    /// for outgoijg packets. 
+    static int socketOptionValueTxFlags();
+
+    /// Set or clear the bits in the specified 'optionValue' that enable or 
+    /// disable timestamping for incoming packets according to the specified
+    /// 'enabled' flag. Return the result. 
+    static int setRxTimestamps(int optionValue, bool enabled);
+
+    /// Set or clear the bits in the specified 'optionValue' that enable or 
+    /// disable timestamping for outgoing packets according to the specified
+    /// 'enabled' flag. Return the result. 
+    static int setTxTimestamps(int optionValue, bool enabled);
+
+    /// Return true if the specified 'optionValue' has the necessary bits set
+    /// indicate timestamping for incoming packets is enabled. 
+    static bool hasRxTimestamps(int optionValue);
+
+    /// Return true if the specified 'optionValue' has the necessary bits set
+    /// indicate timestamping for outgoing packets is enabled.
+    static bool hasTxTimestamps(int optionValue);
 
     /// Return true if the specified operation system 'versionMajor',
     /// 'versionMinor', and 'versionPatch' supports the specified 'option'

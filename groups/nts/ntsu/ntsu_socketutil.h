@@ -655,6 +655,8 @@ struct SocketUtil {
     /// Read data from the specified 'socket' error queue. Then if the
     /// specified 'notifications' is not null parse fetched data to extract
     /// control messages into the specified 'notifications'. Return the error.
+    /// Note that this function is always non-blocking, even if the 'socket'
+    /// is in blocking mode.
     static ntsa::Error receiveNotifications(
         ntsa::NotificationQueue* notifications,
         ntsa::Handle             socket);
@@ -702,6 +704,16 @@ struct SocketUtil {
     /// Return the error.
     static ntsa::Error waitUntilWritable(ntsa::Handle              socket,
                                          const bsls::TimeInterval& timeout);
+
+    /// Wait indefinitely until the specified 'socket' has an error or the wait
+    /// is interrupted by a signal. Return the error.
+    static ntsa::Error waitUntilError(ntsa::Handle socket);
+
+    /// Wait until the specified 'socket' has an error or the wait is
+    /// interrupted by a signal or the specified absolute 'timeout' elapses.
+    /// Return the error.
+    static ntsa::Error waitUntilError(ntsa::Handle              socket,
+                                      const bsls::TimeInterval& timeout);
 
     /// Load into the specified 'client' and 'server' a connected pair of
     /// sockets of the specified 'type'. Return the error.
@@ -775,9 +787,9 @@ struct SocketUtil {
     static ntsa::Error reportInfo(bsl::ostream&                 stream,
                                   const ntsa::SocketInfoFilter& filter);
 
-    /// Load into the specified 'result' the information of all sockets in
-    /// the operating system. Filter the sockets reported according to the specified 'filter'.
-    /// Return the error.
+    /// Load into the specified 'result' the information of all sockets in the
+    /// operating system. Filter the sockets reported according to the
+    /// specified 'filter'. Return the error.
     static ntsa::Error reportInfo(bsl::vector<ntsa::SocketInfo>* result,
                                   const ntsa::SocketInfoFilter&  filter);
 

@@ -48,6 +48,11 @@ BSLS_IDENT_RCSID(ntsu_adapterutil_cpp, "$Id$ $CSID$")
     defined(BSLS_PLATFORM_OS_LINUX) || defined(BSLS_PLATFORM_OS_SOLARIS)
 #include <ifaddrs.h>
 #endif
+#if defined(BSLS_PLATFORM_OS_LINUX)
+#include <linux/ethtool.h>
+#include <linux/sockios.h>
+#include <linux/version.h>
+#endif
 #include <errno.h>
 #include <netdb.h>
 #include <unistd.h>
@@ -230,6 +235,10 @@ void AdapterUtil::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
 
     result->clear();
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+#endif
+
     struct ifaddrs* interfaceAddressList = 0;
     struct ifaddrs* interfaceAddress     = 0;
 
@@ -288,6 +297,78 @@ void AdapterUtil::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
         else {
             adapter.setMulticast(false);
         }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+        {
+            struct ::ifreq ethtoolIfr;
+            bsl::memset(&ethtoolIfr, 0, sizeof ethtoolIfr);
+
+            const char* ifaName = interfaceAddress->ifa_name;
+            const bsl::size_t ifaNameLength = bsl::strlen(ifaName);
+
+            if (ifaNameLength < sizeof ethtoolIfr.ifr_ifrn.ifrn_name) {
+                bsl::strcpy(ethtoolIfr.ifr_ifrn.ifrn_name, 
+                            interfaceAddress->ifa_name);
+
+                struct ::ethtool_cmd ethtoolGset;
+                bsl::memset(&ethtoolGset, 0, sizeof ethtoolGset);
+
+                ethtoolGset.cmd = ETHTOOL_GSET;
+
+                ethtoolIfr.ifr_ifru.ifru_data = 
+                    reinterpret_cast<char*>(&ethtoolGset);
+
+                rc = ::ioctl(fd, SIOCETHTOOL, &ethtoolIfr);
+                if (rc == 0) {
+                    adapter.setSpeed(
+                        static_cast<bsl::size_t>(
+                            ethtool_cmd_speed(&ethtoolGset)));
+                }
+
+                struct ::ethtool_ts_info ethtoolTsInfo;
+                bsl::memset(&ethtoolTsInfo, 0, sizeof ethtoolTsInfo);
+
+                ethtoolTsInfo.cmd = ETHTOOL_GET_TS_INFO;
+
+                ethtoolIfr.ifr_ifru.ifru_data = 
+                    reinterpret_cast<char*>(&ethtoolTsInfo);
+
+                rc = ::ioctl(fd, SIOCETHTOOL, &ethtoolIfr);
+                if (rc == 0) {
+                    enum TsInfoFlags {
+                        e_SOF_TIMESTAMPING_TX_HARDWARE = (1 << 0),
+                        e_SOF_TIMESTAMPING_TX_SOFTWARE = (1 << 1),
+                        e_SOF_TIMESTAMPING_RX_HARDWARE = (1 << 2),
+                        e_SOF_TIMESTAMPING_RX_SOFTWARE = (1 << 3)
+                    };
+
+                    if ((ethtoolTsInfo.so_timestamping & 
+                         e_SOF_TIMESTAMPING_TX_SOFTWARE) != 0) 
+                    {
+                        adapter.setTxSoftwareTimestamps(true);
+                    }
+
+                    if ((ethtoolTsInfo.so_timestamping & 
+                         e_SOF_TIMESTAMPING_TX_HARDWARE) != 0) 
+                    {
+                        adapter.setTxHardwareTimestamps(true);
+                    }
+
+                    if ((ethtoolTsInfo.so_timestamping & 
+                         e_SOF_TIMESTAMPING_RX_SOFTWARE) != 0) 
+                    {
+                        adapter.setRxSoftwareTimestamps(true);
+                    }
+
+                    if ((ethtoolTsInfo.so_timestamping & 
+                         e_SOF_TIMESTAMPING_RX_HARDWARE) != 0) 
+                    {
+                        adapter.setRxHardwareTimestamps(true);
+                    }
+                }
+            }
+        }
+#endif
 
         if (interfaceAddress->ifa_addr->sa_family == AF_INET) {
             struct sockaddr_in* socketAddressIpv4 =
@@ -403,6 +484,12 @@ void AdapterUtil::discoverAdapterList(bsl::vector<ntsa::Adapter>* result)
     if (interfaceAddressList != 0) {
         freeifaddrs(interfaceAddressList);
     }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    if (fd >= 0) {
+        ::close(fd);
+    }
+#endif
 
     for (AdapterMap::const_iterator it = adapters.begin();
          it != adapters.end();

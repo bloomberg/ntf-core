@@ -22,6 +22,7 @@ BSLS_IDENT("$Id: $")
 #include <ntsa_endpoint.h>
 #include <ntsa_error.h>
 #include <ntsa_handle.h>
+#include <ntsa_socketconfig.h>
 #include <ntsa_socketoption.h>
 #include <ntscfg_platform.h>
 #include <ntsscm_version.h>
@@ -49,6 +50,11 @@ class SocketOptionUtil
     /// error.
     static ntsa::Error setOption(ntsa::Handle              socket,
                                  const ntsa::SocketOption& option);
+
+    /// Set each option in the specified 'configuration' for the specified
+    /// 'socket'. Return the error.
+    static ntsa::Error setConfig(ntsa::Handle              socket,
+                                 const ntsa::SocketConfig& configuration);
 
     /// Set the option for the 'socket' that controls its blocking mode
     /// according to the specified 'blocking' flag. Return the error.
@@ -156,6 +162,11 @@ class SocketOptionUtil
     static ntsa::Error getOption(ntsa::SocketOption*           option,
                                  ntsa::SocketOptionType::Value type,
                                  ntsa::Handle                  socket);
+
+    /// Load into the specified 'result' each socket option for the 
+    /// specified 'socket'. Return the error.
+    static ntsa::Error getConfig(ntsa::SocketConfig* result,
+                                 ntsa::Handle        socket);
 
     /// Load into the specified 'blocking' flag the blocking mode of the
     /// specified 'socket'. Return the error. Note that this function always

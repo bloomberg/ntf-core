@@ -18,6 +18,7 @@
 #include <bdlb_bitutil.h>
 #include <bslmf_assert.h>
 #include <bsls_platform.h>
+#include <bsls_log.h>
 #include <bsl_cstdint.h>
 #include <bsl_iomanip.h>
 #include <bsl_iostream.h>
@@ -37,13 +38,9 @@
 
 #define NTSU_TIMESTAMP_UTIL_LINUX_VERSION(major, minor, patch)                \
     static_cast<bsl::size_t>(                                                 \
-        KERNEL_VERSION(static_cast<bsl::size_t>(versionMajor),                \
-                       static_cast<bsl::size_t>(versionMinor),                \
-                       static_cast<bsl::size_t>(versionPatch)))
-
-#define NTSU_TIMESTAMP_UTIL_LINUX_VERSION_GE(version, major, minor, patch)    \
-    (static_cast<bsl::size_t>(version)) >=                                    \
-        (NTSU_TIMESTAMP_UTIL_LINUX_VERSION(major, minor, patch))
+        KERNEL_VERSION(static_cast<bsl::size_t>(major),                       \
+                       static_cast<bsl::size_t>(minor),                       \
+                       static_cast<bsl::size_t>(patch)))
 
 #endif
 
@@ -55,42 +52,84 @@ class TimestampUtil::Impl
 {
   public:
 #if defined(BSLS_PLATFORM_OS_LINUX)
+    // clang-format off
+
+    /// The structure describing a timestamping option and its minimum required
+    /// kernel version.
     struct OptionSupport {
+        /// The timestamping option.
         int option;
+
+        /// The major version number of the Linux kernel that introduced the
+        /// option.
         int versionMajor;
+
+        /// The minor version number of the Linux kernel that introduced the
+        /// option.
         int versionMinor;
+
+        /// The patch version number of the Linux kernel that introduced the
+        /// option.
         int versionPatch;
     };
 
-    static const TimestampUtil::Impl::OptionSupport s_support[17];
+    /// Return true if the specified current Linux kernel 'versionMajor',
+    /// 'versionMinor', and 'versionPatch' satisfies the specified 
+    /// 'optionSupport', otherwise return false.
+    static bool isSupported(int                  versionMajor, 
+                            int                  versionMinor, 
+                            int                  versionPatch, 
+                            const OptionSupport& optionSupport)
+    {
+        const bsl::size_t currentVersion = 
+            NTSU_TIMESTAMP_UTIL_LINUX_VERSION(
+                versionMajor, 
+                versionMinor,
+                versionPatch);
+
+        const bsl::size_t minimumVersion =
+            NTSU_TIMESTAMP_UTIL_LINUX_VERSION(
+                optionSupport.versionMajor,
+                optionSupport.versionMinor,
+                optionSupport.versionPatch);
+
+        return (currentVersion >= minimumVersion);
+    }
+
+    /// The timestamping option support array.
+    static const TimestampUtil::Impl::OptionSupport s_support[19];
+
+    // clang-format on
 #endif
 };
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
 // clang-format off
-const TimestampUtil::Impl::OptionSupport TimestampUtil::Impl::s_support[17] = {
-    { ntsu::TimestampUtil::e_SCM_TSTAMP_SND,                4, 18, 0 },
-    { ntsu::TimestampUtil::e_SCM_TSTAMP_SCHED,              4, 18, 0 },
-    { ntsu::TimestampUtil::e_SCM_TSTAMP_ACK,                4, 18, 0 },
+const TimestampUtil::Impl::OptionSupport TimestampUtil::Impl::s_support[19] = {
+    { ntsu::TimestampUtil::e_SCM_TSTAMP_SND,                 4, 18, 0 },
+    { ntsu::TimestampUtil::e_SCM_TSTAMP_SCHED,               4, 18, 0 },
+    { ntsu::TimestampUtil::e_SCM_TSTAMP_ACK,                 4, 18, 0 },
 
-    { ntsu::TimestampUtil::e_SO_TIMESTAMPNS,                4, 18, 0 },
-    { ntsu::TimestampUtil::e_SO_TIMESTAMPING,               4, 18, 0 },
-    { ntsu::TimestampUtil::e_SCM_TIMESTAMPNS,               4, 18, 0 },
-    { ntsu::TimestampUtil::e_SCM_TIMESTAMPING,              4, 18, 0 },
+    { ntsu::TimestampUtil::e_SO_TIMESTAMPNS,                 4, 18, 0 },
+    { ntsu::TimestampUtil::e_SO_TIMESTAMPING,                4, 18, 0 },
+    { ntsu::TimestampUtil::e_SCM_TIMESTAMPNS,                4, 18, 0 },
+    { ntsu::TimestampUtil::e_SCM_TIMESTAMPING,               4, 18, 0 },
 
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_HARDWARE,  4, 18, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE,  4, 18, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SCHED,     4, 18, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_ACK,       4, 18, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_HARDWARE,  4, 18, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE,  4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_HARDWARE,   4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE,   4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SCHED,      4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_ACK,        4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_HARDWARE,   4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE,   4, 18, 0 },
 
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE,     4, 18, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RAW_HARDWARE, 4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE,      4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RAW_HARDWARE,  4, 18, 0 },
 
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID,       4, 18, 0 },
-    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_TSONLY,   4, 18, 0 }
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID,        4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID_TCP,    6,  2, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_TSONLY,    4, 18, 0 },
+    { ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_RX_FILTER, 6, 12, 0 }
 };
 // clang-format on
 
@@ -134,8 +173,25 @@ BSLMF_ASSERT(TimestampUtil::e_SOF_TIMESTAMPING_RAW_HARDWARE ==
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)
 
+BSLMF_ASSERT(TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID ==
+             static_cast<int>(SOF_TIMESTAMPING_OPT_ID));
+
 BSLMF_ASSERT(TimestampUtil::e_SOF_TIMESTAMPING_OPT_TSONLY ==
              static_cast<int>(SOF_TIMESTAMPING_OPT_TSONLY));
+
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
+
+BSLMF_ASSERT(TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID_TCP ==
+             static_cast<int>(SOF_TIMESTAMPING_OPT_ID_TCP));
+
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 21, 0)
+
+BSLMF_ASSERT(TimestampUtil::e_SOF_TIMESTAMPING_OPT_RX_FILTER ==
+             static_cast<int>(SOF_TIMESTAMPING_OPT_RX_FILTER));
 
 #endif
 
@@ -160,6 +216,162 @@ BSLMF_ASSERT((sizeof(TimestampUtil::ScmTimestamping().hardwareTs) +
 
 #endif
 
+void TimestampUtil::validate()
+{
+
+}
+
+int TimestampUtil::socketOptionLevel()
+{
+    return SOL_SOCKET;
+}
+
+int TimestampUtil::socketOptionName()
+{
+    return ntsu::TimestampUtil::e_SO_TIMESTAMPING;
+}
+
+int TimestampUtil::socketOptionValueReporting()
+{
+    return ntsu::TimestampUtil::e_SOF_TIMESTAMPING_SOFTWARE | 
+           ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RAW_HARDWARE;
+}
+
+int TimestampUtil::socketOptionValueRxGeneration()
+{
+    return ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_HARDWARE | 
+           ntsu::TimestampUtil::e_SOF_TIMESTAMPING_RX_SOFTWARE;
+}
+
+int TimestampUtil::socketOptionValueRxFlags()
+{
+    int result = 0;
+
+    int versionMajor = 0;
+    int versionMinor = 0;
+    int versionPatch = 0;
+    int build        = 0;
+
+    ntsscm::Version::systemVersion(&versionMajor,
+                                   &versionMinor,
+                                   &versionPatch,
+                                   &build);
+
+    NTSCFG_WARNING_UNUSED(build);
+
+    const bsl::size_t currentVersion = 
+        NTSU_TIMESTAMP_UTIL_LINUX_VERSION(versionMajor, 
+                                          versionMinor, 
+                                          versionPatch);
+
+    if (currentVersion >= NTSU_TIMESTAMP_UTIL_LINUX_VERSION(6, 12, 0)) {
+        result |= e_SOF_TIMESTAMPING_OPT_RX_FILTER;
+    }
+
+    return result;
+}
+
+int TimestampUtil::socketOptionValueTxGeneration()
+{
+    return ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_HARDWARE | 
+           ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SOFTWARE |
+           ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_SCHED | 
+           ntsu::TimestampUtil::e_SOF_TIMESTAMPING_TX_ACK;
+}
+
+int TimestampUtil::socketOptionValueTxFlags()
+{
+    int result = 0;
+
+    int versionMajor = 0;
+    int versionMinor = 0;
+    int versionPatch = 0;
+    int build        = 0;
+
+    ntsscm::Version::systemVersion(&versionMajor,
+                                   &versionMinor,
+                                   &versionPatch,
+                                   &build);
+
+    NTSCFG_WARNING_UNUSED(build);
+
+    const bsl::size_t currentVersion = 
+        NTSU_TIMESTAMP_UTIL_LINUX_VERSION(versionMajor, 
+                                          versionMinor, 
+                                          versionPatch);
+
+    if (currentVersion >= NTSU_TIMESTAMP_UTIL_LINUX_VERSION(4, 18, 0)) {
+        result |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID;
+    }
+
+    if (currentVersion >= NTSU_TIMESTAMP_UTIL_LINUX_VERSION(6, 2, 0)) {
+        result |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_ID_TCP;
+    }
+
+    if (currentVersion >= NTSU_TIMESTAMP_UTIL_LINUX_VERSION(4, 18, 0)) {
+        result |= ntsu::TimestampUtil::e_SOF_TIMESTAMPING_OPT_TSONLY;
+    }
+
+    return result;
+}
+
+int TimestampUtil::setRxTimestamps(int optionValue, bool enabled)
+{
+    int result = optionValue;
+
+    if (enabled) {
+        result |= ntsu::TimestampUtil::socketOptionValueRxGeneration();
+        result |= ntsu::TimestampUtil::socketOptionValueRxFlags();
+        result |= ntsu::TimestampUtil::socketOptionValueReporting();
+    }
+    else {
+        result &= ~ntsu::TimestampUtil::socketOptionValueRxGeneration();
+        result &= ~ntsu::TimestampUtil::socketOptionValueRxFlags();
+        if ((result &
+             ntsu::TimestampUtil::socketOptionValueTxGeneration()) == 0)
+        {
+            result &= ~ntsu::TimestampUtil::socketOptionValueReporting();
+        }
+    }
+
+    return result;
+}
+
+int TimestampUtil::setTxTimestamps(int optionValue, bool enabled)
+{
+    int result = optionValue;
+
+    if (enabled) {
+        result |= ntsu::TimestampUtil::socketOptionValueTxGeneration();
+        result |= ntsu::TimestampUtil::socketOptionValueTxFlags();
+        result |= ntsu::TimestampUtil::socketOptionValueReporting();
+    }
+    else {
+        result &= ~ntsu::TimestampUtil::socketOptionValueTxGeneration();
+        result &= ~ntsu::TimestampUtil::socketOptionValueTxFlags();
+
+        if ((result &
+             ntsu::TimestampUtil::socketOptionValueRxGeneration()) == 0)
+        {
+            result &= ~ntsu::TimestampUtil::socketOptionValueReporting();
+        }
+    }
+
+    return result;
+}
+
+bool TimestampUtil::hasRxTimestamps(int optionValue)
+{
+    return ((optionValue &
+             ntsu::TimestampUtil::socketOptionValueRxGeneration()) != 0);
+}
+
+bool TimestampUtil::hasTxTimestamps(int optionValue)
+{
+    return ((optionValue &
+             ntsu::TimestampUtil::socketOptionValueTxGeneration()) != 0);
+}
+
 bool TimestampUtil::supportsOption(int option,
                                    int versionMajor,
                                    int versionMinor,
@@ -167,20 +379,16 @@ bool TimestampUtil::supportsOption(int option,
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
 
-    bsl::size_t version = NTSU_TIMESTAMP_UTIL_LINUX_VERSION(versionMajor,
-                                                            versionMinor,
-                                                            versionPatch);
-
     const bsl::size_t count = sizeof(TimestampUtil::Impl::s_support) /
                               sizeof(TimestampUtil::Impl::s_support[0]);
 
     for (bsl::size_t i = 0; i < count; ++i) {
         if ((option & TimestampUtil::Impl::s_support[i].option) != 0) {
-            return NTSU_TIMESTAMP_UTIL_LINUX_VERSION_GE(
-                version,
-                TimestampUtil::Impl::s_support[i].versionMajor,
-                TimestampUtil::Impl::s_support[i].versionMinor,
-                TimestampUtil::Impl::s_support[i].versionPatch);
+            return TimestampUtil::Impl::isSupported(
+                versionMajor,
+                versionMinor,
+                versionPatch,
+                TimestampUtil::Impl::s_support[i]);
         }
     }
 
@@ -220,8 +428,7 @@ int TimestampUtil::removeUnsupported(int options)
         static_cast<bsl::uint32_t>(options));
 
     for (int i = 0; i <= 32 - n; ++i) {
-        int flag = (1 << i);
-
+        const int flag = (1 << i);
         if ((options & flag) != 0) {
             const bool supportsOption =
                 ntsu::TimestampUtil::supportsOption(flag,
