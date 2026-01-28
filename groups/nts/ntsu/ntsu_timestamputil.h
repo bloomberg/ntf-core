@@ -111,9 +111,6 @@ class TimestampUtil
         Timespec hardwareTs;
     };
 
-    /// Validate the implementation of the current machine.
-    static void validate();
-
     /// Return the socket option level for the timestaping socket option. 
     static int socketOptionLevel();
 
