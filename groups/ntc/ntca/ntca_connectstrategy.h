@@ -40,7 +40,7 @@ class ConnectStrategy
     enum Value {
         /// Resolve the name upon each attempt and pick one endpoint given by
         /// the resolver, according to the IP address selector, IP address
-        /// filter, port selector, and port filer, depending on which, if any,
+        /// filter, port selector, and port filter, depending on which, if any,
         /// are defined.
         e_RESOLVE_INTO_SINGLE,
 

@@ -25,6 +25,21 @@ BSLS_IDENT_RCSID(ntsa_localname_t_cpp, "$Id$ $CSID$")
 #include <baljsn_decoder.h>
 #include <baljsn_encoder.h>
 
+#include <bdlb_nullablevalue.h>
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#include <errno.h>
+#include <unistd.h>
+extern char** environ;
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+// clang-format off
+#include <windows.h>
+#include <direct.h>
+// clang-format on
+#else
+#error Not implemented
+#endif
+
 using namespace BloombergLP;
 
 namespace BloombergLP {
@@ -35,36 +50,267 @@ namespace ntsa {
 // Provide tests for 'ntsa::LocalName'.
 class LocalNameTest
 {
+    // Return the environment variable name for the socket directory.
+    static bsl::string sockDirEnvironmentVariableName();
+
+    // Return the environment variable name for the temporary directory.
+    static bsl::string tempDirEnvironmentVariableName();
+
+    // Return a random string having the specified 'length'.
+    static bsl::string generateString(bsl::size_t length);
+
   public:
-    // TODO
+    // Provide utilities for accessing and manipulating the environment for
+    // use by this test driver.
+    class EnvironmentUtil;
+
+    // Provide an environmenet variable guard for use by this test driver.
+    class EnvironmentGuard;
+
+    // Concern: Local name explicitly set to an absolute path.
     static void verifySetValueFromPathAbsolute();
 
-    // TODO
+    // Concern: Local name explicitly set to a relative path.
     static void verifySetValueFromPathRelative();
 
-    // TODO
+    // Concern: Try to set explicitly value which is longer than can be stored.
     static void verifySetValueFromPathTooLong();
 
-    // TODO
+    // Concern: Local name generated from a unique GUID.
     static void verifyGenerateUnique();
 
-    // TODO
+    // Concern: Local name generated from a unique GUID whose prefix directory
+    // is too long.
     static void verifyGenerateUniqueTooLong();
 
-    // TODO
+    // Concern: Local names generated from unique GUIDs are stored first in
+    // SOCKDIR, if defined, then in TEMPDIR (on the Unixes) or TMP (on 
+    // Windows) if SOCKDIR is not defined.
+    static void verifyGenerateUniqueFromEnvironment();
+
+    // Concern: The object can encoded and decoded in BER.
     static void verifyCodecBer();
 
-    // TODO
+    // Concern: The object can encoded and decoded in JSON.
     static void verifyCodecJson();
 
-    // TODO
+    // Concern: Move semantics.
     static void verifyMoveSemantics();
 };
 
+// Provide utilities for accessing and manipulating the environment for
+// use by this test driver.
+class LocalNameTest::EnvironmentUtil
+{
+public:
+    // Set the environment variable having the specified 'name' to the
+    // specified 'value'.
+    static void put(const bsl::string&                      name, 
+                    const bdlb::NullableValue<bsl::string>& value);
+
+    // Return the environment variable having the specified 'name'.
+    static bdlb::NullableValue<bsl::string> get(const bsl::string& name);
+};
+
+// Provide an environmenet variable guard for use by this test driver.
+class LocalNameTest::EnvironmentGuard
+{
+    // The environment variable name.
+    bsl::string d_name;
+
+    // The initial environment variable value.
+    bdlb::NullableValue<bsl::string> d_initialValue;
+
+    // The current environment variable value.
+    bdlb::NullableValue<bsl::string> d_currentValue;
+
+public:
+    // Create a new environment variable guard for the environment variable
+    // with the specified 'name'. Optionally specify a 'basicAllocator' used
+    // to supply memory. If 'basicAllocator' is 0, the currently installed
+    // default allocator is used.
+    explicit EnvironmentGuard(const bsl::string& name, 
+                              bslma::Allocator*  basicAllocator = 0);
+
+    // Destroy this object.
+    ~EnvironmentGuard();
+
+    // Set the environment variable guarded by this object to the specified 
+    // 'value'. Upon destruction of this object, the value of the environment
+    // variable is reset to its original value at the time of this object's 
+    // construction.
+    void setValue(const bsl::string& value);
+
+    // Set the environment variable guarded by this object to the specified 
+    // 'value'. Upon destruction of this object, the value of the environment
+    // variable is reset to its original value at the time of this object's 
+    // construction.
+    void setValue(const bdlb::NullableValue<bsl::string>& value);
+
+    /// Undefine the environment variable.
+    void undefine();
+
+    // Return the environment variable name.
+    const bsl::string& name() const;
+
+    // Return the environment variable value.
+    const bdlb::NullableValue<bsl::string>& value() const;
+};
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+void LocalNameTest::EnvironmentUtil::put(
+    const bsl::string&                      name, 
+    const bdlb::NullableValue<bsl::string>& value)
+{
+    int rc;
+
+    if (value.has_value()) {
+        rc = ::setenv(name.c_str(), value.value().c_str(), 1);
+        NTSCFG_TEST_EQ(rc, 0);
+    }
+    else {
+        rc = ::unsetenv(name.c_str());
+        NTSCFG_TEST_EQ(rc, 0);
+    }
+}
+
+bdlb::NullableValue<bsl::string> 
+LocalNameTest::EnvironmentUtil::get(const bsl::string& name)
+{
+    bdlb::NullableValue<bsl::string> result;
+
+    const char* value = ::getenv(name.c_str());
+    if (value != 0) {
+        result.makeValue(bsl::string(value));
+    }
+
+    return result;
+}
+
+#else
+
+void LocalNameTest::EnvironmentUtil::put(
+    const bsl::string&                      name, 
+    const bdlb::NullableValue<bsl::string>& value)
+{
+    DWORD rc;
+    
+    if (value.has_value()) {
+        rc = SetEnvironmentVariable(name.c_str(), value.value().c_str());
+        NTSCFG_TEST_NE(rc, FALSE);
+    }
+    else {
+        rc = SetEnvironmentVariable(name.c_str(), 0);
+        NTSCFG_TEST_NE(rc, FALSE);
+    }
+}
+
+bdlb::NullableValue<bsl::string> 
+LocalNameTest::EnvironmentUtil::get(const bsl::string& name)
+{
+    DWORD                            rc;
+    bdlb::NullableValue<bsl::string> result;
+
+    rc = GetEnvironmentVariable(name.c_str(), 0, 0);
+    if (rc == FALSE) {
+        DWORD lastError = GetLastError();
+        NTSCFG_TEST_EQ(lastError, ERROR_ENVVAR_NOT_FOUND);
+        return result;
+    }
+
+    NTSCFG_TEST_GT(rc, 0);
+
+    result.makeValue();
+    result.value().resize(static_cast<bsl::size_t>(rc - 1));
+
+    if (rc > 1) {
+        rc = GetEnvironmentVariable(
+                name.c_str(),
+                result.value().data(),
+                static_cast<DWORD>(result.value().size() + 1));
+        NTSCFG_TEST_GT(rc, 0);
+    }
+
+    return result;
+}
+
+#endif
+
+LocalNameTest::EnvironmentGuard::EnvironmentGuard(
+    const bsl::string& name, 
+    bslma::Allocator*  basicAllocator)
+: d_name(name, basicAllocator)
+, d_initialValue(LocalNameTest::EnvironmentUtil::get(name), basicAllocator)
+, d_currentValue(d_initialValue, basicAllocator)
+{
+}
+
+LocalNameTest::EnvironmentGuard::~EnvironmentGuard()
+{
+    LocalNameTest::EnvironmentUtil::put(d_name, d_initialValue);
+}
+
+void LocalNameTest::EnvironmentGuard::setValue(const bsl::string& value)
+{
+    bdlb::NullableValue<bsl::string> temp = value;
+    LocalNameTest::EnvironmentUtil::put(d_name, temp);
+    d_currentValue = value;
+}
+
+void LocalNameTest::EnvironmentGuard::setValue(
+    const bdlb::NullableValue<bsl::string>& value)
+{
+    LocalNameTest::EnvironmentUtil::put(d_name, value);
+    d_currentValue = value;
+}
+
+void LocalNameTest::EnvironmentGuard::undefine()
+{
+    bdlb::NullableValue<bsl::string> undefined;
+    LocalNameTest::EnvironmentUtil::put(d_name, undefined);
+    d_currentValue.reset();
+}
+
+const bsl::string& LocalNameTest::EnvironmentGuard::name() const
+{
+    return d_name;
+}
+
+const bdlb::NullableValue<bsl::string>& 
+LocalNameTest::EnvironmentGuard::value() const
+{
+    return d_currentValue;
+}
+
+bsl::string LocalNameTest::sockDirEnvironmentVariableName()
+{
+    return "SOCKDIR";
+}
+
+bsl::string LocalNameTest::tempDirEnvironmentVariableName()
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    return "TMPDIR";
+#else
+    return "TEMP";
+#endif
+}
+
+bsl::string LocalNameTest::generateString(bsl::size_t length)
+{
+    bsl::string result;
+
+    for (size_t i = 0; i < length; ++i) {
+        const char ch = 'a' + (bsl::rand() % ('z' - 'a'));
+        result.append(1, ch);
+    }
+
+    return result;
+}
+
 NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathAbsolute)
 {
-    // Concern: Local name explicitly set to an absolute path.
-
     {
         ntsa::LocalName localName;
         localName.setValue("/tmp/server");
@@ -135,9 +381,6 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathAbsolute)
 
 NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathRelative)
 {
-    // Concern: Local name explicitly set to a relative path.
-    // Plan:
-
     {
         ntsa::LocalName localName;
         localName.setValue("foo");
@@ -234,155 +477,222 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathRelative)
 
 NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathTooLong)
 {
-    // Concern: Try to set explicitly value which is longer than can be stored
-    // Plan:
+    ntsa::Error error;
 
-    bsl::stringstream ss;
-    for (size_t i = 0; i < ntsa::LocalName::k_MAX_PATH_LENGTH; ++i) {
-        const char c = 'a' + (bsl::rand() % ('z' - 'a'));
-        ss << c;
-    }
+    bsl::string path = 
+        LocalNameTest::generateString(ntsa::LocalName::k_MAX_PATH_LENGTH);
+
+    bsl::string pathTooLong = path;
+    pathTooLong.append(1, 'x');
+
     {
         ntsa::LocalName localName;
-        NTSCFG_TEST_OK(localName.setValue(ss.str()));
+        error = localName.setValue(path);
+        NTSCFG_TEST_OK(error);
     }
+
 #if defined(BSLS_PLATFORM_OS_LINUX)
     {
         ntsa::LocalName localName;
-        NTSCFG_TEST_OK(localName.setAbstract());
-        NTSCFG_TEST_ERROR(localName.setValue(ss.str()), ntsa::Error::e_LIMIT);
+
+        error = localName.setAbstract();
+        NTSCFG_TEST_OK(error);
+
+        error = localName.setValue(path);
+        NTSCFG_TEST_ERROR(error, ntsa::Error(ntsa::Error::e_LIMIT));
     }
+
     {
         ntsa::LocalName localName;
-        NTSCFG_TEST_OK(localName.setAbstract());
-        NTSCFG_TEST_OK(localName.setValue(
-            ss.str().substr(0, ntsa::LocalName::k_MAX_PATH_LENGTH - 1)));
-    }
-    {
-        ntsa::LocalName localName;
-        NTSCFG_TEST_OK(localName.setValue(ss.str()));
-        NTSCFG_TEST_ERROR(localName.setAbstract(), ntsa::Error::e_LIMIT);
+
+        error = localName.setValue(path);
+        NTSCFG_TEST_OK(error);
+        
+        error = localName.setAbstract();
+        NTSCFG_TEST_ERROR(error, ntsa::Error(ntsa::Error::e_LIMIT));
     }
 #endif
 
-    ss << 'x';  // now string length is k_MAX_PATH_LENGTH
     {
-        ntsa::LocalName   localName;
-        ntsa::Error::Code code = ntsa::Error::e_LIMIT;
-        NTSCFG_TEST_ERROR(localName.setValue(ss.str()), ntsa::Error(code));
-    }
+        ntsa::LocalName localName;
 
-    ss << 'x';  // now string length > k_MAX_PATH_LENGTH
-    {
-        ntsa::LocalName   localName;
-        ntsa::Error::Code code = ntsa::Error::e_LIMIT;
-        NTSCFG_TEST_ERROR(localName.setValue(ss.str()), ntsa::Error(code));
+        error = localName.setValue(pathTooLong);
+        NTSCFG_TEST_ERROR(error, ntsa::Error(ntsa::Error::e_LIMIT));
     }
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUnique)
 {
-    // Concern: Local name generated from a unique GUID.
-    // Plan:
+    ntsa::Error error;
+    int         rc;
 
-    ntsa::LocalName localName = ntsa::LocalName::generateUnique();
+    {
+        ntsa::LocalName localName = ntsa::LocalName::generateUnique();
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    NTSCFG_TEST_TRUE(localName.isAbstract());
+        NTSCFG_TEST_TRUE(localName.isAbstract());
 #else
-    NTSCFG_TEST_FALSE(localName.isAbstract());
+        NTSCFG_TEST_FALSE(localName.isAbstract());
 #endif
 
-    NTSCFG_TEST_FALSE(localName.isUnnamed());
+        NTSCFG_TEST_FALSE(localName.isUnnamed());
 
-    NTSCFG_TEST_TRUE(localName.isAbsolute());
-    NTSCFG_TEST_FALSE(localName.isRelative());
+        NTSCFG_TEST_TRUE(localName.isAbsolute());
+        NTSCFG_TEST_FALSE(localName.isRelative());
+    }
 
-    if (NTSCFG_TEST_VERBOSITY >= NTSCFG_TEST_VERBOSITY_DEBUG) {
-        bsl::cout << "Local name = '" << localName
-                  << "' (size = " << localName.value().size() << ")"
-                  << bsl::endl;
+    {
+        ntsa::LocalName localName;
+        error = ntsa::LocalName::generateUnique(&localName);
+        NTSCFG_TEST_OK(error);
+    }
+
+    {        
+        bsl::string directory = "/test";
+
+        ntsa::LocalName localName;
+        error = ntsa::LocalName::generateUnique(&localName, directory);
+        NTSCFG_TEST_OK(error);
+
+        bsl::string prefix;
+        rc = bdls::PathUtil::getDirname(&prefix, localName.value());
+        NTSCFG_TEST_EQ(rc, 0);
+        NTSCFG_TEST_EQ(prefix, directory);
     }
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueTooLong)
 {
-    // Concern: Test generateUniqueName fails if generated path is long enough
-    // Notes:
-    // 1) Windows and Unixes have different environment variables pointing to a
-    // temporary directory
-    // 2) Linux may not have TMPDIR defined
-    // 3) If environment variable was not defined before the test then it is
-    // needed to undefine it at the end of the test
+    ntsa::Error error;
 
     {
+        bsl::string directory = 
+            LocalNameTest::generateString(ntsa::LocalName::k_MAX_PATH_LENGTH);
+
         ntsa::LocalName localName;
-        NTSCFG_TEST_OK(ntsa::LocalName::generateUnique(&localName));
+        error = ntsa::LocalName::generateUnique(&localName, directory);
+        NTSCFG_TEST_ERROR(error, ntsa::Error(ntsa::Error::e_LIMIT));
     }
+}
 
-#if defined(BSLS_PLATFORM_OS_WINDOWS)
-    const char* envname = "TMP";
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
+{
+    ntsa::Error error;
+    int         rc;
+
+#if defined(BSLS_PLATFORM_OS_UNIX) 
+    const bsl::string customSockDir = "/test/sockdir";
+    const bsl::string customTempDir = "/test/tempdir";
 #else
-    const char* envname = "TMPDIR";
+    const bsl::string customSockDir = "C:\\test\\sockdir";
+    const bsl::string customTempDir = "C:\\test\\tempdir";
 #endif
 
-    bsl::string orig;
-    char*       origRaw = bsl::getenv(envname);
+    LocalNameTest::EnvironmentGuard sockdirGuard(
+       "SOCKDIR", 
+        NTSCFG_TEST_ALLOCATOR);
 
-#if defined(BSLS_PLATFORM_OS_WINDOWS)
-    //assuming that Windows always has such environment variable
-    NTSCFG_TEST_TRUE(origRaw);
+#if defined(BSLS_PLATFORM_OS_UNIX) 
+    LocalNameTest::EnvironmentGuard tempdirGuard(
+        "TMPDIR", 
+        NTSCFG_TEST_ALLOCATOR);
+#else
+    LocalNameTest::EnvironmentGuard tmpdir1Guard(
+        "TMP", 
+        NTSCFG_TEST_ALLOCATOR);
+
+    LocalNameTest::EnvironmentGuard tmpdir2Guard(
+        "TEMP", 
+        NTSCFG_TEST_ALLOCATOR);
 #endif
 
-    if (origRaw) {
-        orig = origRaw;
-    }
+    // SOCKDIR 0, TEMPDIR 0
 
-    //generate long enough string;
-    bsl::string tmp;
     {
-        bsl::stringstream ss;
-        ss << envname << '=';
-        for (size_t i = 0; i < ntsa::LocalName::k_MAX_PATH_LENGTH; ++i) {
-            const char c = 'a' + (bsl::rand() % ('z' - 'a'));
-            ss << c;
-        }
-        tmp = ss.str();
-    }
-#if defined(BSLS_PLATFORM_OS_WINDOWS)
-    int rc = _putenv(tmp.c_str());
+        sockdirGuard.undefine();
+#if defined(BSLS_PLATFORM_OS_UNIX) 
+        tempdirGuard.undefine();
 #else
-    int         rc      = putenv(const_cast<char*>(tmp.c_str()));
+        tmpdir1Guard.undefine();
+        tmpdir2Guard.undefine();
 #endif
-    NTSCFG_TEST_EQ(rc, 0);
+
+        ntsa::LocalName localName;
+        error = ntsa::LocalName::generateUnique(&localName);
+        NTSCFG_TEST_OK(error);
+
+        bsl::string prefix;
+        rc = bdls::PathUtil::getDirname(&prefix, localName.value());
+        NTSCFG_TEST_EQ(rc, 0);
+
+#if defined(BSLS_PLATFORM_OS_UNIX) 
+        NTSCFG_TEST_EQ(prefix, bsl::string("/tmp"));
+#endif
+    }
+
+    // SOCKDIR 0, TEMPDIR 1
 
     {
-        ntsa::LocalName   localName;
-        const ntsa::Error error = ntsa::LocalName::generateUnique(&localName);
+        sockdirGuard.undefine();
+#if defined(BSLS_PLATFORM_OS_UNIX) 
+        tempdirGuard.setValue(customTempDir);
+#else
+        tmpdir1Guard.setValue(customTempDir);
+        tmpdir2Guard.setValue(customTempDir);
+#endif
 
-        //return back the env variable if needed
-        if (!orig.empty()) {
-            bsl::stringstream ss;
-            ss << envname << '=' << orig;
-            bsl::string tmp = ss.str();
-#if defined(BSLS_PLATFORM_OS_WINDOWS)
-            int rc = _putenv(tmp.c_str());
+        ntsa::LocalName localName;
+        error = ntsa::LocalName::generateUnique(&localName);
+        NTSCFG_TEST_OK(error);
+
+        bsl::string prefix;
+        rc = bdls::PathUtil::getDirname(&prefix, localName.value());
+        NTSCFG_TEST_EQ(rc, 0);
+
+        NTSCFG_TEST_EQ(prefix, customTempDir);
+    }
+
+    // SOCKDIR 1, TEMPDIR 0
+
+    {
+        sockdirGuard.setValue(customSockDir);
+#if defined(BSLS_PLATFORM_OS_UNIX) 
+        tempdirGuard.undefine();
 #else
-            int rc = putenv(const_cast<char*>(tmp.c_str()));
+        tmpdir1Guard.undefine();
+        tmpdir2Guard.undefine();
 #endif
-            NTSCFG_TEST_EQ(rc, 0);
-        }
-#if defined(BSLS_PLATFORM_OS_UNIX)
-        else {  //unset env variable
-            int rc = unsetenv(envname);
-            NTSCFG_TEST_EQ(rc, 0);
-        }
+
+        ntsa::LocalName localName;
+        error = ntsa::LocalName::generateUnique(&localName);
+        NTSCFG_TEST_OK(error);
+
+        bsl::string prefix;
+        rc = bdls::PathUtil::getDirname(&prefix, localName.value());
+        NTSCFG_TEST_EQ(rc, 0);
+
+        NTSCFG_TEST_EQ(prefix, customSockDir);
+    }
+
+    // SOCKDIR 1, TEMPDIR 1
+
+    {
+        sockdirGuard.setValue(customSockDir);
+#if defined(BSLS_PLATFORM_OS_UNIX) 
+        tempdirGuard.setValue(customTempDir);
 #else
-        else {
-            NTSCFG_TEST_TRUE(false);
-        }
+
 #endif
-        NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+
+        ntsa::LocalName localName;
+        error = ntsa::LocalName::generateUnique(&localName);
+        NTSCFG_TEST_OK(error);
+
+        bsl::string prefix;
+        rc = bdls::PathUtil::getDirname(&prefix, localName.value());
+        NTSCFG_TEST_EQ(rc, 0);
+
+        NTSCFG_TEST_EQ(prefix, customSockDir);
     }
 }
 

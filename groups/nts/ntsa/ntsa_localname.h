@@ -36,8 +36,37 @@ namespace ntsa {
 /// Provide a name in the local (a.k.a. Unix) address family.
 ///
 /// @details
-/// Provide a value-semantic type that represents an address in
-/// the Unix address family.
+/// Sockets in the local domain are addressed by a path to a file on a
+/// filesystem. For maximum portability and transparency, users are encouraged
+/// to use absolute paths for the names of their local sockets. The read/write
+/// permissions of a socket bound to a name correspond to the read/write
+/// permissions of the parent directory of the basename of the path. Local
+/// names have a small, fixed maximum length that is typically shorter than
+/// the maximum path length on the current platform.
+///
+///@par Namespaces
+/// Portable local sockets and their names are always represented by artifacts
+/// on a filesystem at the path defined by their name. The file system artifact
+/// associated with a local socket must be explicitly removed after the socket
+/// is closed. Certain platforms (namely Linux) additionally introduce a 
+/// concept of an "ephemeral" namespace. Sockets bound to names in the 
+/// ephemeral namespace have no representation on a file system. Sockets in the
+/// ephemeral namespace have the advantage that there is no associated file 
+/// system artifact that must be cleaned up, but have the disadvantage that 
+/// the socket read/write permissions are decoupled from the file system 
+/// permission model.
+///
+///@par Unique Generation
+/// In various cases of local socket programming there is often a desire to
+/// give a local socket an explicit name but that name need not be well-known.
+/// Because portable local sockets must have names that refer to valid 
+/// filesystem paths, this class provides a utility to generate a unique name
+/// is a suitable directory as defined by the environment. Generate unique
+/// names are prefixed by the value of the "SOCKDIR" environment variable, if
+/// defined, or the "TMPDIR" environment variable (on the Unixes) or "TMP" or
+/// "TEMP" environment variables (on Windows) otherwise. If none of these
+/// environment variables are defined the implementation defaults to use
+/// "/tmp" (on the Unixes) or "C:\\Windows\\Temp" (on Windows).
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -221,15 +250,35 @@ class LocalName
                         int         nameLength) const;
 
     /// Generate a unique local name. The name will be abstract if the
-    /// platform supports abstract names (Linux only).
+    /// platform supports abstract names (Linux only). This function is 
+    /// deprecated; prefer the function that generates a local name and 
+    /// returns an error if local name generation fails.
     static ntsa::LocalName generateUnique();
 
-    /// Generate a unique local name and write it to the specified 'name'. The
-    /// name will be abstract if the platform supports abstract names (Linux
-    /// only). In case it is impossible to generate a unique name return the
-    /// error (e.g. it can happen on Windows that absolute path to the file in
-    /// TMP directory is longer than sockaddr_un can store)
+    /// Generate a unique local name and load it to the specified 'name'. The
+    /// name is automatically prefixed with "socket directory" (defined by the
+    /// SOCKDIR environment variable) if present, or the "temporary directory"
+    /// (defined by the TMPDIR environment variable) otherwise. The name will
+    /// be abstract if the platform supports abstract names. Return the error,
+    /// notably when the when the generated absolute path is too long to fully
+    /// store, e.g., when the generated file name concatenated with the "socket
+    /// directory" or "temporary directory" is too long.
     static ntsa::Error generateUnique(ntsa::LocalName* name);
+
+    /// Generate a unique local name and load it to the specified 'name'. The
+    /// name is automatically prefixed with the specified 'directory'. The name
+    /// will be abstract if the platform supports abstract names. Return the
+    /// error, notably when the when the generated absolute path is too long to
+    /// fully store, e.g., when the generated file name concatenated with the
+    /// 'directory' is too long.
+    static ntsa::Error generateUnique(ntsa::LocalName*   name, 
+                                      const bsl::string& directory);
+
+    /// Return the default directory into which non-ephemeral Unix domain
+    /// sockets should stored. This directory is defined by the SOCKDIR
+    /// environment variable, if defined, or the TMPDIR (or TEMPDIR) 
+    /// environment variable otherwise.
+    static bsl::string defaultDirectory();
 
     /// Return attribute information for the attribute indicated by the
     /// specified 'id' if the attribute exists, and 0 otherwise.
