@@ -31,6 +31,7 @@ BSLS_IDENT_RCSID(ntsa_localname_cpp, "$Id$ $CSID$")
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <errno.h>
+#include <unistd.h>
 #include <sys/un.h>
 #endif
 
@@ -56,6 +57,7 @@ BSLS_IDENT_RCSID(ntsa_localname_cpp, "$Id$ $CSID$")
 // clang-format off
 #include <windows.h>
 #include <ws2def.h>
+#include <direct.h>
 // clang-format on
 #endif
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
@@ -340,6 +342,7 @@ bsl::string LocalName::defaultDirectory()
     bsl::string path;
 
     if (path.empty()) {
+#if defined(BSLS_PLATFORM_OS_UNIX) 
         const char* sockDir = bsl::getenv("SOCKDIR");
         if (sockDir != 0) {
             const bsl::size_t sockDirLength = bsl::strlen(sockDir);
@@ -347,6 +350,22 @@ bsl::string LocalName::defaultDirectory()
                 path = sockDir;
             }
         }
+#else
+        DWORD rc;
+        rc = GetEnvironmentVariable("SOCKDIR", 0, 0);
+        if (rc != FALSE && rc > 0) {
+            path.resize(static_cast<bsl::size_t>(rc - 1));
+            if (rc > 1) {
+                rc = GetEnvironmentVariable(
+                        "SOCKDIR",
+                        path.data(),
+                        static_cast<DWORD>(path.size() + 1));
+                if (rc <= 0) {
+                    path.clear();
+                }
+            }
+        }
+#endif
     }
     
     if (path.empty()) {

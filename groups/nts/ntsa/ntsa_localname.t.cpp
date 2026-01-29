@@ -197,7 +197,7 @@ void LocalNameTest::EnvironmentUtil::put(
     DWORD rc;
     
     if (value.has_value()) {
-        rc = SetEnvironmentVariable(name.c_str(), value.c_str());
+        rc = SetEnvironmentVariable(name.c_str(), value.value().c_str());
         NTSCFG_TEST_NE(rc, FALSE);
     }
     else {
@@ -293,7 +293,7 @@ bsl::string LocalNameTest::tempDirEnvironmentVariableName()
 #if defined(BSLS_PLATFORM_OS_UNIX)
     return "TMPDIR";
 #else
-    return "TMP";
+    return "TEMP";
 #endif
 }
 
@@ -580,22 +580,42 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
     ntsa::Error error;
     int         rc;
 
+#if defined(BSLS_PLATFORM_OS_UNIX) 
     const bsl::string customSockDir = "/test/sockdir";
     const bsl::string customTempDir = "/test/tempdir";
+#else
+    const bsl::string customSockDir = "C:\\test\\sockdir";
+    const bsl::string customTempDir = "C:\\test\\tempdir";
+#endif
 
     LocalNameTest::EnvironmentGuard sockdirGuard(
-        LocalNameTest::sockDirEnvironmentVariableName(), 
+       "SOCKDIR", 
         NTSCFG_TEST_ALLOCATOR);
 
+#if defined(BSLS_PLATFORM_OS_UNIX) 
     LocalNameTest::EnvironmentGuard tempdirGuard(
-        LocalNameTest::tempDirEnvironmentVariableName(), 
+        "TMPDIR", 
         NTSCFG_TEST_ALLOCATOR);
+#else
+    LocalNameTest::EnvironmentGuard tmpdir1Guard(
+        "TMP", 
+        NTSCFG_TEST_ALLOCATOR);
+
+    LocalNameTest::EnvironmentGuard tmpdir2Guard(
+        "TEMP", 
+        NTSCFG_TEST_ALLOCATOR);
+#endif
 
     // SOCKDIR 0, TEMPDIR 0
 
     {
         sockdirGuard.undefine();
+#if defined(BSLS_PLATFORM_OS_UNIX) 
         tempdirGuard.undefine();
+#else
+        tmpdir1Guard.undefine();
+        tmpdir2Guard.undefine();
+#endif
 
         ntsa::LocalName localName;
         error = ntsa::LocalName::generateUnique(&localName);
@@ -607,8 +627,6 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
 
 #if defined(BSLS_PLATFORM_OS_UNIX) 
         NTSCFG_TEST_EQ(prefix, bsl::string("/tmp"));
-#else
-        NTSCFG_TEST_EQ(prefix, bsl::string("C:\\Windows\\Temp"));
 #endif
     }
 
@@ -616,7 +634,12 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
 
     {
         sockdirGuard.undefine();
+#if defined(BSLS_PLATFORM_OS_UNIX) 
         tempdirGuard.setValue(customTempDir);
+#else
+        tmpdir1Guard.setValue(customTempDir);
+        tmpdir2Guard.setValue(customTempDir);
+#endif
 
         ntsa::LocalName localName;
         error = ntsa::LocalName::generateUnique(&localName);
@@ -633,7 +656,12 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
 
     {
         sockdirGuard.setValue(customSockDir);
+#if defined(BSLS_PLATFORM_OS_UNIX) 
         tempdirGuard.undefine();
+#else
+        tmpdir1Guard.undefine();
+        tmpdir2Guard.undefine();
+#endif
 
         ntsa::LocalName localName;
         error = ntsa::LocalName::generateUnique(&localName);
@@ -650,7 +678,11 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
 
     {
         sockdirGuard.setValue(customSockDir);
+#if defined(BSLS_PLATFORM_OS_UNIX) 
         tempdirGuard.setValue(customTempDir);
+#else
+
+#endif
 
         ntsa::LocalName localName;
         error = ntsa::LocalName::generateUnique(&localName);
