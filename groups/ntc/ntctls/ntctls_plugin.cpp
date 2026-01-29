@@ -7610,6 +7610,7 @@ bool Certificate::isAuthority() const
                                               0));
     if (bs != 0) {
         result = bs->ca;
+        BASIC_CONSTRAINTS_free(bs);
     }
 
     return result;
