@@ -279,44 +279,96 @@ bsl::ostream& LocalName::print(bsl::ostream& stream,
 
 ntsa::LocalName LocalName::generateUnique()
 {
+    ntsa::Error error;
+
     ntsa::LocalName name;
-    ntsa::Error     error = generateUnique(&name);
+    error = ntsa::LocalName::generateUnique(&name);
     if (error) {
-        abort();  //TODO;
+        bsl::abort();
     }
+
     return name;
 }
 
 ntsa::Error LocalName::generateUnique(ntsa::LocalName* name)
 {
-    bsl::string path;
-    int         rc = bdls::FilesystemUtil::getSystemTemporaryDirectory(&path);
-    if (rc != 0) {
-#if defined(BSLS_PLATFORM_OS_UNIX)
-        path = "/tmp";
-#else
-        return ntsa::Error(ntsa::Error::e_INVALID);
-#endif
-    }
+    return ntsa::LocalName::generateUnique(
+        name, 
+        ntsa::LocalName::defaultDirectory());
+}
 
-    bdlb::Guid        guid = bdlb::GuidUtil::generate();
-    bsl::stringstream ss;
-    ss << "ntf-" << guid;
-
-    rc = bdls::PathUtil::appendIfValid(&path, ss.str());
-    if (rc != 0) {
-        return ntsa::Error(ntsa::Error::e_INVALID);
-    }
+ntsa::Error LocalName::generateUnique(ntsa::LocalName*   name, 
+                                      const bsl::string& directory)
+{
+    ntsa::Error error;
+    int         rc;
 
     name->reset();
+
+    bsl::string basename;
+    {
+        bdlb::Guid guid = bdlb::GuidUtil::generate();
+
+        bsl::stringstream ss;
+        ss << "ntf-" << guid;
+
+        basename = ss.str();
+    }
+
+    bsl::string path = directory;
+    rc = bdls::PathUtil::appendIfValid(&path, basename);
+    if (rc != 0) {
+        return ntsa::Error(ntsa::Error::e_INVALID);
+    }
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
     name->setAbstract();
 #endif
 
-    ntsa::Error error = name->setValue(path);
+    error = name->setValue(path);
+    if (error) {
+        name->reset();
+        return error;
+    }
 
-    return error;
+    return ntsa::Error();
+}
+
+bsl::string LocalName::defaultDirectory()
+{
+    int         rc;
+    bsl::string path;
+
+    if (path.empty()) {
+        const char* sockDir = bsl::getenv("SOCKDIR");
+        if (sockDir != 0) {
+            const bsl::size_t sockDirLength = bsl::strlen(sockDir);
+            if (sockDirLength < ntsa::LocalName::k_MAX_PATH_LENGTH) {
+                path = sockDir;
+            }
+        }
+    }
+    
+    if (path.empty()) {
+        bsl::string tempDir;
+        rc = bdls::FilesystemUtil::getSystemTemporaryDirectory(&tempDir);
+        if (rc == 0) {
+            const bsl::size_t tempDirLength = tempDir.size();
+            if (tempDirLength < ntsa::LocalName::k_MAX_PATH_LENGTH) {
+                path = tempDir;
+            }
+        }
+    }
+
+    if (path.empty()) {
+#if defined(BSLS_PLATFORM_OS_UNIX)
+        path = "/tmp";
+#else
+        path = "C:\\Windows\\Temp";
+#endif
+    }
+
+    return path;
 }
 
 const bdlat_AttributeInfo* LocalName::lookupAttributeInfo(int id)
