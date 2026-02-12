@@ -1070,8 +1070,8 @@ class TestUtil
     static void registerTestCase(const char*             name,
                                  const TestCaseFunction& function);
 
-    /// Parse the specified 'text' and load the integer result into the 
-    /// specified 'result'. Return true if 'text was parsed successfully, 
+    /// Parse the specified 'text' and load the integer result into the
+    /// specified 'result'. Return true if 'text was parsed successfully,
     /// otherwise return false.
     static bool parseInt(int* result, const char* text);
 
@@ -1083,9 +1083,9 @@ class TestUtil
 
     /// List each test described in the specified 'testCaseContextVector'.
     static void list(
-        const bsl::vector<const ntscfg::TestCaseContext*>& 
+        const bsl::vector<const ntscfg::TestCaseContext*>&
         testCaseContextVector);
-    
+
     /// Run all test cases.
     static void call();
 
@@ -1094,7 +1094,7 @@ class TestUtil
 
     /// Run each test described in the specified 'testCaseContextVector'.
     static void call(
-        const bsl::vector<const ntscfg::TestCaseContext*>& 
+        const bsl::vector<const ntscfg::TestCaseContext*>&
         testCaseContextVector);
 
     /// Return true if the specified 'name' matches the specified 'pattern',
@@ -1205,7 +1205,7 @@ void TestUtil::list(
     }
 
     for (bsl::size_t i = 0; i < testCaseContextVector.size(); ++i) {
-        const ntscfg::TestCaseContext& testCaseContext = 
+        const ntscfg::TestCaseContext& testCaseContext =
             *testCaseContextVector[i];
 
         bsl::cout << bsl::setw(maxDigits);
@@ -1238,7 +1238,7 @@ void TestUtil::call(const ntscfg::TestCaseContext& testCaseContext)
         BloombergLP::ntscfg::testAllocator = &ta;
 
         testCaseContext.execute();
-        
+
         if (ta.numBlocksInUse() != 0) {
             bsl::cerr << "Leaked " << ta.numBlocksInUse()
                       << " memory blocks" << bsl::endl;
@@ -1405,7 +1405,7 @@ int main(int argc, char** argv)
                 }
                 arg = argv[i];
 
-                int level;
+                int level = 0;
                 if (BloombergLP::ntscfg::TestUtil::parseInt(&level, arg)) {
                     BloombergLP::ntscfg::testVerbosity = level;
                 }
@@ -1459,8 +1459,8 @@ int main(int argc, char** argv)
                 if (BloombergLP::ntscfg::testCaseMap.contains(number)) {
                     BloombergLP::ntscfg::testCase = number;
 
-                    const BloombergLP::ntscfg::TestCaseContext& 
-                    testCaseContext = 
+                    const BloombergLP::ntscfg::TestCaseContext&
+                    testCaseContext =
                         BloombergLP::ntscfg::testCaseMap
                             [BloombergLP::ntscfg::testCase];
 
@@ -1482,9 +1482,9 @@ int main(int argc, char** argv)
                 }
             }
             else {
-                bsl::vector<const BloombergLP::ntscfg::TestCaseContext*> 
+                bsl::vector<const BloombergLP::ntscfg::TestCaseContext*>
                 testCaseContextVector;
-                
+
                 bool pattern = false;
                 if (concern.value().find('*') != bsl::string::npos) {
                     testCaseContextVector.reserve(
@@ -1502,8 +1502,8 @@ int main(int argc, char** argv)
 
                     if (pattern) {
                         if (BloombergLP::ntscfg::TestUtil::match(
-                            testCaseContext.name(), 
-                            concern.value())) 
+                            testCaseContext.name(),
+                            concern.value()))
                         {
                             testCaseContextVector.push_back(&testCaseContext);
                         }
@@ -1518,7 +1518,7 @@ int main(int argc, char** argv)
 
                 if (testCaseContextVector.empty()) {
                     if (BloombergLP::ntscfg::testVerbosity >= 3) {
-                        bsl::cerr << "No test case(s) matching \"" 
+                        bsl::cerr << "No test case(s) matching \""
                                   << concern.value()
                                   << "\" are found" << bsl::endl;
                     }
