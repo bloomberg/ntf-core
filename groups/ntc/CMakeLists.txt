@@ -25,6 +25,22 @@ configure_file(
 
 add_library(ntc STATIC)
 
+if (${NTF_BUILD_WITH_OPENSSL})
+    bbs_add_target_dynamic_dependency(ntc openssl)
+endif()
+
+if (${NTF_BUILD_WITH_LZ4})
+    bbs_add_target_dynamic_dependency(ntc liblz4)
+endif()
+
+if (${NTF_BUILD_WITH_ZSTD})
+    bbs_add_target_dynamic_dependency(ntc libzstd)
+endif()
+
+if (${NTF_BUILD_WITH_ZLIB})
+    bbs_add_target_dynamic_dependency(ntc zlib)
+endif()
+
 bbs_setup_target_uor(
     ntc
     NO_EMIT_PKG_CONFIG_FILE
