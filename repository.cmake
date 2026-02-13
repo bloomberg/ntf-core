@@ -3873,7 +3873,7 @@ function (ntf_package_dependencies)
     get_property(target_type TARGET ${target} PROPERTY "TYPE")
 
     foreach(dependency ${dependency_list})
-        if (VERBOSE OR TRUE)
+        if (VERBOSE)
             message(STATUS "Adding package metadata dependency: ${target} -> ${dependency}")
         endif()
 
@@ -6644,7 +6644,7 @@ function (ntf_repository_end)
         set(coverage_command
             ${GCOVR_PATH} --root ${PROJECT_SOURCE_DIR} --object-directory=${PROJECT_BINARY_DIR} --exclude=${PROJECT_SOURCE_DIR}/\(.+/\)?\(.+\)\\.t\\.cpp\$ --exclude=${PROJECT_SOURCE_DIR}/\(.+/\)?\(.+\)\\.m\\.cpp\$ --html coverage/index.html --html-details --html-title ${html_title} --xml coverage/index.xml --xml-pretty)
 
-        if (VERBOSE OR TRUE)
+        if (VERBOSE)
             message(STATUS "Enabled code coverage")
             message(STATUS "    GCOV_PATH:    ${GCOV_PATH}")
             message(STATUS "    LCOV_PATH:    ${LCOV_PATH}")
@@ -9482,15 +9482,20 @@ function(ntf_test_discover_cases)
 
                 string(
                     APPEND ctest_file_content
-                    "add_test([=[${test_name}]=] "
-                    "COMMAND ${ARG_TEST_EXECUTABLE})\n"
+                    "add_test("
+                    "[=[${test_name}]=] "
+                    "${ARG_TEST_EXECUTABLE} "
+                    "[=[${test_case_name}]=]"
+                    ")\n"
                 )
 
                 string(
                     APPEND ctest_file_content
                     "set_tests_properties("
-                    "[=[${test_name}]=] PROPERTIES TIMEOUT 600 "
-                    "SKIP_REGULAR_EXPRESSION [==[\\[  SKIPPED \\]]==])\n"
+                    "[=[${test_name}]=] "
+                    "PROPERTIES TIMEOUT 600 "
+                    "SKIP_REGULAR_EXPRESSION [==[\\[  SKIPPED \\]]==]"
+                    ")\n"
                 )
             else()
                 message(FATAL_ERROR
