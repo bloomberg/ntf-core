@@ -13,9 +13,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include_guard(GLOBAL)
+if ("${CMAKE_SCRIPT_MODE_FILE}" STREQUAL "")
+    include_guard(GLOBAL)
 
-include(CMakePackageConfigHelpers)
+    include(CMakePackageConfigHelpers)
+
+    set(CMAKE_TRY_COMPILE_CONFIGURATION "Debug")
+
+    include(CMakePushCheckState)
+    include(CheckIncludeFile)
+    include(CheckIncludeFiles)
+    include(CheckTypeSize)
+    include(CheckFunctionExists)
+    include(CheckVariableExists)
+    include(CheckSymbolExists)
+    include(CheckStructHasMember)
+    include(CheckPrototypeDefinition)
+    include(CheckCSourceCompiles)
+    include(CheckCXXSourceCompiles)
+    include(CheckCXXSourceRuns)
+
+    set(CMAKE_REQUIRED_FLAGS "" CACHE INTERNAL "")
+    set(CMAKE_REQUIRED_DEFINITIONS "" CACHE INTERNAL "")
+    set(CMAKE_REQUIRED_INCLUDES "" CACHE INTERNAL "")
+    set(CMAKE_REQUIRED_LIBRARIES "" CACHE INTERNAL "")
+    set(CMAKE_REQUIRED_QUIET TRUE CACHE INTERNAL "")
+
+    set(CMAKE_EXTRA_INCLUDE_FILES "" CACHE INTERNAL "")
+
+    if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+        set(CMAKE_REQUIRED_DEFINITIONS -D_BSD_SOURCE)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
+        set(CMAKE_REQUIRED_DEFINITIONS -D_BSD_SOURCE)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+        set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")
+        set(CMAKE_REQUIRED_DEFINITIONS -D_BSD_SOURCE)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
+        set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+        set(CMAKE_REQUIRED_LIBRARIES socket nsl)
+    elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+        set(CMAKE_REQUIRED_LIBRARIES ws2_32 shell32 advapi32)
+        set(CMAKE_REQUIRED_DEFINITIONS -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0600)
+    endif()
+
+    find_package(Threads QUIET)
+    list(APPEND CMAKE_REQUIRED_LIBRARIES Threads::Threads)
+endif()
 
 # Return the current log level name.
 function (ntf_log_level_name)
@@ -1034,6 +1078,13 @@ function (ntf_target_options_common_prolog target)
     else()
         ntf_target_build_definition(
             TARGET ${target} VALUE BDE_BUILD_TARGET_CPP${cxx_standard})
+    endif()
+
+    if (DEFINED NTF_BUILD_UNITY)
+        if (${NTF_BUILD_UNITY})
+            ntf_target_build_definition(
+                TARGET ${target} VALUE BDE_BUILD_TARGET_UNITY)
+        endif()
     endif()
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU|SunPro|XL")
@@ -2479,6 +2530,25 @@ function (ntf_executable_requires)
     endforeach()
 endfunction()
 
+# Unify the build of all the components in an executable.
+#
+# NAME       - The executable.
+# VALUE      - The flag that indicates components should be unified.
+function (ntf_executable_unity)
+    cmake_parse_arguments(
+        ARG "" "NAME;VALUE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_NAME})
+    ntf_assert_defined(${ARG_VALUE})
+
+    ntf_nomenclature_target(TARGET ${ARG_NAME} OUTPUT target)
+
+    ntf_assert_target_defined(${target})
+
+    ntf_target_unity_set(TARGET ${target} VALUE ${ARG_VALUE})
+
+endfunction()
+
 # End the definition of an executable.
 function (ntf_executable_end)
     cmake_parse_arguments(
@@ -2947,6 +3017,25 @@ function (ntf_adapter_requires)
     endforeach()
 endfunction()
 
+# Unify the build of all the components in an adapter.
+#
+# NAME       - The adapter.
+# VALUE      - The flag that indicates components should be unified.
+function (ntf_adapter_unity)
+    cmake_parse_arguments(
+        ARG "" "NAME;VALUE" "" ${ARGN})
+
+    ntf_assert_defined(${ARG_NAME})
+    ntf_assert_defined(${ARG_VALUE})
+
+    ntf_nomenclature_target(TARGET ${ARG_NAME} OUTPUT target)
+
+    ntf_assert_target_defined(${target})
+
+    ntf_target_unity_set(TARGET ${target} VALUE ${ARG_VALUE})
+
+endfunction()
+
 # End the definition of an adapter.
 function (ntf_adapter_end)
     cmake_parse_arguments(
@@ -3390,6 +3479,23 @@ function (ntf_group_end)
                 endforeach()
             endif()
 
+            # Link to the test dependencies.
+
+            ntf_target_requires_test_get(
+                TARGET ${target} OUTPUT target_requires_test)
+
+            foreach(entry ${target_requires_test})
+                set(test_dependency ${entry})
+
+                if (VERBOSE)
+                    message(STATUS "NTF Build: linking component test driver '${component_test_build_target}' to test target '${test_dependency}'")
+                    message(STATUS "         * target_link_libraries(${component_test_build_target} ${test_dependency})")
+                endif()
+
+                ntf_target_link_dependency(
+                    TARGET ${component_test_build_target} DEPENDENCY ${test_dependency} OUTPUT result OPTIONAL)
+            endforeach()
+
             ntf_target_options_common_epilog(${target})
 
             cmake_path(
@@ -3399,20 +3505,48 @@ function (ntf_group_end)
 
             ntf_repository_build_valgrind_get(OUTPUT use_valgrind)
 
-            if (${use_valgrind})
-                add_test(
-                    NAME ${component_test_build_target}
-                    COMMAND ${VALGRIND_PATH} --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1 ${component_test_build_target_path}
-                )
+            set(discover_tests_dynamically TRUE)
 
+            if (discover_tests_dynamically)
+                if (${use_valgrind})
+                    ntf_test_discover(
+                        TEST
+                            ${component_test_build_target}
+                        COMPONENT
+                            ${target}
+                        EXECUTABLE
+                            ${component_test_build_target_path}
+                        SOURCE
+                            ${component_driver_path}
+                        LAUNCHER
+                            ${VALGRIND_PATH} --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1
+                    )
+                else()
+                    ntf_test_discover(
+                        TEST
+                            ${component_test_build_target}
+                        COMPONENT
+                            ${target}
+                        EXECUTABLE
+                            ${component_test_build_target_path}
+                        SOURCE
+                            ${component_driver_path}
+                    )
+                endif()
             else()
-                add_test(
-                    NAME ${component_test_build_target}
-                    COMMAND ${component_test_build_target}
-                )
+                if (${use_valgrind})
+                    add_test(
+                        NAME ${component_test_build_target}
+                        COMMAND ${VALGRIND_PATH} --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1 ${component_test_build_target_path}
+                    )
+                else()
+                    add_test(
+                        NAME ${component_test_build_target}
+                        COMMAND ${component_test_build_target}
+                    )
+                endif()
+                set_tests_properties(${component_test_build_target} PROPERTIES TIMEOUT 600)
             endif()
-
-            set_tests_properties(${component_test_build_target} PROPERTIES TIMEOUT 600)
 
             # add_custom_target(
             #     test_${target}
@@ -3736,6 +3870,8 @@ function (ntf_package_dependencies)
     ntf_target_requires_set(
         TARGET ${target} VALUE ${dependency_list})
 
+    get_property(target_type TARGET ${target} PROPERTY "TYPE")
+
     foreach(dependency ${dependency_list})
         if (VERBOSE)
             message(STATUS "Adding package metadata dependency: ${target} -> ${dependency}")
@@ -3746,7 +3882,11 @@ function (ntf_package_dependencies)
             message(STATUS "         * target_link_libraries(${target} ${dependency})")
         endif()
 
-        target_link_libraries(${target} PUBLIC ${dependency})
+        if ("${target_type}" STREQUAL "INTERFACE_LIBRARY")
+            target_link_libraries(${target} INTERFACE ${dependency})
+        else()
+            target_link_libraries(${target} PUBLIC ${dependency})
+        endif()
     endforeach()
 endfunction()
 
@@ -4164,8 +4304,31 @@ function (ntf_component)
 
     cmake_path(
         APPEND
-        component_driver_path "${directory}" "${component}.t${extension}"
+        component_driver_path_t "${directory}" "${component}.t${extension}"
     )
+
+    cmake_path(
+        APPEND
+        component_driver_path_g "${directory}" "${component}.g${extension}"
+    )
+
+    set(component_driver_impl_unknown 0)
+    set(component_driver_impl_native 1)
+    set(component_driver_impl_google 2)
+
+    set(component_driver_path "")
+    set(component_driver_impl ${component_driver_impl_unknown})
+
+    if (EXISTS "${component_driver_path_t}")
+        set(component_driver_path ${component_driver_path_t})
+        set(component_driver_impl ${component_driver_impl_native})
+    elseif (EXISTS "${component_driver_path_g}")
+        set(component_driver_path ${component_driver_path_g})
+        set(component_driver_impl ${component_driver_impl_google})
+    else()
+        set(component_driver_path ${component_driver_path_t})
+        set(component_driver_impl ${component_driver_impl_unknown})
+    endif()
 
     set(component_impl_build_target "${component}")
     set(component_test_build_target "${component}.t")
@@ -4311,7 +4474,8 @@ function (ntf_component)
                 message(STATUS "         * target_link_libraries(${component_test_build_target} ${test_dependency})")
             endif()
 
-            target_link_libraries(${component_test_build_target} PUBLIC ${test_dependency})
+            ntf_target_link_dependency(
+                TARGET ${component_test_build_target} DEPENDENCY ${test_dependency} OUTPUT result OPTIONAL)
         endforeach()
 
         ntf_target_options_common_epilog(${target})
@@ -4323,19 +4487,62 @@ function (ntf_component)
 
         ntf_repository_build_valgrind_get(OUTPUT use_valgrind)
 
-        if (${use_valgrind})
-            ntf_test_add(
-                NAME ${component_test_build_target}
-                COMMAND ${VALGRIND_PATH} --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1 ${component_test_build_target_path}
-                SOURCE ${component_driver_path}
-            )
+        set(discover_tests_dynamically TRUE)
+        if (${component_driver_impl} EQUAL ${component_driver_impl_unknown})
+            set(discover_tests_dynamically FALSE)
+        endif()
 
+        if (discover_tests_dynamically)
+            if (${component_driver_impl} EQUAL
+                ${component_driver_impl_native})
+                if (${use_valgrind})
+                    ntf_test_discover(
+                        TEST
+                            ${component_test_build_target}
+                        COMPONENT
+                            ${component}
+                        EXECUTABLE
+                            ${component_test_build_target_path}
+                        SOURCE
+                            ${component_driver_path}
+                        LAUNCHER
+                            ${VALGRIND_PATH} --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1
+                    )
+                else()
+                    ntf_test_discover(
+                        TEST
+                            ${component_test_build_target}
+                        COMPONENT
+                            ${component}
+                        EXECUTABLE
+                            ${component_test_build_target_path}
+                        SOURCE
+                            ${component_driver_path}
+                    )
+                endif()
+            elseif (${component_driver_impl} EQUAL
+                    ${component_driver_impl_google})
+                gtest_discover_tests(
+                    ${component_test_build_target}
+                    DISCOVERY_MODE POST_BUILD
+                )
+            else()
+                ntf_die("Dynamic test discovery not supported "
+                        "for unknown test driver implementations")
+            endif()
         else()
-            ntf_test_add(
-                NAME ${component_test_build_target}
-                COMMAND ${component_test_build_target}
-                SOURCE ${component_driver_path}
-            )
+            if (${use_valgrind})
+                add_test(
+                    NAME ${component_test_build_target}
+                    COMMAND ${VALGRIND_PATH} --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1 ${component_test_build_target_path}
+                )
+
+            else()
+                add_test(
+                    NAME ${component_test_build_target}
+                    COMMAND ${component_test_build_target}
+                )
+            endif()
         endif()
 
         add_custom_target(
@@ -6437,7 +6644,7 @@ function (ntf_repository_end)
         set(coverage_command
             ${GCOVR_PATH} --root ${PROJECT_SOURCE_DIR} --object-directory=${PROJECT_BINARY_DIR} --exclude=${PROJECT_SOURCE_DIR}/\(.+/\)?\(.+\)\\.t\\.cpp\$ --exclude=${PROJECT_SOURCE_DIR}/\(.+/\)?\(.+\)\\.m\\.cpp\$ --html coverage/index.html --html-details --html-title ${html_title} --xml coverage/index.xml --xml-pretty)
 
-        if (VERBOSE OR TRUE)
+        if (VERBOSE)
             message(STATUS "Enabled code coverage")
             message(STATUS "    GCOV_PATH:    ${GCOV_PATH}")
             message(STATUS "    LCOV_PATH:    ${LCOV_PATH}")
@@ -6466,14 +6673,6 @@ function (ntf_repository_end)
             VERBATIM
             COMMENT "Generating code coverage"
         )
-
-        # MRM:
-        #add_custom_command(
-        #    TARGET coverage
-        #    POST_BUILD
-        #    COMMAND ;
-        #    COMMENT "Generated '${PROJECT_BINARY_DIR}/coverage/index.html'"
-        #)
     endif()
 
 endfunction()
@@ -7148,48 +7347,6 @@ function (ntf_test)
 
     message(FATAL_ERROR "Test complete")
 endfunction()
-
-set(CMAKE_TRY_COMPILE_CONFIGURATION "Debug")
-
-include(CMakePushCheckState)
-include(CheckIncludeFile)
-include(CheckIncludeFiles)
-include(CheckTypeSize)
-include(CheckFunctionExists)
-include(CheckVariableExists)
-include(CheckSymbolExists)
-include(CheckStructHasMember)
-include(CheckPrototypeDefinition)
-include(CheckCSourceCompiles)
-include(CheckCXXSourceCompiles)
-include(CheckCXXSourceRuns)
-
-set(CMAKE_REQUIRED_FLAGS "" CACHE INTERNAL "")
-set(CMAKE_REQUIRED_DEFINITIONS "" CACHE INTERNAL "")
-set(CMAKE_REQUIRED_INCLUDES "" CACHE INTERNAL "")
-set(CMAKE_REQUIRED_LIBRARIES "" CACHE INTERNAL "")
-set(CMAKE_REQUIRED_QUIET TRUE CACHE INTERNAL "")
-
-set(CMAKE_EXTRA_INCLUDE_FILES "" CACHE INTERNAL "")
-
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-    set(CMAKE_REQUIRED_DEFINITIONS -D_BSD_SOURCE)
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
-    set(CMAKE_REQUIRED_DEFINITIONS -D_BSD_SOURCE)
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-    set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")
-    set(CMAKE_REQUIRED_DEFINITIONS -D_BSD_SOURCE)
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
-    set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
-    set(CMAKE_REQUIRED_LIBRARIES socket nsl)
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
-    set(CMAKE_REQUIRED_LIBRARIES ws2_32 shell32 advapi32)
-    set(CMAKE_REQUIRED_DEFINITIONS -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0600)
-endif()
-
-find_package(Threads QUIET)
-list(APPEND CMAKE_REQUIRED_LIBRARIES Threads::Threads)
 
 function (ntf_check_diagnostic)
     cmake_parse_arguments(
@@ -7934,7 +8091,9 @@ function (ntf_check_build_has_link_dynamic_ubsan)
 
 endfunction()
 
-# Add a test.
+# Add a test whose test cases are discovered by searching the source code
+# for known patterns. Note that this function is currently unused is retained
+# only for historical purposes.
 #
 # NAME    - The name of the test.
 # COMMAND - The command to run the test
@@ -9054,3 +9213,309 @@ function (ntf_target_install_traits_get_alternate_ufid_list)
 
     set(${ARG_OUTPUT} ${alternate_install_ufid_list} PARENT_SCOPE)
 endfunction()
+
+# Discover tests by asking a compiled test driver for which tests it supports.
+#
+# This function sets up a post-build or pre-test command on the test executable
+# that discovers the names of the supported tests at run-time.
+#
+# TEST       - The test target, typically "<package>_<component>.t".
+# COMPONENT  - The component being tests, typically "<package>_<component>".
+# EXECUTABLE - The path the test executable for the test target.
+# SOURCE     - The path to the source code defining the tests for the
+#              component.
+function (ntf_test_discover)
+    cmake_parse_arguments(
+        ARG
+        "POST_BUILD;PRE_TEST"
+        "TEST;COMPONENT;EXECUTABLE;SOURCE;LAUNCHER"
+        ""
+        ${ARGN})
+
+    ntf_assert_defined(${ARG_TEST})
+    ntf_assert_defined(${ARG_COMPONENT})
+    ntf_assert_defined(${ARG_EXECUTABLE})
+    ntf_assert_defined(${ARG_SOURCE})
+
+    set(output "")
+
+    if ("${ARG_POST_BUILD}" STREQUAL "")
+        set(ARG_POST_BUILD FALSE)
+    endif()
+
+    if ("${ARG_PRE_TEST}" STREQUAL "")
+        set(ARG_PRE_TEST FALSE)
+    endif()
+
+    if (NOT ${ARG_POST_BUILD} AND NOT ${ARG_PRE_TEST})
+        set(ARG_POST_BUILD TRUE)
+    endif()
+
+    set(target ${ARG_TEST})
+
+    set(ctest_file_base "${CMAKE_CURRENT_BINARY_DIR}/${ARG_COMPONENT}")
+    set(ctest_include_file "${ctest_file_base}_include.cmake")
+    set(ctest_tests_file "${ctest_file_base}_tests.cmake")
+
+    if (${ARG_POST_BUILD})
+        add_custom_command(
+          TARGET ${target} POST_BUILD
+          BYPRODUCTS "${ctest_tests_file}"
+          COMMAND "${CMAKE_COMMAND}"
+                  -D "NTF_TEST_DISCOVERY=TRUE"
+                  -D "NTF_TEST_DISCOVERY_TARGET=${target}"
+                  -D "NTF_TEST_DISCOVERY_COMPONENT=${ARG_COMPONENT}"
+                  -D "NTF_TEST_DISCOVERY_EXECUTABLE=$<TARGET_FILE:${target}>"
+                  -D "NTF_TEST_DISCOVERY_LAUNCHER=${ARG_LAUNCHER}"
+                  -D "NTF_TEST_DISCOVERY_CTEST_FILE=${ctest_tests_file}"
+                  -P "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/repository.cmake"
+          VERBATIM
+        )
+
+        file(WRITE "${ctest_include_file}"
+            "if (EXISTS \"${ctest_tests_file}\")\n"
+            "  include(\"${ctest_tests_file}\")\n"
+            "else()\n"
+            "  add_test(${target}_NOT_BUILT ${target}_NOT_BUILT)\n"
+            "endif()\n"
+        )
+    elseif (${ARG_PRE_TEST})
+        ntf_die("Test discovery pre-test is not implemented")
+    else()
+        ntf_die("Invalid test discovery mode")
+    endif()
+
+    set_property(DIRECTORY
+                 APPEND PROPERTY TEST_INCLUDE_FILES "${ctest_include_file}")
+endfunction()
+
+function(ntf_test_discover_cases)
+    cmake_parse_arguments(
+        ARG
+        ""
+        "TEST_TARGET;TEST_COMPONENT;TEST_EXECUTABLE;TEST_LAUNCHER;CTEST_FILE"
+        ""
+        ${ARGN})
+
+    cmake_language(EVAL CODE
+        "execute_process(
+        COMMAND [==[${ARG_TEST_EXECUTABLE}]==] --help
+        OUTPUT_VARIABLE help_output
+        RESULT_VARIABLE help_result
+        )"
+    )
+
+    if (NOT ${help_result} EQUAL 0)
+      string(REPLACE "\n" "\n    " help_output "${help_output}")
+      message(
+          FATAL_ERROR
+          "Failed to discover tests for '${ARG_TEST_EXECUTABLE}': "
+          "failed to get help:\n"
+          "    ${help_output}\n"
+      )
+    endif()
+
+    if ("${help_output}" MATCHES "Google")
+        set(test_json_path "${ARG_CTEST_FILE}.json")
+        file(REMOVE "${test_json_path}")
+
+        cmake_language(EVAL CODE
+            "execute_process(
+            COMMAND [==[${ARG_TEST_EXECUTABLE}]==] --gtest_list_tests [==[--gtest_output=json:${test_json_path}]==]
+            OUTPUT_VARIABLE output
+            RESULT_VARIABLE result
+            )"
+        )
+
+        set(ctest_file_content "")
+
+        file(READ "${test_json_path}" test_json)
+
+        string(JSON test_fixture_array GET "${test_json}" "testsuites")
+        string(JSON test_fixture_array_count LENGTH "${test_fixture_array}")
+
+        if (test_fixture_array_count GREATER 0)
+            math(EXPR test_fixture_index_max "${test_fixture_array_count}-1")
+            foreach (test_fixture_index RANGE ${test_fixture_index_max})
+                string(JSON test_fixture GET
+                       "${test_fixture_array}" ${test_fixture_index})
+
+                string(JSON test_fixture_name GET "${test_fixture}" "name")
+
+                string(JSON test_case_array GET "${test_fixture}" "testsuite")
+
+                string(JSON test_case_array_count LENGTH "${test_case_array}")
+                if (test_case_array_count GREATER 0)
+                    math(EXPR test_case_index_max "${test_case_array_count}-1")
+                    foreach (test_case_index RANGE ${test_case_index_max})
+                        string(JSON test_case GET
+                               "${test_case_array}"
+                               ${test_case_index})
+
+                        string(JSON test_case_name
+                               ERROR_VARIABLE test_case_name_error
+                               GET "${test_case}" "name")
+                        if (test_case_name_error)
+                            set(test_case_name "")
+                        endif()
+
+                        string(JSON test_case_file
+                               ERROR_VARIABLE test_case_file_error
+                               GET "${test_case}" "file")
+                        if (test_case_file_error)
+                            set(test_case_file "")
+                        endif()
+
+                        string(JSON test_case_line
+                               ERROR_VARIABLE test_case_line_error
+                               GET "${test_case}" "line")
+                        if (test_case_line_error)
+                            set(test_case_line "")
+                        endif()
+
+                        string(JSON test_case_param_value
+                               ERROR_VARIABLE test_case_param_value_error
+                               GET "${test_case}" "value_param")
+                        if (test_case_param_value_error)
+                            set(test_case_param_value "")
+                        endif()
+
+                        string(JSON test_case_param_type
+                               ERROR_VARIABLE test_case_param_type_error
+                               GET "${test_case}" "type_param")
+                        if (test_case_param_type_error)
+                            set(test_case_param_type "")
+                        endif()
+
+                        if (NOT test_case_param_value STREQUAL "")
+                            string(REGEX REPLACE "^(.+)/.+$" "\\1\/"
+                                   test_case_name "${test_case_name}")
+                        endif()
+
+                        string(CONCAT test_name
+                            "${test_fixture_name}."
+                            "${test_case_name}"
+                            "${test_case_param_value}"
+                            "${test_case_param_type}"
+                        )
+
+                        set(test_command "")
+
+                        if (NOT "${ARG_TEST_LAUNCHER}" STREQUAL "")
+                            string(
+                                APPEND test_command
+                                "${ARG_TEST_LAUNCHER} "
+                            )
+                        endif()
+
+                        string(
+                            APPEND test_command
+                            "${ARG_TEST_EXECUTABLE} "
+                            "[=[--gtest_filter=${test_name}]=]"
+                        )
+
+                        string(
+                            APPEND ctest_file_content
+                            "add_test([=[${test_name}]=] "
+                            "COMMAND ${ARG_TEST_EXECUTABLE})\n"
+                        )
+
+                        string(
+                            APPEND ctest_file_content
+                            "set_tests_properties("
+                            "[=[${test_name}]=] PROPERTIES TIMEOUT 600 "
+                            "SKIP_REGULAR_EXPRESSION "
+                            "[==[\\[  SKIPPED \\]]==])\n"
+                        )
+                    endforeach()
+                endif()
+            endforeach()
+        endif()
+
+        file(WRITE "${ARG_CTEST_FILE}" "${ctest_file_content}")
+    else()
+        cmake_language(EVAL CODE
+            "execute_process(
+            COMMAND [==[${ARG_TEST_EXECUTABLE}]==] --list
+            OUTPUT_VARIABLE output
+            RESULT_VARIABLE result
+            )"
+        )
+
+        if (NOT ${result} EQUAL 0)
+            string(REPLACE "\n" "\n    " output "${output}")
+            message(
+                FATAL_ERROR
+                "Failed to discover tests for '${ARG_TEST_EXECUTABLE}': "
+                "failed to list tests:\n"
+                "    ${output}\n"
+            )
+        endif()
+
+        set(ctest_file_content "")
+
+        string(REGEX REPLACE "[\r\n]+" ";" output_line_list "${output}")
+
+        foreach (line ${output_line_list})
+            if (line STREQUAL "")
+                continue()
+            endif()
+
+            if (line MATCHES "([0-9]+)\\) (.*)")
+                set(test_case_number ${CMAKE_MATCH_1})
+                set(test_case_name ${CMAKE_MATCH_2})
+
+                set(test_name "${ARG_TEST_COMPONENT} ${test_case_name}")
+                set(test_command "")
+
+                if (NOT "${ARG_TEST_LAUNCHER}" STREQUAL "")
+                    string(
+                        APPEND test_command
+                        "${ARG_TEST_LAUNCHER} "
+                    )
+                endif()
+
+                string(
+                    APPEND test_command
+                    "${ARG_TEST_EXECUTABLE} [=[${test_case_name}]=]"
+                )
+
+                string(
+                    APPEND ctest_file_content
+                    "add_test("
+                    "[=[${test_name}]=] "
+                    "${ARG_TEST_EXECUTABLE} "
+                    "[=[${test_case_name}]=]"
+                    ")\n"
+                )
+
+                string(
+                    APPEND ctest_file_content
+                    "set_tests_properties("
+                    "[=[${test_name}]=] "
+                    "PROPERTIES TIMEOUT 600 "
+                    "SKIP_REGULAR_EXPRESSION [==[\\[  SKIPPED \\]]==]"
+                    ")\n"
+                )
+            else()
+                message(FATAL_ERROR
+                        "Failed to discover test from line: ${line}")
+            endif()
+        endforeach()
+
+        file(WRITE "${ARG_CTEST_FILE}" "${ctest_file_content}")
+    endif()
+endfunction()
+
+if (CMAKE_SCRIPT_MODE_FILE)
+    if (NTF_TEST_DISCOVERY)
+        ntf_test_discover_cases(
+            TEST_TARGET     ${NTF_TEST_DISCOVERY_TARGET}
+            TEST_COMPONENT  ${NTF_TEST_DISCOVERY_COMPONENT}
+            TEST_EXECUTABLE ${NTF_TEST_DISCOVERY_EXECUTABLE}
+            TEST_LAUNCHER   "${NTF_TEST_DISCOVERY_LAUNCHER}"
+            CTEST_FILE      ${NTF_TEST_DISCOVERY_CTEST_FILE})
+    endif()
+endif()
+
+
