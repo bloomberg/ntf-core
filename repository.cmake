@@ -4747,7 +4747,6 @@ function (ntf_target_link_dependency_by_cmake)
         endif()
 
         if ("${dependency}" STREQUAL "openssl")
-
             if (NOT TARGET OpenSSL::SSL)
                 if (NOT TARGET libssl)
                     if (VERBOSE)
@@ -5154,6 +5153,9 @@ function (ntf_target_link_dependency)
             if (TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
                 if (VERBOSE OR TRUE)
                     message(STATUS "OpenSSL has been found for ${target} by FindOpenSSL.cmake")
+                endif()
+                if (NOT TARGET openssl)
+                    add_library(openssl ALIAS OpenSSL::SSL)
                 endif()
                 set(dependency_found_by_findopenssl TRUE)
             else()
@@ -9387,6 +9389,11 @@ function(ntf_test_discover_cases)
                             set(test_case_param_type "")
                         endif()
 
+                        string(CONCAT test_filter
+                            "${test_fixture_name}."
+                            "${test_case_name}"
+                        )
+
                         if (NOT test_case_param_value STREQUAL "")
                             string(REGEX REPLACE "^(.+)/.+$" "\\1\/"
                                    test_case_name "${test_case_name}")
@@ -9411,13 +9418,13 @@ function(ntf_test_discover_cases)
                         string(
                             APPEND test_command
                             "${ARG_TEST_EXECUTABLE} "
-                            "[=[--gtest_filter=${test_name}]=]"
+                            "[=[--gtest_filter=${test_filter}]=]"
                         )
 
                         string(
                             APPEND ctest_file_content
                             "add_test([=[${test_name}]=] "
-                            "COMMAND ${ARG_TEST_EXECUTABLE})\n"
+                            "${test_command})\n"
                         )
 
                         string(
@@ -9484,8 +9491,7 @@ function(ntf_test_discover_cases)
                     APPEND ctest_file_content
                     "add_test("
                     "[=[${test_name}]=] "
-                    "${ARG_TEST_EXECUTABLE} "
-                    "[=[${test_case_name}]=]"
+                    "${test_command}"
                     ")\n"
                 )
 
