@@ -54,6 +54,10 @@ using namespace BloombergLP;
 // instead of both static and dynamic load balancing.
 // #define NTCF_SYSTEM_TEST_DYNAMIC_LOAD_BALANCING true
 
+// Uncomment to test a particular style of zero-copy semantics, instead of both
+// traditional system calls and zero-copy system calls.
+// #define NTCF_SYSTEM_TEST_ZERO_COPY false
+
 // Uncomment to test a specific driver type, instead of all driver types.
 // Available names are:
 //
@@ -66,7 +70,7 @@ using namespace BloombergLP;
 // "KQUEUE"      Implementation using kqueue/kevent
 // "IOCP"        Implementation using I/O completion ports
 // "IORING"      Implementation using I/O rings
-//#define NTCF_SYSTEM_TEST_DRIVER_TYPE "SELECT"
+// #define NTCF_SYSTEM_TEST_DRIVER_TYPE "SELECT"
 
 // Uncomment to test a specific address family, instead of all address
 // families.
@@ -6411,6 +6415,12 @@ void SystemTest::concern(const ConcernCallback& concernCallback,
     {
         const bool forceZeroCopy = FORCE_ZERO_COPY[forceZeroCopyIndex];
 
+#if defined(NTCF_SYSTEM_TEST_ZERO_COPY)
+        if (forceZeroCopy != NTCF_SYSTEM_TEST_ZERO_COPY) {
+            continue;
+        }
+#endif
+
 #if !defined(BSLS_PLATFORM_OS_LINUX)
         if (forceZeroCopy == true) {
             continue;
@@ -8333,7 +8343,7 @@ void SystemTest::concernConnectEndpoint8(
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
-    const bsls::TimeInterval k_RETRY_INTERVAL(0, 1);
+    const bsls::TimeInterval k_RETRY_INTERVAL(k_RETRY_INTERVAL_SECONDS);
     const bsls::TimeInterval k_LINGER_INTERVAL(k_RETRY_INTERVAL_SECONDS * 3);
 
     ntsa::Error error;
@@ -9480,7 +9490,7 @@ void SystemTest::concernConnectName8(
 
     const double k_RETRY_INTERVAL_SECONDS = 0.1;
 
-    const bsls::TimeInterval k_RETRY_INTERVAL(0, 1);
+    const bsls::TimeInterval k_RETRY_INTERVAL(k_RETRY_INTERVAL_SECONDS);
     const bsls::TimeInterval k_LINGER_INTERVAL(k_RETRY_INTERVAL_SECONDS * 3);
 
     ntsa::Error error;
