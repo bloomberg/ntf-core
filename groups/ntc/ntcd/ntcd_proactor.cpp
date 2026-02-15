@@ -97,9 +97,8 @@ struct Proactor::Result {
 /// This struct describes the work pending for a socket.
 struct Proactor::Work : public ntccfg::Shared<Proactor::Work> {
   public:
+    /// Provide a guard to automatically update a work's enabled events.
     class UpdateGuard;
-    // Provide a guard to automatically update a work's
-    // enabled events.
 
     /// This struct describes a pending accept.
     struct Accept {
@@ -202,6 +201,7 @@ struct Proactor::Work : public ntccfg::Shared<Proactor::Work> {
     /// Define a type alias for a mutex lock guard.
     typedef ntccfg::LockGuard LockGuard;
 
+    ntccfg::Object                        d_object;
     Mutex                                 d_mutex;
     ntsa::Handle                          d_handle;
     bsl::shared_ptr<ntcd::Machine>        d_machine_sp;
@@ -231,6 +231,7 @@ struct Proactor::Work : public ntccfg::Shared<Proactor::Work> {
     /// 'event'.
     void processError(const ntca::ReactorEvent& event);
 
+    /// Update the work.
     void update();
 
   public:
@@ -652,7 +653,8 @@ Proactor::Work::Work(const bsl::shared_ptr<ntcd::Machine>&        machine,
                      const bsl::shared_ptr<ntci::ProactorSocket>& socket,
                      const bsl::shared_ptr<ntcs::RegistryEntry>&  entry,
                      bslma::Allocator* basicAllocator)
-: d_mutex()
+: d_object("ntcd::Proactor::Work")
+, d_mutex()
 , d_handle(socket->handle())
 , d_machine_sp(machine)
 , d_monitor_sp(monitor)
@@ -672,12 +674,13 @@ Proactor::Work::~Work()
 
 ntsa::Error Proactor::Work::showError()
 {
-    LockGuard lock(&d_mutex);
+    bsl::shared_ptr<Proactor::Work> self(this->getSelf(this));
+    LockGuard                       lock(&d_mutex);
 
     ntcs::Interest interest = d_entry_sp->showErrorCallback(
         ntca::ReactorEventOptions(),
         ntci::ReactorEventCallback(NTCCFG_BIND(&Proactor::Work::processError,
-                                               this,
+                                               self,
                                                NTCCFG_BIND_PLACEHOLDER_1)));
 
     return d_monitor_sp->update(d_handle, interest);
@@ -685,7 +688,10 @@ ntsa::Error Proactor::Work::showError()
 
 ntsa::Error Proactor::Work::hideError()
 {
-    LockGuard lock(&d_mutex);
+    bsl::shared_ptr<Proactor::Work> self(this->getSelf(this));
+    LockGuard                       lock(&d_mutex);
+
+    NTCCFG_WARNING_UNUSED(self);
 
     ntcs::Interest interest =
         d_entry_sp->hideErrorCallback(ntca::ReactorEventOptions());
@@ -695,7 +701,8 @@ ntsa::Error Proactor::Work::hideError()
 
 ntsa::Error Proactor::Work::initiateAccept()
 {
-    LockGuard lock(&d_mutex);
+    bsl::shared_ptr<Proactor::Work> self(this->getSelf(this));
+    LockGuard                       lock(&d_mutex);
 
     if (!d_receiveQueue.empty()) {
         return ntsa::Error(ntsa::Error::e_INVALID);
@@ -710,7 +717,7 @@ ntsa::Error Proactor::Work::initiateAccept()
             ntca::ReactorEventOptions(),
             ntci::ReactorEventCallback(
                 NTCCFG_BIND(&Proactor::Work::processReadable,
-                            this,
+                            self,
                             NTCCFG_BIND_PLACEHOLDER_1)));
 
         return d_monitor_sp->update(d_handle, interest);
@@ -722,7 +729,8 @@ ntsa::Error Proactor::Work::initiateAccept()
 
 ntsa::Error Proactor::Work::initiateConnect(const ntsa::Endpoint& endpoint)
 {
-    LockGuard lock(&d_mutex);
+    bsl::shared_ptr<Proactor::Work> self(this->getSelf(this));
+    LockGuard                       lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -766,7 +774,7 @@ ntsa::Error Proactor::Work::initiateConnect(const ntsa::Endpoint& endpoint)
             ntca::ReactorEventOptions(),
             ntci::ReactorEventCallback(
                 NTCCFG_BIND(&Proactor::Work::processWritable,
-                            this,
+                            self,
                             NTCCFG_BIND_PLACEHOLDER_1)));
 
         return d_monitor_sp->update(d_handle, interest);
@@ -779,7 +787,8 @@ ntsa::Error Proactor::Work::initiateConnect(const ntsa::Endpoint& endpoint)
 ntsa::Error Proactor::Work::initiateSend(const bdlbb::Blob&       data,
                                          const ntsa::SendOptions& options)
 {
-    LockGuard lock(&d_mutex);
+    bsl::shared_ptr<Proactor::Work> self(this->getSelf(this));
+    LockGuard                       lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -796,7 +805,7 @@ ntsa::Error Proactor::Work::initiateSend(const bdlbb::Blob&       data,
             ntca::ReactorEventOptions(),
             ntci::ReactorEventCallback(
                 NTCCFG_BIND(&Proactor::Work::processWritable,
-                            this,
+                            self,
                             NTCCFG_BIND_PLACEHOLDER_1)));
 
         return d_monitor_sp->update(d_handle, interest);
@@ -809,7 +818,8 @@ ntsa::Error Proactor::Work::initiateSend(const bdlbb::Blob&       data,
 ntsa::Error Proactor::Work::initiateSend(const ntsa::Data&        data,
                                          const ntsa::SendOptions& options)
 {
-    LockGuard lock(&d_mutex);
+    bsl::shared_ptr<Proactor::Work> self(this->getSelf(this));
+    LockGuard                       lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -826,7 +836,7 @@ ntsa::Error Proactor::Work::initiateSend(const ntsa::Data&        data,
             ntca::ReactorEventOptions(),
             ntci::ReactorEventCallback(
                 NTCCFG_BIND(&Proactor::Work::processWritable,
-                            this,
+                            self,
                             NTCCFG_BIND_PLACEHOLDER_1)));
 
         return d_monitor_sp->update(d_handle, interest);
@@ -840,7 +850,8 @@ ntsa::Error Proactor::Work::initiateReceive(
     bdlbb::Blob*                data,
     const ntsa::ReceiveOptions& options)
 {
-    LockGuard lock(&d_mutex);
+    bsl::shared_ptr<Proactor::Work> self(this->getSelf(this));
+    LockGuard                       lock(&d_mutex);
 
     ntsa::Error error;
 
@@ -857,7 +868,7 @@ ntsa::Error Proactor::Work::initiateReceive(
             ntca::ReactorEventOptions(),
             ntci::ReactorEventCallback(
                 NTCCFG_BIND(&Proactor::Work::processReadable,
-                            this,
+                            self,
                             NTCCFG_BIND_PLACEHOLDER_1)));
 
         return d_monitor_sp->update(d_handle, interest);
@@ -890,7 +901,10 @@ ntsa::Error Proactor::Work::shutdown(ntsa::ShutdownType::Value direction)
 
 ntsa::Error Proactor::Work::cancel()
 {
-    LockGuard lock(&d_mutex);
+    bsl::shared_ptr<Proactor::Work> self(this->getSelf(this));
+    LockGuard                       lock(&d_mutex);
+
+    NTCCFG_WARNING_UNUSED(self);
 
     d_acceptQueue.clear();
     d_connectQueue.clear();
