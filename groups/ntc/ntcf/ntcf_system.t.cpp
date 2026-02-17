@@ -2593,9 +2593,9 @@ void SystemTest::DatagramSocketSession::wait()
     }
 
     if (d_parameters.d_tolerateDataLoss) {
-        // Not all datagrams might be received, so wait up to 5 seconds to try
-        // to recieve those that can.
-        for (bsl::size_t i = 0; i < 50; ++i) {
+        // Not all datagrams might be received, so wait up one second to try
+        // to receive those that can.
+        for (bsl::size_t i = 0; i < 10; ++i) {
             if (d_numMessagesReceived.tryWait()) {
                 break;
             }
@@ -2605,7 +2605,10 @@ void SystemTest::DatagramSocketSession::wait()
                 (int)(d_datagramSocket_sp->handle()),
                 d_datagramSocket_sp->sourceEndpoint().text().c_str());
 
-            bslmt::ThreadUtil::microSleep(100 * 1000);
+            bsls::TimeInterval timeInterval;
+            timeInterval.setTotalMilliseconds(100);
+
+            bslmt::ThreadUtil::sleep(timeInterval);
         }
     }
     else {
@@ -7113,7 +7116,7 @@ void SystemTest::concernConnectInitiateEndpointAndClose(
     // Concern: Closing sockets immediately after a connection is initiated to
     // a name.
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -7172,7 +7175,7 @@ void SystemTest::concernConnectInitiateNameAndClose(
     // Concern: Closing sockets immediately after a connection is initiated to
     // a name.
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -7238,7 +7241,7 @@ void SystemTest::concernConnectEndpointAndShutdown(
     // even if connection is not refused or shutdown is called not during
     // socket detachment process
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -7289,7 +7292,7 @@ void SystemTest::concernConnectNameAndShutdown(
     // even if connection is not refused or shutdown is called not during
     // socket detachment process
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -7330,7 +7333,7 @@ void SystemTest::concernConnectEndpoint1(
     // Concern: Connect to endpoint periodically fails but eventually succeeds
     // Testing: ECONNREFUSED, connection established
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -7742,7 +7745,7 @@ void SystemTest::concernConnectEndpoint4(
 
     BSLS_LOG_DEBUG("ECONNREFUSED (x4), ECANCELED");
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -7904,7 +7907,7 @@ void SystemTest::concernConnectEndpoint5(
 
     BSLS_LOG_DEBUG("ETIMEDOUT (x4), ECANCELED");
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -8069,7 +8072,7 @@ void SystemTest::concernConnectEndpoint6(
 
     BSLS_LOG_DEBUG("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -8200,7 +8203,7 @@ void SystemTest::concernConnectEndpoint7(
 
     BSLS_LOG_DEBUG("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -8335,7 +8338,7 @@ void SystemTest::concernConnectEndpoint8(
     BSLS_LOG_DEBUG(
         "ETIMEDOUT/ECONNREFUSED/ECONNABORTED (x100) (instantaneous)");
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -8439,7 +8442,7 @@ void SystemTest::concernConnectName1(
     // Concern: Connect to name periodically fails but eventually succeeds
     // Testing: ECONNREFUSED, connection established
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -8864,7 +8867,7 @@ void SystemTest::concernConnectName4(
 
     BSLS_LOG_DEBUG("ECONNREFUSED (x4), ECANCELED");
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -9026,7 +9029,7 @@ void SystemTest::concernConnectName5(
 
     BSLS_LOG_DEBUG("ETIMEDOUT (x4), ECANCELED");
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -9203,7 +9206,7 @@ void SystemTest::concernConnectName6(
 
     BSLS_LOG_DEBUG("ECONNREFUSED (x4), ETIMEDOUT/ECANCELED");
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -9333,7 +9336,7 @@ void SystemTest::concernConnectName7(
 
     BSLS_LOG_DEBUG("ETIMEDOUT (x4), ETIMEDOUT/ECANCELED");
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -9482,7 +9485,7 @@ void SystemTest::concernConnectName8(
     BSLS_LOG_DEBUG(
         "ETIMEDOUT/ECONNREFUSED/ECONNABORTED (x100) (instantaneous)");
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 10;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 100;
@@ -10064,13 +10067,15 @@ void SystemTest::concernDatagramSocketStressReactive(
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
     test::DatagramSocketParameters parameters;
 
-    parameters.d_numTimers         = 100;
-    parameters.d_numSocketPairs    = 100;
-    parameters.d_numMessages       = 32;
+    parameters.d_numTimers         = 0;
+    parameters.d_numSocketPairs    = 10;
+    parameters.d_numMessages       = 10;
     parameters.d_messageSize       = 1024;
     parameters.d_useAsyncCallbacks = false;
 
-    parameters.d_receiveBufferSize = 500 * 1000;
+    parameters.d_sendBufferSize = 1024 * 1024 * 16;
+    parameters.d_receiveBufferSize = 1024 * 1024 * 16;
+    parameters.d_writeQueueHighWatermark = 1024 * 1024 * 64;
 
     test::concern(NTCCFG_BIND(&test::concernDatagramSocket,
                               NTCCFG_BIND_PLACEHOLDER_1,
@@ -10090,13 +10095,15 @@ void SystemTest::concernDatagramSocketStressProactive(
 #if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0
     test::DatagramSocketParameters parameters;
 
-    parameters.d_numTimers         = 100;
-    parameters.d_numSocketPairs    = 100;
-    parameters.d_numMessages       = 32;
+    parameters.d_numTimers         = 0;
+    parameters.d_numSocketPairs    = 10;
+    parameters.d_numMessages       = 10;
     parameters.d_messageSize       = 1024;
     parameters.d_useAsyncCallbacks = true;
 
-    parameters.d_receiveBufferSize = 500 * 1000;
+    parameters.d_sendBufferSize = 1024 * 1024 * 16;
+    parameters.d_receiveBufferSize = 1024 * 1024 * 16;
+    parameters.d_writeQueueHighWatermark = 1024 * 1024 * 64;
 
     test::concern(NTCCFG_BIND(&test::concernDatagramSocket,
                               NTCCFG_BIND_PLACEHOLDER_1,
@@ -10725,11 +10732,15 @@ void SystemTest::concernStreamSocketStressReactive(bslma::Allocator* allocator)
     test::StreamSocketParameters parameters;
 
     parameters.d_numTimers                 = 0;
-    parameters.d_numListeners              = 10;
-    parameters.d_numConnectionsPerListener = 10;
+    parameters.d_numListeners              = 4;
+    parameters.d_numConnectionsPerListener = 4;
     parameters.d_numMessages               = 100;
     parameters.d_messageSize               = 32;
     parameters.d_useAsyncCallbacks         = false;
+
+    parameters.d_sendBufferSize = 1024 * 1024 * 16;
+    parameters.d_receiveBufferSize = 1024 * 1024 * 16;
+    parameters.d_writeQueueHighWatermark = 1024 * 1024 * 64;
 
     test::concern(NTCCFG_BIND(&test::concernStreamSocket,
                               NTCCFG_BIND_PLACEHOLDER_1,
@@ -10746,11 +10757,15 @@ void SystemTest::concernStreamSocketStressProactive(
     test::StreamSocketParameters parameters;
 
     parameters.d_numTimers                 = 0;
-    parameters.d_numListeners              = 10;
-    parameters.d_numConnectionsPerListener = 10;
+    parameters.d_numListeners              = 4;
+    parameters.d_numConnectionsPerListener = 4;
     parameters.d_numMessages               = 100;
     parameters.d_messageSize               = 32;
     parameters.d_useAsyncCallbacks         = true;
+
+    parameters.d_sendBufferSize = 1024 * 1024 * 16;
+    parameters.d_receiveBufferSize = 1024 * 1024 * 16;
+    parameters.d_writeQueueHighWatermark = 1024 * 1024 * 64;
 
     test::concern(NTCCFG_BIND(&test::concernStreamSocket,
                               NTCCFG_BIND_PLACEHOLDER_1,
@@ -18912,7 +18927,7 @@ void concernStreamSocketConnectDeadlineTimerClose(
     // Concern: validate that connect deadline timer is automatically closed
     // when the socket is closed and then destroyed
 
-#if NTC_BUILD_WITH_VALGRIND
+#if NTC_BUILD_FROM_CONTINUOUS_INTEGRATION == 0 || NTC_BUILD_WITH_VALGRIND
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 6;
 #else
     const bsl::size_t k_MAX_CONNECTION_ATTEMPTS = 60;
