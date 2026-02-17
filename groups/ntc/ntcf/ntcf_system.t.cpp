@@ -10073,8 +10073,8 @@ void SystemTest::concernDatagramSocketStressReactive(
     parameters.d_messageSize       = 1024;
     parameters.d_useAsyncCallbacks = false;
 
-    parameters.d_sendBufferSize = 1024 * 1024 * 16;
-    parameters.d_receiveBufferSize = 1024 * 1024 * 16;
+    parameters.d_sendBufferSize = 1024 * 1024 * 8;
+    parameters.d_receiveBufferSize = 1024 * 1024 * 8;
     parameters.d_writeQueueHighWatermark = 1024 * 1024 * 64;
 
     test::concern(NTCCFG_BIND(&test::concernDatagramSocket,
@@ -10101,8 +10101,8 @@ void SystemTest::concernDatagramSocketStressProactive(
     parameters.d_messageSize       = 1024;
     parameters.d_useAsyncCallbacks = true;
 
-    parameters.d_sendBufferSize = 1024 * 1024 * 16;
-    parameters.d_receiveBufferSize = 1024 * 1024 * 16;
+    parameters.d_sendBufferSize = 1024 * 1024 * 8;
+    parameters.d_receiveBufferSize = 1024 * 1024 * 8;
     parameters.d_writeQueueHighWatermark = 1024 * 1024 * 64;
 
     test::concern(NTCCFG_BIND(&test::concernDatagramSocket,
@@ -10738,8 +10738,8 @@ void SystemTest::concernStreamSocketStressReactive(bslma::Allocator* allocator)
     parameters.d_messageSize               = 32;
     parameters.d_useAsyncCallbacks         = false;
 
-    parameters.d_sendBufferSize = 1024 * 1024 * 16;
-    parameters.d_receiveBufferSize = 1024 * 1024 * 16;
+    parameters.d_sendBufferSize = 1024 * 1024 * 8;
+    parameters.d_receiveBufferSize = 1024 * 1024 * 8;
     parameters.d_writeQueueHighWatermark = 1024 * 1024 * 64;
 
     test::concern(NTCCFG_BIND(&test::concernStreamSocket,
@@ -10763,8 +10763,8 @@ void SystemTest::concernStreamSocketStressProactive(
     parameters.d_messageSize               = 32;
     parameters.d_useAsyncCallbacks         = true;
 
-    parameters.d_sendBufferSize = 1024 * 1024 * 16;
-    parameters.d_receiveBufferSize = 1024 * 1024 * 16;
+    parameters.d_sendBufferSize = 1024 * 1024 * 8;
+    parameters.d_receiveBufferSize = 1024 * 1024 * 8;
     parameters.d_writeQueueHighWatermark = 1024 * 1024 * 64;
 
     test::concern(NTCCFG_BIND(&test::concernStreamSocket,
@@ -17911,7 +17911,7 @@ NTSCFG_TEST_FUNCTION(ntcf::ConcurrentTest::verifyApplication)
         coVerifyApplication(scheduler, bsl::allocator_arg, allocator);
 
     ntsa::Coroutine::synchronize(bsl::move(task));
-    
+
 #endif
 }
 
@@ -19898,7 +19898,7 @@ NTSCFG_TEST_CASE(62)
 
     ntccfg::TestAllocator ta;
     {
-        
+
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
@@ -19909,7 +19909,7 @@ NTSCFG_TEST_CASE(63)
 
     ntccfg::TestAllocator ta;
     {
-        
+
     }
     NTSCFG_TEST_ASSERT(ta.numBlocksInUse() == 0);
 }
