@@ -275,6 +275,10 @@ if not "%1"=="" (
         set NTF_CONFIGURE_GENERATOR=%2
         shift
     )
+    if "%1"=="--standard" (
+        set NTF_CONFIGURE_STANDARD=%2
+        shift
+    )
     if "%1"=="--project" (
         set NTF_CONFIGURE_PROJECT=%2
         shift
@@ -902,6 +906,7 @@ echo     --output       ^<path^>            Path to the directory where the buil
 echo     --refroot      ^<path^>            Path to the refroot containing build dependencies (default: %NTF_CONFIGURE_REFROOT%)
 echo     --distribution ^<name^>            Name of the distribution (default: %NTF_CONFIGURE_DISTRIBUTION%)
 echo     --generator    ^<name^>            Name of the build system, either "Ninja" or "msvc" (default: %NTF_CONFIGURE_GENERATOR%)
+echo     --standard     ^<number^>          C++ standard version: 03, 11, 14, 17, 20, 23, 26, etc.
 echo     --jobs         ^<number^>          Maximum number of parallel build jobs (default: %NTF_CONFIGURE_JOBS%)
 echo     --clean                          Remove the previous build output, if any, before configuring
 echo     --keep                           Retain the previous build output, if any, while configuring
