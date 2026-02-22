@@ -193,6 +193,7 @@ if [[ -z "${NTF_CONFIGURE_TOOLCHAIN}" ]]; then
 fi
 
 NTF_CONFIGURE_SANITIZER=""
+NTF_CONFIGURE_STANDARD=""
 
 if [[ -z "${NTF_CONFIGURE_MULTIPLATFORM}" ]]; then
     NTF_CONFIGURE_MULTIPLATFORM=1
@@ -492,6 +493,7 @@ usage()
     echo "    --generator           <name>       CMake generator name: \"Ninja\", \"Unix Makefiles\", \"NMake Makefiles\", or \"msvc\" [\"${NTF_CONFIGURE_GENERATOR}\"]"
     echo "    --toolchain           <path>       Path to the cmake toolchain file [${NTF_CONFIGURE_TOOLCHAIN}]"
     echo "    --sanitizer           <name>       Sanitizer name: \"asan\" (addressability), \"msan\" (uninitialized memory), \"tsan\" (data races), or \"ubsan\" (undefined behavior)"
+    echo "    --standard            <number>     C++ standard version: 03, 11, 14, 17, 23, 26, etc."
     echo "    --jobs                <number>     Number of parallel build jobs [${NTF_CONFIGURE_JOBS}]"
     echo "    --clean                            Remove the previous build output, if any, before configuring"
     echo "    --keep                             Retain the previous build output, if any, while configuring"
@@ -626,6 +628,8 @@ while true ; do
             NTF_CONFIGURE_TOOLCHAIN=$2 ; shift 2 ;;
         --sanitizer)
             NTF_CONFIGURE_SANITIZER=$2 ; shift 2 ;;
+        --standard)
+            NTF_CONFIGURE_STANDARD=$2 ; shift 2 ;;
         --jobs)
             NTF_CONFIGURE_JOBS=$2 ; shift 2 ;;
 
@@ -941,6 +945,7 @@ export NTF_CONFIGURE_PREFIX
 export NTF_CONFIGURE_REFROOT
 
 export NTF_CONFIGURE_SANITIZER
+export NTF_CONFIGURE_STANDARD
 
 export NTF_CONFIGURE_WITH_WARNINGS
 export NTF_CONFIGURE_WITH_WARNINGS_AS_ERRORS
@@ -1077,11 +1082,8 @@ if [[ -n "${NTF_CONFIGURE_SANITIZER}" ]]; then
     NTF_CONFIGURE_UFID_CANONICAL="${NTF_CONFIGURE_UFID_CANONICAL}_${NTF_CONFIGURE_SANITIZER}"
 fi
 
-if { [[ "${NTF_CONFIGURE_UNAME}" == "Linux" ]] || \
-     [[ "${NTF_CONFIGURE_UNAME}" == "Darwin" ]] || \
-     [[ "${NTF_CONFIGURE_UNAME}" == "Windows" ]]; } && \
-    [[ ! "${NTF_CONFIGURE_UFID_CANONICAL}" =~ cpp[0-9]{2} ]]; then
-    NTF_CONFIGURE_UFID_CANONICAL="${NTF_CONFIGURE_UFID_CANONICAL}_cpp20"
+if [[ -n "${NTF_CONFIGURE_STANDARD}" ]]; then
+    NTF_CONFIGURE_UFID_CANONICAL="${NTF_CONFIGURE_UFID_CANONICAL}_cpp${NTF_CONFIGURE_STANDARD}"
 fi
 
 if [[ "${NTF_CONFIGURE_REFROOT}" == "" ]] || [[ "${NTF_CONFIGURE_REFROOT}" == "/" ]]; then

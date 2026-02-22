@@ -110,11 +110,6 @@ if (NOT DEFINED NTF_BUILD_UFID)
         if(CMAKE_SIZEOF_VOID_P EQUAL 8)
             set(NTF_BUILD_UFID "${NTF_BUILD_UFID}_64" CACHE INTERNAL "")
         endif()
-
-        if(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "AIX" AND
-           NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
-            set(NTF_BUILD_UFID "${NTF_BUILD_UFID}_cpp17" CACHE INTERNAL "")
-        endif()
     endif()
 endif()
 

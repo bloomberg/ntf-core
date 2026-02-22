@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Bloomberg Finance L.P.
+# Copyright 2020-2026 Bloomberg Finance L.P.
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -1451,6 +1451,10 @@ function (ntf_target_options_common_epilog target)
                 TARGET ${target} VALUE _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
             ntf_target_build_definition(
                 TARGET ${target} VALUE _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS)
+            ntf_target_build_definition(
+                TARGET ${target} VALUE _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS)
+            ntf_target_build_definition(
+                TARGET ${target} VALUE _SILENCE_ALL_CXX26_DEPRECATION_WARNINGS)
 
             ntf_target_build_option(TARGET ${target} COMPILE VALUE /W3)
         endif()
@@ -1945,6 +1949,18 @@ function (ntf_target_options_cpp20 target)
     # in ntf_target_options.
 endfunction()
 
+# Set the compiler and linker options for a target based upon the "cpp23" UFID.
+function (ntf_target_options_cpp23 target)
+    # Note: Specification of the usage of the C++23 standard is specified
+    # in ntf_target_options.
+endfunction()
+
+# Set the compiler and linker options for a target based upon the "cpp26" UFID.
+function (ntf_target_options_cpp26 target)
+    # Note: Specification of the usage of the C++26 standard is specified
+    # in ntf_target_options.
+endfunction()
+
 # Set the compiler and linker options for a target based upon the UFID.
 #
 # TARGET - The target.
@@ -1969,7 +1985,7 @@ function (ntf_target_options)
         cov
         static
         stlport pic shr ndebug
-        cpp03 cpp11 cpp14 cpp17 cpp20)
+        cpp03 cpp11 cpp14 cpp17 cpp20 cpp23 cpp26)
 
     foreach(flag IN LISTS known_ufid_flags)
         ntf_ufid_string_has(UFID ${ufid} FLAG "${flag}" OUTPUT "is_${flag}")
@@ -2105,6 +2121,14 @@ function (ntf_target_options)
 
     if (${is_cpp20})
         ntf_target_options_cpp20(${target})
+    endif()
+
+    if (${is_cpp23})
+        ntf_target_options_cpp23(${target})
+    endif()
+
+    if (${is_cpp26})
+        ntf_target_options_cpp26(${target})
     endif()
 endfunction()
 
@@ -6171,7 +6195,11 @@ function (ntf_repository)
 
     ntf_repository_install_prefix_set(VALUE ${CMAKE_INSTALL_PREFIX})
 
-    ntf_repository_build_type_set(VALUE ${CMAKE_BUILD_TYPE})
+    if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "")
+        ntf_repository_build_type_set(VALUE ${CMAKE_BUILD_TYPE})
+    else()
+        ntf_repository_build_type_set(VALUE "RelWithDebInfo")
+    endif()
 
     ntf_ufid_parse_for_build(UFID "${ARG_UFID}" OUTPUT build_ufid)
     ntf_ufid_parse_for_install(UFID "${build_ufid}" OUTPUT install_ufid)
@@ -6180,7 +6208,7 @@ function (ntf_repository)
     ntf_repository_install_ufid_set(VALUE ${install_ufid})
 
     set(cpp_standard_list
-        "03" "11" "14" "17" "20")
+        "03" "11" "14" "17" "20" "23" "26")
 
     set(cpp_standard "")
     foreach(cpp_standard_candidate IN LISTS cpp_standard_list)
@@ -6199,10 +6227,16 @@ function (ntf_repository)
     endforeach()
 
     if ("${cpp_standard}" STREQUAL "")
-        if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU|MSVC")
-            set(cpp_standard "20")
+        if (NOT "${CMAKE_CXX_STANDARD}" STREQUAL "")
+            set(cpp_standard "${CMAKE_CXX_STANDARD}")
         else()
-            set(cpp_standard "98")
+            if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+                set(cpp_standard "23")
+            elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+                set(cpp_standard "20")
+            else()
+                set(cpp_standard "98")
+            endif()
         endif()
     endif()
 
@@ -6970,6 +7004,8 @@ function (ntf_ide_vs_code_c_cpp_properties_create)
                 "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
     endif()
 
+    ntf_repository_standard_get(OUTPUT cxx_standard)
+
     set(c_cpp_properties_text "")
     if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
         string(APPEND c_cpp_properties_text "\
@@ -6981,7 +7017,7 @@ function (ntf_ide_vs_code_c_cpp_properties_create)
       \"compilerPath\": \"${compiler_path}\",\n\
       \"compileCommands\": \"${CMAKE_BINARY_DIR}/compile_commands.json\",\n\
       \"cStandard\": \"c11\",\n\
-      \"cppStandard\": \"c++20\",\n\
+      \"cppStandard\": \"c++${cxx_standard}\",\n\
       \"intelliSenseMode\": \"linux-gcc-${arch}\"\n\
     }\n\
   ]\n\
@@ -6996,7 +7032,7 @@ function (ntf_ide_vs_code_c_cpp_properties_create)
       \"compilerPath\": \"${compiler_path}\",\n\
       \"compileCommands\": \"${CMAKE_BINARY_DIR}/compile_commands.json\",\n\
       \"cStandard\": \"c11\",\n\
-      \"cppStandard\": \"c++20\",\n\
+      \"cppStandard\": \"c++${cxx_standard}\",\n\
       \"intelliSenseMode\": \"macos-clang-${arch}\",\n\
       \"macFrameworkPath\": [ \"/System/Library/Frameworks\", \"/Library/Frameworks\" ]\n\
     }\n\
@@ -7013,7 +7049,7 @@ function (ntf_ide_vs_code_c_cpp_properties_create)
       \"compilerPath\": \"${compiler_path}\",\n\
       \"compileCommands\": \"${CMAKE_BINARY_DIR}/compile_commands.json\",\n\
       \"cStandard\": \"c11\",\n\
-      \"cppStandard\": \"c++20\",\n\
+      \"cppStandard\": \"c++${cxx_standard}\",\n\
       \"intelliSenseMode\": \"windows-msvc-${arch}\"\n\
     }\n\
   ]\n\
@@ -7101,7 +7137,7 @@ function (ntf_ufid_list_canonicalize)
         cov
         static
         stlport pic shr ndebug
-        cpp03 cpp11 cpp14 cpp17 cpp20)
+        cpp03 cpp11 cpp14 cpp17 cpp20 cpp23 cpp26)
 
     set(result)
     foreach(known_ufid_flag IN LISTS known_ufid_flags)
@@ -7223,6 +7259,8 @@ function (ntf_ufid_parse_for_install)
     string(REPLACE "_cpp14" "" install_ufid "${install_ufid}")
     string(REPLACE "_cpp17" "" install_ufid "${install_ufid}")
     string(REPLACE "_cpp20" "" install_ufid "${install_ufid}")
+    string(REPLACE "_cpp23" "" install_ufid "${install_ufid}")
+    string(REPLACE "_cpp26" "" install_ufid "${install_ufid}")
 
     if ("${install_ufid}" STREQUAL "")
         ntf_die("The install UFID ${install_ufid} is not valid")
@@ -8191,6 +8229,8 @@ function (ntf_target_install_rule_legacy)
     string(TOLOWER ${target} target_lowercase)
     string(TOUPPER ${target} target_uppercase)
 
+    ntf_repository_build_type_get(OUTPUT repository_build_type)
+
     ntf_target_type_get(TARGET ${target} OUTPUT target_type)
     ntf_target_private_get(TARGET ${target} OUTPUT target_private)
     ntf_target_pseudo_get(TARGET ${target} OUTPUT target_pseudo)
@@ -8303,7 +8343,7 @@ function (ntf_target_install_rule_legacy)
                 set(install_cmake_metadata_style 2)
             endif()
 
-            string(TOLOWER "${CMAKE_BUILD_TYPE}" buildTypeLowercase)
+            string(TOLOWER "${repository_build_type}" buildTypeLowercase)
 
             if (${install_cmake_metadata_style} EQUAL 1)
                 set(install_cmake_metadata_config "${target}Config")
@@ -8699,6 +8739,8 @@ function (ntf_target_install_rule)
         set(install_multiconfig FALSE)
     endif()
 
+    ntf_repository_build_type_get(OUTPUT repository_build_type)
+
     ntf_target_type_get(TARGET ${target} OUTPUT target_type)
     ntf_target_private_get(TARGET ${target} OUTPUT target_private)
     ntf_target_pseudo_get(TARGET ${target} OUTPUT target_pseudo)
@@ -8809,7 +8851,7 @@ function (ntf_target_install_rule)
         endif()
     endif()
 
-    string(TOLOWER "${CMAKE_BUILD_TYPE}" buildTypeLowercase)
+    string(TOLOWER "${repository_build_type}" buildTypeLowercase)
 
     if (${install_cmake_metadata_style} EQUAL 1)
         set(install_cmake_metadata_config "${target}Config")
