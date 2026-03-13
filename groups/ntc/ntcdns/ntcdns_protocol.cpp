@@ -1649,7 +1649,7 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
                 }
 
                 for (bsl::size_t i = 0; i < bitsetSize; ++i) {
-                    for (bsl::size_t j = 0; i < 8; ++i) {
+                    for (bsl::size_t j = 0; j < 8; ++j) {
                         if ((bitset[i] & (1 << j)) != 0) {
                             unsigned short portNumber =
                                 NTCCFG_WARNING_NARROW(unsigned short,
