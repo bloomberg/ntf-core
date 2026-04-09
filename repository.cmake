@@ -4310,30 +4310,31 @@ function (ntf_component)
     endif()
 
     get_filename_component(directory ${component_source_path} DIRECTORY)
+    get_filename_component(base ${component_source_path} NAME_WE)
 
     cmake_path(
         APPEND
-        component_idl_path "${directory}" "${component}.idl"
+        component_idl_path "${directory}" "${base}.idl"
     )
 
     cmake_path(
         APPEND
-        component_xsd_path "${directory}" "${component}.xsd"
+        component_xsd_path "${directory}" "${base}.xsd"
     )
 
     cmake_path(
         APPEND
-        component_header_path "${directory}" "${component}.h"
+        component_header_path "${directory}" "${base}.h"
     )
 
     cmake_path(
         APPEND
-        component_driver_path_t "${directory}" "${component}.t${extension}"
+        component_driver_path_t "${directory}" "${base}.t${extension}"
     )
 
     cmake_path(
         APPEND
-        component_driver_path_g "${directory}" "${component}.g${extension}"
+        component_driver_path_g "${directory}" "${base}.g${extension}"
     )
 
     set(component_driver_impl_unknown 0)
