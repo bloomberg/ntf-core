@@ -180,7 +180,11 @@ endif()
 
 string(REGEX MATCH "cpp([0-9][0-9])" ufid_standard "${NTF_TOOLCHAIN_UFID}")
 if (ufid_standard)
-    set(CMAKE_CXX_STANDARD "${CMAKE_MATCH_1}${CMAKE_MATCH_2}" CACHE STRING "" FORCE)
+    if (CMAKE_MATCH_1 STREQUAL "03")
+        set(CMAKE_CXX_STANDARD "98" CACHE STRING "" FORCE)
+    else ()
+        set(CMAKE_CXX_STANDARD "${CMAKE_MATCH_1}" CACHE STRING "" FORCE)
+    endif ()
 endif()
 unset(ufid_standard)
 
