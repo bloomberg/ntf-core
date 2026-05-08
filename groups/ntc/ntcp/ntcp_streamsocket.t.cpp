@@ -66,8 +66,16 @@ class StreamSocketTest
     class StreamSocketManager;
 
     // Execute the concern to test connection strategies for the specified
-    // 'transport' using the specified 'reactor'.
+    // 'transport' using the specified 'proactor'.
     static void verifyConnectStrategyVariation(
+        ntsa::Transport::Value                 transport,
+        const bsl::shared_ptr<ntci::Proactor>& proactor,
+        bslma::Allocator*                      allocator);
+
+    // Execute the concern to test that connect callbacks for a socket for
+    // for the specified 'transport' using the specified 'proactor' are always
+    // invoked on one of the threads assigned to the socket.
+    static void verifyConnectCallbackThreadVariation(
         ntsa::Transport::Value                 transport,
         const bsl::shared_ptr<ntci::Proactor>& proactor,
         bslma::Allocator*                      allocator);
@@ -197,6 +205,15 @@ class StreamSocketTest
     /// test driver.
     static ntsa::Endpoint any(ntsa::Transport::Value transport);
 
+    /// Ensure the calling thread is one of the threads assigned to process
+    /// the specified 'streamSocket' running by the specified 'proactor' then
+    /// arrive at the specified 'latch'.
+    static void processConnectCallbackThread(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const bsl::shared_ptr<ntci::Proactor>&     proactor,
+        const ntca::ConnectEvent&                  event,
+        bslmt::Latch*                              latch);
+
   public:
     // Concern: Breathing test.
     static void verifyBreathing();
@@ -262,6 +279,11 @@ class StreamSocketTest
     // Concern: The "list"-based connect strategy tries each result of
     // name resolution in order before re-resolving.
     static void verifyConnectStrategy();
+
+    // Concern: The connect callback is invoked on one of the I/O threads
+    // assigned to process the socket, and not one of the I/O threads used to
+    // implement asynchronous name resolution.
+    static void verifyConnectCallbackThread();
 };
 
 /// Provide a test case execution framework.
@@ -1576,6 +1598,93 @@ void StreamSocketTest::verifyConnectStrategyVariation(
     proactor->stop();
 }
 
+void StreamSocketTest::verifyConnectCallbackThreadVariation(
+    ntsa::Transport::Value                 transport,
+    const bsl::shared_ptr<ntci::Proactor>& proactor,
+    bslma::Allocator*                      allocator)
+{
+    // Concern: Connect callbacks are invoked on one of the I/O threads
+    // assigned to process the socket, and not any other thread.
+
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_DEBUG("Stream socket connect callback thread test starting");
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntcs::Metrics> metrics;
+
+    ntca::ResolverConfig resolverConfig;
+    resolverConfig.setClientEnabled(false);
+    resolverConfig.setSystemEnabled(false);
+
+    bsl::shared_ptr<ntcdns::Resolver> resolver;
+    resolver.createInplace(allocator, resolverConfig, allocator);
+
+    error = resolver->addIpAddress("my.test.domain",
+                                   ntsa::IpAddress("10.0.1.101"));
+    NTSCFG_TEST_OK(error);
+
+    error = resolver->addIpAddress("my.test.domain",
+                                   ntsa::IpAddress("10.0.1.102"));
+    NTSCFG_TEST_OK(error);
+
+    error = resolver->addIpAddress("my.test.domain",
+                                   ntsa::IpAddress("10.0.1.103"));
+    NTSCFG_TEST_OK(error);
+
+    bsl::shared_ptr<ntcd::StreamSocket> basicStreamSocket;
+    basicStreamSocket.createInplace(allocator, allocator);
+
+    error = basicStreamSocket->open(transport);
+    NTSCFG_TEST_OK(error);
+
+    ntca::StreamSocketOptions streamSocketOptions;
+    streamSocketOptions.setTransport(transport);
+
+    bsl::shared_ptr<ntcp::StreamSocket> streamSocket;
+    streamSocket.createInplace(allocator,
+                               streamSocketOptions,
+                               resolver,
+                               proactor,
+                               proactor,
+                               metrics,
+                               allocator);
+
+    error = streamSocket->open(transport, basicStreamSocket);
+    NTSCFG_TEST_OK(error);
+
+    ntca::ConnectOptions connectOptions;
+
+    bsls::TimeInterval retryInterval;
+    retryInterval.addMilliseconds(100);
+
+    connectOptions.setStrategy(ntca::ConnectStrategy::e_RESOLVE_INTO_LIST);
+    connectOptions.setRetryCount(2);
+    connectOptions.setRetryInterval(retryInterval);
+
+    bslmt::Latch latch(3);
+
+    ntci::ConnectCallback connectCallback =
+        streamSocket->createConnectCallback(
+            NTCCFG_BIND(&StreamSocketTest::processConnectCallbackThread,
+                        streamSocket,
+                        proactor,
+                        NTCCFG_BIND_PLACEHOLDER_2,
+                        &latch));
+
+    error = streamSocket->connect("my.test.domain:12345",
+                                  connectOptions,
+                                  connectCallback);
+    NTSCFG_TEST_OK(error);
+
+    latch.wait();
+
+    NTCI_LOG_DEBUG("Stream socket connect callback thread test complete");
+
+    proactor->stop();
+}
+
 void StreamSocketTest::verifyGenericVariation(
     ntsa::Transport::Value                 transport,
     const bsl::shared_ptr<ntci::Proactor>& proactor,
@@ -2520,6 +2629,47 @@ ntsa::Endpoint StreamSocketTest::any(ntsa::Transport::Value transport)
     return endpoint;
 }
 
+void StreamSocketTest::processConnectCallbackThread(
+        const bsl::shared_ptr<ntci::StreamSocket>& streamSocket,
+        const bsl::shared_ptr<ntci::Proactor>&     proactor,
+        const ntca::ConnectEvent&                  event,
+        bslmt::Latch*                              latch)
+{
+    NTCI_LOG_CONTEXT();
+
+    NTCI_LOG_STREAM_DEBUG << "Connect event = " << event
+                          << NTCI_LOG_STREAM_END;
+
+    if (proactor->numThreads() == 1) {
+        const bsls::Types::Uint64 currentThreadId =
+            bslmt::ThreadUtil::selfIdAsUint64();
+
+        const bsls::Types::Uint64 socketThreadId =
+            bslmt::ThreadUtil::idAsUint64(
+                bslmt::ThreadUtil::handleToId(streamSocket->threadHandle()));
+
+        const bsls::Types::Uint64 proactorThreadId =
+            bslmt::ThreadUtil::idAsUint64(
+                bslmt::ThreadUtil::handleToId(proactor->threadHandle()));
+
+        NTSCFG_TEST_EQ(socketThreadId, proactorThreadId);
+        NTSCFG_TEST_EQ(currentThreadId, socketThreadId);
+    }
+    else {
+        // TODO: When dynamically load balancing sockets onto the threads,
+        // the result of the ntci::StreamSocket::threadHandle() function,
+        // representing a single thread, cannot convey all the allowed
+        // possibilities of which thread should invoke this callback. When
+        // either 'streamSocket' or 'proactor' is enhanced to report the *set*
+        // of the threads assigned to run them, also enhance this test to
+        // verify the callback is invoked on one of those threads and not any
+        // other thread, namely, one of the threads running the asynchronous
+        // resolver.
+    }
+
+    latch->arrive();
+}
+
 NTSCFG_TEST_FUNCTION(ntcp::StreamSocketTest::verifyBreathing)
 {
     // Concern: Breathing test.
@@ -3120,6 +3270,14 @@ NTSCFG_TEST_FUNCTION(ntcp::StreamSocketTest::verifyConnectStrategy)
         ntsa::Transport::e_TCP_IPV4_STREAM,
         1,
         &ntcp::StreamSocketTest::verifyConnectStrategyVariation);
+}
+
+NTSCFG_TEST_FUNCTION(ntcp::StreamSocketTest::verifyConnectCallbackThread)
+{
+    StreamSocketTest::Framework::execute(
+        ntsa::Transport::e_TCP_IPV4_STREAM,
+        1,
+        &ntcp::StreamSocketTest::verifyConnectCallbackThreadVariation);
 }
 
 }  // close namespace ntcp

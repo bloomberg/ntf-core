@@ -3869,10 +3869,14 @@ ntsa::Error StreamSocket::privateRetryConnectToName()
         {
             const bsl::shared_ptr<StreamSocket> strongRef = socket.lock();
             if (strongRef) {
-                strongRef->processRemoteEndpointResolution(resolver,
-                                                           endpoint,
-                                                           getEndpointEvent,
-                                                           connectAttempts);
+                strongRef->execute(
+                    NTCCFG_BIND(
+                        &StreamSocket::processRemoteEndpointResolution,
+                        strongRef,
+                        resolver,
+                        endpoint,
+                        getEndpointEvent,
+                        connectAttempts));
             }
         }
     };
