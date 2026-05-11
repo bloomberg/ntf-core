@@ -1627,7 +1627,8 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
             ntcdns::ResourceRecordDataWks& rdata =
                 d_rdata.makeWellKnownService();
 
-            error = decoder->decodeUint32(&rdata.address());
+            error = decoder->decodeRaw(&rdata.address(),
+                                       sizeof(bsl::uint32_t));
             if (error) {
                 return error;
             }
@@ -1637,9 +1638,9 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
                 return error;
             }
 
-            if (rdataLength > rdata.address() + rdata.protocol()) {
+            if (rdataLength > sizeof(bsl::uint32_t) + sizeof(bsl::uint8_t)) {
                 bsl::size_t bitsetSize =
-                    rdataLength - (rdata.address() + rdata.protocol());
+                    rdataLength - sizeof(bsl::uint32_t) - sizeof(bsl::uint8_t);
 
                 bsl::vector<bsl::uint8_t> bitset(bitsetSize);
 
@@ -1650,7 +1651,7 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
 
                 for (bsl::size_t i = 0; i < bitsetSize; ++i) {
                     for (bsl::size_t j = 0; j < 8; ++j) {
-                        if ((bitset[i] & (1 << j)) != 0) {
+                        if ((bitset[i] & (1 << (7 - j))) != 0) {
                             unsigned short portNumber =
                                 NTCCFG_WARNING_NARROW(unsigned short,
                                                       (i * 8) + j);
@@ -1929,7 +1930,8 @@ ntsa::Error ResourceRecord::encode(MemoryEncoder* encoder) const
         }
     }
     else if (d_rdata.isWellKnownServiceValue()) {
-        error = encoder->encodeUint32(d_rdata.wellKnownService().address());
+        const bsl::uint32_t address = d_rdata.wellKnownService().address();
+        error = encoder->encodeRaw(&address, sizeof(bsl::uint32_t));
         if (error) {
             return error;
         }
@@ -1952,10 +1954,10 @@ ntsa::Error ResourceRecord::encode(MemoryEncoder* encoder) const
             bsl::vector<bsl::uint8_t> bitset(bitsetSize);
 
             for (bsl::size_t i = 0; i < portVector.size(); ++i) {
-                bsl::size_t portNumber = portVector[i];
-                bitset[portNumber / 8] &=
+                const bsl::size_t portNumber = portVector[i];
+                bitset[portNumber / 8] |=
                     NTCCFG_WARNING_NARROW(unsigned char,
-                                          (1 << (portNumber % 8)));
+                                          (1 << (7 - portNumber % 8)));
             }
 
             error = encoder->encodeRaw(&bitset[0], bitset.size());

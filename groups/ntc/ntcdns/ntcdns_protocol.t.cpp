@@ -64,6 +64,9 @@ class ProtocolTest
 
     // TODO
     static void verifyCase4();
+
+    // TODO
+    static void verifyWks();
 };
 
 NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyCase1)
@@ -491,6 +494,112 @@ NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyCase4)
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
 
         bsl::size_t bufferSize = encoder.position();
+
+        ntcdns::MemoryDecoder decoder(&buffer[0], bufferSize);
+
+        ntcdns::Message other(NTSCFG_TEST_ALLOCATOR);
+        error = other.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+        NTSCFG_TEST_EQ(message, other);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyWks)
+{
+    // Concern: Well-known Services (WKS) records.
+
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+    int         rc;
+
+    // clang-format off
+    const bsl::uint8_t RESPONSE[57] = {
+        0x12, 0x34, 0x84, 0x00, 0x00, 0x01, 0x00, 0x01,
+        0x00, 0x00, 0x00, 0x00, 0x07, 0x65, 0x78, 0x61,
+        0x6d, 0x70, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d,
+        0x00, 0x00, 0x0b, 0x00, 0x01, 0xc0, 0x0c, 0x00,
+        0x0b, 0x00, 0x01, 0x00, 0x00, 0x0e, 0x10, 0x00,
+        0x10, 0xc0, 0xa8, 0x01, 0x01, 0x06, 0x00, 0x00,
+        0x02, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x80
+    };
+    // clang-format on
+
+    NTCI_LOG_STREAM_DEBUG << "I:\n"
+                          << bdlb::PrintStringHexDumper(
+                                reinterpret_cast<const char*>(RESPONSE),
+                                static_cast<int>(sizeof RESPONSE))
+                          << NTCI_LOG_STREAM_END;
+
+    ntcdns::Message message(NTSCFG_TEST_ALLOCATOR);
+
+    {
+        ntcdns::MemoryDecoder decoder(RESPONSE, sizeof RESPONSE);
+        error = message.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+    }
+
+    NTCI_LOG_STREAM_DEBUG << "Message = " << message << NTCI_LOG_STREAM_END;
+
+    NTSCFG_TEST_EQ(message.id(), 4660);
+
+    NTSCFG_TEST_EQ(message.direction(), ntcdns::Direction::e_RESPONSE);
+    NTSCFG_TEST_EQ(message.operation(), ntcdns::Operation::e_STANDARD);
+    NTSCFG_TEST_EQ(message.error(), ntcdns::Error::e_OK);
+
+    NTSCFG_TEST_EQ(message.aa(), true);
+    NTSCFG_TEST_EQ(message.tc(), false);
+    NTSCFG_TEST_EQ(message.rd(), false);
+    NTSCFG_TEST_EQ(message.ra(), false);
+    NTSCFG_TEST_EQ(message.ad(), false);
+    NTSCFG_TEST_EQ(message.cd(), false);
+
+    NTSCFG_TEST_EQ(message.qdcount(), 1);
+    NTSCFG_TEST_EQ(message.ancount(), 1);
+    NTSCFG_TEST_EQ(message.nscount(), 0);
+    NTSCFG_TEST_EQ(message.arcount(), 0);
+
+    const ntcdns::Question& question = message.qd(0);
+
+    NTSCFG_TEST_EQ(question.name(), "example.com");
+    NTSCFG_TEST_EQ(question.type(), ntcdns::Type::e_WKS);
+    NTSCFG_TEST_EQ(question.classification(),
+                   ntcdns::Classification::e_INTERNET);
+
+    const ntcdns::ResourceRecord& answer = message.an(0);
+
+    NTSCFG_TEST_EQ(answer.name(), "example.com");
+    NTSCFG_TEST_EQ(answer.type(), ntcdns::Type::e_WKS);
+    NTSCFG_TEST_EQ(answer.classification(),
+                   ntcdns::Classification::e_INTERNET);
+    NTSCFG_TEST_EQ(answer.ttl(), 3600);
+    NTSCFG_TEST_EQ(answer.rdata().isWellKnownServiceValue(), true);
+
+    const ntcdns::ResourceRecordDataWks& wks =
+        answer.rdata().wellKnownService();
+
+    NTSCFG_TEST_EQ(wks.port().size(), 3);
+    NTSCFG_TEST_EQ(wks.port()[0], 22);
+    NTSCFG_TEST_EQ(wks.port()[1], 25);
+    NTSCFG_TEST_EQ(wks.port()[2], 80);
+
+    {
+        bsl::vector<bsl::uint8_t> buffer(1024 * 64);
+
+        ntcdns::MemoryEncoder encoder(&buffer[0], buffer.size());
+
+        error = message.encode(&encoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+        bsl::size_t bufferSize = encoder.position();
+
+        NTCI_LOG_STREAM_DEBUG << "O:\n"
+                              << bdlb::PrintStringHexDumper(
+                                    reinterpret_cast<const char*>(&buffer[0]),
+                                    static_cast<int>(bufferSize))
+                              << NTCI_LOG_STREAM_END;
 
         ntcdns::MemoryDecoder decoder(&buffer[0], bufferSize);
 
