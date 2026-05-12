@@ -207,43 +207,83 @@ NTSCFG_TEST_FUNCTION(ntca::EncryptionCertificateTest::verifyMatchName)
     bool match;
 
     match = ntca::EncryptionCertificateUtil::matches(
-        "c.b.a", 
+        "c.b.a",
         "c.b.a");
     NTSCFG_TEST_TRUE(match);
 
     match = ntca::EncryptionCertificateUtil::matches(
-        "c.b.x", 
+        "C.B.A",
+        "c.b.a");
+    NTSCFG_TEST_TRUE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "c.b.x",
         "c.b.a");
     NTSCFG_TEST_FALSE(match);
 
     match = ntca::EncryptionCertificateUtil::matches(
-        "c.x.a", 
+        "C.B.X",
         "c.b.a");
     NTSCFG_TEST_FALSE(match);
 
     match = ntca::EncryptionCertificateUtil::matches(
-        "x.b.a", 
+        "c.x.a",
         "c.b.a");
     NTSCFG_TEST_FALSE(match);
 
     match = ntca::EncryptionCertificateUtil::matches(
-        "d.c.b.a", 
-            "c.b.a");
+        "C.X.A",
+        "c.b.a");
     NTSCFG_TEST_FALSE(match);
 
     match = ntca::EncryptionCertificateUtil::matches(
-            "c.b.a", 
+        "x.b.a",
+        "c.b.a");
+    NTSCFG_TEST_FALSE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "X.B.A",
+        "c.b.a");
+    NTSCFG_TEST_FALSE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "d.c.b.a",
+          "c.b.a");
+    NTSCFG_TEST_FALSE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "D.C.B.A",
+          "c.b.a");
+    NTSCFG_TEST_FALSE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+          "c.b.a",
         "d.c.b.a");
     NTSCFG_TEST_FALSE(match);
 
     match = ntca::EncryptionCertificateUtil::matches(
-        "d.c.b.a", 
+          "C.B.A",
+        "d.c.b.a");
+    NTSCFG_TEST_FALSE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "d.c.b.a",
         "*.c.b.a");
     NTSCFG_TEST_TRUE(match);
 
     match = ntca::EncryptionCertificateUtil::matches(
-        "e.d.c.b.a", 
-            "*.c.b.a");
+        "D.C.B.A",
+        "*.c.b.a");
+    NTSCFG_TEST_TRUE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "e.d.c.b.a",
+          "*.c.b.a");
+    NTSCFG_TEST_TRUE(match);
+
+    match = ntca::EncryptionCertificateUtil::matches(
+        "E.D.C.B.A",
+          "*.c.b.a");
     NTSCFG_TEST_TRUE(match);
 
     // clang-format on
@@ -309,7 +349,33 @@ NTSCFG_TEST_FUNCTION(ntca::EncryptionCertificateTest::verifyMatchAddress)
     {
         ntsa::Uri requestedUri;
         requestedUri.setScheme("http");
+        requestedUri.setHost("FOUND");
+        requestedUri.setPort(80);
+
+        bsl::string certifiedString = "found";
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedUri,
+                                                         certifiedString);
+        NTSCFG_TEST_TRUE(match);
+    }
+
+    {
+        ntsa::Uri requestedUri;
+        requestedUri.setScheme("http");
         requestedUri.setHost("missing");
+        requestedUri.setPort(80);
+
+        bsl::string certifiedString = "found";
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedUri,
+                                                         certifiedString);
+        NTSCFG_TEST_FALSE(match);
+    }
+
+    {
+        ntsa::Uri requestedUri;
+        requestedUri.setScheme("http");
+        requestedUri.setHost("MISSING");
         requestedUri.setPort(80);
 
         bsl::string certifiedString = "found";
@@ -356,7 +422,39 @@ NTSCFG_TEST_FUNCTION(ntca::EncryptionCertificateTest::verifyMatchAddress)
     {
         ntsa::Uri requestedUri;
         requestedUri.setScheme("http");
+        requestedUri.setHost("FOUND");
+        requestedUri.setPort(80);
+
+        ntsa::Uri certifiedUri;
+        certifiedUri.setScheme("https");  // intentional
+        certifiedUri.setHost("found");
+        certifiedUri.setPort(8080);  // intentional
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedUri,
+                                                         certifiedUri);
+        NTSCFG_TEST_TRUE(match);
+    }
+
+    {
+        ntsa::Uri requestedUri;
+        requestedUri.setScheme("http");
         requestedUri.setHost("missing");
+        requestedUri.setPort(80);
+
+        ntsa::Uri certifiedUri;
+        certifiedUri.setScheme("https");  // intentional
+        certifiedUri.setHost("found");
+        certifiedUri.setPort(8080);  // intentional
+
+        match = ntca::EncryptionCertificateUtil::matches(requestedUri,
+                                                         certifiedUri);
+        NTSCFG_TEST_FALSE(match);
+    }
+
+    {
+        ntsa::Uri requestedUri;
+        requestedUri.setScheme("http");
+        requestedUri.setHost("MISSING");
         requestedUri.setPort(80);
 
         ntsa::Uri certifiedUri;
@@ -397,6 +495,10 @@ NTSCFG_TEST_FUNCTION(ntca::EncryptionCertificateTest::verifyFields)
     bool matchesSubjectDomainName =
         certificate.matchesSubjectDomainName("ntf.bloomberg.com");
     NTSCFG_TEST_TRUE(matchesSubjectDomainName);
+
+    bool matchesSubjectDomainNameCaseless =
+        certificate.matchesSubjectDomainName("NTF.Bloomberg.Com");
+    NTSCFG_TEST_TRUE(matchesSubjectDomainNameCaseless);
 
     bool isEllipticCurve = certificate.usesSubjectPublicKeyAlgorithm(
         ntca::EncryptionKeyAlgorithmIdentifierType::e_ELLIPTIC_CURVE);
