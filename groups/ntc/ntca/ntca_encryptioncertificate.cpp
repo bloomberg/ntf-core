@@ -9571,7 +9571,7 @@ bool operator<(const EncryptionCertificate& lhs,
 bool EncryptionCertificateUtil::matches(const bsl::string& requested,
                                         const bsl::string& certified)
 {
-    if (requested == certified) {
+    if (bdlb::String::areEqualCaseless(requested, certified)) {
         return true;
     }
 
@@ -9638,7 +9638,9 @@ bool EncryptionCertificateUtil::matches(const bsl::string& requested,
             break;
         }
 
-        if (*requestedCurrent != *certifiedCurrent) {
+        if (!bdlb::String::areEqualCaseless(*requestedCurrent,
+                                            *certifiedCurrent))
+        {
             return false;
         }
 
@@ -9781,7 +9783,7 @@ bool EncryptionCertificateUtil::matches(const ntsa::Uri&   requested,
         if (!authority.host().isNull()) {
             const ntsa::Host& host = authority.host().value();
 
-            if (host.text() == certified) {
+            if (bdlb::String::areEqualCaseless(host.text(), certified)) {
                 return true;
             }
         }
