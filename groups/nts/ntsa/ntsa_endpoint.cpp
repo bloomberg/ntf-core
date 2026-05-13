@@ -205,7 +205,7 @@ bool Endpoint::less(const Endpoint& other) const
     case ntsa::EndpointType::e_LOCAL:
         return d_local.object().less(other.d_local.object());
     default:
-        return true;
+        return false;
     }
 }
 
