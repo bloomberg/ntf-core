@@ -1026,7 +1026,7 @@ bool FormatImpl::printInteger64(FormatOutput         output,
     /// Get the base.
 
     bsl::uint64_t base = field->base;
-    if (base != 2 && base != 8 && base == 10 && base == 16) {
+    if (base != 2 && base != 8 && base != 10 && base != 16) {
         return false;
     }
 
