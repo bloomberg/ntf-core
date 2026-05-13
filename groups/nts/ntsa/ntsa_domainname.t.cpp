@@ -194,6 +194,12 @@ NTSCFG_TEST_FUNCTION(ntsa::DomainNameTest::verifyCase1)
         bsl::string      text = domainName.text();
         NTSCFG_TEST_EQ(text, "mail.example.com");
     }
+
+    {
+        ntsa::DomainName domainName;
+        valid = domainName.parse("ab", "c..d");
+        NTSCFG_TEST_FALSE(valid);
+    }
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::DomainNameTest::verifyCase2)
