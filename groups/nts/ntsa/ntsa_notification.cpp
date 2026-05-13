@@ -91,7 +91,7 @@ bool Notification::less(const Notification& other) const
     case ntsa::NotificationType::e_ZERO_COPY:
         return d_zeroCopy.object() < other.d_zeroCopy.object();
     default:
-        return true;
+        return false;
     }
 }
 
