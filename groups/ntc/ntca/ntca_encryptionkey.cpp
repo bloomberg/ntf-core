@@ -5197,7 +5197,7 @@ bool EncryptionKey::less(const EncryptionKey& other) const
         return d_info.object().less(other.d_info.object());
     }
 
-    return true;
+    return false;
 }
 
 bsl::ostream& EncryptionKey::print(bsl::ostream& stream,
