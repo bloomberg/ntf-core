@@ -140,7 +140,7 @@ bool IpAddress::less(const IpAddress& other) const
     case ntsa::IpAddressType::e_V6:
         return d_v6.object().less(other.d_v6.object());
     default:
-        return true;
+        return false;
     }
 }
 
