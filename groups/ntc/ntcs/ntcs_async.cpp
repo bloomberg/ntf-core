@@ -318,10 +318,10 @@ void* Async::State::run(Async::State* state)
     }
 
     while (state->d_runState == k_RUN_STATE_STARTED) {
+        ntccfg::ConditionMutexGuard guard(&state->d_runMutex);
+
         bdlb::NullableValue<bsls::TimeInterval> deadline =
             state->d_chronology_sp->earliest();
-
-        ntccfg::ConditionMutexGuard guard(&state->d_runMutex);
 
         if (deadline.isNull()) {
             state->d_runCondition.wait(&state->d_runMutex);
