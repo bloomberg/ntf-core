@@ -197,7 +197,11 @@ NTSCFG_TEST_FUNCTION(ntsa::DomainNameTest::verifyCase1)
 
     {
         ntsa::DomainName domainName;
-        valid = domainName.parse("ab", "c..d");
+
+        valid = domainName.parse("foo..bar", "baz");
+        NTSCFG_TEST_FALSE(valid);
+
+        valid = domainName.parse("foo", "bar..baz");
         NTSCFG_TEST_FALSE(valid);
     }
 }
