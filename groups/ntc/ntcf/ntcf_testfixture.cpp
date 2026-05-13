@@ -96,7 +96,7 @@ void TestFixture::configure(ntca::SchedulerConfig*        result,
     }
 
     if (configuration.receiveBufferSize.has_value()) {
-        result->setBacklog(configuration.receiveBufferSize.value());
+        result->setReceiveBufferSize(configuration.receiveBufferSize.value());
     }
 
     if (configuration.acceptGreedily.has_value()) {
@@ -173,7 +173,7 @@ void TestFixture::configure(ntca::SchedulerConfig*        result,
     }
 
     if (configuration.receiveBufferSize.has_value()) {
-        result->setBacklog(configuration.receiveBufferSize.value());
+        result->setReceiveBufferSize(configuration.receiveBufferSize.value());
     }
 
     if (configuration.acceptGreedily.has_value()) {
