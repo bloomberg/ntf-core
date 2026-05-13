@@ -230,7 +230,7 @@ ntsa::Error ResolverOverrides::addPort(const bslstl::StringRef& serviceName,
     {
         PortVector& target = d_udpPortByServiceName[serviceName];
         target.push_back(port);
-        d_tcpServiceNameByPort[port] = serviceName;
+        d_udpServiceNameByPort[port] = serviceName;
     }
     else {
         return ntsa::Error(ntsa::Error::e_INVALID);
