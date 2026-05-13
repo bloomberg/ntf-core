@@ -218,7 +218,7 @@ bool DomainName::parse(const bslstl::StringRef& name,
             else if (i == name_size - 1) {
                 return false;
             }
-            else if (d_buffer[i - 1] == '.') {
+            else if (domain[i - 1] == '.') {
                 return false;
             }
         }
