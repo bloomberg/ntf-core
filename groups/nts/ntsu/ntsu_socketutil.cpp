@@ -919,7 +919,7 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
         }
         else {
             *endpoint =
-                ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::any(), 0));
+                ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv6Address::any(), 0));
         }
     }
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
