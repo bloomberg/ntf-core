@@ -1712,7 +1712,7 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
                 bsl::size_t s1 = decoder->position();
 
                 bsl::size_t numBytesRead = s1 - s0;
-                if (numBytesRead >= numBytesRemaining) {
+                if (numBytesRead <= numBytesRemaining) {
                     numBytesRemaining -= numBytesRead;
                 }
                 else {
