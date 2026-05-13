@@ -276,15 +276,15 @@ TestFixture::TestFixture(const ntcf::TestFixtureConfig& configuration,
         d_config.client.blobBufferSize.makeValue(4096);
     }
 
-    if (d_config.server.minThreads.isNull() &&
-        d_config.server.maxThreads.isNull())
+    if (d_config.client.minThreads.isNull() &&
+        d_config.client.maxThreads.isNull())
     {
-        d_config.server.minThreads = 1;
-        d_config.server.maxThreads = 1;
+        d_config.client.minThreads = 1;
+        d_config.client.maxThreads = 1;
     }
 
-    if (d_config.server.keepHalfOpen.isNull()) {
-        d_config.server.keepHalfOpen = false;
+    if (d_config.client.keepHalfOpen.isNull()) {
+        d_config.client.keepHalfOpen = false;
     }
 
     d_clientDataPool_sp =
