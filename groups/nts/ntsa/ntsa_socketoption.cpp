@@ -800,7 +800,7 @@ bool SocketOption::less(const SocketOption& other) const
         return d_tcpCongestionControl.object() <
                other.d_tcpCongestionControl.object();
     default:
-        return true;
+        return false;
     }
 }
 
