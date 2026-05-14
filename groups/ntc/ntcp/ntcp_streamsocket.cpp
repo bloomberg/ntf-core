@@ -190,8 +190,8 @@ BSLS_IDENT_RCSID(ntcp_streamsocket_cpp, "$Id$ $CSID$")
 
 #define NTCP_STREAMSOCKET_LOG_WRITE_QUEUE_HIGH_WATERMARK(highWatermark, size) \
     NTCI_LOG_TRACE("Stream socket "                                           \
-                   "has breached the write queue high watermark of %d "       \
-                   "bytes with a write queue of %d bytes",                    \
+                   "has breached the write queue high watermark of %zu "      \
+                   "bytes with a write queue of %zu bytes",                   \
                    highWatermark,                                             \
                    size)
 
