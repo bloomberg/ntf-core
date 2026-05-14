@@ -209,7 +209,7 @@ bsl::ostream& Event::print(bsl::ostream& stream,
                 stateDescription.append(1, ' ');                              \
             }                                                                 \
             static const bsl::string_view k_DESC = (STR);                     \
-            stateDescription.append(STR);                                     \
+            stateDescription.append(k_DESC);                                  \
             ++numFlags;                                                       \
         }
 
