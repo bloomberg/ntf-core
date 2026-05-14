@@ -470,7 +470,7 @@ ntsa::Linger& SocketOption::makeLinger()
     }
     else {
         this->reset();
-        new (d_linger.buffer()) bool();
+        new (d_linger.buffer()) ntsa::Linger();
         d_type = ntsa::SocketOptionType::e_LINGER;
     }
 
@@ -480,7 +480,7 @@ ntsa::Linger& SocketOption::makeLinger()
 ntsa::Linger& SocketOption::makeLinger(const ntsa::Linger& value)
 {
     if (d_type == ntsa::SocketOptionType::e_LINGER) {
-        d_linger.object().reset();
+        d_linger.object() = value;
     }
     else {
         this->reset();
