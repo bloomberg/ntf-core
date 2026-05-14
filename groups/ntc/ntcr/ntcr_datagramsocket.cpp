@@ -4043,7 +4043,7 @@ ntsa::Error DatagramSocket::receive(const ntca::ReceiveOptions&  options,
         else {
             receiveContext.setEndpoint(d_systemRemoteEndpoint);
         }
-        if (!entry.foreignHandle().has_value()) {
+        if (entry.foreignHandle().has_value()) {
             receiveContext.setForeignHandle(entry.foreignHandle().value());
         }
 
