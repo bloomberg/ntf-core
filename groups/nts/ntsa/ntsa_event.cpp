@@ -203,59 +203,24 @@ bsl::ostream& Event::print(bsl::ostream& stream,
         bsl::string stateDescription;
         bsl::size_t numFlags = 0;
 
-        if ((d_state & (1 << EventType::e_READABLE)) != 0) {
-            if (numFlags > 0) {
-                stateDescription.append(1, ' ');
-            }
-
-            stateDescription.append("READABLE", 8);
-            ++numFlags;
+#define NTSA_CHECK_PRINT(FLAG, STR)                                           \
+        if ((d_state & (1 << (FLAG))) != 0) {                                 \
+            if (numFlags > 0) {                                               \
+                stateDescription.append(1, ' ');                              \
+            }                                                                 \
+            static const bsl::string_view k_DESC = STR;                       \
+            stateDescription.append(STR);                                     \
+            ++numFlags;                                                       \
         }
 
-        if ((d_state & (1 << EventType::e_WRITABLE)) != 0) {
-            if (numFlags > 0) {
-                stateDescription.append(1, ' ');
-            }
+        NTSA_CHECK_PRINT(EventType::e_READABLE, "READABLE");
+        NTSA_CHECK_PRINT(EventType::e_WRITABLE, "WRITABLE");
+        NTSA_CHECK_PRINT(EventType::e_EXCEPTIONAL, "EXCEPTIONAL");
+        NTSA_CHECK_PRINT(EventType::e_ERROR, "ERROR");
+        NTSA_CHECK_PRINT(EventType::e_SHUTDOWN, "SHUTDOWN");
+        NTSA_CHECK_PRINT(EventType::e_HANGUP, "HANGUP");
 
-            stateDescription.append("WRITABLE", 8);
-            ++numFlags;
-        }
-
-        if ((d_state & (1 << EventType::e_EXCEPTIONAL)) != 0) {
-            if (numFlags > 0) {
-                stateDescription.append(1, ' ');
-            }
-
-            stateDescription.append("EXCEPTIONAL", 11);
-            ++numFlags;
-        }
-
-        if ((d_state & (1 << EventType::e_ERROR)) != 0) {
-            if (numFlags > 0) {
-                stateDescription.append(1, ' ');
-            }
-
-            stateDescription.append("ERROR", 5);
-            ++numFlags;
-        }
-
-        if ((d_state & (1 << EventType::e_SHUTDOWN)) != 0) {
-            if (numFlags > 0) {
-                stateDescription.append(1, ' ');
-            }
-
-            stateDescription.append("SHUTDOWN", 8);
-            ++numFlags;
-        }
-
-        if ((d_state & (1 << EventType::e_HANGUP)) != 0) {
-            if (numFlags > 0) {
-                stateDescription.append(1, ' ');
-            }
-
-            stateDescription.append("HANGUP", 12);
-            ++numFlags;
-        }
+#undef NTSA_CHECK_PRINT
 
         printer.printAttribute("state", stateDescription);
     }
