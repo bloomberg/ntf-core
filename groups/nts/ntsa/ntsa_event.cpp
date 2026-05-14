@@ -208,7 +208,7 @@ bsl::ostream& Event::print(bsl::ostream& stream,
             if (numFlags > 0) {                                               \
                 stateDescription.append(1, ' ');                              \
             }                                                                 \
-            static const bsl::string_view k_DESC = STR;                       \
+            static const bsl::string_view k_DESC = (STR);                     \
             stateDescription.append(STR);                                     \
             ++numFlags;                                                       \
         }
