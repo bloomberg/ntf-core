@@ -470,7 +470,7 @@ ntsa::Linger& SocketOption::makeLinger()
     }
     else {
         this->reset();
-        new (d_linger.buffer()) bool();
+        new (d_linger.buffer()) ntsa::Linger();
         d_type = ntsa::SocketOptionType::e_LINGER;
     }
 
