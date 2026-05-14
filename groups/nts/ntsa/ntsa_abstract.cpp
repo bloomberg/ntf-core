@@ -5985,7 +5985,7 @@ bool AbstractIntegerRepresentation::parse(
             const char ch = *it;
 
             if (base == 10) {
-                if (ch >= '0' && ch <= '9') {
+                if ('0' <= ch && ch <= '9') {
                     Digit digit = ch - '0';
                     digits.push_back(digit);
                 }
@@ -5994,16 +5994,16 @@ bool AbstractIntegerRepresentation::parse(
                 }
             }
             else if (base == 16) {
-                if (ch >= '0' && ch <= '9') {
+                if ('0' <= ch && ch <= '9') {
                     Digit digit = ch - '0';
                     digits.push_back(digit);
                 }
-                else if (ch >= 'a' && ch <= 'f') {
-                    Digit digit = ch - 'a';
+                else if ('a' <= ch && ch <= 'f') {
+                    Digit digit = ch - 'a' + 10;
                     digits.push_back(digit);
                 }
-                else if (ch >= 'A' && ch <= 'F') {
-                    Digit digit = ch - 'A';
+                else if ('A' <= ch && ch <= 'F') {
+                    Digit digit = ch - 'A' + 10;
                     digits.push_back(digit);
                 }
                 else {
