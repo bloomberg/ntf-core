@@ -148,8 +148,8 @@ BSLS_IDENT_RCSID(ntcp_datagramsocket_cpp, "$Id$ $CSID$")
 #define NTCP_DATAGRAMSOCKET_LOG_WRITE_QUEUE_HIGH_WATERMARK(highWatermark,     \
                                                            size)              \
     NTCI_LOG_TRACE("Datagram socket "                                         \
-                   "has breached the write queue high watermark of %d "       \
-                   "bytes with a write queue of %d bytes",                    \
+                   "has breached the write queue high watermark of %zu "      \
+                   "bytes with a write queue of %zu bytes",                   \
                    highWatermark,                                             \
                    size)
 
