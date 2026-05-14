@@ -6972,12 +6972,13 @@ ntsa::Error AbstractIntegerQuantity::convert(unsigned short* result) const
 
     const bsl::uint64_t value = d_rep.get(0);
 
-    if (value > static_cast<bsl::uint64_t>(bsl::numeric_limits<short>::max()))
+    if (value >
+        static_cast<bsl::uint64_t>(bsl::numeric_limits<unsigned short>::max()))
     {
         return ntsa::Error(ntsa::Error::e_LIMIT);
     }
 
-    *result = static_cast<short>(value);
+    *result = static_cast<unsigned short>(value);
     return ntsa::Error();
 }
 
@@ -7910,7 +7911,7 @@ ntsa::Error AbstractInteger::convert(unsigned short* result) const
         return ntsa::Error(ntsa::Error::e_LIMIT);
     }
 
-    *result = static_cast<short>(value);
+    *result = static_cast<unsigned short>(value);
     return ntsa::Error();
 }
 
