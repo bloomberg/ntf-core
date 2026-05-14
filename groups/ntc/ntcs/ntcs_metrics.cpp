@@ -187,7 +187,7 @@ void Metrics::logAcceptFailure()
 void Metrics::logAcceptIterations(bsl::size_t numIterations)
 {
     if (numIterations > 0) {
-        d_numReceiveIterations.update(static_cast<double>(numIterations));
+        d_numAcceptIterations.update(static_cast<double>(numIterations));
     }
 
     if (d_parent_sp) {
