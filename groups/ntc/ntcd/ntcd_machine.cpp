@@ -1426,6 +1426,7 @@ ntsa::Error PortMap::acquire(ntsa::Port* result, ntsa::Port requested)
             return ntsa::Error(ntsa::Error::e_ADDRESS_IN_USE);
         }
 
+        d_bitset.set(requested);
         *result = requested;
     }
     else {
