@@ -2453,7 +2453,7 @@ ntsa::Error Uri::setHost(const ntsa::Ipv4Address& value)
         }
     }
     else {
-        d_authority.value().setHost(value);
+        error = d_authority.value().setHost(value);
         if (error) {
             return error;
         }
