@@ -44,7 +44,7 @@ bool Timestamp::less(const Timestamp& other) const
     }
 
     if (other.d_id < d_id) {
-        return true;
+        return false;
     }
 
     return d_time < other.d_time;
