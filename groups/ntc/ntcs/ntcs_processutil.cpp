@@ -191,7 +191,7 @@ void ProcessUtil::getResourceUsage(ntcs::ProcessStatistics* result)
                          &lrs,
                          &drs,
                          &dr);
-        if (rc != 0) {
+        if (rc > 0) {
             const bsl::size_t pageSize =
                 static_cast<bsl::size_t>(::sysconf(_SC_PAGESIZE));
 
