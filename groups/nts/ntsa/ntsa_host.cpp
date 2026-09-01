@@ -325,7 +325,7 @@ bool Host::less(const Host& other) const
     case ntsa::HostType::e_LOCAL_NAME:
         return d_localName.object().less(other.d_localName.object());
     default:
-        return true;
+        return false;
     }
 }
 
