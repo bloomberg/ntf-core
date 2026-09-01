@@ -1266,7 +1266,7 @@ ntsa::Error Question::decode(MemoryDecoder* decoder)
 
     error = decoder->decodeDomainName(&d_name);
     if (error) {
-        return ntsa::Error();
+        return error;
     }
 
     {
