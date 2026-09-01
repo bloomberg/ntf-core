@@ -91,7 +91,38 @@ class StreamSocket : public ntci::StreamSocket,
     typedef ntccfg::LockGuard LockGuard;
 
     ntccfg::Object                             d_object;
+    // LOCKING STRATEGY
+    //
+    // 'd_mutex' (the "state" mutex) guards the shared lifecycle and control
+    // state of the socket: the connect/upgrade machinery, the open, shutdown,
+    // and detach state machines' *transitions*, and the encryption object.
+    //
+    // 'd_sendMutex' guards the write path (the send queue, zero-copy queue,
+    // outgoing timestamping, and send-direction reactor interest).
+    // 'd_receiveMutex' guards the read path (the receive queue and
+    // receive-direction reactor interest). These two leaf mutexes are
+    // independent so that sending is not serialized against receiving.
+    //
+    // 'd_flowControlState' is itself thread safe (lock-free), so a single
+    // instance is shared by both directions: the send path applies/relaxes it
+    // with 'e_SEND' under 'd_sendMutex' and the receive path with 'e_RECEIVE'
+    // under 'd_receiveMutex'.
+    //
+    // When more than one is held they are always acquired in the order
+    // 'd_mutex' -> 'd_sendMutex' -> 'd_receiveMutex'. A steady-state I/O drain
+    // holds only its own leaf; when it must perform a cross-cutting lifecycle
+    // transition (connection establishment, failure, shutdown) it first
+    // releases its leaf, then re-acquires in canonical order.
+    //
+    // The observable lifecycle predicates ('d_openState', 'd_shutdownState',
+    // 'd_detachState.mode()') are atomic and may be read without any lock. The
+    // co-guarded members ('d_socket_sp', 'd_encryption_sp', 'd_session_sp',
+    // 'd_sessionStrand_sp', 'd_manager_sp', 'd_managerStrand_sp') are written
+    // only while holding all three mutexes and may therefore be read while
+    // holding any one of them.
     mutable Mutex                              d_mutex;
+    mutable Mutex                              d_sendMutex;
+    mutable Mutex                              d_receiveMutex;
     ntsa::Transport::Value                     d_transport;
     ntsa::Handle                               d_systemHandle;
     ntsa::Endpoint                             d_systemSourceEndpoint;
@@ -147,7 +178,7 @@ class StreamSocket : public ntci::StreamSocket,
     bsl::shared_ptr<ntci::Timer>               d_connectRetryTimer_sp;
     bsl::shared_ptr<ntci::RateLimiter>         d_connectRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>               d_connectRateTimer_sp;
-    bool                                       d_connectInProgress;
+    bsls::AtomicBool                           d_connectInProgress;
     ntca::UpgradeOptions                       d_upgradeOptions;
     ntci::UpgradeCallback                      d_upgradeCallback;
     bsl::shared_ptr<ntci::Timer>               d_upgradeTimer_sp;
@@ -241,9 +272,13 @@ class StreamSocket : public ntci::StreamSocket,
         const bsl::string&                                  details);
 
     /// Process the readability of the socket by performing one read
-    /// iteration.
+    /// iteration. If the specified 'defer' flag is true, force all event
+    /// announcements and callback invocations made during the iteration to be
+    /// deferred (used when the iteration runs while holding more than one
+    /// mutex, e.g. the encrypted read path).
     ntsa::Error privateSocketReadableIteration(
-        const bsl::shared_ptr<StreamSocket>& self);
+        const bsl::shared_ptr<StreamSocket>& self,
+        bool                                 defer);
 
     /// Process the writability of the socket indicating the connection
     /// is established.
@@ -251,9 +286,14 @@ class StreamSocket : public ntci::StreamSocket,
         const bsl::shared_ptr<StreamSocket>& self);
 
     /// Process the writability of the socket by performing one write
-    /// iteration.
+    /// iteration. If a graceful shutdown sentinel is drained during the
+    /// iteration, set the specified '*shutdownSendPending' to true instead of
+    /// shutting down for sending inline, so that the caller
+    /// ('processSocketWritable') can perform the cross-cutting shutdown
+    /// sequence after releasing the send mutex.
     ntsa::Error privateSocketWritableIteration(
-        const bsl::shared_ptr<StreamSocket>& self);
+        const bsl::shared_ptr<StreamSocket>& self,
+        bool*                                shutdownSendPending);
 
     /// Process the writability of the socket by performing one write
     /// iteration from the contiguous range of suitable entries at the front
@@ -262,9 +302,12 @@ class StreamSocket : public ntci::StreamSocket,
         const bsl::shared_ptr<StreamSocket>& self);
 
     /// Process the writability of the socket by performing one write
-    /// iteration from the entry at the front of the write queue.
+    /// iteration from the entry at the front of the write queue. If a graceful
+    /// shutdown sentinel is drained, set the specified '*shutdownSendPending'
+    /// to true rather than shutting down for sending inline.
     ntsa::Error privateSocketWritableIterationFront(
-        const bsl::shared_ptr<StreamSocket>& self);
+        const bsl::shared_ptr<StreamSocket>& self,
+        bool*                                shutdownSendPending);
 
     /// Indicate a connection failure has occurred. If the specified 'defer'
     /// flag is true, ensure the announcement is deferred. If the specified
@@ -416,6 +459,24 @@ class StreamSocket : public ntci::StreamSocket,
         const bsl::shared_ptr<StreamSocket>& self,
         ntsa::ReceiveContext*                context,
         bdlbb::Blob*                         data);
+
+    /// Enqueue the specified 'data' for transmission according to the
+    /// specified 'options', invoking the specified 'callback' on completion.
+    /// The behavior is undefined unless 'd_sendMutex' is locked (and, if the
+    /// socket is encrypted, 'd_mutex' as well). Return the error.
+    ntsa::Error privateSend(const bsl::shared_ptr<StreamSocket>& self,
+                            const bdlbb::Blob&                   data,
+                            const ntca::SendOptions&             options,
+                            const ntci::SendCallback&            callback);
+
+    /// Enqueue the specified 'data' for transmission according to the
+    /// specified 'options', invoking the specified 'callback' on completion.
+    /// The behavior is undefined unless 'd_sendMutex' is locked (and, if the
+    /// socket is encrypted, 'd_mutex' as well). Return the error.
+    ntsa::Error privateSend(const bsl::shared_ptr<StreamSocket>& self,
+                            const ntsa::Data&                    data,
+                            const ntca::SendOptions&             options,
+                            const ntci::SendCallback&            callback);
 
     /// Rearm the interest in the writability of the socket in the reactor,
     /// if necessary.

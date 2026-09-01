@@ -88,7 +88,34 @@ class StreamSocket : public ntci::StreamSocket,
     typedef ntccfg::LockGuard LockGuard;
 
     ntccfg::Object                             d_object;
+    // LOCKING STRATEGY
+    //
+    // 'd_mutex' (the "state" mutex) guards the shared lifecycle and control
+    // state of the socket: the connect/upgrade machinery, the open, shutdown,
+    // and detach state machines' *transitions*, and the encryption object.
+    //
+    // 'd_sendMutex' guards the write path (the send queue and outgoing
+    // completion state) and 'd_receiveMutex' guards the read path (the receive
+    // queue and incoming completion state). These two leaf mutexes are
+    // independent so that sending is not serialized against receiving.
+    //
+    // When more than one is held they are always acquired in the order
+    // 'd_mutex' -> 'd_sendMutex' -> 'd_receiveMutex'. A steady-state I/O
+    // completion holds only its own leaf; when it must perform a cross-cutting
+    // lifecycle transition (connection establishment, failure, shutdown) it
+    // first releases its leaf, then re-acquires in canonical order (or defers
+    // the transition via 'execute').
+    //
+    // The observable lifecycle predicates ('d_openState', 'd_shutdownState',
+    // 'd_detachState.mode()', 'd_connectInProgress') are atomic and may be read
+    // without any lock. 'd_flowControlState' is itself thread safe (lock-free).
+    // The co-guarded members ('d_socket_sp', 'd_encryption_sp', 'd_session_sp',
+    // 'd_sessionStrand_sp', 'd_manager_sp', 'd_managerStrand_sp') are written
+    // only while holding all three mutexes and may therefore be read while
+    // holding any one of them.
     mutable Mutex                              d_mutex;
+    mutable Mutex                              d_sendMutex;
+    mutable Mutex                              d_receiveMutex;
     ntsa::Transport::Value                     d_transport;
     ntsa::Handle                               d_systemHandle;
     ntsa::Endpoint                             d_systemSourceEndpoint;
@@ -144,7 +171,7 @@ class StreamSocket : public ntci::StreamSocket,
     bsl::shared_ptr<ntci::Timer>               d_connectRetryTimer_sp;
     bsl::shared_ptr<ntci::RateLimiter>         d_connectRateLimiter_sp;
     bsl::shared_ptr<ntci::Timer>               d_connectRateTimer_sp;
-    bool                                       d_connectInProgress;
+    bsls::AtomicBool                           d_connectInProgress;
     ntca::UpgradeOptions                       d_upgradeOptions;
     ntci::UpgradeCallback                      d_upgradeCallback;
     bsl::shared_ptr<ntci::Timer>               d_upgradeTimer_sp;
@@ -267,13 +294,21 @@ class StreamSocket : public ntci::StreamSocket,
     /// Initiate a new reception, if allowed and necessary.
     void privateInitiateReceive(const bsl::shared_ptr<StreamSocket>& self);
 
-    /// Process the completion of the reception of raw or encrypted
-    /// data according to the specified 'numBytesReceivable' and
-    /// 'numBytesReceived'. The behavior is undefined unless 'd_mutex' is
-    /// locked.
-    void privateCompleteReceive(const bsl::shared_ptr<StreamSocket>& self,
-                                bsl::size_t numBytesReceivable,
-                                bsl::size_t numBytesReceived);
+    /// Process the completion of the reception of raw or encrypted data
+    /// according to the specified 'numBytesReceivable' and 'numBytesReceived'.
+    /// If the specified 'defer' flag is true, force all event announcements and
+    /// callback invocations made during processing to be deferred (used when
+    /// running while holding more than one mutex, e.g. the encrypted read
+    /// path). Return 'ntsa::Error::e_EOF' if the peer has shut down, another
+    /// error if the reception failed, or a default-constructed error on
+    /// success; the caller performs any resulting shutdown or failure sequence
+    /// after releasing the receive mutex. The behavior is undefined unless
+    /// 'd_receiveMutex' is locked.
+    ntsa::Error privateCompleteReceive(
+        const bsl::shared_ptr<StreamSocket>& self,
+        bsl::size_t                          numBytesReceivable,
+        bsl::size_t                          numBytesReceived,
+        bool                                 defer);
 
     /// Process the completion of the reception of the raw or unencrypted
     /// data according to the specified 'numBytesReceived'. The behavior is
@@ -393,6 +428,24 @@ class StreamSocket : public ntci::StreamSocket,
     /// able to be received.
     ntsa::Error privateThrottleReceiveBuffer(
         const bsl::shared_ptr<StreamSocket>& self);
+
+    /// Enqueue the specified 'data' for transmission according to the
+    /// specified 'options', invoking the specified 'callback' on completion.
+    /// The behavior is undefined unless 'd_sendMutex' is locked (and, if the
+    /// socket is encrypted, 'd_mutex' as well). Return the error.
+    ntsa::Error privateSend(const bsl::shared_ptr<StreamSocket>& self,
+                            const bdlbb::Blob&                   data,
+                            const ntca::SendOptions&             options,
+                            const ntci::SendCallback&            callback);
+
+    /// Enqueue the specified 'data' for transmission according to the
+    /// specified 'options', invoking the specified 'callback' on completion.
+    /// The behavior is undefined unless 'd_sendMutex' is locked (and, if the
+    /// socket is encrypted, 'd_mutex' as well). Return the error.
+    ntsa::Error privateSend(const bsl::shared_ptr<StreamSocket>& self,
+                            const ntsa::Data&                    data,
+                            const ntca::SendOptions&             options,
+                            const ntci::SendCallback&            callback);
 
     /// Send the specified raw or already encrypted 'data' according to the
     /// specified 'options'. When the 'data' is entirely copied to the

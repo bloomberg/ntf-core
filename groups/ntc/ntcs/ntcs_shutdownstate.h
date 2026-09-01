@@ -38,16 +38,31 @@ namespace ntcs {
 /// when sequencing the shutdown of reads and writes for that socket.
 ///
 /// @par Thread Safety
-/// This class is not thread safe.
+/// The observable state accessors ('canSend', 'canReceive', 'initiated',
+/// 'completed') read atomic mirrors and may be called concurrently with each
+/// other and with a single thread invoking one of the manipulators. Concurrent
+/// invocations of the manipulators are not safe.
 ///
 /// @ingroup module_ntcs
 class ShutdownState
 {
     ntcs::ShutdownContext d_context;
 
+    // The following atomic members mirror the observable predicates derived
+    // from 'd_context' so that the accessors may be evaluated without holding
+    // any external lock. They are refreshed from 'd_context' by every
+    // manipulator (see 'refreshAtomicState').
+    bsls::AtomicBool d_canSend;
+    bsls::AtomicBool d_canReceive;
+    bsls::AtomicBool d_initiated;
+    bsls::AtomicBool d_completed;
+
   private:
     ShutdownState(const ShutdownState&) BSLS_KEYWORD_DELETED;
     ShutdownState& operator=(const ShutdownState&) BSLS_KEYWORD_DELETED;
+
+    /// Refresh the atomic mirrors of the observable state from 'd_context'.
+    void refreshAtomicState();
 
   public:
     /// Create a new object in the default state.
@@ -124,25 +139,25 @@ class ShutdownState
 NTCCFG_INLINE
 bool ShutdownState::initiated() const
 {
-    return d_context.shutdownInitiated();
+    return d_initiated.loadAcquire();
 }
 
 NTCCFG_INLINE
 bool ShutdownState::canSend() const
 {
-    return !d_context.shutdownSend();
+    return d_canSend.loadAcquire();
 }
 
 NTCCFG_INLINE
 bool ShutdownState::canReceive() const
 {
-    return !d_context.shutdownReceive();
+    return d_canReceive.loadAcquire();
 }
 
 NTCCFG_INLINE
 bool ShutdownState::completed() const
 {
-    return d_context.shutdownCompleted();
+    return d_completed.loadAcquire();
 }
 
 }  // end namespace ntcs

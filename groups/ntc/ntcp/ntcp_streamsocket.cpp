@@ -215,7 +215,11 @@ void StreamSocket::processSocketConnected(const ntsa::Error& error)
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    // Connection completion is cross-cutting; acquire all three mutexes in
+    // canonical order.
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.mode() == ntcs::DetachMode::e_INITIATED))
     {
@@ -245,35 +249,131 @@ void StreamSocket::processSocketReceived(const ntsa::Error&          error,
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
-
     if (NTCCFG_UNLIKELY(d_detachState.mode() == ntcs::DetachMode::e_INITIATED))
     {
         return;
     }
 
-    NTCI_LOG_CONTEXT();
+    bool        encrypted = false;
+    ntsa::Error outcome;
 
-    NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
-    NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
-    NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
+    // Fast path: an unencrypted receive completion only needs the receive
+    // mutex. The encryption object is co-guarded and may be examined under the
+    // receive mutex; if it is present, escalate to holding all three mutexes in
+    // canonical order (the encrypted completion decrypts under 'd_mutex' and may
+    // enqueue outgoing cipher text under 'd_sendMutex'). To avoid a concurrent
+    // 'privateInitiateReceive' from overwriting 'd_receiveBlob_sp' during the
+    // lock handoff, 'd_receivePending' is left true until the completion is
+    // actually processed.
 
-    d_receivePending = false;
+    {
+        LockGuard receiveLock(&d_receiveMutex);
 
-    if (error) {
-        if (error != ntsa::Error::e_CANCELLED) {
-            NTCP_STREAMSOCKET_LOG_RECEIVE_FAILURE(error);
-            this->privateFailReceive(self, error);
+        if (NTCCFG_UNLIKELY(d_detachState.mode() ==
+                            ntcs::DetachMode::e_INITIATED))
+        {
+            return;
+        }
+
+        if (d_encryption_sp) {
+            encrypted = true;
+        }
+        else {
+            NTCI_LOG_CONTEXT();
+            NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
+            NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+            NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
+
+            d_receivePending = false;
+
+            if (error) {
+                if (error != ntsa::Error::e_CANCELLED) {
+                    NTCP_STREAMSOCKET_LOG_RECEIVE_FAILURE(error);
+                    outcome = error;
+                }
+            }
+            else {
+                NTCP_STREAMSOCKET_LOG_RECEIVE_RESULT(context);
+                outcome = this->privateCompleteReceive(
+                    self,
+                    context.bytesReceivable(),
+                    context.bytesReceived(),
+                    false);
+            }
+
+            if (!outcome) {
+                this->privateInitiateReceive(self);
+            }
         }
     }
-    else {
-        NTCP_STREAMSOCKET_LOG_RECEIVE_RESULT(context);
-        this->privateCompleteReceive(self,
-                                     context.bytesReceivable(),
-                                     context.bytesReceived());
+
+    if (encrypted) {
+        LockGuard stateLock(&d_mutex);
+        LockGuard sendLock(&d_sendMutex);
+        LockGuard receiveLock(&d_receiveMutex);
+
+        if (NTCCFG_UNLIKELY(d_detachState.mode() ==
+                            ntcs::DetachMode::e_INITIATED))
+        {
+            return;
+        }
+
+        NTCI_LOG_CONTEXT();
+        NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
+        NTCI_LOG_CONTEXT_GUARD_SOURCE_ENDPOINT(d_systemSourceEndpoint);
+        NTCI_LOG_CONTEXT_GUARD_REMOTE_ENDPOINT(d_systemRemoteEndpoint);
+
+        d_receivePending = false;
+
+        if (error) {
+            if (error != ntsa::Error::e_CANCELLED) {
+                NTCP_STREAMSOCKET_LOG_RECEIVE_FAILURE(error);
+                outcome = error;
+            }
+        }
+        else {
+            NTCP_STREAMSOCKET_LOG_RECEIVE_RESULT(context);
+            outcome = this->privateCompleteReceive(self,
+                                                   context.bytesReceivable(),
+                                                   context.bytesReceived(),
+                                                   true);
+        }
+
+        if (outcome == ntsa::Error::e_EOF) {
+            this->privateShutdownReceive(self,
+                                         ntsa::ShutdownOrigin::e_REMOTE,
+                                         true);
+        }
+        else if (outcome) {
+            this->privateFailReceive(self, outcome);
+        }
+        else {
+            this->privateInitiateReceive(self);
+        }
+
+        return;
     }
 
-    this->privateInitiateReceive(self);
+    // Perform any cross-cutting shutdown or failure sequence for the
+    // unencrypted path outside the receive mutex, acquiring all three mutexes
+    // in canonical order.
+
+    if (outcome == ntsa::Error::e_EOF) {
+        LockGuard stateLock(&d_mutex);
+        LockGuard sendLock(&d_sendMutex);
+        LockGuard receiveLock(&d_receiveMutex);
+
+        this->privateShutdownReceive(self,
+                                     ntsa::ShutdownOrigin::e_REMOTE,
+                                     true);
+    }
+    else if (outcome) {
+        LockGuard stateLock(&d_mutex);
+        LockGuard sendLock(&d_sendMutex);
+        LockGuard receiveLock(&d_receiveMutex);
+
+        this->privateFailReceive(self, outcome);
+    }
 }
 
 void StreamSocket::processSocketSent(const ntsa::Error&       error,
@@ -283,7 +383,7 @@ void StreamSocket::processSocketSent(const ntsa::Error&       error,
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.mode() == ntcs::DetachMode::e_INITIATED))
     {
@@ -318,7 +418,11 @@ void StreamSocket::processSocketError(const ntsa::Error& error)
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    // Error handling is cross-cutting (it fails the whole socket); acquire all
+    // three mutexes in canonical order.
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.mode() == ntcs::DetachMode::e_INITIATED))
     {
@@ -338,7 +442,12 @@ void StreamSocket::processSocketDetached()
 {
     NTCCFG_OBJECT_GUARD(&d_object);
 
-    LockGuard lock(&d_mutex);
+    // The detachment completion runs the deferred shutdown/connect-failure
+    // completion, which is cross-cutting; acquire all three mutexes in
+    // canonical order.
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -364,7 +473,9 @@ void StreamSocket::processConnectDeadlineTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -406,7 +517,9 @@ void StreamSocket::processConnectRetryTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -444,7 +557,9 @@ void StreamSocket::processUpgradeTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -473,7 +588,7 @@ void StreamSocket::processSendRateTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -502,7 +617,7 @@ void StreamSocket::processSendRateTimer(
                 ntci::Strand::unknown(),
                 self,
                 false,
-                &d_mutex);
+                &d_sendMutex);
         }
     }
 }
@@ -518,7 +633,7 @@ void StreamSocket::processSendDeadlineTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -552,7 +667,7 @@ void StreamSocket::processSendDeadlineTimer(
                               d_proactorStrand_sp,
                               self,
                               false,
-                              &d_mutex);
+                              &d_sendMutex);
         }
     }
 }
@@ -567,7 +682,7 @@ void StreamSocket::processReceiveRateTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -596,7 +711,7 @@ void StreamSocket::processReceiveRateTimer(
                 ntci::Strand::unknown(),
                 self,
                 false,
-                &d_mutex);
+                &d_receiveMutex);
         }
     }
 }
@@ -612,7 +727,7 @@ void StreamSocket::processReceiveDeadlineTimer(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -640,7 +755,7 @@ void StreamSocket::processReceiveDeadlineTimer(
                 d_proactorStrand_sp,
                 self,
                 false,
-                &d_mutex);
+                &d_receiveMutex);
         }
     }
 }
@@ -650,8 +765,10 @@ void StreamSocket::privateEncryptionHandshake(
     const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
     const bsl::string&                                  details)
 {
-    // IMPLEMENTATION NOTE: This function is always called under a lock
-    // during the exection of 'd_encryption->popIncomingCipherText()'.
+    // IMPLEMENTATION NOTE: This function is always called while holding
+    // 'd_mutex', 'd_sendMutex', and 'd_receiveMutex' (from the encrypted
+    // receive completion or from 'privateUpgrade'), so the callback is
+    // deferred.
 
     NTCI_LOG_CONTEXT();
 
@@ -681,7 +798,7 @@ void StreamSocket::privateEncryptionHandshake(
                                      event,
                                      d_proactorStrand_sp,
                                      self,
-                                     false,
+                                     true,
                                      &d_mutex);
         }
     }
@@ -833,6 +950,9 @@ void StreamSocket::privateCompleteConnect(
 
     NTCI_LOG_TRACE("Connection attempt succeeded");
 
+    // Connection establishment runs while holding all three mutexes, so all
+    // announcements and callbacks are deferred.
+
     if (d_session_sp) {
         ntcs::Dispatch::announceConnectComplete(d_session_sp,
                                                 self,
@@ -840,7 +960,7 @@ void StreamSocket::privateCompleteConnect(
                                                 d_sessionStrand_sp,
                                                 ntci::Strand::unknown(),
                                                 self,
-                                                false,
+                                                true,
                                                 &d_mutex);
 
         if (d_openState.value() != ntcs::OpenState::e_CONNECTED) {
@@ -853,7 +973,7 @@ void StreamSocket::privateCompleteConnect(
                                  connectEvent,
                                  d_proactorStrand_sp,
                                  self,
-                                 false,
+                                 true,
                                  &d_mutex);
 
         if (d_openState.value() != ntcs::OpenState::e_CONNECTED) {
@@ -866,7 +986,7 @@ void StreamSocket::privateCompleteConnect(
                                         d_managerStrand_sp,
                                         d_proactorStrand_sp,
                                         self,
-                                        false,
+                                        true,
                                         &d_mutex);
 }
 
@@ -1013,6 +1133,12 @@ void StreamSocket::privateFailConnectComplete(
     bool                                 defer)
 {
     NTCI_LOG_CONTEXT();
+
+    // This cleanup always runs while holding all three mutexes (inline from
+    // 'privateFailConnect' or from the deferred detachment completion), so all
+    // announcements and callbacks are deferred.
+    NTCCFG_WARNING_UNUSED(defer);
+
     if (d_systemHandle != ntsa::k_INVALID_HANDLE) {
         if (d_socket_sp) {
             ntcs::ObserverRef<ntci::Proactor> proactorRef(&d_proactor);
@@ -1045,7 +1171,7 @@ void StreamSocket::privateFailConnectComplete(
                                                 d_sessionStrand_sp,
                                                 ntci::Strand::unknown(),
                                                 self,
-                                                defer,
+                                                true,
                                                 &d_mutex);
     }
 
@@ -1054,7 +1180,7 @@ void StreamSocket::privateFailConnectComplete(
                                  connectEvent,
                                  d_proactorStrand_sp,
                                  self,
-                                 defer,
+                                 true,
                                  &d_mutex);
     }
 
@@ -1119,7 +1245,7 @@ void StreamSocket::privateFailUpgrade(
     this->privateApplyFlowControl(self,
                                   ntca::FlowControlType::e_BOTH,
                                   ntca::FlowControlMode::e_IMMEDIATE,
-                                  false,
+                                  true,
                                   true);
 
     d_flowControlState.close();
@@ -1129,14 +1255,14 @@ void StreamSocket::privateFailUpgrade(
                                  upgradeEvent,
                                  d_proactorStrand_sp,
                                  self,
-                                 false,
+                                 true,
                                  &d_mutex);
     }
 
     this->privateShutdown(self,
                           ntsa::ShutdownType::e_BOTH,
                           ntsa::ShutdownMode::e_IMMEDIATE,
-                          false);
+                          true);
 }
 
 void StreamSocket::privateInitiateReceive(
@@ -1158,7 +1284,12 @@ void StreamSocket::privateInitiateReceive(
 
     ntcs::ObserverRef<ntci::Proactor> proactorRef(&d_proactor);
     if (!proactorRef) {
-        this->privateFailReceive(self, ntsa::Error(ntsa::Error::e_INVALID));
+        // Failing the receive is cross-cutting; this function runs holding only
+        // the receive mutex, so defer the failure to run under all three
+        // mutexes in canonical order.
+        this->execute(NTCCFG_BIND(&StreamSocket::processSocketError,
+                                  self,
+                                  ntsa::Error(ntsa::Error::e_INVALID)));
         return;
     }
 
@@ -1179,51 +1310,31 @@ void StreamSocket::privateInitiateReceive(
     error =
         proactorRef->receive(self, d_receiveBlob_sp.get(), d_receiveOptions);
     if (error) {
-        this->privateFailReceive(self, error);
+        // Failing the receive is cross-cutting; defer it to run under all three
+        // mutexes in canonical order.
+        this->execute(
+            NTCCFG_BIND(&StreamSocket::processSocketError, self, error));
         return;
     }
 
     d_receivePending = true;
 }
 
-void StreamSocket::privateCompleteReceive(
+ntsa::Error StreamSocket::privateCompleteReceive(
     const bsl::shared_ptr<StreamSocket>& self,
     bsl::size_t                          numBytesReceivable,
-    bsl::size_t                          numBytesReceived)
+    bsl::size_t                          numBytesReceived,
+    bool                                 defer)
 {
     NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
 
     if (numBytesReceived == 0) {
-        // Execute the shutdown of the receive buffer asynchronously to allow
-        // pending writes to first complete, otherwise pending writes which
-        // have had their data copied to the socket send buffer but not
-        // announced to be complete by the proactor will be mistakenly
-        // considered by be discarded.
-        //
-        // However, there is no current API to call something like
-        // 'privateShutdownReceive' indicating the peer has initiated the
-        // shutdown while not expected that function to be holding the lock.
-        //
-        // TODO: Resolve this issue.
-        //
-        // this->privateApplyFlowControl(self,
-        //                               ntca::FlowControlType::e_RECEIVE,
-        //                               ntca::FlowControlMode::e_IMMEDIATE,
-        //                               true);
-        //
-        // this->execute(NTCCFG_BIND(
-        //     &StreamSocket::privateShutdownReceive,
-        //     self,
-        //     self,
-        //     ntsa::ShutdownOrigin::e_REMOTE,
-        //     false));
-
-        this->privateShutdownReceive(self,
-                                     ntsa::ShutdownOrigin::e_REMOTE,
-                                     false);
-        return;
+        // The peer has shut down. Return EOF so the caller
+        // ('processSocketReceived') can perform the cross-cutting shutdown of
+        // reception after releasing the receive mutex.
+        return ntsa::Error(ntsa::Error::e_EOF);
     }
 
     d_receiveFeedback.setFeedback(numBytesReceivable, numBytesReceived);
@@ -1257,8 +1368,7 @@ void StreamSocket::privateCompleteReceive(
                                               *d_receiveBlob_sp,
                                               inflateOptions);
         if (NTCCFG_UNLIKELY(error)) {
-            this->privateFailReceive(self, error);
-            return;
+            return error;
         }
 
         bdlbb::BlobUtil::erase(d_receiveBlob_sp.get(),
@@ -1274,8 +1384,7 @@ void StreamSocket::privateCompleteReceive(
 
         error = d_encryption_sp->pushIncomingCipherText(*d_receiveBlob_sp);
         if (NTCCFG_UNLIKELY(error)) {
-            this->privateFailReceive(self, error);
-            return;
+            return error;
         }
 
         bdlbb::BlobUtil::erase(d_receiveBlob_sp.get(),
@@ -1283,7 +1392,7 @@ void StreamSocket::privateCompleteReceive(
                                d_receiveBlob_sp->length());
 
         if (!d_encryption_sp) {
-            return;
+            return ntsa::Error();
         }
 
         if (!d_receiveInflater_sp) {
@@ -1291,8 +1400,7 @@ void StreamSocket::privateCompleteReceive(
                 error = d_encryption_sp->popIncomingPlainText(
                     d_receiveQueue.data().get());
                 if (NTCCFG_UNLIKELY(error)) {
-                    this->privateFailReceive(self, error);
-                    return;
+                    return error;
                 }
             }
 
@@ -1306,7 +1414,7 @@ void StreamSocket::privateCompleteReceive(
                     error = d_encryption_sp->popIncomingLeftovers(
                         d_receiveQueue.data().get());
                     if (NTCCFG_UNLIKELY(error)) {
-                        return;
+                        return ntsa::Error();
                     }
                 }
             }
@@ -1316,8 +1424,7 @@ void StreamSocket::privateCompleteReceive(
             while (NTCCFG_LIKELY(d_encryption_sp->hasIncomingPlainText())) {
                 error = d_encryption_sp->popIncomingPlainText(&plainText);
                 if (NTCCFG_UNLIKELY(error)) {
-                    this->privateFailReceive(self, error);
-                    return;
+                    return error;
                 }
             }
 
@@ -1330,7 +1437,7 @@ void StreamSocket::privateCompleteReceive(
 
                     error = d_encryption_sp->popIncomingLeftovers(&plainText);
                     if (NTCCFG_UNLIKELY(error)) {
-                        return;
+                        return ntsa::Error();
                     }
                 }
             }
@@ -1345,8 +1452,7 @@ void StreamSocket::privateCompleteReceive(
                                                   plainText,
                                                   inflateOptions);
             if (NTCCFG_UNLIKELY(error)) {
-                this->privateFailReceive(self, error);
-                return;
+                return error;
             }
 
             bdlbb::BlobUtil::append(d_receiveQueue.data().get(), inflatedData);
@@ -1448,8 +1554,8 @@ void StreamSocket::privateCompleteReceive(
                                                   receiveEvent,
                                                   d_proactorStrand_sp,
                                                   self,
-                                                  false,
-                                                  &d_mutex);
+                                                  defer,
+                                                  &d_receiveMutex);
     }
 
     if (d_receiveQueue.authorizeLowWatermarkEvent()) {
@@ -1468,8 +1574,8 @@ void StreamSocket::privateCompleteReceive(
                                                           d_sessionStrand_sp,
                                                           d_proactorStrand_sp,
                                                           self,
-                                                          false,
-                                                          &d_mutex);
+                                                          defer,
+                                                          &d_receiveMutex);
         }
     }
 
@@ -1481,7 +1587,7 @@ void StreamSocket::privateCompleteReceive(
         this->privateApplyFlowControl(self,
                                       ntca::FlowControlType::e_RECEIVE,
                                       ntca::FlowControlMode::e_IMMEDIATE,
-                                      false,
+                                      defer,
                                       false);
 
         if (d_session_sp) {
@@ -1495,8 +1601,8 @@ void StreamSocket::privateCompleteReceive(
                                                            d_sessionStrand_sp,
                                                            d_proactorStrand_sp,
                                                            self,
-                                                           false,
-                                                           &d_mutex);
+                                                           defer,
+                                                           &d_receiveMutex);
         }
     }
 
@@ -1517,7 +1623,7 @@ void StreamSocket::privateCompleteReceive(
                         d_sessionStrand_sp,
                         d_proactorStrand_sp,
                         self,
-                        false,
+                        defer,
                         &d_mutex);
                 }
             }
@@ -1537,7 +1643,7 @@ void StreamSocket::privateCompleteReceive(
                                                           d_sessionStrand_sp,
                                                           d_proactorStrand_sp,
                                                           self,
-                                                          false,
+                                                          defer,
                                                           &d_mutex);
             }
         }
@@ -1546,8 +1652,7 @@ void StreamSocket::privateCompleteReceive(
                 if (!d_encryption_sp->isShutdownSent()) {
                     error = d_encryption_sp->shutdown();
                     if (error) {
-                        this->privateFailReceive(self, error);
-                        return;
+                        return error;
                     }
 
                     if (d_session_sp) {
@@ -1564,7 +1669,7 @@ void StreamSocket::privateCompleteReceive(
                             d_sessionStrand_sp,
                             d_proactorStrand_sp,
                             self,
-                            false,
+                            defer,
                             &d_mutex);
                     }
                 }
@@ -1579,8 +1684,7 @@ void StreamSocket::privateCompleteReceive(
                     error =
                         d_encryption_sp->popOutgoingCipherText(&cipherData);
                     if (error) {
-                        this->privateFailReceive(self, error);
-                        return;
+                        return error;
                     }
                 }
 
@@ -1591,8 +1695,7 @@ void StreamSocket::privateCompleteReceive(
                                                  ntca::SendContext(),
                                                  d_sendComplete);
                     if (error) {
-                        this->privateFailReceive(self, error);
-                        return;
+                        return error;
                     }
                 }
             }
@@ -1614,12 +1717,14 @@ void StreamSocket::privateCompleteReceive(
                         d_sessionStrand_sp,
                         d_proactorStrand_sp,
                         self,
-                        false,
+                        defer,
                         &d_mutex);
                 }
             }
         }
     }
+
+    return ntsa::Error();
 }
 
 void StreamSocket::privateFailReceive(
@@ -1710,8 +1815,16 @@ void StreamSocket::privateInitiateSend(
             break;
         }
         else {
+            // A graceful shutdown sentinel has been drained. Shutting down for
+            // sending is cross-cutting; this function runs holding only the
+            // send mutex, so defer the shutdown to run under all three mutexes
+            // in canonical order (via the public 'shutdown', which is a no-op
+            // sentinel push once the write queue is empty).
             d_sendQueue.popEntry();
-            this->privateShutdownSend(self, false);
+            this->execute(NTCCFG_BIND(&StreamSocket::shutdown,
+                                      self,
+                                      ntsa::ShutdownType::e_SEND,
+                                      ntsa::ShutdownMode::e_GRACEFUL));
         }
     }
 }
@@ -1760,7 +1873,7 @@ void StreamSocket::privateCompleteSend(
                           d_proactorStrand_sp,
                           self,
                           false,
-                          &d_mutex);
+                          &d_sendMutex);
     }
 
     if (d_sendQueue.authorizeLowWatermarkEvent()) {
@@ -1780,7 +1893,7 @@ void StreamSocket::privateCompleteSend(
                                                            d_proactorStrand_sp,
                                                            self,
                                                            true,
-                                                           &d_mutex);
+                                                           &d_sendMutex);
         }
     }
 
@@ -1817,7 +1930,7 @@ void StreamSocket::privateFailSend(const bsl::shared_ptr<StreamSocket>& self,
                           d_proactorStrand_sp,
                           self,
                           false,
-                          &d_mutex);
+                          &d_sendMutex);
     }
 }
 
@@ -1837,7 +1950,7 @@ void StreamSocket::privateFail(const bsl::shared_ptr<StreamSocket>& self,
     this->privateApplyFlowControl(self,
                                   ntca::FlowControlType::e_BOTH,
                                   ntca::FlowControlMode::e_IMMEDIATE,
-                                  false,
+                                  true,
                                   true);
 
     d_flowControlState.close();
@@ -1879,7 +1992,7 @@ void StreamSocket::privateFail(const bsl::shared_ptr<StreamSocket>& self,
                                           d_sessionStrand_sp,
                                           d_proactorStrand_sp,
                                           self,
-                                          false,
+                                          true,
                                           &d_mutex);
         }
 
@@ -2433,7 +2546,7 @@ ntsa::Error StreamSocket::privateRelaxFlowControl(
                             ntci::Strand::unknown(),
                             self,
                             defer,
-                            &d_mutex);
+                            &d_sendMutex);
                     }
 
                     this->privateInitiateSend(self);
@@ -2458,7 +2571,7 @@ ntsa::Error StreamSocket::privateRelaxFlowControl(
                             ntci::Strand::unknown(),
                             self,
                             defer,
-                            &d_mutex);
+                            &d_receiveMutex);
                     }
 
                     this->privateInitiateReceive(self);
@@ -2513,7 +2626,7 @@ ntsa::Error StreamSocket::privateApplyFlowControl(
                         ntci::Strand::unknown(),
                         self,
                         defer,
-                        &d_mutex);
+                        &d_sendMutex);
                 }
 
                 // Handled at the completion of the last send.
@@ -2536,7 +2649,7 @@ ntsa::Error StreamSocket::privateApplyFlowControl(
                         ntci::Strand::unknown(),
                         self,
                         defer,
-                        &d_mutex);
+                        &d_receiveMutex);
                 }
 
                 // Handled at the completion of the last receive.
@@ -2575,7 +2688,7 @@ bool StreamSocket::privateCloseFlowControl(
                         ntci::Strand::unknown(),
                         self,
                         defer,
-                        &d_mutex);
+                        &d_sendMutex);
                 }
             }
         }
@@ -2596,7 +2709,7 @@ bool StreamSocket::privateCloseFlowControl(
                         ntci::Strand::unknown(),
                         self,
                         defer,
-                        &d_mutex);
+                        &d_receiveMutex);
                 }
             }
         }
@@ -2637,7 +2750,7 @@ ntsa::Error StreamSocket::privateThrottleSendBuffer(
             this->privateApplyFlowControl(self,
                                           ntca::FlowControlType::e_SEND,
                                           ntca::FlowControlMode::e_IMMEDIATE,
-                                          false,
+                                          true,
                                           true);
 
             if (!d_shutdownState.canSend()) {
@@ -2705,7 +2818,7 @@ ntsa::Error StreamSocket::privateThrottleReceiveBuffer(
             this->privateApplyFlowControl(self,
                                           ntca::FlowControlType::e_RECEIVE,
                                           ntca::FlowControlMode::e_IMMEDIATE,
-                                          false,
+                                          true,
                                           true);
 
             if (!d_shutdownState.canReceive()) {
@@ -2924,14 +3037,14 @@ ntsa::Error StreamSocket::privateSendEncrypted(
         sendEvent.setType(ntca::SendEventType::e_COMPLETE);
         sendEvent.setContext(setting);
 
-        const bool defer = !options.recurse();
-
+        // The encrypted send path holds both 'd_mutex' and 'd_sendMutex', so
+        // the completion callback is always deferred.
         callback.dispatch(self,
                           sendEvent,
                           ntci::Strand::unknown(),
                           self,
-                          defer,
-                          &d_mutex);
+                          true,
+                          &d_sendMutex);
     }
 
     return ntsa::Error();
@@ -2972,14 +3085,14 @@ ntsa::Error StreamSocket::privateSendEncrypted(
         sendEvent.setType(ntca::SendEventType::e_COMPLETE);
         sendEvent.setContext(setting);
 
-        const bool defer = !options.recurse();
-
+        // The encrypted send path holds both 'd_mutex' and 'd_sendMutex', so
+        // the completion callback is always deferred.
         callback.dispatch(self,
                           sendEvent,
                           ntci::Strand::unknown(),
                           self,
-                          defer,
-                          &d_mutex);
+                          true,
+                          &d_sendMutex);
     }
 
     return ntsa::Error();
@@ -3367,7 +3480,9 @@ void StreamSocket::processRemoteEndpointResolution(
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     if (NTCCFG_UNLIKELY(d_detachState.mode() == ntcs::DetachMode::e_INITIATED))
     {
@@ -3469,7 +3584,7 @@ void StreamSocket::processRemoteEndpointResolution(
                                                  d_sessionStrand_sp,
                                                  ntci::Strand::unknown(),
                                                  self,
-                                                 false,
+                                                 true,
                                                  &d_mutex);
 
         if (NTCCFG_UNLIKELY(d_detachState.mode() ==
@@ -3973,7 +4088,7 @@ ntsa::Error StreamSocket::privateRetryConnectToEndpoint(
                                                  d_sessionStrand_sp,
                                                  ntci::Strand::unknown(),
                                                  self,
-                                                 false,
+                                                 true,
                                                  &d_mutex);
     }
 
@@ -4026,6 +4141,8 @@ StreamSocket::StreamSocket(
     bslma::Allocator*                          basicAllocator)
 : d_object("ntcp::StreamSocket")
 , d_mutex()
+, d_sendMutex()
+, d_receiveMutex()
 , d_transport(ntsa::Transport::e_UNDEFINED)
 , d_systemHandle(ntsa::k_INVALID_HANDLE)
 , d_systemSourceEndpoint()
@@ -4656,7 +4773,9 @@ ntsa::Error StreamSocket::upgrade(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -4814,8 +4933,29 @@ ntsa::Error StreamSocket::send(const bdlbb::Blob&        data,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    // Fast path: an unencrypted send only needs the send mutex. The encryption
+    // object is co-guarded and may be examined under the send mutex; if it is
+    // present, escalate to also holding the state mutex (in canonical order),
+    // since the encrypted send path operates on the shared encryption object.
 
+    {
+        LockGuard sendLock(&d_sendMutex);
+        if (NTCCFG_LIKELY(!d_encryption_sp)) {
+            return this->privateSend(self, data, options, callback);
+        }
+    }
+
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    return this->privateSend(self, data, options, callback);
+}
+
+ntsa::Error StreamSocket::privateSend(
+    const bsl::shared_ptr<StreamSocket>& self,
+    const bdlbb::Blob&                   data,
+    const ntca::SendOptions&             options,
+    const ntci::SendCallback&            callback)
+{
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -4854,7 +4994,7 @@ ntsa::Error StreamSocket::send(const bdlbb::Blob&        data,
                     ntci::Strand::unknown(),
                     self,
                     true,
-                    &d_mutex);
+                    &d_sendMutex);
             }
         }
 
@@ -4934,8 +5074,27 @@ ntsa::Error StreamSocket::send(const ntsa::Data&         data,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    // Fast path: an unencrypted send only needs the send mutex; escalate to
+    // also hold the state mutex (in canonical order) only when encrypted.
 
+    {
+        LockGuard sendLock(&d_sendMutex);
+        if (NTCCFG_LIKELY(!d_encryption_sp)) {
+            return this->privateSend(self, data, options, callback);
+        }
+    }
+
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    return this->privateSend(self, data, options, callback);
+}
+
+ntsa::Error StreamSocket::privateSend(
+    const bsl::shared_ptr<StreamSocket>& self,
+    const ntsa::Data&                    data,
+    const ntca::SendOptions&             options,
+    const ntci::SendCallback&            callback)
+{
     NTCI_LOG_CONTEXT();
 
     NTCI_LOG_CONTEXT_GUARD_DESCRIPTOR(d_publicHandle);
@@ -4974,7 +5133,7 @@ ntsa::Error StreamSocket::send(const ntsa::Data&         data,
                     ntci::Strand::unknown(),
                     self,
                     true,
-                    &d_mutex);
+                    &d_sendMutex);
             }
         }
 
@@ -5045,7 +5204,7 @@ ntsa::Error StreamSocket::receive(ntca::ReceiveContext*       context,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5167,7 +5326,7 @@ ntsa::Error StreamSocket::receive(const ntca::ReceiveOptions&  options,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5269,7 +5428,7 @@ ntsa::Error StreamSocket::receive(const ntca::ReceiveOptions&  options,
                                                   ntci::Strand::unknown(),
                                                   self,
                                                   defer,
-                                                  &d_mutex);
+                                                  &d_receiveMutex);
 
         bool receiveQueueHighWatermarkViolatedAfter =
             d_receiveQueue.isHighWatermarkViolated();
@@ -5348,7 +5507,9 @@ ntsa::Error StreamSocket::registerManager(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     if (manager) {
         d_manager_sp       = manager;
@@ -5368,7 +5529,9 @@ ntsa::Error StreamSocket::registerManager(
 
 ntsa::Error StreamSocket::deregisterManager()
 {
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     d_manager_sp.reset();
     d_managerStrand_sp.reset();
@@ -5381,7 +5544,9 @@ ntsa::Error StreamSocket::registerSession(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     if (session) {
         d_session_sp       = session;
@@ -5411,7 +5576,9 @@ ntsa::Error StreamSocket::registerSessionCallback(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     if (callback) {
         bsl::shared_ptr<ntcu::StreamSocketSession> session;
@@ -5448,7 +5615,9 @@ ntsa::Error StreamSocket::registerSessionCallback(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     if (callback) {
         bsl::shared_ptr<ntcu::StreamSocketSession> session;
@@ -5478,7 +5647,9 @@ ntsa::Error StreamSocket::registerSessionCallback(
 
 ntsa::Error StreamSocket::deregisterSession()
 {
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     d_session_sp.reset();
     d_sessionStrand_sp.reset();
@@ -5497,7 +5668,7 @@ ntsa::Error StreamSocket::setConnectRateLimiter(
 ntsa::Error StreamSocket::setWriteDeflater(
     const bsl::shared_ptr<ntci::Compression>& compression)
 {
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
 
     d_sendDeflater_sp = compression;
 
@@ -5509,7 +5680,7 @@ ntsa::Error StreamSocket::setWriteRateLimiter(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5538,7 +5709,7 @@ ntsa::Error StreamSocket::setWriteQueueLowWatermark(bsl::size_t lowWatermark)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5577,7 +5748,7 @@ ntsa::Error StreamSocket::setWriteQueueHighWatermark(bsl::size_t highWatermark)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5617,7 +5788,7 @@ ntsa::Error StreamSocket::setWriteQueueWatermarks(bsl::size_t lowWatermark,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5678,7 +5849,7 @@ ntsa::Error StreamSocket::setWriteQueueWatermarks(bsl::size_t lowWatermark,
 ntsa::Error StreamSocket::setReadInflater(
     const bsl::shared_ptr<ntci::Compression>& compression)
 {
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
 
     d_receiveInflater_sp = compression;
 
@@ -5690,7 +5861,7 @@ ntsa::Error StreamSocket::setReadRateLimiter(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5719,7 +5890,7 @@ ntsa::Error StreamSocket::setReadQueueLowWatermark(bsl::size_t lowWatermark)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5760,7 +5931,7 @@ ntsa::Error StreamSocket::setReadQueueHighWatermark(bsl::size_t highWatermark)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5786,7 +5957,7 @@ ntsa::Error StreamSocket::setReadQueueWatermarks(bsl::size_t lowWatermark,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5820,7 +5991,9 @@ ntsa::Error StreamSocket::relaxFlowControl(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5837,7 +6010,9 @@ ntsa::Error StreamSocket::applyFlowControl(
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5879,7 +6054,9 @@ ntsa::Error StreamSocket::cancel(const ntca::ConnectToken& token)
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5905,7 +6082,9 @@ ntsa::Error StreamSocket::cancel(const ntca::UpgradeToken& token)
 
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -5954,7 +6133,7 @@ ntsa::Error StreamSocket::cancel(const ntca::SendToken& token)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -6000,7 +6179,7 @@ ntsa::Error StreamSocket::cancel(const ntca::ReceiveToken& token)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -6041,7 +6220,9 @@ ntsa::Error StreamSocket::downgrade()
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     return this->privateDowngrade(self, ntca::DowngradeOptions());
 }
@@ -6050,7 +6231,9 @@ ntsa::Error StreamSocket::downgrade(const ntca::DowngradeOptions& options)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     if (options.abortive().isNull() || !options.abortive().value()) {
         return this->privateDowngrade(self, options);
@@ -6065,7 +6248,9 @@ ntsa::Error StreamSocket::shutdown(ntsa::ShutdownType::Value direction,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     NTCI_LOG_CONTEXT();
 
@@ -6114,7 +6299,9 @@ ntsa::Error StreamSocket::release(ntsa::Handle*              result,
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     *result = ntsa::k_INVALID_HANDLE;
 
@@ -6150,7 +6337,9 @@ void StreamSocket::close(const ntci::CloseCallback& callback)
 {
     bsl::shared_ptr<StreamSocket> self = this->getSelf(this);
 
-    LockGuard lock(&d_mutex);
+    LockGuard stateLock(&d_mutex);
+    LockGuard sendLock(&d_sendMutex);
+    LockGuard receiveLock(&d_receiveMutex);
 
     this->privateClose(self, callback);
 }
@@ -6353,37 +6542,37 @@ bsl::size_t StreamSocket::threadIndex() const
 
 bsl::size_t StreamSocket::readQueueSize() const
 {
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
     return d_receiveQueue.size();
 }
 
 bsl::size_t StreamSocket::readQueueLowWatermark() const
 {
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
     return d_receiveQueue.lowWatermark();
 }
 
 bsl::size_t StreamSocket::readQueueHighWatermark() const
 {
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_receiveMutex);
     return d_receiveQueue.highWatermark();
 }
 
 bsl::size_t StreamSocket::writeQueueSize() const
 {
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
     return d_sendQueue.size();
 }
 
 bsl::size_t StreamSocket::writeQueueLowWatermark() const
 {
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
     return d_sendQueue.lowWatermark();
 }
 
 bsl::size_t StreamSocket::writeQueueHighWatermark() const
 {
-    LockGuard lock(&d_mutex);
+    LockGuard lock(&d_sendMutex);
     return d_sendQueue.highWatermark();
 }
 
@@ -6439,23 +6628,28 @@ void StreamSocket::getInfo(ntsa::SocketInfo* result) const
     d_publicRemoteEndpoint.load(&remoteEndpoint);
 
     {
-        LockGuard lock(&d_mutex);
+        LockGuard sendLock(&d_sendMutex);
+        sendQueueSize = d_sendQueue.size();
+    }
 
-        sendQueueSize    = d_sendQueue.size();
+    {
+        LockGuard receiveLock(&d_receiveMutex);
         receiveQueueSize = d_receiveQueue.size();
+    }
 
-        if (d_shutdownState.completed()) {
-            socketState = ntsa::SocketState::e_CLOSED;
-        }
-        else if (d_shutdownState.initiated()) {
-            socketState = ntsa::SocketState::e_CLOSING;
-        }
-        else if (d_connectInProgress) {
-            socketState = ntsa::SocketState::e_SYN_SENT;
-        }
-        else {
-            socketState = ntsa::SocketState::e_ESTABLISHED;
-        }
+    // The shutdown and connect predicates are atomic and read without a lock.
+
+    if (d_shutdownState.completed()) {
+        socketState = ntsa::SocketState::e_CLOSED;
+    }
+    else if (d_shutdownState.initiated()) {
+        socketState = ntsa::SocketState::e_CLOSING;
+    }
+    else if (d_connectInProgress) {
+        socketState = ntsa::SocketState::e_SYN_SENT;
+    }
+    else {
+        socketState = ntsa::SocketState::e_ESTABLISHED;
     }
 
     ntcs::ObserverRef<ntci::Proactor> proactorRef(&d_proactor);
