@@ -151,6 +151,7 @@ DistinguishedName& DistinguishedName::operator=(const DistinguishedName& other)
 {
     if (this != &other) {
         d_componentList = other.d_componentList;
+        d_componentMap.clear();
         for (ComponentList::iterator it = d_componentList.begin();
              it != d_componentList.end();
              ++it)
