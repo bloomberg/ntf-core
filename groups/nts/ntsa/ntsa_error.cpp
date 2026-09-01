@@ -316,7 +316,7 @@ bsl::ostream& Error::Impl::printErrorString(bsl::ostream&       stream,
         return stream << "Text file busy (ETXTBSY)";
 #if (EWOULDBLOCK != EAGAIN)
     case EWOULDBLOCK:
-        stream << "Operation would block (EWOULDBLOCK)";
+        return stream << "Operation would block (EWOULDBLOCK)";
 #endif
     case EXDEV:
         return stream << "Cross-device link (EXDEV)";
