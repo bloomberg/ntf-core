@@ -3351,7 +3351,7 @@ bool Uri::isLocalhost() const
                     return host.ip().v4().isLoopback();
                 }
                 else if (host.ip().isV6()) {
-                    return host.ip().v4().isLoopback();
+                    return host.ip().v6().isLoopback();
                 }
                 else {
                     return false;
