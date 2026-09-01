@@ -1910,7 +1910,7 @@ void Session::update()
                         error);
                 }
             }
-            d_errorActive = true;
+            d_errorActive = false;
         }
     }
 
