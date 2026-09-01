@@ -1345,7 +1345,8 @@ ntsa::Error ListenerSocket::privateOpen(
         }
     }
     else {
-        ntsf::System::createListenerSocket(handle, d_allocator_p);
+        listenerSocket = ntsf::System::createListenerSocket(handle,
+                                                            d_allocator_p);
     }
 
     error = this->privateOpen(self, transport, listenerSocket);
