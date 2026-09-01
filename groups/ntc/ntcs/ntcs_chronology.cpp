@@ -1441,7 +1441,10 @@ void Chronology::execute(const ntci::Executor::Functor& functor)
 
         bool wasEmpty = d_functorQueue.empty();
         if (wasEmpty) {
-            d_functorQueue.reserve(8 * 1024);
+            const size_t MIN_CAPACITY = 2 * 1024;
+            BSLS_ASSERT(MIN_CAPACITY * sizeof(FunctorQueue::value_type) <
+                        d_functorQueuePool.maxPooledBlockSize());
+            d_functorQueue.reserve(MIN_CAPACITY);
         }
         d_functorQueue.push_back(functor);
 
