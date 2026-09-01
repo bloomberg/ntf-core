@@ -7863,7 +7863,7 @@ int AbstractInteger::compare(const AbstractInteger& other) const
         result = +1;
     }
     else {
-        result = d_magnitude.compare(other.d_magnitude);
+        result = d_sign * d_magnitude.compare(other.d_magnitude);
     }
 
     return result;
