@@ -1270,7 +1270,7 @@ ntsa::Error ClientNameServer::createDatagramSocket()
 
     error = datagramSocket->registerSession(self);
     if (error) {
-        d_datagramSocket_sp->close();
+        datagramSocket->close();
         return error;
     }
 
