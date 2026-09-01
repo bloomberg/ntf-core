@@ -351,7 +351,7 @@ void Metrics::logRxDelayInHardware(const bsls::TimeInterval& rxDelayInHardware)
         static_cast<double>(rxDelayInHardware.totalMicroseconds()));
 
     if (d_parent_sp) {
-        d_parent_sp->logRxDelay(rxDelayInHardware);
+        d_parent_sp->logRxDelayInHardware(rxDelayInHardware);
     }
 }
 
