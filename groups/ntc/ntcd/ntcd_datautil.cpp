@@ -52,7 +52,7 @@ void DataUtil::generateData(bsl::string* result,
     result->clear();
     result->resize(size);
 
-    for (bsl::size_t i = offset; i < offset + size; ++i) {
+    for (bsl::size_t i = offset; i < size; ++i) {
         (*result)[i] = generateByte(offset + i, dataset);
     }
 }
