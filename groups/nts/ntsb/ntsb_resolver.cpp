@@ -580,7 +580,7 @@ Resolver::Resolver(const ntsa::ResolverConfig& configuration,
 : d_overrides(basicAllocator)
 , d_overridesExist(false)
 , d_overridesEnabled(configuration.overridesEnabled().valueOr(true))
-, d_systemEnabled(configuration.overridesEnabled().valueOr(true))
+, d_systemEnabled(configuration.systemEnabled().valueOr(true))
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
