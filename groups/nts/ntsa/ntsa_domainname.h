@@ -98,8 +98,8 @@ class DomainName
   private:
     enum { BUFFER_SIZE = 256 };
 
-    char          d_buffer[BUFFER_SIZE];
     bsl::uint32_t d_size;
+    char          d_buffer[BUFFER_SIZE];
 
     // Provide a private implementation.
     class Impl;
