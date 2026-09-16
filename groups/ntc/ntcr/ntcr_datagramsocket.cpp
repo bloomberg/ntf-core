@@ -3910,6 +3910,9 @@ ntsa::Error DatagramSocket::receive(ntca::ReceiveContext*       context,
         if (!entry.endpoint().isNull()) {
             context->setEndpoint(entry.endpoint().value());
         }
+        if (entry.foreignHandle().has_value()) {
+            context->setForeignHandle(entry.foreignHandle().value());
+        }
         *data = *entry.data();
 
         NTCS_METRICS_UPDATE_READ_QUEUE_DELAY(entry.delay());
@@ -4039,6 +4042,9 @@ ntsa::Error DatagramSocket::receive(const ntca::ReceiveOptions&  options,
         }
         else {
             receiveContext.setEndpoint(d_systemRemoteEndpoint);
+        }
+        if (entry.foreignHandle().has_value()) {
+            receiveContext.setForeignHandle(entry.foreignHandle().value());
         }
 
         ntca::ReceiveEvent receiveEvent;
