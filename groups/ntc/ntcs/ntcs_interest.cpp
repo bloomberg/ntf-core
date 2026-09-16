@@ -40,52 +40,30 @@ bsl::ostream& Interest::print(bsl::ostream& stream,
     NTCCFG_WARNING_UNUSED(level);
     NTCCFG_WARNING_UNUSED(spacesPerLevel);
 
-    bool empty = true;
-
     if (d_value == 0) {
         stream << "(none)";
         return stream;
     }
 
-    if ((d_value & e_READABLE) != 0) {
-        if (empty) {
-            stream << ' ';
-        }
-        stream << "READABLE";
-        empty = false;
+    int num = 0;
+
+#define NTCS_CHECK_PRINT(FLAG, STR)                                           \
+    if ((d_value & (FLAG)) != 0) {                                            \
+        if (num > 0) {                                                        \
+            stream << ' ';                                                    \
+        }                                                                     \
+        stream << (STR);                                                      \
+        ++num;                                                                \
     }
 
-    if ((d_value & e_WRITABLE) != 0) {
-        if (empty) {
-            stream << ' ';
-        }
-        stream << "WRITABLE";
-        empty = false;
-    }
+    NTCS_CHECK_PRINT(e_READABLE, "READABLE");
+    NTCS_CHECK_PRINT(e_WRITABLE, "WRITABLE");
+    NTCS_CHECK_PRINT(e_ERROR, "ERROR");
+    NTCS_CHECK_PRINT(e_EDGE, "EDGE");
+    NTCS_CHECK_PRINT(e_ONE_SHOT, "ONESHOT");
+    NTCS_CHECK_PRINT(e_NOTIFICATION, "NOTIFICATION");
 
-    if ((d_value & e_EDGE) != 0) {
-        if (empty) {
-            stream << ' ';
-        }
-        stream << "EDGE";
-        empty = false;
-    }
-
-    if ((d_value & e_ONE_SHOT) != 0) {
-        if (empty) {
-            stream << ' ';
-        }
-        stream << "ONESHOT";
-        empty = false;
-    }
-
-    if ((d_value & e_NOTIFICATION) != 0) {
-        if (empty) {
-            stream << ' ';
-        }
-        stream << "NOTIFICATION";
-        empty = false;
-    }
+#undef NTCS_CHECK_PRINT
 
     return stream;
 }
