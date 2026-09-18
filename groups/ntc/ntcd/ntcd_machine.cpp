@@ -5714,7 +5714,7 @@ ntsa::Error Machine::releaseBinding(const ntcd::Binding&   binding,
             return ntsa::Error(ntsa::Error::e_INVALID);
         }
 
-        d_sessionByTcpBindingMap.erase(it);
+        d_sessionByUdpBindingMap.erase(it);
     }
     else if (protocol == ntsa::TransportProtocol::e_LOCAL) {
         SessionByBindingMap::iterator it =
