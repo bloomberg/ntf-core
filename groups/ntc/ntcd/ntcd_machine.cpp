@@ -809,11 +809,10 @@ ntsa::Error Packet::dequeueData(ntsa::ReceiveContext*       context,
 
     context->reset();
 
-    bsl::size_t position = data->size();
+    const bsl::size_t position = data->size();
 
     bsl::size_t numBytesReceivable = data->capacity() - data->size();
     if (numBytesReceivable == 0) {
-        data->resize(d_data.length());
         numBytesReceivable = d_data.length();
     }
 
@@ -824,6 +823,8 @@ ntsa::Error Packet::dequeueData(ntsa::ReceiveContext*       context,
         numBytesToCopy = numBytesReceivable;
     }
 
+    data->resize(position + numBytesToCopy);
+
     bdlbb::BlobUtil::copy(data->data() + position,
                           d_data,
                           0,
@@ -832,8 +833,6 @@ ntsa::Error Packet::dequeueData(ntsa::ReceiveContext*       context,
     bdlbb::BlobUtil::erase(&d_data,
                            0,
                            NTCCFG_WARNING_NARROW(int, numBytesToCopy));
-
-    data->resize(position + numBytesToCopy);
 
     context->setEndpoint(d_sourceEndpoint);
     context->setBytesReceived(numBytesToCopy);

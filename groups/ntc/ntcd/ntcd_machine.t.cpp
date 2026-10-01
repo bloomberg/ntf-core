@@ -92,6 +92,10 @@ class MachineTest
 
     // Concern: Sending and receiving data larger than socket buffer sizes.
     static void verifySendBufferOverflow();
+
+    // Concern: Receiving into an 'ntsa::Data' that represents a string
+    // having spare capacity loads the bytes that were sent.
+    static void verifyReceiveIntoString();
 };
 
 NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyOpen)
@@ -4317,6 +4321,130 @@ NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifySendBufferOverflow)
     machine->stop();
 
 #endif
+}
+
+NTSCFG_TEST_FUNCTION(ntcd::MachineTest::verifyReceiveIntoString)
+{
+    NTCI_LOG_CONTEXT();
+    NTCI_LOG_CONTEXT_GUARD_OWNER("main");
+
+    ntsa::Error error;
+
+    // Create a machine.
+
+    bsl::shared_ptr<ntcd::Machine> machine;
+    machine.createInplace(NTSCFG_TEST_ALLOCATOR, NTSCFG_TEST_ALLOCATOR);
+
+    // Create a client.
+
+    bsl::shared_ptr<ntcd::Session> client =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the client as an IPv4 datagram socket.
+
+    error = client->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the client to any port on the IPv4 loopback address.
+
+    error = client->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the client.
+
+    ntsa::Endpoint clientSourceEndpoint;
+    error = client->sourceEndpoint(&clientSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Create a server.
+
+    bsl::shared_ptr<ntcd::Session> server =
+        machine->createSession(NTSCFG_TEST_ALLOCATOR);
+
+    // Open the server as an IPv4 datagram socket.
+
+    error = server->open(ntsa::Transport::e_UDP_IPV4_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    // Bind the server to any port on the IPv4 loopback address.
+
+    error = server->bind(
+        ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::loopback(), 0)),
+        false);
+    NTSCFG_TEST_OK(error);
+
+    // Get the source endpoint of the server.
+
+    ntsa::Endpoint serverSourceEndpoint;
+    error = server->sourceEndpoint(&serverSourceEndpoint);
+    NTSCFG_TEST_OK(error);
+
+    // Send data from the client to the server.
+
+    const bsl::string CLIENT_DATA = "HELLOWORLD";
+
+    {
+        ntsa::Data data(
+            ntsa::ConstBuffer(CLIENT_DATA.data(), CLIENT_DATA.size()));
+
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        options.setEndpoint(serverSourceEndpoint);
+
+        error = client->send(&context, data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesSent(), CLIENT_DATA.size());
+    }
+
+    // Advance the simulation.
+
+    error = machine->step(false);
+    NTSCFG_TEST_OK(error);
+
+    // Receive data at the server into a string that is empty but has spare
+    // capacity, i.e. the destination of the received bytes is the region
+    // between the size and the capacity of the string.
+
+    {
+        ntsa::Data data(NTSCFG_TEST_ALLOCATOR);
+
+        bsl::string& remoteData = data.makeString();
+        remoteData.reserve(64);
+
+        NTSCFG_TEST_EQ(remoteData.size(), 0);
+        NTSCFG_TEST_GE(remoteData.capacity(), CLIENT_DATA.size());
+
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+
+        error = server->receive(&context, &data, options);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(context.bytesReceived(), CLIENT_DATA.size());
+
+        // Ensure the string is the data that was sent, and not, say, the
+        // null bytes written by growing the string after the copy.
+
+        NTSCFG_TEST_EQ(remoteData.size(), CLIENT_DATA.size());
+        NTSCFG_TEST_EQ(remoteData, CLIENT_DATA);
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+        NTSCFG_TEST_EQ(context.endpoint().value(), clientSourceEndpoint);
+    }
+
+    // Close the client.
+
+    error = client->close();
+    NTSCFG_TEST_OK(error);
+
+    // Close the server.
+
+    error = server->close();
+    NTSCFG_TEST_OK(error);
 }
 
 }  // close namespace ntcd
