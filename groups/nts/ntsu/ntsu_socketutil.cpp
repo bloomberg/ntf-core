@@ -937,11 +937,28 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
             const bsl::size_t pathOffset =
                 offsetof(struct sockaddr_un, sun_path);
 
-            if (socketAddressSize == pathOffset) {
+            const bsl::size_t addressSize =
+                static_cast<bsl::size_t>(socketAddressSize);
+
+            if (addressSize <= pathOffset) {
                 localName->setUnnamed();
             }
             else {
+                // The address length reported by the socket API is the
+                // authoritative extent of 'sun_path': the field is not
+                // guaranteed to be null-terminated (abstract names never are,
+                // and a peer may supply a truncated or unterminated path).
+                // Bound the scan by that length, clamped to the capacity of
+                // the field itself, so the scan never reads bytes outside the
+                // address.
+
+                bsl::size_t pathSize = addressSize - pathOffset;
+                if (pathSize > sizeof(socketAddressLocal->sun_path)) {
+                    pathSize = sizeof(socketAddressLocal->sun_path);
+                }
+
                 const char* begin = socketAddressLocal->sun_path;
+                const char* limit = begin + pathSize;
 
                 if (*begin == 0) {
                     localName->setAbstract();
@@ -949,7 +966,7 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
                 }
 
                 const char* end = begin;
-                while (*end != 0) {
+                while (end != limit && *end != 0) {
                     ++end;
                 }
 
@@ -957,7 +974,11 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
                     localName->setUnnamed();
                 }
                 else {
-                    localName->setValue(bslstl::StringRef(begin, end));
+                    ntsa::Error error =
+                        localName->setValue(bslstl::StringRef(begin, end));
+                    if (error) {
+                        return error;
+                    }
                 }
             }
         }
