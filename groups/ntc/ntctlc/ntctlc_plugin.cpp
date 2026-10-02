@@ -377,12 +377,6 @@ class Lz4 : public ntci::Compression
 /// @ingroup module_ntctlc
 class Zstd : public ntci::Compression
 {
-    /// The base-2 logarithm of the maximum window size used by the deflater
-    /// and accepted by the inflater. This bounds the memory the inflater
-    /// allocates for a frame, regardless of the window size the frame
-    /// declares.
-    static const int k_WINDOW_LOG_MAX = 23;
-
     ZSTD_CCtx*                      d_deflaterContext_p;
     ZSTD_inBuffer                   d_deflaterInput;
     ZSTD_outBuffer                  d_deflaterOutput;
@@ -1783,24 +1777,6 @@ ntsa::Error Zstd::deflateCreate()
         return Zstd::translateError(rc, "set checksum flag");
     }
 
-    // Limit the window size to that accepted by the inflater, so that every
-    // frame produced by the deflater may be inflated, but do not increase
-    // the window size beyond the default for the compression level.
-
-    const ZSTD_compressionParameters compressionParameters =
-        ZSTD_getCParams(d_level, ZSTD_CONTENTSIZE_UNKNOWN, 0);
-
-    if (compressionParameters.windowLog >
-        static_cast<unsigned int>(k_WINDOW_LOG_MAX))
-    {
-        rc = ZSTD_CCtx_setParameter(d_deflaterContext_p,
-                                    ZSTD_c_windowLog,
-                                    k_WINDOW_LOG_MAX);
-        if (ZSTD_isError(rc)) {
-            return Zstd::translateError(rc, "set window log");
-        }
-    }
-
     bsl::memset(&d_deflaterInput, 0, sizeof d_deflaterInput);
     bsl::memset(&d_deflaterOutput, 0, sizeof d_deflaterOutput);
 
@@ -2093,16 +2069,6 @@ ntsa::Error Zstd::inflateCreate()
     }
 
 #endif
-
-    // Reject frames whose declared window size exceeds the maximum, which
-    // bounds the memory allocated to inflate each frame.
-
-    bsl::size_t rc = ZSTD_DCtx_setParameter(d_inflaterContext_p,
-                                            ZSTD_d_windowLogMax,
-                                            k_WINDOW_LOG_MAX);
-    if (ZSTD_isError(rc)) {
-        return Zstd::translateError(rc, "set maximum window log");
-    }
 
     bsl::memset(&d_inflaterInput, 0, sizeof d_inflaterInput);
     bsl::memset(&d_inflaterOutput, 0, sizeof d_inflaterOutput);

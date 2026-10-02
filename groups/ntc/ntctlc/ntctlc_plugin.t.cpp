@@ -71,11 +71,6 @@ class PluginTest
     // the failure such that subsequent, well-formed input is inflated.
     static void verifyMalformed();
 
-    // Verify the zstd inflater rejects frames whose declared window size
-    // exceeds the maximum, and that the zstd deflater never produces such
-    // frames.
-    static void verifyZstdWindow();
-
   private:
     /// Verify the integrity of inflating and deflating a data stream
     /// according to the specified 'parameters'.
@@ -1398,114 +1393,6 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyMalformed)
     for (bsl::size_t i = 0; i < typeVector.size(); ++i) {
         PluginTest::verifyMalformedForType(typeVector[i]);
     }
-}
-
-NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyZstdWindow)
-{
-#if NTC_BUILD_WITH_ZSTD
-
-    ntsa::Error error;
-
-    bsl::shared_ptr<ntci::DataPool> dataPool = PluginTest::createDataPool();
-
-    ntca::CompressionConfig config;
-    config.setType(ntca::CompressionType::e_ZSTD);
-    config.setGoal(ntca::CompressionGoal::e_BALANCED);
-
-    bsl::shared_ptr<ntci::Compression> compression =
-        PluginTest::createCompression(config, dataPool);
-
-    // A frame having no content size, declaring a window of the specified
-    // size, containing a single, last, raw block of the single byte 'x'.
-
-    const unsigned char k_FRAME_WINDOW_2_24[] =
-        {0x28, 0xB5, 0x2F, 0xFD, 0x00, 0x70, 0x09, 0x00, 0x00, 'x'};
-
-    const unsigned char k_FRAME_WINDOW_2_23[] =
-        {0x28, 0xB5, 0x2F, 0xFD, 0x00, 0x68, 0x09, 0x00, 0x00, 'x'};
-
-    // Concern: a frame declaring a window larger than the maximum is
-    // rejected.
-
-    {
-        bsl::shared_ptr<bdlbb::Blob> frame = dataPool->createIncomingBlob();
-        bdlbb::BlobUtil::append(frame.get(),
-                                reinterpret_cast<const char*>(
-                                    k_FRAME_WINDOW_2_24),
-                                sizeof k_FRAME_WINDOW_2_24);
-
-        bsl::shared_ptr<bdlbb::Blob> inflated = dataPool->createIncomingBlob();
-
-        error = PluginTest::inflate(compression, inflated.get(), *frame);
-        NTSCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
-
-        NTSCFG_TEST_EQ(inflated->length(), 0);
-    }
-
-    // Concern: a frame declaring a window equal to the maximum is accepted.
-
-    {
-        bsl::shared_ptr<bdlbb::Blob> frame = dataPool->createIncomingBlob();
-        bdlbb::BlobUtil::append(frame.get(),
-                                reinterpret_cast<const char*>(
-                                    k_FRAME_WINDOW_2_23),
-                                sizeof k_FRAME_WINDOW_2_23);
-
-        bsl::shared_ptr<bdlbb::Blob> inflated = dataPool->createIncomingBlob();
-
-        error = PluginTest::inflate(compression, inflated.get(), *frame);
-        NTSCFG_TEST_OK(error);
-
-        bsl::shared_ptr<bdlbb::Blob> expected = dataPool->createIncomingBlob();
-        bdlbb::BlobUtil::append(expected.get(), "x", 1);
-
-        NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*inflated, *expected), 0);
-    }
-
-    // Concern: frames produced by the deflater at every compression goal,
-    // including those whose default window exceeds the maximum, may be
-    // inflated.
-
-    {
-        bsl::shared_ptr<bdlbb::Blob> original = dataPool->createIncomingBlob();
-        ntscfg::TestDataUtil::generateData(
-            original.get(),
-            64 * 1024,
-            0,
-            ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
-
-        const ntca::CompressionGoal::Value k_GOAL[] = {
-            ntca::CompressionGoal::e_BEST_SIZE,
-            ntca::CompressionGoal::e_BETTER_SIZE,
-            ntca::CompressionGoal::e_BALANCED,
-            ntca::CompressionGoal::e_BETTER_SPEED,
-            ntca::CompressionGoal::e_BEST_SPEED};
-
-        for (bsl::size_t i = 0; i < sizeof k_GOAL / sizeof k_GOAL[0]; ++i) {
-            ntca::CompressionConfig deflaterConfig;
-            deflaterConfig.setType(ntca::CompressionType::e_ZSTD);
-            deflaterConfig.setGoal(k_GOAL[i]);
-
-            bsl::shared_ptr<ntci::Compression> deflater =
-                PluginTest::createCompression(deflaterConfig, dataPool);
-
-            bsl::shared_ptr<bdlbb::Blob> deflated =
-                dataPool->createOutgoingBlob();
-
-            error = PluginTest::deflate(deflater, deflated.get(), *original);
-            NTSCFG_TEST_OK(error);
-
-            bsl::shared_ptr<bdlbb::Blob> inflated =
-                dataPool->createIncomingBlob();
-
-            error = PluginTest::inflate(compression, inflated.get(), *deflated);
-            NTSCFG_TEST_OK(error);
-
-            NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*inflated, *original), 0);
-        }
-    }
-
-#endif
 }
 
 }  // close namespace ntctlc
