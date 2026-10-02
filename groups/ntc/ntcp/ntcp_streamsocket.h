@@ -90,30 +90,47 @@ class StreamSocket : public ntci::StreamSocket,
     ntccfg::Object                             d_object;
     // LOCKING STRATEGY
     //
-    // 'd_mutex' (the "state" mutex) guards the shared lifecycle and control
-    // state of the socket: the connect/upgrade machinery, the open, shutdown,
-    // and detach state machines' *transitions*, and the encryption object.
+    // 'd_receiveMutex' guards the read path (the receive queue and incoming
+    // completion state) and the shared lifecycle and control state of the
+    // socket: the connect/upgrade machinery and the open, shutdown, and detach
+    // state machines' *transitions*. Conceptually, it guards the
+    // connectedness and potential readability of the socket. 'd_sendMutex'
+    // guards the separate write path (the send queue and outgoing completion
+    // state), so that sending is not serialized against receiving.
     //
-    // 'd_sendMutex' guards the write path (the send queue and outgoing
-    // completion state) and 'd_receiveMutex' guards the read path (the receive
-    // queue and incoming completion state). These two leaf mutexes are
-    // independent so that sending is not serialized against receiving.
+    // The encryption object is itself thread safe. Encrypting outgoing data
+    // requires only 'd_sendMutex': every path that pops outgoing cipher text
+    // and enqueues it to the send queue holds 'd_sendMutex', so TLS records
+    // are enqueued in the order they are generated, and pushing outgoing plain
+    // text never invokes the handshake callback.
     //
-    // When more than one is held they are always acquired in the order
-    // 'd_mutex' -> 'd_sendMutex' -> 'd_receiveMutex'. A steady-state I/O
-    // completion holds only its own leaf; when it must perform a cross-cutting
-    // lifecycle transition (connection establishment, failure, shutdown) it
-    // first releases its leaf, then re-acquires in canonical order (or defers
-    // the transition via 'execute').
+    // Decrypting incoming data in the steady state (i.e., once the handshake
+    // has completed) requires only 'd_receiveMutex': the handshake callback
+    // can no longer be invoked. Decrypting incoming data while the handshake
+    // is in progress holds both mutexes, since it may complete or fail the
+    // handshake (a cross-cutting transition).
+    //
+    // When both are held they are always acquired in the order
+    // 'd_receiveMutex' -> 'd_sendMutex'. This order follows the flow of data:
+    // the read path may feed the write path, so it may acquire 'd_sendMutex'
+    // while holding 'd_receiveMutex', but the write path never acquires
+    // 'd_receiveMutex' while holding 'd_sendMutex'. Consequently, the receive
+    // completion performs every cross-cutting transition it discovers
+    // (enqueueing outgoing cipher text generated while decrypting, receiving
+    // the peer's TLS shutdown, end-of-file, or failure) in place, by
+    // additionally acquiring 'd_sendMutex' without releasing
+    // 'd_receiveMutex'. The write path holds only 'd_sendMutex'; when it must
+    // perform a cross-cutting lifecycle transition (connection establishment,
+    // failure, shutdown) it first releases 'd_sendMutex', then acquires both
+    // in canonical order (or defers the transition via 'execute').
     //
     // The observable lifecycle predicates ('d_openState', 'd_shutdownState',
     // 'd_detachState.mode()', 'd_connectInProgress') are atomic and may be read
     // without any lock. 'd_flowControlState' is itself thread safe (lock-free).
     // The co-guarded members ('d_socket_sp', 'd_encryption_sp', 'd_session_sp',
     // 'd_sessionStrand_sp', 'd_manager_sp', 'd_managerStrand_sp') are written
-    // only while holding all three mutexes and may therefore be read while
-    // holding any one of them.
-    mutable Mutex                              d_mutex;
+    // only while holding both mutexes and may therefore be read while holding
+    // either one of them.
     mutable Mutex                              d_sendMutex;
     mutable Mutex                              d_receiveMutex;
     ntsa::Transport::Value                     d_transport;
@@ -259,7 +276,7 @@ class StreamSocket : public ntci::StreamSocket,
         const bsl::string&                                  details);
 
     /// Process the completion of the connection attempt. The behavior is
-    /// undefined unless 'd_mutex' is locked.
+    /// undefined unless both 'd_receiveMutex' and 'd_sendMutex' are locked.
     void privateCompleteConnect(const bsl::shared_ptr<StreamSocket>& self);
 
     /// Indicate a connection failure has occurred. If the specified 'defer'
@@ -286,7 +303,7 @@ class StreamSocket : public ntci::StreamSocket,
         bool                                 defer);
 
     /// Process the failure of the upgrade attempt. The behavior is
-    /// undefined unless 'd_mutex' is locked.
+    /// undefined unless both 'd_receiveMutex' and 'd_sendMutex' are locked.
     void privateFailUpgrade(const bsl::shared_ptr<StreamSocket>& self,
                             const ntsa::Error&                   error,
                             const bsl::string& errorDescription);
@@ -296,28 +313,45 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Process the completion of the reception of raw or encrypted data
     /// according to the specified 'numBytesReceivable' and 'numBytesReceived'.
-    /// If the specified 'defer' flag is true, force all event announcements and
-    /// callback invocations made during processing to be deferred (used when
-    /// running while holding more than one mutex, e.g. the encrypted read
-    /// path). Return 'ntsa::Error::e_EOF' if the peer has shut down, another
-    /// error if the reception failed, or a default-constructed error on
-    /// success; the caller performs any resulting shutdown or failure sequence
-    /// after releasing the receive mutex. The behavior is undefined unless
-    /// 'd_receiveMutex' is locked.
+    /// If the specified 'exclusive' flag is true, the caller holds both
+    /// 'd_receiveMutex' and 'd_sendMutex', and all event announcements and
+    /// callback invocations made during processing are deferred. Otherwise,
+    /// the caller holds only 'd_receiveMutex', 'd_sendMutex' is additionally
+    /// acquired as necessary, and the behavior is undefined unless the
+    /// encryption handshake, if any, has completed. Return
+    /// 'ntsa::Error::e_EOF' if the peer has shut down, another error if the
+    /// reception failed, or a default-constructed error on success; the
+    /// caller performs any resulting shutdown or failure sequence.
     ntsa::Error privateCompleteReceive(
         const bsl::shared_ptr<StreamSocket>& self,
         bsl::size_t                          numBytesReceivable,
         bsl::size_t                          numBytesReceived,
-        bool                                 defer);
+        bool                                 exclusive);
+
+    /// Complete the downgrade from encrypted to unencrypted communication
+    /// initiated by the receipt of the peer's TLS shutdown, or, if the
+    /// specified 'abortive' flag is true, by the receipt of unencrypted
+    /// leftovers after the encrypted data. Enqueue any outgoing cipher text
+    /// generated as a result. The behavior is undefined unless both
+    /// 'd_receiveMutex' and 'd_sendMutex' are locked. Return the error.
+    ntsa::Error privateReceiveDowngrade(
+        const bsl::shared_ptr<StreamSocket>& self,
+        bool                                 abortive);
+
+    /// Pop all outgoing cipher text from the encryption session and enqueue
+    /// it for transmission. The behavior is undefined unless 'd_sendMutex' is
+    /// locked. Return the error.
+    ntsa::Error privateSendOutgoingCipherText(
+        const bsl::shared_ptr<StreamSocket>& self);
 
     /// Process the completion of the reception of the raw or unencrypted
     /// data according to the specified 'numBytesReceived'. The behavior is
-    /// undefined unless 'd_mutex' is locked.
+    /// undefined unless 'd_receiveMutex' is locked.
     void privateCompleteReceiveRaw(const bsl::shared_ptr<StreamSocket>& self,
                                    bsl::size_t numBytesReceived);
 
     /// Process the failure of the reception of a message. The behavior is
-    /// undefined unless 'd_mutex' is locked.
+    /// undefined unless both 'd_receiveMutex' and 'd_sendMutex' are locked.
     void privateFailReceive(const bsl::shared_ptr<StreamSocket>& self,
                             const ntsa::Error&                   error);
 
@@ -328,7 +362,7 @@ class StreamSocket : public ntci::StreamSocket,
     /// Process the completion of the transmission of raw or
     /// already-encrypted data at the head of the write queue according to
     /// the specified 'numBytesSent'. The behavior is undefined unless
-    /// 'd_mutex' is locked.
+    /// 'd_sendMutex' is locked.
     void privateCompleteSend(const bsl::shared_ptr<StreamSocket>& self,
                              bsl::size_t numBytesSent);
 
@@ -336,7 +370,7 @@ class StreamSocket : public ntci::StreamSocket,
     /// of the write queue. Announce the failure of the head of the write
     /// queue if a callback is associated with the head of the write queue
     /// then pop the head of the write queue. The behavior is undefined
-    /// unless 'd_mutex' is locked.
+    /// unless 'd_sendMutex' is locked.
     void privateFailSend(const bsl::shared_ptr<StreamSocket>& self,
                          const ntsa::Error&                   error);
 
@@ -388,7 +422,8 @@ class StreamSocket : public ntci::StreamSocket,
         bool                                 defer);
 
     /// Enable copying from the socket buffers in the specified 'direction'.
-    /// The behavior is undefined unless 'd_mutex' is locked.
+    /// The behavior is undefined unless the mutex guarding the 'direction'
+    /// (or both mutexes, for 'ntca::FlowControlType::e_BOTH') is locked.
     ntsa::Error privateRelaxFlowControl(
         const bsl::shared_ptr<StreamSocket>& self,
         ntca::FlowControlType::Value         direction,
@@ -397,7 +432,8 @@ class StreamSocket : public ntci::StreamSocket,
 
     /// Disable copying from socket buffers in the specified 'direction'
     /// according to the specified 'mode'. The behavior is undefined unless
-    /// 'd_mutex' is locked.
+    /// the mutex guarding the 'direction' (or both mutexes, for
+    /// 'ntca::FlowControlType::e_BOTH') is locked.
     ntsa::Error privateApplyFlowControl(
         const bsl::shared_ptr<StreamSocket>& self,
         ntca::FlowControlType::Value         direction,
@@ -428,24 +464,6 @@ class StreamSocket : public ntci::StreamSocket,
     /// able to be received.
     ntsa::Error privateThrottleReceiveBuffer(
         const bsl::shared_ptr<StreamSocket>& self);
-
-    /// Enqueue the specified 'data' for transmission according to the
-    /// specified 'options', invoking the specified 'callback' on completion.
-    /// The behavior is undefined unless 'd_sendMutex' is locked (and, if the
-    /// socket is encrypted, 'd_mutex' as well). Return the error.
-    ntsa::Error privateSend(const bsl::shared_ptr<StreamSocket>& self,
-                            const bdlbb::Blob&                   data,
-                            const ntca::SendOptions&             options,
-                            const ntci::SendCallback&            callback);
-
-    /// Enqueue the specified 'data' for transmission according to the
-    /// specified 'options', invoking the specified 'callback' on completion.
-    /// The behavior is undefined unless 'd_sendMutex' is locked (and, if the
-    /// socket is encrypted, 'd_mutex' as well). Return the error.
-    ntsa::Error privateSend(const bsl::shared_ptr<StreamSocket>& self,
-                            const ntsa::Data&                    data,
-                            const ntca::SendOptions&             options,
-                            const ntci::SendCallback&            callback);
 
     /// Send the specified raw or already encrypted 'data' according to the
     /// specified 'options'. When the 'data' is entirely copied to the
