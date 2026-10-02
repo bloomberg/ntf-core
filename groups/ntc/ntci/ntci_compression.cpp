@@ -773,6 +773,10 @@ ntsa::Error Compression::inflate(ntca::InflateContext*       context,
         error = ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
     }
 
+    if (error) {
+        return error;
+    }
+
     error = this->inflateEnd(context, result, options);
     if (error) {
         return error;

@@ -24,7 +24,10 @@ BSLS_IDENT_RCSID(ntcd_compression_t_cpp, "$Id$ $CSID$")
 #include <ntci_log.h>
 #include <ntcs_blobutil.h>
 #include <ntcs_datapool.h>
+#include <bdlbb_pooledblobbufferfactory.h>
 #include <bslim_printer.h>
+
+#include <limits.h>
 
 // Uncomment to define the single buffer size tested.
 // #define NTCD_COMPRESSION_TEST_BUFFER_SIZE 32
@@ -51,9 +54,50 @@ class CompressionTest
     // in chunks, simulating the arrival of deflated data over a stream.
     static void verifyStreaming();
 
+    // Verify the inflater rejects malformed frames and blocks without
+    // underflowing its state or over-appending inflated data.
+    static void verifyMalformed();
+
+    // Verify the inflater and deflater honor the configured maximum number of
+    // bytes inflated and deflated per operation.
+    static void verifyLimits();
+
   private:
     // Verify compression using the specified testing 'parameters'.
     static void verifyParameters(const Parameters& parameters);
+
+    // Append to the specified 'result' a frame header declaring the
+    // specified frame content 'length' and the specified 'checksum'.
+    static void appendFrameHeader(bdlbb::Blob*          result,
+                                  bsl::uint32_t         length,
+                                  const ntca::Checksum& checksum);
+
+    // Append to the specified 'result' a block having the specified 'type',
+    // 'length', and 'literal'.
+    static void appendBlock(bdlbb::Blob*                      result,
+                            ntcd::CompressionBlockType::Value type,
+                            bsl::uint16_t                     length,
+                            bsl::uint8_t                      literal);
+
+    // Append to the specified 'result' a frame footer having the specified
+    // 'checksum'.
+    static void appendFrameFooter(bdlbb::Blob*          result,
+                                  const ntca::Checksum& checksum);
+
+    // Load into the specified 'result' a frame whose content is a run of 100
+    // 'a' characters, followed by "bcdef", followed by a run of 50 'z'
+    // characters, and load into the specified 'expected' the inflated content
+    // of that frame.
+    static void generateFrame(bdlbb::Blob* result, bdlbb::Blob* expected);
+
+    // Inflate the specified 'input' into the specified 'output' using a new
+    // RLE inflater. Assert the inflation fails with the specified 'expected'
+    // error and that no more than the specified 'maxOutputSize' bytes are
+    // inflated. Assert the inflater resets after the failure such that a
+    // subsequent, well-formed frame is inflated successfully.
+    static void verifyInflateFailure(const bdlbb::Blob& input,
+                                     ntsa::Error::Code  expected,
+                                     bsl::size_t        maxOutputSize);
 
     // Dump the specified 'blob' to the log with the specified 'label'.
     static void dump(const char* label, const bdlbb::Blob& blob);
@@ -541,6 +585,155 @@ void CompressionTest::verifyParameters(const Parameters& parameters)
     NTSCFG_TEST_EQ(comparison, 0);
 }
 
+void CompressionTest::appendFrameHeader(bdlbb::Blob*          result,
+                                        bsl::uint32_t         length,
+                                        const ntca::Checksum& checksum)
+{
+    ntcd::CompressionFrameHeader frameHeader;
+    frameHeader.setLength(length);
+    frameHeader.setChecksum(checksum);
+
+    bsl::size_t numBytesEncoded = 0;
+    ntsa::Error error = frameHeader.encode(&numBytesEncoded, result);
+    NTSCFG_TEST_OK(error);
+}
+
+void CompressionTest::appendBlock(bdlbb::Blob*                      result,
+                                  ntcd::CompressionBlockType::Value type,
+                                  bsl::uint16_t                     length,
+                                  bsl::uint8_t                      literal)
+{
+    ntcd::CompressionBlock block;
+    block.setType(type);
+    block.setLength(length);
+    block.setLiteral(literal);
+
+    bsl::size_t numBytesEncoded = 0;
+    ntsa::Error error = block.encode(&numBytesEncoded, result);
+    NTSCFG_TEST_OK(error);
+}
+
+void CompressionTest::appendFrameFooter(bdlbb::Blob*          result,
+                                        const ntca::Checksum& checksum)
+{
+    ntcd::CompressionFrameFooter frameFooter;
+    frameFooter.setChecksum(checksum);
+
+    bsl::size_t numBytesEncoded = 0;
+    ntsa::Error error = frameFooter.encode(&numBytesEncoded, result);
+    NTSCFG_TEST_OK(error);
+}
+
+void CompressionTest::verifyInflateFailure(const bdlbb::Blob& input,
+                                           ntsa::Error::Code  expected,
+                                           bsl::size_t        maxOutputSize)
+{
+    ntsa::Error error;
+
+    bdlbb::PooledBlobBufferFactory blobBufferFactory(256,
+                                                     NTSCFG_TEST_ALLOCATOR);
+
+    ntca::CompressionConfig compressionConfig;
+    compressionConfig.setType(ntca::CompressionType::e_RLE);
+    compressionConfig.setGoal(ntca::CompressionGoal::e_BALANCED);
+
+    bsl::shared_ptr<ntcs::DataPool> dataPool;
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           256,
+                           256,
+                           NTSCFG_TEST_ALLOCATOR);
+
+    ntcd::Compression compression(compressionConfig,
+                                  dataPool,
+                                  NTSCFG_TEST_ALLOCATOR);
+
+    ntcd::CompressionTest::dump("M", input);
+
+    bdlbb::Blob inflatedData(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+    ntca::InflateOptions inflateOptions;
+    ntca::InflateContext inflateContext;
+
+    error = compression.inflate(&inflateContext,
+                                &inflatedData,
+                                input,
+                                inflateOptions);
+    NTSCFG_TEST_ERROR(error, expected);
+
+    NTSCFG_TEST_LE(static_cast<bsl::size_t>(inflatedData.length()),
+                   maxOutputSize);
+
+    // The inflater resets after the failure, so a subsequent, well-formed
+    // frame is inflated successfully.
+
+    bdlbb::Blob validFrame(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+    {
+        ntca::Checksum checksum(ntca::ChecksumType::e_CRC32);
+        error = checksum.update("qqq", 3);
+        NTSCFG_TEST_OK(error);
+
+        ntcd::CompressionTest::appendFrameHeader(
+            &validFrame,
+            static_cast<bsl::uint32_t>(sizeof(ntcd::CompressionBlock)),
+            checksum);
+        ntcd::CompressionTest::appendBlock(&validFrame,
+                                           ntcd::CompressionBlockType::e_RLE,
+                                           3,
+                                           'q');
+        ntcd::CompressionTest::appendFrameFooter(&validFrame, checksum);
+    }
+
+    bdlbb::Blob validInflatedData(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+    error = compression.inflate(&inflateContext,
+                                &validInflatedData,
+                                validFrame,
+                                inflateOptions);
+    NTSCFG_TEST_OK(error);
+
+    bdlbb::Blob validExpected(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+    ntcs::BlobUtil::append(&validExpected, "qqq", 3);
+
+    NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(validInflatedData, validExpected),
+                   0);
+}
+
+void CompressionTest::generateFrame(bdlbb::Blob* result, bdlbb::Blob* expected)
+{
+    ntsa::Error error;
+
+    const bsl::string data = bsl::string(100, 'a') + "bcdef" +
+                             bsl::string(50, 'z');
+
+    ntca::Checksum checksum(ntca::ChecksumType::e_CRC32);
+    error = checksum.update(data.data(), data.size());
+    NTSCFG_TEST_OK(error);
+
+    const bsl::size_t k_BLOCK_SIZE = sizeof(ntcd::CompressionBlock);
+
+    CompressionTest::appendFrameHeader(
+        result,
+        static_cast<bsl::uint32_t>(k_BLOCK_SIZE + k_BLOCK_SIZE + 5 +
+                                   k_BLOCK_SIZE),
+        checksum);
+    CompressionTest::appendBlock(result,
+                                 ntcd::CompressionBlockType::e_RLE,
+                                 100,
+                                 'a');
+    CompressionTest::appendBlock(result,
+                                 ntcd::CompressionBlockType::e_RAW,
+                                 5,
+                                 0);
+    ntcs::BlobUtil::append(result, "bcdef", 5);
+    CompressionTest::appendBlock(result,
+                                 ntcd::CompressionBlockType::e_RLE,
+                                 50,
+                                 'z');
+    CompressionTest::appendFrameFooter(result, checksum);
+
+    ntcs::BlobUtil::append(expected, data.data(), data.size());
+}
+
 void CompressionTest::dump(const char* label, const bdlbb::Blob& blob)
 {
     NTCI_LOG_CONTEXT();
@@ -702,6 +895,431 @@ NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyStreaming)
 
     for (bsl::size_t i = 0; i < parametersVector.size(); ++i) {
         CompressionTest::verifyParameters(parametersVector[i]);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyMalformed)
+{
+    ntsa::Error error;
+
+    bdlbb::PooledBlobBufferFactory blobBufferFactory(256,
+                                                     NTSCFG_TEST_ALLOCATOR);
+
+    const bsl::size_t k_BLOCK_SIZE       = sizeof(ntcd::CompressionBlock);
+    const bsl::size_t k_MAX_BLOCK_LENGTH = 65535;
+
+    // Concern: a well-formed, hand-crafted frame inflates successfully,
+    // validating the frame construction used by the cases below.
+
+    {
+        const char        k_DATA[]    = "aaabc";
+        const bsl::size_t k_DATA_SIZE = sizeof k_DATA - 1;
+
+        ntca::Checksum checksum(ntca::ChecksumType::e_CRC32);
+        error = checksum.update(k_DATA, k_DATA_SIZE);
+        NTSCFG_TEST_OK(error);
+
+        bdlbb::Blob input(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+        CompressionTest::appendFrameHeader(
+            &input,
+            static_cast<bsl::uint32_t>(k_BLOCK_SIZE + k_BLOCK_SIZE + 2),
+            checksum);
+        CompressionTest::appendBlock(&input,
+                                     ntcd::CompressionBlockType::e_RLE,
+                                     3,
+                                     'a');
+        CompressionTest::appendBlock(&input,
+                                     ntcd::CompressionBlockType::e_RAW,
+                                     2,
+                                     0);
+        ntcs::BlobUtil::append(&input, "bc", 2);
+        CompressionTest::appendFrameFooter(&input, checksum);
+
+        ntca::CompressionConfig compressionConfig;
+        compressionConfig.setType(ntca::CompressionType::e_RLE);
+        compressionConfig.setGoal(ntca::CompressionGoal::e_BALANCED);
+
+        bsl::shared_ptr<ntcs::DataPool> dataPool;
+        dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                               256,
+                               256,
+                               NTSCFG_TEST_ALLOCATOR);
+
+        ntcd::Compression compression(compressionConfig,
+                                      dataPool,
+                                      NTSCFG_TEST_ALLOCATOR);
+
+        bdlbb::Blob inflatedData(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+        ntca::InflateOptions inflateOptions;
+        ntca::InflateContext inflateContext;
+
+        error = compression.inflate(&inflateContext,
+                                    &inflatedData,
+                                    input,
+                                    inflateOptions);
+        NTSCFG_TEST_OK(error);
+
+        bdlbb::Blob expected(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+        ntcs::BlobUtil::append(&expected, k_DATA, k_DATA_SIZE);
+
+        NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(inflatedData, expected), 0);
+    }
+
+    // Concern: a frame whose declared content length is too short to contain
+    // even a single block is rejected before any data is inflated, and the
+    // blocks that follow are not inflated.
+
+    for (bsl::uint32_t length = 1; length < k_BLOCK_SIZE; ++length) {
+        ntca::Checksum checksum(ntca::ChecksumType::e_CRC32);
+
+        bdlbb::Blob input(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+        CompressionTest::appendFrameHeader(&input, length, checksum);
+        for (bsl::size_t i = 0; i < 16; ++i) {
+            CompressionTest::appendBlock(
+                &input,
+                ntcd::CompressionBlockType::e_RLE,
+                static_cast<bsl::uint16_t>(k_MAX_BLOCK_LENGTH),
+                'x');
+        }
+        CompressionTest::appendFrameFooter(&input, checksum);
+
+        CompressionTest::verifyInflateFailure(input,
+                                              ntsa::Error::e_INVALID,
+                                              0);
+    }
+
+    // Concern: a frame whose declared content length leaves a remainder too
+    // short to contain a block after a valid block is rejected, and the
+    // blocks that follow are not inflated.
+
+    for (bsl::uint32_t remainder = 1; remainder < k_BLOCK_SIZE; ++remainder) {
+        ntca::Checksum checksum(ntca::ChecksumType::e_CRC32);
+
+        bdlbb::Blob input(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+        CompressionTest::appendFrameHeader(
+            &input,
+            static_cast<bsl::uint32_t>(k_BLOCK_SIZE + remainder),
+            checksum);
+        for (bsl::size_t i = 0; i < 16; ++i) {
+            CompressionTest::appendBlock(
+                &input,
+                ntcd::CompressionBlockType::e_RLE,
+                static_cast<bsl::uint16_t>(k_MAX_BLOCK_LENGTH),
+                'x');
+        }
+        CompressionTest::appendFrameFooter(&input, checksum);
+
+        CompressionTest::verifyInflateFailure(input,
+                                              ntsa::Error::e_INVALID,
+                                              k_MAX_BLOCK_LENGTH);
+    }
+
+    // Concern: a raw block whose payload length exceeds the remaining frame
+    // content is rejected before its payload is inflated.
+
+    {
+        const bsl::size_t k_FRAME_PAYLOAD_SIZE = 8;
+
+        const bsl::size_t k_BLOCK_LENGTH[] = {k_FRAME_PAYLOAD_SIZE + 1,
+                                              100,
+                                              k_MAX_BLOCK_LENGTH};
+
+        const bsl::size_t k_NUM_BLOCK_LENGTHS =
+            sizeof k_BLOCK_LENGTH / sizeof k_BLOCK_LENGTH[0];
+
+        for (bsl::size_t i = 0; i < k_NUM_BLOCK_LENGTHS; ++i) {
+            ntca::Checksum checksum(ntca::ChecksumType::e_CRC32);
+
+            bdlbb::Blob input(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+            CompressionTest::appendFrameHeader(
+                &input,
+                static_cast<bsl::uint32_t>(k_BLOCK_SIZE +
+                                           k_FRAME_PAYLOAD_SIZE),
+                checksum);
+            CompressionTest::appendBlock(
+                &input,
+                ntcd::CompressionBlockType::e_RAW,
+                static_cast<bsl::uint16_t>(k_BLOCK_LENGTH[i]),
+                0);
+
+            bsl::vector<char> payload(k_BLOCK_LENGTH[i], 'y');
+            ntcs::BlobUtil::append(&input, &payload[0], payload.size());
+
+            CompressionTest::appendFrameFooter(&input, checksum);
+
+            CompressionTest::verifyInflateFailure(input,
+                                                  ntsa::Error::e_INVALID,
+                                                  0);
+        }
+    }
+
+    // Concern: a raw block following a valid raw block whose payload length
+    // exceeds the remaining frame content is rejected before its payload is
+    // inflated.
+
+    {
+        ntca::Checksum checksum(ntca::ChecksumType::e_CRC32);
+
+        bdlbb::Blob input(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+        CompressionTest::appendFrameHeader(
+            &input,
+            static_cast<bsl::uint32_t>(k_BLOCK_SIZE + 3 + k_BLOCK_SIZE + 2),
+            checksum);
+        CompressionTest::appendBlock(&input,
+                                     ntcd::CompressionBlockType::e_RAW,
+                                     3,
+                                     0);
+        ntcs::BlobUtil::append(&input, "abc", 3);
+        CompressionTest::appendBlock(&input,
+                                     ntcd::CompressionBlockType::e_RAW,
+                                     3,
+                                     0);
+        ntcs::BlobUtil::append(&input, "def", 3);
+        CompressionTest::appendFrameFooter(&input, checksum);
+
+        CompressionTest::verifyInflateFailure(input,
+                                              ntsa::Error::e_INVALID,
+                                              3);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyLimits)
+{
+    ntsa::Error error;
+
+    bdlbb::PooledBlobBufferFactory blobBufferFactory(256,
+                                                     NTSCFG_TEST_ALLOCATOR);
+
+    bsl::shared_ptr<ntcs::DataPool> dataPool;
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           256,
+                           256,
+                           NTSCFG_TEST_ALLOCATOR);
+
+    // Concern: the limits default to INT_MAX when not explicitly configured.
+
+    NTSCFG_TEST_EQ(ntcd::CompressionDecoder::k_DEFAULT_MAX_INFLATE_SIZE,
+                   static_cast<bsl::size_t>(INT_MAX));
+
+    NTSCFG_TEST_EQ(ntcd::CompressionEncoder::k_DEFAULT_MAX_DEFLATE_SIZE,
+                   static_cast<bsl::size_t>(INT_MAX));
+
+    bdlbb::Blob frame(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+    bdlbb::Blob expected(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+    CompressionTest::generateFrame(&frame, &expected);
+
+    const bsl::size_t k_INFLATED_SIZE =
+        static_cast<bsl::size_t>(expected.length());
+
+    // Concern: an inflate operation succeeds if and only if it produces no
+    // more than the maximum inflate size, and never appends more than the
+    // maximum inflate size.
+
+    for (bsl::size_t limit = 0; limit <= k_INFLATED_SIZE + 1; ++limit) {
+        ntca::CompressionConfig compressionConfig;
+        compressionConfig.setType(ntca::CompressionType::e_RLE);
+        compressionConfig.setMaxInflateSize(limit);
+
+        ntcd::Compression compression(compressionConfig,
+                                      dataPool,
+                                      NTSCFG_TEST_ALLOCATOR);
+
+        bdlbb::Blob inflatedData(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+        ntca::InflateOptions inflateOptions;
+        ntca::InflateContext inflateContext;
+
+        error = compression.inflate(&inflateContext,
+                                    &inflatedData,
+                                    frame,
+                                    inflateOptions);
+
+        if (limit >= k_INFLATED_SIZE) {
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(inflatedData, expected),
+                           0);
+        }
+        else {
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+            NTSCFG_TEST_LE(static_cast<bsl::size_t>(inflatedData.length()),
+                           limit);
+
+            // The inflater resets after the failure, so inflating the same
+            // frame again fails again in the same way.
+
+            const bsl::size_t inflatedLength =
+                static_cast<bsl::size_t>(inflatedData.length());
+
+            error = compression.inflate(&inflateContext,
+                                        &inflatedData,
+                                        frame,
+                                        inflateOptions);
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+            NTSCFG_TEST_LE(static_cast<bsl::size_t>(inflatedData.length()) -
+                               inflatedLength,
+                           limit);
+        }
+    }
+
+    // Concern: the maximum inflate size applies to the entire operation, even
+    // when the operation is fed its input across many calls.
+
+    for (bsl::size_t limit = 0; limit <= k_INFLATED_SIZE + 1; ++limit) {
+        ntca::CompressionConfig compressionConfig;
+        compressionConfig.setType(ntca::CompressionType::e_RLE);
+        compressionConfig.setMaxInflateSize(limit);
+
+        ntcd::CompressionDecoder decoder(compressionConfig,
+                                         NTSCFG_TEST_ALLOCATOR);
+
+        bdlbb::Blob inflatedData(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+        ntca::InflateOptions inflateOptions;
+        ntca::InflateContext inflateContext;
+
+        error = decoder.inflateBegin(&inflateContext,
+                                     &inflatedData,
+                                     inflateOptions);
+        NTSCFG_TEST_OK(error);
+
+        bdlbb::Blob remaining = frame;
+        while (remaining.length() > 0 && !error) {
+            bdlbb::Blob chunk(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+            bdlbb::BlobUtil::append(&chunk, remaining, 0, 1);
+            bdlbb::BlobUtil::erase(&remaining, 0, 1);
+
+            error = decoder.inflateNext(&inflateContext,
+                                        &inflatedData,
+                                        chunk,
+                                        inflateOptions);
+        }
+
+        if (limit >= k_INFLATED_SIZE) {
+            NTSCFG_TEST_OK(error);
+
+            error = decoder.inflateEnd(&inflateContext,
+                                       &inflatedData,
+                                       inflateOptions);
+            NTSCFG_TEST_OK(error);
+
+            NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(inflatedData, expected),
+                           0);
+        }
+        else {
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+            NTSCFG_TEST_LE(static_cast<bsl::size_t>(inflatedData.length()),
+                           limit);
+        }
+    }
+
+    // Concern: the maximum inflate size applies to each operation, not
+    // cumulatively across operations.
+
+    {
+        ntca::CompressionConfig compressionConfig;
+        compressionConfig.setType(ntca::CompressionType::e_RLE);
+        compressionConfig.setMaxInflateSize(k_INFLATED_SIZE);
+
+        ntcd::Compression compression(compressionConfig,
+                                      dataPool,
+                                      NTSCFG_TEST_ALLOCATOR);
+
+        for (bsl::size_t i = 0; i < 4; ++i) {
+            bdlbb::Blob inflatedData(&blobBufferFactory,
+                                     NTSCFG_TEST_ALLOCATOR);
+
+            ntca::InflateOptions inflateOptions;
+            ntca::InflateContext inflateContext;
+
+            error = compression.inflate(&inflateContext,
+                                        &inflatedData,
+                                        frame,
+                                        inflateOptions);
+            NTSCFG_TEST_OK(error);
+
+            NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(inflatedData, expected),
+                           0);
+        }
+    }
+
+    // Concern: a deflate operation succeeds if and only if it produces no
+    // more than the maximum deflate size, and never appends more than the
+    // maximum deflate size.
+
+    bsl::size_t deflatedSize = 0;
+    {
+        ntca::CompressionConfig compressionConfig;
+        compressionConfig.setType(ntca::CompressionType::e_RLE);
+
+        ntcd::Compression compression(compressionConfig,
+                                      dataPool,
+                                      NTSCFG_TEST_ALLOCATOR);
+
+        bdlbb::Blob deflatedData(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+        ntca::DeflateOptions deflateOptions;
+        ntca::DeflateContext deflateContext;
+
+        error = compression.deflate(&deflateContext,
+                                    &deflatedData,
+                                    expected,
+                                    deflateOptions);
+        NTSCFG_TEST_OK(error);
+
+        deflatedSize = static_cast<bsl::size_t>(deflatedData.length());
+    }
+
+    for (bsl::size_t limit = 0; limit <= deflatedSize + 1; ++limit) {
+        ntca::CompressionConfig compressionConfig;
+        compressionConfig.setType(ntca::CompressionType::e_RLE);
+        compressionConfig.setMaxDeflateSize(limit);
+
+        ntcd::Compression compression(compressionConfig,
+                                      dataPool,
+                                      NTSCFG_TEST_ALLOCATOR);
+
+        bdlbb::Blob deflatedData(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+        ntca::DeflateOptions deflateOptions;
+        ntca::DeflateContext deflateContext;
+
+        error = compression.deflate(&deflateContext,
+                                    &deflatedData,
+                                    expected,
+                                    deflateOptions);
+
+        if (limit >= deflatedSize) {
+            NTSCFG_TEST_OK(error);
+            NTSCFG_TEST_EQ(static_cast<bsl::size_t>(deflatedData.length()),
+                           deflatedSize);
+
+            bdlbb::Blob inflatedData(&blobBufferFactory,
+                                     NTSCFG_TEST_ALLOCATOR);
+
+            ntca::InflateOptions inflateOptions;
+            ntca::InflateContext inflateContext;
+
+            error = compression.inflate(&inflateContext,
+                                        &inflatedData,
+                                        deflatedData,
+                                        inflateOptions);
+            NTSCFG_TEST_OK(error);
+
+            NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(inflatedData, expected),
+                           0);
+        }
+        else {
+            NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+            NTSCFG_TEST_LE(static_cast<bsl::size_t>(deflatedData.length()),
+                           limit);
+        }
     }
 }
 

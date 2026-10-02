@@ -25,7 +25,9 @@ namespace ntca {
 
 bool CompressionConfig::equals(const CompressionConfig& other) const
 {
-    return (d_type == other.d_type && d_goal == other.d_goal);
+    return (d_type == other.d_type && d_goal == other.d_goal &&
+            d_maxInflateSize == other.d_maxInflateSize &&
+            d_maxDeflateSize == other.d_maxDeflateSize);
 }
 
 bool CompressionConfig::less(const CompressionConfig& other) const
@@ -38,7 +40,23 @@ bool CompressionConfig::less(const CompressionConfig& other) const
         return false;
     }
 
-    return d_goal < other.d_goal;
+    if (d_goal < other.d_goal) {
+        return true;
+    }
+
+    if (other.d_goal < d_goal) {
+        return false;
+    }
+
+    if (d_maxInflateSize < other.d_maxInflateSize) {
+        return true;
+    }
+
+    if (other.d_maxInflateSize < d_maxInflateSize) {
+        return false;
+    }
+
+    return d_maxDeflateSize < other.d_maxDeflateSize;
 }
 
 bsl::ostream& CompressionConfig::print(bsl::ostream& stream,
@@ -52,6 +70,12 @@ bsl::ostream& CompressionConfig::print(bsl::ostream& stream,
     }
     if (d_goal.has_value()) {
         printer.printAttribute("goal", d_goal);
+    }
+    if (d_maxInflateSize.has_value()) {
+        printer.printAttribute("maxInflateSize", d_maxInflateSize);
+    }
+    if (d_maxDeflateSize.has_value()) {
+        printer.printAttribute("maxDeflateSize", d_maxDeflateSize);
     }
     printer.end();
     return stream;

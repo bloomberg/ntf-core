@@ -45,6 +45,20 @@ namespace ntca {
 /// or speed over size. If not specified, the default value is a balanced goal
 /// that favors neither size nor speed.
 ///
+/// @li @b maxInflateSize:
+/// The maximum number of bytes appended to the result of a single inflate
+/// operation. Inflate operations that would produce more than this number of
+/// bytes fail with 'ntsa::Error::e_LIMIT'. If not specified, the limit is
+/// INT_MAX. Note that this limit is currently honored only by the "RLE"
+/// algorithm.
+///
+/// @li @b maxDeflateSize:
+/// The maximum number of bytes appended to the result of a single deflate
+/// operation. Deflate operations that would produce more than this number of
+/// bytes fail with 'ntsa::Error::e_LIMIT'. If not specified, the limit is
+/// INT_MAX. Note that this limit is currently honored only by the "RLE"
+/// algorithm.
+///
 /// @par Thread Safety
 /// This class is not thread safe.
 ///
@@ -53,6 +67,8 @@ class CompressionConfig
 {
     bdlb::NullableValue<ntca::CompressionType::Value> d_type;
     bdlb::NullableValue<ntca::CompressionGoal::Value> d_goal;
+    bdlb::NullableValue<bsl::size_t>                  d_maxInflateSize;
+    bdlb::NullableValue<bsl::size_t>                  d_maxDeflateSize;
 
   public:
     /// Create new deflate options having the default value.
@@ -78,11 +94,27 @@ class CompressionConfig
     /// Set the compression goal to the specified 'value'.
     void setGoal(ntca::CompressionGoal::Value value);
 
+    /// Set the maximum number of bytes appended to the result of a single
+    /// inflate operation to the specified 'value'.
+    void setMaxInflateSize(bsl::size_t value);
+
+    /// Set the maximum number of bytes appended to the result of a single
+    /// deflate operation to the specified 'value'.
+    void setMaxDeflateSize(bsl::size_t value);
+
     /// Return the compression algorithm.
     const bdlb::NullableValue<ntca::CompressionType::Value>& type() const;
 
     /// Return the compression goal.
     const bdlb::NullableValue<ntca::CompressionGoal::Value>& goal() const;
+
+    /// Return the maximum number of bytes appended to the result of a single
+    /// inflate operation.
+    const bdlb::NullableValue<bsl::size_t>& maxInflateSize() const;
+
+    /// Return the maximum number of bytes appended to the result of a single
+    /// deflate operation.
+    const bdlb::NullableValue<bsl::size_t>& maxDeflateSize() const;
 
     /// Return true if this object has the same value as the specified 'other'
     /// object, otherwise return false.
@@ -158,6 +190,8 @@ NTSCFG_INLINE
 CompressionConfig::CompressionConfig()
 : d_type()
 , d_goal()
+, d_maxInflateSize()
+, d_maxDeflateSize()
 {
 }
 
@@ -165,6 +199,8 @@ NTSCFG_INLINE
 CompressionConfig::CompressionConfig(const CompressionConfig& original)
 : d_type(original.d_type)
 , d_goal(original.d_goal)
+, d_maxInflateSize(original.d_maxInflateSize)
+, d_maxDeflateSize(original.d_maxDeflateSize)
 {
 }
 
@@ -176,8 +212,10 @@ CompressionConfig::~CompressionConfig()
 NTSCFG_INLINE
 CompressionConfig& CompressionConfig::operator=(const CompressionConfig& other)
 {
-    d_goal = other.d_goal;
-    d_type = other.d_type;
+    d_goal           = other.d_goal;
+    d_type           = other.d_type;
+    d_maxInflateSize = other.d_maxInflateSize;
+    d_maxDeflateSize = other.d_maxDeflateSize;
     return *this;
 }
 
@@ -186,6 +224,8 @@ void CompressionConfig::reset()
 {
     d_type.reset();
     d_goal.reset();
+    d_maxInflateSize.reset();
+    d_maxDeflateSize.reset();
 }
 
 NTSCFG_INLINE
@@ -198,6 +238,18 @@ NTSCFG_INLINE
 void CompressionConfig::setGoal(ntca::CompressionGoal::Value value)
 {
     d_goal = value;
+}
+
+NTSCFG_INLINE
+void CompressionConfig::setMaxInflateSize(bsl::size_t value)
+{
+    d_maxInflateSize = value;
+}
+
+NTSCFG_INLINE
+void CompressionConfig::setMaxDeflateSize(bsl::size_t value)
+{
+    d_maxDeflateSize = value;
 }
 
 NTSCFG_INLINE
@@ -214,12 +266,28 @@ const bdlb::NullableValue<ntca::CompressionGoal::Value>& CompressionConfig::
     return d_goal;
 }
 
+NTSCFG_INLINE
+const bdlb::NullableValue<bsl::size_t>& CompressionConfig::maxInflateSize()
+    const
+{
+    return d_maxInflateSize;
+}
+
+NTSCFG_INLINE
+const bdlb::NullableValue<bsl::size_t>& CompressionConfig::maxDeflateSize()
+    const
+{
+    return d_maxDeflateSize;
+}
+
 template <typename HASH_ALGORITHM>
 NTSCFG_INLINE void CompressionConfig::hash(HASH_ALGORITHM& algorithm) const
 {
     using bslh::hashAppend;
     hashAppend(algorithm, d_type);
     hashAppend(algorithm, d_goal);
+    hashAppend(algorithm, d_maxInflateSize);
+    hashAppend(algorithm, d_maxDeflateSize);
 }
 
 NTSCFG_INLINE
