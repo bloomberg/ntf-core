@@ -21,6 +21,7 @@ BSLS_IDENT_RCSID(ntctlc_plugin_t_cpp, "$Id$ $CSID$")
 #include <ntci_log.h>
 #include <ntcs_datapool.h>
 #include <ntctlc_plugin.h>
+#include <ntsa_data.h>
 #include <bslim_printer.h>
 
 using namespace BloombergLP;
@@ -62,10 +63,59 @@ class PluginTest
     // TODO.
     static void verifyUsage();
 
+    // Verify each compression type honors the configured maximum number of
+    // bytes inflated and deflated per operation.
+    static void verifyLimits();
+
+    // Verify each compression type rejects malformed input, and resets after
+    // the failure such that subsequent, well-formed input is inflated.
+    static void verifyMalformed();
+
+    // Verify the zstd inflater rejects frames whose declared window size
+    // exceeds the maximum, and that the zstd deflater never produces such
+    // frames.
+    static void verifyZstdWindow();
+
   private:
     /// Verify the integrity of inflating and deflating a data stream
     /// according to the specified 'parameters'.
     static void verifyParameters(const Parameters& parameters);
+
+    /// Verify the specified compression 'type' honors the configured maximum
+    /// number of bytes inflated and deflated per operation.
+    static void verifyLimitsForType(ntca::CompressionType::Value type);
+
+    /// Verify the specified compression 'type' rejects malformed input, and
+    /// resets after the failure.
+    static void verifyMalformedForType(ntca::CompressionType::Value type);
+
+    /// Load into the specified 'result' the compression types supported by
+    /// this build.
+    static void loadTypes(bsl::vector<ntca::CompressionType::Value>* result);
+
+    /// Return a new data pool.
+    static bsl::shared_ptr<ntci::DataPool> createDataPool();
+
+    /// Return a new compression mechanism created according to the specified
+    /// 'configuration' that allocates data containers from the specified
+    /// 'dataPool'.
+    static bsl::shared_ptr<ntci::Compression> createCompression(
+        const ntca::CompressionConfig&         configuration,
+        const bsl::shared_ptr<ntci::DataPool>& dataPool);
+
+    /// Deflate the specified 'data' using the specified 'compression' and
+    /// append the result to the specified 'result'. Return the error.
+    static ntsa::Error deflate(
+        const bsl::shared_ptr<ntci::Compression>& compression,
+        bdlbb::Blob*                              result,
+        const bdlbb::Blob&                        data);
+
+    /// Inflate the specified 'data' using the specified 'compression' and
+    /// append the result to the specified 'result'. Return the error.
+    static ntsa::Error inflate(
+        const bsl::shared_ptr<ntci::Compression>& compression,
+        bdlbb::Blob*                              result,
+        const bdlbb::Blob&                        data);
 
     /// Declare the log category for this class.
     BALL_LOG_SET_CLASS_CATEGORY("NTC.COMPRESSION");
@@ -847,6 +897,613 @@ NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyUsage)
     NTSCFG_TEST_OK(error);
 
     NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(inflated, initial), 0);
+
+#endif
+}
+
+void PluginTest::loadTypes(bsl::vector<ntca::CompressionType::Value>* result)
+{
+#if NTC_BUILD_WITH_LZ4
+    result->push_back(ntca::CompressionType::e_LZ4);
+#endif
+
+#if NTC_BUILD_WITH_ZSTD
+    result->push_back(ntca::CompressionType::e_ZSTD);
+#endif
+
+#if NTC_BUILD_WITH_ZLIB
+    result->push_back(ntca::CompressionType::e_ZLIB);
+    result->push_back(ntca::CompressionType::e_GZIP);
+#endif
+}
+
+bsl::shared_ptr<ntci::DataPool> PluginTest::createDataPool()
+{
+    bsl::shared_ptr<ntcs::DataPool> dataPool;
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           4096,
+                           4096,
+                           NTSCFG_TEST_ALLOCATOR);
+
+    return dataPool;
+}
+
+bsl::shared_ptr<ntci::Compression> PluginTest::createCompression(
+    const ntca::CompressionConfig&         configuration,
+    const bsl::shared_ptr<ntci::DataPool>& dataPool)
+{
+    bsl::shared_ptr<ntci::CompressionDriver> driver;
+    ntctlc::Plugin::load(&driver);
+
+    bsl::shared_ptr<ntci::Compression> compression;
+    ntsa::Error error = driver->createCompression(&compression,
+                                                  configuration,
+                                                  dataPool,
+                                                  NTSCFG_TEST_ALLOCATOR);
+    NTSCFG_TEST_OK(error);
+
+    return compression;
+}
+
+ntsa::Error PluginTest::deflate(
+    const bsl::shared_ptr<ntci::Compression>& compression,
+    bdlbb::Blob*                              result,
+    const bdlbb::Blob&                        data)
+{
+    ntca::DeflateOptions deflateOptions;
+    ntca::DeflateContext deflateContext;
+
+    return compression->deflate(&deflateContext,
+                                result,
+                                data,
+                                deflateOptions);
+}
+
+ntsa::Error PluginTest::inflate(
+    const bsl::shared_ptr<ntci::Compression>& compression,
+    bdlbb::Blob*                              result,
+    const bdlbb::Blob&                        data)
+{
+    ntca::InflateOptions inflateOptions;
+    ntca::InflateContext inflateContext;
+
+    return compression->inflate(&inflateContext,
+                                result,
+                                data,
+                                inflateOptions);
+}
+
+void PluginTest::verifyLimitsForType(ntca::CompressionType::Value type)
+{
+    ntsa::Error error;
+
+    BALL_LOG_INFO << "Testing limits for " << type << BALL_LOG_END;
+
+    bsl::shared_ptr<ntci::DataPool> dataPool = PluginTest::createDataPool();
+
+    ntca::CompressionConfig baseConfig;
+    baseConfig.setType(type);
+    baseConfig.setGoal(ntca::CompressionGoal::e_BALANCED);
+
+    bsl::shared_ptr<ntci::Compression> unlimitedCompression =
+        PluginTest::createCompression(baseConfig, dataPool);
+
+    // Generate the original data and its deflated form.
+
+    bsl::shared_ptr<bdlbb::Blob> original = dataPool->createIncomingBlob();
+    ntscfg::TestDataUtil::generateData(
+        original.get(),
+        64 * 1024,
+        0,
+        ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
+
+    const bsl::size_t k_ORIGINAL_SIZE =
+        static_cast<bsl::size_t>(original->length());
+
+    bsl::shared_ptr<bdlbb::Blob> deflated = dataPool->createOutgoingBlob();
+    error = PluginTest::deflate(unlimitedCompression, deflated.get(), *original);
+    NTSCFG_TEST_OK(error);
+
+    const bsl::size_t k_DEFLATED_SIZE =
+        static_cast<bsl::size_t>(deflated->length());
+
+    // Generate a small message and its deflated form.
+
+    const char k_SMALL[] = "abbcccddddeeeffg";
+
+    bsl::shared_ptr<bdlbb::Blob> small = dataPool->createIncomingBlob();
+    bdlbb::BlobUtil::append(small.get(), k_SMALL, sizeof k_SMALL - 1);
+
+    const bsl::size_t k_SMALL_SIZE = static_cast<bsl::size_t>(small->length());
+
+    bsl::shared_ptr<bdlbb::Blob> smallDeflated =
+        dataPool->createOutgoingBlob();
+    error = PluginTest::deflate(unlimitedCompression,
+                                smallDeflated.get(),
+                                *small);
+    NTSCFG_TEST_OK(error);
+
+    const bsl::size_t k_SMALL_DEFLATED_SIZE =
+        static_cast<bsl::size_t>(smallDeflated->length());
+
+    // Concern: an inflate operation succeeds if and only if it produces no
+    // more than the maximum inflate size, never appends more than the
+    // maximum inflate size, and the inflater resets after a failure.
+
+    {
+        const bsl::size_t k_LIMIT[] = {0,
+                                       1,
+                                       k_ORIGINAL_SIZE / 2,
+                                       k_ORIGINAL_SIZE - 1,
+                                       k_ORIGINAL_SIZE,
+                                       k_ORIGINAL_SIZE + 1};
+
+        for (bsl::size_t i = 0; i < sizeof k_LIMIT / sizeof k_LIMIT[0]; ++i)
+        {
+            const bsl::size_t limit = k_LIMIT[i];
+
+            ntca::CompressionConfig config = baseConfig;
+            config.setMaxInflateSize(limit);
+
+            bsl::shared_ptr<ntci::Compression> compression =
+                PluginTest::createCompression(config, dataPool);
+
+            bsl::shared_ptr<bdlbb::Blob> inflated =
+                dataPool->createIncomingBlob();
+
+            error = PluginTest::inflate(compression, inflated.get(), *deflated);
+
+            if (limit >= k_ORIGINAL_SIZE) {
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*inflated, *original),
+                               0);
+            }
+            else {
+                NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+                NTSCFG_TEST_LE(static_cast<bsl::size_t>(inflated->length()),
+                               limit);
+
+                if (limit >= k_SMALL_SIZE) {
+                    bsl::shared_ptr<bdlbb::Blob> smallInflated =
+                        dataPool->createIncomingBlob();
+
+                    error = PluginTest::inflate(compression,
+                                                smallInflated.get(),
+                                                *smallDeflated);
+                    NTSCFG_TEST_OK(error);
+
+                    NTSCFG_TEST_EQ(
+                        bdlbb::BlobUtil::compare(*smallInflated, *small),
+                        0);
+                }
+            }
+        }
+    }
+
+    // Concern: the maximum inflate size applies to the entire operation, even
+    // when the operation is fed its input across many calls. Note that
+    // inflating a blob composed of many buffers feeds each buffer to the
+    // inflater in a separate call.
+
+    {
+        bdlbb::SimpleBlobBufferFactory singleByteBufferFactory(
+            1,
+            NTSCFG_TEST_ALLOCATOR);
+
+        bsl::vector<char> bytes(k_DEFLATED_SIZE);
+        bdlbb::BlobUtil::copy(&bytes[0],
+                              *deflated,
+                              0,
+                              static_cast<int>(k_DEFLATED_SIZE));
+
+        bdlbb::Blob fragmented(&singleByteBufferFactory,
+                               NTSCFG_TEST_ALLOCATOR);
+        bdlbb::BlobUtil::append(&fragmented,
+                                &bytes[0],
+                                static_cast<int>(bytes.size()));
+
+        NTSCFG_TEST_EQ(static_cast<bsl::size_t>(fragmented.numDataBuffers()),
+                       k_DEFLATED_SIZE);
+
+        const bsl::size_t k_LIMIT[] = {k_ORIGINAL_SIZE - 1, k_ORIGINAL_SIZE};
+
+        for (bsl::size_t i = 0; i < sizeof k_LIMIT / sizeof k_LIMIT[0]; ++i)
+        {
+            const bsl::size_t limit = k_LIMIT[i];
+
+            ntca::CompressionConfig config = baseConfig;
+            config.setMaxInflateSize(limit);
+
+            bsl::shared_ptr<ntci::Compression> compression =
+                PluginTest::createCompression(config, dataPool);
+
+            bsl::shared_ptr<bdlbb::Blob> inflated =
+                dataPool->createIncomingBlob();
+
+            error = PluginTest::inflate(compression, inflated.get(), fragmented);
+
+            if (limit >= k_ORIGINAL_SIZE) {
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*inflated, *original),
+                               0);
+            }
+            else {
+                NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+                NTSCFG_TEST_LE(static_cast<bsl::size_t>(inflated->length()),
+                               limit);
+            }
+        }
+    }
+
+    // Concern: the maximum inflate size applies to the entire operation when
+    // the operation is fed its input as an array of buffers, and the failure
+    // is reported to the caller.
+
+    {
+        bsl::vector<char> bytes(k_DEFLATED_SIZE);
+        bdlbb::BlobUtil::copy(&bytes[0],
+                              *deflated,
+                              0,
+                              static_cast<int>(k_DEFLATED_SIZE));
+
+        const bsl::size_t k_LIMIT[] = {k_ORIGINAL_SIZE - 1, k_ORIGINAL_SIZE};
+
+        for (bsl::size_t i = 0; i < sizeof k_LIMIT / sizeof k_LIMIT[0]; ++i)
+        {
+            const bsl::size_t limit = k_LIMIT[i];
+
+            ntca::CompressionConfig config = baseConfig;
+            config.setMaxInflateSize(limit);
+
+            bsl::shared_ptr<ntci::Compression> compression =
+                PluginTest::createCompression(config, dataPool);
+
+            ntsa::Data data(NTSCFG_TEST_ALLOCATOR);
+            ntsa::ConstBufferArray& bufferArray = data.makeConstBufferArray();
+            for (bsl::size_t j = 0; j < bytes.size(); ++j) {
+                bufferArray.append(&bytes[j], 1);
+            }
+
+            bsl::shared_ptr<bdlbb::Blob> inflated =
+                dataPool->createIncomingBlob();
+
+            ntca::InflateOptions inflateOptions;
+            ntca::InflateContext inflateContext;
+
+            error = compression->inflate(&inflateContext,
+                                         inflated.get(),
+                                         data,
+                                         inflateOptions);
+
+            if (limit >= k_ORIGINAL_SIZE) {
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*inflated, *original),
+                               0);
+            }
+            else {
+                NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+                NTSCFG_TEST_LE(static_cast<bsl::size_t>(inflated->length()),
+                               limit);
+            }
+        }
+    }
+
+    // Concern: the maximum inflate size applies to each operation, not
+    // cumulatively across operations.
+
+    {
+        ntca::CompressionConfig config = baseConfig;
+        config.setMaxInflateSize(k_ORIGINAL_SIZE);
+
+        bsl::shared_ptr<ntci::Compression> compression =
+            PluginTest::createCompression(config, dataPool);
+
+        for (bsl::size_t i = 0; i < 3; ++i) {
+            bsl::shared_ptr<bdlbb::Blob> inflated =
+                dataPool->createIncomingBlob();
+
+            error = PluginTest::inflate(compression, inflated.get(), *deflated);
+            NTSCFG_TEST_OK(error);
+
+            NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*inflated, *original), 0);
+        }
+    }
+
+    // Concern: a deflate operation succeeds if and only if it produces no
+    // more than the maximum deflate size, never appends more than the
+    // maximum deflate size, and leaves no residue that is appended to the
+    // result of a subsequent operation.
+
+    {
+        const bsl::size_t k_LIMIT[] = {0,
+                                       1,
+                                       k_DEFLATED_SIZE / 2,
+                                       k_DEFLATED_SIZE - 1,
+                                       k_DEFLATED_SIZE,
+                                       k_DEFLATED_SIZE + 1};
+
+        for (bsl::size_t i = 0; i < sizeof k_LIMIT / sizeof k_LIMIT[0]; ++i)
+        {
+            const bsl::size_t limit = k_LIMIT[i];
+
+            ntca::CompressionConfig config = baseConfig;
+            config.setMaxDeflateSize(limit);
+
+            bsl::shared_ptr<ntci::Compression> compression =
+                PluginTest::createCompression(config, dataPool);
+
+            bsl::shared_ptr<bdlbb::Blob> output =
+                dataPool->createOutgoingBlob();
+
+            error = PluginTest::deflate(compression, output.get(), *original);
+
+            if (limit >= k_DEFLATED_SIZE) {
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_EQ(static_cast<bsl::size_t>(output->length()),
+                               k_DEFLATED_SIZE);
+
+                bsl::shared_ptr<bdlbb::Blob> inflated =
+                    dataPool->createIncomingBlob();
+
+                error = PluginTest::inflate(unlimitedCompression,
+                                            inflated.get(),
+                                            *output);
+                NTSCFG_TEST_OK(error);
+
+                NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*inflated, *original),
+                               0);
+            }
+            else {
+                NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+                NTSCFG_TEST_LE(static_cast<bsl::size_t>(output->length()),
+                               limit);
+
+                if (limit >= k_SMALL_DEFLATED_SIZE) {
+                    bsl::shared_ptr<bdlbb::Blob> smallOutput =
+                        dataPool->createOutgoingBlob();
+
+                    error = PluginTest::deflate(compression,
+                                                smallOutput.get(),
+                                                *small);
+                    NTSCFG_TEST_OK(error);
+
+                    NTSCFG_TEST_EQ(
+                        static_cast<bsl::size_t>(smallOutput->length()),
+                        k_SMALL_DEFLATED_SIZE);
+
+                    bsl::shared_ptr<bdlbb::Blob> smallInflated =
+                        dataPool->createIncomingBlob();
+
+                    error = PluginTest::inflate(unlimitedCompression,
+                                                smallInflated.get(),
+                                                *smallOutput);
+                    NTSCFG_TEST_OK(error);
+
+                    NTSCFG_TEST_EQ(
+                        bdlbb::BlobUtil::compare(*smallInflated, *small),
+                        0);
+                }
+            }
+        }
+    }
+
+    // Concern: inflating a highly-compressed payload fails once the maximum
+    // inflate size is reached, without inflating the entire payload.
+
+    {
+        const bsl::size_t k_BOMB_SIZE  = 16 * 1024 * 1024;
+        const bsl::size_t k_BOMB_LIMIT = 1024 * 1024;
+
+        bsl::vector<char> zeros(64 * 1024, 0);
+
+        bsl::shared_ptr<bdlbb::Blob> bomb = dataPool->createIncomingBlob();
+        for (bsl::size_t i = 0; i < k_BOMB_SIZE / zeros.size(); ++i) {
+            bdlbb::BlobUtil::append(bomb.get(),
+                                    &zeros[0],
+                                    static_cast<int>(zeros.size()));
+        }
+
+        bsl::shared_ptr<bdlbb::Blob> bombDeflated =
+            dataPool->createOutgoingBlob();
+        error = PluginTest::deflate(unlimitedCompression,
+                                    bombDeflated.get(),
+                                    *bomb);
+        NTSCFG_TEST_OK(error);
+
+        ntca::CompressionConfig config = baseConfig;
+        config.setMaxInflateSize(k_BOMB_LIMIT);
+
+        bsl::shared_ptr<ntci::Compression> compression =
+            PluginTest::createCompression(config, dataPool);
+
+        bsl::shared_ptr<bdlbb::Blob> inflated = dataPool->createIncomingBlob();
+
+        error = PluginTest::inflate(compression, inflated.get(), *bombDeflated);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+
+        NTSCFG_TEST_LE(static_cast<bsl::size_t>(inflated->length()),
+                       k_BOMB_LIMIT);
+    }
+}
+
+void PluginTest::verifyMalformedForType(ntca::CompressionType::Value type)
+{
+    ntsa::Error error;
+
+    BALL_LOG_INFO << "Testing malformed input for " << type << BALL_LOG_END;
+
+    bsl::shared_ptr<ntci::DataPool> dataPool = PluginTest::createDataPool();
+
+    ntca::CompressionConfig config;
+    config.setType(type);
+    config.setGoal(ntca::CompressionGoal::e_BALANCED);
+
+    bsl::shared_ptr<ntci::Compression> compression =
+        PluginTest::createCompression(config, dataPool);
+
+    const char k_SMALL[] = "abbcccddddeeeffg";
+
+    bsl::shared_ptr<bdlbb::Blob> small = dataPool->createIncomingBlob();
+    bdlbb::BlobUtil::append(small.get(), k_SMALL, sizeof k_SMALL - 1);
+
+    bsl::shared_ptr<bdlbb::Blob> smallDeflated =
+        dataPool->createOutgoingBlob();
+    error = PluginTest::deflate(compression, smallDeflated.get(), *small);
+    NTSCFG_TEST_OK(error);
+
+    const char k_GARBAGE[] = "This is not a compressed frame!";
+
+    for (bsl::size_t i = 0; i < 2; ++i) {
+        // Concern: malformed input is rejected.
+
+        bsl::shared_ptr<bdlbb::Blob> garbage = dataPool->createIncomingBlob();
+        bdlbb::BlobUtil::append(garbage.get(), k_GARBAGE, sizeof k_GARBAGE - 1);
+
+        bsl::shared_ptr<bdlbb::Blob> inflated = dataPool->createIncomingBlob();
+
+        error = PluginTest::inflate(compression, inflated.get(), *garbage);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
+
+        // Concern: the inflater resets after the failure, so a subsequent,
+        // well-formed frame is inflated, and no residue from the failed
+        // operation is appended to its result.
+
+        bsl::shared_ptr<bdlbb::Blob> smallInflated =
+            dataPool->createIncomingBlob();
+
+        error = PluginTest::inflate(compression,
+                                    smallInflated.get(),
+                                    *smallDeflated);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*smallInflated, *small), 0);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyLimits)
+{
+    bsl::vector<ntca::CompressionType::Value> typeVector;
+    PluginTest::loadTypes(&typeVector);
+
+    for (bsl::size_t i = 0; i < typeVector.size(); ++i) {
+        PluginTest::verifyLimitsForType(typeVector[i]);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyMalformed)
+{
+    bsl::vector<ntca::CompressionType::Value> typeVector;
+    PluginTest::loadTypes(&typeVector);
+
+    for (bsl::size_t i = 0; i < typeVector.size(); ++i) {
+        PluginTest::verifyMalformedForType(typeVector[i]);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntctlc::PluginTest::verifyZstdWindow)
+{
+#if NTC_BUILD_WITH_ZSTD
+
+    ntsa::Error error;
+
+    bsl::shared_ptr<ntci::DataPool> dataPool = PluginTest::createDataPool();
+
+    ntca::CompressionConfig config;
+    config.setType(ntca::CompressionType::e_ZSTD);
+    config.setGoal(ntca::CompressionGoal::e_BALANCED);
+
+    bsl::shared_ptr<ntci::Compression> compression =
+        PluginTest::createCompression(config, dataPool);
+
+    // A frame having no content size, declaring a window of the specified
+    // size, containing a single, last, raw block of the single byte 'x'.
+
+    const unsigned char k_FRAME_WINDOW_2_24[] =
+        {0x28, 0xB5, 0x2F, 0xFD, 0x00, 0x70, 0x09, 0x00, 0x00, 'x'};
+
+    const unsigned char k_FRAME_WINDOW_2_23[] =
+        {0x28, 0xB5, 0x2F, 0xFD, 0x00, 0x68, 0x09, 0x00, 0x00, 'x'};
+
+    // Concern: a frame declaring a window larger than the maximum is
+    // rejected.
+
+    {
+        bsl::shared_ptr<bdlbb::Blob> frame = dataPool->createIncomingBlob();
+        bdlbb::BlobUtil::append(frame.get(),
+                                reinterpret_cast<const char*>(
+                                    k_FRAME_WINDOW_2_24),
+                                sizeof k_FRAME_WINDOW_2_24);
+
+        bsl::shared_ptr<bdlbb::Blob> inflated = dataPool->createIncomingBlob();
+
+        error = PluginTest::inflate(compression, inflated.get(), *frame);
+        NTSCFG_TEST_ERROR(error, ntsa::Error::e_INVALID);
+
+        NTSCFG_TEST_EQ(inflated->length(), 0);
+    }
+
+    // Concern: a frame declaring a window equal to the maximum is accepted.
+
+    {
+        bsl::shared_ptr<bdlbb::Blob> frame = dataPool->createIncomingBlob();
+        bdlbb::BlobUtil::append(frame.get(),
+                                reinterpret_cast<const char*>(
+                                    k_FRAME_WINDOW_2_23),
+                                sizeof k_FRAME_WINDOW_2_23);
+
+        bsl::shared_ptr<bdlbb::Blob> inflated = dataPool->createIncomingBlob();
+
+        error = PluginTest::inflate(compression, inflated.get(), *frame);
+        NTSCFG_TEST_OK(error);
+
+        bsl::shared_ptr<bdlbb::Blob> expected = dataPool->createIncomingBlob();
+        bdlbb::BlobUtil::append(expected.get(), "x", 1);
+
+        NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*inflated, *expected), 0);
+    }
+
+    // Concern: frames produced by the deflater at every compression goal,
+    // including those whose default window exceeds the maximum, may be
+    // inflated.
+
+    {
+        bsl::shared_ptr<bdlbb::Blob> original = dataPool->createIncomingBlob();
+        ntscfg::TestDataUtil::generateData(
+            original.get(),
+            64 * 1024,
+            0,
+            ntscfg::TestDataUtil::k_DATASET_CLIENT_COMPRESSABLE);
+
+        const ntca::CompressionGoal::Value k_GOAL[] = {
+            ntca::CompressionGoal::e_BEST_SIZE,
+            ntca::CompressionGoal::e_BETTER_SIZE,
+            ntca::CompressionGoal::e_BALANCED,
+            ntca::CompressionGoal::e_BETTER_SPEED,
+            ntca::CompressionGoal::e_BEST_SPEED};
+
+        for (bsl::size_t i = 0; i < sizeof k_GOAL / sizeof k_GOAL[0]; ++i) {
+            ntca::CompressionConfig deflaterConfig;
+            deflaterConfig.setType(ntca::CompressionType::e_ZSTD);
+            deflaterConfig.setGoal(k_GOAL[i]);
+
+            bsl::shared_ptr<ntci::Compression> deflater =
+                PluginTest::createCompression(deflaterConfig, dataPool);
+
+            bsl::shared_ptr<bdlbb::Blob> deflated =
+                dataPool->createOutgoingBlob();
+
+            error = PluginTest::deflate(deflater, deflated.get(), *original);
+            NTSCFG_TEST_OK(error);
+
+            bsl::shared_ptr<bdlbb::Blob> inflated =
+                dataPool->createIncomingBlob();
+
+            error = PluginTest::inflate(compression, inflated.get(), *deflated);
+            NTSCFG_TEST_OK(error);
+
+            NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(*inflated, *original), 0);
+        }
+    }
 
 #endif
 }
