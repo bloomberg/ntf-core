@@ -25,11 +25,23 @@ namespace ntcs {
 
 ShutdownState::ShutdownState()
 : d_context()
+, d_canSend(true)
+, d_canReceive(true)
+, d_initiated(false)
+, d_completed(false)
 {
 }
 
 ShutdownState::~ShutdownState()
 {
+}
+
+void ShutdownState::refreshAtomicState()
+{
+    d_canSend.storeRelease(!d_context.shutdownSend());
+    d_canReceive.storeRelease(!d_context.shutdownReceive());
+    d_initiated.storeRelease(d_context.shutdownInitiated());
+    d_completed.storeRelease(d_context.shutdownCompleted());
 }
 
 bool ShutdownState::tryShutdownSend(ntcs::ShutdownContext* context,
@@ -65,6 +77,8 @@ bool ShutdownState::tryShutdownSend(ntcs::ShutdownContext* context,
             d_context.setShutdownCompleted(true);
         }
     }
+
+    this->refreshAtomicState();
 
     return true;
 }
@@ -106,6 +120,8 @@ bool ShutdownState::tryShutdownReceive(ntcs::ShutdownContext* context,
         }
     }
 
+    this->refreshAtomicState();
+
     return true;
 }
 
@@ -120,11 +136,15 @@ void ShutdownState::close()
     d_context.setShutdownReceive(true);
 
     d_context.setShutdownCompleted(true);
+
+    this->refreshAtomicState();
 }
 
 void ShutdownState::reset()
 {
     d_context.reset();
+
+    this->refreshAtomicState();
 }
 
 }  // close package namespace

@@ -9451,6 +9451,15 @@ ntsa::Error Session::process(LockGuard* lock)
         return ntsa::Error(ntsa::Error::e_INVALID);
     }
 
+    // Clear any stale errors in this thread's OpenSSL error queue, so that
+    // 'SSL_get_error' reports the outcome of the operations below rather than
+    // an unrelated, previously-unconsumed error. Otherwise, a stale error could
+    // be misinterpreted as a handshake failure, and the handshake callback
+    // could be invoked from a call other than 'initiateHandshake' or
+    // 'pushIncomingCipherText'.
+
+    ERR_clear_error();
+
     bool announceHandshakeComplete = false;
 
     if (SSL_in_init(d_ssl_p)) {
@@ -9476,12 +9485,17 @@ ntsa::Error Session::process(LockGuard* lock)
 
             d_handshakeCallback = ntci::Encryption::HandshakeCallback();
 
-            lock->release()->unlock();
+            // The handshake callback is empty if the failure of the handshake
+            // has already been announced.
 
-            handshakeCallback(
-                ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED),
-                bsl::shared_ptr<ntci::EncryptionCertificate>(),
-                description);
+            if (handshakeCallback) {
+                lock->release()->unlock();
+
+                handshakeCallback(
+                    ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED),
+                    bsl::shared_ptr<ntci::EncryptionCertificate>(),
+                    description);
+            }
 
             return ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED);
         }
@@ -10030,6 +10044,8 @@ ntsa::Error Session::initiateHandshake(
 
     d_handshakeCallback = callback;
 
+    ERR_clear_error();
+
     rc = SSL_do_handshake(d_ssl_p);
 
     if (rc != 1) {
@@ -10266,6 +10282,8 @@ ntsa::Error Session::shutdown()
     }
 
     enum { k_SHUTDOWN_STARTING = 0, k_SHUTDOWN_COMPLETE = 1 };
+
+    ERR_clear_error();
 
     int rc = SSL_shutdown(d_ssl_p);
 
