@@ -67,7 +67,92 @@ class ProtocolTest
 
     // TODO
     static void verifyWks();
+
+    // Verify character strings are decoded within a limit.
+    static void verifyCharacterStringLimit();
+
+    // Verify TXT records.
+    static void verifyTxt();
+
+    // Verify malformed TXT records are rejected.
+    static void verifyTxtMalformed();
+
+    // Verify HINFO records.
+    static void verifyHinfo();
+
+    // Verify malformed HINFO records are rejected.
+    static void verifyHinfoMalformed();
+
+    // Verify malformed WKS records are rejected.
+    static void verifyWksMalformed();
+
+  private:
+    // Load into the specified 'result' a response to a question for the
+    // specified 'type' of "example.com" having the specified 'ancount'
+    // answers, the first of which has the specified 'type', the specified
+    // 'rdlength', and is followed by the specified 'payload' having the
+    // specified 'payloadSize'. Note that 'payloadSize' may differ from
+    // 'rdlength' and 'payload' may contain subsequent answers.
+    static void buildResponse(bsl::vector<bsl::uint8_t>* result,
+                              bsl::uint16_t              type,
+                              bsl::uint16_t              ancount,
+                              bsl::uint16_t              rdlength,
+                              const bsl::uint8_t*        payload,
+                              bsl::size_t                payloadSize);
+
+    // Verify the specified 'message' survives an encode/decode round trip.
+    static void verifyRoundTrip(const ntcdns::Message& message);
 };
+
+void ProtocolTest::buildResponse(bsl::vector<bsl::uint8_t>* result,
+                                 bsl::uint16_t              type,
+                                 bsl::uint16_t              ancount,
+                                 bsl::uint16_t              rdlength,
+                                 const bsl::uint8_t*        payload,
+                                 bsl::size_t                payloadSize)
+{
+    const bsl::uint8_t typeHi = static_cast<bsl::uint8_t>(type >> 8);
+    const bsl::uint8_t typeLo = static_cast<bsl::uint8_t>(type & 0xFF);
+
+    // clang-format off
+    const bsl::uint8_t PREFIX[] = {
+        0x12, 0x34, 0x84, 0x00, 0x00, 0x01,
+        static_cast<bsl::uint8_t>(ancount >> 8),
+        static_cast<bsl::uint8_t>(ancount & 0xFF),
+        0x00, 0x00, 0x00, 0x00,
+        0x07, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65,
+        0x03, 0x63, 0x6f, 0x6d, 0x00,
+        typeHi, typeLo, 0x00, 0x01,
+        0xc0, 0x0c, typeHi, typeLo, 0x00, 0x01,
+        0x00, 0x00, 0x0e, 0x10,
+        static_cast<bsl::uint8_t>(rdlength >> 8),
+        static_cast<bsl::uint8_t>(rdlength & 0xFF)
+    };
+    // clang-format on
+
+    result->assign(PREFIX, PREFIX + sizeof PREFIX);
+    result->insert(result->end(), payload, payload + payloadSize);
+}
+
+void ProtocolTest::verifyRoundTrip(const ntcdns::Message& message)
+{
+    ntsa::Error error;
+
+    bsl::vector<bsl::uint8_t> buffer(1024 * 64);
+
+    ntcdns::MemoryEncoder encoder(&buffer[0], buffer.size());
+
+    error = message.encode(&encoder);
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+    ntcdns::MemoryDecoder decoder(&buffer[0], encoder.position());
+
+    ntcdns::Message other(NTSCFG_TEST_ALLOCATOR);
+    error = other.decode(&decoder);
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+    NTSCFG_TEST_EQ(message, other);
+}
 
 NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyCase1)
 {
@@ -609,6 +694,283 @@ NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyWks)
 
         NTSCFG_TEST_EQ(message, other);
     }
+}
+
+NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyCharacterStringLimit)
+{
+    // Concern: A character string whose declared length exceeds the limit
+    // is rejected without advancing the decoder.
+
+    ntsa::Error error;
+
+    const bsl::uint8_t DATA[] = {0x05, 0x68, 0x65, 0x6c, 0x6c, 0x6f};
+
+    {
+        ntcdns::MemoryDecoder decoder(DATA, sizeof DATA);
+
+        bsl::string value(NTSCFG_TEST_ALLOCATOR);
+        error = decoder.decodeCharacterString(&value, 3);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_EQ(decoder.position(), 0);
+        NTSCFG_TEST_TRUE(value.empty());
+
+        error = decoder.decodeCharacterString(&value, 0);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_EQ(decoder.position(), 0);
+
+        error = decoder.decodeCharacterString(&value, sizeof DATA);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+        NTSCFG_TEST_EQ(decoder.position(), sizeof DATA);
+        NTSCFG_TEST_EQ(value, "hello");
+    }
+
+    {
+        // A limit greater than the buffer is clamped to the buffer.
+
+        ntcdns::MemoryDecoder decoder(DATA, 2);
+
+        bsl::string value(NTSCFG_TEST_ALLOCATOR);
+        error = decoder.decodeCharacterString(&value, 100);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_EQ(decoder.position(), 0);
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyTxt)
+{
+    // Concern: TXT records containing multiple character strings, including
+    // an empty character string.
+
+    ntsa::Error error;
+
+    // clang-format off
+    const bsl::uint8_t RDATA[] = {
+        0x05, 0x68, 0x65, 0x6c, 0x6c, 0x6f,
+        0x00,
+        0x05, 0x77, 0x6f, 0x72, 0x6c, 0x64
+    };
+    // clang-format on
+
+    bsl::vector<bsl::uint8_t> response(NTSCFG_TEST_ALLOCATOR);
+    ProtocolTest::buildResponse(&response,
+                                ntcdns::Type::e_TXT,
+                                1,
+                                sizeof RDATA,
+                                RDATA,
+                                sizeof RDATA);
+
+    ntcdns::Message message(NTSCFG_TEST_ALLOCATOR);
+
+    {
+        ntcdns::MemoryDecoder decoder(&response[0], response.size());
+        error = message.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+    }
+
+    NTSCFG_TEST_EQ(message.ancount(), 1);
+
+    const ntcdns::ResourceRecord& answer = message.an(0);
+
+    NTSCFG_TEST_EQ(answer.type(), ntcdns::Type::e_TXT);
+    NTSCFG_TEST_TRUE(answer.rdata().isTextValue());
+
+    const ntcdns::ResourceRecordDataTxt& txt = answer.rdata().text();
+
+    NTSCFG_TEST_EQ(txt.text().size(), 3);
+    NTSCFG_TEST_EQ(txt.text()[0], "hello");
+    NTSCFG_TEST_EQ(txt.text()[1], "");
+    NTSCFG_TEST_EQ(txt.text()[2], "world");
+
+    ProtocolTest::verifyRoundTrip(message);
+}
+
+NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyTxtMalformed)
+{
+    // Concern: TXT records whose character strings are inconsistent with
+    // the declared RDATA length are rejected.
+
+    ntsa::Error error;
+
+    {
+        // A character string that extends past the RDATA into a subsequent,
+        // well-formed answer.
+
+        // clang-format off
+        const bsl::uint8_t PAYLOAD[] = {
+            0x05, 0x61, 0x62, 0x63,
+            0xc0, 0x0c, 0x00, 0x10, 0x00, 0x01,
+            0x00, 0x00, 0x0e, 0x10, 0x00, 0x02,
+            0x01, 0x78
+        };
+        // clang-format on
+
+        bsl::vector<bsl::uint8_t> response(NTSCFG_TEST_ALLOCATOR);
+        ProtocolTest::buildResponse(&response,
+                                    ntcdns::Type::e_TXT,
+                                    2,
+                                    4,
+                                    PAYLOAD,
+                                    sizeof PAYLOAD);
+
+        {
+            ntcdns::MemoryDecoder decoder(&response[0], response.size());
+            ntcdns::Message       message(NTSCFG_TEST_ALLOCATOR);
+            error = message.decode(&decoder);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        }
+
+        {
+            // The decoder must not advance past the RDATA of the first
+            // answer, which begins immediately after the response prefix.
+
+            const bsl::size_t answerOffset = 29;
+            const bsl::size_t rdataOffset  = response.size() - sizeof PAYLOAD;
+
+            ntcdns::MemoryDecoder decoder(&response[0], response.size());
+            error = decoder.seek(answerOffset);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+
+            ntcdns::ResourceRecord answer(NTSCFG_TEST_ALLOCATOR);
+            error = answer.decode(&decoder);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+            NTSCFG_TEST_EQ(decoder.position(), rdataOffset);
+        }
+    }
+
+    {
+        // The declared RDATA length extends past the end of the message.
+
+        const bsl::uint8_t PAYLOAD[] = {0x05, 0x68, 0x65, 0x6c, 0x6c, 0x6f};
+
+        bsl::vector<bsl::uint8_t> response(NTSCFG_TEST_ALLOCATOR);
+        ProtocolTest::buildResponse(&response,
+                                    ntcdns::Type::e_TXT,
+                                    1,
+                                    32,
+                                    PAYLOAD,
+                                    sizeof PAYLOAD);
+
+        ntcdns::MemoryDecoder decoder(&response[0], response.size());
+        ntcdns::Message       message(NTSCFG_TEST_ALLOCATOR);
+        error = message.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    }
+
+    {
+        // The declared RDATA length ends within a character string.
+
+        const bsl::uint8_t PAYLOAD[] = {0x05, 0x68, 0x65, 0x6c, 0x6c, 0x6f};
+
+        bsl::vector<bsl::uint8_t> response(NTSCFG_TEST_ALLOCATOR);
+        ProtocolTest::buildResponse(&response,
+                                    ntcdns::Type::e_TXT,
+                                    1,
+                                    2,
+                                    PAYLOAD,
+                                    sizeof PAYLOAD);
+
+        ntcdns::MemoryDecoder decoder(&response[0], response.size());
+        ntcdns::Message       message(NTSCFG_TEST_ALLOCATOR);
+        error = message.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyHinfo)
+{
+    // Concern: HINFO records.
+
+    ntsa::Error error;
+
+    // clang-format off
+    const bsl::uint8_t RDATA[] = {
+        0x03, 0x78, 0x38, 0x36,
+        0x05, 0x4c, 0x69, 0x6e, 0x75, 0x78
+    };
+    // clang-format on
+
+    bsl::vector<bsl::uint8_t> response(NTSCFG_TEST_ALLOCATOR);
+    ProtocolTest::buildResponse(&response,
+                                ntcdns::Type::e_HINFO,
+                                1,
+                                sizeof RDATA,
+                                RDATA,
+                                sizeof RDATA);
+
+    ntcdns::Message message(NTSCFG_TEST_ALLOCATOR);
+
+    {
+        ntcdns::MemoryDecoder decoder(&response[0], response.size());
+        error = message.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_OK));
+    }
+
+    const ntcdns::ResourceRecord& answer = message.an(0);
+
+    NTSCFG_TEST_EQ(answer.type(), ntcdns::Type::e_HINFO);
+    NTSCFG_TEST_TRUE(answer.rdata().isHostInfoValue());
+    NTSCFG_TEST_EQ(answer.rdata().hostInfo().cpu(), "x86");
+    NTSCFG_TEST_EQ(answer.rdata().hostInfo().os(), "Linux");
+
+    ProtocolTest::verifyRoundTrip(message);
+}
+
+NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyHinfoMalformed)
+{
+    // Concern: HINFO records whose character strings are inconsistent with
+    // the declared RDATA length are rejected.
+
+    ntsa::Error error;
+
+    // clang-format off
+    const bsl::uint8_t PAYLOAD[] = {
+        0x03, 0x78, 0x38, 0x36,
+        0x05, 0x4c, 0x69, 0x6e, 0x75, 0x78
+    };
+    // clang-format on
+
+    // The declared RDATA length ends within the CPU, after the CPU, and
+    // within the OS, respectively.
+
+    const bsl::uint16_t RDLENGTH[] = {2, 4, 7};
+
+    for (bsl::size_t i = 0; i < sizeof RDLENGTH / sizeof RDLENGTH[0]; ++i) {
+        bsl::vector<bsl::uint8_t> response(NTSCFG_TEST_ALLOCATOR);
+        ProtocolTest::buildResponse(&response,
+                                    ntcdns::Type::e_HINFO,
+                                    1,
+                                    RDLENGTH[i],
+                                    PAYLOAD,
+                                    sizeof PAYLOAD);
+
+        ntcdns::MemoryDecoder decoder(&response[0], response.size());
+        ntcdns::Message       message(NTSCFG_TEST_ALLOCATOR);
+        error = message.decode(&decoder);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcdns::ProtocolTest::verifyWksMalformed)
+{
+    // Concern: WKS records whose declared RDATA length is less than the size
+    // of the address and protocol are rejected.
+
+    ntsa::Error error;
+
+    const bsl::uint8_t PAYLOAD[] = {0xc0, 0xa8, 0x01, 0x01, 0x06, 0x00, 0x00};
+
+    bsl::vector<bsl::uint8_t> response(NTSCFG_TEST_ALLOCATOR);
+    ProtocolTest::buildResponse(&response,
+                                ntcdns::Type::e_WKS,
+                                1,
+                                3,
+                                PAYLOAD,
+                                sizeof PAYLOAD);
+
+    ntcdns::MemoryDecoder decoder(&response[0], response.size());
+    ntcdns::Message       message(NTSCFG_TEST_ALLOCATOR);
+    error = message.decode(&decoder);
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
 }
 
 }  // close namespace ntcdns
