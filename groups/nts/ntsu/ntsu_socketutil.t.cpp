@@ -50,6 +50,13 @@ BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
 // clang-format on
 #endif
 
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#include <sys/socket.h>
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+#include <sys/un.h>
+#endif
+#endif
+
 #if defined(BSLS_PLATFORM_OS_LINUX)
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
@@ -459,6 +466,16 @@ class SocketUtilTest
     // Verify how the operating system reports the result of accepting a
     // socket whose peer has already closed the connection.
     static void verifyListenerSocketAcceptingClosedConnections();
+
+    // Verify endpoint decoding of a Unix domain socket name bounds the scan of
+    // 'sun_path' by the specified address size and does not depend on a null
+    // terminator.
+    static void verifyDecodeEndpointLocalUnterminated();
+
+    // Verify endpoint decoding of a Unix domain socket name with embedded NULs
+    // successfully returns an endpoint whose local name only contains
+    // characters up to the first embedded NUL.
+    static void verifyDecodeEndpointLocalEmbeddedNulls();
 };
 
 /// Describe the parameters of the test.
@@ -479,7 +496,7 @@ public:
     /// Set the flag indicating that zero-copy transmissions should be
     /// performed according to the specified 'value'.
     void setZeroCopy(bool value);
-    
+
     /// Return the flag indicating that timestamps for incoming data should be
     /// generated.
     bool timestampIncomingData() const;
@@ -488,7 +505,7 @@ public:
     /// generated.
     bool timestampOutgoingData() const;
 
-    /// Return the flag indicating that zero-copy transmission should be 
+    /// Return the flag indicating that zero-copy transmission should be
     /// performed.
     bool zeroCopy() const;
 
@@ -567,10 +584,10 @@ bool SocketUtilTest::supportsTimestamping(ntsa::Handle socket)
     for (bsl::size_t i = 0; i < adapterList.size(); ++i) {
         const ntsa::Adapter& adapter = adapterList[i];
 
-        if (adapter.ipv4Address().has_value() && 
-            adapter.ipv4Address().value() == ntsa::Ipv4Address::loopback()) 
+        if (adapter.ipv4Address().has_value() &&
+            adapter.ipv4Address().value() == ntsa::Ipv4Address::loopback())
         {
-            if (adapter.txSoftwareTimestamps() && 
+            if (adapter.txSoftwareTimestamps() &&
                 adapter.rxSoftwareTimestamps())
             {
                 return true;
@@ -716,7 +733,7 @@ void SocketUtilTest::executeStreamSocketTestParameters(
     if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_LOCAL_STREAM))
     {
-        if (!parameters.timestampIncomingData() && 
+        if (!parameters.timestampIncomingData() &&
             !parameters.timestampOutgoingData() &&
             !parameters.zeroCopy())
         {
@@ -749,7 +766,7 @@ void SocketUtilTest::executeStreamSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(listener, 
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(listener,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -807,7 +824,7 @@ void SocketUtilTest::executeStreamSocketTestParameters(
 
         // Set the RX timestamping options for the client according to the
         // test parameters. Note that TX timestamping cannot be enabled on
-        // sockets before they are connected but must be explicitly set after 
+        // sockets before they are connected but must be explicitly set after
         // they are connected.
 
         if (parameters.timestampIncomingData()) {
@@ -815,7 +832,7 @@ void SocketUtilTest::executeStreamSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(client, 
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(client,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -833,7 +850,7 @@ void SocketUtilTest::executeStreamSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client, 
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -862,14 +879,14 @@ void SocketUtilTest::executeStreamSocketTestParameters(
         ntsu::SocketUtil::Guard serverGuard(server);
 
         // Set the TX timestamping options for the server according to the
-        // test parameters. 
+        // test parameters.
 
         if (parameters.timestampOutgoingData()) {
             if (!SocketUtilTest::supportsTimestamping(server)) {
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(server, 
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(server,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -918,13 +935,13 @@ void SocketUtilTest::executeStreamSocketTestParameters(
 
         if (parameters.zeroCopy()) {
             bool clientZeroCopy;
-            error = ntsu::SocketOptionUtil::getZeroCopy(&clientZeroCopy, 
+            error = ntsu::SocketOptionUtil::getZeroCopy(&clientZeroCopy,
                                                         client);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(clientZeroCopy);
 
             bool serverZeroCopy;
-            error = ntsu::SocketOptionUtil::getZeroCopy(&serverZeroCopy, 
+            error = ntsu::SocketOptionUtil::getZeroCopy(&serverZeroCopy,
                                                         server);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(serverZeroCopy);
@@ -1037,7 +1054,7 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
     if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_LOCAL_DATAGRAM))
     {
-        if (!parameters.timestampIncomingData() && 
+        if (!parameters.timestampIncomingData() &&
             !parameters.timestampOutgoingData() &&
             !parameters.zeroCopy())
         {
@@ -1068,7 +1085,7 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(server, 
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(server,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -1078,7 +1095,7 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(server, 
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(server,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -1149,7 +1166,7 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(client, 
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(client,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -1159,7 +1176,7 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client, 
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -1244,13 +1261,13 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
 
         if (parameters.zeroCopy()) {
             bool clientZeroCopy;
-            error = ntsu::SocketOptionUtil::getZeroCopy(&clientZeroCopy, 
+            error = ntsu::SocketOptionUtil::getZeroCopy(&clientZeroCopy,
                                                         client);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(clientZeroCopy);
 
             bool serverZeroCopy;
-            error = ntsu::SocketOptionUtil::getZeroCopy(&serverZeroCopy, 
+            error = ntsu::SocketOptionUtil::getZeroCopy(&serverZeroCopy,
                                                         server);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(serverZeroCopy);
@@ -8551,7 +8568,7 @@ NTSCFG_TEST_FUNCTION(
     NTSCFG_TEST_OK(error);
 
     if (!SocketUtilTest::supportsTimestamping(client) ||
-        !SocketUtilTest::supportsTimestamping(server)) 
+        !SocketUtilTest::supportsTimestamping(server))
     {
         ntsu::SocketUtil::close(client);
         ntsu::SocketUtil::close(server);
@@ -8734,7 +8751,7 @@ NTSCFG_TEST_FUNCTION(
     parameters.setZeroCopy(true);
 
     SocketUtilTest::executeDatagramSocketTestParameters(
-        &SocketUtilTest::testDatagramSocketTxTimestampsAndZeroCopy, 
+        &SocketUtilTest::testDatagramSocketTxTimestampsAndZeroCopy,
         parameters);
 
 #endif
@@ -9089,6 +9106,130 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyIsSocket)
         bool result2 = ntsu::SocketUtil::isSocket(socket);
         NTSCFG_TEST_FALSE(result2);
     }
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnterminated)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: decodeEndpoint bounds the scan of 'sun_path' by the specified
+    // address size and does not depend on a null terminator.
+
+    // Fill well past the end of the address with non-null bytes so a read
+    // beyond the stated length changes the result. Terminate at the very end
+    // so the old unbounded scan stays inside this buffer.
+
+    const bsl::size_t pathOffset = offsetof(struct sockaddr_un, sun_path);
+
+    union {
+        sockaddr_un un;
+        char        raw[512];
+    } address;
+
+    ntsa::Endpoint endpoint;
+    ntsa::Error    error;
+
+    // Pathname, unterminated: "abc" followed by 'x' bytes.
+    bsl::memset(&address, 'x', sizeof address);
+    address.raw[sizeof address - 1] = 0;
+    address.un.sun_family = AF_UNIX;
+    bsl::memcpy(address.un.sun_path, "abc", 3);
+
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                             &address,
+                                             pathOffset + 3);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_TRUE(endpoint.isLocal());
+    NTSCFG_TEST_FALSE(endpoint.local().isAbstract());
+    NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    // Abstract: leading NUL, "abc", followed by 'x' bytes.
+    bsl::memset(&address, 'x', sizeof address);
+    address.raw[sizeof address - 1] = 0;
+    address.un.sun_family = AF_UNIX;
+    address.un.sun_path[0] = 0;
+    bsl::memcpy(address.un.sun_path + 1, "abc", 3);
+
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                             &address,
+                                             pathOffset + 4);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_TRUE(endpoint.local().isAbstract());
+    NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+#endif
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalEmbeddedNulls)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: Endpoint decoding of a Unix domain socket names in the
+    // persistent namespace with embedded NULs successfully returns an endpoint
+    // whose local name only contains characters up to the first embedded NUL.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 'a';
+        un.sun_path[1] = 'b';
+        un.sun_path[2] = 'c';
+        un.sun_path[3] = 0;
+        un.sun_path[4] = 'x';
+
+        un.sun_len = sizeof(un.sun_family) + 5;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            static_cast<std::size_t>(un.sun_len));
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
+        NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+    }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    // Concern: Endpoint decoding of a Unix domain socket names in the
+    // abstract namespace with embedded NULs successfully returns an endpoint
+    // whose local name only contains characters up to the first embedded NUL,
+    // not including the first NUL which indicates the abstract namespace.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 0;
+        un.sun_path[1] = 'a';
+        un.sun_path[2] = 'b';
+        un.sun_path[3] = 'c';
+        un.sun_path[4] = 0;
+        un.sun_path[5] = 'x';
+
+        un.sun_len = sizeof(un.sun_family) + 6;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            static_cast<std::size_t>(un.sun_len));
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
+    }
+#endif
+#endif
+#endif
 }
 
 }  // close namespace ntsu
