@@ -99,6 +99,9 @@ class LocalNameTest
 
     // Concern: Hashing distinguishes abstract and persistent local names.
     static void verifyHashingAbstractness();
+
+    // Concern: Ordering distinguishes abstract and persistent local names.
+    static void verifyLessAbstractness();
 };
 
 // Provide utilities for accessing and manipulating the environment for
@@ -857,6 +860,24 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyHashingAbstractness)
     bsl::size_t persistentHash = bslh::Hash<>()(persistentName);
     bsl::size_t abstractHash   = bslh::Hash<>()(abstractName);
     NTSCFG_TEST_NE(persistentHash, abstractHash);
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyLessAbstractness)
+{
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    ntsa::LocalName persistentName;
+    ntsa::Error    error = persistentName.setValue("same-name");
+    NTSCFG_TEST_OK(error);
+
+    ntsa::LocalName abstractName;
+    error = abstractName.setValue("same-name");
+    NTSCFG_TEST_OK(error);
+    error = abstractName.setAbstract();
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_LT(persistentName, abstractName);
+    NTSCFG_TEST_FALSE(abstractName < persistentName);
 #endif
 }
 
