@@ -9186,12 +9186,13 @@ NTSCFG_TEST_FUNCTION(
         un.sun_path[3] = 0;
         un.sun_path[4] = 'x';
 
-        un.sun_len = sizeof(un.sun_family) + 5;
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 5;
 
         error = ntsu::SocketUtil::decodeEndpoint(
             &endpoint,
             &un,
-            static_cast<std::size_t>(un.sun_len));
+            addressLength);
         NTSCFG_TEST_OK(error);
         NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
         NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
@@ -9218,12 +9219,13 @@ NTSCFG_TEST_FUNCTION(
         un.sun_path[4] = 0;
         un.sun_path[5] = 'x';
 
-        un.sun_len = sizeof(un.sun_family) + 6;
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 6;
 
         error = ntsu::SocketUtil::decodeEndpoint(
             &endpoint,
             &un,
-            static_cast<std::size_t>(un.sun_len));
+            addressLength);
         NTSCFG_TEST_OK(error);
         NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
     }
