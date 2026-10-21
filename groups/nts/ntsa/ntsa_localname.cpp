@@ -254,15 +254,11 @@ bool LocalName::less(const LocalName& other) const
         }
     }
 
-    if (first1 == last1 && first2 != last2) {
-        return true;
+    if (first1 != last1 || first2 != last2) {
+        return first1 == last1;
     }
 
-    if (first1 != last1) {
-        return false;
-    }
-
-    return (!d_abstract && other.d_abstract);
+    return !d_abstract && other.d_abstract;
 }
 
 bsl::ostream& LocalName::print(bsl::ostream& stream,
