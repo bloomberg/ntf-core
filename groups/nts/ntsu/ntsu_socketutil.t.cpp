@@ -9227,7 +9227,8 @@ NTSCFG_TEST_FUNCTION(
             &un,
             addressLength);
         NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
+        NTSCFG_TEST_TRUE(endpoint.local().isAbstract());
+        NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
     }
 #endif
 #endif
