@@ -363,6 +363,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const LocalName& value)
 
     bslstl::StringRef text = value.value();
     algorithm(text.data(), text.size());
+    hashAppend(algorithm, value.isAbstract());
 }
 
 template <typename MANIPULATOR>
