@@ -73,8 +73,11 @@ class LocalNameTest
     // Concern: Local name explicitly set to a relative path.
     static void verifySetValueFromPathRelative();
 
-    // Concern: Try to set explicitly value which is longer than can be stored.
+    // Concern: Try to set value which is longer than can be stored.
     static void verifySetValueFromPathTooLong();
+
+    // Concern: Try to set value containing embedded NULs.
+    static void verifySetValueWithEmbeddedNul();
 
     // Concern: Local name generated from a unique GUID.
     static void verifyGenerateUnique();
@@ -84,7 +87,7 @@ class LocalNameTest
     static void verifyGenerateUniqueTooLong();
 
     // Concern: Local names generated from unique GUIDs are stored first in
-    // SOCKDIR, if defined, then in TEMPDIR (on the Unixes) or TMP (on 
+    // SOCKDIR, if defined, then in TEMPDIR (on the Unixes) or TMP (on
     // Windows) if SOCKDIR is not defined.
     static void verifyGenerateUniqueFromEnvironment();
 
@@ -105,7 +108,7 @@ class LocalNameTest::EnvironmentUtil
 public:
     // Set the environment variable having the specified 'name' to the
     // specified 'value'.
-    static void put(const bsl::string&                      name, 
+    static void put(const bsl::string&                      name,
                     const bdlb::NullableValue<bsl::string>& value);
 
     // Return the environment variable having the specified 'name'.
@@ -129,21 +132,21 @@ public:
     // with the specified 'name'. Optionally specify a 'basicAllocator' used
     // to supply memory. If 'basicAllocator' is 0, the currently installed
     // default allocator is used.
-    explicit EnvironmentGuard(const bsl::string& name, 
+    explicit EnvironmentGuard(const bsl::string& name,
                               bslma::Allocator*  basicAllocator = 0);
 
     // Destroy this object.
     ~EnvironmentGuard();
 
-    // Set the environment variable guarded by this object to the specified 
+    // Set the environment variable guarded by this object to the specified
     // 'value'. Upon destruction of this object, the value of the environment
-    // variable is reset to its original value at the time of this object's 
+    // variable is reset to its original value at the time of this object's
     // construction.
     void setValue(const bsl::string& value);
 
-    // Set the environment variable guarded by this object to the specified 
+    // Set the environment variable guarded by this object to the specified
     // 'value'. Upon destruction of this object, the value of the environment
-    // variable is reset to its original value at the time of this object's 
+    // variable is reset to its original value at the time of this object's
     // construction.
     void setValue(const bdlb::NullableValue<bsl::string>& value);
 
@@ -160,7 +163,7 @@ public:
 #if defined(BSLS_PLATFORM_OS_UNIX)
 
 void LocalNameTest::EnvironmentUtil::put(
-    const bsl::string&                      name, 
+    const bsl::string&                      name,
     const bdlb::NullableValue<bsl::string>& value)
 {
     int rc;
@@ -175,7 +178,7 @@ void LocalNameTest::EnvironmentUtil::put(
     }
 }
 
-bdlb::NullableValue<bsl::string> 
+bdlb::NullableValue<bsl::string>
 LocalNameTest::EnvironmentUtil::get(const bsl::string& name)
 {
     bdlb::NullableValue<bsl::string> result;
@@ -191,11 +194,11 @@ LocalNameTest::EnvironmentUtil::get(const bsl::string& name)
 #else
 
 void LocalNameTest::EnvironmentUtil::put(
-    const bsl::string&                      name, 
+    const bsl::string&                      name,
     const bdlb::NullableValue<bsl::string>& value)
 {
     DWORD rc;
-    
+
     if (value.has_value()) {
         rc = SetEnvironmentVariable(name.c_str(), value.value().c_str());
         NTSCFG_TEST_NE(rc, FALSE);
@@ -206,7 +209,7 @@ void LocalNameTest::EnvironmentUtil::put(
     }
 }
 
-bdlb::NullableValue<bsl::string> 
+bdlb::NullableValue<bsl::string>
 LocalNameTest::EnvironmentUtil::get(const bsl::string& name)
 {
     DWORD                            rc;
@@ -238,7 +241,7 @@ LocalNameTest::EnvironmentUtil::get(const bsl::string& name)
 #endif
 
 LocalNameTest::EnvironmentGuard::EnvironmentGuard(
-    const bsl::string& name, 
+    const bsl::string& name,
     bslma::Allocator*  basicAllocator)
 : d_name(name, basicAllocator)
 , d_initialValue(LocalNameTest::EnvironmentUtil::get(name), basicAllocator)
@@ -277,7 +280,7 @@ const bsl::string& LocalNameTest::EnvironmentGuard::name() const
     return d_name;
 }
 
-const bdlb::NullableValue<bsl::string>& 
+const bdlb::NullableValue<bsl::string>&
 LocalNameTest::EnvironmentGuard::value() const
 {
     return d_currentValue;
@@ -479,7 +482,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathTooLong)
 {
     ntsa::Error error;
 
-    bsl::string path = 
+    bsl::string path =
         LocalNameTest::generateString(ntsa::LocalName::k_MAX_PATH_LENGTH);
 
     bsl::string pathTooLong = path;
@@ -507,7 +510,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathTooLong)
 
         error = localName.setValue(path);
         NTSCFG_TEST_OK(error);
-        
+
         error = localName.setAbstract();
         NTSCFG_TEST_ERROR(error, ntsa::Error(ntsa::Error::e_LIMIT));
     }
@@ -518,6 +521,35 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathTooLong)
 
         error = localName.setValue(pathTooLong);
         NTSCFG_TEST_ERROR(error, ntsa::Error(ntsa::Error::e_LIMIT));
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueWithEmbeddedNul)
+{
+    ntsa::Error error;
+
+    {
+        const char k_NAME[3] = { 0, 'b', 'c' };
+
+        ntsa::LocalName localName;
+        error = localName.setValue(bslstl::StringRef(k_NAME, sizeof k_NAME));
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    }
+
+    {
+        const char k_NAME[3] = { 'a', 0, 'c' };
+
+        ntsa::LocalName localName;
+        error = localName.setValue(bslstl::StringRef(k_NAME, sizeof k_NAME));
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    }
+
+    {
+        const char k_NAME[3] = { 'a', 'b', 0 };
+
+        ntsa::LocalName localName;
+        error = localName.setValue(bslstl::StringRef(k_NAME, sizeof k_NAME));
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
     }
 }
 
@@ -547,7 +579,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUnique)
         NTSCFG_TEST_OK(error);
     }
 
-    {        
+    {
         bsl::string directory = "/test";
 
         ntsa::LocalName localName;
@@ -566,7 +598,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueTooLong)
     ntsa::Error error;
 
     {
-        bsl::string directory = 
+        bsl::string directory =
             LocalNameTest::generateString(ntsa::LocalName::k_MAX_PATH_LENGTH);
 
         ntsa::LocalName localName;
@@ -580,7 +612,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
     ntsa::Error error;
     int         rc;
 
-#if defined(BSLS_PLATFORM_OS_UNIX) 
+#if defined(BSLS_PLATFORM_OS_UNIX)
     const bsl::string customSockDir = "/test/sockdir";
     const bsl::string customTempDir = "/test/tempdir";
 #else
@@ -589,20 +621,20 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
 #endif
 
     LocalNameTest::EnvironmentGuard sockdirGuard(
-       "SOCKDIR", 
+       "SOCKDIR",
         NTSCFG_TEST_ALLOCATOR);
 
-#if defined(BSLS_PLATFORM_OS_UNIX) 
+#if defined(BSLS_PLATFORM_OS_UNIX)
     LocalNameTest::EnvironmentGuard tempdirGuard(
-        "TMPDIR", 
+        "TMPDIR",
         NTSCFG_TEST_ALLOCATOR);
 #else
     LocalNameTest::EnvironmentGuard tmpdir1Guard(
-        "TMP", 
+        "TMP",
         NTSCFG_TEST_ALLOCATOR);
 
     LocalNameTest::EnvironmentGuard tmpdir2Guard(
-        "TEMP", 
+        "TEMP",
         NTSCFG_TEST_ALLOCATOR);
 #endif
 
@@ -610,7 +642,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
 
     {
         sockdirGuard.undefine();
-#if defined(BSLS_PLATFORM_OS_UNIX) 
+#if defined(BSLS_PLATFORM_OS_UNIX)
         tempdirGuard.undefine();
 #else
         tmpdir1Guard.undefine();
@@ -625,7 +657,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
         rc = bdls::PathUtil::getDirname(&prefix, localName.value());
         NTSCFG_TEST_EQ(rc, 0);
 
-#if defined(BSLS_PLATFORM_OS_UNIX) 
+#if defined(BSLS_PLATFORM_OS_UNIX)
         NTSCFG_TEST_EQ(prefix, bsl::string("/tmp"));
 #endif
     }
@@ -634,7 +666,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
 
     {
         sockdirGuard.undefine();
-#if defined(BSLS_PLATFORM_OS_UNIX) 
+#if defined(BSLS_PLATFORM_OS_UNIX)
         tempdirGuard.setValue(customTempDir);
 #else
         tmpdir1Guard.setValue(customTempDir);
@@ -656,7 +688,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
 
     {
         sockdirGuard.setValue(customSockDir);
-#if defined(BSLS_PLATFORM_OS_UNIX) 
+#if defined(BSLS_PLATFORM_OS_UNIX)
         tempdirGuard.undefine();
 #else
         tmpdir1Guard.undefine();
@@ -678,7 +710,7 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyGenerateUniqueFromEnvironment)
 
     {
         sockdirGuard.setValue(customSockDir);
-#if defined(BSLS_PLATFORM_OS_UNIX) 
+#if defined(BSLS_PLATFORM_OS_UNIX)
         tempdirGuard.setValue(customTempDir);
 #else
 
@@ -804,10 +836,10 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyMoveSemantics)
         bsls::ObjectBuffer<ntsa::LocalName> otherLocalName;
         new (otherLocalName.buffer()) ntsa::LocalName(NTSCFG_MOVE(localName));
 
-        bslstl::StringRef otherLocalNameValue = 
+        bslstl::StringRef otherLocalNameValue =
             otherLocalName.object().value();
 
-        NTSCFG_TEST_EQ(bsl::string(otherLocalNameValue), 
+        NTSCFG_TEST_EQ(bsl::string(otherLocalNameValue),
                        bsl::string("/tmp/ntf/test"));
 
 #if NTSCFG_MOVE_RESET_ENABLED
@@ -823,10 +855,10 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifyMoveSemantics)
         ntsa::LocalName otherLocalName;
         otherLocalName = NTSCFG_MOVE(localName);
 
-        bslstl::StringRef otherLocalNameValue = 
+        bslstl::StringRef otherLocalNameValue =
             otherLocalName.value();
 
-        NTSCFG_TEST_EQ(bsl::string(otherLocalNameValue), 
+        NTSCFG_TEST_EQ(bsl::string(otherLocalNameValue),
                        bsl::string("/tmp/ntf/test"));
 
 #if NTSCFG_MOVE_RESET_ENABLED

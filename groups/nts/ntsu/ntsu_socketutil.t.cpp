@@ -467,6 +467,10 @@ class SocketUtilTest
     // socket whose peer has already closed the connection.
     static void verifyListenerSocketAcceptingClosedConnections();
 
+    // Verify endpoint encoding of a Unix domain socket correctly defines the
+    // socket address structure and length.
+    static void verifyEncodeEndpointLocal();
+
     // Verify endpoint decoding of a Unix domain socket name bounds the scan of
     // 'sun_path' by the specified address size and does not depend on a null
     // terminator.
@@ -9108,6 +9112,128 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyIsSocket)
     }
 }
 
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+
+    ntsa::Error error;
+
+    // Verify that a local name in the persistent namespace are encoded to a
+    // socket address structure in the expected address family whose path is
+    // defined with a null terminator and a socket address length that includes
+    // the null terminator. Also verify the addition library implementation
+    // choice to pessimistically zero at-least an additional byte outside the
+    // socket name range, but within the socket address range, for safety in
+    // other applications.
+
+    {
+        const char sentinel = static_cast<char>(0xAA);
+        const char null     = static_cast<char>(0);
+
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        bsl::size_t nullTerminatorSize = 1;
+
+        const bsl::string localNameValue = "abc";
+
+        ntsa::LocalName localName;
+        error = localName.setValue(localNameValue);
+        NTSCFG_TEST_OK(error);
+        error = localName.setPersistent();
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint endpoint(localName);
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize - pathOffset,
+                       localNameValue.size() + nullTerminatorSize);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], 'a');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[1], 'b');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[2], 'c');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], null);
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[4], null);
+    }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    // Verify that a local name in the abstract namespace are encoded to a
+    // socket address structure in the expected address family whose path is
+    // defined with leading null byte but no null terminator and a socket
+    // address length that includes the leading null byte. Also verify the
+    // addition library implementation choice to pessimistically zero at-least
+    // an additional byte outside the socket name range, but within the socket
+    // address range, for safety in other applications.
+
+    {
+        const char sentinel = static_cast<char>(0xAA);
+        const char null     = static_cast<char>(0);
+
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        bsl::size_t nullPrefixSize = 1;
+
+        const bsl::string localNameValue = "abc";
+
+        ntsa::LocalName localName;
+        error = localName.setValue(localNameValue);
+        NTSCFG_TEST_OK(error);
+        error = localName.setAbstract();
+        NTSCFG_TEST_OK(error);
+
+        ntsa::Endpoint endpoint(localName);
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize - pathOffset,
+                       nullPrefixSize + localNameValue.size());
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], null);
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[1], 'a');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[2], 'b');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], 'c');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[4], null);
+    }
+
+#endif
+#endif
+#endif
+}
+
 NTSCFG_TEST_FUNCTION(
     ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnterminated)
 {
@@ -9169,8 +9295,7 @@ NTSCFG_TEST_FUNCTION(
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
     // Concern: Endpoint decoding of a Unix domain socket names in the
-    // persistent namespace with embedded NULs successfully returns an endpoint
-    // whose local name only contains characters up to the first embedded NUL.
+    // persistent namespace with embedded NULs fails.
 
     {
         ntsa::Endpoint endpoint;
@@ -9193,9 +9318,7 @@ NTSCFG_TEST_FUNCTION(
             &endpoint,
             &un,
             addressLength);
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
-        NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
     }
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
