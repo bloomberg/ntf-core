@@ -9323,9 +9323,8 @@ NTSCFG_TEST_FUNCTION(
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
     // Concern: Endpoint decoding of a Unix domain socket names in the
-    // abstract namespace with embedded NULs successfully returns an endpoint
-    // whose local name only contains characters up to the first embedded NUL,
-    // not including the first NUL which indicates the abstract namespace.
+    // abstract namespace with embedded NULs (not including the first NUL which
+    // indicates the abstract namespace) fails.
 
     {
         ntsa::Endpoint endpoint;
@@ -9349,9 +9348,7 @@ NTSCFG_TEST_FUNCTION(
             &endpoint,
             &un,
             addressLength);
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_TRUE(endpoint.local().isAbstract());
-        NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
     }
 #endif
 #endif

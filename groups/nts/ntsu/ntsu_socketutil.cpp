@@ -958,16 +958,19 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
                 }
 
                 const char* begin = socketAddressLocal->sun_path;
-                const char* limit = begin + pathSize;
+                const char* end   = begin + pathSize;
 
                 if (*begin == 0) {
                     localName->setAbstract();
                     ++begin;
                 }
 
-                const char* end = begin;
-                while (end != limit && *end != 0) {
-                    ++end;
+                const char* current = begin;
+                while (current != end) {
+                    if (*current == 0) {
+                        return ntsa::Error(ntsa::Error::e_INVALID);
+                    }
+                    ++current;
                 }
 
                 if (begin == end) {
