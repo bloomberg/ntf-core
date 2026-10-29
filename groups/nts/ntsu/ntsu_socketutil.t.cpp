@@ -3998,8 +3998,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketBasic)
         // Get the client source and remote endpoints.
 
         ntsa::Endpoint clientSourceEndpoint;
-        error =
-            ntsu::SocketUtil::sourceEndpoint(&clientSourceEndpoint, client);
+        error = ntsu::SocketUtil::sourceEndpoint(&clientSourceEndpoint, client);
         NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint clientRemoteEndpoint;
