@@ -254,7 +254,11 @@ bool LocalName::less(const LocalName& other) const
         }
     }
 
-    return (first1 == last1 && first2 != last2);
+    if (first1 != last1 || first2 != last2) {
+        return first1 == last1;
+    }
+
+    return !d_abstract && other.d_abstract;
 }
 
 bsl::ostream& LocalName::print(bsl::ostream& stream,
