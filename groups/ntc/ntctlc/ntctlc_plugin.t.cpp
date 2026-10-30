@@ -24,6 +24,8 @@ BSLS_IDENT_RCSID(ntctlc_plugin_t_cpp, "$Id$ $CSID$")
 #include <ntsa_data.h>
 #include <bslim_printer.h>
 
+#include <limits.h>
+
 using namespace BloombergLP;
 
 namespace BloombergLP {
@@ -90,6 +92,12 @@ class PluginTest
 
     /// Return a new data pool.
     static bsl::shared_ptr<ntci::DataPool> createDataPool();
+
+    /// Append data buffers to the specified 'result' until its length is the
+    /// specified 'room' bytes less than INT_MAX. Note that the data buffers
+    /// all refer to the same memory, so that the length of 'result' may
+    /// approach INT_MAX without allocating INT_MAX bytes.
+    static void fillToLimit(bdlbb::Blob* result, bsl::size_t room);
 
     /// Return a new compression mechanism created according to the specified
     /// 'configuration' that allocates data containers from the specified
@@ -923,6 +931,34 @@ bsl::shared_ptr<ntci::DataPool> PluginTest::createDataPool()
     return dataPool;
 }
 
+void PluginTest::fillToLimit(bdlbb::Blob* result, bsl::size_t room)
+{
+    const bsl::size_t k_BUFFER_SIZE = 1024 * 1024;
+
+    bsl::shared_ptr<char> buffer(
+        static_cast<char*>(NTSCFG_TEST_ALLOCATOR->allocate(k_BUFFER_SIZE)),
+        NTSCFG_TEST_ALLOCATOR);
+
+    bsl::memset(buffer.get(), 0, k_BUFFER_SIZE);
+
+    const bsl::size_t target = static_cast<bsl::size_t>(INT_MAX) - room;
+
+    bsl::size_t length = static_cast<bsl::size_t>(result->length());
+    while (length < target) {
+        bsl::size_t size = target - length;
+        if (size > k_BUFFER_SIZE) {
+            size = k_BUFFER_SIZE;
+        }
+
+        result->appendDataBuffer(
+            bdlbb::BlobBuffer(buffer, static_cast<int>(size)));
+
+        length += size;
+    }
+
+    NTSCFG_TEST_EQ(static_cast<bsl::size_t>(result->length()), target);
+}
+
 bsl::shared_ptr<ntci::Compression> PluginTest::createCompression(
     const ntca::CompressionConfig&         configuration,
     const bsl::shared_ptr<ntci::DataPool>& dataPool)
@@ -1278,6 +1314,77 @@ void PluginTest::verifyLimitsForType(ntca::CompressionType::Value type)
                         bdlbb::BlobUtil::compare(*smallInflated, *small),
                         0);
                 }
+            }
+        }
+    }
+
+    // Concern: an operation fails if it would grow the result beyond INT_MAX
+    // bytes, even when no maximum size is configured, and never grows the
+    // result beyond INT_MAX bytes.
+
+    {
+        const bsl::size_t k_ROOM[] = {k_ORIGINAL_SIZE - 1, k_ORIGINAL_SIZE};
+
+        for (bsl::size_t i = 0; i < sizeof k_ROOM / sizeof k_ROOM[0]; ++i) {
+            const bsl::size_t room = k_ROOM[i];
+
+            bsl::shared_ptr<ntci::Compression> compression =
+                PluginTest::createCompression(baseConfig, dataPool);
+
+            bsl::shared_ptr<bdlbb::Blob> inflated =
+                dataPool->createIncomingBlob();
+
+            PluginTest::fillToLimit(inflated.get(), room);
+
+            error = PluginTest::inflate(compression, inflated.get(), *deflated);
+
+            if (room >= k_ORIGINAL_SIZE) {
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_EQ(static_cast<bsl::size_t>(inflated->length()),
+                               static_cast<bsl::size_t>(INT_MAX) - room +
+                                   k_ORIGINAL_SIZE);
+            }
+            else {
+                NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+                NTSCFG_TEST_LE(static_cast<bsl::size_t>(inflated->length()),
+                               static_cast<bsl::size_t>(INT_MAX));
+            }
+        }
+    }
+
+    // TODO: The LZ4 deflater appends its frame header, frame footer, and
+    // slow-path output using 'ntcs::BlobUtil::append', which may allocate a
+    // buffer from the factory of the result that grows the total capacity of
+    // the result beyond INT_MAX, even though its length does not exceed
+    // INT_MAX. Enable this concern for LZ4 once the LZ4 deflater appends only
+    // buffers trimmed to the bytes written.
+
+    if (type != ntca::CompressionType::e_LZ4) {
+        const bsl::size_t k_ROOM[] = {k_DEFLATED_SIZE - 1, k_DEFLATED_SIZE};
+
+        for (bsl::size_t i = 0; i < sizeof k_ROOM / sizeof k_ROOM[0]; ++i) {
+            const bsl::size_t room = k_ROOM[i];
+
+            bsl::shared_ptr<ntci::Compression> compression =
+                PluginTest::createCompression(baseConfig, dataPool);
+
+            bsl::shared_ptr<bdlbb::Blob> output =
+                dataPool->createOutgoingBlob();
+
+            PluginTest::fillToLimit(output.get(), room);
+
+            error = PluginTest::deflate(compression, output.get(), *original);
+
+            if (room >= k_DEFLATED_SIZE) {
+                NTSCFG_TEST_OK(error);
+                NTSCFG_TEST_EQ(static_cast<bsl::size_t>(output->length()),
+                               static_cast<bsl::size_t>(INT_MAX) - room +
+                                   k_DEFLATED_SIZE);
+            }
+            else {
+                NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
+                NTSCFG_TEST_LE(static_cast<bsl::size_t>(output->length()),
+                               static_cast<bsl::size_t>(INT_MAX));
             }
         }
     }

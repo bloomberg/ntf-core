@@ -62,6 +62,10 @@ class CompressionTest
     // bytes inflated and deflated per operation.
     static void verifyLimits();
 
+    // Verify the deflater encodes runs and raw spans longer than the maximum
+    // block length as multiple blocks, without losing data.
+    static void verifyLongBlocks();
+
   private:
     // Verify compression using the specified testing 'parameters'.
     static void verifyParameters(const Parameters& parameters);
@@ -1319,6 +1323,121 @@ NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyLimits)
             NTSCFG_TEST_ERROR(error, ntsa::Error::e_LIMIT);
             NTSCFG_TEST_LE(static_cast<bsl::size_t>(deflatedData.length()),
                            limit);
+        }
+    }
+}
+
+NTSCFG_TEST_FUNCTION(ntcd::CompressionTest::verifyLongBlocks)
+{
+    ntsa::Error error;
+
+    // The maximum number of bytes encoded by a single block, which is limited
+    // by the 16-bit block length field.
+
+    const bsl::size_t k_MAX_BLOCK_LENGTH = 65535;
+
+    NTSCFG_TEST_EQ(ntcd::CompressionBlock::k_MAX_LENGTH, k_MAX_BLOCK_LENGTH);
+
+    bdlbb::PooledBlobBufferFactory inputBufferFactory(1024 * 1024,
+                                                      NTSCFG_TEST_ALLOCATOR);
+
+    bdlbb::PooledBlobBufferFactory blobBufferFactory(4096,
+                                                     NTSCFG_TEST_ALLOCATOR);
+
+    bsl::shared_ptr<ntcs::DataPool> dataPool;
+    dataPool.createInplace(NTSCFG_TEST_ALLOCATOR,
+                           4096,
+                           4096,
+                           NTSCFG_TEST_ALLOCATOR);
+
+    const bsl::size_t k_LENGTH[] = {65534, 65535, 65536, 65537, 131072, 200000};
+
+    const bsl::size_t k_NUM_LENGTHS = sizeof k_LENGTH / sizeof k_LENGTH[0];
+
+    enum Content {
+        // A run of a single repeated byte, encoded as RLE blocks.
+        e_RUN,
+
+        // A span in which no two adjacent bytes are equal, encoded as raw
+        // blocks.
+        e_SPAN,
+
+        // A run, followed by a span, followed by a run.
+        e_MIXED
+    };
+
+    for (bsl::size_t i = 0; i < k_NUM_LENGTHS; ++i) {
+        for (int content = e_RUN; content <= e_MIXED; ++content) {
+            const bsl::size_t length = k_LENGTH[i];
+
+            bsl::vector<char> data;
+
+            if (content == e_RUN || content == e_MIXED) {
+                data.insert(data.end(), length, 'a');
+            }
+
+            if (content == e_SPAN || content == e_MIXED) {
+                for (bsl::size_t j = 0; j < length; ++j) {
+                    data.push_back(static_cast<char>(j % 251));
+                }
+            }
+
+            if (content == e_MIXED) {
+                data.insert(data.end(), length, 'z');
+            }
+
+            // Deflate the input in a single call by storing it in a single
+            // buffer.
+
+            bdlbb::Blob input(&inputBufferFactory, NTSCFG_TEST_ALLOCATOR);
+            bdlbb::BlobUtil::append(&input,
+                                    &data[0],
+                                    static_cast<int>(data.size()));
+
+            NTSCFG_TEST_EQ(input.numDataBuffers(), 1);
+
+            ntca::CompressionConfig compressionConfig;
+            compressionConfig.setType(ntca::CompressionType::e_RLE);
+
+            ntcd::Compression compression(compressionConfig,
+                                          dataPool,
+                                          NTSCFG_TEST_ALLOCATOR);
+
+            bdlbb::Blob deflated(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+            ntca::DeflateOptions deflateOptions;
+            ntca::DeflateContext deflateContext;
+
+            error = compression.deflate(&deflateContext,
+                                        &deflated,
+                                        input,
+                                        deflateOptions);
+            NTSCFG_TEST_OK(error);
+
+            // A run is encoded as the minimum number of RLE blocks.
+
+            if (content == e_RUN) {
+                const bsl::size_t numBlocks =
+                    (length + k_MAX_BLOCK_LENGTH - 1) / k_MAX_BLOCK_LENGTH;
+
+                NTSCFG_TEST_EQ(static_cast<bsl::size_t>(deflated.length()),
+                               sizeof(ntcd::CompressionFrameHeader) +
+                                   numBlocks * sizeof(ntcd::CompressionBlock) +
+                                   sizeof(ntcd::CompressionFrameFooter));
+            }
+
+            bdlbb::Blob inflated(&blobBufferFactory, NTSCFG_TEST_ALLOCATOR);
+
+            ntca::InflateOptions inflateOptions;
+            ntca::InflateContext inflateContext;
+
+            error = compression.inflate(&inflateContext,
+                                        &inflated,
+                                        deflated,
+                                        inflateOptions);
+            NTSCFG_TEST_OK(error);
+
+            NTSCFG_TEST_EQ(bdlbb::BlobUtil::compare(inflated, input), 0);
         }
     }
 }

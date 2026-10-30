@@ -552,6 +552,9 @@ class CompressionBlock
     /// corresponding byte of the destination object's footprint.
     NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(CompressionBlock);
 
+    /// The maximum number of bytes a single block may encode.
+    static const bsl::size_t k_MAX_LENGTH;
+
     /// This type's move-constructor and move-assignment operator is equivalent
     /// to copying each byte of the source object's footprint to each
     /// corresponding byte of the destination object's footprint.
@@ -619,6 +622,26 @@ class CompressionEncoder
     ntsa::Error checkLimit(const ntca::DeflateContext& context,
                            const bdlbb::Blob&          result,
                            bsl::size_t                 size) const;
+
+    /// Append to the specified 'result' one or more RLE blocks that together
+    /// encode the specified 'length' repetitions of the specified 'literal',
+    /// each block encoding at most 'CompressionBlock::k_MAX_LENGTH' bytes.
+    /// Update the specified 'context' with the number of bytes written.
+    /// Return the error.
+    ntsa::Error encodeRle(ntca::DeflateContext* context,
+                          bdlbb::Blob*          result,
+                          bsl::uint8_t          literal,
+                          bsl::size_t           length);
+
+    /// Append to the specified 'result' one or more raw blocks that together
+    /// encode the specified 'length' bytes at the specified 'data', each
+    /// block encoding at most 'CompressionBlock::k_MAX_LENGTH' bytes. Update
+    /// the specified 'context' with the number of bytes written. Return the
+    /// error.
+    ntsa::Error encodeRaw(ntca::DeflateContext* context,
+                          bdlbb::Blob*          result,
+                          const bsl::uint8_t*   data,
+                          bsl::size_t           length);
 
   public:
     /// Create a new RLE encoder with to the specified 'configuration'.
