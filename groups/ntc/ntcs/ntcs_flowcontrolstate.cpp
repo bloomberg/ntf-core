@@ -24,11 +24,7 @@ namespace BloombergLP {
 namespace ntcs {
 
 FlowControlState::FlowControlState()
-: d_enableSend(false)
-, d_enableReceive(false)
-, d_lockSend(false)
-, d_lockReceive(false)
-, d_closed(false)
+: d_flags(0)
 {
 }
 
@@ -41,12 +37,6 @@ bool FlowControlState::apply(ntcs::FlowControlContext*    context,
                              bool                         lock)
 {
     context->reset();
-
-    if (d_closed) {
-        return false;
-    }
-
-    bool result = false;
 
     bool applySend    = false;
     bool applyReceive = false;
@@ -64,36 +54,58 @@ bool FlowControlState::apply(ntcs::FlowControlContext*    context,
         break;
     }
 
-    if (applySend) {
-        if (!d_lockSend) {
-            if (d_enableSend) {
-                d_enableSend = false;
-                result       = true;
+    // Commit the compound change atomically: read the current flags, compute
+    // the new flags and result from that snapshot, then compare-and-swap. If
+    // the swap loses a race with a concurrent operation, retry.
+
+    for (;;) {
+        const unsigned int oldFlags = d_flags.load();
+
+        if (oldFlags & e_CLOSED) {
+            return false;
+        }
+
+        unsigned int newFlags = oldFlags;
+        bool         result   = false;
+
+        if (applySend) {
+            if (!(newFlags & e_LOCK_SEND)) {
+                if (newFlags & e_ENABLE_SEND) {
+                    newFlags &= ~static_cast<unsigned int>(e_ENABLE_SEND);
+                    result = true;
+                }
+            }
+
+            if (lock) {
+                newFlags |= e_LOCK_SEND;
             }
         }
 
-        if (lock) {
-            d_lockSend = true;
-        }
-    }
+        if (applyReceive) {
+            if (!(newFlags & e_LOCK_RECEIVE)) {
+                if (newFlags & e_ENABLE_RECEIVE) {
+                    newFlags &= ~static_cast<unsigned int>(e_ENABLE_RECEIVE);
+                    result = true;
+                }
+            }
 
-    if (applyReceive) {
-        if (!d_lockReceive) {
-            if (d_enableReceive) {
-                d_enableReceive = false;
-                result          = true;
+            if (lock) {
+                newFlags |= e_LOCK_RECEIVE;
             }
         }
 
-        if (lock) {
-            d_lockReceive = true;
+        if (newFlags == oldFlags) {
+            context->setEnableSend((oldFlags & e_ENABLE_SEND) != 0);
+            context->setEnableReceive((oldFlags & e_ENABLE_RECEIVE) != 0);
+            return result;
+        }
+
+        if (d_flags.testAndSwap(oldFlags, newFlags) == oldFlags) {
+            context->setEnableSend((newFlags & e_ENABLE_SEND) != 0);
+            context->setEnableReceive((newFlags & e_ENABLE_RECEIVE) != 0);
+            return result;
         }
     }
-
-    context->setEnableSend(d_enableSend);
-    context->setEnableReceive(d_enableReceive);
-
-    return result;
 }
 
 bool FlowControlState::relax(ntcs::FlowControlContext*    context,
@@ -101,12 +113,6 @@ bool FlowControlState::relax(ntcs::FlowControlContext*    context,
                              bool                         unlock)
 {
     context->reset();
-
-    if (d_closed) {
-        return false;
-    }
-
-    bool result = false;
 
     bool relaxSend    = false;
     bool relaxReceive = false;
@@ -124,54 +130,67 @@ bool FlowControlState::relax(ntcs::FlowControlContext*    context,
         break;
     }
 
-    if (relaxSend) {
-        if (unlock) {
-            d_lockSend = false;
+    for (;;) {
+        const unsigned int oldFlags = d_flags.load();
+
+        if (oldFlags & e_CLOSED) {
+            return false;
         }
 
-        if (!d_lockSend) {
-            if (!d_enableSend) {
-                d_enableSend = true;
-                result       = true;
+        unsigned int newFlags = oldFlags;
+        bool         result   = false;
+
+        if (relaxSend) {
+            if (unlock) {
+                newFlags &= ~static_cast<unsigned int>(e_LOCK_SEND);
+            }
+
+            if (!(newFlags & e_LOCK_SEND)) {
+                if (!(newFlags & e_ENABLE_SEND)) {
+                    newFlags |= e_ENABLE_SEND;
+                    result = true;
+                }
             }
         }
-    }
 
-    if (relaxReceive) {
-        if (unlock) {
-            d_lockReceive = false;
-        }
+        if (relaxReceive) {
+            if (unlock) {
+                newFlags &= ~static_cast<unsigned int>(e_LOCK_RECEIVE);
+            }
 
-        if (!d_lockReceive) {
-            if (!d_enableReceive) {
-                d_enableReceive = true;
-                result          = true;
+            if (!(newFlags & e_LOCK_RECEIVE)) {
+                if (!(newFlags & e_ENABLE_RECEIVE)) {
+                    newFlags |= e_ENABLE_RECEIVE;
+                    result = true;
+                }
             }
         }
+
+        if (newFlags == oldFlags) {
+            context->setEnableSend((oldFlags & e_ENABLE_SEND) != 0);
+            context->setEnableReceive((oldFlags & e_ENABLE_RECEIVE) != 0);
+            return result;
+        }
+
+        if (d_flags.testAndSwap(oldFlags, newFlags) == oldFlags) {
+            context->setEnableSend((newFlags & e_ENABLE_SEND) != 0);
+            context->setEnableReceive((newFlags & e_ENABLE_RECEIVE) != 0);
+            return result;
+        }
     }
-
-    context->setEnableSend(d_enableSend);
-    context->setEnableReceive(d_enableReceive);
-
-    return result;
 }
 
 void FlowControlState::close()
 {
-    d_enableSend    = false;
-    d_lockSend      = false;
-    d_enableReceive = false;
-    d_lockReceive   = false;
-    d_closed        = true;
+    // Clear the enable and lock bits and set the closed bit. This is a full
+    // overwrite to a constant value, so a single atomic store is sufficient;
+    // any concurrent compare-and-swap will observe the change and retry.
+    d_flags.store(e_CLOSED);
 }
 
 void FlowControlState::reset()
 {
-    d_enableSend    = false;
-    d_enableReceive = false;
-    d_lockSend      = false;
-    d_lockReceive   = false;
-    d_closed        = false;
+    d_flags.store(0);
 }
 
 bool FlowControlState::rearm(ntcs::FlowControlContext*    context,
@@ -184,7 +203,9 @@ bool FlowControlState::rearm(ntcs::FlowControlContext*    context,
         return false;
     }
 
-    if (d_closed) {
+    const unsigned int flags = d_flags.load();
+
+    if (flags & e_CLOSED) {
         return false;
     }
 
@@ -207,21 +228,21 @@ bool FlowControlState::rearm(ntcs::FlowControlContext*    context,
     }
 
     if (rearmSend) {
-        if (d_enableSend) {
-            BSLS_ASSERT(!d_lockSend);
+        if (flags & e_ENABLE_SEND) {
+            BSLS_ASSERT(!(flags & e_LOCK_SEND));
             result = true;
         }
     }
 
     if (rearmReceive) {
-        if (d_enableReceive) {
-            BSLS_ASSERT(!d_lockReceive);
+        if (flags & e_ENABLE_RECEIVE) {
+            BSLS_ASSERT(!(flags & e_LOCK_RECEIVE));
             result = true;
         }
     }
 
-    context->setEnableSend(d_enableSend);
-    context->setEnableReceive(d_enableReceive);
+    context->setEnableSend((flags & e_ENABLE_SEND) != 0);
+    context->setEnableReceive((flags & e_ENABLE_RECEIVE) != 0);
 
     return result;
 }

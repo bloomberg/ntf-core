@@ -24,7 +24,6 @@ BSLS_IDENT("$Id: $")
 #include <ntcs_flowcontrolcontext.h>
 #include <ntcscm_version.h>
 #include <bsls_atomic.h>
-#include <bsls_spinlock.h>
 
 namespace BloombergLP {
 namespace ntcs {
@@ -33,16 +32,26 @@ namespace ntcs {
 /// Provide a mechanism to to manage flow control.
 ///
 /// @par Thread Safety
-/// This class is not thread safe.
+/// This class is thread safe. The entire flow control state is stored in a
+/// single atomic word, and each manipulator commits its compound change
+/// atomically using a compare-and-swap loop, so the class is safe for
+/// concurrent use without any external synchronization.
 ///
 /// @ingroup module_ntcs
 class FlowControlState
 {
-    bool d_enableSend;
-    bool d_enableReceive;
-    bool d_lockSend;
-    bool d_lockReceive;
-    bool d_closed;
+    /// This enumeration defines the bit within 'd_flags' that stores each
+    /// component of the flow control state.
+    enum Flag {
+        e_ENABLE_SEND    = 1 << 0,
+        e_ENABLE_RECEIVE = 1 << 1,
+        e_LOCK_SEND      = 1 << 2,
+        e_LOCK_RECEIVE   = 1 << 3,
+        e_CLOSED         = 1 << 4
+    };
+
+    // The flow control state, storing the flags enumerated by 'Flag'.
+    bsls::AtomicUint d_flags;
 
   private:
     FlowControlState(const FlowControlState&) BSLS_KEYWORD_DELETED;
@@ -119,31 +128,31 @@ class FlowControlState
 NTCCFG_INLINE
 bool FlowControlState::wantSend() const
 {
-    return d_enableSend;
+    return (d_flags.load() & e_ENABLE_SEND) != 0;
 }
 
 NTCCFG_INLINE
 bool FlowControlState::wantReceive() const
 {
-    return d_enableReceive;
+    return (d_flags.load() & e_ENABLE_RECEIVE) != 0;
 }
 
 NTCCFG_INLINE
 bool FlowControlState::lockSend() const
 {
-    return d_lockSend;
+    return (d_flags.load() & e_LOCK_SEND) != 0;
 }
 
 NTCCFG_INLINE
 bool FlowControlState::lockReceive() const
 {
-    return d_lockReceive;
+    return (d_flags.load() & e_LOCK_RECEIVE) != 0;
 }
 
 NTCCFG_INLINE
 bool FlowControlState::closed() const
 {
-    return d_closed;
+    return (d_flags.load() & e_CLOSED) != 0;
 }
 
 }  // end namespace ntcs

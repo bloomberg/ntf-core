@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntccfg_inline.h>
 #include <bsls_assert.h>
+#include <bsls_atomic.h>
 
 namespace BloombergLP {
 namespace ntcs {
@@ -73,12 +74,14 @@ public:
 /// Provide a enumeration that indicates state of a socket detachment process.
 ///
 /// @par Thread Safety
-/// This class is not thread safe.
+/// The mode is stored atomically: 'mode' may be called concurrently with a
+/// single thread invoking 'setMode'. The goal is not synchronized and must
+/// only be accessed while externally serialized.
 ///
 /// @ingroup module_ntcs
 class DetachState
 {
-    ntcs::DetachMode::Value d_mode;
+    bsls::AtomicInt         d_mode;
     ntcs::DetachGoal::Value d_goal;
 
   private:
@@ -121,7 +124,7 @@ DetachState::~DetachState()
 NTCCFG_INLINE
 void DetachState::setMode(ntcs::DetachMode::Value mode)
 {
-    d_mode = mode;
+    d_mode.storeRelease(mode);
 }
 
 NTCCFG_INLINE
@@ -133,7 +136,7 @@ void DetachState::setGoal(ntcs::DetachGoal::Value goal)
 NTCCFG_INLINE
 ntcs::DetachMode::Value DetachState::mode() const
 {
-    return d_mode;
+    return static_cast<ntcs::DetachMode::Value>(d_mode.loadAcquire());
 }
 
 NTCCFG_INLINE

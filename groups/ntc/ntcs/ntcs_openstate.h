@@ -21,6 +21,7 @@ BSLS_IDENT("$Id: $")
 
 #include <ntccfg_platform.h>
 #include <ntcscm_version.h>
+#include <bsls_atomic.h>
 
 namespace BloombergLP {
 namespace ntcs {
@@ -32,7 +33,9 @@ namespace ntcs {
 /// stream socket when connecting to a remote peer.
 ///
 /// @par Thread Safety
-/// This class is not thread safe.
+/// The state value is stored atomically: the accessors may be called
+/// concurrently with each other and with a single thread invoking 'set',
+/// but concurrent invocations of 'set' are not safe.
 ///
 /// @ingroup module_ntcs
 class OpenState
@@ -57,7 +60,7 @@ class OpenState
     };
 
   private:
-    Value d_value;
+    bsls::AtomicInt d_value;
 
   private:
     OpenState(const OpenState&) BSLS_KEYWORD_DELETED;
@@ -126,61 +129,64 @@ OpenState::~OpenState()
 NTCCFG_INLINE
 void OpenState::set(Value value)
 {
-    d_value = value;
+    d_value.storeRelease(value);
 }
 
 NTCCFG_INLINE
 OpenState::Value OpenState::value() const
 {
-    return d_value;
+    return static_cast<Value>(d_value.loadAcquire());
 }
 
 NTCCFG_INLINE
 bool OpenState::canBind() const
 {
-    return d_value == e_DEFAULT;
+    return d_value.loadAcquire() == e_DEFAULT;
 }
 
 NTCCFG_INLINE
 bool OpenState::canConnect() const
 {
-    return d_value == e_DEFAULT;
+    return d_value.loadAcquire() == e_DEFAULT;
 }
 
 NTCCFG_INLINE
 bool OpenState::canSend() const
 {
-    return d_value == e_CONNECTED;
+    return d_value.loadAcquire() == e_CONNECTED;
 }
 
 NTCCFG_INLINE
 bool OpenState::canReceive() const
 {
-    return d_value == e_CONNECTED || d_value == e_CLOSED;
+    const int value = d_value.loadAcquire();
+    return value == e_CONNECTED || value == e_CLOSED;
 }
 
 NTCCFG_INLINE
 bool OpenState::is(Value value) const
 {
-    return d_value == value;
+    return d_value.loadAcquire() == value;
 }
 
 NTCCFG_INLINE
 bool OpenState::isEither(Value value1, Value value2) const
 {
-    return d_value == value1 || d_value == value2;
+    const int value = d_value.loadAcquire();
+    return value == value1 || value == value2;
 }
 
 NTCCFG_INLINE
 bool OpenState::isNot(Value value) const
 {
-    return d_value != value;
+    return d_value.loadAcquire() != value;
 }
 
 NTCCFG_INLINE
 bool OpenState::isNotEither(Value value1, Value value2) const
 {
-    return d_value != value1 && d_value != value2;
+    const int value = d_value.loadAcquire();
+    return value != value1 && value != value2;
 }
 
 }  // end namespace ntcs
