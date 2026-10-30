@@ -552,6 +552,9 @@ class CompressionBlock
     /// corresponding byte of the destination object's footprint.
     NTSCFG_TYPE_TRAIT_BITWISE_COPYABLE(CompressionBlock);
 
+    /// The maximum number of bytes a single block may encode.
+    static const bsl::size_t k_MAX_LENGTH;
+
     /// This type's move-constructor and move-assignment operator is equivalent
     /// to copying each byte of the source object's footprint to each
     /// corresponding byte of the destination object's footprint.
@@ -602,6 +605,7 @@ class CompressionEncoder
     bsl::size_t                  d_frameHeaderPosition;
     bsl::size_t                  d_frameContentBytesTotal;
     ntca::Checksum               d_frameContentCrc;
+    bsl::size_t                  d_maxDeflateSize;
     ntca::CompressionConfig      d_config;
     bslma::Allocator*            d_allocator_p;
 
@@ -609,6 +613,35 @@ class CompressionEncoder
     CompressionEncoder(const CompressionEncoder&) BSLS_KEYWORD_DELETED;
     CompressionEncoder& operator=(const CompressionEncoder&)
         BSLS_KEYWORD_DELETED;
+
+  private:
+    /// Return an error if appending the specified 'size' bytes to the
+    /// specified 'result' would exceed the maximum number of bytes allowed
+    /// to be deflated by the operation described by the specified 'context',
+    /// or would exceed the maximum length of the 'result'.
+    ntsa::Error checkLimit(const ntca::DeflateContext& context,
+                           const bdlbb::Blob&          result,
+                           bsl::size_t                 size) const;
+
+    /// Append to the specified 'result' one or more RLE blocks that together
+    /// encode the specified 'length' repetitions of the specified 'literal',
+    /// each block encoding at most 'CompressionBlock::k_MAX_LENGTH' bytes.
+    /// Update the specified 'context' with the number of bytes written.
+    /// Return the error.
+    ntsa::Error encodeRle(ntca::DeflateContext* context,
+                          bdlbb::Blob*          result,
+                          bsl::uint8_t          literal,
+                          bsl::size_t           length);
+
+    /// Append to the specified 'result' one or more raw blocks that together
+    /// encode the specified 'length' bytes at the specified 'data', each
+    /// block encoding at most 'CompressionBlock::k_MAX_LENGTH' bytes. Update
+    /// the specified 'context' with the number of bytes written. Return the
+    /// error.
+    ntsa::Error encodeRaw(ntca::DeflateContext* context,
+                          bdlbb::Blob*          result,
+                          const bsl::uint8_t*   data,
+                          bsl::size_t           length);
 
   public:
     /// Create a new RLE encoder with to the specified 'configuration'.
@@ -640,6 +673,10 @@ class CompressionEncoder
     ntsa::Error deflateEnd(ntca::DeflateContext*       context,
                            bdlbb::Blob*                result,
                            const ntca::DeflateOptions& options);
+
+    /// The maximum number of bytes a single deflate operation may produce
+    /// when the maximum is not explicitly configured.
+    static const bsl::size_t k_DEFAULT_MAX_DEFLATE_SIZE;
 };
 
 /// @internal @brief
@@ -663,10 +700,7 @@ class CompressionDecoder
         e_WANT_BLOCK_PAYLOAD,
 
         /// The decoder wants to read the frame footer.
-        e_WANT_FRAME_FOOTER,
-
-        /// The decoder encountered an error.
-        e_ERROR
+        e_WANT_FRAME_FOOTER
     };
 
     State                        d_state;
@@ -676,8 +710,8 @@ class CompressionDecoder
     bsl::size_t                  d_frameContentBytesNeeded;
     ntca::Checksum               d_frameContentCrc;
     ntcd::CompressionBlock       d_block;
+    bsl::size_t                  d_maxInflateSize;
     ntca::CompressionConfig      d_config;
-    ntsa::Error                  d_error;
     bslma::Allocator*            d_allocator_p;
 
   private:
@@ -692,7 +726,21 @@ class CompressionDecoder
                         bdlbb::Blob*                result,
                         const ntca::InflateOptions& options);
 
-    /// Fail the decoder with the specified 'error'. Return the 'error'.
+    /// Return an error if appending the specified 'size' bytes to the
+    /// specified 'result', in addition to the specified 'numBytesWritten'
+    /// bytes already appended but not yet reflected in the specified
+    /// 'context', would exceed the maximum number of bytes allowed to be
+    /// inflated by the operation described by the 'context', or would exceed
+    /// the maximum length of the 'result'.
+    ntsa::Error checkLimit(const ntca::InflateContext& context,
+                           const bdlbb::Blob&          result,
+                           bsl::size_t                 numBytesWritten,
+                           bsl::size_t                 size) const;
+
+    /// Fail the current inflate operation with the specified 'error'.
+    /// Discard any buffered input and partially-decoded frame, and reset the
+    /// decoder to expect a new frame, so that subsequent, well-formed frames
+    /// may be decoded. Return the 'error'.
     ntsa::Error fail(ntsa::Error error);
 
   public:
@@ -732,6 +780,10 @@ class CompressionDecoder
     ntsa::Error inflateEnd(ntca::InflateContext*       context,
                            bdlbb::Blob*                result,
                            const ntca::InflateOptions& options);
+
+    /// The maximum number of bytes a single inflate operation may produce
+    /// when the maximum is not explicitly configured.
+    static const bsl::size_t k_DEFAULT_MAX_INFLATE_SIZE;
 };
 
 /// @internal @brief

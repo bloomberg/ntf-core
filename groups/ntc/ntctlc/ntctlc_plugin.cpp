@@ -35,6 +35,8 @@ BSLS_IDENT_RCSID(ntctlc_plugin_cpp, "$Id$ $CSID$")
 #include <bsls_assert.h>
 #include <bslalg_numericformatterutil.h>
 
+#include <limits.h>
+
 #if NTC_BUILD_WITH_LZ4
 #define LZ4_STATIC_LINKING_ONLY
 #define LZ4F_STATIC_LINKING_ONLY
@@ -106,6 +108,147 @@ BSLS_IDENT_RCSID(ntctlc_plugin_cpp, "$Id$ $CSID$")
 namespace BloombergLP {
 namespace ntctlc {
 
+/// @internal @brief
+/// Describe the number of bytes that may still be produced by an inflate or
+/// deflate operation, and which limit determines that number.
+///
+/// @par Thread Safety
+/// This class is not thread safe.
+///
+/// @ingroup module_ntctlc
+class CompressionBudget
+{
+    bsl::size_t d_size;
+    bool        d_limitedByResult;
+
+  public:
+    /// Create a new budget of the specified 'size' bytes. The specified
+    /// 'limitedByResult' flag indicates whether the 'size' is determined by
+    /// the maximum length of the result, rather than by the configured
+    /// maximum size.
+    CompressionBudget(bsl::size_t size, bool limitedByResult);
+
+    /// Return the number of bytes that may still be produced.
+    bsl::size_t size() const;
+
+    /// Return true if the number of bytes that may still be produced is
+    /// determined by the maximum length of the result, rather than by the
+    /// configured maximum size, otherwise return false.
+    bool limitedByResult() const;
+};
+
+CompressionBudget::CompressionBudget(bsl::size_t size, bool limitedByResult)
+: d_size(size)
+, d_limitedByResult(limitedByResult)
+{
+}
+
+bsl::size_t CompressionBudget::size() const
+{
+    return d_size;
+}
+
+bool CompressionBudget::limitedByResult() const
+{
+    return d_limitedByResult;
+}
+
+/// @internal @brief
+/// Provide utilities to limit the number of bytes produced by a single inflate
+/// or deflate operation.
+///
+/// @par Thread Safety
+/// This struct is thread safe.
+///
+/// @ingroup module_ntctlc
+struct CompressionLimitUtil {
+    /// The maximum number of bytes a single inflate or deflate operation may
+    /// produce when the maximum is not explicitly configured.
+    static const bsl::size_t k_DEFAULT_MAX_SIZE;
+
+    /// Return the specified configured 'maxSize', if defined, otherwise
+    /// return the default maximum size.
+    static bsl::size_t maxSize(
+        const bdlb::NullableValue<bsl::size_t>& maxSize);
+
+    /// Return the number of bytes that may still be produced by an operation
+    /// limited to the specified 'maxSize' that has already produced the
+    /// specified 'numBytesProduced' bytes, of which the specified
+    /// 'numBytesPending' bytes have not yet been appended to the specified
+    /// 'result'. The budget is also limited such that the length of 'result'
+    /// never exceeds INT_MAX.
+    static CompressionBudget budget(bsl::size_t        maxSize,
+                                    bsl::size_t        numBytesProduced,
+                                    const bdlbb::Blob& result,
+                                    bsl::size_t        numBytesPending);
+
+    /// Log that the specified 'operation', limited to the specified
+    /// 'maxSize', exceeded the specified 'budget', naming the limit that
+    /// determined the 'budget'. Return the error.
+    static ntsa::Error exceeded(const char*              operation,
+                                bsl::size_t              maxSize,
+                                const CompressionBudget& budget);
+};
+
+const bsl::size_t CompressionLimitUtil::k_DEFAULT_MAX_SIZE =
+    static_cast<bsl::size_t>(INT_MAX);
+
+bsl::size_t CompressionLimitUtil::maxSize(
+    const bdlb::NullableValue<bsl::size_t>& maxSize)
+{
+    return maxSize.value_or(k_DEFAULT_MAX_SIZE);
+}
+
+CompressionBudget CompressionLimitUtil::budget(
+    bsl::size_t        maxSize,
+    bsl::size_t        numBytesProduced,
+    const bdlbb::Blob& result,
+    bsl::size_t        numBytesPending)
+{
+    bsl::size_t remaining = 0;
+    if (numBytesProduced < maxSize) {
+        remaining = maxSize - numBytesProduced;
+    }
+
+    BSLS_ASSERT(result.length() >= 0);
+
+    const bsl::size_t length =
+        static_cast<bsl::size_t>(result.length()) + numBytesPending;
+
+    bsl::size_t ceiling = 0;
+    if (length < static_cast<bsl::size_t>(INT_MAX)) {
+        ceiling = static_cast<bsl::size_t>(INT_MAX) - length;
+    }
+
+    if (ceiling < remaining) {
+        return CompressionBudget(ceiling, true);
+    }
+
+    return CompressionBudget(remaining, false);
+}
+
+ntsa::Error CompressionLimitUtil::exceeded(const char*              operation,
+                                           bsl::size_t              maxSize,
+                                           const CompressionBudget& budget)
+{
+    NTCI_LOG_CONTEXT();
+
+    if (budget.limitedByResult()) {
+        NTCI_LOG_STREAM_ERROR << "Failed to " << operation
+                              << ": the operation grows the result beyond the "
+                              << "maximum length of " << INT_MAX << " bytes"
+                              << NTCI_LOG_STREAM_END;
+    }
+    else {
+        NTCI_LOG_STREAM_ERROR << "Failed to " << operation
+                              << ": the operation produces more than the "
+                              << "maximum of " << maxSize << " bytes"
+                              << NTCI_LOG_STREAM_END;
+    }
+
+    return ntsa::Error(ntsa::Error::e_LIMIT);
+}
+
 #if NTC_BUILD_WITH_LZ4
 
 /// @internal @brief
@@ -144,6 +287,8 @@ class Lz4 : public ntci::Compression
     LZ4F_decompressOptions_t        d_inflaterOptions;
     LZ4F_preferences_t              d_preferences;
     int                             d_level;
+    bsl::size_t                     d_maxDeflateSize;
+    bsl::size_t                     d_maxInflateSize;
     bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
     ntca::CompressionConfig         d_config;
     bslma::Allocator*               d_allocator_p;
@@ -201,6 +346,11 @@ class Lz4 : public ntci::Compression
     /// Destroy the deflater. Return the error.
     ntsa::Error deflateDestroy();
 
+    /// Fail the current deflate operation with the specified 'error'.
+    /// Discard any deflated bytes not yet appended to the result of the
+    /// operation. Return the 'error'.
+    ntsa::Error deflateFail(ntsa::Error error);
+
     /// Create the inflater. Return the error.
     ntsa::Error inflateCreate();
 
@@ -245,6 +395,12 @@ class Lz4 : public ntci::Compression
 
     /// Destroy the deflater. Return the error.
     ntsa::Error inflateDestroy();
+
+    /// Fail the current inflate operation with the specified 'error'.
+    /// Discard any inflated bytes not yet appended to the result of the
+    /// operation, discard any unprocessed input, and reset the inflater to
+    /// prepare for a new frame. Return the 'error'.
+    ntsa::Error inflateFail(ntsa::Error error);
 
     /// Allocate the specified 'size' number of bytes. The specified 'opaque'
     /// field points to the allocator object.
@@ -295,6 +451,8 @@ class Zstd : public ntci::Compression
     bdlbb::BlobBuffer               d_inflaterBuffer;
     bsl::size_t                     d_inflaterBufferSize;
     int                             d_level;
+    bsl::size_t                     d_maxDeflateSize;
+    bsl::size_t                     d_maxInflateSize;
     bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
     ntca::CompressionConfig         d_config;
     bslma::Allocator*               d_allocator_p;
@@ -341,16 +499,23 @@ class Zstd : public ntci::Compression
     void deflateCommit(bdlbb::Blob* result);
 
     /// Feed the input bytes available to the deflate algorithm and write
-    /// any output bytes to the output buffer. Return the error.
+    /// at most the specified 'maxBytesWritten' output bytes to the output
+    /// buffer. Return the error.
     bsl::size_t deflateCycle(bsl::size_t*      numBytesRead,
                              bsl::size_t*      numBytesWritten,
-                             ZSTD_EndDirective mode);
+                             ZSTD_EndDirective mode,
+                             bsl::size_t       maxBytesWritten);
 
     /// Reset the deflater to prepare for a new frame. Return the error.
     ntsa::Error deflateReset();
 
     /// Destroy the deflater. Return the error.
     ntsa::Error deflateDestroy();
+
+    /// Fail the current deflate operation with the specified 'error'.
+    /// Discard any deflated bytes not yet appended to the result of the
+    /// operation. Return the 'error'.
+    ntsa::Error deflateFail(ntsa::Error error);
 
     /// Create the inflater. Return the error.
     ntsa::Error inflateCreate();
@@ -387,15 +552,23 @@ class Zstd : public ntci::Compression
     void inflateCommit(bdlbb::Blob* result);
 
     /// Feed the input bytes available to the inflate algorithm and write
-    /// any output bytes to the output buffer. Return the error.
+    /// at most the specified 'maxBytesWritten' output bytes to the output
+    /// buffer. Return the error.
     bsl::size_t inflateCycle(bsl::size_t* numBytesRead,
-                             bsl::size_t* numBytesWritten);
+                             bsl::size_t* numBytesWritten,
+                             bsl::size_t  maxBytesWritten);
 
     /// Reset the inflater to prepare for a new frame. Return the error.
     ntsa::Error inflateReset();
 
     /// Destroy the deflater. Return the error.
     ntsa::Error inflateDestroy();
+
+    /// Fail the current inflate operation with the specified 'error'.
+    /// Discard any inflated bytes not yet appended to the result of the
+    /// operation, discard any unprocessed input, and reset the inflater to
+    /// prepare for a new frame. Return the 'error'.
+    ntsa::Error inflateFail(ntsa::Error error);
 
     /// Allocate the specified 'size' number of bytes. The specified 'opaque'
     /// field points to the allocator object.
@@ -452,6 +625,8 @@ class Zlib : public ntci::Compression
     bsl::size_t                     d_inflaterBufferSize;
     bsl::uint64_t                   d_inflaterGeneration;
     int                             d_level;
+    bsl::size_t                     d_maxDeflateSize;
+    bsl::size_t                     d_maxInflateSize;
     bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
     ntca::CompressionConfig         d_config;
     bslma::Allocator*               d_allocator_p;
@@ -498,16 +673,23 @@ class Zlib : public ntci::Compression
     void deflateCommit(bdlbb::Blob* result);
 
     /// Feed the input bytes available to the deflate algorithm and write
-    /// any output bytes to the output buffer. Return the error.
+    /// at most the specified 'maxBytesWritten' output bytes to the output
+    /// buffer. Return the error.
     int deflateCycle(bsl::size_t* numBytesRead,
                      bsl::size_t* numBytesWritten,
-                     int          mode);
+                     int          mode,
+                     bsl::size_t  maxBytesWritten);
 
     /// Reset the deflater to prepare for a new frame. Return the error.
     ntsa::Error deflateReset();
 
     /// Destroy the deflater. Return the error.
     ntsa::Error deflateDestroy();
+
+    /// Fail the current deflate operation with the specified 'error'.
+    /// Discard any deflated bytes not yet appended to the result of the
+    /// operation. Return the 'error'.
+    ntsa::Error deflateFail(ntsa::Error error);
 
     /// Create the inflater. Return the error.
     ntsa::Error inflateCreate();
@@ -544,16 +726,24 @@ class Zlib : public ntci::Compression
     void inflateCommit(bdlbb::Blob* result);
 
     /// Feed the input bytes available to the inflate algorithm and write
-    /// any output bytes to the output buffer. Return the error.
+    /// at most the specified 'maxBytesWritten' output bytes to the output
+    /// buffer. Return the error.
     int inflateCycle(bsl::size_t* numBytesRead,
                      bsl::size_t* numBytesWritten,
-                     int          mode);
+                     int          mode,
+                     bsl::size_t  maxBytesWritten);
 
     /// Reset the inflater to prepare for a new frame. Return the error.
     ntsa::Error inflateReset();
 
     /// Destroy the deflater. Return the error.
     ntsa::Error inflateDestroy();
+
+    /// Fail the current inflate operation with the specified 'error'.
+    /// Discard any inflated bytes not yet appended to the result of the
+    /// operation, discard any unprocessed input, and reset the inflater to
+    /// prepare for a new frame. Return the 'error'.
+    ntsa::Error inflateFail(ntsa::Error error);
 
     /// Allocate the specified 'number' of elements of the specified 'size' in
     /// bytes. The specified 'opaque' field points to the allocator object.
@@ -613,6 +803,8 @@ class Gzip : public ntci::Compression
     char                            d_inflaterEntityComment[128];
     bsl::uint64_t                   d_inflaterGeneration;
     int                             d_level;
+    bsl::size_t                     d_maxDeflateSize;
+    bsl::size_t                     d_maxInflateSize;
     bsl::shared_ptr<ntci::DataPool> d_dataPool_sp;
     ntca::CompressionConfig         d_config;
     bslma::Allocator*               d_allocator_p;
@@ -659,16 +851,23 @@ class Gzip : public ntci::Compression
     void deflateCommit(bdlbb::Blob* result);
 
     /// Feed the input bytes available to the deflate algorithm and write
-    /// any output bytes to the output buffer. Return the error.
+    /// at most the specified 'maxBytesWritten' output bytes to the output
+    /// buffer. Return the error.
     int deflateCycle(bsl::size_t* numBytesRead,
                      bsl::size_t* numBytesWritten,
-                     int          mode);
+                     int          mode,
+                     bsl::size_t  maxBytesWritten);
 
     /// Reset the deflater to prepare for a new frame. Return the error.
     ntsa::Error deflateReset();
 
     /// Destroy the deflater. Return the error.
     ntsa::Error deflateDestroy();
+
+    /// Fail the current deflate operation with the specified 'error'.
+    /// Discard any deflated bytes not yet appended to the result of the
+    /// operation. Return the 'error'.
+    ntsa::Error deflateFail(ntsa::Error error);
 
     /// Create the inflater. Return the error.
     ntsa::Error inflateCreate();
@@ -705,16 +904,24 @@ class Gzip : public ntci::Compression
     void inflateCommit(bdlbb::Blob* result);
 
     /// Feed the input bytes available to the inflate algorithm and write
-    /// any output bytes to the output buffer. Return the error.
+    /// at most the specified 'maxBytesWritten' output bytes to the output
+    /// buffer. Return the error.
     int inflateCycle(bsl::size_t* numBytesRead,
                      bsl::size_t* numBytesWritten,
-                     int          mode);
+                     int          mode,
+                     bsl::size_t  maxBytesWritten);
 
     /// Reset the inflater to prepare for a new frame. Return the error.
     ntsa::Error inflateReset();
 
     /// Destroy the deflater. Return the error.
     ntsa::Error inflateDestroy();
+
+    /// Fail the current inflate operation with the specified 'error'.
+    /// Discard any inflated bytes not yet appended to the result of the
+    /// operation, discard any unprocessed input, and reset the inflater to
+    /// prepare for a new frame. Return the 'error'.
+    ntsa::Error inflateFail(ntsa::Error error);
 
     /// Allocate the specified 'number' of elements of the specified 'size' in
     /// bytes. The specified 'opaque' field points to the allocator object.
@@ -935,11 +1142,24 @@ ntsa::Error Lz4::deflateBegin(ntca::DeflateContext*       context,
     if (LZ4F_isError(errorCode)) {
         NTCI_LOG_ERROR("Failed to begin compression frame: %s",
                        LZ4F_getErrorName(errorCode));
-        return ntsa::Error(ntsa::Error::e_INVALID);
+        return this->deflateFail(ntsa::Error(ntsa::Error::e_INVALID));
     }
 
     const bsl::size_t numBytesRead    = 0;
     const bsl::size_t numBytesWritten = static_cast<bsl::size_t>(errorCode);
+
+    const CompressionBudget budget =
+        CompressionLimitUtil::budget(d_maxDeflateSize,
+                                     context->bytesWritten(),
+                                     *result,
+                                     d_deflaterBufferSize);
+
+    if (numBytesWritten > budget.size()) {
+        return this->deflateFail(
+            CompressionLimitUtil::exceeded("deflate",
+                                           d_maxDeflateSize,
+                                           budget));
+    }
 
     NTCTLC_PLUGIN_LOG_DEFLATED_CHAR_BUFFER(header, numBytesWritten);
 
@@ -1035,13 +1255,13 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
                             "expected at least %d, found %d",
                             (int)(destinationCapacityRequired),
                             (int)(d_deflaterArenaCapacity));
-                        return ntsa::Error(ntsa::Error::e_INVALID);
+                        return this->deflateFail(ntsa::Error(ntsa::Error::e_INVALID));
                     }
                     else {
                         NTCI_LOG_ERROR(
                             "Failed to update compression frame: %s",
                             LZ4F_getErrorName(errorCode));
-                        return ntsa::Error(ntsa::Error::e_INVALID);
+                        return this->deflateFail(ntsa::Error(ntsa::Error::e_INVALID));
                     }
                 }
 
@@ -1051,6 +1271,19 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
 
                 BSLS_ASSERT_OPT(numBytesRead > 0);
                 BSLS_ASSERT_OPT(numBytesWritten > 0);
+
+                const CompressionBudget budget = CompressionLimitUtil::budget(
+                    d_maxDeflateSize,
+                    context->bytesWritten() + totalBytesWritten,
+                    *result,
+                    d_deflaterBufferSize);
+
+                if (numBytesWritten > budget.size()) {
+                    return this->deflateFail(CompressionLimitUtil::exceeded(
+                        "deflate",
+                        d_maxDeflateSize,
+                        budget));
+                }
 
                 NTCTLC_PLUGIN_LOG_DEFLATED_CHAR_BUFFER(
                     d_deflaterArena, numBytesWritten);
@@ -1087,7 +1320,7 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
             (int)(sourceSize),
             (int)(destinationCapacity),
             (int)(LZ4F_compressBound(sourceSize, &d_preferences)));
-            return ntsa::Error(ntsa::Error::e_INVALID);
+            return this->deflateFail(ntsa::Error(ntsa::Error::e_INVALID));
         }
 
         const bsl::size_t numBytesRead    = sourceSize;
@@ -1096,6 +1329,19 @@ ntsa::Error Lz4::deflateNext(ntca::DeflateContext*       context,
 
         BSLS_ASSERT_OPT(numBytesRead > 0);
         BSLS_ASSERT_OPT(numBytesWritten > 0);
+
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxDeflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_deflaterBufferSize);
+
+        if (numBytesWritten > budget.size()) {
+            return this->deflateFail(
+                CompressionLimitUtil::exceeded("deflate",
+                                               d_maxDeflateSize,
+                                               budget));
+        }
 
         totalBytesRead += numBytesRead;
         totalBytesWritten += numBytesWritten;
@@ -1133,11 +1379,24 @@ ntsa::Error Lz4::deflateEnd(ntca::DeflateContext*       context,
     if (LZ4F_isError(errorCode)) {
         NTCI_LOG_ERROR("Failed to end compression frame: %s",
                        LZ4F_getErrorName(errorCode));
-        return ntsa::Error(ntsa::Error::e_INVALID);
+        return this->deflateFail(ntsa::Error(ntsa::Error::e_INVALID));
     }
 
     const bsl::size_t numBytesRead    = 0;
     const bsl::size_t numBytesWritten = static_cast<bsl::size_t>(errorCode);
+
+    const CompressionBudget budget =
+        CompressionLimitUtil::budget(d_maxDeflateSize,
+                                     context->bytesWritten(),
+                                     *result,
+                                     d_deflaterBufferSize);
+
+    if (numBytesWritten > budget.size()) {
+        return this->deflateFail(
+            CompressionLimitUtil::exceeded("deflate",
+                                           d_maxDeflateSize,
+                                           budget));
+    }
 
     NTCTLC_PLUGIN_LOG_DEFLATED_CHAR_BUFFER(footer, numBytesWritten);
 
@@ -1211,6 +1470,14 @@ ntsa::Error Lz4::deflateDestroy()
     }
 
     return ntsa::Error();
+}
+
+ntsa::Error Lz4::deflateFail(ntsa::Error error)
+{
+    d_deflaterBuffer.reset();
+    d_deflaterBufferSize = 0;
+
+    return error;
 }
 
 NTCCFG_INLINE
@@ -1306,6 +1573,16 @@ ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
             static_cast<bsl::size_t>(
                 d_inflaterBuffer.size() - d_inflaterBufferSize);
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxInflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_inflaterBufferSize);
+
+        if (destinationSize > budget.size() + 1) {
+            destinationSize = budget.size() + 1;
+        }
+
         bsl::size_t sourceSize =
             static_cast<bsl::size_t>(sourceEnd - sourceCurrent);
 
@@ -1319,7 +1596,14 @@ ntsa::Error Lz4::inflateNext(ntca::InflateContext*       context,
         if (LZ4F_isError(errorCode)) {
             NTCI_LOG_ERROR("Failed to inflate: %s",
                            LZ4F_getErrorName(errorCode));
-            return ntsa::Error(ntsa::Error::e_INVALID);
+            return this->inflateFail(ntsa::Error(ntsa::Error::e_INVALID));
+        }
+
+        if (destinationSize > budget.size()) {
+            return this->inflateFail(
+                CompressionLimitUtil::exceeded("inflate",
+                                               d_maxInflateSize,
+                                               budget));
         }
 
         if (destinationSize > 0) {
@@ -1416,6 +1700,17 @@ ntsa::Error Lz4::inflateDestroy()
     return ntsa::Error();
 }
 
+ntsa::Error Lz4::inflateFail(ntsa::Error error)
+{
+    d_inflaterBuffer.reset();
+    d_inflaterBufferSize = 0;
+
+    ntsa::Error resetError = this->inflateReset();
+    NTCCFG_WARNING_UNUSED(resetError);
+
+    return error;
+}
+
 void* Lz4::allocate(void* opaque, bsl::size_t size)
 {
     bslma::Allocator* allocator = reinterpret_cast<bslma::Allocator*>(opaque);
@@ -1442,6 +1737,10 @@ Lz4::Lz4(const ntca::CompressionConfig&         configuration,
 , d_inflaterBuffer()
 , d_inflaterBufferSize(0)
 , d_level(1)
+, d_maxDeflateSize(
+      CompressionLimitUtil::maxSize(configuration.maxDeflateSize()))
+, d_maxInflateSize(
+      CompressionLimitUtil::maxSize(configuration.maxInflateSize()))
 , d_dataPool_sp(dataPool)
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -1604,18 +1903,32 @@ ntsa::Error Zstd::deflateNext(ntca::DeflateContext*       context,
             this->deflateOverflow(result);
         }
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxDeflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_deflaterBufferSize);
+
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
         rc = this->deflateCycle(&numBytesRead,
                                 &numBytesWritten,
-                                ZSTD_e_continue);
+                                ZSTD_e_continue,
+                                budget.size() + 1);
 
         totalBytesRead    += numBytesRead;
         totalBytesWritten += numBytesWritten;
 
         if (ZSTD_isError(rc)) {
-            return this->translateError(rc, "deflate");
+            return this->deflateFail(this->translateError(rc, "deflate"));
+        }
+
+        if (numBytesWritten > budget.size()) {
+            return this->deflateFail(
+                CompressionLimitUtil::exceeded("deflate",
+                                               d_maxDeflateSize,
+                                               budget));
         }
     }
 
@@ -1641,25 +1954,39 @@ ntsa::Error Zstd::deflateEnd(ntca::DeflateContext*       context,
             this->deflateOverflow(result);
         }
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxDeflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_deflaterBufferSize);
+
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
-        rc = this->deflateCycle(&numBytesRead, &numBytesWritten, ZSTD_e_end);
+        rc = this->deflateCycle(&numBytesRead,
+                                &numBytesWritten,
+                                ZSTD_e_end,
+                                budget.size() + 1);
 
         totalBytesRead    += numBytesRead;
         totalBytesWritten += numBytesWritten;
 
-        if (rc > 0) {
-            continue;
+        if (ZSTD_isError(rc)) {
+            return this->deflateFail(this->translateError(rc, "deflate"));
         }
-        else if (rc == 0) {
+
+        if (numBytesWritten > budget.size()) {
+            return this->deflateFail(
+                CompressionLimitUtil::exceeded("deflate",
+                                               d_maxDeflateSize,
+                                               budget));
+        }
+
+        if (rc == 0) {
             if (d_deflaterBufferSize != 0) {
                 this->deflateCommit(result);
             }
             break;
-        }
-        else {
-            return this->translateError(rc, "deflate");
         }
     }
 
@@ -1712,12 +2039,20 @@ void Zstd::deflateCommit(bdlbb::Blob* result)
 NTCCFG_INLINE
 bsl::size_t Zstd::deflateCycle(bsl::size_t*      numBytesRead,
                                bsl::size_t*      numBytesWritten,
-                               ZSTD_EndDirective mode)
+                               ZSTD_EndDirective mode,
+                               bsl::size_t       maxBytesWritten)
 {
     bsl::size_t rc = 0;
 
     *numBytesRead    = 0;
     *numBytesWritten = 0;
+
+    bsl::size_t outputHidden = 0;
+    if (d_deflaterOutput.size - d_deflaterOutput.pos > maxBytesWritten) {
+        outputHidden =
+            d_deflaterOutput.size - d_deflaterOutput.pos - maxBytesWritten;
+        d_deflaterOutput.size -= outputHidden;
+    }
 
     bsl::size_t posIn0  = d_deflaterInput.pos;
     bsl::size_t posOut0 = d_deflaterOutput.pos;
@@ -1729,6 +2064,8 @@ bsl::size_t Zstd::deflateCycle(bsl::size_t*      numBytesRead,
 
     bsl::size_t posIn1  = d_deflaterInput.pos;
     bsl::size_t posOut1 = d_deflaterOutput.pos;
+
+    d_deflaterOutput.size += outputHidden;
 
     BSLS_ASSERT(posIn1 >= posIn0);
     BSLS_ASSERT(posOut1 >= posOut0);
@@ -1770,6 +2107,17 @@ ntsa::Error Zstd::deflateDestroy()
     d_deflaterContext_p = 0;
 
     return ntsa::Error();
+}
+
+ntsa::Error Zstd::deflateFail(ntsa::Error error)
+{
+    d_deflaterBuffer.reset();
+    d_deflaterBufferSize = 0;
+
+    bsl::memset(&d_deflaterInput, 0, sizeof d_deflaterInput);
+    bsl::memset(&d_deflaterOutput, 0, sizeof d_deflaterOutput);
+
+    return error;
 }
 
 NTCCFG_INLINE
@@ -1838,31 +2186,42 @@ ntsa::Error Zstd::inflateNext(ntca::InflateContext*       context,
             this->inflateOverflow(result);
         }
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxInflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_inflaterBufferSize);
+
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
-        rc = this->inflateCycle(&numBytesRead, &numBytesWritten);
+        rc = this->inflateCycle(&numBytesRead,
+                                &numBytesWritten,
+                                budget.size() + 1);
 
         totalBytesRead    += numBytesRead;
         totalBytesWritten += numBytesWritten;
 
-        if (rc > 0) {
-            continue;
+        if (ZSTD_isError(rc)) {
+            return this->inflateFail(this->translateError(rc, "inflate"));
         }
-        else if (rc == 0) {
+
+        if (numBytesWritten > budget.size()) {
+            return this->inflateFail(
+                CompressionLimitUtil::exceeded("inflate",
+                                               d_maxInflateSize,
+                                               budget));
+        }
+
+        if (rc == 0) {
             if (d_inflaterBufferSize != 0) {
                 this->inflateCommit(result);
             }
 
             error = this->inflateReset();
             if (error) {
-                return error;
+                return this->inflateFail(error);
             }
-
-            continue;
-        }
-        else {
-            return this->translateError(rc, "inflate");
         }
     }
 
@@ -1880,8 +2239,11 @@ ntsa::Error Zstd::inflateEnd(ntca::InflateContext*       context,
                              bdlbb::Blob*                result,
                              const ntca::InflateOptions& options)
 {
-    NTCCFG_WARNING_UNUSED(result);
     NTCCFG_WARNING_UNUSED(options);
+
+    if (d_inflaterBufferSize != 0) {
+        this->inflateCommit(result);
+    }
 
     context->setCompressionType(ntca::CompressionType::e_ZSTD);
 
@@ -1929,12 +2291,20 @@ void Zstd::inflateCommit(bdlbb::Blob* result)
 
 NTCCFG_INLINE
 bsl::size_t Zstd::inflateCycle(bsl::size_t* numBytesRead,
-                               bsl::size_t* numBytesWritten)
+                               bsl::size_t* numBytesWritten,
+                               bsl::size_t  maxBytesWritten)
 {
     bsl::size_t rc = 0;
 
     *numBytesRead    = 0;
     *numBytesWritten = 0;
+
+    bsl::size_t outputHidden = 0;
+    if (d_inflaterOutput.size - d_inflaterOutput.pos > maxBytesWritten) {
+        outputHidden =
+            d_inflaterOutput.size - d_inflaterOutput.pos - maxBytesWritten;
+        d_inflaterOutput.size -= outputHidden;
+    }
 
     bsl::size_t posIn0  = d_inflaterInput.pos;
     bsl::size_t posOut0 = d_inflaterOutput.pos;
@@ -1945,6 +2315,8 @@ bsl::size_t Zstd::inflateCycle(bsl::size_t* numBytesRead,
 
     bsl::size_t posIn1  = d_inflaterInput.pos;
     bsl::size_t posOut1 = d_inflaterOutput.pos;
+
+    d_inflaterOutput.size += outputHidden;
 
     BSLS_ASSERT(posIn1 >= posIn0);
     BSLS_ASSERT(posOut1 >= posOut0);
@@ -1986,6 +2358,20 @@ ntsa::Error Zstd::inflateDestroy()
     d_inflaterContext_p = 0;
 
     return ntsa::Error();
+}
+
+ntsa::Error Zstd::inflateFail(ntsa::Error error)
+{
+    d_inflaterBuffer.reset();
+    d_inflaterBufferSize = 0;
+
+    bsl::memset(&d_inflaterInput, 0, sizeof d_inflaterInput);
+    bsl::memset(&d_inflaterOutput, 0, sizeof d_inflaterOutput);
+
+    ntsa::Error resetError = this->inflateReset();
+    NTCCFG_WARNING_UNUSED(resetError);
+
+    return error;
 }
 
 const char* Zstd::describeError(bsl::size_t error)
@@ -2055,6 +2441,10 @@ Zstd::Zstd(const ntca::CompressionConfig&         configuration,
 , d_inflaterBuffer()
 , d_inflaterBufferSize(0)
 , d_level(0)
+, d_maxDeflateSize(
+      CompressionLimitUtil::maxSize(configuration.maxDeflateSize()))
+, d_maxInflateSize(
+      CompressionLimitUtil::maxSize(configuration.maxInflateSize()))
 , d_dataPool_sp(dataPool)
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -2196,24 +2586,57 @@ ntsa::Error Zlib::deflateNext(ntca::DeflateContext*       context,
     bsl::size_t totalBytesWritten = 0;
     bsl::size_t totalBytesRead    = 0;
 
-    d_deflaterStream.next_in  = const_cast<bsl::uint8_t*>(data);
-    d_deflaterStream.avail_in = static_cast<uInt>(size);
+    const bsl::uint8_t* source          = data;
+    bsl::size_t         sourceRemaining = size;
 
-    while (d_deflaterStream.avail_in != 0) {
+    while (true) {
+        if (d_deflaterStream.avail_in == 0) {
+            if (sourceRemaining == 0) {
+                break;
+            }
+
+            const bsl::size_t sourceSize =
+                sourceRemaining < static_cast<bsl::size_t>(UINT_MAX)
+                    ? sourceRemaining
+                    : static_cast<bsl::size_t>(UINT_MAX);
+
+            d_deflaterStream.next_in  = const_cast<bsl::uint8_t*>(source);
+            d_deflaterStream.avail_in = static_cast<uInt>(sourceSize);
+
+            source          += sourceSize;
+            sourceRemaining -= sourceSize;
+        }
+
         if (d_deflaterStream.avail_out == 0) {
             this->deflateOverflow(result);
         }
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxDeflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_deflaterBufferSize);
+
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
-        rc = this->deflateCycle(&numBytesRead, &numBytesWritten, Z_NO_FLUSH);
+        rc = this->deflateCycle(&numBytesRead,
+                                &numBytesWritten,
+                                Z_NO_FLUSH,
+                                budget.size() + 1);
 
         totalBytesRead    += numBytesRead;
         totalBytesWritten += numBytesWritten;
 
+        if (numBytesWritten > budget.size()) {
+            return this->deflateFail(
+                CompressionLimitUtil::exceeded("deflate",
+                                               d_maxDeflateSize,
+                                               budget));
+        }
+
         if (rc != Z_OK && rc != Z_BUF_ERROR) {
-            return this->translateError(rc, "deflate");
+            return this->deflateFail(this->translateError(rc, "deflate"));
         }
     }
 
@@ -2241,13 +2664,29 @@ ntsa::Error Zlib::deflateEnd(ntca::DeflateContext*       context,
             this->deflateOverflow(result);
         }
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxDeflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_deflaterBufferSize);
+
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
-        rc = this->deflateCycle(&numBytesRead, &numBytesWritten, Z_FINISH);
+        rc = this->deflateCycle(&numBytesRead,
+                                &numBytesWritten,
+                                Z_FINISH,
+                                budget.size() + 1);
 
         totalBytesRead    += numBytesRead;
         totalBytesWritten += numBytesWritten;
+
+        if (numBytesWritten > budget.size()) {
+            return this->deflateFail(
+                CompressionLimitUtil::exceeded("deflate",
+                                               d_maxDeflateSize,
+                                               budget));
+        }
 
         if (rc == Z_OK || rc == Z_BUF_ERROR) {
             continue;
@@ -2259,7 +2698,7 @@ ntsa::Error Zlib::deflateEnd(ntca::DeflateContext*       context,
             break;
         }
         else {
-            return this->translateError(rc, "deflate");
+            return this->deflateFail(this->translateError(rc, "deflate"));
         }
     }
 
@@ -2323,12 +2762,20 @@ void Zlib::deflateCommit(bdlbb::Blob* result)
 NTCCFG_INLINE
 int Zlib::deflateCycle(bsl::size_t* numBytesRead,
                        bsl::size_t* numBytesWritten,
-                       int          mode)
+                       int          mode,
+                       bsl::size_t  maxBytesWritten)
 {
     int rc = 0;
 
     *numBytesRead    = 0;
     *numBytesWritten = 0;
+
+    uInt availOutHidden = 0;
+    if (d_deflaterStream.avail_out > maxBytesWritten) {
+        availOutHidden = d_deflaterStream.avail_out -
+                         static_cast<uInt>(maxBytesWritten);
+        d_deflaterStream.avail_out = static_cast<uInt>(maxBytesWritten);
+    }
 
     uInt availIn0  = d_deflaterStream.avail_in;
     uInt availOut0 = d_deflaterStream.avail_out;
@@ -2337,6 +2784,8 @@ int Zlib::deflateCycle(bsl::size_t* numBytesRead,
 
     uInt availIn1  = d_deflaterStream.avail_in;
     uInt availOut1 = d_deflaterStream.avail_out;
+
+    d_deflaterStream.avail_out += availOutHidden;
 
     BSLS_ASSERT(availIn0 >= availIn1);
     BSLS_ASSERT(availOut0 >= availOut1);
@@ -2396,6 +2845,19 @@ ntsa::Error Zlib::deflateDestroy()
     return ntsa::Error();
 }
 
+ntsa::Error Zlib::deflateFail(ntsa::Error error)
+{
+    d_deflaterBuffer.reset();
+    d_deflaterBufferSize = 0;
+
+    d_deflaterStream.next_in   = 0;
+    d_deflaterStream.avail_in  = 0;
+    d_deflaterStream.next_out  = 0;
+    d_deflaterStream.avail_out = 0;
+
+    return error;
+}
+
 NTCCFG_INLINE
 ntsa::Error Zlib::inflateCreate()
 {
@@ -2450,21 +2912,54 @@ ntsa::Error Zlib::inflateNext(ntca::InflateContext*       context,
     BSLS_ASSERT(d_inflaterStream.next_in == 0);
     BSLS_ASSERT(d_inflaterStream.avail_in == 0);
 
-    d_inflaterStream.next_in  = const_cast<bsl::uint8_t*>(data);
-    d_inflaterStream.avail_in = static_cast<uInt>(size);
+    const bsl::uint8_t* source          = data;
+    bsl::size_t         sourceRemaining = size;
 
-    while (d_inflaterStream.avail_in != 0) {
+    while (true) {
+        if (d_inflaterStream.avail_in == 0) {
+            if (sourceRemaining == 0) {
+                break;
+            }
+
+            const bsl::size_t sourceSize =
+                sourceRemaining < static_cast<bsl::size_t>(UINT_MAX)
+                    ? sourceRemaining
+                    : static_cast<bsl::size_t>(UINT_MAX);
+
+            d_inflaterStream.next_in  = const_cast<bsl::uint8_t*>(source);
+            d_inflaterStream.avail_in = static_cast<uInt>(sourceSize);
+
+            source          += sourceSize;
+            sourceRemaining -= sourceSize;
+        }
+
         if (d_inflaterStream.avail_out == 0) {
             this->inflateOverflow(result);
         }
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxInflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_inflaterBufferSize);
+
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
-        rc = this->inflateCycle(&numBytesRead, &numBytesWritten, Z_NO_FLUSH);
+        rc = this->inflateCycle(&numBytesRead,
+                                &numBytesWritten,
+                                Z_NO_FLUSH,
+                                budget.size() + 1);
 
         totalBytesRead    += numBytesRead;
         totalBytesWritten += numBytesWritten;
+
+        if (numBytesWritten > budget.size()) {
+            return this->inflateFail(
+                CompressionLimitUtil::exceeded("inflate",
+                                               d_maxInflateSize,
+                                               budget));
+        }
 
         if (rc == Z_OK || rc == Z_BUF_ERROR) {
             continue;
@@ -2478,13 +2973,13 @@ ntsa::Error Zlib::inflateNext(ntca::InflateContext*       context,
 
             error = this->inflateReset();
             if (error) {
-                return error;
+                return this->inflateFail(error);
             }
 
             continue;
         }
         else {
-            return this->translateError(rc, "inflate");
+            return this->inflateFail(this->translateError(rc, "inflate"));
         }
     }
 
@@ -2519,13 +3014,29 @@ ntsa::Error Zlib::inflateEnd(ntca::InflateContext*       context,
             this->inflateOverflow(result);
         }
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxInflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_inflaterBufferSize);
+
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
-        rc = this->inflateCycle(&numBytesRead, &numBytesWritten, Z_SYNC_FLUSH);
+        rc = this->inflateCycle(&numBytesRead,
+                                &numBytesWritten,
+                                Z_SYNC_FLUSH,
+                                budget.size() + 1);
 
         totalBytesRead    += numBytesRead;
         totalBytesWritten += numBytesWritten;
+
+        if (numBytesWritten > budget.size()) {
+            return this->inflateFail(
+                CompressionLimitUtil::exceeded("inflate",
+                                               d_maxInflateSize,
+                                               budget));
+        }
 
         if (rc == Z_OK || rc == Z_BUF_ERROR) {
             if (numBytesRead == 0 && numBytesWritten == 0) {
@@ -2544,14 +3055,18 @@ ntsa::Error Zlib::inflateEnd(ntca::InflateContext*       context,
 
             error = this->inflateReset();
             if (error) {
-                return error;
+                return this->inflateFail(error);
             }
 
             continue;
         }
         else {
-            return this->translateError(rc, "inflate");
+            return this->inflateFail(this->translateError(rc, "inflate"));
         }
+    }
+
+    if (d_inflaterBufferSize != 0) {
+        this->inflateCommit(result);
     }
 
     d_inflaterStream.next_in  = 0;
@@ -2605,12 +3120,20 @@ void Zlib::inflateCommit(bdlbb::Blob* result)
 NTCCFG_INLINE
 int Zlib::inflateCycle(bsl::size_t* numBytesRead,
                        bsl::size_t* numBytesWritten,
-                       int          mode)
+                       int          mode,
+                       bsl::size_t  maxBytesWritten)
 {
     int rc = 0;
 
     *numBytesRead    = 0;
     *numBytesWritten = 0;
+
+    uInt availOutHidden = 0;
+    if (d_inflaterStream.avail_out > maxBytesWritten) {
+        availOutHidden = d_inflaterStream.avail_out -
+                         static_cast<uInt>(maxBytesWritten);
+        d_inflaterStream.avail_out = static_cast<uInt>(maxBytesWritten);
+    }
 
     uInt availIn0  = d_inflaterStream.avail_in;
     uInt availOut0 = d_inflaterStream.avail_out;
@@ -2619,6 +3142,8 @@ int Zlib::inflateCycle(bsl::size_t* numBytesRead,
 
     uInt availIn1  = d_inflaterStream.avail_in;
     uInt availOut1 = d_inflaterStream.avail_out;
+
+    d_inflaterStream.avail_out += availOutHidden;
 
     BSLS_ASSERT(availIn0 >= availIn1);
     BSLS_ASSERT(availOut0 >= availOut1);
@@ -2676,6 +3201,22 @@ ntsa::Error Zlib::inflateDestroy()
     d_inflaterBuffer.reset();
 
     return ntsa::Error();
+}
+
+ntsa::Error Zlib::inflateFail(ntsa::Error error)
+{
+    d_inflaterBuffer.reset();
+    d_inflaterBufferSize = 0;
+
+    d_inflaterStream.next_in   = 0;
+    d_inflaterStream.avail_in  = 0;
+    d_inflaterStream.next_out  = 0;
+    d_inflaterStream.avail_out = 0;
+
+    ntsa::Error resetError = this->inflateReset();
+    NTCCFG_WARNING_UNUSED(resetError);
+
+    return error;
 }
 
 void* Zlib::allocate(void* opaque, unsigned int number, unsigned int size)
@@ -2792,6 +3333,10 @@ Zlib::Zlib(const ntca::CompressionConfig&         configuration,
 , d_inflaterBufferSize(0)
 , d_inflaterGeneration(0)
 , d_level(Z_DEFAULT_COMPRESSION)
+, d_maxDeflateSize(
+      CompressionLimitUtil::maxSize(configuration.maxDeflateSize()))
+, d_maxInflateSize(
+      CompressionLimitUtil::maxSize(configuration.maxInflateSize()))
 , d_dataPool_sp(dataPool)
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
@@ -2950,24 +3495,57 @@ ntsa::Error Gzip::deflateNext(ntca::DeflateContext*       context,
     bsl::size_t totalBytesWritten = 0;
     bsl::size_t totalBytesRead    = 0;
 
-    d_deflaterStream.next_in  = const_cast<bsl::uint8_t*>(data);
-    d_deflaterStream.avail_in = static_cast<uInt>(size);
+    const bsl::uint8_t* source          = data;
+    bsl::size_t         sourceRemaining = size;
 
-    while (d_deflaterStream.avail_in != 0) {
+    while (true) {
+        if (d_deflaterStream.avail_in == 0) {
+            if (sourceRemaining == 0) {
+                break;
+            }
+
+            const bsl::size_t sourceSize =
+                sourceRemaining < static_cast<bsl::size_t>(UINT_MAX)
+                    ? sourceRemaining
+                    : static_cast<bsl::size_t>(UINT_MAX);
+
+            d_deflaterStream.next_in  = const_cast<bsl::uint8_t*>(source);
+            d_deflaterStream.avail_in = static_cast<uInt>(sourceSize);
+
+            source          += sourceSize;
+            sourceRemaining -= sourceSize;
+        }
+
         if (d_deflaterStream.avail_out == 0) {
             this->deflateOverflow(result);
         }
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxDeflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_deflaterBufferSize);
+
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
-        rc = this->deflateCycle(&numBytesRead, &numBytesWritten, Z_NO_FLUSH);
+        rc = this->deflateCycle(&numBytesRead,
+                                &numBytesWritten,
+                                Z_NO_FLUSH,
+                                budget.size() + 1);
 
         totalBytesRead    += numBytesRead;
         totalBytesWritten += numBytesWritten;
 
+        if (numBytesWritten > budget.size()) {
+            return this->deflateFail(
+                CompressionLimitUtil::exceeded("deflate",
+                                               d_maxDeflateSize,
+                                               budget));
+        }
+
         if (rc != Z_OK && rc != Z_BUF_ERROR) {
-            return this->translateError(rc, "deflate");
+            return this->deflateFail(this->translateError(rc, "deflate"));
         }
     }
 
@@ -2995,13 +3573,29 @@ ntsa::Error Gzip::deflateEnd(ntca::DeflateContext*       context,
             this->deflateOverflow(result);
         }
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxDeflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_deflaterBufferSize);
+
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
-        rc = this->deflateCycle(&numBytesRead, &numBytesWritten, Z_FINISH);
+        rc = this->deflateCycle(&numBytesRead,
+                                &numBytesWritten,
+                                Z_FINISH,
+                                budget.size() + 1);
 
         totalBytesRead    += numBytesRead;
         totalBytesWritten += numBytesWritten;
+
+        if (numBytesWritten > budget.size()) {
+            return this->deflateFail(
+                CompressionLimitUtil::exceeded("deflate",
+                                               d_maxDeflateSize,
+                                               budget));
+        }
 
         if (rc == Z_OK || rc == Z_BUF_ERROR) {
             continue;
@@ -3013,7 +3607,7 @@ ntsa::Error Gzip::deflateEnd(ntca::DeflateContext*       context,
             break;
         }
         else {
-            return this->translateError(rc, "deflate");
+            return this->deflateFail(this->translateError(rc, "deflate"));
         }
     }
 
@@ -3077,12 +3671,20 @@ void Gzip::deflateCommit(bdlbb::Blob* result)
 NTCCFG_INLINE
 int Gzip::deflateCycle(bsl::size_t* numBytesRead,
                        bsl::size_t* numBytesWritten,
-                       int          mode)
+                       int          mode,
+                       bsl::size_t  maxBytesWritten)
 {
     int rc = 0;
 
     *numBytesRead    = 0;
     *numBytesWritten = 0;
+
+    uInt availOutHidden = 0;
+    if (d_deflaterStream.avail_out > maxBytesWritten) {
+        availOutHidden = d_deflaterStream.avail_out -
+                         static_cast<uInt>(maxBytesWritten);
+        d_deflaterStream.avail_out = static_cast<uInt>(maxBytesWritten);
+    }
 
     uInt availIn0  = d_deflaterStream.avail_in;
     uInt availOut0 = d_deflaterStream.avail_out;
@@ -3091,6 +3693,8 @@ int Gzip::deflateCycle(bsl::size_t* numBytesRead,
 
     uInt availIn1  = d_deflaterStream.avail_in;
     uInt availOut1 = d_deflaterStream.avail_out;
+
+    d_deflaterStream.avail_out += availOutHidden;
 
     BSLS_ASSERT(availIn0 >= availIn1);
     BSLS_ASSERT(availOut0 >= availOut1);
@@ -3177,6 +3781,19 @@ ntsa::Error Gzip::deflateDestroy()
     return ntsa::Error();
 }
 
+ntsa::Error Gzip::deflateFail(ntsa::Error error)
+{
+    d_deflaterBuffer.reset();
+    d_deflaterBufferSize = 0;
+
+    d_deflaterStream.next_in   = 0;
+    d_deflaterStream.avail_in  = 0;
+    d_deflaterStream.next_out  = 0;
+    d_deflaterStream.avail_out = 0;
+
+    return error;
+}
+
 NTCCFG_INLINE
 ntsa::Error Gzip::inflateCreate()
 {
@@ -3234,21 +3851,54 @@ ntsa::Error Gzip::inflateNext(ntca::InflateContext*       context,
     BSLS_ASSERT(d_inflaterStream.next_in == 0);
     BSLS_ASSERT(d_inflaterStream.avail_in == 0);
 
-    d_inflaterStream.next_in  = const_cast<bsl::uint8_t*>(data);
-    d_inflaterStream.avail_in = static_cast<uInt>(size);
+    const bsl::uint8_t* source          = data;
+    bsl::size_t         sourceRemaining = size;
 
-    while (d_inflaterStream.avail_in != 0) {
+    while (true) {
+        if (d_inflaterStream.avail_in == 0) {
+            if (sourceRemaining == 0) {
+                break;
+            }
+
+            const bsl::size_t sourceSize =
+                sourceRemaining < static_cast<bsl::size_t>(UINT_MAX)
+                    ? sourceRemaining
+                    : static_cast<bsl::size_t>(UINT_MAX);
+
+            d_inflaterStream.next_in  = const_cast<bsl::uint8_t*>(source);
+            d_inflaterStream.avail_in = static_cast<uInt>(sourceSize);
+
+            source          += sourceSize;
+            sourceRemaining -= sourceSize;
+        }
+
         if (d_inflaterStream.avail_out == 0) {
             this->inflateOverflow(result);
         }
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxInflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_inflaterBufferSize);
+
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
-        rc = this->inflateCycle(&numBytesRead, &numBytesWritten, Z_NO_FLUSH);
+        rc = this->inflateCycle(&numBytesRead,
+                                &numBytesWritten,
+                                Z_NO_FLUSH,
+                                budget.size() + 1);
 
         totalBytesRead    += numBytesRead;
         totalBytesWritten += numBytesWritten;
+
+        if (numBytesWritten > budget.size()) {
+            return this->inflateFail(
+                CompressionLimitUtil::exceeded("inflate",
+                                               d_maxInflateSize,
+                                               budget));
+        }
 
         if (rc == Z_OK || rc == Z_BUF_ERROR) {
             continue;
@@ -3263,13 +3913,13 @@ ntsa::Error Gzip::inflateNext(ntca::InflateContext*       context,
 
             error = this->inflateReset();
             if (error) {
-                return error;
+                return this->inflateFail(error);
             }
 
             continue;
         }
         else {
-            return this->translateError(rc, "inflate");
+            return this->inflateFail(this->translateError(rc, "inflate"));
         }
     }
 
@@ -3304,13 +3954,29 @@ ntsa::Error Gzip::inflateEnd(ntca::InflateContext*       context,
             this->inflateOverflow(result);
         }
 
+        const CompressionBudget budget = CompressionLimitUtil::budget(
+            d_maxInflateSize,
+            context->bytesWritten() + totalBytesWritten,
+            *result,
+            d_inflaterBufferSize);
+
         bsl::size_t numBytesRead    = 0;
         bsl::size_t numBytesWritten = 0;
 
-        rc = this->inflateCycle(&numBytesRead, &numBytesWritten, Z_SYNC_FLUSH);
+        rc = this->inflateCycle(&numBytesRead,
+                                &numBytesWritten,
+                                Z_SYNC_FLUSH,
+                                budget.size() + 1);
 
         totalBytesRead    += numBytesRead;
         totalBytesWritten += numBytesWritten;
+
+        if (numBytesWritten > budget.size()) {
+            return this->inflateFail(
+                CompressionLimitUtil::exceeded("inflate",
+                                               d_maxInflateSize,
+                                               budget));
+        }
 
         if (rc == Z_OK || rc == Z_BUF_ERROR) {
             if (numBytesRead == 0 && numBytesWritten == 0) {
@@ -3330,14 +3996,18 @@ ntsa::Error Gzip::inflateEnd(ntca::InflateContext*       context,
 
             error = this->inflateReset();
             if (error) {
-                return error;
+                return this->inflateFail(error);
             }
 
             continue;
         }
         else {
-            return this->translateError(rc, "inflate");
+            return this->inflateFail(this->translateError(rc, "inflate"));
         }
+    }
+
+    if (d_inflaterBufferSize != 0) {
+        this->inflateCommit(result);
     }
 
     d_inflaterStream.next_in  = 0;
@@ -3391,12 +4061,20 @@ void Gzip::inflateCommit(bdlbb::Blob* result)
 NTCCFG_INLINE
 int Gzip::inflateCycle(bsl::size_t* numBytesRead,
                        bsl::size_t* numBytesWritten,
-                       int          mode)
+                       int          mode,
+                       bsl::size_t  maxBytesWritten)
 {
     int rc = 0;
 
     *numBytesRead    = 0;
     *numBytesWritten = 0;
+
+    uInt availOutHidden = 0;
+    if (d_inflaterStream.avail_out > maxBytesWritten) {
+        availOutHidden = d_inflaterStream.avail_out -
+                         static_cast<uInt>(maxBytesWritten);
+        d_inflaterStream.avail_out = static_cast<uInt>(maxBytesWritten);
+    }
 
     uInt availIn0  = d_inflaterStream.avail_in;
     uInt availOut0 = d_inflaterStream.avail_out;
@@ -3405,6 +4083,8 @@ int Gzip::inflateCycle(bsl::size_t* numBytesRead,
 
     uInt availIn1  = d_inflaterStream.avail_in;
     uInt availOut1 = d_inflaterStream.avail_out;
+
+    d_inflaterStream.avail_out += availOutHidden;
 
     BSLS_ASSERT(availIn0 >= availIn1);
     BSLS_ASSERT(availOut0 >= availOut1);
@@ -3479,6 +4159,22 @@ ntsa::Error Gzip::inflateDestroy()
     d_inflaterBuffer.reset();
 
     return ntsa::Error();
+}
+
+ntsa::Error Gzip::inflateFail(ntsa::Error error)
+{
+    d_inflaterBuffer.reset();
+    d_inflaterBufferSize = 0;
+
+    d_inflaterStream.next_in   = 0;
+    d_inflaterStream.avail_in  = 0;
+    d_inflaterStream.next_out  = 0;
+    d_inflaterStream.avail_out = 0;
+
+    ntsa::Error resetError = this->inflateReset();
+    NTCCFG_WARNING_UNUSED(resetError);
+
+    return error;
 }
 
 void* Gzip::allocate(void* opaque, unsigned int number, unsigned int size)
@@ -3595,6 +4291,10 @@ Gzip::Gzip(const ntca::CompressionConfig&         configuration,
 , d_inflaterBufferSize(0)
 , d_inflaterGeneration(0)
 , d_level(Z_DEFAULT_COMPRESSION)
+, d_maxDeflateSize(
+      CompressionLimitUtil::maxSize(configuration.maxDeflateSize()))
+, d_maxInflateSize(
+      CompressionLimitUtil::maxSize(configuration.maxInflateSize()))
 , d_dataPool_sp(dataPool)
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))

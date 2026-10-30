@@ -43,6 +43,7 @@ BSLS_IDENT_RCSID(ntcd_compression_cpp, "$Id$ $CSID$")
 #include <bsl_fstream.h>
 #include <bsl_sstream.h>
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -445,6 +446,8 @@ bsl::ostream& operator<<(bsl::ostream& stream, CompressionBlockType::Value rhs)
     return CompressionBlockType::print(stream, rhs);
 }
 
+const bsl::size_t CompressionBlock::k_MAX_LENGTH = 65535;
+
 ntsa::Error CompressionBlock::decode(bsl::size_t* numBytesDecoded,
                                      const void*  source,
                                      bsl::size_t  size)
@@ -631,9 +634,134 @@ bsl::ostream& CompressionBlock::print(bsl::ostream& stream,
 
 #define NTCD_COMPRESSION_ENCODER_RLE_LOG_ERROR(message, error)                \
     do {                                                                      \
-        NTCI_LOG_STREAM_ERROR << "Failed to decode: " << (message)            \
-                              << NTCI_LOG_STREAM_END;                         \
+        NTCI_LOG_STREAM_ERROR << "Failed to encode: " << (message) << ": "    \
+                              << (error) << NTCI_LOG_STREAM_END;              \
     } while (false)
+
+ntsa::Error CompressionEncoder::checkLimit(
+    const ntca::DeflateContext& context,
+    const bdlbb::Blob&          result,
+    bsl::size_t                 size) const
+{
+    NTCI_LOG_CONTEXT();
+
+    const bsl::size_t numBytesDeflated = context.bytesWritten();
+
+    if (numBytesDeflated > d_maxDeflateSize ||
+        size > d_maxDeflateSize - numBytesDeflated)
+    {
+        NTCD_COMPRESSION_ENCODER_RLE_LOG_ERROR(
+            "The operation deflates beyond the maximum size",
+            ntsa::Error(ntsa::Error::e_LIMIT));
+        return ntsa::Error(ntsa::Error::e_LIMIT);
+    }
+
+    BSLS_ASSERT(result.length() >= 0);
+
+    if (size > static_cast<bsl::size_t>(INT_MAX - result.length())) {
+        NTCD_COMPRESSION_ENCODER_RLE_LOG_ERROR(
+            "The operation deflates beyond the maximum blob length",
+            ntsa::Error(ntsa::Error::e_LIMIT));
+        return ntsa::Error(ntsa::Error::e_LIMIT);
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error CompressionEncoder::encodeRle(ntca::DeflateContext* context,
+                                          bdlbb::Blob*          result,
+                                          bsl::uint8_t          literal,
+                                          bsl::size_t           length)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    while (length > 0) {
+        const bsl::size_t blockLength =
+            length < ntcd::CompressionBlock::k_MAX_LENGTH
+                ? length
+                : ntcd::CompressionBlock::k_MAX_LENGTH;
+
+        ntcd::CompressionBlock block;
+        block.setType(ntcd::CompressionBlockType::e_RLE);
+        block.setLength(static_cast<bsl::uint16_t>(blockLength));
+        block.setLiteral(literal);
+
+        NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RLE(block);
+
+        error = this->checkLimit(*context, *result, sizeof block);
+        if (error) {
+            return error;
+        }
+
+        bsl::size_t blockBytesEncoded = 0;
+        error = block.encode(&blockBytesEncoded, result);
+        if (error) {
+            return error;
+        }
+
+        d_frameContentBytesTotal += blockBytesEncoded;
+        context->setBytesWritten(context->bytesWritten() + blockBytesEncoded);
+
+        length -= blockLength;
+    }
+
+    return ntsa::Error();
+}
+
+ntsa::Error CompressionEncoder::encodeRaw(ntca::DeflateContext* context,
+                                          bdlbb::Blob*          result,
+                                          const bsl::uint8_t*   data,
+                                          bsl::size_t           length)
+{
+    NTCI_LOG_CONTEXT();
+
+    ntsa::Error error;
+
+    while (length > 0) {
+        const bsl::size_t blockLength =
+            length < ntcd::CompressionBlock::k_MAX_LENGTH
+                ? length
+                : ntcd::CompressionBlock::k_MAX_LENGTH;
+
+        ntcd::CompressionBlock block;
+        block.setType(ntcd::CompressionBlockType::e_RAW);
+        block.setLength(static_cast<bsl::uint16_t>(blockLength));
+
+        NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RAW(
+            block,
+            bsl::string_view(reinterpret_cast<const char*>(data),
+                             blockLength));
+
+        error = this->checkLimit(*context, *result, sizeof block + blockLength);
+        if (error) {
+            return error;
+        }
+
+        bsl::size_t blockBytesEncoded = 0;
+        error = block.encode(&blockBytesEncoded, result);
+        if (error) {
+            return error;
+        }
+
+        d_frameContentBytesTotal += blockBytesEncoded;
+        context->setBytesWritten(context->bytesWritten() + blockBytesEncoded);
+
+        ntcs::BlobUtil::append(result, data, blockLength);
+
+        d_frameContentBytesTotal += blockLength;
+        context->setBytesWritten(context->bytesWritten() + blockLength);
+
+        data   += blockLength;
+        length -= blockLength;
+    }
+
+    return ntsa::Error();
+}
+
+const bsl::size_t CompressionEncoder::k_DEFAULT_MAX_DEFLATE_SIZE =
+    static_cast<bsl::size_t>(INT_MAX);
 
 CompressionEncoder::CompressionEncoder(
     const ntca::CompressionConfig& configuration,
@@ -642,6 +770,8 @@ CompressionEncoder::CompressionEncoder(
 , d_frameHeaderPosition(0)
 , d_frameContentBytesTotal(0)
 , d_frameContentCrc(ntca::ChecksumType::e_CRC32)
+, d_maxDeflateSize(
+      configuration.maxDeflateSize().value_or(k_DEFAULT_MAX_DEFLATE_SIZE))
 , d_config(configuration)
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
@@ -671,6 +801,11 @@ ntsa::Error CompressionEncoder::deflateBegin(
     d_frameContentBytesTotal = 0;
     d_frameContentCrc.reset(ntca::ChecksumType::e_CRC32);
 
+    error = this->checkLimit(*context, *result, sizeof d_frameHeader);
+    if (error) {
+        return error;
+    }
+
     bsl::size_t frameHeaderBytesEncoded = 0;
     error = d_frameHeader.encode(&frameHeaderBytesEncoded, result);
     if (error) {
@@ -691,8 +826,6 @@ ntsa::Error CompressionEncoder::deflateNext(
     const ntca::DeflateOptions& options)
 {
     NTCCFG_WARNING_UNUSED(options);
-
-    NTCI_LOG_CONTEXT();
 
     ntsa::Error error;
 
@@ -727,24 +860,14 @@ ntsa::Error CompressionEncoder::deflateNext(
                 if (*current != *previous) {
                     BSLS_ASSERT(*previous == *mark);
 
-                    ntcd::CompressionBlock block;
-                    block.setType(ntcd::CompressionBlockType::e_RLE);
-                    block.setLength(
-                        static_cast<bsl::uint16_t>(current - mark));
-                    block.setLiteral(*previous);
-
-                    NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RLE(block);
-
-                    bsl::size_t blockBytesEncoded = 0;
-                    error = block.encode(&blockBytesEncoded, result);
+                    error = this->encodeRle(
+                        context,
+                        result,
+                        *previous,
+                        static_cast<bsl::size_t>(current - mark));
                     if (error) {
                         return error;
                     }
-
-                    d_frameContentBytesTotal += blockBytesEncoded;
-
-                    context->setBytesWritten(context->bytesWritten() +
-                                             blockBytesEncoded);
 
                     mode = k_MODE_DEFAULT;
                     mark = current;
@@ -752,32 +875,14 @@ ntsa::Error CompressionEncoder::deflateNext(
             }
             else {
                 if (*current == *previous) {
-                    ntcd::CompressionBlock block;
-                    block.setType(ntcd::CompressionBlockType::e_RAW);
-                    block.setLength(
-                        static_cast<bsl::uint16_t>(previous - mark));
-
-                    NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RAW(
-                        block,
-                        bsl::string_view((const char*)(mark), block.length()));
-
-                    bsl::size_t blockBytesEncoded = 0;
-                    error = block.encode(&blockBytesEncoded, result);
+                    error = this->encodeRaw(
+                        context,
+                        result,
+                        mark,
+                        static_cast<bsl::size_t>(previous - mark));
                     if (error) {
                         return error;
                     }
-
-                    d_frameContentBytesTotal += blockBytesEncoded;
-
-                    context->setBytesWritten(context->bytesWritten() +
-                                             blockBytesEncoded);
-
-                    ntcs::BlobUtil::append(result, mark, block.length());
-
-                    d_frameContentBytesTotal += block.length();
-
-                    context->setBytesWritten(context->bytesWritten() +
-                                             block.length());
 
                     mode = k_MODE_SAME;
                     mark = previous;
@@ -791,41 +896,22 @@ ntsa::Error CompressionEncoder::deflateNext(
     BSLS_ASSERT(current == end);
 
     if (mode == k_MODE_SAME) {
-        ntcd::CompressionBlock block;
-        block.setType(ntcd::CompressionBlockType::e_RLE);
-        block.setLength(static_cast<bsl::uint16_t>(current - mark));
-        block.setLiteral(*previous);
-
-        NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RLE(block);
-
-        bsl::size_t blockBytesEncoded = 0;
-        error = block.encode(&blockBytesEncoded, result);
+        error = this->encodeRle(context,
+                                result,
+                                *previous,
+                                static_cast<bsl::size_t>(current - mark));
         if (error) {
             return error;
         }
-
-        d_frameContentBytesTotal += blockBytesEncoded;
-        context->setBytesWritten(context->bytesWritten() + blockBytesEncoded);
     }
     else {
-        ntcd::CompressionBlock block;
-        block.setType(ntcd::CompressionBlockType::e_RAW);
-        block.setLength(static_cast<bsl::uint16_t>(current - mark));
-
-        NTCD_COMPRESSION_ENCODER_RLE_LOG_BLOCK_RAW(
-            block,
-            bsl::string_view((const char*)(mark), block.length()));
-
-        bsl::size_t blockBytesEncoded = 0;
-        block.encode(&blockBytesEncoded, result);
-
-        d_frameContentBytesTotal += blockBytesEncoded;
-        context->setBytesWritten(context->bytesWritten() + blockBytesEncoded);
-
-        ntcs::BlobUtil::append(result, mark, block.length());
-
-        d_frameContentBytesTotal += block.length();
-        context->setBytesWritten(context->bytesWritten() + block.length());
+        error = this->encodeRaw(context,
+                                result,
+                                mark,
+                                static_cast<bsl::size_t>(current - mark));
+        if (error) {
+            return error;
+        }
     }
 
     context->setBytesRead(context->bytesRead() + size);
@@ -868,6 +954,11 @@ ntsa::Error CompressionEncoder::deflateEnd(ntca::DeflateContext*       context,
 
     ntcd::CompressionFrameFooter frameFooter;
     frameFooter.setChecksum(d_frameContentCrc);
+
+    error = this->checkLimit(*context, *result, sizeof frameFooter);
+    if (error) {
+        return error;
+    }
 
     error = frameFooter.encode(&frameFooterBytesEncoded, result);
     if (error) {
@@ -918,8 +1009,8 @@ ntsa::Error CompressionEncoder::deflateEnd(ntca::DeflateContext*       context,
 
 #define NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(message, error)                \
     do {                                                                      \
-        NTCI_LOG_STREAM_ERROR << "Failed to decode: " << (message)            \
-                              << NTCI_LOG_STREAM_END;                         \
+        NTCI_LOG_STREAM_ERROR << "Failed to decode: " << (message) << ": "    \
+                              << (error) << NTCI_LOG_STREAM_END;              \
     } while (false)
 
 ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
@@ -948,7 +1039,7 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
                 }
                 else {
                     NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
-                        "Failed to decode frame header",
+                        "The frame header is invalid",
                         error);
                     return this->fail(error);
                 }
@@ -970,6 +1061,13 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
             continue;
         }
         else if (d_state == e_WANT_BLOCK) {
+            if (d_frameContentBytesNeeded < sizeof(ntcd::CompressionBlock)) {
+                NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
+                    "The frame content is too short to contain a block",
+                    ntsa::Error(ntsa::Error::e_INVALID));
+                return this->fail(ntsa::Error(ntsa::Error::e_INVALID));
+            }
+
             bsl::size_t numBytesDecoded = 0;
             error = d_block.decode(&numBytesDecoded, d_input);
             if (error) {
@@ -978,7 +1076,7 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
                 }
                 else {
                     NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
-                        "Failed to decode block",
+                        "The block is invalid",
                         error);
                     return this->fail(error);
                 }
@@ -989,6 +1087,15 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
             ntcs::BlobUtil::pop(&d_input, numBytesDecoded);
             d_frameContentBytesNeeded -= numBytesDecoded;
 
+            if (d_block.type() == ntcd::CompressionBlockType::e_RAW &&
+                d_block.length() > d_frameContentBytesNeeded)
+            {
+                NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
+                    "The block payload exceeds the remaining frame content",
+                    ntsa::Error(ntsa::Error::e_INVALID));
+                return this->fail(ntsa::Error(ntsa::Error::e_INVALID));
+            }
+
             if (d_block.type() == ntcd::CompressionBlockType::e_RAW) {
                 if (d_block.length() > 0) {
                     d_state = e_WANT_BLOCK_PAYLOAD;
@@ -997,6 +1104,14 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
             }
             else if (d_block.type() == ntcd::CompressionBlockType::e_RLE) {
                 if (d_block.length() > 0) {
+                    error = this->checkLimit(*context,
+                                             *result,
+                                             numBytesWritten,
+                                             d_block.length());
+                    if (error) {
+                        return this->fail(error);
+                    }
+
                     d_expansion.clear();
                     d_expansion.resize(d_block.length(), d_block.literal());
 
@@ -1007,7 +1122,7 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
                     error = d_frameContentCrc.update(&d_expansion[0],
                                                      d_expansion.size());
                     if (error) {
-                        return error;
+                        return this->fail(error);
                     }
 
                     d_expansion.clear();
@@ -1017,7 +1132,7 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
             }
             else {
                 NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
-                    "Invalid block type",
+                    "The block type is invalid",
                     ntsa::Error(ntsa::Error::e_INVALID));
                 return this->fail(ntsa::Error(ntsa::Error::e_INVALID));
             }
@@ -1035,6 +1150,14 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
         }
         else if (d_state == e_WANT_BLOCK_PAYLOAD) {
             if (d_input.length() >= d_block.length()) {
+                error = this->checkLimit(*context,
+                                         *result,
+                                         numBytesWritten,
+                                         d_block.length());
+                if (error) {
+                    return this->fail(error);
+                }
+
                 bdlbb::BlobUtil::append(result,
                                         d_input,
                                         0,
@@ -1042,10 +1165,12 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
 
                 error = d_frameContentCrc.update(d_input, d_block.length());
                 if (error) {
-                    return error;
+                    return this->fail(error);
                 }
 
                 ntcs::BlobUtil::pop(&d_input, d_block.length());
+
+                BSLS_ASSERT(d_block.length() <= d_frameContentBytesNeeded);
                 d_frameContentBytesNeeded -= d_block.length();
 
                 numBytesWritten += d_block.length();
@@ -1074,7 +1199,7 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
                 }
                 else {
                     NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
-                        "Failed to decode frame footer",
+                        "The frame footer is invalid",
                         error);
                     return this->fail(error);
                 }
@@ -1106,20 +1231,9 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
 
             continue;
         }
-        else if (d_state == e_ERROR) {
-            if (d_error) {
-                return d_error;
-            }
-            else {
-                NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
-                    "The decoder is inoperable after a previous failure",
-                    ntsa::Error(ntsa::Error::e_INVALID));
-                return this->fail(ntsa::Error(ntsa::Error::e_INVALID));
-            }
-        }
         else {
             NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
-                "The decoder is is an invalid state",
+                "The decoder is in an invalid state",
                 ntsa::Error(ntsa::Error::e_INVALID));
             return this->fail(ntsa::Error(ntsa::Error::e_INVALID));
         }
@@ -1130,10 +1244,43 @@ ntsa::Error CompressionDecoder::process(ntca::InflateContext*       context,
     return ntsa::Error();
 }
 
+ntsa::Error CompressionDecoder::checkLimit(
+    const ntca::InflateContext& context,
+    const bdlbb::Blob&          result,
+    bsl::size_t                 numBytesWritten,
+    bsl::size_t                 size) const
+{
+    NTCI_LOG_CONTEXT();
+
+    const bsl::size_t numBytesInflated =
+        context.bytesWritten() + numBytesWritten;
+
+    if (numBytesInflated > d_maxInflateSize ||
+        size > d_maxInflateSize - numBytesInflated)
+    {
+        NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
+            "The operation inflates beyond the maximum size",
+            ntsa::Error(ntsa::Error::e_LIMIT));
+        return ntsa::Error(ntsa::Error::e_LIMIT);
+    }
+
+    BSLS_ASSERT(result.length() >= 0);
+
+    if (size > static_cast<bsl::size_t>(INT_MAX - result.length())) {
+        NTCD_COMPRESSION_DECODER_RLE_LOG_ERROR(
+            "The operation inflates beyond the maximum blob length",
+            ntsa::Error(ntsa::Error::e_LIMIT));
+        return ntsa::Error(ntsa::Error::e_LIMIT);
+    }
+
+    return ntsa::Error();
+}
+
 ntsa::Error CompressionDecoder::fail(ntsa::Error error)
 {
-    d_state = e_ERROR;
-    d_error = error;
+    d_state = e_WANT_FRAME_HEADER;
+
+    bdlbb::BlobUtil::erase(&d_input, 0, d_input.length());
 
     d_expansion.clear();
     d_frameHeader.reset();
@@ -1143,6 +1290,9 @@ ntsa::Error CompressionDecoder::fail(ntsa::Error error)
 
     return error;
 }
+
+const bsl::size_t CompressionDecoder::k_DEFAULT_MAX_INFLATE_SIZE =
+    static_cast<bsl::size_t>(INT_MAX);
 
 CompressionDecoder::CompressionDecoder(
     const ntca::CompressionConfig& configuration,
@@ -1154,8 +1304,9 @@ CompressionDecoder::CompressionDecoder(
 , d_frameContentBytesNeeded(0)
 , d_frameContentCrc(ntca::ChecksumType::e_CRC32)
 , d_block()
+, d_maxInflateSize(
+      configuration.maxInflateSize().value_or(k_DEFAULT_MAX_INFLATE_SIZE))
 , d_config(configuration)
-, d_error()
 , d_allocator_p(bslma::Default::allocator(basicAllocator))
 {
 }
