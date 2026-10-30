@@ -164,6 +164,18 @@ ntsa::Error LocalName::setValue(const bslstl::StringRef& value)
         return ntsa::Error(ntsa::Error::e_LIMIT);
     }
 
+    for (bsl::size_t i = 0; i < size; ++i) {
+        if (value[i] == 0) {
+            bsl::string path = value;
+            BSLS_LOG_WARN(
+                "Unix domain socket name '%s' "
+                "contains embedded NUL at index %d",
+                path.c_str(),
+                (int)(i));
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
+    }
+
     bsl::memcpy(d_path, value.data(), size);
 
     d_size = static_cast<bsl::uint8_t>(size);
@@ -295,11 +307,11 @@ ntsa::LocalName LocalName::generateUnique()
 ntsa::Error LocalName::generateUnique(ntsa::LocalName* name)
 {
     return ntsa::LocalName::generateUnique(
-        name, 
+        name,
         ntsa::LocalName::defaultDirectory());
 }
 
-ntsa::Error LocalName::generateUnique(ntsa::LocalName*   name, 
+ntsa::Error LocalName::generateUnique(ntsa::LocalName*   name,
                                       const bsl::string& directory)
 {
     ntsa::Error error;
@@ -342,7 +354,7 @@ bsl::string LocalName::defaultDirectory()
     bsl::string path;
 
     if (path.empty()) {
-#if defined(BSLS_PLATFORM_OS_UNIX) 
+#if defined(BSLS_PLATFORM_OS_UNIX)
         const char* sockDir = bsl::getenv("SOCKDIR");
         if (sockDir != 0) {
             const bsl::size_t sockDirLength = bsl::strlen(sockDir);
@@ -367,7 +379,7 @@ bsl::string LocalName::defaultDirectory()
         }
 #endif
     }
-    
+
     if (path.empty()) {
         bsl::string tempDir;
         rc = bdls::FilesystemUtil::getSystemTemporaryDirectory(&tempDir);

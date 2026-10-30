@@ -48,18 +48,25 @@ namespace ntsa {
 /// Portable local sockets and their names are always represented by artifacts
 /// on a filesystem at the path defined by their name. The file system artifact
 /// associated with a local socket must be explicitly removed after the socket
-/// is closed. Certain platforms (namely Linux) additionally introduce a 
-/// concept of an "ephemeral" namespace. Sockets bound to names in the 
-/// ephemeral namespace have no representation on a file system. Sockets in the
-/// ephemeral namespace have the advantage that there is no associated file 
-/// system artifact that must be cleaned up, but have the disadvantage that 
-/// the socket read/write permissions are decoupled from the file system 
+/// is closed. Certain platforms (namely Linux) additionally introduce a
+/// concept of an "abstract" namespace. Sockets bound to names in the
+/// abstract namespace have no representation on a file system. Sockets in the
+/// abstract namespace have the advantage that there is no associated file
+/// system artifact that must be cleaned up, but have the disadvantage that
+/// the socket read/write permissions are decoupled from the file system
 /// permission model.
+///
+///@par Valid Characters
+/// Some operating systems allow for Unix domain names in the abstract
+/// namespace to contain embedded 'NUL' bytes. For maximum portability and
+/// convenience to treat the name as a string, the implementation of
+/// 'ntsa::LocalName' treats Unix domain names with embedded 'NUL' bytes as
+/// invalid.
 ///
 ///@par Unique Generation
 /// In various cases of local socket programming there is often a desire to
 /// give a local socket an explicit name but that name need not be well-known.
-/// Because portable local sockets must have names that refer to valid 
+/// Because portable local sockets must have names that refer to valid
 /// filesystem paths, this class provides a utility to generate a unique name
 /// is a suitable directory as defined by the environment. Generate unique
 /// names are prefixed by the value of the "SOCKDIR" environment variable, if
@@ -140,10 +147,10 @@ class LocalName
     /// Set the local name to be unnamed. Return the error.
     ntsa::Error setUnnamed();
 
-    /// Set the path of the local name to the specified 'value'. If length of
-    /// the 'value' is greater than k_MAX_PATH_LENGTH , in case of abstract
-    /// name, (k_MAX_PATH_LEN - 1) then operation is not performed and error
-    /// is returned.
+    /// Set the path of the local name to the specified 'value'. Return the
+    /// error, namely when 'value' contains invalid bytes or the length of
+    /// 'value' is greater than 'k_MAX_PATH_LENGTH' (or 'k_MAX_PATH_LEN - 1' if
+    /// the name is in the abstract namespace.)
     ntsa::Error setValue(const bslstl::StringRef& value);
 
     /// Return the value of the local name.
@@ -250,8 +257,8 @@ class LocalName
                         int         nameLength) const;
 
     /// Generate a unique local name. The name will be abstract if the
-    /// platform supports abstract names (Linux only). This function is 
-    /// deprecated; prefer the function that generates a local name and 
+    /// platform supports abstract names (Linux only). This function is
+    /// deprecated; prefer the function that generates a local name and
     /// returns an error if local name generation fails.
     static ntsa::LocalName generateUnique();
 
@@ -271,12 +278,12 @@ class LocalName
     /// error, notably when the when the generated absolute path is too long to
     /// fully store, e.g., when the generated file name concatenated with the
     /// 'directory' is too long.
-    static ntsa::Error generateUnique(ntsa::LocalName*   name, 
+    static ntsa::Error generateUnique(ntsa::LocalName*   name,
                                       const bsl::string& directory);
 
     /// Return the default directory into which non-ephemeral Unix domain
     /// sockets should stored. This directory is defined by the SOCKDIR
-    /// environment variable, if defined, or the TMPDIR (or TEMPDIR) 
+    /// environment variable, if defined, or the TMPDIR (or TEMPDIR)
     /// environment variable otherwise.
     static bsl::string defaultDirectory();
 
