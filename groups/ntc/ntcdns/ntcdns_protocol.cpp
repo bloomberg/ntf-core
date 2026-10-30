@@ -674,24 +674,35 @@ ntsa::Error MemoryDecoder::decodeLabel(bsl::string* value,
 
 ntsa::Error MemoryDecoder::decodeCharacterString(bsl::string* value)
 {
+    return this->decodeCharacterString(value, d_end - d_current);
+}
+
+ntsa::Error MemoryDecoder::decodeCharacterString(bsl::string* value,
+                                                 bsl::size_t  limit)
+{
     ntsa::Error error;
+
+    if (limit > static_cast<bsl::size_t>(d_end - d_current)) {
+        limit = d_end - d_current;
+    }
 
     bsl::uint8_t length = 0;
 
-    error = Validation::checkUnderflow(d_end - d_current, sizeof length);
+    error = Validation::checkUnderflow(limit, sizeof length);
     if (error) {
         return error;
     }
 
-    length     = *d_current;
+    length = *d_current;
+
+    error = Validation::checkUnderflow(limit, sizeof length + length);
+    if (error) {
+        return error;
+    }
+
     d_current += sizeof length;
 
     if (length > 0) {
-        error = Validation::checkUnderflow(d_end - d_current, length);
-        if (error) {
-            return error;
-        }
-
         value->append(reinterpret_cast<const char*>(d_current),
                       static_cast<bsl::size_t>(length));
 
@@ -1550,6 +1561,12 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
         return error;
     }
 
+    error = Validation::checkUnderflow(decoder->end() - decoder->current(),
+                                       rdataLength);
+    if (error) {
+        return error;
+    }
+
     if (rdataLength > 0) {
         bsl::size_t p0 = decoder->position();
 
@@ -1627,6 +1644,13 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
             ntcdns::ResourceRecordDataWks& rdata =
                 d_rdata.makeWellKnownService();
 
+            error = Validation::checkUnderflow(
+                rdataLength,
+                sizeof(bsl::uint32_t) + sizeof(bsl::uint8_t));
+            if (error) {
+                return error;
+            }
+
             error = decoder->decodeRaw(&rdata.address(),
                                        sizeof(bsl::uint32_t));
             if (error) {
@@ -1672,12 +1696,14 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
         else if (d_type == ntcdns::Type::e_HINFO) {
             ntcdns::ResourceRecordDataHinfo& rdata = d_rdata.makeHostInfo();
 
-            error = decoder->decodeCharacterString(&rdata.cpu());
+            error = decoder->decodeCharacterString(&rdata.cpu(), rdataLength);
             if (error) {
                 return error;
             }
 
-            error = decoder->decodeCharacterString(&rdata.os());
+            error = decoder->decodeCharacterString(
+                &rdata.os(),
+                rdataLength - (decoder->position() - p0));
             if (error) {
                 return error;
             }
@@ -1704,7 +1730,8 @@ ntsa::Error ResourceRecord::decode(MemoryDecoder* decoder)
                 bsl::size_t s0 = decoder->position();
 
                 rdata.text().resize(rdata.text().size() + 1);
-                error = decoder->decodeCharacterString(&rdata.text().back());
+                error = decoder->decodeCharacterString(&rdata.text().back(),
+                                                       numBytesRemaining);
                 if (error) {
                     return error;
                 }

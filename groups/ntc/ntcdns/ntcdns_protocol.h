@@ -230,6 +230,11 @@ class MemoryDecoder
     /// Decode the specified character string 'value'. Return the error.
     ntsa::Error decodeCharacterString(bsl::string* value);
 
+    /// Decode the specified character string 'value', failing without
+    /// advancing if the encoded character string, including its length
+    /// octet, is greater than the specified 'limit'. Return the error.
+    ntsa::Error decodeCharacterString(bsl::string* value, bsl::size_t limit);
+
     /// Decode the specified raw resource record data 'value'. Return the
     /// error.
     ntsa::Error decodeRdata(bdlbb::Blob* value);
