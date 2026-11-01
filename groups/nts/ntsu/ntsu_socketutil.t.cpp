@@ -26,6 +26,8 @@ BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
 #include <ntsu_socketutil.h>
 #include <ntsu_timestamputil.h>
 
+#include <ntsa_temporary.h>
+
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #ifdef NTDDI_VERSION
 #undef NTDDI_VERSION
@@ -52,6 +54,7 @@ BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <sys/socket.h>
+#include <sys/stat.h>
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
 #include <sys/un.h>
 #endif
@@ -339,6 +342,9 @@ class SocketUtilTest
         bslma::Allocator*      allocator);
 
   public:
+    // Verify platform behavior for Unix domain sockets.
+    static void verifyPlatformBehaviorUnixDomain();
+
     // Verify basic operations on stream sockets.
     static void verifyStreamSocketBasic();
 
@@ -3907,6 +3913,125 @@ void SocketUtilTest::testDatagramSocketReceiveNotifications(
         ntsu::SocketUtil::receiveNotifications(&notifications, client);
         ntsu::SocketUtil::receiveNotifications(&notifications, server);
     }
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyPlatformBehaviorUnixDomain)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+
+    int rc;
+
+    const bsl::size_t numExtralNullTerminators = 2;
+
+    ntsa::TemporaryDirectory temporaryDirectory;
+    ntsa::TemporaryFile      temporaryFile(&temporaryDirectory);
+
+    {
+        char socketName[sizeof(((struct ::sockaddr_un *)0)->sun_path)];
+        NTSCFG_TEST_LT(temporaryFile.path().size(), sizeof socketName);
+
+        bsl::memset(&socketName, 0, sizeof socketName);
+        bsl::memcpy(&socketName,
+                    temporaryFile.path().c_str(),
+                    temporaryFile.path().size());
+
+        const bsl::size_t socketNameLength = bsl::strlen(socketName);
+
+        ::unlink(socketName);
+
+        const bsl::size_t socketAddressStorageCapacity =
+            sizeof(struct ::sockaddr_storage);
+
+        const bsl::size_t socketAddressLocalCapacity =
+            sizeof(struct ::sockaddr_un);
+
+        const bsl::size_t socketAddressLocalPathOffset =
+            offsetof(struct ::sockaddr_un, sun_path);
+
+        int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
+        NTSCFG_TEST_GE(fd, 0);
+
+        {
+            struct ::sockaddr_storage socketAddressStorage;
+            bsl::memset(&socketAddressStorage,
+                        0,
+                        socketAddressStorageCapacity);
+
+            struct ::sockaddr* socketAddress =
+                reinterpret_cast<struct ::sockaddr*>(&socketAddressStorage);
+
+            struct ::sockaddr_un* socketAddressLocal =
+                reinterpret_cast<struct ::sockaddr_un*>(&socketAddressStorage);
+
+            bsl::memcpy(
+                socketAddressLocal->sun_path, socketName, socketNameLength);
+
+            // Give the OS a double null-terminator included in the length.
+            // Vary between +0, +1, and +2.
+            const bsl::size_t socketAddressLength =
+                socketAddressLocalPathOffset +
+                socketNameLength +
+                numExtralNullTerminators;
+
+            socketAddressLocal->sun_family = AF_UNIX;
+            socketAddressLocal->sun_len    = socketAddressLength;
+
+            rc = ::bind(fd, socketAddress, socketAddressLength);
+            NTSCFG_TEST_EQ(rc, 0);
+
+            struct ::stat socketStat;
+            bsl::memset(&socketStat, 0, sizeof socketStat);
+
+            rc = ::stat(socketName, &socketStat);
+            NTSCFG_TEST_EQ(rc, 0);
+
+            const bool isSocket = S_ISSOCK(socketStat.st_mode);
+            NTSCFG_TEST_TRUE(isSocket);
+        }
+
+        {
+            struct ::sockaddr_storage socketAddressStorage;
+            bsl::memset(&socketAddressStorage,
+                        static_cast<int>(0xFF),
+                        socketAddressStorageCapacity);
+
+            ::socklen_t socketAddressStorageLength =
+                socketAddressStorageCapacity;
+
+            struct ::sockaddr* socketAddress =
+                reinterpret_cast<struct ::sockaddr*>(
+                    &socketAddressStorage);
+
+            rc = ::getsockname(
+                fd, socketAddress, &socketAddressStorageLength);
+            NTSCFG_TEST_EQ(rc, 0);
+
+            struct ::sockaddr_un* socketAddressLocal =
+                reinterpret_cast<struct ::sockaddr_un*>(
+                    &socketAddressStorage);
+
+            NTSCFG_TEST_EQ(socketAddressLocal->sun_len,
+                           socketAddressStorageLength);
+
+            // Ensure the operating system includes any extra null terminators,
+            // initially specified when binding, returned in the socket address
+            // length.
+
+            const ::socklen_t socketAddressStorageLengthExpected =
+                socketAddressLocalPathOffset +
+                socketNameLength +
+                numExtralNullTerminators;
+
+            NTSCFG_TEST_EQ(socketAddressStorageLength,
+                           socketAddressStorageLengthExpected);
+        }
+
+        ::close(fd);
+    }
+
+#endif
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketBasic)

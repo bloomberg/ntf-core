@@ -956,7 +956,7 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
             if (addressSize <= pathOffset) {
                 localName->setUnnamed();
             }
-#if (BSLS_PLATFORM_OS_DARWIN)
+#if defined(BSLS_PLATFORM_OS_DARWIN)
             else if (SocketUtil::Impl::isUnnamed(socketAddressLocal,
                                                  socketAddressSize))
             {
