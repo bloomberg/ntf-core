@@ -491,8 +491,10 @@ class SocketUtilTest
     // terminator.
     static void verifyDecodeEndpointLocalUnterminated();
 
-    // Verify endpoint decoding of a Unix domain socket name with embedded NULs
-    // fails.
+    // Verify endpoint decoding of a persistent Unix domain socket name 
+    // truncates the name after the first NUL. Verify decoding of an abstract
+    // Unix domain socket name with any embedded NULs (after the first byte,
+    // indicating the abstract namespace) fails.
     static void verifyDecodeEndpointLocalEmbeddedNulls();
 };
 
@@ -6537,10 +6539,9 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketBinding)
         }
 
         // Concern 2: The socket may be bound after creation to an unnamed
-        // name, and the socket's resulting source endpoint is *not* the
-        // unnamed name, but an explicit name chosen by the operating
-        // system (on Linux, in the abstract namespace.) [This
-        // functionality is only true on Linux].
+        // abstract name, and the socket's resulting source endpoint is *not*
+        // the unnamed abstract name, but an explicit abstract name chosen by
+        // the operating system. [This functionality is only true on Linux].
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
         {
@@ -6553,8 +6554,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketBinding)
             {
                 ntsa::Endpoint unnamedSourceEndpoint =
                     ntsa::Endpoint(ntsa::LocalName());
-                NTSCFG_TEST_ASSERT(unnamedSourceEndpoint.isLocal());
-                NTSCFG_TEST_ASSERT(unnamedSourceEndpoint.local().isUnnamed());
+                NTSCFG_TEST_TRUE(unnamedSourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(unnamedSourceEndpoint.local().isUnnamed());
 
                 error = ntsu::SocketUtil::bind(unnamedSourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -6569,9 +6570,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketBinding)
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_NE(sourceEndpoint, unnamedSourceEndpoint);
                 NTSCFG_TEST_GT(sourceEndpoint.local().value().size(), 0);
-#if defined(BSLS_PLATFORM_OS_LINUX)
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isAbstract());
-#endif
             }
 
             error = ntsu::SocketUtil::unlink(socket);
@@ -9200,18 +9199,15 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
 
     ntsa::Error error;
 
-    // Verify that a local name in the persistent namespace are encoded to a
-    // socket address structure in the expected address family whose path is
-    // defined with a null terminator and a socket address length that includes
-    // the null terminator. Also verify the addition library implementation
-    // choice to pessimistically zero at-least an additional byte outside the
-    // socket name range, but within the socket address range, for safety in
-    // other applications.
+    const char sentinel = static_cast<char>(0xAA);
+    const char null     = static_cast<char>(0);
+
+    // Verify that a local name with a non-empty path in the persistent
+    // namespace is encoded to a socket address structure in the expected
+    // address family whose path is defined with a null terminator and a socket
+    // address length that includes the null terminator.
 
     {
-        const char sentinel = static_cast<char>(0xAA);
-        const char null     = static_cast<char>(0);
-
         struct sockaddr_storage socketAddress;
         bsl::memset(&socketAddress,
                     static_cast<int>(sentinel),
@@ -9229,6 +9225,9 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
         error = localName.setPersistent();
         NTSCFG_TEST_OK(error);
 
+        NTSCFG_TEST_FALSE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isPersistent());
+
         ntsa::Endpoint endpoint(localName);
 
         error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
@@ -9240,6 +9239,9 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
             reinterpret_cast<struct sockaddr_un*>(&socketAddress);
 
         NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_len, socketAddressSize);
+#endif
 
         const bsl::size_t pathOffset =
                 offsetof(struct sockaddr_un, sun_path);
@@ -9251,7 +9253,49 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[1], 'b');
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[2], 'c');
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], null);
-        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[4], null);
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[4], sentinel);
+    }
+
+    // Verify that a local name with a empty path in the persistent
+    // namespace is encoded to a socket address structure in the expected
+    // address family whose path is not defined.
+
+    {
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        ntsa::LocalName localName;
+        error = localName.setPersistent();
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_TRUE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isPersistent());
+
+        ntsa::Endpoint endpoint(localName);
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_len, socketAddressSize);
+#endif
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize, pathOffset);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], sentinel);
     }
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -9259,15 +9303,9 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
     // Verify that a local name in the abstract namespace are encoded to a
     // socket address structure in the expected address family whose path is
     // defined with leading null byte but no null terminator and a socket
-    // address length that includes the leading null byte. Also verify the
-    // addition library implementation choice to pessimistically zero at-least
-    // an additional byte outside the socket name range, but within the socket
-    // address range, for safety in other applications.
+    // address length that includes the leading null byte.
 
     {
-        const char sentinel = static_cast<char>(0xAA);
-        const char null     = static_cast<char>(0);
-
         struct sockaddr_storage socketAddress;
         bsl::memset(&socketAddress,
                     static_cast<int>(sentinel),
@@ -9284,6 +9322,9 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
         NTSCFG_TEST_OK(error);
         error = localName.setAbstract();
         NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_FALSE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isAbstract());
 
         ntsa::Endpoint endpoint(localName);
 
@@ -9307,7 +9348,49 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[1], 'a');
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[2], 'b');
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], 'c');
-        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[4], null);
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[4], sentinel);
+    }
+
+    // Verify that a local name with a empty path in the abstract
+    // namespace is encoded to a socket address structure in the expected
+    // address family whose path is not defined.
+
+    {
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        ntsa::LocalName localName;
+        error = localName.setAbstract();
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_TRUE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isAbstract());
+
+        ntsa::Endpoint endpoint(localName);
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_len, socketAddressSize);
+#endif
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize, pathOffset);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], sentinel);
     }
 
 #endif
@@ -9852,7 +9935,8 @@ NTSCFG_TEST_FUNCTION(
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
     // Concern: Endpoint decoding of a Unix domain socket names in the
-    // persistent namespace with embedded NULs fails.
+    // persistent namespace with embedded NULs truncates the name after the
+    // first NUL.
 
     {
         ntsa::Endpoint endpoint;
@@ -9875,7 +9959,11 @@ NTSCFG_TEST_FUNCTION(
             &endpoint,
             &un,
             addressLength);
-        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
+        NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
     }
 
 #if defined(BSLS_PLATFORM_OS_LINUX)

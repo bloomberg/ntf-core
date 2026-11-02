@@ -367,19 +367,6 @@ class SocketUtil::Impl
                                socklen_t*            socketAddressSize,
                                const ntsa::Endpoint& endpoint);
 
-#if defined(BSLS_PLATFORM_OS_DARWIN)
-    /// Return true if the specified 'socketAddressLocal' having the specified
-    /// 'socketAddressSize' indicates the special signature for an unnamed
-    /// Unix domain socket on Darwin. Note that there is no equivalent special
-    /// signature on other platforms; Darwin is unique in that calling
-    /// 'getsockname()' on an unbound/unnamed Unix domain socket results in a
-    /// protocol-specific structure whose length is 16 bytes where all bytes
-    /// in the path are zeroed. Other platforms define an unnamed socket by
-    /// specifying a socket address size that implies the path length is 0.
-    static bool isUnnamed(const sockaddr_un* socketAddressLocal,
-                          socklen_t          socketAddressSize);
-#endif
-
 #if NTSU_SOCKETUTIL_DEBUG_HANDLE_MAP
     static bsls::SpinLock s_handleSetLock;
     static HandleSet      s_handleSet;
@@ -877,6 +864,8 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
                                       const sockaddr_storage* socketAddress,
                                       socklen_t socketAddressSize)
 {
+    ntsa::Error error;
+
     endpoint->reset();
 
     if (socketAddress->ss_family == AF_INET) {
@@ -954,36 +943,29 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
                 static_cast<bsl::size_t>(socketAddressSize);
 
             if (addressSize <= pathOffset) {
-                localName->setUnnamed();
+                error = localName->setUnnamed();
+                if (error) {
+                    return error;
+                }
             }
-#if defined(BSLS_PLATFORM_OS_DARWIN)
-            else if (SocketUtil::Impl::isUnnamed(socketAddressLocal,
-                                                 socketAddressSize))
-            {
-                localName->setUnnamed();
-            }
-#endif
             else {
-                // The address length reported by the socket API is the
-                // authoritative extent of 'sun_path': the field is not
-                // guaranteed to be null-terminated (abstract names never are,
-                // and a peer may supply a truncated or unterminated path).
-                // Bound the scan by that length, clamped to the capacity of
-                // the field itself, so the scan never reads bytes outside the
-                // address.
-
                 bsl::size_t pathSize = addressSize - pathOffset;
                 if (pathSize > sizeof(socketAddressLocal->sun_path)) {
-                    pathSize = sizeof(socketAddressLocal->sun_path);
+                    return ntsa::Error::invalid();
                 }
 
                 const char* begin = socketAddressLocal->sun_path;
                 const char* end   = begin + pathSize;
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
                 if (*begin == 0) {
-                    localName->setAbstract();
+                    error = localName->setAbstract();
+                    if (error) {
+                        return error;
+                    }
                     ++begin;
                 }
+#endif
 
                 const char* current = begin;
                 while (current != end) {
@@ -1001,11 +983,13 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
                 end = current;
 
                 if (begin == end) {
-                    localName->setUnnamed();
+                    error = localName->setUnnamed();
+                    if (error) {
+                        return error;
+                    }
                 }
                 else {
-                    ntsa::Error error =
-                        localName->setValue(bslstl::StringRef(begin, end));
+                    error = localName->setValue(bslstl::StringRef(begin, end));
                     if (error) {
                         return error;
                     }
@@ -1013,7 +997,10 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
             }
         }
         else {
-            localName->setUnnamed();
+            error = localName->setUnnamed();
+            if (error) {
+                return error;
+            }
         }
     }
 #endif
@@ -1042,7 +1029,10 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
                                       socklen_t*            socketAddressSize,
                                       const ntsa::Endpoint& endpoint)
 {
-    bsl::memset(socketAddress, 0, sizeof(sockaddr_storage));
+    socketAddress->ss_family = AF_UNSPEC;
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    socketAddress->ss_len = 0;
+#endif
     *socketAddressSize = 0;
 
     if (endpoint.isIp()) {
@@ -1087,15 +1077,15 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
         socketAddressLocal->sun_family = AF_UNIX;
         *socketAddressSize = offsetof(struct sockaddr_un, sun_path);
 
-        bsl::size_t offset = 0;
-
-        if (endpoint.local().isAbstract()) {
-            socketAddressLocal->sun_path[offset]  = 0;
-            *socketAddressSize                   += 1;
-            ++offset;
-        }
-
         if (!endpoint.local().isUnnamed()) {
+            bsl::size_t offset = 0;
+
+            if (endpoint.local().isAbstract()) {
+                socketAddressLocal->sun_path[offset]  = 0;
+                *socketAddressSize                   += 1;
+                ++offset;
+            }
+
             BSLS_ASSERT_OPT(ntsa::LocalName::k_MAX_PATH_LENGTH <=
                             sizeof(sockaddr_un) -
                                 offsetof(struct sockaddr_un, sun_path) -
@@ -1109,11 +1099,11 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
 
             *socketAddressSize += static_cast<socklen_t>(value.size());
             offset             += value.size();
-        }
 
-        if (!endpoint.local().isAbstract()) {
-            socketAddressLocal->sun_path[offset]  = 0;
-            *socketAddressSize                   += 1;
+            if (!endpoint.local().isAbstract()) {
+                socketAddressLocal->sun_path[offset]  = 0;
+                *socketAddressSize                   += 1;
+            }
         }
     }
 #endif
@@ -1121,42 +1111,12 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
         return ntsa::Error::invalid();
     }
 
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    socketAddress->ss_len = *socketAddressSize;
+#endif
+
     return ntsa::Error();
 }
-
-#if defined(BSLS_PLATFORM_OS_DARWIN)
-bool SocketUtil::Impl::isUnnamed(const sockaddr_un* socketAddressLocal,
-                                 socklen_t          socketAddressSize)
-{
-    const bsl::size_t pathOffset = offsetof(struct sockaddr_un, sun_path);
-
-    if (socketAddressSize <= pathOffset) {
-        return true;
-    }
-
-    const bsl::size_t unnamedSignatureSize = sizeof(struct sockaddr_in);
-
-    if (socketAddressSize == unnamedSignatureSize &&
-        socketAddressLocal->sun_path[0] == 0)
-    {
-        if (pathOffset > socketAddressSize) {
-            return false;
-        }
-
-        const bsl::size_t pathSize = socketAddressSize - pathOffset;
-
-        for (bsl::size_t i = 1; i < pathSize; ++i) {
-            if (socketAddressLocal->sun_path[i] != 0) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    return false;
-}
-#endif
 
 #if NTSU_SOCKETUTIL_DEBUG_HANDLE_MAP
 bsls::SpinLock SocketUtil::Impl::s_handleSetLock = BSLS_SPINLOCK_UNLOCKED;
@@ -8593,9 +8553,6 @@ ntsa::Error SocketUtil::encodeEndpoint(void*                 socketAddress,
                                        const ntsa::Endpoint& endpoint)
 {
     socklen_t length = 0;
-
-    Impl::initialize(reinterpret_cast<sockaddr_storage*>(socketAddress),
-                     &length);
 
     ntsa::Error error =
         Impl::convert(reinterpret_cast<sockaddr_storage*>(socketAddress),
