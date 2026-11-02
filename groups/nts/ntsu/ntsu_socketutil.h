@@ -723,11 +723,15 @@ struct SocketUtil {
 
     /// Load into the specified 'endpoint' the conversion of the specified
     /// 'socketAddress' having the specified 'socketAddressSize'. Return the
-    /// error. Note a 'socketAddress' indicating a Unix domain name with an
-    /// embedded NUL is successfully decoded but the resulting 'endpoint' local
-    /// name only contains characters up to the first NUL character, not
-    /// including the initital NUL character, if any, that indicates the Unix
-    /// domain name is in the abstract namespace.
+    /// error. Note that decoding a 'socketAddress' containing a Unix domain
+    /// name with an embedded NUL will fail, regardless of whether the Unix
+    /// domain name is in the "persistent" or "abstract" namespace, but
+    /// decoding a 'socketAddress' containing a Unix domain name with multiple,
+    /// trailing NUL characters will succeed, but the resulting
+    /// 'ntsa::LocalName' will have a path containing characters only up to,
+    /// but not-including, the the initital NUL character, if any,
+    /// not-including the initial NUL character, if any, that indicates the
+    /// "abstract" namespace.
     static ntsa::Error decodeEndpoint(ntsa::Endpoint* endpoint,
                                       const void*     socketAddress,
                                       bsl::size_t     socketAddressSize);

@@ -393,7 +393,8 @@ int LocalName::manipulateAttributes(MANIPULATOR& manipulator)
 template <typename MANIPULATOR>
 int LocalName::manipulateAttribute(MANIPULATOR& manipulator, int id)
 {
-    int rc;
+    ntsa::Error error;
+    int         rc;
 
     if (id == e_ATTRIBUTE_ID_PATH) {
         bsl::string path;
@@ -402,7 +403,10 @@ int LocalName::manipulateAttribute(MANIPULATOR& manipulator, int id)
             return rc;
         }
 
-        this->setValue(path);
+        error = this->setValue(path);
+        if (error) {
+            return -1;
+        }
     }
     else if (id == e_ATTRIBUTE_ID_ABSTRACT) {
         bdlb::NullableValue<bool> abstract;
@@ -411,11 +415,17 @@ int LocalName::manipulateAttribute(MANIPULATOR& manipulator, int id)
             return rc;
         }
 
-        if (abstract.has_value() && abstract.value()) {
-            d_abstract = true;
+        if (abstract.value_or(false)) {
+            error = this->setAbstract();
+            if (error) {
+                return -1;
+            }
         }
         else {
-            d_abstract = false;
+            error = this->setPersistent();
+            if (error) {
+                return -1;
+            }
         }
     }
     else {

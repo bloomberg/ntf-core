@@ -944,6 +944,14 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
             return ntsa::Error::invalid();
         }
 
+        const bsl::size_t socketAddressSizeMax =
+            offsetof(struct sockaddr_un, sun_path) +
+            sizeof(socketAddressLocal->sun_path);
+
+        if (socketAddressSize > socketAddressSizeMax) {
+            socketAddressSize = socketAddressSizeMax;
+        }
+
         ntsa::LocalName* localName = &endpoint->makeLocal();
 
         if (socketAddressSize != 0) {
