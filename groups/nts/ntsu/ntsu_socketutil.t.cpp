@@ -545,7 +545,7 @@ class SocketUtilTest::CloseGuard
 
   public:
     /// Create a new close guard that automatically closes the specified
-    /// 'handle' upon destruction. 
+    /// 'handle' upon destruction.
     explicit CloseGuard(ntsa::Handle handle);
 
     /// Destroy this object.
@@ -563,8 +563,8 @@ class SocketUtilTest::EraseGuard
 
   public:
     /// Create a new close guard that automatically removes the specified
-    /// 'path' upon destruction. 
-    explicit EraseGuard(const bsl::string& path, 
+    /// 'path' upon destruction.
+    explicit EraseGuard(const bsl::string& path,
                         bslma::Allocator*  basicAllocator = 0);
 
     /// Destroy this object.
@@ -628,7 +628,7 @@ SocketUtilTest::CloseGuard::~CloseGuard()
 #endif
 }
 
-SocketUtilTest::EraseGuard::EraseGuard(const bsl::string& path, 
+SocketUtilTest::EraseGuard::EraseGuard(const bsl::string& path,
                                        bslma::Allocator*  basicAllocator)
 : d_path(path, basicAllocator)
 {
@@ -3997,12 +3997,9 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyPlatformBehaviorUnixDomain)
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
 
-    // Notes: On Linux, care must be take when calling 'getsockname' given a
-    // 'struct sockaddr_storage', since 'struct sockaddr_storage' is guaranteed
-    // to be larger than 'struct sockaddr_un'. This is different than most
-    // other platforms, where the size of 'struct sockaddr_storage' is equal to
-    // the size of 'struct sockaddr_un' (the Unix domain address being the
-    // largest of the supported socket address families.) This care is notable
+    // Notes: Care must be take when calling 'getsockname' given a
+    // 'struct sockaddr_storage', since 'struct sockaddr_storage' is often
+    // larger than 'struct sockaddr_un'. This care is notable
     // when anticipating whether the operating system will include a
     // null-terminator in the output of 'getsockname', even when the socket is
     // bound to an address without a null terminator in the 'sun_path' given to
@@ -4012,8 +4009,27 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyPlatformBehaviorUnixDomain)
     // would typically use the 'struct sockaddr_storage' and its size in
     // situations where the exact address type is not known, or cared to be
     // known, ahead of time. This avoids supplying the operating system with
-    // extra capacity greater allowing it to write null terminators after the
+    // sufficient capacity allowing it to write null terminators after the
     // last byte of 'struct sockaddr_un::sun_path'.
+    //
+    // Darwin: The result of 'getsockname' exactly matches the input to 'bind',
+    // including any and all null-terminators, even superfluous ones, provided
+    // sufficient capacity is given to 'getsockname'. For example, if the path
+    // given to 'bind' contains no null terminators, then the path that results
+    // from 'getsockname' will not contain any null terminators. If the path
+    // given to 'bind' contains one null terminator, then the result of
+    // 'getsockname' will contain one null terminator. If the path given to
+    // 'bind contains two null terminators, then the result of 'getsockname'
+    // will contain two null terminators.
+    //
+    // Linux: The result of 'getsockname' will always contain a null
+    // terminator, provided there is sufficient capacity, even when the input
+    // to 'bind' does not contain a null terminator. If the input to 'bind' is
+    // a path whose length is equal to 'sizeof(struct sockaddr::sun_path)'
+    // (i.e., the maximum path length), then the result of 'getsockname' will
+    //  *not* contain a null terminator, but the resulting address size will be
+    // greater than the given address size, although the operating system takes
+    // care not to write beyond the initial capacity given to 'getsockname'.
 
     ntsa::Error error;
     int         rc;
@@ -4030,36 +4046,36 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyPlatformBehaviorUnixDomain)
     const bsl::size_t socketAddressLocalPathCapacity =
         sizeof(((struct ::sockaddr_un *)0)->sun_path);
 
-    const bsl::size_t minTestLength = 
+    const bsl::size_t minTestLength =
         static_cast<bsl::size_t>(socketAddressLocalPathCapacity) - 3;
 
-    const bsl::size_t maxTestLength = 
+    const bsl::size_t maxTestLength =
         static_cast<bsl::size_t>(socketAddressLocalPathCapacity);
 
-    for (bsl::size_t testLength  = maxTestLength; 
+    for (bsl::size_t testLength  = maxTestLength;
                      testLength >= minTestLength;
                    --testLength)
     {
-        const bsl::size_t maxNullTerminators = 
+        const bsl::size_t maxNullTerminators =
             socketAddressLocalPathCapacity - testLength;
-        
-        for (bsl::size_t numNullTerminators  = 0; 
-                         numNullTerminators <= maxNullTerminators; 
+
+        for (bsl::size_t numNullTerminators  = 0;
+                         numNullTerminators <= maxNullTerminators;
                        ++numNullTerminators)
         {
             BSLS_LOG_TRACE("Testing sun_path length %zu/%zu, "
-                           "numNullTerminators = %zu/%zu", 
-                           static_cast<bsl::size_t>(testLength), 
-                           socketAddressLocalPathCapacity, 
+                           "numNullTerminators = %zu/%zu",
+                           static_cast<bsl::size_t>(testLength),
+                           socketAddressLocalPathCapacity,
                            numNullTerminators,
                            maxNullTerminators);
 
             ntsa::TemporaryDirectory temporaryDirectory;
 
             bsl::string temporaryFileName;
-            while (temporaryFileName.size() < 
-                   testLength - 
-                   temporaryDirectory.path().size() - 
+            while (temporaryFileName.size() <
+                   testLength -
+                   temporaryDirectory.path().size() -
                    1 -
                    numNullTerminators)
             {
@@ -4068,17 +4084,17 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyPlatformBehaviorUnixDomain)
 
             bsl::string temporaryFilePath = temporaryDirectory.path();
             rc = bdls::PathUtil::appendIfValid(
-                &temporaryFilePath, 
+                &temporaryFilePath,
                 temporaryFileName);
             NTSCFG_TEST_EQ(rc, 0);
 
             SocketUtilTest::EraseGuard eraseGuard(temporaryFileName);
 
-            NTSCFG_TEST_LE(temporaryFilePath.size() + 
-                           numNullTerminators, 
+            NTSCFG_TEST_LE(temporaryFilePath.size() +
+                           numNullTerminators,
                            socketAddressLocalPathCapacity);
 
-            const bsl::size_t temporaryFilePathLength = 
+            const bsl::size_t temporaryFilePathLength =
                 temporaryFilePath.size();
 
             int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
@@ -4101,8 +4117,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyPlatformBehaviorUnixDomain)
                         &socketAddressStorage);
 
                 bsl::memcpy(
-                    socketAddressLocal->sun_path, 
-                    temporaryFilePath.c_str(), 
+                    socketAddressLocal->sun_path,
+                    temporaryFilePath.c_str(),
                     temporaryFilePathLength);
 
                 for (bsl::size_t i = 0; i < numNullTerminators; ++i) {
@@ -4125,7 +4141,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyPlatformBehaviorUnixDomain)
                 rc = ::bind(fd, socketAddress, socketAddressLength);
                 if (rc != 0) {
                     error = ntsa::Error(errno);
-                    BSLS_LOG_TRACE("Failed to bind to '%s': %s", 
+                    BSLS_LOG_TRACE("Failed to bind to '%s': %s",
                                    temporaryFilePath.c_str(),
                                    error.text().c_str());
                     continue;
@@ -4138,7 +4154,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyPlatformBehaviorUnixDomain)
                 rc = ::stat(temporaryFilePath.c_str(), &socketStat);
                 if (rc != 0) {
                     error = ntsa::Error(errno);
-                    BSLS_LOG_TRACE("Failed to stat '%s': %s", 
+                    BSLS_LOG_TRACE("Failed to stat '%s': %s",
                                    temporaryFilePath.c_str(),
                                    error.text().c_str());
                     continue;
@@ -4166,7 +4182,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyPlatformBehaviorUnixDomain)
                     fd, socketAddress, &socketAddressStorageLength);
                 if (rc != 0) {
                     error = ntsa::Error(errno);
-                    BSLS_LOG_TRACE("Failed to getsocketname: %s", 
+                    BSLS_LOG_TRACE("Failed to getsocketname: %s",
                                    error.text().c_str());
                     continue;
                 }
@@ -4199,12 +4215,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyPlatformBehaviorUnixDomain)
 
                 // On Linux, ensure the operating system always includes one
                 // trailing NUL in the output socket address length, provided
-                // there is capacity available. If there is no capacity 
+                // there is capacity available. If there is no capacity
                 // available, the socket length output from 'getsockname' will
                 // be larger than the input by 1, but the operating system will
                 // not write the 1 extra null byte anywhere.
 
-                if (temporaryFilePathLength == 
+                if (temporaryFilePathLength ==
                     socketAddressLocalPathCapacity)
                 {
                     const ::socklen_t socketAddressStorageLengthExpected =
