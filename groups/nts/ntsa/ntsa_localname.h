@@ -57,10 +57,10 @@ namespace ntsa {
 /// permission model.
 ///
 ///@par Valid Characters
-/// Some operating systems allow for Unix domain names in the abstract
+/// Some operating systems allow for local domain names in the abstract
 /// namespace to contain embedded 'NUL' bytes. For maximum portability and
-/// convenience to treat the name as a string, the implementation of
-/// 'ntsa::LocalName' treats Unix domain names with embedded 'NUL' bytes as
+/// convenience treating the name as a string, the implementation of
+/// 'ntsa::LocalName' considers local names with embedded 'NUL' bytes as
 /// invalid.
 ///
 ///@par Unique Generation
@@ -134,23 +134,21 @@ class LocalName
     /// Set the local name to be abstract. A socket bound to an abstract
     /// name does not have a representation in the file system. Return the
     /// error. Note that abstract local names are only supported on Linux.
-    /// Name in the abstract namespace requires a leading null character.
-    /// It is not stored inside the class instance, but if some name is
-    /// already stored then it is ensure that there is free space to place
-    /// a leading nul character
     ntsa::Error setAbstract();
 
     /// Set the local name to be persistent. A socket bound to a persistent
-    /// name has a representation in the file system. Return the error.
+    /// name has a representation in the file system. Return the error. Note
+    /// that a default-constructed local name is considered to be in the
+    /// persistent namespace. Also note that persistent local names are
+    /// supported by all platforms that support sockets in the local domain.
     ntsa::Error setPersistent();
 
     /// Set the local name to be unnamed. Return the error.
     ntsa::Error setUnnamed();
 
     /// Set the path of the local name to the specified 'value'. Return the
-    /// error, namely when 'value' contains invalid bytes or the length of
-    /// 'value' is greater than 'k_MAX_PATH_LENGTH' (or 'k_MAX_PATH_LEN - 1' if
-    /// the name is in the abstract namespace.)
+    /// error, namely when 'value' contains embedded NUL bytes or the length of
+    /// 'value' is greater than 'k_MAX_PATH_LENGTH'.
     ntsa::Error setValue(const bslstl::StringRef& value);
 
     /// Return the value of the local name.
@@ -370,6 +368,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const LocalName& value)
 
     bslstl::StringRef text = value.value();
     algorithm(text.data(), text.size());
+    hashAppend(algorithm, value.isAbstract());
 }
 
 template <typename MANIPULATOR>

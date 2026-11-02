@@ -9582,13 +9582,13 @@ NTSCFG_TEST_FUNCTION(
 #error Not implemented
 #endif
 
-                if (temporaryFilePath.size() <= 
+                if (temporaryFilePath.size() <=
                     ntsa::LocalName::k_MAX_PATH_LENGTH)
                 {
                     ntsa::Endpoint endpoint;
                     error = ntsu::SocketUtil::decodeEndpoint(
-                        &endpoint, 
-                        &socketAddressStorage, 
+                        &endpoint,
+                        &socketAddressStorage,
                         socketAddressStorageLength);
                     NTSCFG_TEST_OK(error);
 
@@ -9606,8 +9606,8 @@ NTSCFG_TEST_FUNCTION(
             // Test address matching when connecting, varying the number
             // of extra null terminators.
 
-            for (bsl::size_t numConnectNullTerminators = 0; 
-                             numConnectNullTerminators <= numNullTerminators; 
+            for (bsl::size_t numConnectNullTerminators = 0;
+                             numConnectNullTerminators <= numNullTerminators;
                            ++numConnectNullTerminators)
             {
                 BSLS_LOG_TRACE("Testing sun_path length %zu/%zu, "
@@ -9646,9 +9646,9 @@ NTSCFG_TEST_FUNCTION(
                         temporaryFilePath.c_str(),
                         temporaryFilePathLength);
 
-                    for (bsl::size_t i = 0; 
-                                     i < numConnectNullTerminators; 
-                                   ++i) 
+                    for (bsl::size_t i = 0;
+                                     i < numConnectNullTerminators;
+                                   ++i)
                     {
                         socketAddressLocal->sun_path[
                             temporaryFilePathLength + i] = 0;
@@ -9664,8 +9664,8 @@ NTSCFG_TEST_FUNCTION(
                     socketAddressLocal->sun_len = socketAddressLength;
 #endif
 
-                    rc = ::connect(clientFd, 
-                                   socketAddress, 
+                    rc = ::connect(clientFd,
+                                   socketAddress,
                                    socketAddressLength);
                     if (rc != 0) {
                         error = ntsa::Error(errno);
@@ -9759,13 +9759,13 @@ NTSCFG_TEST_FUNCTION(
 #error Not implemented
 #endif
 
-                    if (temporaryFilePath.size() <= 
+                    if (temporaryFilePath.size() <=
                         ntsa::LocalName::k_MAX_PATH_LENGTH)
                     {
                         ntsa::Endpoint endpoint;
                         error = ntsu::SocketUtil::decodeEndpoint(
-                            &endpoint, 
-                            &socketAddressStorage, 
+                            &endpoint,
+                            &socketAddressStorage,
                             socketAddressStorageLength);
                         NTSCFG_TEST_OK(error);
 

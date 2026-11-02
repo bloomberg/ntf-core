@@ -944,14 +944,6 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
             return ntsa::Error::invalid();
         }
 
-        const bsl::size_t socketAddressSizeMax =
-            offsetof(struct sockaddr_un, sun_path) +
-            sizeof(socketAddressLocal->sun_path);
-
-        if (socketAddressSize > socketAddressSizeMax) {
-            socketAddressSize = socketAddressSizeMax;
-        }
-
         ntsa::LocalName* localName = &endpoint->makeLocal();
 
         if (socketAddressSize != 0) {
@@ -987,7 +979,6 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
 
                 const char* begin = socketAddressLocal->sun_path;
                 const char* end   = begin + pathSize;
-                const char* last  = end - 1;
 
                 if (*begin == 0) {
                     localName->setAbstract();
@@ -997,7 +988,7 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
                 const char* current = begin;
                 while (current != end) {
                     if (*current == 0) {
-                        if (current != last) {
+                        if (localName->isAbstract()) {
                             return ntsa::Error(ntsa::Error::e_INVALID);
                         }
                         else {
@@ -1096,14 +1087,15 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
         socketAddressLocal->sun_family = AF_UNIX;
         *socketAddressSize = offsetof(struct sockaddr_un, sun_path);
 
-        if (!endpoint.local().isUnnamed()) {
-            bsl::size_t offset = 0;
-            if (endpoint.local().isAbstract()) {
-                socketAddressLocal->sun_path[offset]  = 0;
-                *socketAddressSize                   += 1;
-                ++offset;
-            }
+        bsl::size_t offset = 0;
 
+        if (endpoint.local().isAbstract()) {
+            socketAddressLocal->sun_path[offset]  = 0;
+            *socketAddressSize                   += 1;
+            ++offset;
+        }
+
+        if (!endpoint.local().isUnnamed()) {
             BSLS_ASSERT_OPT(ntsa::LocalName::k_MAX_PATH_LENGTH <=
                             sizeof(sockaddr_un) -
                                 offsetof(struct sockaddr_un, sun_path) -
@@ -1116,15 +1108,12 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
                         value.size());
 
             *socketAddressSize += static_cast<socklen_t>(value.size());
+            offset             += value.size();
+        }
 
-            if (!endpoint.local().isAbstract()) {
-                // Non-abstract Unix domain socket names must be
-                // null-terminated, and the null-terminator is included in the
-                // length.
-                offset                               += value.size();
-                socketAddressLocal->sun_path[offset]  = 0;
-                *socketAddressSize                   += 1;
-            }
+        if (!endpoint.local().isAbstract()) {
+            socketAddressLocal->sun_path[offset]  = 0;
+            *socketAddressSize                   += 1;
         }
     }
 #endif
