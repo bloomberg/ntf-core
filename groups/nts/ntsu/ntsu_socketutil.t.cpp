@@ -28,6 +28,9 @@ BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
 
 #include <ntsa_temporary.h>
 
+#include <bdls_pathutil.h>
+#include <bdls_filesystemutil.h>
+
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #ifdef NTDDI_VERSION
 #undef NTDDI_VERSION
@@ -78,6 +81,12 @@ class SocketUtilTest
 {
     /// Describes the parameters of the test.
     class Parameters;
+
+    /// Provides a guard to close a file descriptor.
+    class CloseGuard;
+
+    // Provides a guard to unlink a path on the file system.
+    class EraseGuard;
 
     /// This typedef defines a callback function invoked to test a particular
     /// portion of the component using the specified connected 'server' and
@@ -525,6 +534,43 @@ private:
     bool d_zeroCopy;
 };
 
+/// Provides a guard to close a file descriptor.
+class SocketUtilTest::CloseGuard
+{
+    ntsa::Handle d_handle;
+
+  private:
+    CloseGuard(const CloseGuard&) BSLS_KEYWORD_DELETED;
+    CloseGuard& operator=(const CloseGuard&) BSLS_KEYWORD_DELETED;
+
+  public:
+    /// Create a new close guard that automatically closes the specified
+    /// 'handle' upon destruction. 
+    explicit CloseGuard(ntsa::Handle handle);
+
+    /// Destroy this object.
+    ~CloseGuard();
+};
+
+// Provides a guard to unlink a path on the file system.
+class SocketUtilTest::EraseGuard
+{
+    bsl::string d_path;
+
+  private:
+    EraseGuard(const EraseGuard&) BSLS_KEYWORD_DELETED;
+    EraseGuard& operator=(const EraseGuard&) BSLS_KEYWORD_DELETED;
+
+  public:
+    /// Create a new close guard that automatically removes the specified
+    /// 'path' upon destruction. 
+    explicit EraseGuard(const bsl::string& path, 
+                        bslma::Allocator*  basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EraseGuard();
+};
+
 SocketUtilTest::Parameters::Parameters()
 : d_timestampIncomingData(false)
 , d_timestampOutgoingData(false)
@@ -560,6 +606,37 @@ bool SocketUtilTest::Parameters::timestampOutgoingData() const
 bool SocketUtilTest::Parameters::zeroCopy() const
 {
     return d_zeroCopy;
+}
+
+SocketUtilTest::CloseGuard::CloseGuard(ntsa::Handle handle)
+: d_handle(handle)
+{
+}
+
+SocketUtilTest::CloseGuard::~CloseGuard()
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+    ::close(d_handle);
+
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+
+    ::closesocket(d_handle);
+
+#else
+#error Not implemented
+#endif
+}
+
+SocketUtilTest::EraseGuard::EraseGuard(const bsl::string& path, 
+                                       bslma::Allocator*  basicAllocator)
+: d_path(path, basicAllocator)
+{
+}
+
+SocketUtilTest::EraseGuard::~EraseGuard()
+{
+    bdls::FilesystemUtil::remove(d_path.c_str(), false);
 }
 
 /// Provide a in-core storage of bytes.
@@ -3920,114 +3997,237 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyPlatformBehaviorUnixDomain)
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
 
-    int rc;
+    // Notes: On Linux, care must be take when calling 'getsockname' given a
+    // 'struct sockaddr_storage', since 'struct sockaddr_storage' is guaranteed
+    // to be larger than 'struct sockaddr_un'. This is different than most
+    // other platforms, where the size of 'struct sockaddr_storage' is equal to
+    // the size of 'struct sockaddr_un' (the Unix domain address being the
+    // largest of the supported socket address families.) This care is notable
+    // when anticipating whether the operating system will include a
+    // null-terminator in the output of 'getsockname', even when the socket is
+    // bound to an address without a null terminator in the 'sun_path' given to
+    // 'bind'. This test deliberately eschews giving the size of 'struct
+    // sockaddr_storage' and instead uses the size of 'struct sockaddr_un',
+    // even through real production implementions (including this library)
+    // would typically use the 'struct sockaddr_storage' and its size in
+    // situations where the exact address type is not known, or cared to be
+    // known, ahead of time. This avoids supplying the operating system with
+    // extra capacity greater allowing it to write null terminators after the
+    // last byte of 'struct sockaddr_un::sun_path'.
 
-    const bsl::size_t numExtralNullTerminators = 2;
+    ntsa::Error error;
+    int         rc;
 
-    ntsa::TemporaryDirectory temporaryDirectory;
-    ntsa::TemporaryFile      temporaryFile(&temporaryDirectory);
+    const bsl::size_t socketAddressStorageCapacity =
+                sizeof(struct ::sockaddr_storage);
 
+    const bsl::size_t socketAddressLocalCapacity =
+        sizeof(struct ::sockaddr_un);
+
+    const bsl::size_t socketAddressLocalPathOffset =
+        offsetof(struct ::sockaddr_un, sun_path);
+
+    const bsl::size_t socketAddressLocalPathCapacity =
+        sizeof(((struct ::sockaddr_un *)0)->sun_path);
+
+    const bsl::size_t minTestLength = 
+        static_cast<bsl::size_t>(socketAddressLocalPathCapacity) - 3;
+
+    const bsl::size_t maxTestLength = 
+        static_cast<bsl::size_t>(socketAddressLocalPathCapacity);
+
+    for (bsl::size_t testLength  = maxTestLength; 
+                     testLength >= minTestLength;
+                   --testLength)
     {
-        char socketName[sizeof(((struct ::sockaddr_un *)0)->sun_path)];
-        NTSCFG_TEST_LT(temporaryFile.path().size(), sizeof socketName);
-
-        bsl::memset(&socketName, 0, sizeof socketName);
-        bsl::memcpy(&socketName,
-                    temporaryFile.path().c_str(),
-                    temporaryFile.path().size());
-
-        const bsl::size_t socketNameLength = bsl::strlen(socketName);
-
-        ::unlink(socketName);
-
-        const bsl::size_t socketAddressStorageCapacity =
-            sizeof(struct ::sockaddr_storage);
-
-        const bsl::size_t socketAddressLocalCapacity =
-            sizeof(struct ::sockaddr_un);
-
-        const bsl::size_t socketAddressLocalPathOffset =
-            offsetof(struct ::sockaddr_un, sun_path);
-
-        int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
-        NTSCFG_TEST_GE(fd, 0);
-
+        const bsl::size_t maxNullTerminators = 
+            socketAddressLocalPathCapacity - testLength;
+        
+        for (bsl::size_t numNullTerminators  = 0; 
+                         numNullTerminators <= maxNullTerminators; 
+                       ++numNullTerminators)
         {
-            struct ::sockaddr_storage socketAddressStorage;
-            bsl::memset(&socketAddressStorage,
-                        0,
-                        socketAddressStorageCapacity);
+            BSLS_LOG_TRACE("Testing sun_path length %zu/%zu, "
+                           "numNullTerminators = %zu/%zu", 
+                           static_cast<bsl::size_t>(testLength), 
+                           socketAddressLocalPathCapacity, 
+                           numNullTerminators,
+                           maxNullTerminators);
 
-            struct ::sockaddr* socketAddress =
-                reinterpret_cast<struct ::sockaddr*>(&socketAddressStorage);
+            ntsa::TemporaryDirectory temporaryDirectory;
 
-            struct ::sockaddr_un* socketAddressLocal =
-                reinterpret_cast<struct ::sockaddr_un*>(&socketAddressStorage);
+            bsl::string temporaryFileName;
+            while (temporaryFileName.size() < 
+                   testLength - 
+                   temporaryDirectory.path().size() - 
+                   1 -
+                   numNullTerminators)
+            {
+                temporaryFileName.push_back('x');
+            }
 
-            bsl::memcpy(
-                socketAddressLocal->sun_path, socketName, socketNameLength);
-
-            // Give the OS a double null-terminator included in the length.
-            // Vary between +0, +1, and +2.
-            const bsl::size_t socketAddressLength =
-                socketAddressLocalPathOffset +
-                socketNameLength +
-                numExtralNullTerminators;
-
-            socketAddressLocal->sun_family = AF_UNIX;
-            socketAddressLocal->sun_len    = socketAddressLength;
-
-            rc = ::bind(fd, socketAddress, socketAddressLength);
+            bsl::string temporaryFilePath = temporaryDirectory.path();
+            rc = bdls::PathUtil::appendIfValid(
+                &temporaryFilePath, 
+                temporaryFileName);
             NTSCFG_TEST_EQ(rc, 0);
 
-            struct ::stat socketStat;
-            bsl::memset(&socketStat, 0, sizeof socketStat);
+            SocketUtilTest::EraseGuard eraseGuard(temporaryFileName);
 
-            rc = ::stat(socketName, &socketStat);
-            NTSCFG_TEST_EQ(rc, 0);
+            NTSCFG_TEST_LE(temporaryFilePath.size() + 
+                           numNullTerminators, 
+                           socketAddressLocalPathCapacity);
 
-            const bool isSocket = S_ISSOCK(socketStat.st_mode);
-            NTSCFG_TEST_TRUE(isSocket);
+            const bsl::size_t temporaryFilePathLength = 
+                temporaryFilePath.size();
+
+            int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
+            NTSCFG_TEST_GE(fd, 0);
+
+            SocketUtilTest::CloseGuard closeGuard(fd);
+
+            {
+                struct ::sockaddr_storage socketAddressStorage;
+                bsl::memset(&socketAddressStorage,
+                            static_cast<int>(0xFF),
+                            socketAddressStorageCapacity);
+
+                struct ::sockaddr* socketAddress =
+                    reinterpret_cast<struct ::sockaddr*>(
+                        &socketAddressStorage);
+
+                struct ::sockaddr_un* socketAddressLocal =
+                    reinterpret_cast<struct ::sockaddr_un*>(
+                        &socketAddressStorage);
+
+                bsl::memcpy(
+                    socketAddressLocal->sun_path, 
+                    temporaryFilePath.c_str(), 
+                    temporaryFilePathLength);
+
+                for (bsl::size_t i = 0; i < numNullTerminators; ++i) {
+                    socketAddressLocal->sun_path[temporaryFilePathLength + i]
+                        = 0;
+                }
+
+                // Give the OS a double null-terminator included in the length.
+                // Vary between +0, +1, and +2.
+                const bsl::size_t socketAddressLength =
+                    socketAddressLocalPathOffset +
+                    temporaryFilePathLength +
+                    numNullTerminators;
+
+                socketAddressLocal->sun_family = AF_UNIX;
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+                socketAddressLocal->sun_len = socketAddressLength;
+#endif
+
+                rc = ::bind(fd, socketAddress, socketAddressLength);
+                if (rc != 0) {
+                    error = ntsa::Error(errno);
+                    BSLS_LOG_TRACE("Failed to bind to '%s': %s", 
+                                   temporaryFilePath.c_str(),
+                                   error.text().c_str());
+                    continue;
+                }
+                NTSCFG_TEST_EQ(rc, 0);
+
+                struct ::stat socketStat;
+                bsl::memset(&socketStat, 0, sizeof socketStat);
+
+                rc = ::stat(temporaryFilePath.c_str(), &socketStat);
+                if (rc != 0) {
+                    error = ntsa::Error(errno);
+                    BSLS_LOG_TRACE("Failed to stat '%s': %s", 
+                                   temporaryFilePath.c_str(),
+                                   error.text().c_str());
+                    continue;
+                }
+                NTSCFG_TEST_EQ(rc, 0);
+
+                const bool isSocket = S_ISSOCK(socketStat.st_mode);
+                NTSCFG_TEST_TRUE(isSocket);
+            }
+
+            {
+                struct ::sockaddr_storage socketAddressStorage;
+                bsl::memset(&socketAddressStorage,
+                            static_cast<int>(0xFF),
+                            socketAddressStorageCapacity);
+
+                ::socklen_t socketAddressStorageLength =
+                    socketAddressLocalCapacity;
+
+                struct ::sockaddr* socketAddress =
+                    reinterpret_cast<struct ::sockaddr*>(
+                        &socketAddressStorage);
+
+                rc = ::getsockname(
+                    fd, socketAddress, &socketAddressStorageLength);
+                if (rc != 0) {
+                    error = ntsa::Error(errno);
+                    BSLS_LOG_TRACE("Failed to getsocketname: %s", 
+                                   error.text().c_str());
+                    continue;
+                }
+                NTSCFG_TEST_EQ(rc, 0);
+
+                struct ::sockaddr_un* socketAddressLocal =
+                    reinterpret_cast<struct ::sockaddr_un*>(
+                        &socketAddressStorage);
+
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+                NTSCFG_TEST_EQ(socketAddressLocal->sun_len,
+                               socketAddressStorageLength);
+#endif
+
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+
+                // On Darwin, ensure the operating system includes any trailing
+                // NULs, initially specified when binding, in the output socket
+                // address length.
+
+                const ::socklen_t socketAddressStorageLengthExpected =
+                    socketAddressLocalPathOffset +
+                    temporaryFilePathLength +
+                    numNullTerminators;
+
+                NTSCFG_TEST_EQ(socketAddressStorageLength,
+                               socketAddressStorageLengthExpected);
+
+#elif defined(BSLS_PLATFORM_OS_LINUX)
+
+                // On Linux, ensure the operating system always includes one
+                // trailing NUL in the output socket address length, provided
+                // there is capacity available. If there is no capacity 
+                // available, the socket length output from 'getsockname' will
+                // be larger than the input by 1, but the operating system will
+                // not write the 1 extra null byte anywhere.
+
+                if (temporaryFilePathLength == 
+                    socketAddressLocalPathCapacity)
+                {
+                    const ::socklen_t socketAddressStorageLengthExpected =
+                        socketAddressLocalCapacity + 1;
+
+                    NTSCFG_TEST_EQ(socketAddressStorageLength,
+                                   socketAddressStorageLengthExpected);
+                }
+                else {
+                    const ::socklen_t socketAddressStorageLengthExpected =
+                        socketAddressLocalPathOffset +
+                        temporaryFilePathLength +
+                        1;
+
+                    NTSCFG_TEST_EQ(socketAddressStorageLength,
+                                   socketAddressStorageLengthExpected);
+                }
+
+#else
+#error Not implemented
+#endif
+            }
         }
-
-        {
-            struct ::sockaddr_storage socketAddressStorage;
-            bsl::memset(&socketAddressStorage,
-                        static_cast<int>(0xFF),
-                        socketAddressStorageCapacity);
-
-            ::socklen_t socketAddressStorageLength =
-                socketAddressStorageCapacity;
-
-            struct ::sockaddr* socketAddress =
-                reinterpret_cast<struct ::sockaddr*>(
-                    &socketAddressStorage);
-
-            rc = ::getsockname(
-                fd, socketAddress, &socketAddressStorageLength);
-            NTSCFG_TEST_EQ(rc, 0);
-
-            struct ::sockaddr_un* socketAddressLocal =
-                reinterpret_cast<struct ::sockaddr_un*>(
-                    &socketAddressStorage);
-
-            NTSCFG_TEST_EQ(socketAddressLocal->sun_len,
-                           socketAddressStorageLength);
-
-            // Ensure the operating system includes any extra null terminators,
-            // initially specified when binding, returned in the socket address
-            // length.
-
-            const ::socklen_t socketAddressStorageLengthExpected =
-                socketAddressLocalPathOffset +
-                socketNameLength +
-                numExtralNullTerminators;
-
-            NTSCFG_TEST_EQ(socketAddressStorageLength,
-                           socketAddressStorageLengthExpected);
-        }
-
-        ::close(fd);
     }
 
 #endif
