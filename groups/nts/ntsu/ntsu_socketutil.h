@@ -724,14 +724,15 @@ struct SocketUtil {
     /// Load into the specified 'endpoint' the conversion of the specified
     /// 'socketAddress' having the specified 'socketAddressSize'. Return the
     /// error. Note that decoding a 'socketAddress' containing a Unix domain
-    /// name will only scan up to the first NUL or the last dereferencable byte
-    /// indicated by the 'socketAddressSize'; any subsequent characters, NUL
-    /// or otherwise, are truncated from the name. Also note that decoding a
-    /// 'socketAddress' in the persistent namespace will fail if any byte in
-    /// the name indicated by the 'socketAddressSize' is NUL, other than the
-    /// first one (indicating the name is in the abstract namespace.) Also 
-    /// note that an "empty" name in either the persistent or the abstract
-    /// namespace is decoded as an unnamed local name. 
+    /// name in the persistent namespace will only scan the name up to the
+    /// first NUL or the last dereferencable byte indicated by the
+    /// 'socketAddressSize'; any subsequent characters, NUL or otherwise, are
+    /// truncated from the name. Also note that decoding a 'socketAddress' in
+    /// the abstract namespace will fail if any byte in the name indicated by
+    /// the 'socketAddressSize' is NUL, other than the first one (indicating
+    /// the name is in the abstract namespace.) Also note that an "empty" name
+    /// in either the persistent or the abstract namespace is decoded as an
+    /// unnamed local name.
     static ntsa::Error decodeEndpoint(ntsa::Endpoint* endpoint,
                                       const void*     socketAddress,
                                       bsl::size_t     socketAddressSize);
