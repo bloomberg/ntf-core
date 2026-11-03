@@ -1029,10 +1029,7 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
                                       socklen_t*            socketAddressSize,
                                       const ntsa::Endpoint& endpoint)
 {
-    socketAddress->ss_family = AF_UNSPEC;
-#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
-    socketAddress->ss_len = 0;
-#endif
+    bsl::memset(socketAddress, 0, sizeof(sockaddr_storage));
     *socketAddressSize = 0;
 
     if (endpoint.isIp()) {
@@ -8553,9 +8550,6 @@ ntsa::Error SocketUtil::encodeEndpoint(void*                 socketAddress,
                                        const ntsa::Endpoint& endpoint)
 {
     socklen_t length = 0;
-
-    Impl::initialize(reinterpret_cast<sockaddr_storage*>(socketAddress),
-                     &length);
 
     ntsa::Error error =
         Impl::convert(reinterpret_cast<sockaddr_storage*>(socketAddress),

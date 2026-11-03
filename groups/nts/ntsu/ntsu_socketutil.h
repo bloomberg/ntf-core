@@ -738,7 +738,9 @@ struct SocketUtil {
                                       bsl::size_t     socketAddressSize);
 
     /// Load into the specified 'socketAddress' and 'socketAddressSize' the
-    /// conversion of the specified 'endpoint'. Return the error.
+    /// conversion of the specified 'endpoint'. Return the error. The behavior
+    /// is undefined unless 'socketAddress' points to a buffer whose size is
+    /// greater than or equal to 'sizeof(sockaddr_storage)'.
     static ntsa::Error encodeEndpoint(void*                 socketAddress,
                                       bsl::size_t*          socketAddressSize,
                                       const ntsa::Endpoint& endpoint);
