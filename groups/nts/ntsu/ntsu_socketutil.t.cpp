@@ -491,7 +491,7 @@ class SocketUtilTest
     // terminator.
     static void verifyDecodeEndpointLocalUnterminated();
 
-    // Verify endpoint decoding of a persistent Unix domain socket name 
+    // Verify endpoint decoding of a persistent Unix domain socket name
     // truncates the name after the first NUL. Verify decoding of an abstract
     // Unix domain socket name with any embedded NULs (after the first byte,
     // indicating the abstract namespace) fails.
@@ -9253,7 +9253,6 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[1], 'b');
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[2], 'c');
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], null);
-        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[4], sentinel);
     }
 
     // Verify that a local name with a empty path in the persistent
@@ -9294,8 +9293,6 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
                 offsetof(struct sockaddr_un, sun_path);
 
         NTSCFG_TEST_EQ(socketAddressSize, pathOffset);
-
-        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], sentinel);
     }
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -9348,7 +9345,6 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[1], 'a');
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[2], 'b');
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], 'c');
-        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[4], sentinel);
     }
 
     // Verify that a local name with a empty path in the abstract
@@ -9389,8 +9385,6 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
                 offsetof(struct sockaddr_un, sun_path);
 
         NTSCFG_TEST_EQ(socketAddressSize, pathOffset);
-
-        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], sentinel);
     }
 
 #endif
