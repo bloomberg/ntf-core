@@ -8554,6 +8554,9 @@ ntsa::Error SocketUtil::encodeEndpoint(void*                 socketAddress,
 {
     socklen_t length = 0;
 
+    Impl::initialize(reinterpret_cast<sockaddr_storage*>(socketAddress),
+                     &length);
+
     ntsa::Error error =
         Impl::convert(reinterpret_cast<sockaddr_storage*>(socketAddress),
                       &length,
