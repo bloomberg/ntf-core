@@ -9349,7 +9349,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
 
     // Verify that a local name with a empty path in the abstract
     // namespace is encoded to a socket address structure in the expected
-    // address family whose path is not defined.
+    // address family whose path is defined with a single null byte.
 
     {
         struct sockaddr_storage socketAddress;
@@ -9384,7 +9384,9 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
         const bsl::size_t pathOffset =
                 offsetof(struct sockaddr_un, sun_path);
 
-        NTSCFG_TEST_EQ(socketAddressSize, pathOffset);
+        NTSCFG_TEST_EQ(socketAddressSize, pathOffset + 1);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], null);
     }
 
 #endif
