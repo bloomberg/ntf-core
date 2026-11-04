@@ -107,6 +107,10 @@ namespace ntsa {
 ///       in the address size, the address is considered unnamed in the
 ///       persistent namespace.
 ///
+///     o Darwin and FreeBSD only: if the socket address size is 16 bytes and
+///       all bytes in the path component are zero, the address is considered
+///       unnamed in the persistent namespace.
+///
 ///     o If the first byte of the native socket address path component is NUL,
 ///       the name is considered abstract. If the abstract namespace is not
 ///       supported on the current platform, decoding fails. The native socket

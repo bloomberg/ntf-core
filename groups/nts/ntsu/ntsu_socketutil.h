@@ -724,15 +724,8 @@ struct SocketUtil {
     /// Load into the specified 'endpoint' the conversion of the specified
     /// 'socketAddress' having the specified 'socketAddressSize'. Return the
     /// error. Note that decoding a 'socketAddress' containing a Unix domain
-    /// name in the persistent namespace will only scan the name up to the
-    /// first NUL or the last dereferencable byte indicated by the
-    /// 'socketAddressSize'; any subsequent characters, NUL or otherwise, are
-    /// truncated from the name. Also note that decoding a 'socketAddress' in
-    /// the abstract namespace will fail if any byte in the name indicated by
-    /// the 'socketAddressSize' is NUL, other than the first one (indicating
-    /// the name is in the abstract namespace.) Also note that an "empty" name
-    /// in either the persistent or the abstract namespace is decoded as an
-    /// unnamed local name.
+    /// name follows the rules described in the 'ntsa::LocalName' class
+    /// documentation.
     static ntsa::Error decodeEndpoint(ntsa::Endpoint* endpoint,
                                       const void*     socketAddress,
                                       bsl::size_t     socketAddressSize);
@@ -740,7 +733,9 @@ struct SocketUtil {
     /// Load into the specified 'socketAddress' and 'socketAddressSize' the
     /// conversion of the specified 'endpoint'. Return the error. The behavior
     /// is undefined unless 'socketAddress' points to a buffer whose size is
-    /// greater than or equal to 'sizeof(sockaddr_storage)'.
+    /// greater than or equal to 'sizeof(sockaddr_storage)'.  Note that
+    /// decoding a 'socketAddress' containing a Unix domain name follows the
+    /// rules described in the 'ntsa::LocalName' class documentation.
     static ntsa::Error encodeEndpoint(void*                 socketAddress,
                                       bsl::size_t*          socketAddressSize,
                                       const ntsa::Endpoint& endpoint);
