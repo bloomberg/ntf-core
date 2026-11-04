@@ -2817,7 +2817,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint && msg.msg_namelen > 0) {
+    if (wantEndpoint) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -2897,7 +2897,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint && msg.msg_namelen > 0) {
+    if (wantEndpoint) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -2973,7 +2973,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint && msg.msg_namelen > 0) {
+    if (wantEndpoint) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -3052,7 +3052,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint && msg.msg_namelen > 0) {
+    if (wantEndpoint) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -3131,7 +3131,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint && msg.msg_namelen > 0) {
+    if (wantEndpoint) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -3224,7 +3224,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint && msg.msg_namelen > 0) {
+    if (wantEndpoint) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -3326,7 +3326,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint && msg.msg_namelen > 0) {
+    if (wantEndpoint) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -3406,7 +3406,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint && msg.msg_namelen > 0) {
+    if (wantEndpoint) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -7097,16 +7097,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        if (socketAddressSize > 0) {
-            ntsa::Endpoint endpoint;
-            error = Impl::convert(
-                &endpoint, &socketAddress, socketAddressSize);
-            if (error) {
-                return error;
-            }
-
-            context->setEndpoint(endpoint);
+        ntsa::Endpoint endpoint;
+        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+        if (error) {
+            return error;
         }
+
+        context->setEndpoint(endpoint);
 
         context->setBytesReceived(wsaNumBytesReceived);
 
@@ -7175,16 +7172,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        if (socketAddressSize > 0) {
-            ntsa::Endpoint endpoint;
-            error = Impl::convert(
-                &endpoint, &socketAddress, socketAddressSize);
-            if (error) {
-                return error;
-            }
-
-            context->setEndpoint(endpoint);
+        ntsa::Endpoint endpoint;
+        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+        if (error) {
+            return error;
         }
+
+        context->setEndpoint(endpoint);
 
         context->setBytesReceived(wsaNumBytesReceived);
 
@@ -7256,16 +7250,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        if (socketAddressSize > 0) {
-            ntsa::Endpoint endpoint;
-            error = Impl::convert(
-                &endpoint, &socketAddress, socketAddressSize);
-            if (error) {
-                return error;
-            }
-
-            context->setEndpoint(endpoint);
+        ntsa::Endpoint endpoint;
+        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+        if (error) {
+            return error;
         }
+
+        context->setEndpoint(endpoint);
 
         context->setBytesReceived(wsaNumBytesReceived);
 
@@ -7340,16 +7331,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        if (socketAddressSize > 0) {
-            ntsa::Endpoint endpoint;
-            error = Impl::convert(
-                &endpoint, &socketAddress, socketAddressSize);
-            if (error) {
-                return error;
-            }
-
-            context->setEndpoint(endpoint);
+        ntsa::Endpoint endpoint;
+        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+        if (error) {
+            return error;
         }
+
+        context->setEndpoint(endpoint);
 
         context->setBytesReceived(wsaNumBytesReceived);
 
@@ -7425,16 +7413,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        if (socketAddressSize > 0) {
-            ntsa::Endpoint endpoint;
-            error = Impl::convert(
-                &endpoint, &socketAddress, socketAddressSize);
-            if (error) {
-                return error;
-            }
-
-            context->setEndpoint(endpoint);
+        ntsa::Endpoint endpoint;
+        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+        if (error) {
+            return error;
         }
+
+        context->setEndpoint(endpoint);
 
         context->setBytesReceived(wsaNumBytesReceived);
 
@@ -7524,16 +7509,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        if (socketAddressSize > 0) {
-            ntsa::Endpoint endpoint;
-            error = Impl::convert(
-                &endpoint, &socketAddress, socketAddressSize);
-            if (error) {
-                return error;
-            }
-
-            context->setEndpoint(endpoint);
+        ntsa::Endpoint endpoint;
+        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+        if (error) {
+            return error;
         }
+
+        context->setEndpoint(endpoint);
 
         context->setBytesReceived(wsaNumBytesReceived);
         string->resize(originalSize + wsaNumBytesReceived);
@@ -7632,16 +7614,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        if (socketAddressSize > 0) {
-            ntsa::Endpoint endpoint;
-            error = Impl::convert(
-                &endpoint, &socketAddress, socketAddressSize);
-            if (error) {
-                return error;
-            }
-
-            context->setEndpoint(endpoint);
+        ntsa::Endpoint endpoint;
+        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+        if (error) {
+            return error;
         }
+
+        context->setEndpoint(endpoint);
 
         context->setBytesReceived(wsaNumBytesReceived);
         blob->setLength(blob->length() + wsaNumBytesReceived);
@@ -7720,16 +7699,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        if (socketAddressSize > 0) {
-            ntsa::Endpoint endpoint;
-            error = Impl::convert(
-                &endpoint, &socketAddress, socketAddressSize);
-            if (error) {
-                return error;
-            }
-
-            context->setEndpoint(endpoint);
+        ntsa::Endpoint endpoint;
+        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+        if (error) {
+            return error;
         }
+
+        context->setEndpoint(endpoint);
 
         context->setBytesReceived(wsaNumBytesReceived);
 
