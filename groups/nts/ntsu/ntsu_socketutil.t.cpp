@@ -10261,10 +10261,6 @@ NTSCFG_TEST_FUNCTION(
 
             SocketUtilTest::EraseGuard eraseGuard(temporaryFilePath);
 
-            NTSCFG_TEST_LE(temporaryFilePath.size() +
-                           numNullTerminators,
-                           socketAddressLocalPathCapacity);
-
             const bsl::size_t temporaryFilePathLength =
                 temporaryFilePath.size();
 
@@ -10276,6 +10272,10 @@ NTSCFG_TEST_FUNCTION(
                 // 'sockaddr_un::sun_path'.
                 continue;
             }
+
+            NTSCFG_TEST_LE(temporaryFilePath.size() +
+                           numNullTerminators,
+                           socketAddressLocalPathCapacity);
 
             int listenFd = ::socket(AF_UNIX, SOCK_STREAM, 0);
             NTSCFG_TEST_GE(listenFd, 0);
