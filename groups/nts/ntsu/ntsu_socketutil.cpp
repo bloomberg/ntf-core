@@ -1068,40 +1068,39 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
     }
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
     else if (endpoint.isLocal()) {
+        BSLMF_ASSERT(ntsa::LocalName::k_MAX_PATH_LENGTH <=
+                         sizeof(sockaddr_un) -
+                         offsetof(struct sockaddr_un, sun_path) -
+                         1);
+
         sockaddr_un* socketAddressLocal =
             reinterpret_cast<sockaddr_un*>(socketAddress);
 
         socketAddressLocal->sun_family = AF_UNIX;
-        *socketAddressSize = offsetof(struct sockaddr_un, sun_path);
+        
+        bsl::size_t offset = 0;
+
+        if (endpoint.local().isAbstract()) {
+            socketAddressLocal->sun_path[offset]  = 0;
+            ++offset;
+        }
 
         if (!endpoint.local().isUnnamed()) {
-            bsl::size_t offset = 0;
-
-            if (endpoint.local().isAbstract()) {
-                socketAddressLocal->sun_path[offset]  = 0;
-                *socketAddressSize                   += 1;
-                ++offset;
-            }
-
-            BSLS_ASSERT_OPT(ntsa::LocalName::k_MAX_PATH_LENGTH <=
-                            sizeof(sockaddr_un) -
-                                offsetof(struct sockaddr_un, sun_path) -
-                                offset);
-
             bslstl::StringRef value = endpoint.local().value();
 
             bsl::memcpy(&socketAddressLocal->sun_path[offset],
                         value.data(),
                         value.size());
+                        
+            offset += value.size();
 
-            *socketAddressSize += static_cast<socklen_t>(value.size());
-            offset             += value.size();
-
-            if (!endpoint.local().isAbstract()) {
+            if (endpoint.local().isPersistent()) {
                 socketAddressLocal->sun_path[offset]  = 0;
-                *socketAddressSize                   += 1;
+                ++offset;
             }
         }
+
+        *socketAddressSize = offsetof(struct sockaddr_un, sun_path) + offset;
     }
 #endif
     else {
@@ -3765,7 +3764,8 @@ ntsa::Error SocketUtil::shutdown(ntsa::ShutdownType::Value direction,
 
 ntsa::Error SocketUtil::unlink(ntsa::Handle socket)
 {
-    int rc;
+    ntsa::Error error;
+    int         rc;
 
     if (socket == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error();
@@ -3779,30 +3779,30 @@ ntsa::Error SocketUtil::unlink(ntsa::Handle socket)
     rc = ::getsockname(socket,
                        reinterpret_cast<sockaddr*>(&socketAddress),
                        &socketAddressSize);
-    if (rc == 0) {
-        if (socketAddress.ss_family == AF_UNIX) {
-            const sockaddr_un* socketAddressLocal =
-                reinterpret_cast<const sockaddr_un*>(&socketAddress);
 
-            if (socketAddressLocal->sun_path[0] != 0) {
-                const bsl::size_t pathOffset =
-                    offsetof(struct sockaddr_un, sun_path);
-                if (socketAddressSize > pathOffset) {
-                    bsl::size_t pathLength = socketAddressSize - pathOffset;
-                    bsl::string path(socketAddressLocal->sun_path, pathLength);
+    if (rc != 0) {
+        return ntsa::Error();
+    }
 
-                    if (!path.empty()) {
-                        rc = ::unlink(path.c_str());
-                        if (rc != 0 && errno != ENOENT) {
-                            ntsa::Error error(errno);
-                            BSLS_LOG_WARN("Failed to unlink %s: %s",
-                                          path.c_str(),
-                                          error.text().c_str());
-                        }
-                    }
-                }
-            }
-        }
+    ntsa::Endpoint endpoint;
+    error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+    if (error) {
+        return error;
+    }
+
+    if (endpoint.isLocal() && 
+        endpoint.local().isPersistent() && 
+        !endpoint.local().isUnnamed())
+    {
+        bsl::string path = endpoint.local().value();
+
+        rc = ::unlink(path.c_str());
+        if (rc != 0 && errno != ENOENT) {
+            ntsa::Error error(errno);
+            BSLS_LOG_WARN("Failed to unlink %s: %s",
+                          path.c_str(),
+                          error.text().c_str());
+        }   
     }
 
     return ntsa::Error();
@@ -7833,32 +7833,31 @@ ntsa::Error SocketUtil::unlink(ntsa::Handle socket)
     rc = ::getsockname(socket,
                        reinterpret_cast<sockaddr*>(&socketAddress),
                        &socketAddressSize);
-    if (rc == 0) {
-        if (socketAddress.ss_family == AF_UNIX) {
-            const sockaddr_un* socketAddressLocal =
-                reinterpret_cast<const sockaddr_un*>(&socketAddress);
 
-            if (socketAddressLocal->sun_path[0] != 0) {
-                const bsl::size_t pathOffset =
-                    offsetof(struct sockaddr_un, sun_path);
-                if (socketAddressSize > pathOffset) {
-                    bsl::size_t pathLength = socketAddressSize - pathOffset;
-                    bsl::string path(socketAddressLocal->sun_path, pathLength);
+    if (rc != 0) {
+        return ntsa::Error();
+    }
 
-                    if (!path.empty()) {
-                        // BSLS_LOG_TRACE("Unlinking %s", path.c_str());
-                        BOOL result = DeleteFile(path.c_str());
-                        if (result == 0) {
-                            DWORD lastError = GetLastError();
-                            if (lastError != ERROR_FILE_NOT_FOUND) {
-                                ntsa::Error error(errno);
-                                BSLS_LOG_WARN("Failed to unlink %s: %s",
-                                              path.c_str(),
-                                              error.text().c_str());
-                            }
-                        }
-                    }
-                }
+    ntsa::Endpoint endpoint;
+    error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+    if (error) {
+        return error;
+    }
+
+    if (endpoint.isLocal() && 
+        endpoint.local().isPersistent() && 
+        !endpoint.local().isUnnamed())
+    {
+        bsl::string path = endpoint.local().value();
+
+        BOOL result = DeleteFile(path.c_str());
+        if (result == 0) {
+            DWORD lastError = GetLastError();
+            if (lastError != ERROR_FILE_NOT_FOUND) {
+                ntsa::Error error(errno);
+                BSLS_LOG_WARN("Failed to unlink %s: %s",
+                              path.c_str(),
+                              error.text().c_str());
             }
         }
     }

@@ -57,7 +57,7 @@ namespace ntsa {
 /// permission model.
 ///
 ///@par Classification
-/// A local name exists in one of three, mutually exclusive classficiation:
+/// A local name exists in one of four, mutually exclusive classficiation:
 /// Named in the persistent namespace, named in the abstract namespace, or
 /// unnamed. The semantics of an unnamed local name depend on the type of
 /// operation performed with it: when given to 'bind', on some operating
@@ -94,20 +94,26 @@ namespace ntsa {
 /// An 'ntsa::LocalName' encodes to a native socket address according to the
 /// following rules:
 ///
-///     o If the local name is unnamed, the native socket address has the
-///       unnamed socket address representation. An unnamed socket address
-///       representation is treated as "unbound", "unnamed", or "autobind"
-///       depending on the context in which it is used.
+///     o If the local name is unnamed in the persistent namespace, the native
+///       socket address path is not defined. An 
+///       unnamed socket address representation is treated as "unbound", 
+///       "unnamed", or "autobind" depending on the context in which it is 
+///       used.
 ///
-///     o If the local name is in the persistent namespace, the native
-///       socket address contains the local name value followed by a single NUL
-///       byte, with the trailing NUL byte included in the native socket
-///       address size.
+///     o If the local name is named in the persistent namespace, the native
+///       socket address path contains the local name value followed by a 
+///       single NUL byte, with the trailing NUL byte included in the native
+///       socket address size.
 ///
-///     o If the local name is in the abstract namespace, the native socket
-///       address contains a leading NUL byte followed by the local name value,
-///       with socket address size including the leading NUL byte and the
-///       local name value. The native socket address is not NUL-terminated.
+///     o If the local name is unnamed in the abstract namespace, the native 
+///       socket address path contains a single leading NUL byte, with the 
+///       socket address size including the single leading NUL byte.
+///
+///     o If the local name is named in the abstract namespace, the native 
+///       socket path address contains a leading NUL byte followed by the local
+///       name value, with socket address size including the leading NUL byte
+///       and the local name value. The native socket address is not 
+///       NUL-terminated.
 ///
 ///@par Decoding
 /// An 'ntsa::LocalName' decodes from a native socket address according to the
