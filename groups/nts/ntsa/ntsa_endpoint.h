@@ -233,12 +233,12 @@ class Endpoint
     /// selected, otherwise return false.
     bool isLocal() const;
 
-    /// Return true if the endpoint *either* represents an IP address is
-    /// *not* the wildcard "any" address (i.e., '0.0.0.0:0' for IPv4
+    /// Return true if the endpoint *either* represents an IP address whose
+    /// host is *not* the wildcard "any" address (i.e., '0.0.0.0:0' for IPv4
     /// addresses, '[:0]:0' for IPv6 addresses), *or* if the endpoint
     /// represents a local name that is *not* unnamed in the persistent
     /// namespace. Otherwise, return false. Note that this function returns the
-    ///  negation of 'isImplicit()'.
+    /// negation of 'isImplicit()'.
     bool isExplicit() const;
 
     /// Return true if the endpoint *either* represents an IP address whose
