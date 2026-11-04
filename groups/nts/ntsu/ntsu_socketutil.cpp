@@ -868,138 +868,119 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
 
     endpoint->reset();
 
+    if (socketAddressSize == 0) {
+        return ntsa::Error();
+    }
+
+    const bsl::size_t familyOffset = offsetof(sockaddr_storage, ss_family);
+    const bsl::size_t familySize   = sizeof(socketAddress->ss_family);
+
+    const bsl::size_t socketAddressSizeMin = familyOffset + familySize;
+
+    if (socketAddressSize < socketAddressSizeMin) {
+        return ntsa::Error::invalid();
+    }
+
     if (socketAddress->ss_family == AF_INET) {
+        if (socketAddressSize != sizeof(sockaddr_in)) {
+            return ntsa::Error::invalid();
+        }
+
         const sockaddr_in* socketAddressIpv4 =
             reinterpret_cast<const sockaddr_in*>(socketAddress);
 
-        if (socketAddressIpv4->sin_family != AF_INET) {
+        ntsa::IpEndpoint* ipEndpoint = &endpoint->makeIp();
+
+        ntsa::Ipv4Address ipv4Address;
+        ipv4Address.copyFrom(&socketAddressIpv4->sin_addr,
+                             sizeof socketAddressIpv4->sin_addr);
+
+        ipEndpoint->setHost(ipv4Address);
+        ipEndpoint->setPort(ntohs(socketAddressIpv4->sin_port));
+    }
+    else if (socketAddress->ss_family == AF_INET6) {
+        if (socketAddressSize != sizeof(sockaddr_in6)) {
             return ntsa::Error::invalid();
         }
 
-        if (socketAddressSize != 0) {
-            if (socketAddressSize != sizeof(sockaddr_in)) {
-                return ntsa::Error::invalid();
-            }
-
-            ntsa::IpEndpoint* ipEndpoint = &endpoint->makeIp();
-
-            ntsa::Ipv4Address ipv4Address;
-            ipv4Address.copyFrom(&socketAddressIpv4->sin_addr,
-                                 sizeof socketAddressIpv4->sin_addr);
-
-            ipEndpoint->setHost(ipv4Address);
-            ipEndpoint->setPort(ntohs(socketAddressIpv4->sin_port));
-        }
-        else {
-            *endpoint =
-                ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv4Address::any(), 0));
-        }
-    }
-    else if (socketAddress->ss_family == AF_INET6) {
         const sockaddr_in6* socketAddressIpv6 =
             reinterpret_cast<const sockaddr_in6*>(socketAddress);
 
-        if (socketAddressIpv6->sin6_family != AF_INET6) {
-            return ntsa::Error::invalid();
-        }
+        ntsa::IpEndpoint* ipEndpoint = &endpoint->makeIp();
 
-        if (socketAddressSize != 0) {
-            if (socketAddressSize != sizeof(sockaddr_in6)) {
-                return ntsa::Error::invalid();
-            }
+        ntsa::Ipv6Address ipv6Address;
+        ipv6Address.copyFrom(&socketAddressIpv6->sin6_addr,
+                             sizeof socketAddressIpv6->sin6_addr);
 
-            ntsa::IpEndpoint* ipEndpoint = &endpoint->makeIp();
+        ipv6Address.setScopeId(socketAddressIpv6->sin6_scope_id);
 
-            ntsa::Ipv6Address ipv6Address;
-            ipv6Address.copyFrom(&socketAddressIpv6->sin6_addr,
-                                 sizeof socketAddressIpv6->sin6_addr);
-
-            ipv6Address.setScopeId(socketAddressIpv6->sin6_scope_id);
-
-            ipEndpoint->setHost(ipv6Address);
-            ipEndpoint->setPort(ntohs(socketAddressIpv6->sin6_port));
-        }
-        else {
-            *endpoint =
-                ntsa::Endpoint(ntsa::IpEndpoint(ntsa::Ipv6Address::any(), 0));
-        }
+        ipEndpoint->setHost(ipv6Address);
+        ipEndpoint->setPort(ntohs(socketAddressIpv6->sin6_port));
     }
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
     else if (socketAddress->ss_family == AF_UNIX) {
         const sockaddr_un* socketAddressLocal =
             reinterpret_cast<const sockaddr_un*>(socketAddress);
 
-        if (socketAddressLocal->sun_family != AF_UNIX) {
-            return ntsa::Error::invalid();
-        }
-
         ntsa::LocalName* localName = &endpoint->makeLocal();
 
-        if (socketAddressSize != 0) {
-            const bsl::size_t pathOffset =
-                offsetof(struct sockaddr_un, sun_path);
+        const bsl::size_t pathOffset =
+            offsetof(struct sockaddr_un, sun_path);
 
-            const bsl::size_t addressSize =
-                static_cast<bsl::size_t>(socketAddressSize);
+        const bsl::size_t addressSize =
+            static_cast<bsl::size_t>(socketAddressSize);
 
-            if (addressSize <= pathOffset) {
+        if (addressSize <= pathOffset) {
+            error = localName->setUnnamed();
+            if (error) {
+                return error;
+            }
+        }
+        else {
+            bsl::size_t pathSize = addressSize - pathOffset;
+            if (pathSize > sizeof(socketAddressLocal->sun_path)) {
+                return ntsa::Error::invalid();
+            }
+
+            const char* begin = socketAddressLocal->sun_path;
+            const char* end   = begin + pathSize;
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+            if (*begin == 0) {
+                error = localName->setAbstract();
+                if (error) {
+                    return error;
+                }
+                ++begin;
+            }
+#endif
+
+            const char* current = begin;
+            while (current != end) {
+                if (*current == 0) {
+                    if (localName->isAbstract()) {
+                        return ntsa::Error(ntsa::Error::e_INVALID);
+                    }
+                    else {
+                        break;
+                    }
+                }
+                ++current;
+            }
+
+            end = current;
+
+            if (begin == end) {
                 error = localName->setUnnamed();
                 if (error) {
                     return error;
                 }
             }
             else {
-                bsl::size_t pathSize = addressSize - pathOffset;
-                if (pathSize > sizeof(socketAddressLocal->sun_path)) {
-                    return ntsa::Error::invalid();
+                error = localName->setValue(bslstl::StringRef(begin, end));
+                if (error) {
+                    return error;
                 }
-
-                const char* begin = socketAddressLocal->sun_path;
-                const char* end   = begin + pathSize;
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-                if (*begin == 0) {
-                    error = localName->setAbstract();
-                    if (error) {
-                        return error;
-                    }
-                    ++begin;
-                }
-#endif
-
-                const char* current = begin;
-                while (current != end) {
-                    if (*current == 0) {
-                        if (localName->isAbstract()) {
-                            return ntsa::Error(ntsa::Error::e_INVALID);
-                        }
-                        else {
-                            break;
-                        }
-                    }
-                    ++current;
-                }
-
-                end = current;
-
-                if (begin == end) {
-                    error = localName->setUnnamed();
-                    if (error) {
-                        return error;
-                    }
-                }
-                else {
-                    error = localName->setValue(bslstl::StringRef(begin, end));
-                    if (error) {
-                        return error;
-                    }
-                }
-            }
-        }
-        else {
-            error = localName->setUnnamed();
-            if (error) {
-                return error;
             }
         }
     }
@@ -2836,7 +2817,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint) {
+    if (wantEndpoint && msg.msg_namelen > 0) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -2916,7 +2897,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint) {
+    if (wantEndpoint && msg.msg_namelen > 0) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -2992,7 +2973,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint) {
+    if (wantEndpoint && msg.msg_namelen > 0) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -3071,7 +3052,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint) {
+    if (wantEndpoint && msg.msg_namelen > 0) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -3150,7 +3131,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint) {
+    if (wantEndpoint && msg.msg_namelen > 0) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -3243,7 +3224,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint) {
+    if (wantEndpoint && msg.msg_namelen > 0) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -3345,7 +3326,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint) {
+    if (wantEndpoint && msg.msg_namelen > 0) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -3425,7 +3406,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         return ntsa::Error(errno);
     }
 
-    if (wantEndpoint) {
+    if (wantEndpoint && msg.msg_namelen > 0) {
         ntsa::Endpoint endpoint;
         error = Impl::convert(
             &endpoint,
@@ -7076,6 +7057,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     if (capacity == 0) {
@@ -7114,15 +7097,14 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        ntsa::Endpoint endpoint;
-        ntsa::Error    endpointError =
-            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (endpointError) {
-            endpointError =
-                ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
-        }
+        if (socketAddressSize > 0) {
+            ntsa::Endpoint endpoint;
+            error = Impl::convert(
+                &endpoint, &socketAddress, socketAddressSize);
+            if (error) {
+                return error;
+            }
 
-        if (!endpoint.isUndefined()) {
             context->setEndpoint(endpoint);
         }
 
@@ -7156,6 +7138,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     bsl::size_t capacity = buffer->size();
@@ -7191,15 +7175,14 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        ntsa::Endpoint endpoint;
-        ntsa::Error    endpointError =
-            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (endpointError) {
-            endpointError =
-                ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
-        }
+        if (socketAddressSize > 0) {
+            ntsa::Endpoint endpoint;
+            error = Impl::convert(
+                &endpoint, &socketAddress, socketAddressSize);
+            if (error) {
+                return error;
+            }
 
-        if (!endpoint.isUndefined()) {
             context->setEndpoint(endpoint);
         }
 
@@ -7235,6 +7218,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     bsl::size_t capacity =
@@ -7271,15 +7256,14 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        ntsa::Endpoint endpoint;
-        ntsa::Error    endpointError =
-            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (endpointError) {
-            endpointError =
-                ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
-        }
+        if (socketAddressSize > 0) {
+            ntsa::Endpoint endpoint;
+            error = Impl::convert(
+                &endpoint, &socketAddress, socketAddressSize);
+            if (error) {
+                return error;
+            }
 
-        if (!endpoint.isUndefined()) {
             context->setEndpoint(endpoint);
         }
 
@@ -7314,6 +7298,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     bsl::size_t numBuffersTotal = bufferArray->numBuffers();
@@ -7354,15 +7340,14 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        ntsa::Endpoint endpoint;
-        ntsa::Error    endpointError =
-            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (endpointError) {
-            endpointError =
-                ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
-        }
+        if (socketAddressSize > 0) {
+            ntsa::Endpoint endpoint;
+            error = Impl::convert(
+                &endpoint, &socketAddress, socketAddressSize);
+            if (error) {
+                return error;
+            }
 
-        if (!endpoint.isUndefined()) {
             context->setEndpoint(endpoint);
         }
 
@@ -7398,6 +7383,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
                                 const ntsa::ReceiveOptions&  options,
                                 ntsa::Handle                 socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     bsl::size_t numBuffersTotal = bufferArray->numBuffers();
@@ -7438,15 +7425,14 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        ntsa::Endpoint endpoint;
-        ntsa::Error    endpointError =
-            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (endpointError) {
-            endpointError =
-                ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
-        }
+        if (socketAddressSize > 0) {
+            ntsa::Endpoint endpoint;
+            error = Impl::convert(
+                &endpoint, &socketAddress, socketAddressSize);
+            if (error) {
+                return error;
+            }
 
-        if (!endpoint.isUndefined()) {
             context->setEndpoint(endpoint);
         }
 
@@ -7482,6 +7468,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     const bsl::size_t originalSize     = string->size();
@@ -7536,15 +7524,14 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        ntsa::Endpoint endpoint;
-        ntsa::Error    endpointError =
-            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (endpointError) {
-            endpointError =
-                ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
-        }
+        if (socketAddressSize > 0) {
+            ntsa::Endpoint endpoint;
+            error = Impl::convert(
+                &endpoint, &socketAddress, socketAddressSize);
+            if (error) {
+                return error;
+            }
 
-        if (!endpoint.isUndefined()) {
             context->setEndpoint(endpoint);
         }
 
@@ -7581,6 +7568,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     bsl::size_t numBytesMax = options.maxBytes();
@@ -7643,15 +7632,14 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        ntsa::Endpoint endpoint;
-        ntsa::Error    endpointError =
-            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (endpointError) {
-            endpointError =
-                ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
-        }
+        if (socketAddressSize > 0) {
+            ntsa::Endpoint endpoint;
+            error = Impl::convert(
+                &endpoint, &socketAddress, socketAddressSize);
+            if (error) {
+                return error;
+            }
 
-        if (!endpoint.isUndefined()) {
             context->setEndpoint(endpoint);
         }
 
@@ -7689,6 +7677,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     bsl::size_t capacity = blobBuffer->size();
@@ -7730,15 +7720,14 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
             return ntsa::Error(WSAGetLastError());
         }
 
-        ntsa::Endpoint endpoint;
-        ntsa::Error    endpointError =
-            Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (endpointError) {
-            endpointError =
-                ntsu::SocketUtil::remoteEndpoint(&endpoint, socket);
-        }
+        if (socketAddressSize > 0) {
+            ntsa::Endpoint endpoint;
+            error = Impl::convert(
+                &endpoint, &socketAddress, socketAddressSize);
+            if (error) {
+                return error;
+            }
 
-        if (!endpoint.isUndefined()) {
             context->setEndpoint(endpoint);
         }
 

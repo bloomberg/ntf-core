@@ -52,12 +52,16 @@ BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
 #endif
 // clang-format off
 #include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <ws2def.h>
 // clang-format on
 #endif
 
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <netinet/in.h>
 #if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
 #include <sys/un.h>
 #endif
@@ -479,28 +483,41 @@ class SocketUtilTest
     // socket whose peer has already closed the connection.
     static void verifyListenerSocketAcceptingClosedConnections();
 
-    // Verify endpoint encoding of a Unix domain socket correctly defines the
-    // socket address structure and length according to the 'ntsa::LocalName'
-    // encoding rules.
+    // Verify encoding of a IPv4 endpoint correctly defines the IPv4
+    // socket address structure.
+    static void verifyEncodeEndpointIpv4();
+
+    // Verify decoding of an IPv4 socket address.
+    static void verifyDecodeEndpointIpv4();
+
+    // Verify encoding of a IPv6 endpoint correctly defines the IPv6
+    // socket address structure.
+    static void verifyEncodeEndpointIpv6();
+
+    // Verify decoding of an IPv6 socket address.
+    static void verifyDecodeEndpointIpv6();
+
+    // Verify encoding of a local name endpoint correctly defines the Unix
+    // domain socket address.
     static void verifyEncodeEndpointLocal();
 
-    // Verify endpoint decoding of a Unix domain socket correctly round-trips
-    // according to the 'ntsa::LocalName' decoding rules.
+    // Verify decoding of a Unix domain socket address.
     static void verifyDecodeEndpointLocal();
 
-    // Verify platform behavior for Unix domain sockets.
-    static void verifyDecodeEndpointLocalPlatformBehavior();
-
-    // Verify endpoint decoding of a Unix domain socket name bounds the scan of
+    // Verify decoding of a Unix domain socket name bounds the scan of
     // 'sun_path' by the specified address size and does not depend on a null
     // terminator.
     static void verifyDecodeEndpointLocalUnterminated();
 
-    // Verify endpoint decoding of a persistent Unix domain socket name
-    // truncates the name after the first NUL. Verify decoding of an abstract
-    // Unix domain socket name with any embedded NULs (after the first byte,
-    // indicating the abstract namespace) fails.
+    // Verify decoding of a Unix domain socket address whose name is in the
+    // persistent namespace truncates the name after the first NUL. Verify
+    // decoding fails for a Unix domain socket adress whose name is in the
+    // abstract namespace and has any embedded NULs (after the first byte,
+    // indicating the abstract namespace).
     static void verifyDecodeEndpointLocalEmbeddedNulls();
+
+    // Verify platform behavior for Unix domain sockets.
+    static void verifyDecodeEndpointLocalPlatformBehavior();
 };
 
 /// Describe the parameters of the test.
@@ -9303,6 +9320,226 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyIsSocket)
     }
 }
 
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointIpv4)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    ntsa::Error error;
+    int         rc;
+
+    const char sentinel = static_cast<char>(0xAA);
+
+    struct sockaddr_storage socketAddress;
+    bsl::memset(&socketAddress,
+                static_cast<int>(sentinel),
+                sizeof socketAddress);
+
+    bsl::size_t socketAddressSize = sizeof socketAddress;
+
+    ntsa::Ipv4Endpoint ipv4Endpoint;
+    ipv4Endpoint.setHost(ntsa::Ipv4Address::loopback());
+    ipv4Endpoint.setPort(80);
+
+    ntsa::Endpoint endpoint(ipv4Endpoint);
+
+    NTSCFG_TEST_TRUE(endpoint.isExplicit());
+
+    error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                             &socketAddressSize,
+                                             endpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_EQ(socketAddressSize, sizeof(struct sockaddr_in));
+
+    struct sockaddr_in *socketAddressIpv4 =
+        reinterpret_cast<struct sockaddr_in*>(&socketAddress);
+
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_family, AF_INET);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_len, socketAddressSize);
+#endif
+
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_addr.s_addr,
+                   htonl(INADDR_LOOPBACK));
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_port,
+                   htons(80));
+
+    bsl::uint8_t zero[sizeof socketAddressIpv4->sin_zero];
+    bsl::memset(zero, 0, sizeof zero);
+
+    rc = bsl::memcmp(socketAddressIpv4->sin_zero, zero, sizeof zero);
+    NTSCFG_TEST_EQ(rc, 0);
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointIpv4)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    ntsa::Error error;
+    int         rc;
+
+    const char sentinel = static_cast<char>(0xAA);
+
+    struct sockaddr_storage socketAddress;
+    bsl::memset(&socketAddress,
+                static_cast<int>(sentinel),
+                sizeof socketAddress);
+
+    bsl::size_t socketAddressSize = sizeof socketAddress;
+
+    ntsa::Ipv4Endpoint ipv4Endpoint;
+    ipv4Endpoint.setHost(ntsa::Ipv4Address::loopback());
+    ipv4Endpoint.setPort(80);
+
+    ntsa::Endpoint endpoint1(ipv4Endpoint);
+
+    NTSCFG_TEST_TRUE(endpoint1.isExplicit());
+
+    error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                             &socketAddressSize,
+                                             endpoint1);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_EQ(socketAddressSize, sizeof(struct sockaddr_in));
+
+    struct sockaddr_in *socketAddressIpv4 =
+        reinterpret_cast<struct sockaddr_in*>(&socketAddress);
+
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_family, AF_INET);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_len, socketAddressSize);
+#endif
+
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_addr.s_addr,
+                   htonl(INADDR_LOOPBACK));
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_port,
+                   htons(80));
+
+    bsl::uint8_t zero[sizeof socketAddressIpv4->sin_zero];
+    bsl::memset(zero, 0, sizeof zero);
+
+    rc = bsl::memcmp(socketAddressIpv4->sin_zero, zero, sizeof zero);
+    NTSCFG_TEST_EQ(rc, 0);
+
+    ntsa::Endpoint endpoint2;
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                             &socketAddress,
+                                             socketAddressSize);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(endpoint2, endpoint1);
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointIpv6)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    ntsa::Error error;
+    int         rc;
+
+    const char sentinel = static_cast<char>(0xAA);
+
+    struct sockaddr_storage socketAddress;
+    bsl::memset(&socketAddress,
+                static_cast<int>(sentinel),
+                sizeof socketAddress);
+
+    bsl::size_t socketAddressSize = sizeof socketAddress;
+
+    ntsa::Ipv6Address ipv6Address = ntsa::Ipv6Address::loopback();
+    ipv6Address.setScopeId(3);
+
+    ntsa::Ipv6Endpoint ipv6Endpoint;
+    ipv6Endpoint.setHost(ipv6Address);
+    ipv6Endpoint.setPort(80);
+
+    ntsa::Endpoint endpoint(ipv6Endpoint);
+
+    NTSCFG_TEST_TRUE(endpoint.isExplicit());
+
+    error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                             &socketAddressSize,
+                                             endpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_EQ(socketAddressSize, sizeof(struct sockaddr_in6));
+
+    struct sockaddr_in6 *socketAddressIpv6 =
+        reinterpret_cast<struct sockaddr_in6*>(&socketAddress);
+
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_family, AF_INET6);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_len, socketAddressSize);
+#endif
+
+    rc = bsl::memcmp(&socketAddressIpv6->sin6_addr,
+                     &in6addr_loopback,
+                     sizeof socketAddressIpv6->sin6_addr);
+    NTSCFG_TEST_EQ(rc, 0);
+
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_port, htons(80));
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_scope_id, 3);
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_flowinfo, 0);
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointIpv6)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    ntsa::Error error;
+    int         rc;
+
+    const char sentinel = static_cast<char>(0xAA);
+
+    struct sockaddr_storage socketAddress;
+    bsl::memset(&socketAddress,
+                static_cast<int>(sentinel),
+                sizeof socketAddress);
+
+    bsl::size_t socketAddressSize = sizeof socketAddress;
+
+    ntsa::Ipv6Address ipv6Address = ntsa::Ipv6Address::loopback();
+    ipv6Address.setScopeId(3);
+
+    ntsa::Ipv6Endpoint ipv6Endpoint;
+    ipv6Endpoint.setHost(ipv6Address);
+    ipv6Endpoint.setPort(80);
+
+    ntsa::Endpoint endpoint1(ipv6Endpoint);
+
+    NTSCFG_TEST_TRUE(endpoint1.isExplicit());
+
+    error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                             &socketAddressSize,
+                                             endpoint1);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_EQ(socketAddressSize, sizeof(struct sockaddr_in6));
+
+    struct sockaddr_in6 *socketAddressIpv6 =
+        reinterpret_cast<struct sockaddr_in6*>(&socketAddress);
+
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_family, AF_INET6);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_len, socketAddressSize);
+#endif
+
+    rc = bsl::memcmp(&socketAddressIpv6->sin6_addr,
+                     &in6addr_loopback,
+                     sizeof socketAddressIpv6->sin6_addr);
+    NTSCFG_TEST_EQ(rc, 0);
+
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_port, htons(80));
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_scope_id, 3);
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_flowinfo, 0);
+
+    ntsa::Endpoint endpoint2;
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                             &socketAddress,
+                                             socketAddressSize);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(endpoint2, endpoint1);
+#endif
+}
+
 NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
 {
 #if defined(BSLS_PLATFORM_OS_UNIX)
@@ -9744,6 +9981,177 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointLocal)
 }
 
 NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnterminated)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: decodeEndpoint bounds the scan of 'sun_path' by the specified
+    // address size and does not depend on a null terminator.
+
+    // Fill well past the end of the address with non-null bytes so a read
+    // beyond the stated length changes the result. Terminate at the very end
+    // so the old unbounded scan stays inside this buffer.
+
+    const bsl::size_t pathOffset = offsetof(struct sockaddr_un, sun_path);
+
+    union {
+        sockaddr_un un;
+        char        raw[512];
+    } address;
+
+    ntsa::Endpoint endpoint;
+    ntsa::Error    error;
+
+    // Pathname, unterminated: "abc" followed by 'x' bytes.
+    bsl::memset(&address, 'x', sizeof address);
+    address.raw[sizeof address - 1] = 0;
+    address.un.sun_family = AF_UNIX;
+    bsl::memcpy(address.un.sun_path, "abc", 3);
+
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                             &address,
+                                             pathOffset + 3);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_TRUE(endpoint.isLocal());
+    NTSCFG_TEST_FALSE(endpoint.local().isAbstract());
+    NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    // Abstract: leading NUL, "abc", followed by 'x' bytes.
+    bsl::memset(&address, 'x', sizeof address);
+    address.raw[sizeof address - 1] = 0;
+    address.un.sun_family = AF_UNIX;
+    address.un.sun_path[0] = 0;
+    bsl::memcpy(address.un.sun_path + 1, "abc", 3);
+
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                             &address,
+                                             pathOffset + 4);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_TRUE(endpoint.local().isAbstract());
+    NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+#endif
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalEmbeddedNulls)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: Endpoint decoding of a Unix domain socket names in the
+    // persistent namespace with embedded NULs truncates the name after the
+    // first NUL.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 'a';
+        un.sun_path[1] = 'b';
+        un.sun_path[2] = 'c';
+        un.sun_path[3] = 0;
+        un.sun_path[4] = 'x';
+
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 5;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            addressLength);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
+        NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+    }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    // Concern: Endpoint decoding of a Unix domain socket names in the
+    // abstract namespace with embedded NULs (not including the first NUL which
+    // indicates the abstract namespace) fails.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 0;
+        un.sun_path[1] = 0;
+
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 2;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            addressLength);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    }
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 0;
+        un.sun_path[1] = 0;
+        un.sun_path[2] = 'a';
+        un.sun_path[3] = 'b';
+        un.sun_path[4] = 'd';
+        un.sun_path[5] = 'e';
+
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 6;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            addressLength);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    }
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 0;
+        un.sun_path[1] = 'a';
+        un.sun_path[2] = 'b';
+        un.sun_path[3] = 'c';
+        un.sun_path[4] = 0;
+        un.sun_path[5] = 'x';
+
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 6;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            addressLength);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    }
+#endif
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
     ntsu::SocketUtilTest::verifyDecodeEndpointLocalPlatformBehavior)
 {
 #if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_LINUX)
@@ -9863,6 +10271,9 @@ NTSCFG_TEST_FUNCTION(
             if (temporaryFilePathLength + numNullTerminators >
                 socketAddressLocalPathCapacity)
             {
+                // Skip tests if the current temporary directory results in a
+                // Unix domain socket having a path longer than the capacity of
+                // 'sockaddr_un::sun_path'.
                 continue;
             }
 
@@ -10181,178 +10592,6 @@ NTSCFG_TEST_FUNCTION(
         }
     }
 
-#endif
-#endif
-}
-
-NTSCFG_TEST_FUNCTION(
-    ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnterminated)
-{
-#if defined(BSLS_PLATFORM_OS_UNIX)
-#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
-    // Concern: decodeEndpoint bounds the scan of 'sun_path' by the specified
-    // address size and does not depend on a null terminator.
-
-    // Fill well past the end of the address with non-null bytes so a read
-    // beyond the stated length changes the result. Terminate at the very end
-    // so the old unbounded scan stays inside this buffer.
-
-    const bsl::size_t pathOffset = offsetof(struct sockaddr_un, sun_path);
-
-    union {
-        sockaddr_un un;
-        char        raw[512];
-    } address;
-
-    ntsa::Endpoint endpoint;
-    ntsa::Error    error;
-
-    // Pathname, unterminated: "abc" followed by 'x' bytes.
-    bsl::memset(&address, 'x', sizeof address);
-    address.raw[sizeof address - 1] = 0;
-    address.un.sun_family = AF_UNIX;
-    bsl::memcpy(address.un.sun_path, "abc", 3);
-
-    error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
-                                             &address,
-                                             pathOffset + 3);
-    NTSCFG_TEST_OK(error);
-    NTSCFG_TEST_TRUE(endpoint.isLocal());
-    NTSCFG_TEST_FALSE(endpoint.local().isAbstract());
-    NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    // Abstract: leading NUL, "abc", followed by 'x' bytes.
-    bsl::memset(&address, 'x', sizeof address);
-    address.raw[sizeof address - 1] = 0;
-    address.un.sun_family = AF_UNIX;
-    address.un.sun_path[0] = 0;
-    bsl::memcpy(address.un.sun_path + 1, "abc", 3);
-
-    error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
-                                             &address,
-                                             pathOffset + 4);
-    NTSCFG_TEST_OK(error);
-    NTSCFG_TEST_TRUE(endpoint.local().isAbstract());
-    NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
-#endif
-#endif
-#endif
-}
-
-NTSCFG_TEST_FUNCTION(
-    ntsu::SocketUtilTest::verifyDecodeEndpointLocalEmbeddedNulls)
-{
-#if defined(BSLS_PLATFORM_OS_UNIX)
-#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
-    // Concern: Endpoint decoding of a Unix domain socket names in the
-    // persistent namespace with embedded NULs truncates the name after the
-    // first NUL.
-
-    {
-        ntsa::Endpoint endpoint;
-        ntsa::Error    error;
-
-        sockaddr_un un;
-        bsl::memset(&un, 0, sizeof un);
-
-        un.sun_family = AF_UNIX;
-        un.sun_path[0] = 'a';
-        un.sun_path[1] = 'b';
-        un.sun_path[2] = 'c';
-        un.sun_path[3] = 0;
-        un.sun_path[4] = 'x';
-
-        const bsl::size_t addressLength =
-            offsetof(struct sockaddr_un, sun_path) + 5;
-
-        error = ntsu::SocketUtil::decodeEndpoint(
-            &endpoint,
-            &un,
-            addressLength);
-        NTSCFG_TEST_OK(error);
-
-        NTSCFG_TEST_OK(error);
-        NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
-        NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
-    }
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-    // Concern: Endpoint decoding of a Unix domain socket names in the
-    // abstract namespace with embedded NULs (not including the first NUL which
-    // indicates the abstract namespace) fails.
-
-    {
-        ntsa::Endpoint endpoint;
-        ntsa::Error    error;
-
-        sockaddr_un un;
-        bsl::memset(&un, 0, sizeof un);
-
-        un.sun_family = AF_UNIX;
-        un.sun_path[0] = 0;
-        un.sun_path[1] = 0;
-
-        const bsl::size_t addressLength =
-            offsetof(struct sockaddr_un, sun_path) + 2;
-
-        error = ntsu::SocketUtil::decodeEndpoint(
-            &endpoint,
-            &un,
-            addressLength);
-        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-    }
-
-    {
-        ntsa::Endpoint endpoint;
-        ntsa::Error    error;
-
-        sockaddr_un un;
-        bsl::memset(&un, 0, sizeof un);
-
-        un.sun_family = AF_UNIX;
-        un.sun_path[0] = 0;
-        un.sun_path[1] = 0;
-        un.sun_path[2] = 'a';
-        un.sun_path[3] = 'b';
-        un.sun_path[4] = 'd';
-        un.sun_path[5] = 'e';
-
-        const bsl::size_t addressLength =
-            offsetof(struct sockaddr_un, sun_path) + 6;
-
-        error = ntsu::SocketUtil::decodeEndpoint(
-            &endpoint,
-            &un,
-            addressLength);
-        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-    }
-
-    {
-        ntsa::Endpoint endpoint;
-        ntsa::Error    error;
-
-        sockaddr_un un;
-        bsl::memset(&un, 0, sizeof un);
-
-        un.sun_family = AF_UNIX;
-        un.sun_path[0] = 0;
-        un.sun_path[1] = 'a';
-        un.sun_path[2] = 'b';
-        un.sun_path[3] = 'c';
-        un.sun_path[4] = 0;
-        un.sun_path[5] = 'x';
-
-        const bsl::size_t addressLength =
-            offsetof(struct sockaddr_un, sun_path) + 6;
-
-        error = ntsu::SocketUtil::decodeEndpoint(
-            &endpoint,
-            &un,
-            addressLength);
-        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
-    }
-#endif
 #endif
 #endif
 }

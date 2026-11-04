@@ -151,9 +151,7 @@ ntsa::Error LocalName::setValue(const bslstl::StringRef& value)
 {
     const bsl::size_t size = value.size();
 
-    if (size > (ntsa::LocalName::k_MAX_PATH_LENGTH -
-                static_cast<unsigned>(d_abstract)))
-    {
+    if (size > static_cast<bsl::size_t>(ntsa::LocalName::k_MAX_PATH_LENGTH)) {
         bsl::string path = value;
         BSLS_LOG_WARN(
             "Unix domain socket name '%s' length %d exceeds maximum length %d",

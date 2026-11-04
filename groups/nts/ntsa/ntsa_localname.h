@@ -104,13 +104,15 @@ namespace ntsa {
 /// following rules:
 ///
 ///     o If no bytes of the native socket address path component are included
-///       in the address size, the address is considered unnamed.
+///       in the address size, the address is considered unnamed in the
+///       persistent namespace.
 ///
 ///     o If the first byte of the native socket address path component is NUL,
-///       the name is considered abstract. The native socket address path
-///       component is scanned up to the last byte indicated by the socket
-///       address size. If any byte other than the first byte in the native
-///       socket address path component is NUL, decoding fails.
+///       the name is considered abstract. If the abstract namespace is not
+///       supported on the current platform, decoding fails. The native socket
+///       address path component is scanned up to the last byte indicated by
+///       the socket address size. If any byte other than the first byte in the
+///       native socket address path component is NUL, decoding fails.
 ///
 ///     o If the first byte of the native socket address path component is not
 ///       NUL, the name is considered persistent. The native socket address
@@ -119,7 +121,8 @@ namespace ntsa {
 ///       NUL byte are ignored.
 ///
 ///     o If the resulting local name value is "empty", the local name is
-///       considered unnamed.
+///       considered unnamed, retaining the namespace indicated by the first
+///       byte.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -191,7 +194,7 @@ class LocalName
     /// local domain.
     ntsa::Error setPersistent();
 
-    /// Set the local name to be unnamed, with no affect on the namespace.
+    /// Set the local name to be unnamed, with no effect on the namespace.
     /// Return the error.
     ntsa::Error setUnnamed();
 
