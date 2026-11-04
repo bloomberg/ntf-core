@@ -164,7 +164,7 @@ bool Endpoint::isExplicit() const
         }
     }
     else if (d_type == ntsa::EndpointType::e_LOCAL) {
-        if (d_local.object().isUnnamed()) {
+        if (d_local.object().isUnnamed() && d_local.object().isPersistent()) {
             return false;
         }
     }

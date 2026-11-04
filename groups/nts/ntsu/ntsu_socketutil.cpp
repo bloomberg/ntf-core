@@ -1077,7 +1077,7 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
             reinterpret_cast<sockaddr_un*>(socketAddress);
 
         socketAddressLocal->sun_family = AF_UNIX;
-        
+
         bsl::size_t offset = 0;
 
         if (endpoint.local().isAbstract()) {
@@ -1091,7 +1091,7 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
             bsl::memcpy(&socketAddressLocal->sun_path[offset],
                         value.data(),
                         value.size());
-                        
+
             offset += value.size();
 
             if (endpoint.local().isPersistent()) {
@@ -1272,11 +1272,13 @@ ntsa::Error SocketUtil::bind(const ntsa::Endpoint& endpoint,
         if (!endpoint.local().isUnnamed() && !endpoint.local().isAbstract()) {
             bsl::string path = endpoint.local().value();
             int         rc   = ::unlink(path.c_str());
-            if (rc != 0 && errno != ENOENT) {
-                ntsa::Error error(errno);
-                BSLS_LOG_WARN("Failed to unlink %s: %s",
-                              path.c_str(),
-                              error.text().c_str());
+            if (rc != 0) {
+                int lastError = errno;
+                if (lastError != ENOENT) {
+                    BSLS_LOG_WARN("Failed to unlink '%s': %s",
+                                  path.c_str(),
+                                  ntsa::Error(lastError).text().c_str());
+                }
             }
         }
     }
@@ -2784,6 +2786,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     const bool wantEndpoint = options.wantEndpoint();
@@ -2834,9 +2838,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        Impl::convert(&endpoint,
-                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-                      msg.msg_namelen);
+        error = Impl::convert(
+            &endpoint,
+            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+            msg.msg_namelen);
+        if (error) {
+            return error;
+        }
 
         context->setEndpoint(endpoint);
     }
@@ -2855,6 +2863,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     const bool wantEndpoint = options.wantEndpoint();
@@ -2908,9 +2918,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        Impl::convert(&endpoint,
-                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-                      msg.msg_namelen);
+        error = Impl::convert(
+            &endpoint,
+            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+            msg.msg_namelen);
+        if (error) {
+            return error;
+        }
 
         context->setEndpoint(endpoint);
     }
@@ -2930,6 +2944,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     const bool wantEndpoint = options.wantEndpoint();
@@ -2978,9 +2994,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        Impl::convert(&endpoint,
-                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-                      msg.msg_namelen);
+        error = Impl::convert(
+            &endpoint,
+            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+            msg.msg_namelen);
+        if (error) {
+            return error;
+        }
 
         context->setEndpoint(endpoint);
     }
@@ -2999,6 +3019,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     const bool wantEndpoint = options.wantEndpoint();
@@ -3051,9 +3073,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        Impl::convert(&endpoint,
-                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-                      msg.msg_namelen);
+        error = Impl::convert(
+            &endpoint,
+            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+            msg.msg_namelen);
+        if (error) {
+            return error;
+        }
 
         context->setEndpoint(endpoint);
     }
@@ -3072,6 +3098,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
                                 const ntsa::ReceiveOptions&  options,
                                 ntsa::Handle                 socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     const bool wantEndpoint = options.wantEndpoint();
@@ -3124,9 +3152,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        Impl::convert(&endpoint,
-                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-                      msg.msg_namelen);
+        error = Impl::convert(
+            &endpoint,
+            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+            msg.msg_namelen);
+        if (error) {
+            return error;
+        }
 
         context->setEndpoint(endpoint);
     }
@@ -3145,6 +3177,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     const bool wantEndpoint = options.wantEndpoint();
@@ -3211,9 +3245,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        Impl::convert(&endpoint,
-                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-                      msg.msg_namelen);
+        error = Impl::convert(
+            &endpoint,
+            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+            msg.msg_namelen);
+        if (error) {
+            return error;
+        }
 
         context->setEndpoint(endpoint);
     }
@@ -3233,6 +3271,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     const bool wantEndpoint = options.wantEndpoint();
@@ -3307,9 +3347,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        Impl::convert(&endpoint,
-                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-                      msg.msg_namelen);
+        error = Impl::convert(
+            &endpoint,
+            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+            msg.msg_namelen);
+        if (error) {
+            return error;
+        }
 
         context->setEndpoint(endpoint);
     }
@@ -3329,6 +3373,8 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
                                 const ntsa::ReceiveOptions& options,
                                 ntsa::Handle                socket)
 {
+    ntsa::Error error;
+
     context->reset();
 
     const bool wantEndpoint = options.wantEndpoint();
@@ -3381,9 +3427,13 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        Impl::convert(&endpoint,
-                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-                      msg.msg_namelen);
+        error = Impl::convert(
+            &endpoint,
+            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+            msg.msg_namelen);
+        if (error) {
+            return error;
+        }
 
         context->setEndpoint(endpoint);
     }
@@ -3459,6 +3509,8 @@ ntsa::Error SocketUtil::receiveFromMultiple(bsl::size_t* numBytesReceivable,
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #if defined(BSLS_PLATFORM_OS_LINUX) &&                                        \
     ((__GLIBC__ >= 3) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 17))
+    ntsa::Error error;
+
     *numBytesReceived = 0;
 
     if (numBytesReceivable) {
@@ -3545,9 +3597,13 @@ ntsa::Error SocketUtil::receiveFromMultiple(bsl::size_t* numBytesReceivable,
         msghdr& msg = mmsg[mmsgIndex].msg_hdr;
 
         ntsa::Endpoint endpoint;
-        Impl::convert(&endpoint,
-                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-                      msg.msg_namelen);
+        error = Impl::convert(
+            &endpoint,
+            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+            msg.msg_namelen);
+        if (error) {
+            return error;
+        }
 
         messages[mmsgIndex].setEndpoint(endpoint);
         messages[mmsgIndex].setSize(
@@ -3784,25 +3840,29 @@ ntsa::Error SocketUtil::unlink(ntsa::Handle socket)
         return ntsa::Error();
     }
 
-    ntsa::Endpoint endpoint;
-    error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-    if (error) {
-        return error;
-    }
+    if (socketAddress.ss_family == AF_UNIX) {
+        ntsa::Endpoint endpoint;
+        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+        if (error) {
+            return error;
+        }
 
-    if (endpoint.isLocal() && 
-        endpoint.local().isPersistent() && 
-        !endpoint.local().isUnnamed())
-    {
-        bsl::string path = endpoint.local().value();
+        if (endpoint.isLocal() &&
+            endpoint.local().isPersistent() &&
+            !endpoint.local().isUnnamed())
+        {
+            bsl::string path = endpoint.local().value();
 
-        rc = ::unlink(path.c_str());
-        if (rc != 0 && errno != ENOENT) {
-            ntsa::Error error(errno);
-            BSLS_LOG_WARN("Failed to unlink %s: %s",
-                          path.c_str(),
-                          error.text().c_str());
-        }   
+            rc = ::unlink(path.c_str());
+            if (rc != 0) {
+                int lastError = errno;
+                if (lastError != ENOENT) {
+                    BSLS_LOG_WARN("Failed to unlink '%s': %s",
+                                  path.c_str(),
+                                  ntsa::Error(lastError).text().c_str());
+                }
+            }
+        }
     }
 
     return ntsa::Error();
@@ -3891,6 +3951,8 @@ ntsa::Error SocketUtil::close(ntsa::Handle socket)
 ntsa::Error SocketUtil::sourceEndpoint(ntsa::Endpoint* result,
                                        ntsa::Handle    socket)
 {
+    ntsa::Error error;
+
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
@@ -3903,8 +3965,7 @@ ntsa::Error SocketUtil::sourceEndpoint(ntsa::Endpoint* result,
         return ntsa::Error(errno);
     }
 
-    ntsa::Error error =
-        Impl::convert(result, &socketAddress, socketAddressSize);
+    error = Impl::convert(result, &socketAddress, socketAddressSize);
     if (error) {
         return error;
     }
@@ -3927,6 +3988,8 @@ ntsa::Error SocketUtil::sourceEndpoint(ntsa::Endpoint* result,
 ntsa::Error SocketUtil::remoteEndpoint(ntsa::Endpoint* result,
                                        ntsa::Handle    socket)
 {
+    ntsa::Error error;
+
     sockaddr_storage socketAddress;
     socklen_t        socketAddressSize;
 
@@ -3939,8 +4002,7 @@ ntsa::Error SocketUtil::remoteEndpoint(ntsa::Endpoint* result,
         return ntsa::Error(errno);
     }
 
-    ntsa::Error error =
-        Impl::convert(result, &socketAddress, socketAddressSize);
+    error = Impl::convert(result, &socketAddress, socketAddressSize);
     if (error) {
         return error;
     }
@@ -5585,10 +5647,9 @@ ntsa::Error SocketUtil::bind(const ntsa::Endpoint& endpoint,
             if (rc == 0) {
                 DWORD lastError = GetLastError();
                 if (lastError != ERROR_FILE_NOT_FOUND) {
-                    ntsa::Error error(errno);
-                    BSLS_LOG_WARN("Failed to unlink %s: %s",
+                    BSLS_LOG_WARN("Failed to unlink '%s': %s",
                                   path.c_str(),
-                                  error.text().c_str());
+                                  ntsa::Error(lastError).text().c_str());
                 }
             }
         }
@@ -7819,7 +7880,8 @@ ntsa::Error SocketUtil::unlink(ntsa::Handle socket)
     // Unlink 'socket' as in the Unix implementation, but call 'DeleteFile'
     // instead of 'unlink'.
 
-    int rc;
+    ntsa::Error error;
+    int         rc;
 
     if (socket == ntsa::k_INVALID_HANDLE) {
         return ntsa::Error();
@@ -7838,26 +7900,27 @@ ntsa::Error SocketUtil::unlink(ntsa::Handle socket)
         return ntsa::Error();
     }
 
-    ntsa::Endpoint endpoint;
-    error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-    if (error) {
-        return error;
-    }
+    if (socketAddress.ss_family == AF_UNIX) {
+        ntsa::Endpoint endpoint;
+        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
+        if (error) {
+            return error;
+        }
 
-    if (endpoint.isLocal() && 
-        endpoint.local().isPersistent() && 
-        !endpoint.local().isUnnamed())
-    {
-        bsl::string path = endpoint.local().value();
+        if (endpoint.isLocal() &&
+            endpoint.local().isPersistent() &&
+            !endpoint.local().isUnnamed())
+        {
+            bsl::string path = endpoint.local().value();
 
-        BOOL result = DeleteFile(path.c_str());
-        if (result == 0) {
-            DWORD lastError = GetLastError();
-            if (lastError != ERROR_FILE_NOT_FOUND) {
-                ntsa::Error error(errno);
-                BSLS_LOG_WARN("Failed to unlink %s: %s",
-                              path.c_str(),
-                              error.text().c_str());
+            BOOL result = DeleteFile(path.c_str());
+            if (result == 0) {
+                DWORD lastError = GetLastError();
+                if (lastError != ERROR_FILE_NOT_FOUND) {
+                    BSLS_LOG_WARN("Failed to unlink '%s': %s",
+                                  path.c_str(),
+                                  ntsa::Error(lastError).text().c_str());
+                }
             }
         }
     }

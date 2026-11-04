@@ -177,21 +177,22 @@ class LocalName
     /// Reset the value of this object to its value on default construction.
     void reset();
 
-    /// Interpret the 'value()', if non-empty, to be in the "abstract"
-    /// namespace. A socket bound to an abstract name does not have a
-    /// representation in the file system. Return the error. Note that abstract
-    /// local names are only supported on Linux.
+    /// Interpret the local name to be in the "abstract" namespace. A socket
+    /// bound to an abstract name does not have a representation in the file
+    /// system. Return the error. Note that abstract local names are only
+    /// supported on Linux.
     ntsa::Error setAbstract();
 
-    /// Interpret the 'value()', if non-empty, to be in the "persistent"
-    /// namespace. A socket bound to a persistent name has a representation in
-    /// the file system. Return the error. Note that a default-constructed
-    /// local name is considered to be in the persistent namespace. Also note
-    /// that persistent local names are supported by all platforms that support
-    /// sockets in the local domain.
+    /// Interpret the local name to be in the "persistent" namespace. A socket
+    /// bound to a persistent name has a representation in the file system.
+    /// Return the error. Note that a default-constructed local name is
+    /// considered to be in the persistent namespace. Also note that persistent
+    /// local names are supported by all platforms that support sockets in the
+    /// local domain.
     ntsa::Error setPersistent();
 
-    /// Set the local name to be unnamed. Return the error.
+    /// Set the local name to be unnamed, with no affect on the namespace.
+    /// Return the error.
     ntsa::Error setUnnamed();
 
     /// Set the path of the local name to the specified 'value'. Return the
@@ -416,6 +417,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const LocalName& value)
 
     bslstl::StringRef text = value.value();
     algorithm(text.data(), text.size());
+    hashAppend(algorithm, value.isAbstract());
 }
 
 template <typename MANIPULATOR>

@@ -6544,12 +6544,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketBinding)
         }
 
         // Concern 2a: The socket may be bound after creation to an unnamed
-        // persistent name (i.e. the default-constructed 'ntsa::LocalName' 
-        // value, and the socket's resulting source endpoint is *not* the 
+        // persistent name (i.e., the default-constructed 'ntsa::LocalName'
+        // value), and the socket's resulting source endpoint is *not* the
         // unnamed persistent name, but an explicit abstract name chosen by
-        // the operating system (i.e, the socket address is interpreted as an
-        // instruction to the operating system to "auto-bind". [This 
-        // functionality is only true on Linux].
+        // the operating system (i.e., the socket address is interpreted as an
+        // instruction to the operating system to "auto-bind"). [This
+        // functionality is only true on Linux.]
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
         {
@@ -6593,8 +6593,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketBinding)
         // Concern 2b: The socket may be bound after creation to an unnamed
         // abstract name and the socket's resulting source endpoint is the
         // unnamed abstract name. [This functionality is only true on Linux].
+        // Note that this test is disabled because it is intrinsically flaky:
+        // abstract names are shared by every process in the network namespace,
+        // so parallel test runs or another job on the same host can collide.
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && 0
         {
             ntsa::Handle socket;
             error =
@@ -6609,7 +6612,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketBinding)
                 error = localName.setAbstract();
                 NTSCFG_TEST_OK(error);
 
-                ntsa::Endpoint unnamedSourceEndpoint = 
+                ntsa::Endpoint unnamedSourceEndpoint =
                     ntsa::Endpoint(localName);
                 NTSCFG_TEST_TRUE(unnamedSourceEndpoint.isLocal());
                 NTSCFG_TEST_TRUE(unnamedSourceEndpoint.local().isUnnamed());
@@ -7927,12 +7930,12 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketBinding)
         }
 
         // Concern 2a: The socket may be bound after creation to an unnamed
-        // persistent name (i.e. the default-constructed 'ntsa::LocalName' 
-        // value, and the socket's resulting source endpoint is *not* the 
+        // persistent name (i.e., the default-constructed 'ntsa::LocalName'
+        // value), and the socket's resulting source endpoint is *not* the
         // unnamed persistent name, but an explicit abstract name chosen by
-        // the operating system (i.e, the socket address is interpreted as an
-        // instruction to the operating system to "auto-bind". [This 
-        // functionality is only true on Linux].
+        // the operating system (i.e., the socket address is interpreted as an
+        // instruction to the operating system to "auto-bind"). [This
+        // functionality is only true on Linux.]
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
         {
@@ -7974,8 +7977,11 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketBinding)
         // Concern 2b: The socket may be bound after creation to an unnamed
         // abstract name and the socket's resulting source endpoint is the
         // unnamed abstract name. [This functionality is only true on Linux].
+        // Note that this test is disabled because it is intrinsically flaky:
+        // abstract names are shared by every process in the network namespace,
+        // so parallel test runs or another job on the same host can collide.
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
+#if defined(BSLS_PLATFORM_OS_LINUX) && 0
         {
             ntsa::Handle socket;
             error =
@@ -7990,7 +7996,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketBinding)
                 error = localName.setAbstract();
                 NTSCFG_TEST_OK(error);
 
-                ntsa::Endpoint unnamedSourceEndpoint = 
+                ntsa::Endpoint unnamedSourceEndpoint =
                     ntsa::Endpoint(localName);
                 NTSCFG_TEST_TRUE(unnamedSourceEndpoint.isLocal());
                 NTSCFG_TEST_TRUE(unnamedSourceEndpoint.local().isUnnamed());
@@ -9333,6 +9339,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
 
         ntsa::Endpoint endpoint(localName);
 
+        NTSCFG_TEST_TRUE(endpoint.isExplicit());
+
         error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
                                                  &socketAddressSize,
                                                  endpoint);
@@ -9381,6 +9389,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
 
         ntsa::Endpoint endpoint(localName);
 
+        NTSCFG_TEST_TRUE(endpoint.isImplicit());
+
         error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
                                                  &socketAddressSize,
                                                  endpoint);
@@ -9428,6 +9438,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
 
         ntsa::Endpoint endpoint(localName);
 
+        NTSCFG_TEST_TRUE(endpoint.isExplicit());
+
         error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
                                                  &socketAddressSize,
                                                  endpoint);
@@ -9472,6 +9484,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
         NTSCFG_TEST_TRUE(localName.isAbstract());
 
         ntsa::Endpoint endpoint(localName);
+
+        NTSCFG_TEST_TRUE(endpoint.isExplicit());
 
         error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
                                                  &socketAddressSize,
@@ -9560,8 +9574,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointLocal)
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], null);
 
         ntsa::Endpoint endpoint2;
-        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2, 
-                                                 &socketAddress, 
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                                 &socketAddress,
                                                  socketAddressSize);
         NTSCFG_TEST_OK(error);
         NTSCFG_TEST_EQ(endpoint2, endpoint1);
@@ -9609,8 +9623,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointLocal)
         NTSCFG_TEST_EQ(socketAddressSize, pathOffset);
 
         ntsa::Endpoint endpoint2;
-        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2, 
-                                                 &socketAddress, 
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                                 &socketAddress,
                                                  socketAddressSize);
         NTSCFG_TEST_OK(error);
         NTSCFG_TEST_EQ(endpoint2, endpoint1);
@@ -9666,8 +9680,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointLocal)
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], 'c');
 
         ntsa::Endpoint endpoint2;
-        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2, 
-                                                 &socketAddress, 
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                                 &socketAddress,
                                                  socketAddressSize);
         NTSCFG_TEST_OK(error);
         NTSCFG_TEST_EQ(endpoint2, endpoint1);
@@ -9717,8 +9731,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointLocal)
         NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], null);
 
         ntsa::Endpoint endpoint2;
-        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2, 
-                                                 &socketAddress, 
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                                 &socketAddress,
                                                  socketAddressSize);
         NTSCFG_TEST_OK(error);
         NTSCFG_TEST_EQ(endpoint2, endpoint1);
@@ -9837,7 +9851,7 @@ NTSCFG_TEST_FUNCTION(
                 temporaryFileName);
             NTSCFG_TEST_EQ(rc, 0);
 
-            SocketUtilTest::EraseGuard eraseGuard(temporaryFileName);
+            SocketUtilTest::EraseGuard eraseGuard(temporaryFilePath);
 
             NTSCFG_TEST_LE(temporaryFilePath.size() +
                            numNullTerminators,
@@ -9892,26 +9906,12 @@ NTSCFG_TEST_FUNCTION(
 #endif
 
                 rc = ::bind(listenFd, socketAddress, socketAddressLength);
-                if (rc != 0) {
-                    error = ntsa::Error(errno);
-                    BSLS_LOG_TRACE("Failed to bind to '%s': %s",
-                                   temporaryFilePath.c_str(),
-                                   error.text().c_str());
-                    continue;
-                }
                 NTSCFG_TEST_EQ(rc, 0);
 
                 struct ::stat socketStat;
                 bsl::memset(&socketStat, 0, sizeof socketStat);
 
                 rc = ::stat(temporaryFilePath.c_str(), &socketStat);
-                if (rc != 0) {
-                    error = ntsa::Error(errno);
-                    BSLS_LOG_TRACE("Failed to stat '%s': %s",
-                                   temporaryFilePath.c_str(),
-                                   error.text().c_str());
-                    continue;
-                }
                 NTSCFG_TEST_EQ(rc, 0);
 
                 const bool isSocket = S_ISSOCK(socketStat.st_mode);
@@ -9935,12 +9935,6 @@ NTSCFG_TEST_FUNCTION(
                     listenFd,
                     socketAddress,
                     &socketAddressStorageLength);
-                if (rc != 0) {
-                    error = ntsa::Error(errno);
-                    BSLS_LOG_TRACE("Failed to getsockname: %s",
-                                   error.text().c_str());
-                    continue;
-                }
                 NTSCFG_TEST_EQ(rc, 0);
 
                 NTSCFG_TEST_EQ(socketAddressStorage.ss_family, AF_UNIX);
@@ -10081,15 +10075,7 @@ NTSCFG_TEST_FUNCTION(
                     rc = ::connect(clientFd,
                                    socketAddress,
                                    socketAddressLength);
-                    if (rc != 0) {
-                        error = ntsa::Error(errno);
-                        BSLS_LOG_TRACE("Failed to connect to '%s': %s",
-                                    temporaryFilePath.c_str(),
-                                    error.text().c_str());
-                        continue;
-                    }
                     NTSCFG_TEST_EQ(rc, 0);
-
                 }
 
                 // Get the peer address.
@@ -10111,12 +10097,6 @@ NTSCFG_TEST_FUNCTION(
                         clientFd,
                         socketAddress,
                         &socketAddressStorageLength);
-                    if (rc != 0) {
-                        error = ntsa::Error(errno);
-                        BSLS_LOG_TRACE("Failed to getpeername: %s",
-                                    error.text().c_str());
-                        continue;
-                    }
                     NTSCFG_TEST_EQ(rc, 0);
 
                     NTSCFG_TEST_EQ(socketAddressStorage.ss_family, AF_UNIX);
@@ -10301,6 +10281,52 @@ NTSCFG_TEST_FUNCTION(
     // Concern: Endpoint decoding of a Unix domain socket names in the
     // abstract namespace with embedded NULs (not including the first NUL which
     // indicates the abstract namespace) fails.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 0;
+        un.sun_path[1] = 0;
+
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 2;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            addressLength);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    }
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 0;
+        un.sun_path[1] = 0;
+        un.sun_path[2] = 'a';
+        un.sun_path[3] = 'b';
+        un.sun_path[4] = 'd';
+        un.sun_path[5] = 'e';
+
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 6;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            addressLength);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    }
 
     {
         ntsa::Endpoint endpoint;
