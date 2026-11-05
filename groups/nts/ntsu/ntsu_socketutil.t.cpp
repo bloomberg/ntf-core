@@ -31,6 +31,8 @@ BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
 #include <bdls_pathutil.h>
 #include <bdls_filesystemutil.h>
 
+#include <bsl_limits.h>
+
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #ifdef NTDDI_VERSION
 #undef NTDDI_VERSION
@@ -524,6 +526,16 @@ class SocketUtilTest
     // contain the address family, or whose size is inconsistent with its
     // address family.
     static void verifyDecodeEndpointInvalidSize();
+
+    // Verify the capacity of 'struct sockaddr_storage' is sufficient to hold
+    // any socket address structure that may be decoded, notably
+    // 'struct sockaddr_un'.
+    static void verifyDecodeEndpointStorageCapacity();
+
+    // Verify decoding fails, without reading beyond the socket address
+    // structure, for a socket address whose size is larger than the size of
+    // 'struct sockaddr_storage'.
+    static void verifyDecodeEndpointSizeExceedsStorage();
 
     // Verify decoding a Unix domain socket address that indicates an unnamed
     // socket results in an unnamed local name in the persistent namespace,
@@ -10330,6 +10342,80 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointInvalidSize)
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
     }
 #endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointStorageCapacity)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    // Concern: The operating system reports socket addresses into a
+    // 'struct sockaddr_storage', and decoding may read up to the size of the
+    // family-specific socket address structure. Ensure each family-specific
+    // socket address structure fits within 'struct sockaddr_storage'.
+
+    BSLMF_ASSERT(sizeof(struct sockaddr_in) <=
+                 sizeof(struct sockaddr_storage));
+    BSLMF_ASSERT(sizeof(struct sockaddr_in6) <=
+                 sizeof(struct sockaddr_storage));
+
+    NTSCFG_TEST_LE(sizeof(struct sockaddr_in),
+                   sizeof(struct sockaddr_storage));
+    NTSCFG_TEST_LE(sizeof(struct sockaddr_in6),
+                   sizeof(struct sockaddr_storage));
+
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    BSLMF_ASSERT(sizeof(struct sockaddr_un) <=
+                 sizeof(struct sockaddr_storage));
+
+    NTSCFG_TEST_LE(sizeof(struct sockaddr_un),
+                   sizeof(struct sockaddr_storage));
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointSizeExceedsStorage)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    // Concern: The operating system may report a socket address size larger
+    // than the capacity supplied to 'getsockname', 'getpeername', or
+    // 'recvmsg'. Decoding a socket address whose size is larger than
+    // 'struct sockaddr_storage' fails without reading beyond the socket
+    // address structure. Note that reading beyond the socket address
+    // structure is detected when this test is run under AddressSanitizer.
+
+    const int k_FAMILIES[] = {
+        AF_INET,
+        AF_INET6
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+        , AF_UNIX
+#endif
+    };
+
+    const bsl::size_t k_SIZES[] = {
+        sizeof(struct sockaddr_storage) + 1,
+        sizeof(struct sockaddr_storage) * 2,
+        static_cast<bsl::size_t>(bsl::numeric_limits<socklen_t>::max())
+    };
+
+    for (bsl::size_t i = 0; i < sizeof k_FAMILIES / sizeof k_FAMILIES[0]; ++i)
+    {
+        for (bsl::size_t j = 0; j < sizeof k_SIZES / sizeof k_SIZES[0]; ++j) {
+            ntsa::Endpoint endpoint;
+            ntsa::Error    error;
+
+            struct sockaddr_storage socketAddress;
+            bsl::memset(&socketAddress, 'x', sizeof socketAddress);
+
+            socketAddress.ss_family =
+                static_cast<sa_family_t>(k_FAMILIES[i]);
+
+            error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                     &socketAddress,
+                                                     k_SIZES[j]);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        }
+    }
 #endif
 }
 
