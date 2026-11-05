@@ -1116,26 +1116,26 @@ bool SocketUtil::Impl::isUnnamed(const sockaddr_un* socketAddressLocal,
     // examines the first byte of 'sun_path', if defined in the socket address
     // length, to determine if the socket is unnamed.
 
-    const bsl::size_t pathOffset   = offsetof(struct sockaddr_un, sun_path);
-    const bsl::size_t pathCapacity = sizeof(socketAddressLocal->sun_path);
+    const bsl::size_t pathOffset = offsetof(struct sockaddr_un, sun_path);
 
-    const bsl::size_t socketAddressSizeMin = pathOffset;
+    if (socketAddressSize <= pathOffset) {
+        return true;
+    }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    NTSCFG_WARNING_UNUSED(socketAddressLocal);
+    return false;
+
+#else
+
+    const bsl::size_t pathCapacity = sizeof(socketAddressLocal->sun_path);
 
 #if defined(BDE_BUILD_TARGET_DBG)
     const bsl::size_t socketAddressSizeMax = pathOffset + pathCapacity;
 #else
     const bsl::size_t socketAddressSizeMax = pathOffset + 1;
 #endif
-
-    if (socketAddressSize <= socketAddressSizeMin) {
-        return true;
-    }
-
-#if defined(BSLS_PLATFORM_OS_LINUX)
-
-    return false;
-
-#else
 
     if (socketAddressSize > socketAddressSizeMax) {
         socketAddressSize = socketAddressSizeMax;
