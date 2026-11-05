@@ -367,19 +367,11 @@ class SocketUtil::Impl
                                socklen_t*            socketAddressSize,
                                const ntsa::Endpoint& endpoint);
 
-#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
     /// Return true if the specified 'socketAddressLocal' having the specified
     /// 'socketAddressSize' indicates the special signature for an unnamed Unix
-    /// domain socket on Darwin and FreeBSD. Note that there is no equivalent
-    /// special signature on other platforms; Darwin and FreeBSD are unique in
-    /// that calling 'getsockname()' on an unbound/unnamed Unix domain socket
-    /// results in a protocol-specific structure whose length is 16 bytes where
-    /// all bytes in the path are zeroed. Other platforms define an unnamed
-    /// socket by specifying a socket address size that implies the path length
-    /// is 0.
+    /// domain socket.
     static bool isUnnamed(const sockaddr_un* socketAddressLocal,
                           socklen_t          socketAddressSize);
-#endif
 
 #if NTSU_SOCKETUTIL_DEBUG_HANDLE_MAP
     static bsls::SpinLock s_handleSetLock;
@@ -941,29 +933,15 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
 
         ntsa::LocalName* localName = &endpoint->makeLocal();
 
-        const bsl::size_t pathOffset =
-            offsetof(struct sockaddr_un, sun_path);
-
-        const bsl::size_t addressSize =
-            static_cast<bsl::size_t>(socketAddressSize);
-
-        if (addressSize <= pathOffset) {
-            error = localName->setUnnamed();
-            if (error) {
-                return error;
-            }
-        }
-#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
-        else if (SocketUtil::Impl::isUnnamed(socketAddressLocal,
-                                             socketAddressSize))
+        if (!SocketUtil::Impl::isUnnamed(socketAddressLocal,
+                                         socketAddressSize))
         {
-            error = localName->setUnnamed();
-            if (error) {
-                return error;
-            }
-        }
-#endif
-        else {
+            const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+            const bsl::size_t addressSize =
+                static_cast<bsl::size_t>(socketAddressSize);
+
             bsl::size_t pathSize = addressSize - pathOffset;
             if (pathSize > sizeof(socketAddressLocal->sun_path)) {
                 return ntsa::Error::invalid();
@@ -972,7 +950,6 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
             const char* begin = socketAddressLocal->sun_path;
             const char* end   = begin + pathSize;
 
-#if defined(BSLS_PLATFORM_OS_LINUX)
             if (*begin == 0) {
                 error = localName->setAbstract();
                 if (error) {
@@ -980,7 +957,6 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
                 }
                 ++begin;
             }
-#endif
 
             const char* current = begin;
             while (current != end) {
@@ -997,13 +973,7 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
 
             end = current;
 
-            if (begin == end) {
-                error = localName->setUnnamed();
-                if (error) {
-                    return error;
-                }
-            }
-            else {
+            if (begin != end) {
                 error = localName->setValue(bslstl::StringRef(begin, end));
                 if (error) {
                     return error;
@@ -1109,35 +1079,80 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
     return ntsa::Error();
 }
 
-#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
 bool SocketUtil::Impl::isUnnamed(const sockaddr_un* socketAddressLocal,
                                  socklen_t          socketAddressSize)
 {
-    const bsl::size_t pathOffset = offsetof(struct sockaddr_un, sun_path);
+    // On AIX, the the signature of an unnamed socket is a 'sockaddr_un' with
+    // either no bytes in 'sun_path' included in the socket address size, or at
+    // at least the first byte of 'sun_path' included in the socket address
+    // size and the first byte of 'sun_path' zeroed.
+    //
+    // On Darwin, the signature of an unnamed socket is a 'sockaddr_un' having
+    // the size of 'sockaddr' with all bytes zeroed in 'sun_path' that are
+    // included in the socket address size.
+    //
+    // On FreeBSD, the signature of an unnamed socket is a 'sockaddr_un' having
+    // the size of 'sockaddr' with all bytes zeroed in 'sun_path' that are
+    // included in the socket address size.
+    //
+    // On Linux, the signature of an unnamed socket is a 'sockaddr_un' with no
+    // bytes in 'sun_path' included in the socket address size.
+    //
+    // On Solaris, the the signature of an unnamed socket is a 'sockaddr_un'
+    // with either no bytes in 'sun_path' included in the socket address size,
+    // or at at least the first byte of 'sun_path' included in the socket
+    // address size and the first byte of 'sun_path' zeroed.
+    //
+    // On Windows, the signature of an unnamed socket is a 'sockaddr_un' having
+    // the size of 'sockaddr_un' with all bytes zeroed in 'sun_path' that are
+    // included in the socket address size.
+    //
+    // For absolute correctness, in debug builds this implementation scans all
+    // bytes 'sun_path' that are included in the socket address and checks if
+    // all bytes are zero. However, in the interest of efficiency, and because
+    // many operating system provide a large socket address size for unnamed
+    // Unix domain socket addresses, in release builds we trust each operating
+    // system to encode the unnamed address correctly, and this implemention on
+    // examines the first byte of 'sun_path', if defined in the socket address
+    // length, to determine if the socket is unnamed.
 
-    if (socketAddressSize <= pathOffset) {
+    const bsl::size_t pathOffset   = offsetof(struct sockaddr_un, sun_path);
+    const bsl::size_t pathCapacity = sizeof(socketAddressLocal->sun_path);
+
+    const bsl::size_t socketAddressSizeMin = pathOffset;
+
+#if defined(BDE_BUILD_TARGET_DBG)
+    const bsl::size_t socketAddressSizeMax = pathOffset + pathCapacity;
+#else
+    const bsl::size_t socketAddressSizeMax = pathOffset + 1;
+#endif
+
+    if (socketAddressSize <= socketAddressSizeMin) {
         return true;
     }
 
-    const bsl::size_t unnamedSignatureSize = sizeof(struct sockaddr);
-
-    if (socketAddressSize == unnamedSignatureSize &&
-        socketAddressLocal->sun_path[0] == 0)
-    {
-        const bsl::size_t pathSize = socketAddressSize - pathOffset;
-
-        for (bsl::size_t i = 1; i < pathSize; ++i) {
-            if (socketAddressLocal->sun_path[i] != 0) {
-                return false;
-            }
-        }
-
-        return true;
-    }
+#if defined(BSLS_PLATFORM_OS_LINUX)
 
     return false;
-}
+
+#else
+
+    if (socketAddressSize > socketAddressSizeMax) {
+        socketAddressSize = socketAddressSizeMax;
+    }
+
+    BSLS_ASSERT_OPT(socketAddressSize > 0);
+
+    for (bsl::size_t i = 0; i < socketAddressSize; ++i) {
+        if (socketAddressLocal->sun_path[i] != 0) {
+            return false;
+        }
+    }
+
+    return true;
+
 #endif
+}
 
 #if NTSU_SOCKETUTIL_DEBUG_HANDLE_MAP
 bsls::SpinLock SocketUtil::Impl::s_handleSetLock = BSLS_SPINLOCK_UNLOCKED;
