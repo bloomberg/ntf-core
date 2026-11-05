@@ -124,13 +124,9 @@ void LocalName::reset()
 ntsa::Error LocalName::setAbstract()
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    if (d_size == k_MAX_PATH_LENGTH) {
-        return ntsa::Error(ntsa::Error::e_LIMIT);
-    }
     d_abstract = true;
     return ntsa::Error();
 #else
-    d_abstract = false;
     return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
 }
