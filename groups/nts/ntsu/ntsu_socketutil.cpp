@@ -1083,7 +1083,7 @@ bool SocketUtil::Impl::isUnnamed(const sockaddr_un* socketAddressLocal,
                                  socklen_t          socketAddressSize)
 {
     // On AIX, the signature of an unnamed socket is a 'sockaddr_un' with
-    // either no bytes in 'sun_path' included in the socket address size, or at
+    // either no bytes in 'sun_path' included in the socket address size, or
     // at least the first byte of 'sun_path' included in the socket address
     // size and the first byte of 'sun_path' zeroed.
     //
@@ -1108,8 +1108,8 @@ bool SocketUtil::Impl::isUnnamed(const sockaddr_un* socketAddressLocal,
     // included in the socket address size.
     //
     // This implementation scans all bytes of 'sun_path' that are included in
-    // the socket address, up the maximum capacity of 'sun_path', and checks if
-    // all bytes are zero, except on Linux, which only needs to check the
+    // the socket address, up to the maximum capacity of 'sun_path', and checks
+    // if all bytes are zero, except on Linux, which only needs to check the
     // socket address size.
 
     const bsl::size_t pathOffset = offsetof(struct sockaddr_un, sun_path);
