@@ -194,7 +194,7 @@ bool LocalName::isPersistent() const
 
 bool LocalName::isAbsolute() const
 {
-    return bdls::PathUtil::isAbsolute(d_path);
+    return bdls::PathUtil::isAbsolute(this->value());
 }
 
 bool LocalName::isRelative() const
