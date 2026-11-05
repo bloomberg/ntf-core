@@ -80,45 +80,56 @@ namespace ntsa {
 /// following rules:
 ///
 ///     o If the local name is unnamed in the persistent namespace, the native
-///       socket address path is not defined. An unnamed socket address
-///       representation is treated as "unbound", "unnamed", or "autobind"
-///       depending on the context in which it is used.
+///       socket address size includes no bytes of the native socket address
+///       path component. An unnamed socket address representation is treated
+///       as "unbound", "unnamed", or "autobind" depending on the context in
+///       which it is used.
 ///
 ///     o If the local name is named in the persistent namespace, the native
 ///       socket address path contains the local name value followed by a
 ///       single NUL byte, with the trailing NUL byte included in the native
 ///       socket address size.
 ///
-///     o If the local name is unnamed in the abstract namespace, the native
-///       socket address path contains a single leading NUL byte, with the
-///       socket address size including the single leading NUL byte.
+///     o If the local name is unnamed in the abstract namespace (Linux only),
+///       the native socket address path contains a single leading NUL byte,
+///       with the socket address size including the single leading NUL byte.
 ///
-///     o If the local name is named in the abstract namespace, the native
-///       socket path address contains a leading NUL byte followed by the local
-///       name value, with socket address size including the leading NUL byte
-///       and the local name value. The native socket address is not
-///       NUL-terminated.
+///     o If the local name is named in the abstract namespace (Linux only),
+///       the native socket address path contains a leading NUL byte followed
+///       by the local name value, with socket address size including the
+///       leading NUL byte and the local name value. The native socket address
+///       is not NUL-terminated.
 ///
 ///@par Decoding
 /// An 'ntsa::LocalName' decodes from a native socket address according to the
 /// following rules:
 ///
+///     o If the address size indicates more bytes of the native socket address
+///       path component than the capacity of the path component, decoding
+///       fails.
+///
 ///     o If no bytes of the native socket address path component are included
 ///       in the address size, the address is considered unnamed in the
 ///       persistent namespace.
 ///
-///     o Darwin and FreeBSD only: if the socket address size is 16 bytes and
-///       all bytes in the path component are zero, the address is considered
-///       unnamed in the persistent namespace.
+///     o On platforms other than Linux, if every byte of the native socket
+///       address path component included in the address size is NUL, the
+///       address is considered unnamed in the persistent namespace. Note that
+///       different platforms report an unnamed socket address with different
+///       sizes (e.g., Darwin and FreeBSD report the size of 'sockaddr', and
+///       Windows reports the size of 'sockaddr_un'), but always with every
+///       included byte of the path component set to NUL.
 ///
-///     o If the first byte of the native socket address path component is NUL,
-///       the name is considered abstract. If the abstract namespace is not
-///       supported on the current platform (i.e., on any platform other than
-///       Linux), decoding fails with an error indicating the operation is not
-///       implemented (e_NOT_IMPLEMENTED). Otherwise, the native socket address
-///       path component is scanned up to the last byte indicated by the socket
-///       address size. If any byte other than the first byte in the native
-///       socket address path component is NUL, decoding fails.
+///     o If the first byte of the native socket address path component is NUL
+///       (and, on platforms other than Linux, any subsequent byte included in
+///       the address size is not NUL), the name is considered abstract. If the
+///       abstract namespace is not supported on the current platform (i.e., on
+///       any platform other than Linux), decoding fails with an error
+///       indicating the operation is not implemented (e_NOT_IMPLEMENTED).
+///       Otherwise, the native socket address path component is scanned up to
+///       the last byte indicated by the socket address size. If any byte other
+///       than the first byte in the native socket address path component is
+///       NUL, decoding fails.
 ///
 ///     o If the first byte of the native socket address path component is not
 ///       NUL, the name is considered persistent. The native socket address

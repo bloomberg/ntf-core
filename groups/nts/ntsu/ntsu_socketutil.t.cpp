@@ -543,6 +543,18 @@ class SocketUtilTest
     // Darwin and FreeBSD.
     static void verifyDecodeEndpointLocalUnnamed();
 
+    // Verify decoding fails for a Unix domain socket address whose size
+    // indicates more bytes than the capacity of 'sun_path', even when every
+    // byte of the path is zero (i.e., the address otherwise resembles the
+    // signature of an unnamed socket).
+    static void verifyDecodeEndpointLocalUnnamedOversized();
+
+    // Verify decoding a Unix domain socket address whose size is the size of
+    // 'struct sockaddr_un' and whose path bytes are all zero results in an
+    // unnamed local name in the persistent namespace on platforms other than
+    // Linux, and fails on Linux.
+    static void verifyDecodeEndpointLocalUnnamedFullSize();
+
     // Verify decoding a Unix domain socket address whose path begins with a
     // NUL byte results in a local name in the abstract namespace on Linux,
     // and fails on platforms that do not support the abstract namespace.
@@ -10491,6 +10503,81 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnnamed)
                                                  sizeof(struct sockaddr));
         NTSCFG_TEST_EQ(error, ntsa::Error(ENOTSUP));
     }
+#endif
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnnamedOversized)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: A Unix domain socket address whose size indicates more bytes
+    // than the capacity of 'sun_path' fails to decode, even when every byte
+    // of the path is zero. The size is validated before the address is
+    // checked for the signature of an unnamed socket.
+
+    const bsl::size_t k_SIZES[] = {
+        sizeof(struct sockaddr_un) + 1,
+        sizeof(struct sockaddr_storage),
+        sizeof(struct sockaddr_storage) + 1
+    };
+
+    for (bsl::size_t i = 0; i < sizeof k_SIZES / sizeof k_SIZES[0]; ++i) {
+        if (k_SIZES[i] <= sizeof(struct sockaddr_un)) {
+            continue;
+        }
+
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress, 0, sizeof socketAddress);
+
+        socketAddress.ss_family = AF_UNIX;
+
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                 &socketAddress,
+                                                 k_SIZES[i]);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+    }
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnnamedFullSize)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: A Unix domain socket address whose size is the size of
+    // 'struct sockaddr_un' and whose path bytes are all zero (i.e., the
+    // signature of an unnamed socket on Windows) decodes to an unnamed local
+    // name in the persistent namespace on platforms other than Linux. On
+    // Linux, such an address is in the abstract namespace and contains
+    // embedded NULs, so decoding fails.
+
+    ntsa::Endpoint endpoint;
+    ntsa::Error    error;
+
+    sockaddr_un un;
+    bsl::memset(&un, 0, sizeof un);
+
+    un.sun_family = AF_UNIX;
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    un.sun_len = sizeof un;
+#endif
+
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint, &un, sizeof un);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+#else
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_TRUE(endpoint.isLocal());
+    NTSCFG_TEST_TRUE(endpoint.local().isUnnamed());
+    NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
 #endif
 #endif
 #endif
