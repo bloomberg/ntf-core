@@ -933,20 +933,20 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
 
         ntsa::LocalName* localName = &endpoint->makeLocal();
 
+        const bsl::size_t pathOffset =
+            offsetof(struct sockaddr_un, sun_path);
+
+        const bsl::size_t addressSize =
+            static_cast<bsl::size_t>(socketAddressSize);
+
+        bsl::size_t pathSize = addressSize - pathOffset;
+        if (pathSize > sizeof(socketAddressLocal->sun_path)) {
+            return ntsa::Error::invalid();
+        }
+
         if (!SocketUtil::Impl::isUnnamed(socketAddressLocal,
                                          socketAddressSize))
         {
-            const bsl::size_t pathOffset =
-                offsetof(struct sockaddr_un, sun_path);
-
-            const bsl::size_t addressSize =
-                static_cast<bsl::size_t>(socketAddressSize);
-
-            bsl::size_t pathSize = addressSize - pathOffset;
-            if (pathSize > sizeof(socketAddressLocal->sun_path)) {
-                return ntsa::Error::invalid();
-            }
-
             const char* begin = socketAddressLocal->sun_path;
             const char* end   = begin + pathSize;
 
@@ -1082,7 +1082,7 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
 bool SocketUtil::Impl::isUnnamed(const sockaddr_un* socketAddressLocal,
                                  socklen_t          socketAddressSize)
 {
-    // On AIX, the the signature of an unnamed socket is a 'sockaddr_un' with
+    // On AIX, the signature of an unnamed socket is a 'sockaddr_un' with
     // either no bytes in 'sun_path' included in the socket address size, or at
     // at least the first byte of 'sun_path' included in the socket address
     // size and the first byte of 'sun_path' zeroed.
@@ -1098,23 +1098,19 @@ bool SocketUtil::Impl::isUnnamed(const sockaddr_un* socketAddressLocal,
     // On Linux, the signature of an unnamed socket is a 'sockaddr_un' with no
     // bytes in 'sun_path' included in the socket address size.
     //
-    // On Solaris, the the signature of an unnamed socket is a 'sockaddr_un'
-    // with either no bytes in 'sun_path' included in the socket address size,
-    // or at at least the first byte of 'sun_path' included in the socket
-    // address size and the first byte of 'sun_path' zeroed.
+    // On Solaris, the signature of an unnamed socket is a 'sockaddr_un' with
+    // either no bytes in 'sun_path' included in the socket address size, or at
+    // least the first byte of 'sun_path' included in the socket address size
+    // and the first byte of 'sun_path' zeroed.
     //
     // On Windows, the signature of an unnamed socket is a 'sockaddr_un' having
     // the size of 'sockaddr_un' with all bytes zeroed in 'sun_path' that are
     // included in the socket address size.
     //
-    // For absolute correctness, in debug builds this implementation scans all
-    // bytes 'sun_path' that are included in the socket address and checks if
-    // all bytes are zero. However, in the interest of efficiency, and because
-    // many operating system provide a large socket address size for unnamed
-    // Unix domain socket addresses, in release builds we trust each operating
-    // system to encode the unnamed address correctly, and this implemention on
-    // examines the first byte of 'sun_path', if defined in the socket address
-    // length, to determine if the socket is unnamed.
+    // This implementation scans all bytes of 'sun_path' that are included in
+    // the socket address, up the maximum capacity of 'sun_path', and checks if
+    // all bytes are zero, except on Linux, which only needs to check the
+    // socket address size.
 
     const bsl::size_t pathOffset = offsetof(struct sockaddr_un, sun_path);
 
@@ -1130,12 +1126,7 @@ bool SocketUtil::Impl::isUnnamed(const sockaddr_un* socketAddressLocal,
 #else
 
     const bsl::size_t pathCapacity = sizeof(socketAddressLocal->sun_path);
-
-#if defined(BDE_BUILD_TARGET_DBG)
     const bsl::size_t socketAddressSizeMax = pathOffset + pathCapacity;
-#else
-    const bsl::size_t socketAddressSizeMax = pathOffset + 1;
-#endif
 
     if (socketAddressSize > socketAddressSizeMax) {
         socketAddressSize = socketAddressSizeMax;
@@ -1143,7 +1134,12 @@ bool SocketUtil::Impl::isUnnamed(const sockaddr_un* socketAddressLocal,
 
     BSLS_ASSERT_OPT(socketAddressSize > 0);
 
-    for (bsl::size_t i = 0; i < socketAddressSize; ++i) {
+    bsl::size_t pathSize = socketAddressSize - pathOffset;
+    if (pathSize > pathCapacity) {
+        pathSize = pathCapacity;
+    }
+
+    for (bsl::size_t i = 0; i < pathSize; ++i) {
         if (socketAddressLocal->sun_path[i] != 0) {
             return false;
         }
