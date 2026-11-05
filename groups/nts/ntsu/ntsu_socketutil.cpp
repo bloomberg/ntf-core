@@ -1084,8 +1084,8 @@ bool SocketUtil::Impl::isUnnamed(const sockaddr_un* socketAddressLocal,
 {
     // On AIX, the signature of an unnamed socket is a 'sockaddr_un' with
     // either no bytes in 'sun_path' included in the socket address size, or
-    // at least the first byte of 'sun_path' included in the socket address
-    // size and the first byte of 'sun_path' zeroed.
+    // all bytes zeroed in 'sun_path' that are included in the socket address
+    // size.
     //
     // On Darwin, the signature of an unnamed socket is a 'sockaddr_un' having
     // the size of 'sockaddr' with all bytes zeroed in 'sun_path' that are
@@ -1099,9 +1099,9 @@ bool SocketUtil::Impl::isUnnamed(const sockaddr_un* socketAddressLocal,
     // bytes in 'sun_path' included in the socket address size.
     //
     // On Solaris, the signature of an unnamed socket is a 'sockaddr_un' with
-    // either no bytes in 'sun_path' included in the socket address size, or at
-    // least the first byte of 'sun_path' included in the socket address size
-    // and the first byte of 'sun_path' zeroed.
+    // either no bytes in 'sun_path' included in the socket address size, or
+    // all bytes zeroed in 'sun_path' that are included in the socket address
+    // size.
     //
     // On Windows, the signature of an unnamed socket is a 'sockaddr_un' having
     // the size of 'sockaddr_un' with all bytes zeroed in 'sun_path' that are
