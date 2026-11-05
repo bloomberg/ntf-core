@@ -10606,6 +10606,16 @@ NTSCFG_TEST_FUNCTION(
 
             ntsa::TemporaryDirectory temporaryDirectory;
 
+            if (temporaryDirectory.path().size() + 1 + numNullTerminators >=
+                testLength)
+            {
+                // Skip tests if the current temporary directory leaves no
+                // room for a non-empty file name within the test length. This
+                // check also prevents the unsigned computation of the file
+                // name length below from wrapping around.
+                continue;
+            }
+
             bsl::string temporaryFileName;
             while (temporaryFileName.size() <
                    testLength -
