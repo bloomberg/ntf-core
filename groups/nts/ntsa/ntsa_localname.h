@@ -113,10 +113,12 @@ namespace ntsa {
 ///
 ///     o If the first byte of the native socket address path component is NUL,
 ///       the name is considered abstract. If the abstract namespace is not
-///       supported on the current platform, decoding fails. The native socket
-///       address path component is scanned up to the last byte indicated by
-///       the socket address size. If any byte other than the first byte in the
-///       native socket address path component is NUL, decoding fails.
+///       supported on the current platform (i.e., on any platform other than
+///       Linux), decoding fails with an error indicating the operation is not
+///       supported ('ENOTSUP'). Otherwise, the native socket address path
+///       component is scanned up to the last byte indicated by the socket
+///       address size. If any byte other than the first byte in the native
+///       socket address path component is NUL, decoding fails.
 ///
 ///     o If the first byte of the native socket address path component is not
 ///       NUL, the name is considered persistent. The native socket address
