@@ -496,8 +496,16 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathTooLong)
 
     {
         ntsa::LocalName localName;
+
         error = localName.setValue(path);
         NTSCFG_TEST_OK(error);
+    }
+
+    {
+        ntsa::LocalName localName;
+
+        error = localName.setValue(pathTooLong);
+        NTSCFG_TEST_ERROR(error, ntsa::Error(ntsa::Error::e_LIMIT));
     }
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -508,26 +516,19 @@ NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueFromPathTooLong)
         NTSCFG_TEST_OK(error);
 
         error = localName.setValue(path);
-        NTSCFG_TEST_ERROR(error, ntsa::Error(ntsa::Error::e_LIMIT));
+        NTSCFG_TEST_OK(error);
     }
 
     {
         ntsa::LocalName localName;
-
-        error = localName.setValue(path);
-        NTSCFG_TEST_OK(error);
 
         error = localName.setAbstract();
-        NTSCFG_TEST_ERROR(error, ntsa::Error(ntsa::Error::e_LIMIT));
-    }
-#endif
-
-    {
-        ntsa::LocalName localName;
+        NTSCFG_TEST_OK(error);
 
         error = localName.setValue(pathTooLong);
         NTSCFG_TEST_ERROR(error, ntsa::Error(ntsa::Error::e_LIMIT));
     }
+#endif
 }
 
 NTSCFG_TEST_FUNCTION(ntsa::LocalNameTest::verifySetValueWithEmbeddedNul)
