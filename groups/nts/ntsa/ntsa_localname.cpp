@@ -131,7 +131,7 @@ ntsa::Error LocalName::setAbstract()
     return ntsa::Error();
 #else
     d_abstract = false;
-    return ntsa::Error(ENOTSUP);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
 }
 

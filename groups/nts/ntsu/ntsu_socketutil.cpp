@@ -972,6 +972,7 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
             const char* begin = socketAddressLocal->sun_path;
             const char* end   = begin + pathSize;
 
+#if defined(BSLS_PLATFORM_OS_LINUX)
             if (*begin == 0) {
                 error = localName->setAbstract();
                 if (error) {
@@ -979,6 +980,7 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
                 }
                 ++begin;
             }
+#endif
 
             const char* current = begin;
             while (current != end) {
@@ -1092,7 +1094,8 @@ ntsa::Error SocketUtil::Impl::convert(sockaddr_storage*     socketAddress,
             }
         }
 
-        *socketAddressSize = offsetof(struct sockaddr_un, sun_path) + offset;
+        *socketAddressSize = static_cast<socklen_t>(
+            offsetof(struct sockaddr_un, sun_path) + offset);
     }
 #endif
     else {
