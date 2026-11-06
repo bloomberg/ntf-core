@@ -941,6 +941,7 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
 
         bsl::size_t pathSize = addressSize - pathOffset;
         if (pathSize > sizeof(socketAddressLocal->sun_path)) {
+            endpoint->reset();
             return ntsa::Error::invalid();
         }
 
@@ -953,6 +954,7 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
             if (*begin == 0) {
                 error = localName->setAbstract();
                 if (error) {
+                    endpoint->reset();
                     return error;
                 }
                 ++begin;
@@ -962,6 +964,7 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
             while (current != end) {
                 if (*current == 0) {
                     if (localName->isAbstract()) {
+                        endpoint->reset();
                         return ntsa::Error(ntsa::Error::e_INVALID);
                     }
                     else {
@@ -976,6 +979,7 @@ ntsa::Error SocketUtil::Impl::convert(ntsa::Endpoint*         endpoint,
             if (begin != end) {
                 error = localName->setValue(bslstl::StringRef(begin, end));
                 if (error) {
+                    endpoint->reset();
                     return error;
                 }
             }

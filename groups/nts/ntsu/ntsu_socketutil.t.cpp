@@ -10145,6 +10145,7 @@ NTSCFG_TEST_FUNCTION(
             &un,
             addressLength);
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
     }
 
     {
@@ -10170,6 +10171,7 @@ NTSCFG_TEST_FUNCTION(
             &un,
             addressLength);
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
     }
 
     {
@@ -10195,6 +10197,7 @@ NTSCFG_TEST_FUNCTION(
             &un,
             addressLength);
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
     }
 #endif
 #endif
@@ -10279,6 +10282,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointInvalidSize)
 
         error = ntsu::SocketUtil::decodeEndpoint(&endpoint, &socketAddress, 1);
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
     }
 
     // Concern: An IPv4 socket address whose size is not exactly the size of
@@ -10303,6 +10307,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointInvalidSize)
                                                      &socketAddress,
                                                      k_SIZES[i]);
             NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+            NTSCFG_TEST_TRUE(endpoint.isUndefined());
         }
     }
 
@@ -10328,6 +10333,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointInvalidSize)
                                                      &socketAddress,
                                                      k_SIZES[i]);
             NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+            NTSCFG_TEST_TRUE(endpoint.isUndefined());
         }
     }
 
@@ -10352,6 +10358,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointInvalidSize)
                                                  &socketAddress,
                                                  socketAddressSize);
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
     }
 #endif
 #endif
@@ -10426,6 +10433,7 @@ NTSCFG_TEST_FUNCTION(
                                                      &socketAddress,
                                                      k_SIZES[j]);
             NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+            NTSCFG_TEST_TRUE(endpoint.isUndefined());
         }
     }
 #endif
@@ -10501,7 +10509,8 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnnamed)
         error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
                                                  &un,
                                                  sizeof(struct sockaddr));
-        NTSCFG_TEST_EQ(error, ntsa::Error(ENOTSUP));
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
     }
 #endif
 #endif
@@ -10541,6 +10550,7 @@ NTSCFG_TEST_FUNCTION(
                                                  &socketAddress,
                                                  k_SIZES[i]);
         NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
     }
 #endif
 #endif
@@ -10614,7 +10624,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointLocalLeadingNul)
     NTSCFG_TEST_TRUE(endpoint.local().isAbstract());
     NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
 #else
-    NTSCFG_TEST_EQ(error, ntsa::Error(ENOTSUP));
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
 #endif
 #endif
 #endif
