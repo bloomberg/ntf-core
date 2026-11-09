@@ -7701,7 +7701,7 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         }
 
         ntsa::Endpoint endpoint;
-        eImpl::convert(&endpoint, &socketAddress, socketAddressSize);
+        Impl::convert(&endpoint, &socketAddress, socketAddressSize);
 
         context->setEndpoint(endpoint);
         context->setBytesReceived(wsaNumBytesReceived);
