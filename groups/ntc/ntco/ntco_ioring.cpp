@@ -5214,33 +5214,20 @@ void IoRing::wait(ntci::Waiter waiter)
                 ::msghdr* message =
                     reinterpret_cast< ::msghdr*>(event->d_message);
 
-                ntsa::Error messageError;
                 if (message->msg_namelen > 0) {
                     ntsa::Endpoint endpoint;
-                    messageError =
-                        ntsu::SocketUtil::decodeEndpoint(&endpoint,
-                                                         message->msg_name,
-                                                         message->msg_namelen);
+                    ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                     message->msg_name,
+                                                     message->msg_namelen);
 
-                    if (!messageError) {
-                        context.setEndpoint(endpoint);
-                    }
+                    context.setEndpoint(endpoint);
                 }
 
-                if (!messageError) {
-                    ntcs::Dispatch::announceReceived(
-                        event->d_socket,
-                        ntsa::Error(),
-                        context,
-                        event->d_socket->strand());
-                }
-                else {
-                    ntcs::Dispatch::announceReceived(
-                        event->d_socket,
-                        messageError,
-                        context,
-                        event->d_socket->strand());
-                }
+                ntcs::Dispatch::announceReceived(
+                    event->d_socket,
+                    ntsa::Error(),
+                    context,
+                    event->d_socket->strand());
             }
         }
         else {

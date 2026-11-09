@@ -972,19 +972,11 @@ void Iocp::wait(ntci::Waiter waiter)
 
             if (haveEndpoint) {
                 ntsa::Endpoint endpoint;
-                error = ntsu::SocketUtil::decodeEndpoint(
+                ntsu::SocketUtil::decodeEndpoint(
                     &endpoint,
                     reinterpret_cast<const sockaddr_storage*>(
                         event->d_address),
                     static_cast<bsl::size_t>(event->d_numBytesIndicated));
-                if (error) {
-                    ntcs::Dispatch::announceReceived(
-                        event->d_socket,
-                        error,
-                        context,
-                        event->d_socket->strand());
-                    return;
-                }
 
                 context.setEndpoint(endpoint);
             }

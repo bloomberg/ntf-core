@@ -355,8 +355,10 @@ class SocketUtil::Impl
                            socklen_t*        socketAddressSize);
 
     /// Load into the specified 'endpoint' the conversion of the specified
-    /// 'socketAddress' having the specified 'socketAddressSize'. Return
-    /// the error.
+    /// 'socketAddress' having the specified 'socketAddressSize'. Return the
+    /// error. Note that if the 'socketAddress' having the 'socketAddressSize'
+    /// cannot be successfully converted then after this function returns to
+    /// the caller 'endpoint->isUndefined()' is true.
     static ntsa::Error convert(ntsa::Endpoint*         endpoint,
                                const sockaddr_storage* socketAddress,
                                socklen_t               socketAddressSize);
@@ -2878,13 +2880,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        error = Impl::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -2958,13 +2956,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        error = Impl::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -3034,13 +3028,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        error = Impl::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -3113,13 +3103,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        error = Impl::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -3192,13 +3178,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        error = Impl::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -3285,13 +3267,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        error = Impl::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -3387,13 +3365,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        error = Impl::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -3467,13 +3441,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
 
     if (wantEndpoint) {
         ntsa::Endpoint endpoint;
-        error = Impl::convert(
-            &endpoint,
-            reinterpret_cast<sockaddr_storage*>(msg.msg_name),
-            msg.msg_namelen);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint,
+                      reinterpret_cast<sockaddr_storage*>(msg.msg_name),
+                      msg.msg_namelen);
 
         context->setEndpoint(endpoint);
     }
@@ -7157,13 +7127,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         }
 
         ntsa::Endpoint endpoint;
-        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint, &socketAddress, socketAddressSize);
 
         context->setEndpoint(endpoint);
-
         context->setBytesReceived(wsaNumBytesReceived);
 
         return ntsa::Error();
@@ -7232,13 +7198,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         }
 
         ntsa::Endpoint endpoint;
-        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint, &socketAddress, socketAddressSize);
 
         context->setEndpoint(endpoint);
-
         context->setBytesReceived(wsaNumBytesReceived);
 
         return ntsa::Error();
@@ -7310,13 +7272,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         }
 
         ntsa::Endpoint endpoint;
-        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint, &socketAddress, socketAddressSize);
 
         context->setEndpoint(endpoint);
-
         context->setBytesReceived(wsaNumBytesReceived);
 
         return ntsa::Error();
@@ -7391,13 +7349,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         }
 
         ntsa::Endpoint endpoint;
-        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint, &socketAddress, socketAddressSize);
 
         context->setEndpoint(endpoint);
-
         context->setBytesReceived(wsaNumBytesReceived);
 
         return ntsa::Error();
@@ -7473,13 +7427,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*        context,
         }
 
         ntsa::Endpoint endpoint;
-        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint, &socketAddress, socketAddressSize);
 
         context->setEndpoint(endpoint);
-
         context->setBytesReceived(wsaNumBytesReceived);
 
         return ntsa::Error();
@@ -7569,13 +7519,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         }
 
         ntsa::Endpoint endpoint;
-        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint, &socketAddress, socketAddressSize);
 
         context->setEndpoint(endpoint);
-
         context->setBytesReceived(wsaNumBytesReceived);
         string->resize(originalSize + wsaNumBytesReceived);
 
@@ -7674,13 +7620,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         }
 
         ntsa::Endpoint endpoint;
-        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (error) {
-            return error;
-        }
+        Impl::convert(&endpoint, &socketAddress, socketAddressSize);
 
         context->setEndpoint(endpoint);
-
         context->setBytesReceived(wsaNumBytesReceived);
         blob->setLength(blob->length() + wsaNumBytesReceived);
 
@@ -7759,13 +7701,9 @@ ntsa::Error SocketUtil::receive(ntsa::ReceiveContext*       context,
         }
 
         ntsa::Endpoint endpoint;
-        error = Impl::convert(&endpoint, &socketAddress, socketAddressSize);
-        if (error) {
-            return error;
-        }
+        eImpl::convert(&endpoint, &socketAddress, socketAddressSize);
 
         context->setEndpoint(endpoint);
-
         context->setBytesReceived(wsaNumBytesReceived);
 
         return ntsa::Error();

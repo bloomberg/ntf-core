@@ -41,9 +41,15 @@ namespace ntsa {
 /// The flag to indicate that the remote endpoint should also be received and
 /// included in the resulting receive context. Note that when this flag is
 /// false, the resulting endpoint field of the receive context will be null.
-/// Setting this flag to false can be an optimization for connected sockets
-/// which already know the remote endpoint, by virtue of being connected. The
-/// default value is true.
+/// However, while setting this flag to true will cause the resulting endpoint
+/// field of the receive context to be defined, that resulting endpoint may be
+/// 'ntsa::Endpoint::isUndefined()', if either the operating system does not
+/// make the peer address available or the available peer address is not
+/// representable by an 'ntsa::Endpoint', e.g., when the peer Unix domain is
+/// unnamed or its name is too long or contains unsupported characters. Setting
+/// this flag to false can be an optimization for connected sockets which
+/// already know the remote endpoint, by virtue of being connected. The default
+/// value is true.
 ///
 /// @li @b wantTimestamp:
 /// The flag to indicate that software and hardware timestamps should also be

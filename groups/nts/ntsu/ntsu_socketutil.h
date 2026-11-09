@@ -730,10 +730,11 @@ struct SocketUtil {
     /// family-specific socket address structure for an IPv4 or IPv6 address,
     /// or is larger than the size of the family-specific socket address
     /// structure for a Unix domain address, or if the address family is not
-    /// supported. If an error is returned, 'endpoint' is left in a valid but
-    /// unspecified state. Note that decoding a 'socketAddress' containing a
-    /// Unix domain name follows the rules described in the 'ntsa::LocalName'
-    /// class documentation.
+    /// supported. Note that if the 'socketAddress' having the
+    /// 'socketAddressSize' cannot be successfully converted then after this
+    /// function returns to the caller 'endpoint->isUndefined()' is true. Note
+    /// that decoding a 'socketAddress' containing a Unix domain name follows
+    /// the rules described in the 'ntsa::LocalName' class documentation.
     static ntsa::Error decodeEndpoint(ntsa::Endpoint* endpoint,
                                       const void*     socketAddress,
                                       bsl::size_t     socketAddressSize);
