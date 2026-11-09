@@ -233,20 +233,20 @@ class Endpoint
     /// selected, otherwise return false.
     bool isLocal() const;
 
-    /// Return true if the the endpoint *either* represents an IP address is
-    /// *not* the wildcard "any" address (i.e., '0.0.0.0:0' for IPv4
+    /// Return true if the endpoint *either* represents an IP address whose
+    /// host is *not* the wildcard "any" address (i.e., '0.0.0.0:0' for IPv4
     /// addresses, '[:0]:0' for IPv6 addresses), *or* if the endpoint
-    /// represents a local name that is *not* unnamed. Otherwise, return
-    /// false. Note that this function returns the negation of
-    /// 'isImplicit()'.
+    /// represents a local name that is *not* unnamed in the persistent
+    /// namespace. Otherwise, return false. Note that this function returns the
+    /// negation of 'isImplicit()'.
     bool isExplicit() const;
 
     /// Return true if the endpoint *either* represents an IP address whose
     /// host is the wildcard "any" address (i.e. '0.0.0.0:0' for IPv4
     /// addresses, '[:0]:0' for IPv6 addresses), *or* if the endpoint
-    /// represents a local name that is unnamed, *or* if the endpoint is
-    /// undefined. Otherwise, return false. Note that this function returns
-    /// the negation of 'isExplicit()'.
+    /// represents a local name that is unnamed in the persistent namespace,
+    /// *or* if the endpoint is undefined. Otherwise, return false. Note that
+    /// this function returns the negation of 'isExplicit()'.
     bool isImplicit() const;
 
     /// Return true if this object has the same value as the specified
@@ -450,7 +450,7 @@ Endpoint::~Endpoint()
 }
 
 NTSCFG_INLINE
-Endpoint& Endpoint::operator=(bslmf::MovableRef<Endpoint> other) 
+Endpoint& Endpoint::operator=(bslmf::MovableRef<Endpoint> other)
     NTSCFG_NOEXCEPT
 {
     if (this == &NTSCFG_MOVE_ACCESS(other)) {
@@ -465,7 +465,7 @@ Endpoint& Endpoint::operator=(bslmf::MovableRef<Endpoint> other)
         this->makeLocal(NTSCFG_MOVE_FROM(other, d_local.object()));
         break;
     default:
-        BSLS_ASSERT(NTSCFG_MOVE_ACCESS(other).d_type == 
+        BSLS_ASSERT(NTSCFG_MOVE_ACCESS(other).d_type ==
                     ntsa::EndpointType::e_UNDEFINED);
         this->reset();
     }

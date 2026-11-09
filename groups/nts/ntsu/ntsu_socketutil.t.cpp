@@ -26,6 +26,13 @@ BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
 #include <ntsu_socketutil.h>
 #include <ntsu_timestamputil.h>
 
+#include <ntsa_temporary.h>
+
+#include <bdls_pathutil.h>
+#include <bdls_filesystemutil.h>
+
+#include <bsl_limits.h>
+
 #if defined(BSLS_PLATFORM_OS_WINDOWS)
 #ifdef NTDDI_VERSION
 #undef NTDDI_VERSION
@@ -47,7 +54,19 @@ BSLS_IDENT_RCSID(ntsu_socketutil_t_cpp, "$Id$ $CSID$")
 #endif
 // clang-format off
 #include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <ws2def.h>
 // clang-format on
+#endif
+
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <netinet/in.h>
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+#include <sys/un.h>
+#endif
 #endif
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
@@ -68,6 +87,12 @@ class SocketUtilTest
 {
     /// Describes the parameters of the test.
     class Parameters;
+
+    /// Provides a guard to close a file descriptor.
+    class CloseGuard;
+
+    // Provides a guard to unlink a path on the file system.
+    class EraseGuard;
 
     /// This typedef defines a callback function invoked to test a particular
     /// portion of the component using the specified connected 'server' and
@@ -459,6 +484,90 @@ class SocketUtilTest
     // Verify how the operating system reports the result of accepting a
     // socket whose peer has already closed the connection.
     static void verifyListenerSocketAcceptingClosedConnections();
+
+    // Verify encoding of a IPv4 endpoint correctly defines the IPv4
+    // socket address structure.
+    static void verifyEncodeEndpointIpv4();
+
+    // Verify decoding of an IPv4 socket address.
+    static void verifyDecodeEndpointIpv4();
+
+    // Verify encoding of a IPv6 endpoint correctly defines the IPv6
+    // socket address structure.
+    static void verifyEncodeEndpointIpv6();
+
+    // Verify decoding of an IPv6 socket address.
+    static void verifyDecodeEndpointIpv6();
+
+    // Verify encoding of a local name endpoint correctly defines the Unix
+    // domain socket address.
+    static void verifyEncodeEndpointLocal();
+
+    // Verify decoding of a Unix domain socket address.
+    static void verifyDecodeEndpointLocal();
+
+    // Verify decoding of a Unix domain socket name bounds the scan of
+    // 'sun_path' by the specified address size and does not depend on a null
+    // terminator.
+    static void verifyDecodeEndpointLocalUnterminated();
+
+    // Verify decoding of a Unix domain socket address whose name is in the
+    // persistent namespace truncates the name after the first NUL. Verify
+    // decoding fails for a Unix domain socket adress whose name is in the
+    // abstract namespace and has any embedded NULs (after the first byte,
+    // indicating the abstract namespace).
+    static void verifyDecodeEndpointLocalEmbeddedNulls();
+
+    // Verify decoding a socket address whose size is zero, or whose address
+    // family is 'AF_UNSPEC', succeeds and results in an undefined endpoint.
+    static void verifyDecodeEndpointUndefined();
+
+    // Verify decoding fails for a socket address whose size is too small to
+    // contain the address family, or whose size is inconsistent with its
+    // address family.
+    static void verifyDecodeEndpointInvalidSize();
+
+    // Verify the capacity of 'struct sockaddr_storage' is sufficient to hold
+    // any socket address structure that may be decoded, notably
+    // 'struct sockaddr_un'.
+    static void verifyDecodeEndpointStorageCapacity();
+
+    // Verify decoding fails, without reading beyond the socket address
+    // structure, for a socket address whose size is larger than the size of
+    // 'struct sockaddr_storage'.
+    static void verifyDecodeEndpointSizeExceedsStorage();
+
+    // Verify decoding a Unix domain socket address that indicates an unnamed
+    // socket results in an unnamed local name in the persistent namespace,
+    // including the special signature of an unnamed Unix domain socket on
+    // Darwin and FreeBSD.
+    static void verifyDecodeEndpointLocalUnnamed();
+
+    // Verify decoding fails for a Unix domain socket address whose size
+    // indicates more bytes than the capacity of 'sun_path', even when every
+    // byte of the path is zero (i.e., the address otherwise resembles the
+    // signature of an unnamed socket).
+    static void verifyDecodeEndpointLocalUnnamedOversized();
+
+    // Verify decoding a Unix domain socket address whose size is the size of
+    // 'struct sockaddr_un' and whose path bytes are all zero results in an
+    // unnamed local name in the persistent namespace on platforms other than
+    // Linux, and fails on Linux.
+    static void verifyDecodeEndpointLocalUnnamedFullSize();
+
+    // Verify decoding a Unix domain socket address whose path begins with a
+    // NUL byte results in a local name in the abstract namespace on Linux,
+    // and fails on platforms that do not support the abstract namespace.
+    static void verifyDecodeEndpointLocalLeadingNul();
+
+    // Verify receiving a datagram from an unnamed Unix domain socket while
+    // requesting the sender's endpoint succeeds, and the sender's endpoint is
+    // reported according to the platform's representation of an unnamed
+    // sender.
+    static void verifyDecodeEndpointLocalFromUnnamedSender();
+
+    // Verify platform behavior for Unix domain sockets.
+    static void verifyDecodeEndpointLocalPlatformBehavior();
 };
 
 /// Describe the parameters of the test.
@@ -479,7 +588,7 @@ public:
     /// Set the flag indicating that zero-copy transmissions should be
     /// performed according to the specified 'value'.
     void setZeroCopy(bool value);
-    
+
     /// Return the flag indicating that timestamps for incoming data should be
     /// generated.
     bool timestampIncomingData() const;
@@ -488,7 +597,7 @@ public:
     /// generated.
     bool timestampOutgoingData() const;
 
-    /// Return the flag indicating that zero-copy transmission should be 
+    /// Return the flag indicating that zero-copy transmission should be
     /// performed.
     bool zeroCopy() const;
 
@@ -496,6 +605,43 @@ private:
     bool d_timestampIncomingData;
     bool d_timestampOutgoingData;
     bool d_zeroCopy;
+};
+
+/// Provides a guard to close a file descriptor.
+class SocketUtilTest::CloseGuard
+{
+    ntsa::Handle d_handle;
+
+  private:
+    CloseGuard(const CloseGuard&) BSLS_KEYWORD_DELETED;
+    CloseGuard& operator=(const CloseGuard&) BSLS_KEYWORD_DELETED;
+
+  public:
+    /// Create a new close guard that automatically closes the specified
+    /// 'handle' upon destruction.
+    explicit CloseGuard(ntsa::Handle handle);
+
+    /// Destroy this object.
+    ~CloseGuard();
+};
+
+// Provides a guard to unlink a path on the file system.
+class SocketUtilTest::EraseGuard
+{
+    bsl::string d_path;
+
+  private:
+    EraseGuard(const EraseGuard&) BSLS_KEYWORD_DELETED;
+    EraseGuard& operator=(const EraseGuard&) BSLS_KEYWORD_DELETED;
+
+  public:
+    /// Create a new close guard that automatically removes the specified
+    /// 'path' upon destruction.
+    explicit EraseGuard(const bsl::string& path,
+                        bslma::Allocator*  basicAllocator = 0);
+
+    /// Destroy this object.
+    ~EraseGuard();
 };
 
 SocketUtilTest::Parameters::Parameters()
@@ -535,6 +681,37 @@ bool SocketUtilTest::Parameters::zeroCopy() const
     return d_zeroCopy;
 }
 
+SocketUtilTest::CloseGuard::CloseGuard(ntsa::Handle handle)
+: d_handle(handle)
+{
+}
+
+SocketUtilTest::CloseGuard::~CloseGuard()
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+
+    ::close(d_handle);
+
+#elif defined(BSLS_PLATFORM_OS_WINDOWS)
+
+    ::closesocket(d_handle);
+
+#else
+#error Not implemented
+#endif
+}
+
+SocketUtilTest::EraseGuard::EraseGuard(const bsl::string& path,
+                                       bslma::Allocator*  basicAllocator)
+: d_path(path, basicAllocator)
+{
+}
+
+SocketUtilTest::EraseGuard::~EraseGuard()
+{
+    bdls::FilesystemUtil::remove(d_path.c_str(), false);
+}
+
 /// Provide a in-core storage of bytes.
 template <unsigned N>
 class SocketUtilTest::Storage
@@ -567,10 +744,10 @@ bool SocketUtilTest::supportsTimestamping(ntsa::Handle socket)
     for (bsl::size_t i = 0; i < adapterList.size(); ++i) {
         const ntsa::Adapter& adapter = adapterList[i];
 
-        if (adapter.ipv4Address().has_value() && 
-            adapter.ipv4Address().value() == ntsa::Ipv4Address::loopback()) 
+        if (adapter.ipv4Address().has_value() &&
+            adapter.ipv4Address().value() == ntsa::Ipv4Address::loopback())
         {
-            if (adapter.txSoftwareTimestamps() && 
+            if (adapter.txSoftwareTimestamps() &&
                 adapter.rxSoftwareTimestamps())
             {
                 return true;
@@ -716,7 +893,7 @@ void SocketUtilTest::executeStreamSocketTestParameters(
     if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_LOCAL_STREAM))
     {
-        if (!parameters.timestampIncomingData() && 
+        if (!parameters.timestampIncomingData() &&
             !parameters.timestampOutgoingData() &&
             !parameters.zeroCopy())
         {
@@ -749,7 +926,7 @@ void SocketUtilTest::executeStreamSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(listener, 
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(listener,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -807,7 +984,7 @@ void SocketUtilTest::executeStreamSocketTestParameters(
 
         // Set the RX timestamping options for the client according to the
         // test parameters. Note that TX timestamping cannot be enabled on
-        // sockets before they are connected but must be explicitly set after 
+        // sockets before they are connected but must be explicitly set after
         // they are connected.
 
         if (parameters.timestampIncomingData()) {
@@ -815,7 +992,7 @@ void SocketUtilTest::executeStreamSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(client, 
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(client,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -833,7 +1010,7 @@ void SocketUtilTest::executeStreamSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client, 
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -862,14 +1039,14 @@ void SocketUtilTest::executeStreamSocketTestParameters(
         ntsu::SocketUtil::Guard serverGuard(server);
 
         // Set the TX timestamping options for the server according to the
-        // test parameters. 
+        // test parameters.
 
         if (parameters.timestampOutgoingData()) {
             if (!SocketUtilTest::supportsTimestamping(server)) {
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(server, 
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(server,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -918,13 +1095,13 @@ void SocketUtilTest::executeStreamSocketTestParameters(
 
         if (parameters.zeroCopy()) {
             bool clientZeroCopy;
-            error = ntsu::SocketOptionUtil::getZeroCopy(&clientZeroCopy, 
+            error = ntsu::SocketOptionUtil::getZeroCopy(&clientZeroCopy,
                                                         client);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(clientZeroCopy);
 
             bool serverZeroCopy;
-            error = ntsu::SocketOptionUtil::getZeroCopy(&serverZeroCopy, 
+            error = ntsu::SocketOptionUtil::getZeroCopy(&serverZeroCopy,
                                                         server);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(serverZeroCopy);
@@ -1037,7 +1214,7 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
     if (ntsu::AdapterUtil::supportsTransportLoopback(
             ntsa::Transport::e_LOCAL_DATAGRAM))
     {
-        if (!parameters.timestampIncomingData() && 
+        if (!parameters.timestampIncomingData() &&
             !parameters.timestampOutgoingData() &&
             !parameters.zeroCopy())
         {
@@ -1068,7 +1245,7 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(server, 
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(server,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -1078,7 +1255,7 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(server, 
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(server,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -1149,7 +1326,7 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampIncomingData(client, 
+            error = ntsu::SocketOptionUtil::setTimestampIncomingData(client,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -1159,7 +1336,7 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
                 continue;
             }
 
-            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client, 
+            error = ntsu::SocketOptionUtil::setTimestampOutgoingData(client,
                                                                      true);
             NTSCFG_TEST_OK(error);
         }
@@ -1244,13 +1421,13 @@ void SocketUtilTest::executeDatagramSocketTestParameters(
 
         if (parameters.zeroCopy()) {
             bool clientZeroCopy;
-            error = ntsu::SocketOptionUtil::getZeroCopy(&clientZeroCopy, 
+            error = ntsu::SocketOptionUtil::getZeroCopy(&clientZeroCopy,
                                                         client);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(clientZeroCopy);
 
             bool serverZeroCopy;
-            error = ntsu::SocketOptionUtil::getZeroCopy(&serverZeroCopy, 
+            error = ntsu::SocketOptionUtil::getZeroCopy(&serverZeroCopy,
                                                         server);
             NTSCFG_TEST_OK(error);
             NTSCFG_TEST_TRUE(serverZeroCopy);
@@ -3977,8 +4154,7 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketBasic)
         // Get the client source and remote endpoints.
 
         ntsa::Endpoint clientSourceEndpoint;
-        error =
-            ntsu::SocketUtil::sourceEndpoint(&clientSourceEndpoint, client);
+        error = ntsu::SocketUtil::sourceEndpoint(&clientSourceEndpoint, client);
         NTSCFG_TEST_OK(error);
 
         ntsa::Endpoint clientRemoteEndpoint;
@@ -6434,11 +6610,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketBinding)
             NTSCFG_TEST_OK(error);
         }
 
-        // Concern 2: The socket may be bound after creation to an unnamed
-        // name, and the socket's resulting source endpoint is *not* the
-        // unnamed name, but an explicit name chosen by the operating
-        // system (on Linux, in the abstract namespace.) [This
-        // functionality is only true on Linux].
+        // Concern 2a: The socket may be bound after creation to an unnamed
+        // persistent name (i.e., the default-constructed 'ntsa::LocalName'
+        // value), and the socket's resulting source endpoint is *not* the
+        // unnamed persistent name, but an explicit abstract name chosen by
+        // the operating system (i.e., the socket address is interpreted as an
+        // instruction to the operating system to "auto-bind"). [This
+        // functionality is only true on Linux.]
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
         {
@@ -6451,8 +6629,9 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketBinding)
             {
                 ntsa::Endpoint unnamedSourceEndpoint =
                     ntsa::Endpoint(ntsa::LocalName());
-                NTSCFG_TEST_ASSERT(unnamedSourceEndpoint.isLocal());
-                NTSCFG_TEST_ASSERT(unnamedSourceEndpoint.local().isUnnamed());
+                NTSCFG_TEST_TRUE(unnamedSourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(unnamedSourceEndpoint.local().isUnnamed());
+                NTSCFG_TEST_TRUE(unnamedSourceEndpoint.local().isPersistent());
 
                 error = ntsu::SocketUtil::bind(unnamedSourceEndpoint,
                                                k_REUSE_ADDRESS,
@@ -6467,9 +6646,58 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDatagramSocketBinding)
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_NE(sourceEndpoint, unnamedSourceEndpoint);
                 NTSCFG_TEST_GT(sourceEndpoint.local().value().size(), 0);
-#if defined(BSLS_PLATFORM_OS_LINUX)
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isAbstract());
+            }
+
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_OK(error);
+        }
 #endif
+
+        // Concern 2b: The socket may be bound after creation to an unnamed
+        // abstract name and the socket's resulting source endpoint is the
+        // unnamed abstract name. [This functionality is only true on Linux].
+        // Note that this test is disabled because it is intrinsically flaky:
+        // abstract names are shared by every process in the network namespace,
+        // so parallel test runs or another job on the same host can collide.
+
+#if defined(BSLS_PLATFORM_OS_LINUX) && 0
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_LOCAL_DATAGRAM);
+            NTSCFG_TEST_OK(error);
+
+            {
+                ntsa::LocalName localName;
+                error = localName.setUnnamed();
+                NTSCFG_TEST_OK(error);
+                error = localName.setAbstract();
+                NTSCFG_TEST_OK(error);
+
+                ntsa::Endpoint unnamedSourceEndpoint =
+                    ntsa::Endpoint(localName);
+                NTSCFG_TEST_TRUE(unnamedSourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(unnamedSourceEndpoint.local().isUnnamed());
+                NTSCFG_TEST_TRUE(unnamedSourceEndpoint.local().isAbstract());
+
+                error = ntsu::SocketUtil::bind(unnamedSourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_OK(error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_OK(error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isAbstract());
             }
 
             error = ntsu::SocketUtil::unlink(socket);
@@ -7768,11 +7996,13 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketBinding)
             NTSCFG_TEST_OK(error);
         }
 
-        // Concern 2: The socket may be bound after creation to an unnamed
-        // name, and the socket's resulting source endpoint is *not* the
-        // unnamed name, but an explicit name chosen by the operating
-        // system (on Linux, in the abstract namespace.) [This
-        // functionality is only available on Linux.]
+        // Concern 2a: The socket may be bound after creation to an unnamed
+        // persistent name (i.e., the default-constructed 'ntsa::LocalName'
+        // value), and the socket's resulting source endpoint is *not* the
+        // unnamed persistent name, but an explicit abstract name chosen by
+        // the operating system (i.e., the socket address is interpreted as an
+        // instruction to the operating system to "auto-bind"). [This
+        // functionality is only true on Linux.]
 
 #if defined(BSLS_PLATFORM_OS_LINUX)
         {
@@ -7800,9 +8030,58 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyStreamSocketBinding)
                 NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
                 NTSCFG_TEST_NE(sourceEndpoint, unnamedSourceEndpoint);
                 NTSCFG_TEST_GT(sourceEndpoint.local().value().size(), 0);
-#if defined(BSLS_PLATFORM_OS_LINUX)
                 NTSCFG_TEST_TRUE(sourceEndpoint.local().isAbstract());
+            }
+
+            error = ntsu::SocketUtil::unlink(socket);
+            NTSCFG_TEST_OK(error);
+
+            error = ntsu::SocketUtil::close(socket);
+            NTSCFG_TEST_OK(error);
+        }
 #endif
+
+        // Concern 2b: The socket may be bound after creation to an unnamed
+        // abstract name and the socket's resulting source endpoint is the
+        // unnamed abstract name. [This functionality is only true on Linux].
+        // Note that this test is disabled because it is intrinsically flaky:
+        // abstract names are shared by every process in the network namespace,
+        // so parallel test runs or another job on the same host can collide.
+
+#if defined(BSLS_PLATFORM_OS_LINUX) && 0
+        {
+            ntsa::Handle socket;
+            error =
+                ntsu::SocketUtil::create(&socket,
+                                         ntsa::Transport::e_LOCAL_STREAM);
+            NTSCFG_TEST_OK(error);
+
+            {
+                ntsa::LocalName localName;
+                error = localName.setUnnamed();
+                NTSCFG_TEST_OK(error);
+                error = localName.setAbstract();
+                NTSCFG_TEST_OK(error);
+
+                ntsa::Endpoint unnamedSourceEndpoint =
+                    ntsa::Endpoint(localName);
+                NTSCFG_TEST_TRUE(unnamedSourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(unnamedSourceEndpoint.local().isUnnamed());
+                NTSCFG_TEST_TRUE(unnamedSourceEndpoint.local().isAbstract());
+
+                error = ntsu::SocketUtil::bind(unnamedSourceEndpoint,
+                                               k_REUSE_ADDRESS,
+                                               socket);
+                NTSCFG_TEST_OK(error);
+
+                ntsa::Endpoint sourceEndpoint;
+                error =
+                    ntsu::SocketUtil::sourceEndpoint(&sourceEndpoint, socket);
+                NTSCFG_TEST_OK(error);
+
+                NTSCFG_TEST_TRUE(sourceEndpoint.isLocal());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isUnnamed());
+                NTSCFG_TEST_TRUE(sourceEndpoint.local().isAbstract());
             }
 
             error = ntsu::SocketUtil::unlink(socket);
@@ -8551,7 +8830,7 @@ NTSCFG_TEST_FUNCTION(
     NTSCFG_TEST_OK(error);
 
     if (!SocketUtilTest::supportsTimestamping(client) ||
-        !SocketUtilTest::supportsTimestamping(server)) 
+        !SocketUtilTest::supportsTimestamping(server))
     {
         ntsu::SocketUtil::close(client);
         ntsu::SocketUtil::close(server);
@@ -8734,7 +9013,7 @@ NTSCFG_TEST_FUNCTION(
     parameters.setZeroCopy(true);
 
     SocketUtilTest::executeDatagramSocketTestParameters(
-        &SocketUtilTest::testDatagramSocketTxTimestampsAndZeroCopy, 
+        &SocketUtilTest::testDatagramSocketTxTimestampsAndZeroCopy,
         parameters);
 
 #endif
@@ -9089,6 +9368,1788 @@ NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyIsSocket)
         bool result2 = ntsu::SocketUtil::isSocket(socket);
         NTSCFG_TEST_FALSE(result2);
     }
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointIpv4)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    ntsa::Error error;
+    int         rc;
+
+    const char sentinel = static_cast<char>(0xAA);
+
+    struct sockaddr_storage socketAddress;
+    bsl::memset(&socketAddress,
+                static_cast<int>(sentinel),
+                sizeof socketAddress);
+
+    bsl::size_t socketAddressSize = sizeof socketAddress;
+
+    ntsa::Ipv4Endpoint ipv4Endpoint;
+    ipv4Endpoint.setHost(ntsa::Ipv4Address::loopback());
+    ipv4Endpoint.setPort(80);
+
+    ntsa::Endpoint endpoint(ipv4Endpoint);
+
+    NTSCFG_TEST_TRUE(endpoint.isExplicit());
+
+    error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                             &socketAddressSize,
+                                             endpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_EQ(socketAddressSize, sizeof(struct sockaddr_in));
+
+    struct sockaddr_in *socketAddressIpv4 =
+        reinterpret_cast<struct sockaddr_in*>(&socketAddress);
+
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_family, AF_INET);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_len, socketAddressSize);
+#endif
+
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_addr.s_addr,
+                   htonl(INADDR_LOOPBACK));
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_port,
+                   htons(80));
+
+    bsl::uint8_t zero[sizeof socketAddressIpv4->sin_zero];
+    bsl::memset(zero, 0, sizeof zero);
+
+    rc = bsl::memcmp(socketAddressIpv4->sin_zero, zero, sizeof zero);
+    NTSCFG_TEST_EQ(rc, 0);
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointIpv4)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    ntsa::Error error;
+    int         rc;
+
+    const char sentinel = static_cast<char>(0xAA);
+
+    struct sockaddr_storage socketAddress;
+    bsl::memset(&socketAddress,
+                static_cast<int>(sentinel),
+                sizeof socketAddress);
+
+    bsl::size_t socketAddressSize = sizeof socketAddress;
+
+    ntsa::Ipv4Endpoint ipv4Endpoint;
+    ipv4Endpoint.setHost(ntsa::Ipv4Address::loopback());
+    ipv4Endpoint.setPort(80);
+
+    ntsa::Endpoint endpoint1(ipv4Endpoint);
+
+    NTSCFG_TEST_TRUE(endpoint1.isExplicit());
+
+    error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                             &socketAddressSize,
+                                             endpoint1);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_EQ(socketAddressSize, sizeof(struct sockaddr_in));
+
+    struct sockaddr_in *socketAddressIpv4 =
+        reinterpret_cast<struct sockaddr_in*>(&socketAddress);
+
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_family, AF_INET);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_len, socketAddressSize);
+#endif
+
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_addr.s_addr,
+                   htonl(INADDR_LOOPBACK));
+    NTSCFG_TEST_EQ(socketAddressIpv4->sin_port,
+                   htons(80));
+
+    bsl::uint8_t zero[sizeof socketAddressIpv4->sin_zero];
+    bsl::memset(zero, 0, sizeof zero);
+
+    rc = bsl::memcmp(socketAddressIpv4->sin_zero, zero, sizeof zero);
+    NTSCFG_TEST_EQ(rc, 0);
+
+    ntsa::Endpoint endpoint2;
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                             &socketAddress,
+                                             socketAddressSize);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(endpoint2, endpoint1);
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointIpv6)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    ntsa::Error error;
+    int         rc;
+
+    const char sentinel = static_cast<char>(0xAA);
+
+    struct sockaddr_storage socketAddress;
+    bsl::memset(&socketAddress,
+                static_cast<int>(sentinel),
+                sizeof socketAddress);
+
+    bsl::size_t socketAddressSize = sizeof socketAddress;
+
+    ntsa::Ipv6Address ipv6Address = ntsa::Ipv6Address::loopback();
+    ipv6Address.setScopeId(3);
+
+    ntsa::Ipv6Endpoint ipv6Endpoint;
+    ipv6Endpoint.setHost(ipv6Address);
+    ipv6Endpoint.setPort(80);
+
+    ntsa::Endpoint endpoint(ipv6Endpoint);
+
+    NTSCFG_TEST_TRUE(endpoint.isExplicit());
+
+    error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                             &socketAddressSize,
+                                             endpoint);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_EQ(socketAddressSize, sizeof(struct sockaddr_in6));
+
+    struct sockaddr_in6 *socketAddressIpv6 =
+        reinterpret_cast<struct sockaddr_in6*>(&socketAddress);
+
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_family, AF_INET6);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_len, socketAddressSize);
+#endif
+
+    rc = bsl::memcmp(&socketAddressIpv6->sin6_addr,
+                     &in6addr_loopback,
+                     sizeof socketAddressIpv6->sin6_addr);
+    NTSCFG_TEST_EQ(rc, 0);
+
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_port, htons(80));
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_scope_id, 3);
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_flowinfo, 0);
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointIpv6)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    ntsa::Error error;
+    int         rc;
+
+    const char sentinel = static_cast<char>(0xAA);
+
+    struct sockaddr_storage socketAddress;
+    bsl::memset(&socketAddress,
+                static_cast<int>(sentinel),
+                sizeof socketAddress);
+
+    bsl::size_t socketAddressSize = sizeof socketAddress;
+
+    ntsa::Ipv6Address ipv6Address = ntsa::Ipv6Address::loopback();
+    ipv6Address.setScopeId(3);
+
+    ntsa::Ipv6Endpoint ipv6Endpoint;
+    ipv6Endpoint.setHost(ipv6Address);
+    ipv6Endpoint.setPort(80);
+
+    ntsa::Endpoint endpoint1(ipv6Endpoint);
+
+    NTSCFG_TEST_TRUE(endpoint1.isExplicit());
+
+    error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                             &socketAddressSize,
+                                             endpoint1);
+    NTSCFG_TEST_OK(error);
+
+    NTSCFG_TEST_EQ(socketAddressSize, sizeof(struct sockaddr_in6));
+
+    struct sockaddr_in6 *socketAddressIpv6 =
+        reinterpret_cast<struct sockaddr_in6*>(&socketAddress);
+
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_family, AF_INET6);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_len, socketAddressSize);
+#endif
+
+    rc = bsl::memcmp(&socketAddressIpv6->sin6_addr,
+                     &in6addr_loopback,
+                     sizeof socketAddressIpv6->sin6_addr);
+    NTSCFG_TEST_EQ(rc, 0);
+
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_port, htons(80));
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_scope_id, 3);
+    NTSCFG_TEST_EQ(socketAddressIpv6->sin6_flowinfo, 0);
+
+    ntsa::Endpoint endpoint2;
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                             &socketAddress,
+                                             socketAddressSize);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_EQ(endpoint2, endpoint1);
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyEncodeEndpointLocal)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+
+    ntsa::Error error;
+
+    const char sentinel = static_cast<char>(0xAA);
+    const char null     = static_cast<char>(0);
+
+    // Verify that a local name with a non-empty path in the persistent
+    // namespace is encoded to a socket address structure in the expected
+    // address family whose path is defined with a null terminator and a socket
+    // address length that includes the null terminator.
+
+    {
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        const bsl::string localNameValue = "abc";
+
+        ntsa::LocalName localName;
+        error = localName.setValue(localNameValue);
+        NTSCFG_TEST_OK(error);
+        error = localName.setPersistent();
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_FALSE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isPersistent());
+
+        ntsa::Endpoint endpoint(localName);
+
+        NTSCFG_TEST_TRUE(endpoint.isExplicit());
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_len, socketAddressSize);
+#endif
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize,
+                       pathOffset + localNameValue.size() + 1);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], 'a');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[1], 'b');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[2], 'c');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], null);
+    }
+
+    // Verify that a local name with a empty path in the persistent
+    // namespace is encoded to a socket address structure in the expected
+    // address family whose path is not defined.
+
+    {
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        ntsa::LocalName localName;
+        error = localName.setUnnamed();
+        NTSCFG_TEST_OK(error);
+        error = localName.setPersistent();
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_TRUE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isPersistent());
+
+        ntsa::Endpoint endpoint(localName);
+
+        NTSCFG_TEST_TRUE(endpoint.isImplicit());
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_len, socketAddressSize);
+#endif
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize, pathOffset);
+    }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    // Verify that a local name in the abstract namespace is encoded to a
+    // socket address structure in the expected address family whose path is
+    // defined with leading null byte but no null terminator and a socket
+    // address length that includes the leading null byte.
+
+    {
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        const bsl::string localNameValue = "abc";
+
+        ntsa::LocalName localName;
+        error = localName.setValue(localNameValue);
+        NTSCFG_TEST_OK(error);
+        error = localName.setAbstract();
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_FALSE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isAbstract());
+
+        ntsa::Endpoint endpoint(localName);
+
+        NTSCFG_TEST_TRUE(endpoint.isExplicit());
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize,
+                       pathOffset + 1 + localNameValue.size());
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], null);
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[1], 'a');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[2], 'b');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], 'c');
+    }
+
+    // Verify that a local name with a empty path in the abstract
+    // namespace is encoded to a socket address structure in the expected
+    // address family whose path is defined with a single null byte.
+
+    {
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        ntsa::LocalName localName;
+        error = localName.setUnnamed();
+        NTSCFG_TEST_OK(error);
+        error = localName.setAbstract();
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_TRUE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isAbstract());
+
+        ntsa::Endpoint endpoint(localName);
+
+        NTSCFG_TEST_TRUE(endpoint.isExplicit());
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_len, socketAddressSize);
+#endif
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize, pathOffset + 1);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], null);
+    }
+
+#endif
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointLocal)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+
+    ntsa::Error error;
+
+    const char sentinel = static_cast<char>(0xAA);
+    const char null     = static_cast<char>(0);
+
+    // Verify that a local name with a non-empty path in the persistent
+    // namespace is decoded from a socket address structure in the expected
+    // address family whose path is defined with a null terminator and a socket
+    // address length that includes the null terminator.
+
+    {
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        const bsl::string localNameValue = "abc";
+
+        ntsa::LocalName localName;
+        error = localName.setValue(localNameValue);
+        NTSCFG_TEST_OK(error);
+        error = localName.setPersistent();
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_FALSE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isPersistent());
+
+        ntsa::Endpoint endpoint1(localName);
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint1);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_len, socketAddressSize);
+#endif
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize,
+                       pathOffset + localNameValue.size() + 1);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], 'a');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[1], 'b');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[2], 'c');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], null);
+
+        ntsa::Endpoint endpoint2;
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                                 &socketAddress,
+                                                 socketAddressSize);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(endpoint2, endpoint1);
+    }
+
+    // Verify that a local name with a empty path in the persistent
+    // namespace is decoded from a socket address structure in the expected
+    // address family whose path is not defined.
+
+    {
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        ntsa::LocalName localName;
+        error = localName.setUnnamed();
+        NTSCFG_TEST_OK(error);
+        error = localName.setPersistent();
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_TRUE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isPersistent());
+
+        ntsa::Endpoint endpoint1(localName);
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint1);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_len, socketAddressSize);
+#endif
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize, pathOffset);
+
+        ntsa::Endpoint endpoint2;
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                                 &socketAddress,
+                                                 socketAddressSize);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(endpoint2, endpoint1);
+    }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+
+    // Verify that a local name in the abstract namespace is decoded from a
+    // socket address structure in the expected address family whose path is
+    // defined with leading null byte but no null terminator and a socket
+    // address length that includes the leading null byte.
+
+    {
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        const bsl::string localNameValue = "abc";
+
+        ntsa::LocalName localName;
+        error = localName.setValue(localNameValue);
+        NTSCFG_TEST_OK(error);
+        error = localName.setAbstract();
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_FALSE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isAbstract());
+
+        ntsa::Endpoint endpoint1(localName);
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint1);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize,
+                       pathOffset + 1 + localNameValue.size());
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], null);
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[1], 'a');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[2], 'b');
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[3], 'c');
+
+        ntsa::Endpoint endpoint2;
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                                 &socketAddress,
+                                                 socketAddressSize);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(endpoint2, endpoint1);
+    }
+
+    // Verify that a local name with a empty path in the abstract
+    // namespace is decoded from a socket address structure in the expected
+    // address family whose path is defined with a single null byte.
+
+    {
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress,
+                    static_cast<int>(sentinel),
+                    sizeof socketAddress);
+
+        bsl::size_t socketAddressSize = sizeof socketAddress;
+
+        ntsa::LocalName localName;
+        error = localName.setUnnamed();
+        NTSCFG_TEST_OK(error);
+        error = localName.setAbstract();
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_TRUE(localName.isUnnamed());
+        NTSCFG_TEST_TRUE(localName.isAbstract());
+
+        ntsa::Endpoint endpoint1(localName);
+
+        error = ntsu::SocketUtil::encodeEndpoint(&socketAddress,
+                                                 &socketAddressSize,
+                                                 endpoint1);
+        NTSCFG_TEST_OK(error);
+
+        struct sockaddr_un *socketAddressLocal =
+            reinterpret_cast<struct sockaddr_un*>(&socketAddress);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_family, AF_UNIX);
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_len, socketAddressSize);
+#endif
+
+        const bsl::size_t pathOffset =
+                offsetof(struct sockaddr_un, sun_path);
+
+        NTSCFG_TEST_EQ(socketAddressSize, pathOffset + 1);
+
+        NTSCFG_TEST_EQ(socketAddressLocal->sun_path[0], null);
+
+        ntsa::Endpoint endpoint2;
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint2,
+                                                 &socketAddress,
+                                                 socketAddressSize);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(endpoint2, endpoint1);
+    }
+
+#endif
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnterminated)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: decodeEndpoint bounds the scan of 'sun_path' by the specified
+    // address size and does not depend on a null terminator.
+
+    // Fill well past the end of the address with non-null bytes so a read
+    // beyond the stated length changes the result. Terminate at the very end
+    // so the old unbounded scan stays inside this buffer.
+
+    const bsl::size_t pathOffset = offsetof(struct sockaddr_un, sun_path);
+
+    union {
+        sockaddr_un un;
+        char        raw[512];
+    } address;
+
+    ntsa::Endpoint endpoint;
+    ntsa::Error    error;
+
+    // Pathname, unterminated: "abc" followed by 'x' bytes.
+    bsl::memset(&address, 'x', sizeof address);
+    address.raw[sizeof address - 1] = 0;
+    address.un.sun_family = AF_UNIX;
+    bsl::memcpy(address.un.sun_path, "abc", 3);
+
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                             &address,
+                                             pathOffset + 3);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_TRUE(endpoint.isLocal());
+    NTSCFG_TEST_FALSE(endpoint.local().isAbstract());
+    NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    // Abstract: leading NUL, "abc", followed by 'x' bytes.
+    bsl::memset(&address, 'x', sizeof address);
+    address.raw[sizeof address - 1] = 0;
+    address.un.sun_family = AF_UNIX;
+    address.un.sun_path[0] = 0;
+    bsl::memcpy(address.un.sun_path + 1, "abc", 3);
+
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                             &address,
+                                             pathOffset + 4);
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_TRUE(endpoint.local().isAbstract());
+    NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+#endif
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalEmbeddedNulls)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: Endpoint decoding of a Unix domain socket names in the
+    // persistent namespace with embedded NULs truncates the name after the
+    // first NUL.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 'a';
+        un.sun_path[1] = 'b';
+        un.sun_path[2] = 'c';
+        un.sun_path[3] = 0;
+        un.sun_path[4] = 'x';
+
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 5;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            addressLength);
+        NTSCFG_TEST_OK(error);
+
+        NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
+        NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+    }
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    // Concern: Endpoint decoding of a Unix domain socket names in the
+    // abstract namespace with embedded NULs (not including the first NUL which
+    // indicates the abstract namespace) fails.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 0;
+        un.sun_path[1] = 0;
+
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 2;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            addressLength);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
+    }
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 0;
+        un.sun_path[1] = 0;
+        un.sun_path[2] = 'a';
+        un.sun_path[3] = 'b';
+        un.sun_path[4] = 'd';
+        un.sun_path[5] = 'e';
+
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 6;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            addressLength);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
+    }
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_path[0] = 0;
+        un.sun_path[1] = 'a';
+        un.sun_path[2] = 'b';
+        un.sun_path[3] = 'c';
+        un.sun_path[4] = 0;
+        un.sun_path[5] = 'x';
+
+        const bsl::size_t addressLength =
+            offsetof(struct sockaddr_un, sun_path) + 6;
+
+        error = ntsu::SocketUtil::decodeEndpoint(
+            &endpoint,
+            &un,
+            addressLength);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
+    }
+#endif
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointUndefined)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    // Concern: A socket address whose size is zero decodes to an undefined
+    // endpoint, regardless of the contents of the socket address structure.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress, 0xAA, sizeof socketAddress);
+
+        socketAddress.ss_family = AF_INET;
+
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint, &socketAddress, 0);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
+    }
+
+    // Concern: A socket address whose address family is 'AF_UNSPEC' decodes
+    // to an undefined endpoint, regardless of the socket address size.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress, 0, sizeof socketAddress);
+
+        socketAddress.ss_family = AF_UNSPEC;
+
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                 &socketAddress,
+                                                 sizeof socketAddress);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
+    }
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress, 0, sizeof socketAddress);
+
+        socketAddress.ss_family = AF_UNSPEC;
+
+        const bsl::size_t socketAddressSize =
+            offsetof(struct sockaddr_storage, ss_family) +
+            sizeof socketAddress.ss_family;
+
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                 &socketAddress,
+                                                 socketAddressSize);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
+    }
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointInvalidSize)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    // Concern: A socket address whose size is too small to contain the
+    // address family fails to decode.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress, 0, sizeof socketAddress);
+
+        socketAddress.ss_family = AF_INET;
+
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint, &socketAddress, 1);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
+    }
+
+    // Concern: An IPv4 socket address whose size is not exactly the size of
+    // 'struct sockaddr_in' fails to decode.
+
+    {
+        const bsl::size_t k_SIZES[] = {
+            sizeof(struct sockaddr_in) - 1,
+            sizeof(struct sockaddr_in) + 1
+        };
+
+        for (bsl::size_t i = 0; i < sizeof k_SIZES / sizeof k_SIZES[0]; ++i) {
+            ntsa::Endpoint endpoint;
+            ntsa::Error    error;
+
+            struct sockaddr_storage socketAddress;
+            bsl::memset(&socketAddress, 0, sizeof socketAddress);
+
+            socketAddress.ss_family = AF_INET;
+
+            error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                     &socketAddress,
+                                                     k_SIZES[i]);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+            NTSCFG_TEST_TRUE(endpoint.isUndefined());
+        }
+    }
+
+    // Concern: An IPv6 socket address whose size is not exactly the size of
+    // 'struct sockaddr_in6' fails to decode.
+
+    {
+        const bsl::size_t k_SIZES[] = {
+            sizeof(struct sockaddr_in6) - 1,
+            sizeof(struct sockaddr_in6) + 1
+        };
+
+        for (bsl::size_t i = 0; i < sizeof k_SIZES / sizeof k_SIZES[0]; ++i) {
+            ntsa::Endpoint endpoint;
+            ntsa::Error    error;
+
+            struct sockaddr_storage socketAddress;
+            bsl::memset(&socketAddress, 0, sizeof socketAddress);
+
+            socketAddress.ss_family = AF_INET6;
+
+            error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                     &socketAddress,
+                                                     k_SIZES[i]);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+            NTSCFG_TEST_TRUE(endpoint.isUndefined());
+        }
+    }
+
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: A Unix domain socket address whose size is larger than the
+    // size of 'struct sockaddr_un' fails to decode.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress, 'x', sizeof socketAddress);
+
+        socketAddress.ss_family = AF_UNIX;
+
+        const bsl::size_t socketAddressSize = sizeof(struct sockaddr_un) + 1;
+
+        NTSCFG_TEST_LE(socketAddressSize, sizeof socketAddress);
+
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                 &socketAddress,
+                                                 socketAddressSize);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
+    }
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointStorageCapacity)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    // Concern: The operating system reports socket addresses into a
+    // 'struct sockaddr_storage', and decoding may read up to the size of the
+    // family-specific socket address structure. Ensure each family-specific
+    // socket address structure fits within 'struct sockaddr_storage'.
+
+    BSLMF_ASSERT(sizeof(struct sockaddr_in) <=
+                 sizeof(struct sockaddr_storage));
+    BSLMF_ASSERT(sizeof(struct sockaddr_in6) <=
+                 sizeof(struct sockaddr_storage));
+
+    NTSCFG_TEST_LE(sizeof(struct sockaddr_in),
+                   sizeof(struct sockaddr_storage));
+    NTSCFG_TEST_LE(sizeof(struct sockaddr_in6),
+                   sizeof(struct sockaddr_storage));
+
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    BSLMF_ASSERT(sizeof(struct sockaddr_un) <=
+                 sizeof(struct sockaddr_storage));
+
+    NTSCFG_TEST_LE(sizeof(struct sockaddr_un),
+                   sizeof(struct sockaddr_storage));
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointSizeExceedsStorage)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+    // Concern: The operating system may report a socket address size larger
+    // than the capacity supplied to 'getsockname', 'getpeername', or
+    // 'recvmsg'. Decoding a socket address whose size is larger than
+    // 'struct sockaddr_storage' fails without reading beyond the socket
+    // address structure. Note that reading beyond the socket address
+    // structure is detected when this test is run under AddressSanitizer.
+
+    const int k_FAMILIES[] = {
+        AF_INET,
+        AF_INET6
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+        , AF_UNIX
+#endif
+    };
+
+    const bsl::size_t k_SIZES[] = {
+        sizeof(struct sockaddr_storage) + 1,
+        sizeof(struct sockaddr_storage) * 2,
+        static_cast<bsl::size_t>(bsl::numeric_limits<socklen_t>::max())
+    };
+
+    for (bsl::size_t i = 0; i < sizeof k_FAMILIES / sizeof k_FAMILIES[0]; ++i)
+    {
+        for (bsl::size_t j = 0; j < sizeof k_SIZES / sizeof k_SIZES[0]; ++j) {
+            ntsa::Endpoint endpoint;
+            ntsa::Error    error;
+
+            struct sockaddr_storage socketAddress;
+            bsl::memset(&socketAddress, 'x', sizeof socketAddress);
+
+            socketAddress.ss_family =
+                static_cast<sa_family_t>(k_FAMILIES[i]);
+
+            error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                     &socketAddress,
+                                                     k_SIZES[j]);
+            NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+            NTSCFG_TEST_TRUE(endpoint.isUndefined());
+        }
+    }
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnnamed)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    const bsl::size_t pathOffset = offsetof(struct sockaddr_un, sun_path);
+
+    // Concern: A Unix domain socket address whose size includes no bytes of
+    // the path decodes to an unnamed local name in the persistent namespace.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 'x', sizeof un);
+
+        un.sun_family = AF_UNIX;
+
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint, &un, pathOffset);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(endpoint.isLocal());
+        NTSCFG_TEST_TRUE(endpoint.local().isUnnamed());
+        NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
+    }
+
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    // Concern: On Darwin and FreeBSD, a Unix domain socket address whose size
+    // is the size of 'struct sockaddr' and whose path bytes are all zero
+    // (i.e., the result of 'getsockname' on an unbound socket) decodes to an
+    // unnamed local name in the persistent namespace.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family = AF_UNIX;
+        un.sun_len    = sizeof(struct sockaddr);
+
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                 &un,
+                                                 sizeof(struct sockaddr));
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_TRUE(endpoint.isLocal());
+        NTSCFG_TEST_TRUE(endpoint.local().isUnnamed());
+        NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
+    }
+
+    // Concern: On Darwin and FreeBSD, a Unix domain socket address whose size
+    // is the size of 'struct sockaddr' and whose path begins with a NUL byte,
+    // but whose path bytes are not all zero, does not match the special
+    // signature of an unnamed socket and fails to decode because the abstract
+    // namespace is not supported.
+
+    {
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        sockaddr_un un;
+        bsl::memset(&un, 0, sizeof un);
+
+        un.sun_family  = AF_UNIX;
+        un.sun_len     = sizeof(struct sockaddr);
+        un.sun_path[5] = 'x';
+
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                 &un,
+                                                 sizeof(struct sockaddr));
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
+    }
+#endif
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnnamedOversized)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: A Unix domain socket address whose size indicates more bytes
+    // than the capacity of 'sun_path' fails to decode, even when every byte
+    // of the path is zero. The size is validated before the address is
+    // checked for the signature of an unnamed socket.
+
+    const bsl::size_t k_SIZES[] = {
+        sizeof(struct sockaddr_un) + 1,
+        sizeof(struct sockaddr_storage),
+        sizeof(struct sockaddr_storage) + 1
+    };
+
+    for (bsl::size_t i = 0; i < sizeof k_SIZES / sizeof k_SIZES[0]; ++i) {
+        if (k_SIZES[i] <= sizeof(struct sockaddr_un)) {
+            continue;
+        }
+
+        ntsa::Endpoint endpoint;
+        ntsa::Error    error;
+
+        struct sockaddr_storage socketAddress;
+        bsl::memset(&socketAddress, 0, sizeof socketAddress);
+
+        socketAddress.ss_family = AF_UNIX;
+
+        error = ntsu::SocketUtil::decodeEndpoint(&endpoint,
+                                                 &socketAddress,
+                                                 k_SIZES[i]);
+        NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
+    }
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalUnnamedFullSize)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: A Unix domain socket address whose size is the size of
+    // 'struct sockaddr_un' and whose path bytes are all zero (i.e., the
+    // signature of an unnamed socket on Windows) decodes to an unnamed local
+    // name in the persistent namespace on platforms other than Linux. On
+    // Linux, such an address is in the abstract namespace and contains
+    // embedded NULs, so decoding fails.
+
+    ntsa::Endpoint endpoint;
+    ntsa::Error    error;
+
+    sockaddr_un un;
+    bsl::memset(&un, 0, sizeof un);
+
+    un.sun_family = AF_UNIX;
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+    un.sun_len = sizeof un;
+#endif
+
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint, &un, sizeof un);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_INVALID));
+#else
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_TRUE(endpoint.isLocal());
+    NTSCFG_TEST_TRUE(endpoint.local().isUnnamed());
+    NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
+#endif
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(ntsu::SocketUtilTest::verifyDecodeEndpointLocalLeadingNul)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: A Unix domain socket address whose path begins with a NUL byte
+    // decodes to a local name in the abstract namespace on Linux, and fails
+    // to decode on platforms that do not support the abstract namespace.
+
+    ntsa::Endpoint endpoint;
+    ntsa::Error    error;
+
+    sockaddr_un un;
+    bsl::memset(&un, 0, sizeof un);
+
+    un.sun_family  = AF_UNIX;
+    un.sun_path[0] = 0;
+    un.sun_path[1] = 'a';
+    un.sun_path[2] = 'b';
+    un.sun_path[3] = 'c';
+
+    const bsl::size_t addressLength =
+        offsetof(struct sockaddr_un, sun_path) + 4;
+
+    error = ntsu::SocketUtil::decodeEndpoint(&endpoint, &un, addressLength);
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+    NTSCFG_TEST_OK(error);
+    NTSCFG_TEST_TRUE(endpoint.isLocal());
+    NTSCFG_TEST_TRUE(endpoint.local().isAbstract());
+    NTSCFG_TEST_EQ(endpoint.local().value(), "abc");
+#else
+    NTSCFG_TEST_EQ(error, ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED));
+#endif
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalFromUnnamedSender)
+{
+#if defined(BSLS_PLATFORM_OS_UNIX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+    // Concern: Receiving a datagram from an unnamed Unix domain socket while
+    // requesting the sender's endpoint succeeds. On Linux, the operating
+    // system reports a zero-length sender address, which decodes to an
+    // undefined endpoint. On Darwin and FreeBSD, the operating system reports
+    // the special signature of an unnamed socket, which decodes to an unnamed
+    // local name in the persistent namespace.
+
+    ntsa::Error error;
+
+    ntsa::Handle client;
+    ntsa::Handle server;
+    error = ntsu::SocketUtil::pair(&client,
+                                   &server,
+                                   ntsa::Transport::e_LOCAL_DATAGRAM);
+    NTSCFG_TEST_OK(error);
+
+    SocketUtilTest::CloseGuard clientCloseGuard(client);
+    SocketUtilTest::CloseGuard serverCloseGuard(server);
+
+    {
+        char              buffer = 'C';
+        ntsa::SendContext context;
+        ntsa::SendOptions options;
+
+        ntsa::Data data(ntsa::ConstBuffer(&buffer, 1));
+
+        error = ntsu::SocketUtil::send(&context, data, options, client);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(context.bytesSent(), 1);
+    }
+
+    {
+        char                 buffer = 0;
+        ntsa::ReceiveContext context;
+        ntsa::ReceiveOptions options;
+        options.showEndpoint();
+
+        ntsa::Data data(ntsa::MutableBuffer(&buffer, 1));
+
+        error = ntsu::SocketUtil::receive(&context, &data, options, server);
+        NTSCFG_TEST_OK(error);
+        NTSCFG_TEST_EQ(context.bytesReceived(), 1);
+        NTSCFG_TEST_EQ(buffer, 'C');
+
+        NTSCFG_TEST_FALSE(context.endpoint().isNull());
+
+        const ntsa::Endpoint& endpoint = context.endpoint().value();
+
+#if defined(BSLS_PLATFORM_OS_LINUX)
+        NTSCFG_TEST_TRUE(endpoint.isUndefined());
+#elif defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_FREEBSD)
+        NTSCFG_TEST_TRUE(endpoint.isLocal());
+        NTSCFG_TEST_TRUE(endpoint.local().isUnnamed());
+        NTSCFG_TEST_TRUE(endpoint.local().isPersistent());
+#else
+        NTSCFG_TEST_TRUE(endpoint.isImplicit());
+#endif
+    }
+#endif
+#endif
+}
+
+NTSCFG_TEST_FUNCTION(
+    ntsu::SocketUtilTest::verifyDecodeEndpointLocalPlatformBehavior)
+{
+#if defined(BSLS_PLATFORM_OS_DARWIN) || defined(BSLS_PLATFORM_OS_LINUX)
+#if NTSCFG_BUILD_WITH_TRANSPORT_PROTOCOL_LOCAL
+
+    // This test explores, observes, and enshrines expected platform behavior
+    // when binding and connection Unix domain sockets to addresses in the
+    // "persistent" namespace that are not NUL-terminated and addresses
+    // containing "extra" NUL characters in the Unix domain address path. This
+    // test additionally verifies that any of these addresses successfully
+    // decode into the expected 'ntsa::Endpoint' value. In particular, this
+    // test verifies that any "extra" NUL terminators do not participate in
+    // the "value" of the address as interpreted by the operating system.
+    //
+    // Care must be take when calling 'getsockname' given a
+    // 'struct sockaddr_storage', since 'struct sockaddr_storage' is often
+    // larger than 'struct sockaddr_un'. This care is notable
+    // when anticipating whether the operating system will include a
+    // null-terminator in the output of 'getsockname', even when the socket is
+    // bound to an address without a null terminator in the 'sun_path' given to
+    // 'bind'. This test deliberately eschews giving the size of 'struct
+    // sockaddr_storage' and instead uses the size of 'struct sockaddr_un',
+    // even through real production implementions (including this library)
+    // would typically use the 'struct sockaddr_storage' and its size in
+    // situations where the exact address type is not known, or cared to be
+    // known, ahead of time. This avoids supplying the operating system with
+    // sufficient capacity allowing it to write null terminators after the
+    // last byte of 'struct sockaddr_un::sun_path'.
+    //
+    // This test observes the following, platform-specific behavior:
+    //
+    // Darwin: The result of 'getsockname' exactly matches the input to 'bind',
+    // including any and all null-terminators, even superfluous ones, provided
+    // sufficient capacity is given to 'getsockname'. For example, if the path
+    // given to 'bind' contains no null terminators, then the path that results
+    // from 'getsockname' will not contain any null terminators. If the path
+    // given to 'bind' contains one null terminator, then the result of
+    // 'getsockname' will contain one null terminator. If the path given to
+    // 'bind contains two null terminators, then the result of 'getsockname'
+    // will contain two null terminators.
+    //
+    // Linux: The result of 'getsockname' will always contain a null
+    // terminator, provided there is sufficient capacity, even when the input
+    // to 'bind' does not contain a null terminator. If the input to 'bind' is
+    // a path whose length is equal to 'sizeof(struct sockaddr::sun_path)'
+    // (i.e., the maximum path length), then the result of 'getsockname' will
+    //  *not* contain a null terminator, but the resulting address size will be
+    // greater than the given address size, although the operating system takes
+    // care not to write beyond the initial capacity given to 'getsockname'.
+
+    ntsa::Error error;
+    int         rc;
+
+    const bsl::size_t socketAddressStorageCapacity =
+                sizeof(struct ::sockaddr_storage);
+
+    const bsl::size_t socketAddressLocalCapacity =
+        sizeof(struct ::sockaddr_un);
+
+    const bsl::size_t socketAddressLocalPathOffset =
+        offsetof(struct ::sockaddr_un, sun_path);
+
+    const bsl::size_t socketAddressLocalPathCapacity =
+        sizeof(((struct ::sockaddr_un *)0)->sun_path);
+
+    const bsl::size_t minTestLength =
+        static_cast<bsl::size_t>(socketAddressLocalPathCapacity) - 3;
+
+    const bsl::size_t maxTestLength =
+        static_cast<bsl::size_t>(socketAddressLocalPathCapacity);
+
+    for (bsl::size_t testLength  = maxTestLength;
+                     testLength >= minTestLength;
+                   --testLength)
+    {
+        const bsl::size_t maxNullTerminators =
+            socketAddressLocalPathCapacity - testLength;
+
+        for (bsl::size_t numNullTerminators  = 0;
+                         numNullTerminators <= maxNullTerminators;
+                       ++numNullTerminators)
+        {
+            BSLS_LOG_TRACE("Testing sun_path length %zu/%zu, "
+                           "numNullTerminators = %zu/%zu",
+                           static_cast<bsl::size_t>(testLength),
+                           socketAddressLocalPathCapacity,
+                           numNullTerminators,
+                           maxNullTerminators);
+
+            ntsa::TemporaryDirectory temporaryDirectory;
+
+            if (temporaryDirectory.path().size() + 1 + numNullTerminators >=
+                testLength)
+            {
+                // Skip tests if the current temporary directory leaves no
+                // room for a non-empty file name within the test length. This
+                // check also prevents the unsigned computation of the file
+                // name length below from wrapping around.
+                continue;
+            }
+
+            bsl::string temporaryFileName;
+            while (temporaryFileName.size() <
+                   testLength -
+                   temporaryDirectory.path().size() -
+                   1 -
+                   numNullTerminators)
+            {
+                temporaryFileName.push_back('x');
+            }
+
+            bsl::string temporaryFilePath = temporaryDirectory.path();
+            rc = bdls::PathUtil::appendIfValid(
+                &temporaryFilePath,
+                temporaryFileName);
+            NTSCFG_TEST_EQ(rc, 0);
+
+            SocketUtilTest::EraseGuard eraseGuard(temporaryFilePath);
+
+            const bsl::size_t temporaryFilePathLength =
+                temporaryFilePath.size();
+
+            if (temporaryFilePathLength + numNullTerminators >
+                socketAddressLocalPathCapacity)
+            {
+                // Skip tests if the current temporary directory results in a
+                // Unix domain socket having a path longer than the capacity of
+                // 'sockaddr_un::sun_path'.
+                continue;
+            }
+
+            NTSCFG_TEST_LE(temporaryFilePath.size() +
+                           numNullTerminators,
+                           socketAddressLocalPathCapacity);
+
+            int listenFd = ::socket(AF_UNIX, SOCK_STREAM, 0);
+            NTSCFG_TEST_GE(listenFd, 0);
+
+            SocketUtilTest::CloseGuard listenCloseGuard(listenFd);
+
+            {
+                struct ::sockaddr_storage socketAddressStorage;
+                bsl::memset(&socketAddressStorage,
+                            static_cast<int>(0xFF),
+                            socketAddressStorageCapacity);
+
+                struct ::sockaddr* socketAddress =
+                    reinterpret_cast<struct ::sockaddr*>(
+                        &socketAddressStorage);
+
+                struct ::sockaddr_un* socketAddressLocal =
+                    reinterpret_cast<struct ::sockaddr_un*>(
+                        &socketAddressStorage);
+
+                bsl::memcpy(
+                    socketAddressLocal->sun_path,
+                    temporaryFilePath.c_str(),
+                    temporaryFilePathLength);
+
+                for (bsl::size_t i = 0; i < numNullTerminators; ++i) {
+                    socketAddressLocal->sun_path[
+                        temporaryFilePathLength + i] = 0;
+                }
+
+                const bsl::size_t socketAddressLength =
+                    socketAddressLocalPathOffset +
+                    temporaryFilePathLength +
+                    numNullTerminators;
+
+                socketAddressLocal->sun_family = AF_UNIX;
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+                socketAddressLocal->sun_len = socketAddressLength;
+#endif
+
+                rc = ::bind(listenFd, socketAddress, socketAddressLength);
+                NTSCFG_TEST_EQ(rc, 0);
+
+                struct ::stat socketStat;
+                bsl::memset(&socketStat, 0, sizeof socketStat);
+
+                rc = ::stat(temporaryFilePath.c_str(), &socketStat);
+                NTSCFG_TEST_EQ(rc, 0);
+
+                const bool isSocket = S_ISSOCK(socketStat.st_mode);
+                NTSCFG_TEST_TRUE(isSocket);
+            }
+
+            {
+                struct ::sockaddr_storage socketAddressStorage;
+                bsl::memset(&socketAddressStorage,
+                            static_cast<int>(0xFF),
+                            socketAddressStorageCapacity);
+
+                ::socklen_t socketAddressStorageLength =
+                    socketAddressLocalCapacity;
+
+                struct ::sockaddr* socketAddress =
+                    reinterpret_cast<struct ::sockaddr*>(
+                        &socketAddressStorage);
+
+                rc = ::getsockname(
+                    listenFd,
+                    socketAddress,
+                    &socketAddressStorageLength);
+                NTSCFG_TEST_EQ(rc, 0);
+
+                NTSCFG_TEST_EQ(socketAddressStorage.ss_family, AF_UNIX);
+
+                struct ::sockaddr_un* socketAddressLocal =
+                    reinterpret_cast<struct ::sockaddr_un*>(
+                        &socketAddressStorage);
+
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+                NTSCFG_TEST_EQ(socketAddressLocal->sun_len,
+                               socketAddressStorageLength);
+#endif
+
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+                // On Darwin, ensure the operating system includes any trailing
+                // NULs, initially specified when binding, in the output socket
+                // address length.
+
+                const ::socklen_t socketAddressStorageLengthExpected =
+                    socketAddressLocalPathOffset +
+                    temporaryFilePathLength +
+                    numNullTerminators;
+
+                NTSCFG_TEST_EQ(socketAddressStorageLength,
+                               socketAddressStorageLengthExpected);
+#elif defined(BSLS_PLATFORM_OS_LINUX)
+                // On Linux, ensure the operating system always includes one
+                // trailing NUL in the output socket address length, provided
+                // there is capacity available. If there is no capacity
+                // available, the socket length output from 'getsockname' will
+                // be larger than the input by 1, but the operating system will
+                // not write the 1 extra null byte anywhere.
+
+                if (temporaryFilePathLength ==
+                    socketAddressLocalPathCapacity)
+                {
+                    const ::socklen_t socketAddressStorageLengthExpected =
+                        socketAddressLocalCapacity + 1;
+
+                    NTSCFG_TEST_EQ(socketAddressStorageLength,
+                                   socketAddressStorageLengthExpected);
+                }
+                else {
+                    const ::socklen_t socketAddressStorageLengthExpected =
+                        socketAddressLocalPathOffset +
+                        temporaryFilePathLength +
+                        1;
+
+                    NTSCFG_TEST_EQ(socketAddressStorageLength,
+                                   socketAddressStorageLengthExpected);
+                }
+#else
+#error Not implemented
+#endif
+
+                if (temporaryFilePath.size() <=
+                    ntsa::LocalName::k_MAX_PATH_LENGTH)
+                {
+                    ntsa::Endpoint endpoint;
+                    error = ntsu::SocketUtil::decodeEndpoint(
+                        &endpoint,
+                        &socketAddressStorage,
+                        socketAddressStorageLength);
+                    NTSCFG_TEST_OK(error);
+
+                    NTSCFG_TEST_TRUE(endpoint.isLocal());
+
+                    const ntsa::LocalName& localName = endpoint.local();
+                    NTSCFG_TEST_EQ(localName.value(), temporaryFilePath);
+                    NTSCFG_TEST_TRUE(localName.isPersistent());
+                }
+            }
+
+            rc = ::listen(listenFd, 1);
+            NTSCFG_TEST_EQ(rc, 0);
+
+            // Test address matching when connecting, varying the number
+            // of extra null terminators.
+
+            for (bsl::size_t numConnectNullTerminators = 0;
+                             numConnectNullTerminators <= numNullTerminators;
+                           ++numConnectNullTerminators)
+            {
+                BSLS_LOG_TRACE("Testing sun_path length %zu/%zu, "
+                               "numNullTerminators = %zu/%zu, "
+                               "numConnectNullTerminators = %zu/%zu",
+                               static_cast<bsl::size_t>(testLength),
+                               socketAddressLocalPathCapacity,
+                               numNullTerminators,
+                               maxNullTerminators,
+                               numConnectNullTerminators,
+                               numNullTerminators);
+
+                int clientFd = ::socket(AF_UNIX, SOCK_STREAM, 0);
+                NTSCFG_TEST_GE(clientFd, 0);
+
+                SocketUtilTest::CloseGuard clientCloseGuard(clientFd);
+
+                // Connect.
+
+                {
+                    struct ::sockaddr_storage socketAddressStorage;
+                    bsl::memset(&socketAddressStorage,
+                                static_cast<int>(0xFF),
+                                socketAddressStorageCapacity);
+
+                    struct ::sockaddr* socketAddress =
+                        reinterpret_cast<struct ::sockaddr*>(
+                            &socketAddressStorage);
+
+                    struct ::sockaddr_un* socketAddressLocal =
+                        reinterpret_cast<struct ::sockaddr_un*>(
+                            &socketAddressStorage);
+
+                    bsl::memcpy(
+                        socketAddressLocal->sun_path,
+                        temporaryFilePath.c_str(),
+                        temporaryFilePathLength);
+
+                    for (bsl::size_t i = 0;
+                                     i < numConnectNullTerminators;
+                                   ++i)
+                    {
+                        socketAddressLocal->sun_path[
+                            temporaryFilePathLength + i] = 0;
+                    }
+
+                    const bsl::size_t socketAddressLength =
+                        socketAddressLocalPathOffset +
+                        temporaryFilePathLength +
+                        numConnectNullTerminators;
+
+                    socketAddressLocal->sun_family = AF_UNIX;
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+                    socketAddressLocal->sun_len = socketAddressLength;
+#endif
+
+                    rc = ::connect(clientFd,
+                                   socketAddress,
+                                   socketAddressLength);
+                    NTSCFG_TEST_EQ(rc, 0);
+                }
+
+                // Get the peer address.
+
+                {
+                    struct ::sockaddr_storage socketAddressStorage;
+                    bsl::memset(&socketAddressStorage,
+                                static_cast<int>(0xFF),
+                                socketAddressStorageCapacity);
+
+                    ::socklen_t socketAddressStorageLength =
+                        socketAddressLocalCapacity;
+
+                    struct ::sockaddr* socketAddress =
+                        reinterpret_cast<struct ::sockaddr*>(
+                            &socketAddressStorage);
+
+                    rc = ::getpeername(
+                        clientFd,
+                        socketAddress,
+                        &socketAddressStorageLength);
+                    NTSCFG_TEST_EQ(rc, 0);
+
+                    NTSCFG_TEST_EQ(socketAddressStorage.ss_family, AF_UNIX);
+
+                    struct ::sockaddr_un* socketAddressLocal =
+                        reinterpret_cast<struct ::sockaddr_un*>(
+                            &socketAddressStorage);
+
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+                    NTSCFG_TEST_EQ(socketAddressLocal->sun_len,
+                                   socketAddressStorageLength);
+#endif
+
+#if defined(BSLS_PLATFORM_OS_DARWIN)
+                    // On Darwin, ensure the operating system includes any
+                    // trailing NULs, initially specified when binding, in the
+                    // output socket address length.
+
+                    const ::socklen_t socketAddressStorageLengthExpected =
+                        socketAddressLocalPathOffset +
+                        temporaryFilePathLength +
+                        numNullTerminators;
+
+                    NTSCFG_TEST_EQ(socketAddressStorageLength,
+                                   socketAddressStorageLengthExpected);
+#elif defined(BSLS_PLATFORM_OS_LINUX)
+                    // On Linux, ensure the operating system always includes
+                    // one trailing NUL in the output socket address length,
+                    // provided there is capacity available. If there is no
+                    // capacity available, the socket length output from
+                    // 'getsockname' will be larger than the input by 1, but
+                    // the operating system will not write the 1 extra null
+                    // byte anywhere.
+
+                    if (temporaryFilePathLength ==
+                        socketAddressLocalPathCapacity)
+                    {
+                        const ::socklen_t socketAddressStorageLengthExpected =
+                            socketAddressLocalCapacity + 1;
+
+                        NTSCFG_TEST_EQ(socketAddressStorageLength,
+                                    socketAddressStorageLengthExpected);
+                    }
+                    else {
+                        const ::socklen_t socketAddressStorageLengthExpected =
+                            socketAddressLocalPathOffset +
+                            temporaryFilePathLength +
+                            1;
+
+                        NTSCFG_TEST_EQ(socketAddressStorageLength,
+                                       socketAddressStorageLengthExpected);
+                    }
+#else
+#error Not implemented
+#endif
+
+                    if (temporaryFilePath.size() <=
+                        ntsa::LocalName::k_MAX_PATH_LENGTH)
+                    {
+                        ntsa::Endpoint endpoint;
+                        error = ntsu::SocketUtil::decodeEndpoint(
+                            &endpoint,
+                            &socketAddressStorage,
+                            socketAddressStorageLength);
+                        NTSCFG_TEST_OK(error);
+
+                        NTSCFG_TEST_TRUE(endpoint.isLocal());
+
+                        const ntsa::LocalName& localName = endpoint.local();
+                        NTSCFG_TEST_EQ(localName.value(), temporaryFilePath);
+                        NTSCFG_TEST_TRUE(localName.isPersistent());
+                    }
+                }
+
+                // Accept the socket.
+
+                int serverFd = ::accept(listenFd, 0, 0);
+                NTSCFG_TEST_GT(serverFd, 0);
+
+                SocketUtilTest::CloseGuard serverCloseGuard(serverFd);
+            }
+        }
+    }
+
+#endif
+#endif
 }
 
 }  // close namespace ntsu

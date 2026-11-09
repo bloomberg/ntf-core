@@ -48,18 +48,25 @@ namespace ntsa {
 /// Portable local sockets and their names are always represented by artifacts
 /// on a filesystem at the path defined by their name. The file system artifact
 /// associated with a local socket must be explicitly removed after the socket
-/// is closed. Certain platforms (namely Linux) additionally introduce a 
-/// concept of an "ephemeral" namespace. Sockets bound to names in the 
-/// ephemeral namespace have no representation on a file system. Sockets in the
-/// ephemeral namespace have the advantage that there is no associated file 
-/// system artifact that must be cleaned up, but have the disadvantage that 
-/// the socket read/write permissions are decoupled from the file system 
+/// is closed. Certain platforms (namely Linux) additionally introduce a
+/// concept of an "abstract" namespace. Sockets bound to names in the
+/// abstract namespace have no representation on a file system. Sockets in the
+/// abstract namespace have the advantage that there is no associated file
+/// system artifact that must be cleaned up, but have the disadvantage that
+/// the socket read/write permissions are decoupled from the file system
 /// permission model.
+///
+///@par Valid Characters
+/// Some operating systems allow for local domain names in the abstract
+/// namespace to contain embedded 'NUL' bytes. For maximum portability and
+/// convenience treating the name as a string, the implementation of
+/// 'ntsa::LocalName' considers local names with embedded 'NUL' bytes as
+/// invalid.
 ///
 ///@par Unique Generation
 /// In various cases of local socket programming there is often a desire to
 /// give a local socket an explicit name but that name need not be well-known.
-/// Because portable local sockets must have names that refer to valid 
+/// Because portable local sockets must have names that refer to valid
 /// filesystem paths, this class provides a utility to generate a unique name
 /// is a suitable directory as defined by the environment. Generate unique
 /// names are prefixed by the value of the "SOCKDIR" environment variable, if
@@ -67,6 +74,72 @@ namespace ntsa {
 /// "TEMP" environment variables (on Windows) otherwise. If none of these
 /// environment variables are defined the implementation defaults to use
 /// "/tmp" (on the Unixes) or "C:\\Windows\\Temp" (on Windows).
+///
+///@par Encoding
+/// An 'ntsa::LocalName' encodes to a native socket address according to the
+/// following rules:
+///
+///     o If the local name is unnamed in the persistent namespace, the native
+///       socket address size includes no bytes of the native socket address
+///       path component. An unnamed socket address representation is treated
+///       as "unbound", "unnamed", or "autobind" depending on the context in
+///       which it is used.
+///
+///     o If the local name is named in the persistent namespace, the native
+///       socket address path contains the local name value followed by a
+///       single NUL byte, with the trailing NUL byte included in the native
+///       socket address size.
+///
+///     o If the local name is unnamed in the abstract namespace (Linux only),
+///       the native socket address path contains a single leading NUL byte,
+///       with the socket address size including the single leading NUL byte.
+///
+///     o If the local name is named in the abstract namespace (Linux only),
+///       the native socket address path contains a leading NUL byte followed
+///       by the local name value, with socket address size including the
+///       leading NUL byte and the local name value. The native socket address
+///       is not NUL-terminated.
+///
+///@par Decoding
+/// An 'ntsa::LocalName' decodes from a native socket address according to the
+/// following rules:
+///
+///     o If the address size indicates more bytes of the native socket address
+///       path component than the capacity of the path component, decoding
+///       fails.
+///
+///     o If no bytes of the native socket address path component are included
+///       in the address size, the address is considered unnamed in the
+///       persistent namespace.
+///
+///     o On platforms other than Linux, if every byte of the native socket
+///       address path component included in the address size is NUL, the
+///       address is considered unnamed in the persistent namespace. Note that
+///       different platforms report an unnamed socket address with different
+///       sizes (e.g., Darwin and FreeBSD report the size of 'sockaddr', and
+///       Windows reports the size of 'sockaddr_un'), but always with every
+///       included byte of the path component set to NUL.
+///
+///     o If the first byte of the native socket address path component is NUL
+///       (and, on platforms other than Linux, any subsequent byte included in
+///       the address size is not NUL), the name is considered abstract. If the
+///       abstract namespace is not supported on the current platform (i.e., on
+///       any platform other than Linux), decoding fails with an error
+///       indicating the operation is not implemented (e_NOT_IMPLEMENTED).
+///       Otherwise, the native socket address path component is scanned up to
+///       the last byte indicated by the socket address size. If any byte other
+///       than the first byte in the native socket address path component is
+///       NUL, decoding fails.
+///
+///     o If the first byte of the native socket address path component is not
+///       NUL, the name is considered persistent. The native socket address
+///       path component is scanned up to the last byte indicated by the socket
+///       address size or until the first NUL byte. Any bytes after the first
+///       NUL byte are ignored.
+///
+///     o If the resulting local name value is "empty", the local name is
+///       considered unnamed, retaining the namespace indicated by the first
+///       byte.
 ///
 /// @par Thread Safety
 /// This class is not thread safe.
@@ -124,26 +197,27 @@ class LocalName
     /// Reset the value of this object to its value on default construction.
     void reset();
 
-    /// Set the local name to be abstract. A socket bound to an abstract
-    /// name does not have a representation in the file system. Return the
-    /// error. Note that abstract local names are only supported on Linux.
-    /// Name in the abstract namespace requires a leading null character.
-    /// It is not stored inside the class instance, but if some name is
-    /// already stored then it is ensure that there is free space to place
-    /// a leading nul character
+    /// Interpret the local name to be in the "abstract" namespace. A socket
+    /// bound to an abstract name does not have a representation in the file
+    /// system. Return the error. Note that abstract local names are only
+    /// supported on Linux.
     ntsa::Error setAbstract();
 
-    /// Set the local name to be persistent. A socket bound to a persistent
-    /// name has a representation in the file system. Return the error.
+    /// Interpret the local name to be in the "persistent" namespace. A socket
+    /// bound to a persistent name has a representation in the file system.
+    /// Return the error. Note that a default-constructed local name is
+    /// considered to be in the persistent namespace. Also note that persistent
+    /// local names are supported by all platforms that support sockets in the
+    /// local domain.
     ntsa::Error setPersistent();
 
-    /// Set the local name to be unnamed. Return the error.
+    /// Set the local name to be unnamed, with no effect on the namespace.
+    /// Return the error.
     ntsa::Error setUnnamed();
 
-    /// Set the path of the local name to the specified 'value'. If length of
-    /// the 'value' is greater than k_MAX_PATH_LENGTH , in case of abstract
-    /// name, (k_MAX_PATH_LEN - 1) then operation is not performed and error
-    /// is returned.
+    /// Set the path of the local name to the specified 'value'. Return the
+    /// error, namely when 'value' contains embedded NUL bytes or the length of
+    /// 'value' is greater than 'k_MAX_PATH_LENGTH'.
     ntsa::Error setValue(const bslstl::StringRef& value);
 
     /// Return the value of the local name.
@@ -250,8 +324,8 @@ class LocalName
                         int         nameLength) const;
 
     /// Generate a unique local name. The name will be abstract if the
-    /// platform supports abstract names (Linux only). This function is 
-    /// deprecated; prefer the function that generates a local name and 
+    /// platform supports abstract names (Linux only). This function is
+    /// deprecated; prefer the function that generates a local name and
     /// returns an error if local name generation fails.
     static ntsa::LocalName generateUnique();
 
@@ -271,12 +345,12 @@ class LocalName
     /// error, notably when the when the generated absolute path is too long to
     /// fully store, e.g., when the generated file name concatenated with the
     /// 'directory' is too long.
-    static ntsa::Error generateUnique(ntsa::LocalName*   name, 
+    static ntsa::Error generateUnique(ntsa::LocalName*   name,
                                       const bsl::string& directory);
 
     /// Return the default directory into which non-ephemeral Unix domain
     /// sockets should stored. This directory is defined by the SOCKDIR
-    /// environment variable, if defined, or the TMPDIR (or TEMPDIR) 
+    /// environment variable, if defined, or the TMPDIR (or TEMPDIR)
     /// environment variable otherwise.
     static bsl::string defaultDirectory();
 
@@ -363,6 +437,7 @@ void hashAppend(HASH_ALGORITHM& algorithm, const LocalName& value)
 
     bslstl::StringRef text = value.value();
     algorithm(text.data(), text.size());
+    hashAppend(algorithm, value.isAbstract());
 }
 
 template <typename MANIPULATOR>
@@ -386,7 +461,8 @@ int LocalName::manipulateAttributes(MANIPULATOR& manipulator)
 template <typename MANIPULATOR>
 int LocalName::manipulateAttribute(MANIPULATOR& manipulator, int id)
 {
-    int rc;
+    ntsa::Error error;
+    int         rc;
 
     if (id == e_ATTRIBUTE_ID_PATH) {
         bsl::string path;
@@ -395,7 +471,10 @@ int LocalName::manipulateAttribute(MANIPULATOR& manipulator, int id)
             return rc;
         }
 
-        this->setValue(path);
+        error = this->setValue(path);
+        if (error) {
+            return -1;
+        }
     }
     else if (id == e_ATTRIBUTE_ID_ABSTRACT) {
         bdlb::NullableValue<bool> abstract;
@@ -404,11 +483,17 @@ int LocalName::manipulateAttribute(MANIPULATOR& manipulator, int id)
             return rc;
         }
 
-        if (abstract.has_value() && abstract.value()) {
-            d_abstract = true;
+        if (abstract.value_or(false)) {
+            error = this->setAbstract();
+            if (error) {
+                return -1;
+            }
         }
         else {
-            d_abstract = false;
+            error = this->setPersistent();
+            if (error) {
+                return -1;
+            }
         }
     }
     else {

@@ -723,13 +723,28 @@ struct SocketUtil {
 
     /// Load into the specified 'endpoint' the conversion of the specified
     /// 'socketAddress' having the specified 'socketAddressSize'. Return the
-    /// error.
+    /// error. If 'socketAddressSize' is zero, or the address family of
+    /// 'socketAddress' is 'AF_UNSPEC', load an undefined endpoint and return
+    /// success. Return 'ntsa::Error::e_INVALID' if 'socketAddressSize' is too
+    /// small to contain the address family, is not the size of the
+    /// family-specific socket address structure for an IPv4 or IPv6 address,
+    /// or is larger than the size of the family-specific socket address
+    /// structure for a Unix domain address, or if the address family is not
+    /// supported. Note that if the 'socketAddress' having the
+    /// 'socketAddressSize' cannot be successfully converted then after this
+    /// function returns to the caller 'endpoint->isUndefined()' is true. Note
+    /// that decoding a 'socketAddress' containing a Unix domain name follows
+    /// the rules described in the 'ntsa::LocalName' class documentation.
     static ntsa::Error decodeEndpoint(ntsa::Endpoint* endpoint,
                                       const void*     socketAddress,
                                       bsl::size_t     socketAddressSize);
 
     /// Load into the specified 'socketAddress' and 'socketAddressSize' the
-    /// conversion of the specified 'endpoint'. Return the error.
+    /// conversion of the specified 'endpoint'. Return the error. The behavior
+    /// is undefined unless 'socketAddress' points to a buffer whose size is
+    /// greater than or equal to 'sizeof(sockaddr_storage)'. Note that encoding
+    /// an 'endpoint' containing a Unix domain name follows the rules described
+    /// in the 'ntsa::LocalName' class documentation.
     static ntsa::Error encodeEndpoint(void*                 socketAddress,
                                       bsl::size_t*          socketAddressSize,
                                       const ntsa::Endpoint& endpoint);

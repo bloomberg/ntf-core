@@ -124,14 +124,10 @@ void LocalName::reset()
 ntsa::Error LocalName::setAbstract()
 {
 #if defined(BSLS_PLATFORM_OS_LINUX)
-    if (d_size == k_MAX_PATH_LENGTH) {
-        return ntsa::Error(ntsa::Error::e_LIMIT);
-    }
     d_abstract = true;
     return ntsa::Error();
 #else
-    d_abstract = false;
-    return ntsa::Error(ENOTSUP);
+    return ntsa::Error(ntsa::Error::e_NOT_IMPLEMENTED);
 #endif
 }
 
@@ -151,9 +147,7 @@ ntsa::Error LocalName::setValue(const bslstl::StringRef& value)
 {
     const bsl::size_t size = value.size();
 
-    if (size > (ntsa::LocalName::k_MAX_PATH_LENGTH -
-                static_cast<unsigned>(d_abstract)))
-    {
+    if (size > static_cast<bsl::size_t>(ntsa::LocalName::k_MAX_PATH_LENGTH)) {
         bsl::string path = value;
         BSLS_LOG_WARN(
             "Unix domain socket name '%s' length %d exceeds maximum length %d",
@@ -162,6 +156,18 @@ ntsa::Error LocalName::setValue(const bslstl::StringRef& value)
             (int)(ntsa::LocalName::k_MAX_PATH_LENGTH -
             static_cast<unsigned>(d_abstract)));
         return ntsa::Error(ntsa::Error::e_LIMIT);
+    }
+
+    for (bsl::size_t i = 0; i < size; ++i) {
+        if (value[i] == 0) {
+            bsl::string path = value;
+            BSLS_LOG_WARN(
+                "Unix domain socket name '%s' "
+                "contains embedded NUL at index %d",
+                path.c_str(),
+                (int)(i));
+            return ntsa::Error(ntsa::Error::e_INVALID);
+        }
     }
 
     bsl::memcpy(d_path, value.data(), size);
@@ -188,7 +194,7 @@ bool LocalName::isPersistent() const
 
 bool LocalName::isAbsolute() const
 {
-    return bdls::PathUtil::isAbsolute(d_path);
+    return bdls::PathUtil::isAbsolute(this->value());
 }
 
 bool LocalName::isRelative() const
@@ -254,7 +260,11 @@ bool LocalName::less(const LocalName& other) const
         }
     }
 
-    return (first1 == last1 && first2 != last2);
+    if (first1 != last1 || first2 != last2) {
+        return first1 == last1;
+    }
+
+    return !d_abstract && other.d_abstract;
 }
 
 bsl::ostream& LocalName::print(bsl::ostream& stream,
@@ -295,11 +305,11 @@ ntsa::LocalName LocalName::generateUnique()
 ntsa::Error LocalName::generateUnique(ntsa::LocalName* name)
 {
     return ntsa::LocalName::generateUnique(
-        name, 
+        name,
         ntsa::LocalName::defaultDirectory());
 }
 
-ntsa::Error LocalName::generateUnique(ntsa::LocalName*   name, 
+ntsa::Error LocalName::generateUnique(ntsa::LocalName*   name,
                                       const bsl::string& directory)
 {
     ntsa::Error error;
@@ -342,7 +352,7 @@ bsl::string LocalName::defaultDirectory()
     bsl::string path;
 
     if (path.empty()) {
-#if defined(BSLS_PLATFORM_OS_UNIX) 
+#if defined(BSLS_PLATFORM_OS_UNIX)
         const char* sockDir = bsl::getenv("SOCKDIR");
         if (sockDir != 0) {
             const bsl::size_t sockDirLength = bsl::strlen(sockDir);
@@ -367,7 +377,7 @@ bsl::string LocalName::defaultDirectory()
         }
 #endif
     }
-    
+
     if (path.empty()) {
         bsl::string tempDir;
         rc = bdls::FilesystemUtil::getSystemTemporaryDirectory(&tempDir);
