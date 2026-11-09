@@ -3519,8 +3519,6 @@ ntsa::Error SocketUtil::receiveFromMultiple(bsl::size_t* numBytesReceivable,
 #if defined(BSLS_PLATFORM_OS_UNIX)
 #if defined(BSLS_PLATFORM_OS_LINUX) &&                                        \
     ((__GLIBC__ >= 3) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 17))
-    ntsa::Error error;
-
     *numBytesReceived = 0;
 
     if (numBytesReceivable) {
@@ -3607,13 +3605,10 @@ ntsa::Error SocketUtil::receiveFromMultiple(bsl::size_t* numBytesReceivable,
         msghdr& msg = mmsg[mmsgIndex].msg_hdr;
 
         ntsa::Endpoint endpoint;
-        error = Impl::convert(
+        Impl::convert(
             &endpoint,
             reinterpret_cast<sockaddr_storage*>(msg.msg_name),
             msg.msg_namelen);
-        if (error) {
-            return error;
-        }
 
         messages[mmsgIndex].setEndpoint(endpoint);
         messages[mmsgIndex].setSize(
