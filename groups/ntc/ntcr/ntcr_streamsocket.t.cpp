@@ -4039,6 +4039,14 @@ NTSCFG_TEST_FUNCTION(ntcr::StreamSocketTest::verifyShutdownEsoterica4)
             .ONCE()
             .RETURN(ntsa::Error::invalid());
 
+        // The connect failure callback is now delivered deferred: the failure
+        // path holds more than one mutex, so the announcement is enqueued via
+        // the reactor rather than invoked synchronously.
+        ntci::Reactor::Functor deferredCallback;
+        NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+            .ONCE()
+            .SAVE_ARG_1(ntscfg::Mock::TO(&deferredCallback));
+
         ntca::ReactorEvent                   event;
         bsl::shared_ptr<ntci::ReactorSocket> reactorSocket = socket;
         reactorSocket->processSocketWritable(event);
@@ -4046,6 +4054,9 @@ NTSCFG_TEST_FUNCTION(ntcr::StreamSocketTest::verifyShutdownEsoterica4)
         NTCI_LOG_DEBUG("Ensure that connection callback was called and "
                        "connection error was indicated");
         {
+            NTSCFG_TEST_TRUE(deferredCallback);
+            deferredCallback();
+
             NTSCFG_TEST_TRUE(test.d_connectResult.has_value());
             NTSCFG_TEST_EQ(test.d_connectResult.value().type(),
                            ntca::ConnectEventType::e_ERROR);
@@ -4238,11 +4249,22 @@ NTSCFG_TEST_FUNCTION(ntcr::StreamSocketTest::verifyShutdownEsoterica5)
             .ONCE()
             .RETURN(StreamSocketTest::Fixture::k_NO_ERROR);
 
+        // The connect failure callback is now delivered deferred (the async
+        // detachment completion holds all three mutexes), so it is enqueued
+        // via the reactor before the postponed calls are moved and executed.
+        ntci::Reactor::Functor deferredConnectCallback;
+        NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+            .ONCE()
+            .SAVE_ARG_1(ntscfg::Mock::TO(&deferredConnectCallback));
+
         NTF_EXPECT(*test.d_reactorMock, moveAndExecute, IGNORE_ARG, IGNORE_ARG)
             .ONCE()
             .SAVE_ARG_1(ntscfg::Mock::TO_DEREF(&functorSequence));
 
         detachCallback(test.d_nullStrand);
+
+        NTSCFG_TEST_TRUE(deferredConnectCallback);
+        deferredConnectCallback();
 
         NTSCFG_TEST_TRUE(test.d_connectResult.has_value());
         NTSCFG_TEST_EQ(test.d_connectResult.value().type(),
@@ -4440,11 +4462,22 @@ NTSCFG_TEST_FUNCTION(ntcr::StreamSocketTest::verifyShutdownEsoterica6)
             .ONCE()
             .RETURN(StreamSocketTest::Fixture::k_NO_ERROR);
 
+        // The connect failure callback is now delivered deferred (the async
+        // detachment completion holds all three mutexes), so it is enqueued
+        // via the reactor before the postponed calls are moved and executed.
+        ntci::Reactor::Functor deferredConnectCallback;
+        NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+            .ONCE()
+            .SAVE_ARG_1(ntscfg::Mock::TO(&deferredConnectCallback));
+
         NTF_EXPECT(*test.d_reactorMock, moveAndExecute, IGNORE_ARG, IGNORE_ARG)
             .ONCE()
             .SAVE_ARG_1(ntscfg::Mock::TO_DEREF(&functorSequence));
 
         detachCallback(test.d_nullStrand);
+
+        NTSCFG_TEST_TRUE(deferredConnectCallback);
+        deferredConnectCallback();
 
         NTSCFG_TEST_TRUE(test.d_connectResult.has_value());
         NTSCFG_TEST_EQ(test.d_connectResult.value().type(),
@@ -5019,6 +5052,14 @@ NTSCFG_TEST_FUNCTION(ntcr::StreamSocketTest::verifyCloseEsoterica4)
             .ONCE()
             .RETURN(ntsa::Error::invalid());
 
+        // The connect failure callback is now delivered deferred: the failure
+        // path holds more than one mutex, so the announcement is enqueued via
+        // the reactor rather than invoked synchronously.
+        ntci::Reactor::Functor deferredCallback;
+        NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+            .ONCE()
+            .SAVE_ARG_1(ntscfg::Mock::TO(&deferredCallback));
+
         ntca::ReactorEvent                   event;
         bsl::shared_ptr<ntci::ReactorSocket> reactorSocket = socket;
         reactorSocket->processSocketWritable(event);
@@ -5026,6 +5067,9 @@ NTSCFG_TEST_FUNCTION(ntcr::StreamSocketTest::verifyCloseEsoterica4)
         NTCI_LOG_DEBUG("Ensure that connection callback was called and "
                        "connection error was indicated");
         {
+            NTSCFG_TEST_TRUE(deferredCallback);
+            deferredCallback();
+
             NTSCFG_TEST_TRUE(test.d_connectResult.has_value());
             NTSCFG_TEST_EQ(test.d_connectResult.value().type(),
                            ntca::ConnectEventType::e_ERROR);
@@ -5222,11 +5266,22 @@ NTSCFG_TEST_FUNCTION(ntcr::StreamSocketTest::verifyCloseEsoterica5)
             .ONCE()
             .RETURN(StreamSocketTest::Fixture::k_NO_ERROR);
 
+        // The connect failure callback is now delivered deferred (the async
+        // detachment completion holds all three mutexes), so it is enqueued
+        // via the reactor before the postponed calls are moved and executed.
+        ntci::Reactor::Functor deferredConnectCallback;
+        NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+            .ONCE()
+            .SAVE_ARG_1(ntscfg::Mock::TO(&deferredConnectCallback));
+
         NTF_EXPECT(*test.d_reactorMock, moveAndExecute, IGNORE_ARG, IGNORE_ARG)
             .ONCE()
             .SAVE_ARG_1(ntscfg::Mock::TO_DEREF(&functorSequence));
 
         detachCallback(test.d_nullStrand);
+
+        NTSCFG_TEST_TRUE(deferredConnectCallback);
+        deferredConnectCallback();
 
         NTSCFG_TEST_TRUE(test.d_connectResult.has_value());
         NTSCFG_TEST_EQ(test.d_connectResult.value().type(),
@@ -5431,11 +5486,22 @@ NTSCFG_TEST_FUNCTION(ntcr::StreamSocketTest::verifyCloseEsoterica6)
             .ONCE()
             .RETURN(StreamSocketTest::Fixture::k_NO_ERROR);
 
+        // The connect failure callback is now delivered deferred (the async
+        // detachment completion holds all three mutexes), so it is enqueued
+        // via the reactor before the postponed calls are moved and executed.
+        ntci::Reactor::Functor deferredConnectCallback;
+        NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+            .ONCE()
+            .SAVE_ARG_1(ntscfg::Mock::TO(&deferredConnectCallback));
+
         NTF_EXPECT(*test.d_reactorMock, moveAndExecute, IGNORE_ARG, IGNORE_ARG)
             .ONCE()
             .SAVE_ARG_1(ntscfg::Mock::TO_DEREF(&functorSequence));
 
         detachCallback(test.d_nullStrand);
+
+        NTSCFG_TEST_TRUE(deferredConnectCallback);
+        deferredConnectCallback();
 
         NTSCFG_TEST_TRUE(test.d_connectResult.has_value());
         NTSCFG_TEST_EQ(test.d_connectResult.value().type(),
@@ -5620,11 +5686,22 @@ NTSCFG_TEST_FUNCTION(
             .ONCE()
             .RETURN(StreamSocketTest::Fixture::k_NO_ERROR);
 
+        // The connect failure callback is now delivered deferred (the async
+        // detachment completion holds all three mutexes), so it is enqueued
+        // via the reactor before the postponed calls are moved and executed.
+        ntci::Reactor::Functor deferredConnectCallback;
+        NTF_EXPECT(*test.d_reactorMock, execute, IGNORE_ARG)
+            .ONCE()
+            .SAVE_ARG_1(ntscfg::Mock::TO(&deferredConnectCallback));
+
         NTF_EXPECT(*test.d_reactorMock, moveAndExecute, IGNORE_ARG, IGNORE_ARG)
             .ONCE()
             .SAVE_ARG_1(ntscfg::Mock::TO_DEREF(&functorSequence));
 
         detachCallback(test.d_nullStrand);
+
+        NTSCFG_TEST_TRUE(deferredConnectCallback);
+        deferredConnectCallback();
 
         NTSCFG_TEST_TRUE(test.d_connectResult.has_value());
         NTSCFG_TEST_EQ(test.d_connectResult.value().type(),

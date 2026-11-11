@@ -50,6 +50,16 @@ namespace ntci {
 /// @par Thread Safety
 /// This class is thread safe.
 ///
+/// @par Handshake Callback Invocation
+/// Implementations must invoke the handshake callback only from within a call
+/// to 'initiateHandshake' or 'pushIncomingCipherText', i.e., only from within
+/// the call that supplies the input that determines the outcome of the
+/// handshake. Implementations must not invoke the handshake callback from
+/// within any other function, in particular 'pushOutgoingPlainText',
+/// 'popIncomingPlainText', 'popOutgoingCipherText', or 'shutdown'. Users of
+/// this class rely on this guarantee to call those other functions without
+/// being prepared to process the completion or failure of the handshake.
+///
 /// @ingroup module_ntci_encryption
 class Encryption
 {
@@ -58,7 +68,9 @@ class Encryption
     /// a handshake is complete. The first parameter indicates the error,
     /// if any. The second parameter indicates the certificate of the peer,
     /// if any. The third parameters indicates the cause of the handshake
-    /// error, if an error is indicated.
+    /// error, if an error is indicated. Note that this function is invoked
+    /// only from within a call to 'initiateHandshake' or
+    /// 'pushIncomingCipherText'.
     typedef NTCCFG_FUNCTION(
         const ntsa::Error&                                  error,
         const bsl::shared_ptr<ntci::EncryptionCertificate>& certificate,
@@ -68,30 +80,37 @@ class Encryption
     virtual ~Encryption();
 
     /// Initiate the handshake to begin the session. Invoke the specified
-    /// 'callback' when the handshake completes. Return the error.
+    /// 'callback' when the handshake completes, either from within this
+    /// call or from within a subsequent call to 'pushIncomingCipherText'.
+    /// Return the error.
     virtual ntsa::Error initiateHandshake(const HandshakeCallback& callback);
 
     /// Initiate the handshake to begin the session according to the specified
     /// 'upgradeOptions'. Invoke the specified 'callback' when the handshake
-    /// completes. Return the error.
+    /// completes, either from within this call or from within a subsequent
+    /// call to 'pushIncomingCipherText'. Return the error.
     virtual ntsa::Error initiateHandshake(
         const ntca::UpgradeOptions& upgradeOptions,
         const HandshakeCallback&    callback);
 
     /// Add the specified 'input' containing ciphertext read from the peer.
-    /// Return the error.
+    /// Invoke the handshake callback if 'input' completes the handshake or
+    /// causes it to fail. Return the error.
     virtual ntsa::Error pushIncomingCipherText(const bdlbb::Blob& input);
 
     /// Add the specified 'input' containing ciphertext read from the peer.
-    /// Return the error.
+    /// Invoke the handshake callback if 'input' completes the handshake or
+    /// causes it to fail. Return the error.
     virtual ntsa::Error pushIncomingCipherText(const ntsa::Data& input);
 
     /// Add the specified 'input' containing plaintext to be sent to the
-    /// peer. Return the error.
+    /// peer. Return the error. Note that this function never invokes the
+    /// handshake callback.
     virtual ntsa::Error pushOutgoingPlainText(const bdlbb::Blob& input);
 
     /// Add the specified 'input' containing plaintext to be sent to the
-    /// peer. Return the error.
+    /// peer. Return the error. Note that this function never invokes the
+    /// handshake callback.
     virtual ntsa::Error pushOutgoingPlainText(const ntsa::Data& input);
 
     /// Pop plaintext read from the peer and append it to the specified

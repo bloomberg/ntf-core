@@ -1366,13 +1366,6 @@ ntsa::Error Encryption::processIncomingHello()
 
         d_shutdownState.close();
         d_handshakeState = e_FAILED;
-        {
-            ntccfg::UnLockGuard guard(&d_mutex);
-            d_handshakeCallback(ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED),
-                                bsl::shared_ptr<ntci::EncryptionCertificate>(),
-                                "Not authorized");
-        }
-        d_handshakeCallback = ntci::Encryption::HandshakeCallback();
     }
     else {
         error = this->enqueueOutgoingAccept(true);
@@ -1385,11 +1378,6 @@ ntsa::Error Encryption::processIncomingHello()
         if (d_role == ntca::EncryptionRole::e_CLIENT) {
             BSLS_ASSERT(d_remoteCertificate_sp);
             d_handshakeState = e_ESTABLISHED;
-            {
-                ntccfg::UnLockGuard guard(&d_mutex);
-                d_handshakeCallback(ntsa::Error(), d_remoteCertificate_sp, "");
-            }
-            d_handshakeCallback = ntci::Encryption::HandshakeCallback();
         }
         else {
             error = this->enqueueOutgoingHello();
@@ -1438,23 +1426,11 @@ ntsa::Error Encryption::processIncomingAccept()
         if (d_role == ntca::EncryptionRole::e_SERVER) {
             BSLS_ASSERT(d_remoteCertificate_sp);
             d_handshakeState = e_ESTABLISHED;
-            {
-                ntccfg::UnLockGuard guard(&d_mutex);
-                d_handshakeCallback(ntsa::Error(), d_remoteCertificate_sp, "");
-            }
-            d_handshakeCallback = ntci::Encryption::HandshakeCallback();
         }
     }
     else {
         d_shutdownState.close();
         d_handshakeState = e_FAILED;
-        {
-            ntccfg::UnLockGuard guard(&d_mutex);
-            d_handshakeCallback(ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED),
-                                bsl::shared_ptr<ntci::EncryptionCertificate>(),
-                                "Not authorized");
-        }
-        d_handshakeCallback = ntci::Encryption::HandshakeCallback();
     }
 
     return ntsa::Error();
@@ -1518,7 +1494,7 @@ ntsa::Error Encryption::processIncomingGoodbye()
     return ntsa::Error();
 }
 
-ntsa::Error Encryption::process()
+ntsa::Error Encryption::processData()
 {
     ntsa::Error error;
 
@@ -1566,6 +1542,49 @@ ntsa::Error Encryption::process()
     }
 
     return ntsa::Error();
+}
+
+ntsa::Error Encryption::process(LockGuard* lock)
+{
+    ntsa::Error error = this->processData();
+
+    // Announce the outcome of the handshake only after all complete incoming
+    // frames have been consumed, so that a concurrent caller cannot observe
+    // (and re-process) a partially-processed frame while the mutex is
+    // released. The handshake callback is reset when the outcome is
+    // announced, so the outcome is announced at most once.
+
+    if (d_handshakeCallback && (d_handshakeState == e_ESTABLISHED ||
+                                d_handshakeState == e_FAILED))
+    {
+        ntci::Encryption::HandshakeCallback handshakeCallback =
+            d_handshakeCallback;
+
+        d_handshakeCallback = ntci::Encryption::HandshakeCallback();
+
+        const bool established = d_handshakeState == e_ESTABLISHED;
+
+        bsl::shared_ptr<ntci::EncryptionCertificate> remoteCertificate;
+        if (established) {
+            remoteCertificate = d_remoteCertificate_sp;
+        }
+
+        // Do not re-acquire the mutex after the handshake callback returns:
+        // the handshake callback may destroy this object.
+
+        lock->release()->unlock();
+
+        if (established) {
+            handshakeCallback(ntsa::Error(), remoteCertificate, "");
+        }
+        else {
+            handshakeCallback(ntsa::Error(ntsa::Error::e_NOT_AUTHORIZED),
+                              remoteCertificate,
+                              "Not authorized");
+        }
+    }
+
+    return error;
 }
 
 Encryption::Encryption(
@@ -1627,7 +1646,7 @@ ntsa::Error Encryption::initiateHandshake(const HandshakeCallback& callback)
         d_handshakeState = e_HELLO_SENT;
     }
 
-    return this->process();
+    return this->process(&guard);
 }
 
 ntsa::Error Encryption::pushIncomingCipherText(const bdlbb::Blob& input)
@@ -1640,7 +1659,7 @@ ntsa::Error Encryption::pushIncomingCipherText(const bdlbb::Blob& input)
 
     bdlbb::BlobUtil::append(d_incomingCipherText_sp.get(), input);
 
-    return this->process();
+    return this->process(&guard);
 }
 
 ntsa::Error Encryption::pushIncomingCipherText(const ntsa::Data& input)
@@ -1653,7 +1672,7 @@ ntsa::Error Encryption::pushIncomingCipherText(const ntsa::Data& input)
 
     ntsa::DataUtil::append(d_incomingCipherText_sp.get(), input);
 
-    return this->process();
+    return this->process(&guard);
 }
 
 ntsa::Error Encryption::pushOutgoingPlainText(const bdlbb::Blob& input)
@@ -1666,7 +1685,7 @@ ntsa::Error Encryption::pushOutgoingPlainText(const bdlbb::Blob& input)
 
     bdlbb::BlobUtil::append(d_outgoingPlainText_sp.get(), input);
 
-    return this->process();
+    return this->process(&guard);
 }
 
 ntsa::Error Encryption::pushOutgoingPlainText(const ntsa::Data& input)
@@ -1679,7 +1698,7 @@ ntsa::Error Encryption::pushOutgoingPlainText(const ntsa::Data& input)
 
     ntsa::DataUtil::append(d_outgoingPlainText_sp.get(), input);
 
-    return this->process();
+    return this->process(&guard);
 }
 
 ntsa::Error Encryption::popIncomingPlainText(bdlbb::Blob* output)
@@ -1693,7 +1712,7 @@ ntsa::Error Encryption::popIncomingPlainText(bdlbb::Blob* output)
                                d_incomingPlainText_sp->length());
     }
 
-    return this->process();
+    return this->process(&guard);
 }
 
 ntsa::Error Encryption::popOutgoingCipherText(bdlbb::Blob* output)
@@ -1707,7 +1726,7 @@ ntsa::Error Encryption::popOutgoingCipherText(bdlbb::Blob* output)
                                d_outgoingCipherText_sp->length());
     }
 
-    return this->process();
+    return this->process(&guard);
 }
 
 ntsa::Error Encryption::shutdown()
