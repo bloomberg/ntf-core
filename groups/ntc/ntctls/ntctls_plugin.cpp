@@ -3841,7 +3841,7 @@ class Certificate::Impl
   public:
     /// Convert the specified 'name' into the specified 'identity'.
     static void parseDistinguishedName(ntsa::DistinguishedName* identity,
-                                       X509_NAME*               name);
+                                       const X509_NAME*         name);
 
     /// Append the specified Distinguished Name 'component' to the specified
     /// 'result'. Return 0 on success and a non-zero value otherwise.
@@ -3858,12 +3858,12 @@ class Certificate::Impl
 
     /// Return the extension in the specified 'x509' identified by the
     /// specified 'nid', or null if no such extension is found.
-    static X509_EXTENSION* getExtension(const X509* x509, int nid);
+    static const X509_EXTENSION* getExtension(const X509* x509, int nid);
 };
 
 void Certificate::Impl::parseDistinguishedName(
     ntsa::DistinguishedName* identity,
-    X509_NAME*               name)
+    const X509_NAME*         name)
 {
     identity->reset();
 
@@ -3874,7 +3874,7 @@ void Certificate::Impl::parseDistinguishedName(
     const bsl::size_t numEntries = X509_NAME_entry_count(name);
 
     for (bsl::size_t i = 0; i < numEntries; ++i) {
-        X509_NAME_ENTRY* entry =
+        const X509_NAME_ENTRY* entry =
             X509_NAME_get_entry(name, static_cast<int>(i));
 
         const int n = OBJ_obj2nid(X509_NAME_ENTRY_get_object(entry));
@@ -3892,10 +3892,11 @@ void Certificate::Impl::parseDistinguishedName(
 
         const bsl::size_t entryNameSize = bsl::strlen(entryNameData);
 
-        ASN1_STRING* entry_value = X509_NAME_ENTRY_get_data(entry);
+        const ASN1_STRING* entry_value = X509_NAME_ENTRY_get_data(entry);
 
-        const unsigned char* entryValueData = entry_value->data;
-        const int            entryValueSize = entry_value->length;
+        const unsigned char* entryValueData =
+            ASN1_STRING_get0_data(entry_value);
+        const int entryValueSize = ASN1_STRING_length(entry_value);
 
         bsl::string component;
         if (entryNameData && entryNameSize > 0) {
@@ -3961,7 +3962,8 @@ ntsa::Error Certificate::Impl::addExtension(X509*       x509,
     return ntsa::Error();
 }
 
-X509_EXTENSION* Certificate::Impl::getExtension(const X509* x509, int nid)
+const X509_EXTENSION* Certificate::Impl::getExtension(const X509* x509,
+                                                       int         nid)
 {
     int rc = X509_get_ext_by_NID(x509, nid, -1);
     if (rc < 0) {
@@ -7595,7 +7597,7 @@ bool Certificate::isAuthority() const
 {
     bool result = false;
 
-    X509_EXTENSION* extension =
+    const X509_EXTENSION* extension =
         Impl::getExtension(d_x509.get(), NID_basic_constraints);
     if (extension == 0) {
         return false;
