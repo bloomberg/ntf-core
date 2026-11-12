@@ -54,3 +54,40 @@ jobs:
       - name: Build
         id: ntf-deps-run
         run: docker run -v $(pwd):/workspace/ntf-core --name ntf-deps ntf-deps /bin/bash -c "/workspace/ntf-core/.github/workflows/docker/build_test_ntf.sh"
+
+  build-check-darwin:
+    name: "Darwin"
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up dependencies
+        run: brew install cmake ninja pkg-config openssl@3 lz4 zstd zlib
+
+      - name: Cache-Identify
+        id: get-hash
+        run: echo "ntf_deps_hash=darwin-`uname -m`-`cat .github/workflows/darwin/build_deps.sh | shasum | cut -d' ' -f1`" >> $GITHUB_OUTPUT
+
+      - name: Cache-Lookup
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/ntf-deps
+          key: ${{ steps.get-hash.outputs.ntf_deps_hash }}
+
+      - name: Cache-Build
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        run: .github/workflows/darwin/build_deps.sh ~/ntf-deps
+
+      - name: Cache-Commit
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/ntf-deps
+          key: ${{ steps.get-hash.outputs.ntf_deps_hash }}
+
+      - name: Build
+        run: |
+          export OPENSSL_ROOT_DIR="$(brew --prefix openssl@3)"
+          .github/workflows/darwin/build_test_ntf.sh ~/ntf-deps
