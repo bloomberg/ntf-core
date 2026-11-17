@@ -29,14 +29,18 @@ namespace ntsa {
 class DomainNameTest
 {
   public:
-    // TODO
-    static void verifyCase1();
+    // Test parsing, including invalid and empty input, equality, and
+    // comparison.
+    static void verifyParsing();
 
-    // TODO
-    static void verifyCase2();
+    // Test parsing: name and domain parts, including empty parts.
+    static void verifyParsingNameAndDomain();
+
+    // Test hashing.
+    static void verifyHashing();
 };
 
-NTSCFG_TEST_FUNCTION(ntsa::DomainNameTest::verifyCase1)
+NTSCFG_TEST_FUNCTION(ntsa::DomainNameTest::verifyParsing)
 {
     bool valid;
     bool equals;
@@ -210,9 +214,190 @@ NTSCFG_TEST_FUNCTION(ntsa::DomainNameTest::verifyCase1)
         valid = domainName.parse("ab", ".cd");
         NTSCFG_TEST_FALSE(valid);
     }
+
+#define TEST(value, expectedValid, expectedText)                              \
+    do {                                                                      \
+        ntsa::DomainName domainName;                                          \
+                                                                              \
+        valid = domainName.parse(value);                                      \
+        NTSCFG_TEST_EQ(valid, expectedValid);                                 \
+                                                                              \
+        const bsl::string domain = domainName.text();                         \
+        NTSCFG_TEST_EQ(domain, expectedText);                                 \
+    } while (false)
+
+    TEST("", false, "");
+    TEST(".", false, "");
+    TEST("-", false, "");
+    TEST("_", false, "");
+
+    TEST("..", false, "");
+    TEST(".-", false, "");
+    TEST("._", false, "");
+
+    TEST("-.", false, "");
+    TEST("--", false, "");
+    TEST("-_", false, "");
+
+    TEST("_.", false, "");
+    TEST("_-", false, "");
+    TEST("__", false, "");
+
+    TEST("foo.", true, "foo.");
+    TEST("FOO.", true, "foo.");
+    TEST(".foo", false, "");
+    TEST(".foo.", false, "");
+
+    TEST("foo-", false, "");
+    TEST("-foo", false, "");
+    TEST("-foo-", false, "");
+
+    TEST("foo_", false, "");
+    TEST("_foo", false, "");
+    TEST("_foo_", false, "");
+
+    TEST("foo.bar", true, "foo.bar");
+    TEST("foo.BAR", true, "foo.bar");
+    TEST("FOO.bar", true, "foo.bar");
+    TEST("FOO.BAR", true, "foo.bar");
+    TEST("foo.bar.", true, "foo.bar.");
+    TEST(".foo.bar", false, "");
+    TEST(".foo.bar.", false, "");
+
+    TEST("foo-bar", true, "foo-bar");
+    TEST("foo-BAR", true, "foo-bar");
+    TEST("FOO-bar", true, "foo-bar");
+    TEST("FOO-BAR", true, "foo-bar");
+    TEST("foo-bar-", false, "");
+    TEST("-foo-bar", false, "");
+    TEST("-foo-bar-", false, "");
+
+    TEST("foo_bar", true, "foo_bar");
+    TEST("foo_BAR", true, "foo_bar");
+    TEST("FOO_bar", true, "foo_bar");
+    TEST("FOO_BAR", true, "foo_bar");
+    TEST("foo_bar_", false, "");
+    TEST("_foo_bar", false, "");
+    TEST("_foo_bar_", false, "");
+
+    // Accepted forms that are not technically legal according to RFC 1035.
+    TEST("foo-.bar", true, "foo-.bar");
+    TEST("foo.-bar", true, "foo.-bar");
+    TEST("foo-.-bar", true, "foo-.-bar");
+
+    // Also accepted but technically illegal.
+    TEST("foo_.bar", true, "foo_.bar");
+    TEST("foo._bar", true, "foo._bar");
+    TEST("foo_._bar", true, "foo_._bar");
+
+    TEST("foo..bar", false, "");
+    TEST("foo--bar", true, "foo--bar");
+    TEST("foo__bar", true, "foo__bar");
+
+    TEST("foo", true, "foo");
+    TEST("foO", true, "foo");
+    TEST("fOo", true, "foo");
+    TEST("Foo", true, "foo");
+    TEST("FOO", true, "foo");
+
+#undef TEST
 }
 
-NTSCFG_TEST_FUNCTION(ntsa::DomainNameTest::verifyCase2)
+NTSCFG_TEST_FUNCTION(ntsa::DomainNameTest::verifyParsingNameAndDomain)
+{
+#define TEST(name, domain, expectedValid, expectedText)                       \
+    do {                                                                      \
+        ntsa::DomainName domainName;                                          \
+                                                                              \
+        const bool valid = domainName.parse(name, domain);                    \
+        NTSCFG_TEST_EQ(valid, expectedValid);                                 \
+                                                                              \
+        if (valid) {                                                          \
+            NTSCFG_TEST_EQ(domainName.text(), expectedText);                  \
+                                                                              \
+            ntsa::DomainName reparsed;                                        \
+            NTSCFG_TEST_TRUE(reparsed.parse(domainName.text()));              \
+            NTSCFG_TEST_EQ(reparsed, domainName);                             \
+        }                                                                     \
+    } while (false)
+
+    TEST("", "", false, "");
+    TEST(".", "", false, "");
+    TEST("-", "", false, "");
+    TEST("_", "", false, "");
+
+    TEST(".", ".", false, "");
+    TEST(".", "-", false, "");
+    TEST(".", "_", false, "");
+
+    TEST("-", ".", false, "");
+    TEST("-", "-", false, "");
+    TEST("-", "_", false, "");
+
+    TEST("_", ".", false, "");
+    TEST("_", "-", false, "");
+    TEST("_", "_", false, "");
+
+    TEST("", "bar", false, "");
+    TEST(".", "bar", false, "");
+    TEST("-", "bar", false, "");
+    TEST("_", "bar", false, "");
+    TEST("", "bar.baz", false, "");
+
+    TEST("foo", "", true, "foo.");
+    TEST("foo", ".", false, "");
+    TEST("foo", "-", false, "");
+    TEST("foo", "_", false, "");
+
+    TEST("foo", "bar", true, "foo.bar");
+    TEST("foO", "baR", true, "foo.bar");
+    TEST("fOO", "bAR", true, "foo.bar");
+    TEST("FOO", "BAR", true, "foo.bar");
+
+    TEST("foo.bar", "baz", true, "foo.bar.baz");
+    TEST("foo..bar", "baz", false, "");
+    TEST(".foo", "bar", false, "");
+    TEST("foo.", "bar", false, "");
+
+    TEST("foo", "bar.baz", true, "foo.bar.baz");
+    TEST("foo", "bar..baz", false, "");
+    TEST("foo", ".bar", false, "");
+    TEST("foo", "bar.", true, "foo.bar.");
+    TEST("foo", "bar.baz.", true, "foo.bar.baz.");
+
+    // Accepted forms that are not technically legal according to RFC 1035.
+    TEST("foo-", "bar", true, "foo-.bar");
+    TEST("foo", "-bar", true, "foo.-bar");
+    TEST("foo-", "-bar", true, "foo-.-bar");
+
+    // Also accepted but technically illegal.
+    TEST("foo_", "bar", true, "foo_.bar");
+    TEST("foo", "_bar", true, "foo._bar");
+    TEST("foo_", "_bar", true, "foo_._bar");
+
+    // Also accepted but technically illegal.
+    TEST("foo-.bar", "baz", true, "foo-.bar.baz");
+    TEST("foo.-bar", "baz", true, "foo.-bar.baz");
+    TEST("foo-.-bar", "baz", true, "foo-.-bar.baz");
+
+    // Also accepted but technically illegal.
+    TEST("foo_.bar", "baz", true, "foo_.bar.baz");
+    TEST("foo._bar", "baz", true, "foo._bar.baz");
+    TEST("foo_._bar", "baz", true, "foo_._bar.baz");
+
+    // Also accepted but technically illegal.
+    TEST("foo", "bar-.baz", true, "foo.bar-.baz");
+    TEST("foo", "bar.-baz", true, "foo.bar.-baz");
+    TEST("foo", "bar-.-baz", true, "foo.bar-.-baz");
+
+    // Also accepted but technically illegal.
+    TEST("foo", "bar_.baz", true, "foo.bar_.baz");
+    TEST("foo", "bar._baz", true, "foo.bar._baz");
+    TEST("foo", "bar_._baz", true, "foo.bar_._baz");
+#undef TEST
+}
+
+NTSCFG_TEST_FUNCTION(ntsa::DomainNameTest::verifyHashing)
 {
     ntsa::DomainName domainName1("one", "example.com");
     ntsa::DomainName domainName2("two", "example.com");
