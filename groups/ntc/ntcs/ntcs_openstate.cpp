@@ -25,7 +25,7 @@ namespace ntcs {
 
 const char* OpenState::toString() const
 {
-    switch (d_value) {
+    switch (static_cast<Value>(d_value.loadAcquire())) {
     case e_DEFAULT:
         return "DEFAULT";
     case e_WAITING:

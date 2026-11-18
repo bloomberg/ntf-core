@@ -682,7 +682,17 @@ class Encryption : public ntci::Encryption
 
     /// Process the available data through the encryption state machine.
     /// Return the error.
-    ntsa::Error process();
+    ntsa::Error processData();
+
+    /// Process the available data through the encryption state machine.
+    /// If the handshake has completed or failed and that outcome has not
+    /// yet been announced, release the specified 'lock', unlock the mutex,
+    /// and invoke the handshake callback. Return the error. Note that
+    /// the handshake callback is invoked only after all complete incoming
+    /// frames have been consumed, and the mutex is not re-acquired after the
+    /// handshake callback returns, so the handshake callback may safely
+    /// destroy this object.
+    ntsa::Error process(LockGuard* lock);
 
   public:
     /// Create a new encryption operating in the specified 'role' from an
