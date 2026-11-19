@@ -148,11 +148,15 @@ bool DomainName::parse(const bslstl::StringRef& text)
 {
     this->reset();
 
-    if (text.size() > sizeof d_buffer - 1) {
+    const bsl::size_t size = text.size();
+
+    if (size == 0) {
         return false;
     }
 
-    bsl::size_t size = text.size();
+    if (size > sizeof d_buffer - 1) {
+        return false;
+    }
 
     for (bsl::size_t i = 0; i < size; ++i) {
         char ch = text[i];
@@ -194,11 +198,20 @@ bool DomainName::parse(const bslstl::StringRef& name,
 {
     this->reset();
 
-    if (name.size() + 1 + domain.size() > sizeof d_buffer - 1) {
+    const bsl::size_t name_size = name.size();
+
+    // A label must contain at least one character: only the root label may
+    // be empty, and the root is always the last label, never the first. An
+    // empty 'domain', however, denotes the root, which yields the absolute
+    // domain name "<name>.".
+
+    if (name_size == 0) {
         return false;
     }
 
-    bsl::size_t name_size = name.size();
+    if (name_size + 1 + domain.size() > sizeof d_buffer - 1) {
+        return false;
+    }
 
     for (bsl::size_t i = 0; i < name_size; ++i) {
         char ch = name[i];
@@ -228,7 +241,7 @@ bool DomainName::parse(const bslstl::StringRef& name,
 
     d_buffer[name_size] = '.';
 
-    bsl::size_t domainSize = domain.size();
+    const bsl::size_t domainSize = domain.size();
 
     for (bsl::size_t i = 0; i < domainSize; ++i) {
         char ch = domain[i];
